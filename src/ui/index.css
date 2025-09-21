@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@custom-variant hocus {
+  &:hover,
+  &:focus {
+    @slot;
+  }
+}
+
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @apply min-h-screen antialiased;
+
+  background: #1f1f1f;
+  color: #f5f5f5;
+}

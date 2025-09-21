@@ -1,0 +1,39 @@
+{
+  "name": "@meyfa/cadence",
+  "version": "0.0.0",
+  "description": "",
+  "author": "Fabian Meyer",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "tsc --noEmit -p tsconfig.lint.json && eslint .",
+    "lint-fix": "tsc --noEmit -p tsconfig.lint.json && eslint --fix .",
+    "start": "vite",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meyfa/cadence.git"
+  },
+  "homepage": "https://github.com/meyfa/cadence",
+  "bugs": {
+    "url": "https://github.com/meyfa/cadence/issues"
+  },
+  "devDependencies": {
+    "@meyfa/eslint-config": "8.0.1",
+    "@tailwindcss/vite": "4.1.13",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "5.0.3",
+    "eslint": "9.36.0",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.2",
+    "vite": "7.1.6"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  }
+}
