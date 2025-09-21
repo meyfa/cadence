@@ -1,8 +1,8 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant hocus {
   &:hover,
-  &:focus {
+  &:focus-visible {
     @slot;
   }
 }
