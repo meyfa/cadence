@@ -1,0 +1,40 @@
+{
+  "extends": [
+    "config:js-app"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "extends": ["schedule:weekly"]
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)",
+      "groupSlug": "dev-dependencies-non-major"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch", "lockFileMaintenance"],
+      "matchPackageNames": [
+        "typescript",
+        "eslint",
+        "mocha",
+        "chai",
+        "stylelint",
+        "stylelint-config-standard",
+        "@meyfa/eslint-config"
+      ],
+      "automerge": true
+    },
+    {
+      "matchPackageNames": ["/^@octokit//"],
+      "groupName": "octokit packages"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  }
+}
