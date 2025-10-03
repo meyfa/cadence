@@ -29,7 +29,8 @@ export const App: FunctionComponent = () => {
         playing={playing}
         onPlayPause={() => setPlaying((playing) => !playing)}
         volume={volume}
-        onVolumeChange={setVolume} />
+        onVolumeChange={setVolume}
+      />
 
       <div className='flex flex-col h-[calc(100vh-3rem)] min-h-0'>
         <Editor value={code} onChange={setCode} />
