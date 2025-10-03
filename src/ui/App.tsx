@@ -9,6 +9,10 @@ const initialCode = `
 # Press Play to start the demo. Edit the code to create your own patterns.
 # Use 'x' for a hit and '-' for a rest.
 
+track {
+  tempo: 128
+}
+
 kick  = [x--- x--- x--- x---]
 snare = [---- x--- ---- x---]
 hat   = [--x- --x- --x- --x-]
@@ -23,7 +27,8 @@ const instruments = {
 }
 
 const demo = createAudioDemo({
-  instruments
+  instruments,
+  defaultTempo: 128
 })
 
 export const App: FunctionComponent = () => {
