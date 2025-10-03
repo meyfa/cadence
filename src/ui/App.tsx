@@ -6,6 +6,9 @@ import { parse } from '../language/parser.js'
 import clsx from 'clsx'
 
 const initialCode = `
+# Press Play to start the demo. Edit the code to create your own patterns.
+# Use 'x' for a hit and '-' for a rest.
+
 kick  = [x--- x--- x--- x---]
 snare = [---- x--- ---- x---]
 hat   = [--x- --x- --x- --x-]
