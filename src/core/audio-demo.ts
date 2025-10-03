@@ -1,16 +1,20 @@
-import { gainToDb, getTransport, Pattern, PolySynth, Synth } from 'tone'
+import { gainToDb, getTransport, PolySynth, Sequence, Synth } from 'tone'
+
+type PatternItem = 'rest' | 'hit'
 
 export interface AudioDemo {
   readonly play: () => void
   readonly stop: () => void
   readonly setVolume: (volume: number) => void
+  readonly setPattern: (pattern: PatternItem[]) => void
 }
 
 export function createAudioDemo (): AudioDemo {
   let initialized = false
   let synth: PolySynth | undefined
-  let pattern: Pattern<string> | undefined
+  let seq: Sequence | undefined
   let decibels: number | undefined
+  let events: PatternItem[] = ['rest']
 
   return {
     play: () => {
@@ -35,20 +39,20 @@ export function createAudioDemo (): AudioDemo {
           synth.volume.value = decibels
         }
 
-        pattern = new Pattern(function (time, note) {
-          synth?.triggerAttackRelease(note, 0.125, time)
-        }, ['G4', 'D4', 'F4', 'A4'])
-
-        pattern.interval = '12n'
+        seq = new Sequence((time, note) => {
+          if (note === 'hit') {
+            synth?.triggerAttackRelease('C4', '8n', time)
+          }
+        }, events, '16n')
 
         getTransport().start()
       }
 
-      pattern?.start()
+      seq?.start()
     },
 
     stop: () => {
-      pattern?.stop()
+      seq?.stop()
     },
 
     setVolume: (volume: number) => {
@@ -56,6 +60,14 @@ export function createAudioDemo (): AudioDemo {
 
       if (synth != null) {
         synth.volume.rampTo(decibels, 0.05)
+      }
+    },
+
+    setPattern: (pattern) => {
+      events = pattern
+
+      if (seq != null) {
+        seq.events = events
       }
     }
   }
