@@ -1,20 +1,30 @@
-import { gainToDb, getTransport, PolySynth, Sequence, Synth } from 'tone'
+import { gainToDb, getTransport, Sequence, Player } from 'tone'
 
 type PatternItem = 'rest' | 'hit'
+
+interface Program {
+  patterns: Record<string, PatternItem[]>
+}
 
 export interface AudioDemo {
   readonly play: () => void
   readonly stop: () => void
   readonly setVolume: (volume: number) => void
-  readonly setPattern: (pattern: PatternItem[]) => void
+  readonly setProgram: (program: Program) => void
 }
 
-export function createAudioDemo (): AudioDemo {
+export function createAudioDemo (options: {
+  instruments: Record<string, string>
+}): AudioDemo {
   let initialized = false
-  let synth: PolySynth | undefined
-  let seq: Sequence | undefined
+
+  const players: Record<string, Player> = {}
+  const sequences: Record<string, Sequence> = {}
+
   let decibels: number | undefined
-  let events: PatternItem[] = ['rest']
+  let currentProgram: Program = {
+    patterns: {}
+  }
 
   return {
     play: () => {
@@ -23,51 +33,57 @@ export function createAudioDemo (): AudioDemo {
 
         getTransport().bpm.value = 128
 
-        synth = new PolySynth(Synth, {
-          oscillator: {
-            type: 'sine'
-          },
-          envelope: {
-            attack: 0.01,
-            decay: 0.2,
-            sustain: 0,
-            release: 0.1
-          }
-        }).toDestination()
+        for (const [key, url] of Object.entries(options.instruments)) {
+          const player = new Player({
+            url,
+            autostart: false,
+            loop: false
+          }).toDestination()
 
-        if (decibels != null) {
-          synth.volume.value = decibels
+          if (decibels != null) {
+            player.volume.value = decibels
+          }
+
+          players[key] = player
+
+          const pattern = currentProgram.patterns[key] ?? []
+          const sequence = new Sequence<PatternItem>((time, note) => {
+            if (note === 'hit') {
+              player.start(time)
+            }
+          }, pattern, '16n')
+
+          sequences[key] = sequence
         }
-
-        seq = new Sequence((time, note) => {
-          if (note === 'hit') {
-            synth?.triggerAttackRelease('C4', '8n', time)
-          }
-        }, events, '16n')
 
         getTransport().start()
       }
 
-      seq?.start()
+      for (const sequence of Object.values(sequences)) {
+        sequence.start()
+      }
     },
 
     stop: () => {
-      seq?.stop()
+      for (const sequence of Object.values(sequences)) {
+        sequence.stop()
+      }
     },
 
     setVolume: (volume: number) => {
       decibels = gainToDb(Math.pow(volume, 2))
 
-      if (synth != null) {
-        synth.volume.rampTo(decibels, 0.05)
+      for (const player of Object.values(players)) {
+        player.volume.rampTo(decibels, 0.05)
       }
     },
 
-    setPattern: (pattern) => {
-      events = pattern
+    setProgram: (program) => {
+      currentProgram = program
 
-      if (seq != null) {
-        seq.events = events
+      for (const [key, sequence] of Object.entries(sequences)) {
+        const pattern = currentProgram.patterns[key] ?? []
+        sequence.events = pattern
       }
     }
   }

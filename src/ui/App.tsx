@@ -5,12 +5,26 @@ import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser.js'
 import clsx from 'clsx'
 
-const INITIAL_CODE = '[x--- x--- x--- x--x]'
+const initialCode = `
+kick  = [x--- x--- x--- x---]
+snare = [---- x--- ---- x---]
+hat   = [--x- --x- --x- --x-]
+tom   = [---- -x-- ---- ---x]
+`.trimStart()
 
-const demo = createAudioDemo()
+const instruments = {
+  kick: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav',
+  snare: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808sd/SD0010.WAV',
+  hat: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808oh/OH00.WAV',
+  tom: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808mt/MT10.WAV'
+}
+
+const demo = createAudioDemo({
+  instruments
+})
 
 export const App: FunctionComponent = () => {
-  const [code, setCode] = useState(INITIAL_CODE)
+  const [code, setCode] = useState(initialCode)
 
   const parseResult = useMemo(() => {
     return parse(code)
@@ -18,7 +32,7 @@ export const App: FunctionComponent = () => {
 
   useEffect(() => {
     if (parseResult.complete) {
-      demo.setPattern(parseResult.value)
+      demo.setProgram(parseResult.value)
     }
   }, [parseResult])
 
