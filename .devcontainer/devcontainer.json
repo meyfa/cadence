@@ -14,7 +14,10 @@
         "files.trimFinalNewlines": true,
         "files.trimTrailingWhitespace": true,
         "eslint.format.enable": true,
-        "editor.tabSize": 2
+        "editor.tabSize": 2,
+        "javascript.preferences.importModuleSpecifierEnding": "js",
+        "typescript.preferences.importModuleSpecifierEnding": "js",
+        "typescript.preferences.preferTypeOnlyAutoImports": true
       }
     }
   }

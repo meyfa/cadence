@@ -1,12 +1,26 @@
-import { FunctionComponent, useEffect, useState } from 'react'
+import { FunctionComponent, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header.js'
 import { createAudioDemo } from '../core/audio-demo.js'
 import { Editor } from './components/Editor.js'
+import { parse } from '../language/parser.js'
+import clsx from 'clsx'
+
+const INITIAL_CODE = '[x--- x--- x--- x--x]'
 
 const demo = createAudioDemo()
 
 export const App: FunctionComponent = () => {
-  const [code, setCode] = useState('# Welcome to Cadence')
+  const [code, setCode] = useState(INITIAL_CODE)
+
+  const parseResult = useMemo(() => {
+    return parse(code)
+  }, [code])
+
+  useEffect(() => {
+    if (parseResult.complete) {
+      demo.setPattern(parseResult.value)
+    }
+  }, [parseResult])
 
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
@@ -32,8 +46,14 @@ export const App: FunctionComponent = () => {
         onVolumeChange={setVolume}
       />
 
-      <div className='flex flex-col h-[calc(100vh-3rem)] min-h-0'>
+      <div className='flex flex-col h-[calc(100vh-5rem)] min-h-0'>
         <Editor value={code} onChange={setCode} />
+      </div>
+
+      <div className={clsx('p-2 text-xs text-gray-500', !parseResult.complete && 'bg-red-500/20 text-red-500')}>
+        {parseResult.complete
+          ? 'No errors'
+          : 'Parsing failed'}
       </div>
     </>
   )

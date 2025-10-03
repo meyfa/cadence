@@ -43,6 +43,8 @@
     "@codemirror/view": "6.38.4",
     "clsx": "2.1.1",
     "codemirror": "6.0.2",
+    "leac": "0.7.0",
+    "peberminta": "0.10.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tone": "15.1.22"
