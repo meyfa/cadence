@@ -2,6 +2,10 @@ import { Token } from 'leac'
 import * as p from 'peberminta'
 import { lex } from './lexer.js'
 
+interface TrackBlock {
+  tempo?: number
+}
+
 type PatternItem = 'rest' | 'hit'
 type Pattern = PatternItem[]
 
@@ -11,6 +15,7 @@ interface Assignment {
 }
 
 interface Program {
+  track?: TrackBlock
   patterns: Record<string, Pattern>
 }
 
@@ -29,6 +34,11 @@ const patternLiteral_: p.Parser<Token, unknown, Pattern> = p.map(
 
 const identifier_: p.Parser<Token, unknown, string> = p.token((t) => t.name === 'identifier' ? t.text : undefined)
 
+const number_: p.Parser<Token, unknown, number> = p.map(
+  p.token((t) => t.name === 'number' ? t.text : undefined),
+  (text) => Number.parseFloat(text)
+)
+
 const assignment_: p.Parser<Token, unknown, Assignment> = p.abc(
   identifier_,
   literal('='),
@@ -36,16 +46,57 @@ const assignment_: p.Parser<Token, unknown, Assignment> = p.abc(
   (key, _eq, value) => ({ key, value })
 )
 
-const program_: p.Parser<Token, unknown, Program> = p.map(
-  p.many(assignment_),
-  (assignments) => {
-    const patterns: Record<string, Pattern> = {}
-    for (const assignment of assignments) {
-      patterns[assignment.key] = assignment.value
-    }
+const property_: p.Parser<Token, unknown, { key: string, value: number }> = p.abc(
+  identifier_,
+  literal(':'),
+  number_,
+  (key, _colon, value) => ({ key, value })
+)
 
-    return { patterns }
-  }
+const trackBlock_: p.Parser<Token, unknown, TrackBlock> = p.right(
+  p.token((t) => t.name === 'identifier' && t.text === 'track' ? true : undefined),
+  p.middle(
+    literal('{'),
+    p.map(
+      p.many(property_),
+      (properties) => {
+        const block: TrackBlock = {}
+        for (const property of properties) {
+          if (property.key === 'tempo') {
+            block.tempo = property.value
+          }
+        }
+        return block
+      }
+    ),
+    literal('}')
+  )
+)
+
+const program_: p.Parser<Token, unknown, Program> = p.left(
+  p.map(
+    p.many(
+      p.eitherOr(trackBlock_, assignment_)
+    ),
+    (statements) => {
+      console.log(statements)
+
+      const patterns: Record<string, Pattern> = {}
+      let track: TrackBlock | undefined
+
+      for (const statement of statements) {
+        if ('key' in statement) {
+          patterns[statement.key] = statement.value
+          continue
+        }
+
+        track = statement
+      }
+
+      return { track, patterns }
+    }
+  ),
+  p.end
 )
 
 export type ParseResult = {

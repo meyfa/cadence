@@ -3,6 +3,9 @@ import { gainToDb, getTransport, Sequence, Player } from 'tone'
 type PatternItem = 'rest' | 'hit'
 
 interface Program {
+  track?: {
+    tempo?: number
+  }
   patterns: Record<string, PatternItem[]>
 }
 
@@ -15,6 +18,7 @@ export interface AudioDemo {
 
 export function createAudioDemo (options: {
   instruments: Record<string, string>
+  defaultTempo: number
 }): AudioDemo {
   let initialized = false
 
@@ -30,8 +34,6 @@ export function createAudioDemo (options: {
     play: () => {
       if (!initialized) {
         initialized = true
-
-        getTransport().bpm.value = 128
 
         for (const [key, url] of Object.entries(options.instruments)) {
           const player = new Player({
@@ -80,6 +82,13 @@ export function createAudioDemo (options: {
 
     setProgram: (program) => {
       currentProgram = program
+
+      let tempo = program.track?.tempo ?? options.defaultTempo
+      if (!Number.isFinite(tempo) || tempo <= 1 || tempo > 400) {
+        tempo = options.defaultTempo
+      }
+
+      getTransport().bpm.value = tempo
 
       for (const [key, sequence] of Object.entries(sequences)) {
         const pattern = currentProgram.patterns[key] ?? []
