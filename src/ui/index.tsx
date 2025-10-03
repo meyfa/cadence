@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import React from 'react'
+import { StrictMode } from 'react'
 import './index.css'
 import { App } from './App.js'
 
@@ -11,7 +11,7 @@ if (container == null) {
 const root = createRoot(container)
 
 root.render(
-  <React.StrictMode>
+  <StrictMode>
     <App />
-  </React.StrictMode>
+  </StrictMode>
 )
