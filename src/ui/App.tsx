@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useState } from 'react'
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header.js'
 import { createAudioDemo } from '../core/audio-demo.js'
 import { Editor } from './components/Editor.js'
@@ -56,6 +56,13 @@ export const App: FunctionComponent = () => {
     }
   }, [playing])
 
+  const update = useCallback(() => {
+    demo.stop()
+    if (playing) {
+      demo.play()
+    }
+  }, [playing])
+
   useEffect(() => {
     demo.setVolume(volume / 100)
   }, [volume])
@@ -67,6 +74,7 @@ export const App: FunctionComponent = () => {
         onPlayPause={() => setPlaying((playing) => !playing)}
         volume={volume}
         onVolumeChange={setVolume}
+        onUpdate={update}
       />
 
       <div className='flex flex-col h-[calc(100vh-5rem)] min-h-0'>
