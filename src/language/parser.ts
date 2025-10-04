@@ -7,38 +7,73 @@ function literal (name: string): p.Parser<Token, unknown, true> {
   return p.token((t) => t.name === name ? true : undefined)
 }
 
-const patternLiteral_: p.Parser<Token, unknown, ast.Pattern> = p.map(
-  p.token((t) => t.name === 'pattern' ? t.text : undefined),
-  (text) => {
-    const steps = text.slice(1, -1).replace(/\s/g, '').split('').map((char) => {
-      return char === '-' ? 'rest' : 'hit'
-    })
-
-    return { type: 'Pattern', steps }
-  }
+const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.map(
+  p.token((t) => t.name === 'identifier' ? t.text : undefined),
+  (name) => ({ type: 'Identifier', name })
 )
 
-const identifier_: p.Parser<Token, unknown, string> = p.token(
-  (t) => t.name === 'identifier' ? t.text : undefined
-)
-
-const number_: p.Parser<Token, unknown, ast.NumberLiteral> = p.map(
+const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.map(
   p.token((t) => t.name === 'number' ? t.text : undefined),
   (text) => ({ type: 'NumberLiteral', value: Number.parseFloat(text) })
 )
 
-const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
-  identifier_,
-  literal('='),
-  patternLiteral_,
-  (key, _eq, value) => ({ type: 'Assignment', key, value })
+const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.map(
+  p.token((t) => t.name === 'string' ? t.text : undefined),
+  (text) => {
+    // Remove surrounding quotes and unescape characters
+    const unescaped = JSON.parse(text)
+    return { type: 'StringLiteral', value: unescaped }
+  }
+)
+
+const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.map(
+  p.token((t) => t.name === 'pattern' ? t.text : undefined),
+  (text) => {
+    const value = text.slice(1, -1).replace(/\s/g, '').split('').map((char) => {
+      return char === '-' ? 'rest' : 'hit'
+    })
+
+    return { type: 'PatternLiteral', value }
+  }
+)
+
+const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
+  stringLiteral_,
+  p.eitherOr(
+    numberLiteral_,
+    patternLiteral_
+  )
 )
 
 const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   identifier_,
   literal(':'),
-  number_,
+  literal_,
   (key, _colon, value) => ({ type: 'Property', key, value })
+)
+
+const call_: p.Parser<Token, unknown, ast.Call> = p.ab(
+  identifier_,
+  p.middle(
+    literal('('),
+    p.sepBy(property_, literal(',')),
+    literal(')')
+  ),
+  (callee, args) => ({ type: 'Call', callee, arguments: args })
+)
+
+const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
+  identifier_,
+  literal('='),
+  p.eitherOr(patternLiteral_, call_),
+  (key, _eq, value) => ({ type: 'Assignment', key, value })
+)
+
+const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
+  identifier_,
+  literal('<<'),
+  p.eitherOr(patternLiteral_, identifier_),
+  (instrument, _arrow, pattern) => ({ type: 'Routing', instrument, pattern })
 )
 
 const trackBlock_: p.Parser<Token, unknown, ast.Track> = p.right(
@@ -56,19 +91,23 @@ const trackBlock_: p.Parser<Token, unknown, ast.Track> = p.right(
 const program_: p.Parser<Token, unknown, ast.Program> = p.left(
   p.map(
     p.many(
-      p.eitherOr(trackBlock_, assignment_)
+      p.eitherOr(trackBlock_, p.eitherOr(assignment_, routing_))
     ),
     (statements) => {
-      const patterns: Record<string, ast.Pattern> = {}
       let track: ast.Track | undefined
+      const assignments: ast.Assignment[] = []
+      const routings: ast.Routing[] = []
 
       for (const statement of statements) {
         switch (statement.type) {
-          case 'Assignment':
-            patterns[statement.key] = statement.value
-            break
           case 'Track':
             track = statement
+            break
+          case 'Assignment':
+            assignments.push(statement)
+            break
+          case 'Routing':
+            routings.push(statement)
             break
           default:
             // @ts-expect-error - should be unreachable
@@ -76,7 +115,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.left(
         }
       }
 
-      return { type: 'Program', track, patterns }
+      return { type: 'Program', track, assignments, routings }
     }
   ),
   p.end

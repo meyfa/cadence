@@ -13,21 +13,22 @@ track {
   tempo: 128
 }
 
-kick  = [x--- x--- x--- x---]
-snare = [---- x--- ---- x---]
-hat   = [--x- --x- --x- --x-]
-tom   = [---- -x-- ---- ---x]
+kick  = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav")
+snare = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808sd/SD0010.WAV")
+hat   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808oh/OH00.WAV")
+tom   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808mt/MT10.WAV")
+
+kick  << [x-x- x--- x--- x---]
+snare << [---- x--- ---- x---]
+hat   << [--x- --x- --x- --x-]
+
+# You can also define patterns and reuse them.
+
+tom_pattern = [---- -x-- ---- ---x]
+tom   << tom_pattern
 `.trimStart()
 
-const instruments = {
-  kick: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav',
-  snare: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808sd/SD0010.WAV',
-  hat: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808oh/OH00.WAV',
-  tom: 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808mt/MT10.WAV'
-}
-
 const demo = createAudioDemo({
-  instruments,
   defaultTempo: 128
 })
 
