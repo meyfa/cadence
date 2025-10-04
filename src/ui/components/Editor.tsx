@@ -1,8 +1,11 @@
+import './Editor.css'
 import { EditorState } from '@codemirror/state'
 import { EditorView, basicSetup } from 'codemirror'
 import { FunctionComponent, useEffect, useRef } from 'react'
 import { oneDark } from '@codemirror/theme-one-dark'
-import './Editor.css'
+import { cadenceLanguageSupport } from '../../editor/language-support.js'
+import { keymap } from '@codemirror/view'
+import { indentWithTab } from '@codemirror/commands'
 
 export const Editor: FunctionComponent<{
   value: string
@@ -33,7 +36,13 @@ export const Editor: FunctionComponent<{
       extensions: [
         basicSetup,
         EditorState.tabSize.of(2),
+        keymap.of([
+          indentWithTab,
+          // Disable browser save dialog, improving UX for users accustomed to regularly pressing Ctrl+S
+          { key: 'Ctrl-s', run: () => true }
+        ]),
         oneDark,
+        cadenceLanguageSupport(),
         updateListener
       ]
     })
