@@ -1,19 +1,11 @@
-import { gainToDb, getTransport, Sequence, Player } from 'tone'
-
-type PatternItem = 'rest' | 'hit'
-
-interface Program {
-  track?: {
-    tempo?: number
-  }
-  patterns: Record<string, PatternItem[]>
-}
+import { gainToDb, getTransport, Sequence, Player, now } from 'tone'
+import * as ast from '../language/ast.js'
 
 export interface AudioDemo {
   readonly play: () => void
   readonly stop: () => void
   readonly setVolume: (volume: number) => void
-  readonly setProgram: (program: Program) => void
+  readonly setProgram: (program: ast.Program) => void
 }
 
 export function createAudioDemo (options: {
@@ -26,7 +18,8 @@ export function createAudioDemo (options: {
   const sequences: Record<string, Sequence> = {}
 
   let decibels: number | undefined
-  let currentProgram: Program = {
+  let currentProgram: ast.Program = {
+    type: 'Program',
     patterns: {}
   }
 
@@ -48,12 +41,12 @@ export function createAudioDemo (options: {
 
           players[key] = player
 
-          const pattern = currentProgram.patterns[key] ?? []
-          const sequence = new Sequence<PatternItem>((time, note) => {
+          const pattern = currentProgram.patterns[key] ?? { type: 'Pattern', steps: [] }
+          const sequence = new Sequence<ast.Step>((time, note) => {
             if (note === 'hit') {
               player.start(time)
             }
-          }, pattern, '16n')
+          }, pattern.steps, '16n')
 
           sequences[key] = sequence
         }
@@ -62,7 +55,7 @@ export function createAudioDemo (options: {
       }
 
       for (const sequence of Object.values(sequences)) {
-        sequence.start()
+        sequence.start(now() + 0.01)
       }
     },
 
@@ -83,17 +76,21 @@ export function createAudioDemo (options: {
     setProgram: (program) => {
       currentProgram = program
 
-      let tempo = program.track?.tempo ?? options.defaultTempo
-      if (!Number.isFinite(tempo) || tempo <= 1 || tempo > 400) {
+      let tempo = findProperty(program.track?.properties ?? [], 'tempo')?.value
+      if (tempo == null || !Number.isFinite(tempo) || tempo <= 1 || tempo > 400) {
         tempo = options.defaultTempo
       }
 
       getTransport().bpm.value = tempo
 
       for (const [key, sequence] of Object.entries(sequences)) {
-        const pattern = currentProgram.patterns[key] ?? []
-        sequence.events = pattern
+        const pattern = currentProgram.patterns[key] ?? { type: 'Pattern', steps: [] }
+        sequence.events = pattern.steps
       }
     }
   }
+}
+
+function findProperty (properties: ast.Property[], key: string): ast.Property['value'] | undefined {
+  return properties.find((prop) => prop.key === key)?.value
 }
