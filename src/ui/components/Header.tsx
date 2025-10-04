@@ -7,7 +7,8 @@ export const Header: FunctionComponent<{
   onPlayPause: () => void
   volume: number
   onVolumeChange: (volume: number) => void
-}> = ({ playing, onPlayPause, volume, onVolumeChange }) => {
+  onUpdate: () => void
+}> = ({ playing, onPlayPause, volume, onVolumeChange, onUpdate }) => {
   return (
     <header className='w-full h-12 border-b border-b-gray-700 flex items-center px-4 gap-4'>
       <h1 className='text-lg font-semibold'>
@@ -22,6 +23,10 @@ export const Header: FunctionComponent<{
 
         <Button onClick={onPlayPause}>
           {playing ? 'Stop' : 'Play'}
+        </Button>
+
+        <Button onClick={onUpdate} disabled={!playing}>
+          Update
         </Button>
       </div>
     </header>
