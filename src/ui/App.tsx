@@ -10,10 +10,12 @@ const initialCode = `
 
 # Define samples to use in the track.
 
-kick  = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav")
-snare = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808sd/SD0010.WAV")
-hat   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808oh/OH00.WAV")
-tom   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808mt/MT10.WAV")
+sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/"
+
+kick  = sample(url: sample_collection + "house/000_BD.wav")
+snare = sample(url: sample_collection + "808sd/SD0010.WAV")
+hat   = sample(url: sample_collection + "808oh/OH00.WAV")
+tom   = sample(url: sample_collection + "808mt/MT10.WAV")
 
 # Define patterns using a simple step sequencer syntax where 'x' is a hit and '-' is a rest.
 # Patterns are 16th notes by default, and can be any length.
@@ -25,7 +27,7 @@ track {
   tempo: 128 bpm
 
   # Sections play in sequence.
-  # Patterns will loop to fill the section length.
+  # Patterns will loop to fill the section length, specified in bars or beats.
 
   section intro for 4 bars {
     kick  << kick_pattern

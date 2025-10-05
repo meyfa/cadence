@@ -9,13 +9,15 @@
   string { "\"" (!["\\] | "\\" (![.] | $[.]))* "\"" }
   pattern { "[" $[ \t\n\rx-]* "]" }
 
-  "="
-  ":"
   "{" "}"
   "(" ")"
   ","
 
+  "="
+  ":"
   "<<"
+
+  "+"
 }
 
 @skip { space | Comment }
@@ -23,6 +25,10 @@
 @detectDelim
 
 kw<term> { @specialize[@name={term}]<word, term> }
+
+@precedence {
+  plus @left
+}
 
 @top Program {
   (Assignment | TrackStatement)*
@@ -32,6 +38,9 @@ unit {
   @specialize<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
 }
 
+VariableDefinition { word }
+VariableName { word }
+
 NumberLiteral { number unit? }
 StringLiteral { string }
 PatternLiteral { pattern }
@@ -40,19 +49,24 @@ Literal {
   NumberLiteral | StringLiteral | PatternLiteral
 }
 
-VariableDefinition { word }
-VariableName { word }
+expression {
+  Literal | Call | VariableName | BinaryExpression
+}
+
+BinaryExpression {
+  expression !plus "+" expression
+}
 
 Property {
   PropertyName { word }
   ":"
-  Literal
+  expression
 }
 
 Assignment {
   VariableDefinition
   "="
-  (Literal | Call | VariableName)
+  expression
 }
 
 Call {
@@ -75,7 +89,7 @@ TrackStatement {
 
 SectionStatement {
   kw<"section"> VariableDefinition
-  kw<"for"> NumberLiteral
+  kw<"for"> expression
   SectionBlock {
     "{" (Routing)* "}"
   }
