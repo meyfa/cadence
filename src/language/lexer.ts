@@ -1,6 +1,6 @@
-import { createLexer } from 'leac'
+import { createLexer, type Options, type Rules } from 'leac'
 
-export const lex = createLexer([
+const rules: Rules = [
   { name: 'space', regex: /[ \t\n\r]+/, discard: true },
 
   { name: 'comment', regex: /#[^\n]*/, discard: true },
@@ -22,4 +22,12 @@ export const lex = createLexer([
   { name: '<<' },
 
   { name: '+' }
-])
+]
+
+const state = undefined
+
+const options: Options = {
+  lineNumbers: true
+}
+
+export const lex = createLexer(rules, state, options)

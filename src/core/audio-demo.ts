@@ -1,5 +1,6 @@
 import { gainToDb, getTransport, Sequence, Player, now } from 'tone'
 import * as ast from '../language/ast.js'
+import { combineLocations, getEmptyLocation } from '../language/location.js'
 
 const BEATS_PER_BAR = 4
 const STEPS_PER_BEAT = 4
@@ -23,6 +24,7 @@ export function createAudioDemo (options: {
   let decibels: number | undefined
   let program: ast.Program = {
     type: 'Program',
+    location: getEmptyLocation(),
     track: undefined,
     assignments: []
   }
@@ -261,13 +263,23 @@ function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value,
       return undefined
 
     case 'NumberLiteral': {
+      if (left.unit !== (right as typeof left).unit) {
+        // TODO error handling - unit mismatch
+        return undefined
+      }
+
       const result = computeArithmeticOperation(operator, left.value, (right as typeof left).value)
       if (result == null) {
         // TODO error handling - unsupported operation
         return undefined
       }
 
-      return { type: 'NumberLiteral', value: result, unit: left.unit }
+      return {
+        type: 'NumberLiteral',
+        location: combineLocations(left, right),
+        value: result,
+        unit: left.unit
+      }
     }
 
     case 'StringLiteral': {
@@ -277,7 +289,11 @@ function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value,
         return undefined
       }
 
-      return { type: 'StringLiteral', value: result }
+      return {
+        type: 'StringLiteral',
+        location: combineLocations(left, right),
+        value: result
+      }
     }
 
     case 'PatternLiteral': {
@@ -287,7 +303,11 @@ function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value,
         return undefined
       }
 
-      return { type: 'PatternLiteral', value: result }
+      return {
+        type: 'PatternLiteral',
+        location: combineLocations(left, right),
+        value: result
+      }
     }
 
     default:

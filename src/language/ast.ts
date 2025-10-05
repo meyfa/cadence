@@ -1,5 +1,8 @@
+import type { Location } from './location.js'
+
 export interface ASTNode {
   readonly type: string
+  readonly location: Location
 }
 
 // Basic Types
