@@ -4,6 +4,9 @@ export interface ASTNode {
 
 // Basic Types
 
+export const units = ['bpm', 'bar', 'bars', 'beat', 'beats', 's', 'ms', 'hz', 'db'] as const
+export type Unit = typeof units[number]
+
 export interface Identifier extends ASTNode {
   readonly type: 'Identifier'
   readonly name: string
@@ -12,6 +15,7 @@ export interface Identifier extends ASTNode {
 export interface NumberLiteral extends ASTNode {
   readonly type: 'NumberLiteral'
   readonly value: number
+  readonly unit?: Unit
 }
 
 export interface StringLiteral extends ASTNode {

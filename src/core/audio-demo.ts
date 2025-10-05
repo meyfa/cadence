@@ -37,7 +37,7 @@ export function createAudioDemo (options: {
     let tempo = options.defaultTempo
 
     const tempoProperty = findProperty(program.track?.properties ?? [], 'tempo')
-    if (tempoProperty?.type === 'NumberLiteral') {
+    if (tempoProperty?.type === 'NumberLiteral' && tempoProperty.unit === 'bpm') {
       const { value } = tempoProperty
       if (Number.isFinite(value) && value > 1 && value <= 400) {
         tempo = value
@@ -163,7 +163,6 @@ function findProperty (properties: readonly ast.Property[], key: string): ast.Pr
   return properties.find((prop) => prop.key.name === key)?.value
 }
 
-function resolveIdentifierToValue (program: ast.Program, key: string): ast.Literal | ast.Call | undefined {
-  const assignment = program.assignments.find((a) => a.key.name === key)
-  return assignment?.value
+function resolveIdentifierToValue (program: ast.Program, key: string): ast.Assignment['value'] | undefined {
+  return program.assignments.find((a) => a.key.name === key)?.value
 }
