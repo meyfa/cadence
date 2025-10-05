@@ -3,7 +3,7 @@ import { Header } from './components/Header.js'
 import { createAudioDemo } from '../core/audio-demo.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser.js'
-import clsx from 'clsx'
+import { Footer } from './components/Footer.js'
 
 const initialCode = `
 # Press Play to start the demo.
@@ -54,6 +54,7 @@ const demo = createAudioDemo({
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialCode)
+  const [editorLocation, setEditorLocation] = useState<{ line: number, column: number } | undefined>()
 
   const parseResult = useMemo(() => {
     return parse(code)
@@ -97,15 +98,9 @@ export const App: FunctionComponent = () => {
         onUpdate={update}
       />
 
-      <div className='flex flex-col grow'>
-        <Editor value={code} onChange={setCode} />
-      </div>
+      <Editor value={code} onChange={setCode} onLocationChange={setEditorLocation} />
 
-      <div className={clsx('p-2 text-xs text-gray-500', !parseResult.complete && 'bg-red-500/20 text-red-500')}>
-        {parseResult.complete
-          ? 'No errors'
-          : 'Parsing failed'}
-      </div>
+      <Footer parseResult={parseResult} editorLocation={editorLocation} />
     </div>
   )
 }

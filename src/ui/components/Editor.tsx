@@ -10,14 +10,20 @@ import { indentWithTab } from '@codemirror/commands'
 export const Editor: FunctionComponent<{
   value: string
   onChange: (value: string) => void
-}> = ({ value, onChange }) => {
+  onLocationChange?: (location: { line: number, column: number } | undefined) => void
+}> = ({ value, onChange, onLocationChange }) => {
   const editorRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
+  const onLocationChangeRef = useRef(onLocationChange)
 
   useEffect(() => {
     onChangeRef.current = onChange
   }, [onChange])
+
+  useEffect(() => {
+    onLocationChangeRef.current = onLocationChange
+  }, [onLocationChange])
 
   // Initialize editor
   useEffect(() => {
@@ -28,6 +34,18 @@ export const Editor: FunctionComponent<{
     const updateListener = EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         onChangeRef.current(update.state.doc.toString())
+      }
+
+      if (onLocationChangeRef.current) {
+        const selections = update.state.selection.ranges
+        if (selections.length === 1) {
+          const pos = selections[0].head
+          const line = update.state.doc.lineAt(pos)
+          const column = pos - line.from + 1
+          onLocationChangeRef.current({ line: line.number, column })
+        } else {
+          onLocationChangeRef.current(undefined)
+        }
       }
     })
 
