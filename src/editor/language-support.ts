@@ -11,13 +11,15 @@ const parserWithMetadata = parser.configure({
       StringLiteral: t.string,
       PatternLiteral: t.string,
 
-      '=': t.definitionOperator,
-      ':': t.separator,
       '{ }': t.brace,
       '( )': t.paren,
       ',': t.separator,
 
+      '=': t.definitionOperator,
+      ':': t.separator,
       '<<': t.operator,
+
+      '+': t.arithmeticOperator,
 
       'track section for': t.keyword,
 

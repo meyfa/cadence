@@ -1,6 +1,10 @@
 import { gainToDb, getTransport, Sequence, Player, now } from 'tone'
 import * as ast from '../language/ast.js'
 
+const BEATS_PER_BAR = 4
+const STEPS_PER_BEAT = 4
+const STEPS_PER_BAR = BEATS_PER_BAR * STEPS_PER_BEAT
+
 export interface AudioDemo {
   readonly play: () => void
   readonly stop: () => void
@@ -36,8 +40,9 @@ export function createAudioDemo (options: {
     let tempo = options.defaultTempo
 
     const tempoProperty = findProperty(program.track?.properties ?? [], 'tempo')
-    if (tempoProperty?.type === 'NumberLiteral' && tempoProperty.unit === 'bpm') {
-      const { value } = tempoProperty
+    const tempoValue = tempoProperty != null ? resolveExpression(tempoProperty, program) : undefined
+    if (tempoValue != null && tempoValue.type === 'NumberLiteral' && tempoValue.unit === 'bpm') {
+      const { value } = tempoValue
       if (Number.isFinite(value) && value > 1 && value <= 400) {
         tempo = value
       }
@@ -57,13 +62,15 @@ export function createAudioDemo (options: {
         continue
       }
 
-      const url = findProperty(assignment.value.arguments, 'url')
-      if (url?.type !== 'StringLiteral') {
+      const urlArgument = findProperty(assignment.value.arguments, 'url')
+      const urlValue = urlArgument != null ? resolveExpression(urlArgument, program) : undefined
+      if (urlValue == null || urlValue.type !== 'StringLiteral') {
+        // TODO handle invalid or missing url
         continue
       }
 
       const player = new Player({
-        url: url.value,
+        url: urlValue.value,
         autostart: false,
         loop: false
       }).toDestination()
@@ -82,12 +89,26 @@ export function createAudioDemo (options: {
     ]))
 
     for (const section of program.track?.sections ?? []) {
-      if (section.length.unit !== 'bars' || !Number.isSafeInteger(section.length.value) || section.length.value <= 0) {
-        // TODO handle other units
+      if (!Number.isSafeInteger(section.length.value) || section.length.value <= 0) {
+        // TODO error handling - invalid section length
         continue
       }
 
-      const sectionLengthSteps = section.length.value * 16
+      let sectionLengthSteps: number
+
+      switch (section.length.unit) {
+        case 'bars':
+          sectionLengthSteps = section.length.value * STEPS_PER_BAR
+          break
+
+        case 'beats':
+          sectionLengthSteps = section.length.value * STEPS_PER_BEAT
+          break
+
+        default:
+          // TODO error handling - unsupported section length unit
+          continue
+      }
 
       // Remember which instruments were used in this section
       const instruments = new Set<string>()
@@ -107,26 +128,9 @@ export function createAudioDemo (options: {
           continue
         }
 
-        let pattern: ast.PatternLiteral | undefined
-
-        switch (routing.pattern.type) {
-          case 'PatternLiteral':
-            pattern = routing.pattern
-            break
-          case 'Identifier': {
-            const value = resolveIdentifierToValue(program, routing.pattern.name)
-            if (value?.type === 'PatternLiteral') {
-              pattern = value
-            }
-            // TODO handle invalid pattern reference
-            break
-          }
-          default:
-            // @ts-expect-error - should be unreachable
-            throw new Error(`Unexpected pattern type: ${routing.pattern.type}`)
-        }
-
-        if (pattern == null) {
+        const pattern = resolveExpression(routing.pattern, program)
+        if (pattern == null || pattern.type !== 'PatternLiteral') {
+          // TODO handle invalid pattern
           continue
         }
 
@@ -206,6 +210,112 @@ function findProperty (properties: readonly ast.Property[], key: string): ast.Pr
   return properties.find((prop) => prop.key.name === key)?.value
 }
 
-function resolveIdentifierToValue (program: ast.Program, key: string): ast.Assignment['value'] | undefined {
-  return program.assignments.find((a) => a.key.name === key)?.value
+function resolveExpression (expression: ast.Expression, program: ast.Program, traversedVariables = new Set<string>()): ast.Value | undefined {
+  switch (expression.type) {
+    case 'Identifier': {
+      if (traversedVariables.has(expression.name)) {
+        // TODO error handling - circular reference
+        return undefined
+      }
+
+      traversedVariables.add(expression.name)
+
+      const value = program.assignments.find((a) => a.key.name === expression.name)?.value
+      if (value == null) {
+        // TODO error handling - undefined variable
+        return undefined
+      }
+
+      return resolveExpression(value, program, traversedVariables)
+    }
+
+    case 'BinaryExpression': {
+      const left = resolveExpression(expression.left, program, new Set(traversedVariables))
+      const right = resolveExpression(expression.right, program, new Set(traversedVariables))
+
+      if (left == null || right == null) {
+        // TODO error handling - unable to resolve sub-expression
+        return undefined
+      }
+
+      return computeBinaryExpression(expression.operator, left, right)
+    }
+
+    default:
+      return expression
+  }
+}
+
+function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value, right: ast.Value): ast.Value | undefined {
+  if (left.type !== right.type) {
+    // TODO error handling - type mismatch
+    return undefined
+  }
+
+  switch (left.type) {
+    case 'Identifier':
+      throw new Error('Unexpected Identifier in computeBinaryExpression')
+
+    case 'Call':
+      // TODO error handling - unsupported operation
+      return undefined
+
+    case 'NumberLiteral': {
+      const result = computeArithmeticOperation(operator, left.value, (right as typeof left).value)
+      if (result == null) {
+        // TODO error handling - unsupported operation
+        return undefined
+      }
+
+      return { type: 'NumberLiteral', value: result, unit: left.unit }
+    }
+
+    case 'StringLiteral': {
+      const result = computeStringOperation(operator, left.value, (right as typeof left).value)
+      if (result == null) {
+        // TODO error handling - unsupported operation
+        return undefined
+      }
+
+      return { type: 'StringLiteral', value: result }
+    }
+
+    case 'PatternLiteral': {
+      const result = computePatternOperation(operator, left.value, (right as typeof left).value)
+      if (result == null) {
+        // TODO error handling - unsupported operation
+        return undefined
+      }
+
+      return { type: 'PatternLiteral', value: result }
+    }
+
+    default:
+      // @ts-expect-error - should be unreachable
+      throw new Error(`Unexpected value type: ${left.type}`)
+  }
+}
+
+function computeArithmeticOperation (operator: ast.BinaryOperator, left: number, right: number): number | undefined {
+  switch (operator) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    case '+':
+      return left + right
+  }
+}
+
+function computeStringOperation (operator: ast.BinaryOperator, left: string, right: string): string | undefined {
+  switch (operator) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    case '+':
+      return left + right
+  }
+}
+
+function computePatternOperation (operator: ast.BinaryOperator, left: readonly ast.Step[], right: readonly ast.Step[]): readonly ast.Step[] | undefined {
+  switch (operator) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    case '+':
+      return [...left, ...right]
+  }
 }

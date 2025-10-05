@@ -11,13 +11,15 @@ export const lex = createLexer([
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },
   { name: 'pattern', regex: /\[[ \t\n\rx-]*\]/ },
 
-  { name: '=' },
-  { name: ':' },
   { name: '{' },
   { name: '}' },
   { name: '(' },
   { name: ')' },
   { name: ',' },
 
-  { name: '<<' }
+  { name: '=' },
+  { name: ':' },
+  { name: '<<' },
+
+  { name: '+' }
 ])

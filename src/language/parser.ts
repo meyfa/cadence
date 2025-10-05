@@ -63,10 +63,42 @@ const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
   )
 )
 
+const binaryOperator_: p.Parser<Token, unknown, ast.BinaryOperator> = p.token((t) => {
+  const operator = t.name as ast.BinaryOperator
+  return ast.binaryOperators.includes(operator) ? operator : undefined
+})
+
+const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
+  literal_,
+  p.eitherOr(
+    p.recursive(() => call_),
+    identifier_
+  )
+)
+
+const binaryExpression_: p.Parser<Token, unknown, ast.BinaryExpression> = p.leftAssoc2(
+  p.abc(
+    value_,
+    binaryOperator_,
+    value_,
+    (left, operator, right) => ({ type: 'BinaryExpression', operator, left, right })
+  ),
+  p.map(
+    binaryOperator_,
+    (operator) => (left: ast.BinaryExpression, right: ast.Expression): ast.BinaryExpression => ({ type: 'BinaryExpression', operator, left, right })
+  ),
+  p.recursive(() => expression_)
+)
+
+const expression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+  binaryExpression_,
+  value_
+)
+
 const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   identifier_,
   literal(':'),
-  literal_,
+  expression_,
   (key, _colon, value) => ({ type: 'Property', key, value })
 )
 
@@ -83,7 +115,7 @@ const call_: p.Parser<Token, unknown, ast.Call> = p.ab(
 const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   identifier_,
   literal('='),
-  p.eitherOr(patternLiteral_, call_),
+  expression_,
   (key, _eq, value) => ({ type: 'Assignment', key, value })
 )
 

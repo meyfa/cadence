@@ -32,12 +32,26 @@ export interface PatternLiteral extends ASTNode {
 
 export type Literal = NumberLiteral | StringLiteral | PatternLiteral
 
+export type Value = Literal | Call | Identifier
+
+export const binaryOperators = ['+'] as const
+export type BinaryOperator = typeof binaryOperators[number]
+
+export interface BinaryExpression extends ASTNode {
+  readonly type: 'BinaryExpression'
+  readonly operator: BinaryOperator
+  readonly left: Expression
+  readonly right: Expression
+}
+
+export type Expression = Value | BinaryExpression
+
 // Composite Types
 
 export interface Property extends ASTNode {
   readonly type: 'Property'
   readonly key: Identifier
-  readonly value: Literal
+  readonly value: Expression
 }
 
 export interface Call extends ASTNode {
@@ -49,7 +63,7 @@ export interface Call extends ASTNode {
 export interface Assignment extends ASTNode {
   readonly type: 'Assignment'
   readonly key: Identifier
-  readonly value: Literal | Call
+  readonly value: Expression
 }
 
 export interface Routing extends ASTNode {
