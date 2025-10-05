@@ -1,6 +1,7 @@
 import { FunctionComponent } from 'react'
 import { Button } from './Button.js'
 import { Slider } from './Slider.js'
+import clsx from 'clsx'
 
 export const Header: FunctionComponent<{
   playing: boolean
@@ -10,7 +11,11 @@ export const Header: FunctionComponent<{
   onUpdate: () => void
 }> = ({ playing, onPlayPause, volume, onVolumeChange, onUpdate }) => {
   return (
-    <header className='w-full h-12 border-b border-b-gray-700 flex items-center px-4 gap-4'>
+    <header className={clsx(
+      'w-full border-b border-b-gray-700 flex flex-col items-center px-4 py-2 gap-2',
+      'sm:flex-row sm:gap-4'
+    )}
+    >
       <h1 className='text-lg font-semibold'>
         Cadence
       </h1>
