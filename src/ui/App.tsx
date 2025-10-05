@@ -88,7 +88,7 @@ export const App: FunctionComponent = () => {
   }, [volume])
 
   return (
-    <>
+    <div className='flex flex-col h-screen'>
       <Header
         playing={playing}
         onPlayPause={() => setPlaying((playing) => !playing)}
@@ -97,7 +97,7 @@ export const App: FunctionComponent = () => {
         onUpdate={update}
       />
 
-      <div className='flex flex-col h-[calc(100vh-5rem)] min-h-0'>
+      <div className='flex flex-col grow'>
         <Editor value={code} onChange={setCode} />
       </div>
 
@@ -106,6 +106,6 @@ export const App: FunctionComponent = () => {
           ? 'No errors'
           : 'Parsing failed'}
       </div>
-    </>
+    </div>
   )
 }
