@@ -19,11 +19,12 @@ const parserWithMetadata = parser.configure({
 
       '<<': t.operator,
 
-      BlockName: t.keyword,
-      AssignmentName: t.definition(t.variableName),
-      VariableReference: t.variableName,
-      Callee: t.function(t.name),
-      RoutingTarget: t.variableName
+      'track section for': t.keyword,
+
+      VariableDefinition: t.definition(t.variableName),
+      VariableName: t.variableName,
+
+      Callee: t.function(t.name)
     }),
 
     foldNodeProp.add({

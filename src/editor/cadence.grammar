@@ -22,12 +22,14 @@
 
 @detectDelim
 
+kw<term> { @specialize[@name={term}]<word, term> }
+
 @top Program {
-  (Assignment | Routing | NamedBlock)*
+  (Assignment | TrackStatement)*
 }
 
 unit {
-  @specialize<word, "bpm" | "bar" | "bars" | "beat" | "beats" | "s" | "ms" | "hz" | "db">
+  @specialize<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
 }
 
 NumberLiteral { number unit? }
@@ -38,40 +40,43 @@ Literal {
   NumberLiteral | StringLiteral | PatternLiteral
 }
 
-Property {
-  PropertyName ":" Literal
-}
+VariableDefinition { word }
+VariableName { word }
 
-PropertyName { word }
+Property {
+  PropertyName { word }
+  ":"
+  Literal
+}
 
 Assignment {
-  AssignmentName "=" (Literal | Call | VariableReference)
+  VariableDefinition
+  "="
+  (Literal | Call | VariableName)
 }
-
-AssignmentName { word }
-
-VariableReference { word }
 
 Call {
-  Callee "(" (Property ("," Property)*)? ")"
+  Callee { word }
+  "(" (Property ("," Property)*)? ")"
 }
-
-Callee { word }
 
 Routing {
-  RoutingTarget "<<" (PatternLiteral | VariableReference)
+  VariableName
+  "<<"
+  (PatternLiteral | VariableName)
 }
 
-RoutingTarget { word }
-
-NamedBlock {
-  BlockName Block
+TrackStatement {
+  kw<"track">
+  TrackBlock {
+    "{" (Property | SectionStatement)* "}"
+  }
 }
 
-BlockName { word }
-
-Block {
-  "{"
-  (Property)*
-  "}"
+SectionStatement {
+  kw<"section"> VariableDefinition
+  kw<"for"> NumberLiteral
+  SectionBlock {
+    "{" (Routing)* "}"
+  }
 }

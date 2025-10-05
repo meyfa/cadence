@@ -7,6 +7,10 @@ function literal (name: string): p.Parser<Token, unknown, true> {
   return p.token((t) => t.name === name ? true : undefined)
 }
 
+function keyword (keyword: string): p.Parser<Token, unknown, true> {
+  return p.token((t) => t.name === 'word' && t.text === keyword ? true : undefined)
+}
+
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.map(
   p.token((t) => t.name === 'word' ? t.text : undefined),
   (name) => ({ type: 'Identifier', name })
@@ -90,13 +94,28 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   (instrument, _arrow, pattern) => ({ type: 'Routing', instrument, pattern })
 )
 
-const trackBlock_: p.Parser<Token, unknown, ast.Track> = p.right(
-  p.token((t) => t.name === 'word' && t.text === 'track' ? true : undefined),
+const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
+  p.right(keyword('section'), identifier_),
+  p.right(keyword('for'), numberLiteral_),
+  p.middle(
+    literal('{'),
+    p.many(routing_),
+    literal('}')
+  ),
+  (name, length, routings) => ({ type: 'SectionStatement', name, length, routings })
+)
+
+const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.right(
+  keyword('track'),
   p.middle(
     literal('{'),
     p.map(
-      p.many(property_),
-      (properties) => ({ type: 'Track', properties })
+      p.many(p.eitherOr(property_, sectionStatement_)),
+      (children) => {
+        const properties = children.filter((c) => c.type === 'Property')
+        const sections = children.filter((c) => c.type === 'SectionStatement')
+        return { type: 'TrackStatement', properties, sections }
+      }
     ),
     literal('}')
   )
@@ -104,24 +123,18 @@ const trackBlock_: p.Parser<Token, unknown, ast.Track> = p.right(
 
 const program_: p.Parser<Token, unknown, ast.Program> = p.left(
   p.map(
-    p.many(
-      p.eitherOr(trackBlock_, p.eitherOr(assignment_, routing_))
-    ),
+    p.many(p.eitherOr(assignment_, trackStatement_)),
     (statements) => {
-      let track: ast.Track | undefined
+      let track: ast.TrackStatement | undefined
       const assignments: ast.Assignment[] = []
-      const routings: ast.Routing[] = []
 
       for (const statement of statements) {
         switch (statement.type) {
-          case 'Track':
+          case 'TrackStatement':
             track = statement
             break
           case 'Assignment':
             assignments.push(statement)
-            break
-          case 'Routing':
-            routings.push(statement)
             break
           default:
             // @ts-expect-error - should be unreachable
@@ -129,7 +142,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.left(
         }
       }
 
-      return { type: 'Program', track, assignments, routings }
+      return { type: 'Program', track, assignments }
     }
   ),
   p.end
