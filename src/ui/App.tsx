@@ -10,7 +10,7 @@ const initialCode = `
 # Use 'x' for a hit and '-' for a rest.
 
 track {
-  tempo: 128
+  tempo: 128 bpm
 }
 
 kick  = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav")

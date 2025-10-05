@@ -5,7 +5,7 @@ export const lex = createLexer([
 
   { name: 'comment', regex: /#[^\n]*/, discard: true },
 
-  { name: 'identifier', regex: /[a-zA-Z_][a-zA-Z_0-9]*/ },
+  { name: 'word', regex: /[a-zA-Z_][a-zA-Z_0-9]*/ },
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },

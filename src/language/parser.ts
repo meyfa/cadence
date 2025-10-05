@@ -8,13 +8,27 @@ function literal (name: string): p.Parser<Token, unknown, true> {
 }
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.map(
-  p.token((t) => t.name === 'identifier' ? t.text : undefined),
+  p.token((t) => t.name === 'word' ? t.text : undefined),
   (name) => ({ type: 'Identifier', name })
 )
 
-const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.map(
-  p.token((t) => t.name === 'number' ? t.text : undefined),
-  (text) => ({ type: 'NumberLiteral', value: Number.parseFloat(text) })
+const unit_: p.Parser<Token, unknown, ast.Unit> = p.token((t) => {
+  if (t.name === 'word' && ast.units.includes(t.text as ast.Unit)) {
+    return t.text as ast.Unit
+  }
+  return undefined
+})
+
+const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.choice(
+  p.ab(
+    p.token((t) => t.name === 'number' ? t.text : undefined),
+    unit_,
+    (text, unit) => ({ type: 'NumberLiteral', value: Number.parseFloat(text), unit })
+  ),
+  p.map(
+    p.token((t) => t.name === 'number' ? t.text : undefined),
+    (text) => ({ type: 'NumberLiteral', value: Number.parseFloat(text) })
+  )
 )
 
 const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.map(
@@ -77,7 +91,7 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
 )
 
 const trackBlock_: p.Parser<Token, unknown, ast.Track> = p.right(
-  p.token((t) => t.name === 'identifier' && t.text === 'track' ? true : undefined),
+  p.token((t) => t.name === 'word' && t.text === 'track' ? true : undefined),
   p.middle(
     literal('{'),
     p.map(
