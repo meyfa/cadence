@@ -14,14 +14,13 @@ export function createAudioDemo (options: {
   let initialized = false
 
   const players = new Map<string, Player>()
-  const sequences = new Map<string, Sequence>()
+  const sequences = new Map<string, Sequence<ast.Step>>()
 
   let decibels: number | undefined
   let program: ast.Program = {
     type: 'Program',
     track: undefined,
-    assignments: [],
-    routings: []
+    assignments: []
   }
 
   const init = () => {
@@ -48,6 +47,8 @@ export function createAudioDemo (options: {
   }
 
   const createPlayers = () => {
+    players.clear()
+
     for (const assignment of program.assignments) {
       const key = assignment.key.name
 
@@ -76,45 +77,90 @@ export function createAudioDemo (options: {
   }
 
   const createSequences = () => {
-    for (const routing of program.routings) {
-      const key = routing.instrument.name
-      const player = players.get(key)
-      if (player == null) {
-        // TODO handle missing instrument
+    const sequenceEvents = new Map<string, ast.Step[]>([
+      ...players.keys()].map((key) => [key, [] as ast.Step[]
+    ]))
+
+    for (const section of program.track?.sections ?? []) {
+      if (section.length.unit !== 'bars' || !Number.isSafeInteger(section.length.value) || section.length.value <= 0) {
+        // TODO handle other units
         continue
       }
 
-      let pattern: ast.PatternLiteral | undefined
+      const sectionLengthSteps = section.length.value * 16
 
-      switch (routing.pattern.type) {
-        case 'PatternLiteral':
-          pattern = routing.pattern
-          break
-        case 'Identifier': {
-          const value = resolveIdentifierToValue(program, routing.pattern.name)
-          if (value?.type === 'PatternLiteral') {
-            pattern = value
-          }
-          // TODO handle invalid pattern reference
-          break
+      // Remember which instruments were used in this section
+      const instruments = new Set<string>()
+
+      for (const routing of section.routings) {
+        const key = routing.instrument.name
+        if (instruments.has(key)) {
+          // TODO handle duplicate instrument in same section
+          continue
         }
-        default:
-          // @ts-expect-error - should be unreachable
-          throw new Error(`Unexpected pattern type: ${routing.pattern.type}`)
+
+        instruments.add(key)
+
+        const player = players.get(key)
+        if (player == null) {
+          // TODO handle missing instrument
+          continue
+        }
+
+        let pattern: ast.PatternLiteral | undefined
+
+        switch (routing.pattern.type) {
+          case 'PatternLiteral':
+            pattern = routing.pattern
+            break
+          case 'Identifier': {
+            const value = resolveIdentifierToValue(program, routing.pattern.name)
+            if (value?.type === 'PatternLiteral') {
+              pattern = value
+            }
+            // TODO handle invalid pattern reference
+            break
+          }
+          default:
+            // @ts-expect-error - should be unreachable
+            throw new Error(`Unexpected pattern type: ${routing.pattern.type}`)
+        }
+
+        if (pattern == null) {
+          continue
+        }
+
+        const events = sequenceEvents.get(key)
+        if (events == null) {
+          // TODO handle missing instrument
+          continue
+        }
+
+        // Expand pattern to fit section length
+        const repeats = Math.ceil(sectionLengthSteps / pattern.value.length)
+        const steps = new Array<readonly ast.Step[]>(repeats).fill(pattern.value).flat().slice(0, sectionLengthSteps)
+
+        events.push(...steps)
       }
 
-      if (pattern == null) {
-        // TODO handle missing pattern
-        continue
+      // Handle instruments not used in this section by adding "rest" steps
+      for (const [key, events] of sequenceEvents) {
+        if (!instruments.has(key)) {
+          events.push(...new Array<ast.Step>(sectionLengthSteps).fill('rest'))
+        }
       }
+    }
 
-      const sequence = new Sequence<ast.Step>((time, note) => {
+    sequences.clear()
+
+    for (const [key, player] of players) {
+      const events = sequenceEvents.get(key) ?? []
+
+      sequences.set(key, new Sequence<ast.Step>((time, note) => {
         if (note === 'hit') {
           player.start(time)
         }
-      }, [...pattern.value], '16n')
-
-      sequences.set(key, sequence)
+      }, events, '16n'))
     }
   }
 
@@ -140,9 +186,6 @@ export function createAudioDemo (options: {
       for (const sequence of sequences.values()) {
         sequence.stop()
       }
-
-      players.clear()
-      sequences.clear()
     },
 
     setVolume: (volume: number) => {

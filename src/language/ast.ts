@@ -4,7 +4,7 @@ export interface ASTNode {
 
 // Basic Types
 
-export const units = ['bpm', 'bar', 'bars', 'beat', 'beats', 's', 'ms', 'hz', 'db'] as const
+export const units = ['bpm', 'bars', 'beats', 's', 'ms', 'hz', 'db'] as const
 export type Unit = typeof units[number]
 
 export interface Identifier extends ASTNode {
@@ -60,16 +60,23 @@ export interface Routing extends ASTNode {
 
 // Domain Types
 
-export interface Track extends ASTNode {
-  readonly type: 'Track'
+export interface TrackStatement extends ASTNode {
+  readonly type: 'TrackStatement'
   readonly properties: readonly Property[]
+  readonly sections: readonly SectionStatement[]
+}
+
+export interface SectionStatement extends ASTNode {
+  readonly type: 'SectionStatement'
+  readonly name: Identifier
+  readonly length: NumberLiteral
+  readonly routings: readonly Routing[]
 }
 
 // Root Type
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
-  readonly track?: Track
+  readonly track?: TrackStatement
   readonly assignments: readonly Assignment[]
-  readonly routings: readonly Routing[]
 }

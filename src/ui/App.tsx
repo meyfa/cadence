@@ -6,26 +6,44 @@ import { parse } from '../language/parser.js'
 import clsx from 'clsx'
 
 const initialCode = `
-# Press Play to start the demo. Edit the code to create your own patterns.
-# Use 'x' for a hit and '-' for a rest.
+# Press Play to start the demo.
 
-track {
-  tempo: 128 bpm
-}
+# Define samples to use in the track.
 
 kick  = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/house/000_BD.wav")
 snare = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808sd/SD0010.WAV")
 hat   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808oh/OH00.WAV")
 tom   = sample(url: "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/808mt/MT10.WAV")
 
-kick  << [x-x- x--- x--- x---]
-snare << [---- x--- ---- x---]
-hat   << [--x- --x- --x- --x-]
+# Define patterns using a simple step sequencer syntax where 'x' is a hit and '-' is a rest.
+# Patterns are 16th notes by default, and can be any length.
 
-# You can also define patterns and reuse them.
+kick_pattern  = [x-x- x--- x--- x---]
+snare_pattern = [---- x---]
 
-tom_pattern = [---- -x-- ---- ---x]
-tom   << tom_pattern
+track {
+  tempo: 128 bpm
+
+  # Sections play in sequence.
+  # Patterns will loop to fill the section length.
+
+  section intro for 4 bars {
+    kick  << kick_pattern
+    snare << snare_pattern
+  }
+
+  section main for 8 bars {
+    kick  << kick_pattern
+    snare << snare_pattern
+    hat   << [--x- --x- --x- --x-]
+    tom   << [---- -x-- ---- ---x]
+  }
+
+  section outro for 4 bars {
+    snare << snare_pattern
+    tom   << [---- -x-- ---- ---x]
+  }
+}
 `.trimStart()
 
 const demo = createAudioDemo({
