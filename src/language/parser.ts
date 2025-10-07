@@ -185,7 +185,7 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
 
 const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
   combine2(keyword('section'), identifier_),
-  combine2(keyword('for'), numberLiteral_),
+  combine2(keyword('for'), expression_),
   combine3(
     literal('{'),
     p.many(routing_),

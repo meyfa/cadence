@@ -91,20 +91,21 @@ export function createAudioDemo (options: {
     ]))
 
     for (const section of program.track?.sections ?? []) {
-      if (!Number.isSafeInteger(section.length.value) || section.length.value <= 0) {
+      const lengthValue = resolveExpression(section.length, program)
+      if (lengthValue == null || lengthValue.type !== 'NumberLiteral') {
         // TODO error handling - invalid section length
         continue
       }
 
       let sectionLengthSteps: number
 
-      switch (section.length.unit) {
+      switch (lengthValue.unit) {
         case 'bars':
-          sectionLengthSteps = section.length.value * STEPS_PER_BAR
+          sectionLengthSteps = lengthValue.value * STEPS_PER_BAR
           break
 
         case 'beats':
-          sectionLengthSteps = section.length.value * STEPS_PER_BEAT
+          sectionLengthSteps = lengthValue.value * STEPS_PER_BEAT
           break
 
         default:

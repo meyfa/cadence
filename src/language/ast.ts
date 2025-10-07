@@ -86,7 +86,7 @@ export interface TrackStatement extends ASTNode {
 export interface SectionStatement extends ASTNode {
   readonly type: 'SectionStatement'
   readonly name: Identifier
-  readonly length: NumberLiteral
+  readonly length: Expression
   readonly routings: readonly Routing[]
 }
 
