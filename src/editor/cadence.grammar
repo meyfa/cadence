@@ -18,6 +18,9 @@
   "<<"
 
   "+"
+  "-"
+  "*"
+  "/"
 }
 
 @skip { space | Comment }
@@ -27,6 +30,7 @@
 kw<term> { @specialize[@name={term}]<word, term> }
 
 @precedence {
+  multiply @left,
   plus @left
 }
 
@@ -54,7 +58,10 @@ expression {
 }
 
 BinaryExpression {
-  expression !plus "+" expression
+  (expression !plus "+" expression) |
+  (expression !plus "-" expression) |
+  (expression !multiply "*" expression) |
+  (expression !multiply "/" expression)
 }
 
 Property {

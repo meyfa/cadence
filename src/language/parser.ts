@@ -51,18 +51,14 @@ const plainNumberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.token
     : undefined
 })
 
-const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.choice(
-  p.ab(
-    plainNumberLiteral_,
-    unit_,
-    (number, unitToken) => ({
-      type: 'NumberLiteral',
-      location: combineLocations(number, unitToken),
-      value: number.value,
-      unit: unitToken.text as ast.Unit
-    })
-  ),
-  plainNumberLiteral_
+const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
+  plainNumberLiteral_,
+  p.option(unit_, undefined),
+  (num, unitToken) => ({
+    ...num,
+    location: unitToken == null ? num.location : combineLocations(num, unitToken),
+    unit: unitToken == null ? undefined : unitToken.text as ast.Unit
+  })
 )
 
 const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) => {
@@ -94,29 +90,12 @@ const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
   )
 )
 
-const binaryOperator_: p.Parser<Token, unknown, Token> = p.satisfy((t) => {
-  return ast.binaryOperators.includes(t.name as ast.BinaryOperator)
-})
-
 const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   literal_,
   p.eitherOr(
     p.recursive(() => call_),
     identifier_
   )
-)
-
-const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
-  p.abc(
-    literal('('),
-    p.recursive(() => expression_),
-    literal(')'),
-    (_l, v, _r) => ({
-      ...v,
-      location: combineLocations(_l, _r)
-    })
-  ),
-  value_
 )
 
 const makeBinaryExpression = (
@@ -131,24 +110,41 @@ const makeBinaryExpression = (
   right
 })
 
-const binaryExpression_: p.Parser<Token, unknown, ast.BinaryExpression> = p.leftAssoc2(
+const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.abc(
-    primary_,
-    binaryOperator_,
-    primary_,
-    makeBinaryExpression
+    literal('('),
+    p.recursive(() => expression_),
+    literal(')'),
+    (_l, v, _r) => ({
+      ...v,
+      location: combineLocations(_l, _r)
+    })
   ),
+  value_
+)
+
+// primary ((*|/) primary)*
+const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+  primary_,
   p.map(
-    binaryOperator_,
-    (operator) => (left, right: ast.Expression) => makeBinaryExpression(left, operator, right)
+    p.satisfy((t) => t.name === '*' || t.name === '/'),
+    (op) => (left: ast.Expression, right: ast.Expression) => makeBinaryExpression(left, op, right)
   ),
   primary_
 )
 
-const expression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
-  binaryExpression_,
-  primary_
+// multiplicative ((+|-) multiplicative)*
+const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+  multiplicativeExpression_,
+  p.map(
+    p.satisfy((t) => t.name === '+' || t.name === '-'),
+    (op) => (left: ast.Expression, right: ast.Expression) => makeBinaryExpression(left, op, right)
+  ),
+  multiplicativeExpression_
 )
+
+// The top-level expression parser
+const expression_: p.Parser<Token, unknown, ast.Expression> = additiveExpression_
 
 const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   identifier_,

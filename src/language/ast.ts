@@ -37,7 +37,7 @@ export type Literal = NumberLiteral | StringLiteral | PatternLiteral
 
 export type Value = Literal | Call | Identifier
 
-export const binaryOperators = ['+'] as const
+export const binaryOperators = ['+', '-', '*', '/'] as const
 export type BinaryOperator = typeof binaryOperators[number]
 
 export interface BinaryExpression extends ASTNode {

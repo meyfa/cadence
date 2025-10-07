@@ -19,7 +19,7 @@ const parserWithMetadata = parser.configure({
       ':': t.separator,
       '<<': t.operator,
 
-      '+': t.arithmeticOperator,
+      '+ - "*" "/"': t.arithmeticOperator,
 
       'track section for': t.keyword,
 

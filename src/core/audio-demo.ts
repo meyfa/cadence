@@ -1,6 +1,6 @@
 import { gainToDb, getTransport, Sequence, Player, now } from 'tone'
 import * as ast from '../language/ast.js'
-import { combineLocations, getEmptyLocation } from '../language/location.js'
+import { combineLocations, getEmptyLocation, type Location } from '../language/location.js'
 
 const BEATS_PER_BAR = 4
 const STEPS_PER_BEAT = 4
@@ -144,16 +144,13 @@ export function createAudioDemo (options: {
         }
 
         // Expand pattern to fit section length
-        const repeats = Math.ceil(sectionLengthSteps / pattern.value.length)
-        const steps = new Array<readonly ast.Step[]>(repeats).fill(pattern.value).flat().slice(0, sectionLengthSteps)
-
-        events.push(...steps)
+        events.push(...withPatternLength(pattern, sectionLengthSteps))
       }
 
       // Handle instruments not used in this section by adding "rest" steps
       for (const [key, events] of sequenceEvents) {
         if (!instruments.has(key)) {
-          events.push(...new Array<ast.Step>(sectionLengthSteps).fill('rest'))
+          events.push(...getSilentPattern(sectionLengthSteps))
         }
       }
     }
@@ -249,94 +246,235 @@ function resolveExpression (expression: ast.Expression, program: ast.Program, tr
   }
 }
 
-function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value, right: ast.Value): ast.Value | undefined {
-  if (left.type !== right.type) {
-    // TODO error handling - type mismatch
+interface CommonUnit {
+  unit: ast.Unit | undefined
+  scaleLeft: number
+  scaleRight: number
+}
+
+function getCommonUnit (left: ast.NumberLiteral, right: ast.NumberLiteral): CommonUnit | undefined {
+  // Both have the same unit, or both have no unit
+  if (left.unit === right.unit) {
+    return { unit: left.unit, scaleLeft: 1, scaleRight: 1 }
+  }
+
+  // One has a unit, the other doesn't - not compatible
+  if (left.unit == null || right.unit == null) {
     return undefined
   }
 
-  switch (left.type) {
-    case 'Identifier':
-      throw new Error('Unexpected Identifier in computeBinaryExpression')
+  // Different units; some special cases are supported
+  if (left.unit === 's' && right.unit === 'ms') {
+    return { unit: 'ms', scaleLeft: 1000, scaleRight: 1 }
+  }
 
-    case 'Call':
-      // TODO error handling - unsupported operation
+  if (left.unit === 'ms' && right.unit === 's') {
+    return { unit: 'ms', scaleLeft: 1, scaleRight: 1000 }
+  }
+
+  if (left.unit === 'beats' && right.unit === 'bars') {
+    return { unit: 'beats', scaleLeft: 1, scaleRight: BEATS_PER_BAR }
+  }
+
+  if (left.unit === 'bars' && right.unit === 'beats') {
+    return { unit: 'beats', scaleLeft: BEATS_PER_BAR, scaleRight: 1 }
+  }
+
+  return undefined
+}
+
+function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value, right: ast.Value): ast.Value | undefined {
+  if (left.type === 'Identifier' || right.type === 'Identifier') {
+    throw new Error('Unable to compute with unresolved Identifier')
+  }
+
+  if (left.type === 'Call' || right.type === 'Call') {
+    // TODO error handling
+    return undefined
+  }
+
+  const location = combineLocations(left, right)
+
+  switch (operator) {
+    case '+':
+      return computePlus(left, right, location)
+    case '-':
+      return computeMinus(left, right, location)
+    case '*':
+      return computeMultiply(left, right, location)
+    case '/':
+      return computeDivide(left, right, location)
+  }
+}
+
+function computePlus (left: ast.Literal, right: ast.Literal, location: Location): ast.Literal | undefined {
+  if (left.type === 'StringLiteral' && right.type === 'StringLiteral') {
+    return {
+      type: 'StringLiteral',
+      location,
+      value: left.value + right.value
+    }
+  }
+
+  if (left.type === 'PatternLiteral' && right.type === 'PatternLiteral') {
+    return {
+      type: 'PatternLiteral',
+      location,
+      value: [...left.value, ...right.value]
+    }
+  }
+
+  if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') {
+    const common = getCommonUnit(left, right)
+    if (common == null) {
+      // TODO error handling - incompatible units
       return undefined
+    }
 
-    case 'NumberLiteral': {
-      if (left.unit !== (right as typeof left).unit) {
-        // TODO error handling - unit mismatch
-        return undefined
-      }
+    return {
+      type: 'NumberLiteral',
+      location,
+      value: left.value * common.scaleLeft + right.value * common.scaleRight,
+      unit: common.unit
+    }
+  }
 
-      const result = computeArithmeticOperation(operator, left.value, (right as typeof left).value)
-      if (result == null) {
-        // TODO error handling - unsupported operation
+  // TODO error handling - incompatible types
+  return undefined
+}
+
+function computeMinus (left: ast.Literal, right: ast.Literal, location: Location): ast.Literal | undefined {
+  if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') {
+    const common = getCommonUnit(left, right)
+    if (common == null) {
+      // TODO error handling - incompatible units
+      return undefined
+    }
+
+    return {
+      type: 'NumberLiteral',
+      location,
+      value: left.value * common.scaleLeft - right.value * common.scaleRight,
+      unit: common.unit
+    }
+  }
+
+  // TODO error handling - incompatible types
+  return undefined
+}
+
+function computeMultiply (left: ast.Literal, right: ast.Literal, location: Location): ast.Literal | undefined {
+  if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') {
+    // Multiplication only supported when (at least) one of the values is unitless
+    if (left.unit != null && right.unit != null) {
+      // TODO error handling - incompatible units
+      return undefined
+    }
+
+    return {
+      type: 'NumberLiteral',
+      location,
+      value: left.value * right.value,
+      unit: left.unit ?? right.unit
+    }
+  }
+
+  if (left.type === 'PatternLiteral' && right.type === 'NumberLiteral' && right.unit == null) {
+    return {
+      type: 'PatternLiteral',
+      location,
+      value: withPatternLength(left, left.value.length * right.value)
+    }
+  }
+
+  if (left.type === 'NumberLiteral' && left.unit == null && right.type === 'PatternLiteral') {
+    return {
+      type: 'PatternLiteral',
+      location,
+      value: withPatternLength(right, right.value.length * left.value)
+    }
+  }
+
+  // TODO error handling - incompatible types
+  return undefined
+}
+
+function computeDivide (left: ast.Literal, right: ast.Literal, location: Location): ast.Literal | undefined {
+  if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') {
+    if (right.value === 0) {
+      // TODO error handling - division by zero
+      return undefined
+    }
+
+    // Equal units cancel out; unequal units are not compatible
+    if (left.unit != null && right.unit != null) {
+      if (left.unit !== right.unit) {
+        // TODO error handling - incompatible units
         return undefined
       }
 
       return {
         type: 'NumberLiteral',
-        location: combineLocations(left, right),
-        value: result,
-        unit: left.unit
+        location,
+        value: left.value / right.value,
+        unit: undefined
       }
     }
 
-    case 'StringLiteral': {
-      const result = computeStringOperation(operator, left.value, (right as typeof left).value)
-      if (result == null) {
-        // TODO error handling - unsupported operation
-        return undefined
-      }
-
-      return {
-        type: 'StringLiteral',
-        location: combineLocations(left, right),
-        value: result
-      }
+    // Disallow divisor with unit
+    if (right.unit != null) {
+      // TODO error handling - incompatible units
+      return undefined
     }
 
-    case 'PatternLiteral': {
-      const result = computePatternOperation(operator, left.value, (right as typeof left).value)
-      if (result == null) {
-        // TODO error handling - unsupported operation
-        return undefined
-      }
+    return {
+      type: 'NumberLiteral',
+      location,
+      value: left.value / right.value,
+      unit: left.unit
+    }
+  }
 
-      return {
-        type: 'PatternLiteral',
-        location: combineLocations(left, right),
-        value: result
-      }
+  if (left.type === 'PatternLiteral' && right.type === 'NumberLiteral' && right.unit == null) {
+    if (right.value <= 0 || !Number.isFinite(right.value)) {
+      // TODO error handling - invalid divisor
+      return undefined
     }
 
-    default:
-      // @ts-expect-error - should be unreachable
-      throw new Error(`Unexpected value type: ${left.type}`)
+    return {
+      type: 'PatternLiteral',
+      location,
+      value: withPatternLength(left, left.value.length / right.value)
+    }
   }
+
+  // TODO error handling - incompatible types
+  return undefined
 }
 
-function computeArithmeticOperation (operator: ast.BinaryOperator, left: number, right: number): number | undefined {
-  switch (operator) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    case '+':
-      return left + right
+function withPatternLength (pattern: ast.PatternLiteral, length: number): readonly ast.Step[] {
+  const len = Math.floor(length)
+  if (!Number.isSafeInteger(len) || len <= 0) {
+    return []
   }
+
+  if (pattern.value.length === len) {
+    return pattern.value
+  }
+
+  if (pattern.value.length === 0) {
+    return getSilentPattern(len)
+  }
+
+  const repeats = Math.ceil(len / pattern.value.length)
+  return new Array<readonly ast.Step[]>(repeats).fill(pattern.value).flat().slice(0, len)
 }
 
-function computeStringOperation (operator: ast.BinaryOperator, left: string, right: string): string | undefined {
-  switch (operator) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    case '+':
-      return left + right
+function getSilentPattern (length: number): readonly ast.Step[] {
+  const len = Math.floor(length)
+  if (!Number.isSafeInteger(len) || len <= 0) {
+    return []
   }
-}
 
-function computePatternOperation (operator: ast.BinaryOperator, left: readonly ast.Step[], right: readonly ast.Step[]): readonly ast.Step[] | undefined {
-  switch (operator) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    case '+':
-      return [...left, ...right]
-  }
+  return new Array<ast.Step>(len).fill('rest')
 }

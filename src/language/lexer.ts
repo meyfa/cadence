@@ -21,7 +21,10 @@ const rules: Rules = [
   { name: ':' },
   { name: '<<' },
 
-  { name: '+' }
+  { name: '+' },
+  { name: '-' },
+  { name: '*' },
+  { name: '/' }
 ]
 
 const state = undefined
