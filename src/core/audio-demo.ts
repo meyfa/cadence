@@ -6,6 +6,8 @@ const BEATS_PER_BAR = 4
 const STEPS_PER_BEAT = 4
 const STEPS_PER_BAR = BEATS_PER_BAR * STEPS_PER_BEAT
 
+const LOAD_TIMEOUT_MS = 3000
+
 export interface AudioDemo {
   readonly play: () => void
   readonly stop: () => void
@@ -18,6 +20,9 @@ export function createAudioDemo (options: {
 }): AudioDemo {
   const players = new Map<string, Player>()
   const sequences = new Map<string, Sequence<ast.Step>>()
+
+  // Increments on play() and stop(), to cancel pending playback
+  let playSession = 0
 
   let decibels: number | undefined
   let program: ast.Program = {
@@ -49,8 +54,10 @@ export function createAudioDemo (options: {
     getTransport().bpm.value = tempo
   }
 
-  const createPlayers = () => {
+  const createPlayers = (): Array<Promise<Player>> => {
     players.clear()
+
+    const loads: Array<Promise<Player>> = []
 
     for (const assignment of program.assignments) {
       const key = assignment.key.name
@@ -67,11 +74,8 @@ export function createAudioDemo (options: {
         continue
       }
 
-      const player = new Player({
-        url: urlValue.value,
-        autostart: false,
-        loop: false
-      }).toDestination()
+      const player = new Player({ autostart: false, loop: false }).toDestination()
+      loads.push(player.load(urlValue.value))
 
       if (decibels != null) {
         player.volume.value = decibels
@@ -79,6 +83,19 @@ export function createAudioDemo (options: {
 
       players.set(key, player)
     }
+
+    return loads
+  }
+
+  const waitForLoadsOrTimeout = async (loads: Array<Promise<Player>>, timeoutMs: number): Promise<void> => {
+    if (loads.length === 0) {
+      return
+    }
+
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs))
+    const loadsIgnoreErrors = Promise.allSettled(loads.map((p) => p.catch(() => {})))
+
+    await Promise.race([loadsIgnoreErrors, timeout])
   }
 
   const createSequences = () => {
@@ -172,18 +189,32 @@ export function createAudioDemo (options: {
 
   return {
     play: () => {
+      const session = ++playSession
+
       resetTransport()
 
       configureTempo()
-      createPlayers()
+      const loads = createPlayers()
       createSequences()
 
-      startSequences()
+      // Defer start until samples are loaded or timeout reached
+      waitForLoadsOrTimeout(loads, LOAD_TIMEOUT_MS).then(() => {
+        // If stop() was called or a newer play() started, abort
+        if (session !== playSession) {
+          return
+        }
 
-      getTransport().start('+0.05')
+        startSequences()
+        getTransport().start('+0.05')
+      }).catch((_err: unknown) => {
+        // ignore
+      })
     },
 
     stop: () => {
+      // Invalidate any pending start from a previous play()
+      ++playSession
+
       for (const sequence of sequences.values()) {
         sequence.stop()
         sequence.dispose()
