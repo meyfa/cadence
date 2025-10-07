@@ -106,6 +106,19 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   )
 )
 
+const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+  p.abc(
+    literal('('),
+    p.recursive(() => expression_),
+    literal(')'),
+    (_l, v, _r) => ({
+      ...v,
+      location: combineLocations(_l, _r)
+    })
+  ),
+  value_
+)
+
 const makeBinaryExpression = (
   left: ast.Expression,
   operator: Token,
@@ -119,17 +132,22 @@ const makeBinaryExpression = (
 })
 
 const binaryExpression_: p.Parser<Token, unknown, ast.BinaryExpression> = p.leftAssoc2(
-  p.abc(value_, binaryOperator_, value_, makeBinaryExpression),
+  p.abc(
+    primary_,
+    binaryOperator_,
+    primary_,
+    makeBinaryExpression
+  ),
   p.map(
     binaryOperator_,
     (operator) => (left, right: ast.Expression) => makeBinaryExpression(left, operator, right)
   ),
-  p.recursive(() => expression_)
+  primary_
 )
 
 const expression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   binaryExpression_,
-  value_
+  primary_
 )
 
 const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
