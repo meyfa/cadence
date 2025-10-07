@@ -1,4 +1,4 @@
-import { gainToDb, getTransport, Sequence, Player, now } from 'tone'
+import { gainToDb, getTransport, Sequence, Player } from 'tone'
 import * as ast from '../language/ast.js'
 import { combineLocations, getEmptyLocation, type Location } from '../language/location.js'
 
@@ -16,8 +16,6 @@ export interface AudioDemo {
 export function createAudioDemo (options: {
   defaultTempo: number
 }): AudioDemo {
-  let initialized = false
-
   const players = new Map<string, Player>()
   const sequences = new Map<string, Sequence<ast.Step>>()
 
@@ -29,13 +27,11 @@ export function createAudioDemo (options: {
     assignments: []
   }
 
-  const init = () => {
-    if (initialized) {
-      return
-    }
-
-    getTransport().start()
-    initialized = true
+  const resetTransport = () => {
+    const transport = getTransport()
+    transport.stop()
+    transport.cancel()
+    transport.position = 0
   }
 
   const configureTempo = () => {
@@ -170,26 +166,31 @@ export function createAudioDemo (options: {
 
   const startSequences = () => {
     for (const sequence of sequences.values()) {
-      sequence.start(now() + 0.01)
+      sequence.start()
     }
   }
 
   return {
     play: () => {
-      init()
+      resetTransport()
 
       configureTempo()
-
       createPlayers()
       createSequences()
 
       startSequences()
+
+      getTransport().start('+0.05')
     },
 
     stop: () => {
       for (const sequence of sequences.values()) {
         sequence.stop()
+        sequence.dispose()
       }
+
+      sequences.clear()
+      resetTransport()
     },
 
     setVolume: (volume: number) => {
