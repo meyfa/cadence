@@ -29,56 +29,43 @@ function keyword (keyword: string): p.Parser<Token, unknown, Token> {
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
   return t.name === 'word'
-    ? {
-        type: 'Identifier',
-        location: locate(t),
-        name: t.text
-      }
+    ? ast.make('Identifier', locate(t), { name: t.text })
     : undefined
-})
-
-const unit_: p.Parser<Token, unknown, Token> = p.satisfy((t) => {
-  return t.name === 'word' && ast.units.includes(t.text as ast.Unit)
 })
 
 const plainNumberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.token((t) => {
   return t.name === 'number'
-    ? {
-        type: 'NumberLiteral',
-        location: locate(t),
-        value: Number.parseFloat(t.text)
-      }
+    ? ast.make('NumberLiteral', locate(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
 
 const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
   plainNumberLiteral_,
-  p.option(unit_, undefined),
-  (num, unitToken) => ({
-    ...num,
-    location: unitToken == null ? num.location : combineLocations(num, unitToken),
-    unit: unitToken == null ? undefined : unitToken.text as ast.Unit
-  })
+  p.option(
+    p.satisfy((t) => t.name === 'word' && ast.units.includes(t.text as ast.Unit)),
+    undefined
+  ),
+  (num, unitToken) => {
+    const location = unitToken == null ? num.location : combineLocations(num, unitToken)
+    const unit = unitToken == null ? undefined : unitToken.text as ast.Unit
+    return ast.make('NumberLiteral', location, { value: num.value, unit })
+  }
 )
 
 const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) => {
   return t.name === 'string'
-    ? {
-        type: 'StringLiteral',
-        location: locate(t),
-        value: JSON.parse(t.text)
-      }
+    ? ast.make('StringLiteral', locate(t), { value: JSON.parse(t.text) })
     : undefined
 })
 
+function parsePattern (text: string): ast.Step[] {
+  return text.slice(1, -1).replace(/\s/g, '').split('')
+    .map((char): ast.Step => char === '-' ? 'rest' : 'hit')
+}
+
 const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.token((t) => {
   return t.name === 'pattern'
-    ? {
-        type: 'PatternLiteral',
-        location: locate(t),
-        value: t.text.slice(1, -1).replace(/\s/g, '').split('')
-          .map((char): ast.Step => char === '-' ? 'rest' : 'hit')
-      }
+    ? ast.make('PatternLiteral', locate(t), { value: parsePattern(t.text) })
     : undefined
 })
 
@@ -98,27 +85,20 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   )
 )
 
-const makeBinaryExpression = (
-  left: ast.Expression,
-  operator: Token,
-  right: ast.Expression
-): ast.BinaryExpression => ({
-  type: 'BinaryExpression',
-  location: combineLocations(left, right),
-  operator: operator.text as ast.BinaryOperator,
-  left,
-  right
-})
+function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
+  return ast.make('BinaryExpression', combineLocations(left, right), {
+    operator: operator.text as ast.BinaryOperator,
+    left,
+    right
+  })
+}
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.abc(
     literal('('),
     p.recursive(() => expression_),
     literal(')'),
-    (_l, v, _r) => ({
-      ...v,
-      location: combineLocations(_l, _r)
-    })
+    (_l, v, _r) => ast.make(v.type, combineLocations(_l, _r), { ...v })
   ),
   value_
 )
@@ -128,7 +108,7 @@ const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.le
   primary_,
   p.map(
     p.satisfy((t) => t.name === '*' || t.name === '/'),
-    (op) => (left: ast.Expression, right: ast.Expression) => makeBinaryExpression(left, op, right)
+    (op) => makeBinaryExpression.bind(undefined, op)
   ),
   primary_
 )
@@ -138,7 +118,7 @@ const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAsso
   multiplicativeExpression_,
   p.map(
     p.satisfy((t) => t.name === '+' || t.name === '-'),
-    (op) => (left: ast.Expression, right: ast.Expression) => makeBinaryExpression(left, op, right)
+    (op) => makeBinaryExpression.bind(undefined, op)
   ),
   multiplicativeExpression_
 )
@@ -150,12 +130,9 @@ const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   identifier_,
   literal(':'),
   expression_,
-  (key, _colon, value) => ({
-    type: 'Property',
-    location: combineLocations(key, value),
-    key,
-    value
-  })
+  (key, _colon, value) => {
+    return ast.make('Property', combineLocations(key, value), { key, value })
+  }
 )
 
 const call_: p.Parser<Token, unknown, ast.Call> = p.ab(
@@ -165,36 +142,27 @@ const call_: p.Parser<Token, unknown, ast.Call> = p.ab(
     p.sepBy(property_, literal(',')),
     literal(')')
   ),
-  (callee, [_lp, args, _rp]) => ({
-    type: 'Call',
-    location: combineLocations(callee, _rp),
-    callee,
-    arguments: args
-  })
+  (callee, [_lp, args, _rp]) => {
+    return ast.make('Call', combineLocations(callee, _rp), { callee, arguments: args })
+  }
 )
 
 const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   identifier_,
   literal('='),
   expression_,
-  (key, _eq, value) => ({
-    type: 'Assignment',
-    location: combineLocations(key, value),
-    key,
-    value
-  })
+  (key, _eq, value) => {
+    return ast.make('Assignment', combineLocations(key, value), { key, value })
+  }
 )
 
 const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   identifier_,
   literal('<<'),
   p.eitherOr(patternLiteral_, identifier_),
-  (instrument, _arrow, pattern) => ({
-    type: 'Routing',
-    location: combineLocations(instrument, pattern),
-    instrument,
-    pattern
-  })
+  (instrument, _arrow, pattern) => {
+    return ast.make('Routing', combineLocations(instrument, pattern), { instrument, pattern })
+  }
 )
 
 const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
@@ -205,13 +173,9 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
     p.many(routing_),
     literal('}')
   ),
-  ([_section, name], [_for, length], [_lp, routings, _rp]) => ({
-    type: 'SectionStatement',
-    location: combineLocations(_section, _rp),
-    name: name,
-    length: length,
-    routings: routings
-  })
+  ([_section, name], [_for, length], [_lp, routings, _rp]) => {
+    return ast.make('SectionStatement', combineLocations(_section, _rp), { name, length, routings })
+  }
 )
 
 const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
@@ -221,12 +185,12 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
     p.many(p.eitherOr(property_, sectionStatement_)),
     literal('}')
   ),
-  (_track, [_lp, children, _rp]) => ({
-    type: 'TrackStatement',
-    location: combineLocations(_track, _rp),
-    properties: children.filter((c) => c.type === 'Property'),
-    sections: children.filter((c) => c.type === 'SectionStatement')
-  })
+  (_track, [_lp, children, _rp]) => {
+    return ast.make('TrackStatement', combineLocations(_track, _rp), {
+      properties: children.filter((c) => c.type === 'Property'),
+      sections: children.filter((c) => c.type === 'SectionStatement')
+    })
+  }
 )
 
 const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
@@ -250,12 +214,10 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
       }
     }
 
-    return {
-      type: 'Program',
-      location: combineLocations(...statements),
+    return ast.make('Program', combineLocations(...statements), {
       track,
       assignments
-    }
+    })
   }
 )
 
@@ -270,22 +232,13 @@ export type ParseResult = {
 export function parse (input: string): ParseResult {
   const lexerResult = lex(input)
   if (!lexerResult.complete) {
-    return {
-      complete: false,
-      value: undefined
-    }
+    return { complete: false, value: undefined }
   }
 
   const value = p.tryParse(program_, lexerResult.tokens, {})
   if (value == null) {
-    return {
-      complete: false,
-      value: undefined
-    }
+    return { complete: false, value: undefined }
   }
 
-  return {
-    complete: true,
-    value
-  }
+  return { complete: true, value }
 }
