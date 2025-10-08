@@ -2,7 +2,7 @@ import { Token } from 'leac'
 import * as p from 'peberminta'
 import { lex } from './lexer.js'
 import * as ast from './ast.js'
-import { combineLocations, locate } from './location.js'
+import { combineLocations, locate, type Location } from './location.js'
 
 function combine2<TToken, TOptions, TValueA, TValueB> (
   a: p.Parser<TToken, TOptions, TValueA>,
@@ -221,23 +221,51 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
   }
 )
 
+export interface ParseError {
+  readonly message: string
+  readonly location?: Location
+}
+
 export type ParseResult = {
-  complete: false
-  value: undefined
+  readonly complete: false
+  readonly error: ParseError
 } | {
-  complete: true
-  value: ast.Program
+  readonly complete: true
+  readonly value: ast.Program
 }
 
 export function parse (input: string): ParseResult {
+  function getLineAndColumn (offset: number): Pick<Location, 'line' | 'column'> {
+    const lines = input.slice(0, offset).split(/(?:\r\n|\r|\n)/)
+    const line = lines.length
+    const column = (lines.at(-1)?.length ?? 0) + 1
+    return { line, column }
+  }
+
   const lexerResult = lex(input)
   if (!lexerResult.complete) {
-    return { complete: false, value: undefined }
+    return {
+      complete: false,
+      error: {
+        message: `Unexpected input (lexing failed)`,
+        location: {
+          offset: lexerResult.offset,
+          length: 1,
+          ...getLineAndColumn(lexerResult.offset)
+        }
+      }
+    }
   }
 
   const value = p.tryParse(program_, lexerResult.tokens, {})
   if (value == null) {
-    return { complete: false, value: undefined }
+    return {
+      complete: false,
+      error: {
+        message: `Unexpected token (parsing failed)`
+        // TODO add location
+      }
+    }
   }
 
   return { complete: true, value }

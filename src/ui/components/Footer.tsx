@@ -1,5 +1,5 @@
 import type { FunctionComponent } from 'react'
-import type { ParseResult } from '../../language/parser.js'
+import type { ParseError, ParseResult } from '../../language/parser.js'
 import clsx from 'clsx'
 
 export const Footer: FunctionComponent<{
@@ -10,16 +10,9 @@ export const Footer: FunctionComponent<{
   }
 }> = ({ parseResult, editorLocation }) => {
   return (
-    <footer
-      className={clsx(
-        'flex p-2 gap-2 text-sm text-gray-400',
-        !parseResult.complete && 'bg-red-500/20 text-red-500'
-      )}
-    >
-      <div className='grow'>
-        {parseResult.complete
-          ? 'No errors'
-          : 'Parsing failed'}
+    <footer className='flex p-2 gap-2 text-sm text-gray-400'>
+      <div className={clsx('grow', !parseResult.complete && 'text-rose-400')}>
+        {parseResult.complete ? 'No errors' : formatParseError(parseResult.error)}
       </div>
 
       {editorLocation != null && (
@@ -29,4 +22,12 @@ export const Footer: FunctionComponent<{
       )}
     </footer>
   )
+}
+
+function formatParseError (error: ParseError): string {
+  if (error.location == null) {
+    return error.message
+  }
+
+  return `${error.message} at line ${error.location.line}, column ${error.location.column}`
 }
