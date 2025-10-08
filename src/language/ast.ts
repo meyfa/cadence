@@ -97,3 +97,33 @@ export interface Program extends ASTNode {
   readonly track?: TrackStatement
   readonly assignments: readonly Assignment[]
 }
+
+// Factory
+
+export function make<T extends keyof NodeByType> (
+  type: T,
+  location: Location,
+  props: Omit<NodeByType[T], 'type' | 'location'>
+): NodeByType[T] {
+  return { type, location, ...(props as any) } as NodeByType[T]
+}
+
+export interface NodeByType {
+  Identifier: Identifier
+  NumberLiteral: NumberLiteral
+  StringLiteral: StringLiteral
+  PatternLiteral: PatternLiteral
+  BinaryExpression: BinaryExpression
+
+  Property: Property
+  Call: Call
+  Assignment: Assignment
+  Routing: Routing
+
+  TrackStatement: TrackStatement
+  SectionStatement: SectionStatement
+
+  Program: Program
+}
+
+export type AnyNode = NodeByType[keyof NodeByType]

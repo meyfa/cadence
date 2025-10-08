@@ -25,12 +25,10 @@ export function createAudioDemo (options: {
   let playSession = 0
 
   let decibels: number | undefined
-  let program: ast.Program = {
-    type: 'Program',
-    location: getEmptyLocation(),
+  let program = ast.make('Program', getEmptyLocation(), {
     track: undefined,
     assignments: []
-  }
+  })
 
   const resetTransport = () => {
     const transport = getTransport()
@@ -341,19 +339,15 @@ function computeBinaryExpression (operator: ast.BinaryOperator, left: ast.Value,
 
 function computePlus (left: ast.Literal, right: ast.Literal, location: Location): ast.Literal | undefined {
   if (left.type === 'StringLiteral' && right.type === 'StringLiteral') {
-    return {
-      type: 'StringLiteral',
-      location,
+    return ast.make('StringLiteral', location, {
       value: left.value + right.value
-    }
+    })
   }
 
   if (left.type === 'PatternLiteral' && right.type === 'PatternLiteral') {
-    return {
-      type: 'PatternLiteral',
-      location,
+    return ast.make('PatternLiteral', location, {
       value: [...left.value, ...right.value]
-    }
+    })
   }
 
   if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') {
@@ -363,12 +357,10 @@ function computePlus (left: ast.Literal, right: ast.Literal, location: Location)
       return undefined
     }
 
-    return {
-      type: 'NumberLiteral',
-      location,
+    return ast.make('NumberLiteral', location, {
       value: left.value * common.scaleLeft + right.value * common.scaleRight,
       unit: common.unit
-    }
+    })
   }
 
   // TODO error handling - incompatible types
@@ -383,12 +375,10 @@ function computeMinus (left: ast.Literal, right: ast.Literal, location: Location
       return undefined
     }
 
-    return {
-      type: 'NumberLiteral',
-      location,
+    return ast.make('NumberLiteral', location, {
       value: left.value * common.scaleLeft - right.value * common.scaleRight,
       unit: common.unit
-    }
+    })
   }
 
   // TODO error handling - incompatible types
@@ -403,28 +393,22 @@ function computeMultiply (left: ast.Literal, right: ast.Literal, location: Locat
       return undefined
     }
 
-    return {
-      type: 'NumberLiteral',
-      location,
+    return ast.make('NumberLiteral', location, {
       value: left.value * right.value,
       unit: left.unit ?? right.unit
-    }
+    })
   }
 
   if (left.type === 'PatternLiteral' && right.type === 'NumberLiteral' && right.unit == null) {
-    return {
-      type: 'PatternLiteral',
-      location,
+    return ast.make('PatternLiteral', location, {
       value: withPatternLength(left, left.value.length * right.value)
-    }
+    })
   }
 
   if (left.type === 'NumberLiteral' && left.unit == null && right.type === 'PatternLiteral') {
-    return {
-      type: 'PatternLiteral',
-      location,
+    return ast.make('PatternLiteral', location, {
       value: withPatternLength(right, right.value.length * left.value)
-    }
+    })
   }
 
   // TODO error handling - incompatible types
@@ -445,12 +429,10 @@ function computeDivide (left: ast.Literal, right: ast.Literal, location: Locatio
         return undefined
       }
 
-      return {
-        type: 'NumberLiteral',
-        location,
+      return ast.make('NumberLiteral', location, {
         value: left.value / right.value,
         unit: undefined
-      }
+      })
     }
 
     // Disallow divisor with unit
@@ -459,12 +441,10 @@ function computeDivide (left: ast.Literal, right: ast.Literal, location: Locatio
       return undefined
     }
 
-    return {
-      type: 'NumberLiteral',
-      location,
+    return ast.make('NumberLiteral', location, {
       value: left.value / right.value,
       unit: left.unit
-    }
+    })
   }
 
   if (left.type === 'PatternLiteral' && right.type === 'NumberLiteral' && right.unit == null) {
@@ -473,11 +453,9 @@ function computeDivide (left: ast.Literal, right: ast.Literal, location: Locatio
       return undefined
     }
 
-    return {
-      type: 'PatternLiteral',
-      location,
+    return ast.make('PatternLiteral', location, {
       value: withPatternLength(left, left.value.length / right.value)
-    }
+    })
   }
 
   // TODO error handling - incompatible types
