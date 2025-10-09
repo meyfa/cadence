@@ -13,8 +13,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html, body, #root {
+  @apply min-h-screen;
+}
+
 body {
-  @apply min-h-screen antialiased;
+  @apply antialiased;
 
   background: #1f1f1f;
   color: #f5f5f5;
