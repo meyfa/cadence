@@ -95,7 +95,7 @@ export const Editor: FunctionComponent<{
   return (
     <div
       ref={editorRef}
-      className='flex-grow h-full w-full Editor'
+      className='flex-1 min-h-0 min-w-0 overflow-hidden relative Editor'
     />
   )
 }
