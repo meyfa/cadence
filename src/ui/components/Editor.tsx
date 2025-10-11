@@ -6,6 +6,10 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { cadenceLanguageSupport } from '../../editor/language-support.js'
 import { keymap } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
+import { linter } from '@codemirror/lint'
+import { cadenceLinter } from '../../editor/linter.js'
+
+const LINT_DELAY = 250
 
 export const Editor: FunctionComponent<{
   value: string
@@ -61,6 +65,9 @@ export const Editor: FunctionComponent<{
         ]),
         oneDark,
         cadenceLanguageSupport(),
+        linter(cadenceLinter, {
+          delay: LINT_DELAY
+        }),
         updateListener
       ]
     })

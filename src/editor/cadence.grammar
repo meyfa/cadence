@@ -84,7 +84,7 @@ Call {
 Routing {
   VariableName
   "<<"
-  (PatternLiteral | VariableName)
+  expression
 }
 
 TrackStatement {
