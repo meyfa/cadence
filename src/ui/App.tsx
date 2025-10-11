@@ -4,6 +4,17 @@ import { createAudioDemo } from '../core/audio-demo.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser.js'
 import { Footer } from './components/Footer.js'
+import { compile, type CompileOptions } from '../language/compiler/compiler.js'
+
+const compileOptions: CompileOptions = {
+  beatsPerBar: 4,
+  stepsPerBeat: 4,
+  tempo: {
+    default: 128,
+    minimum: 1,
+    maximum: 400
+  }
+}
 
 const initialCode = `
 # Press Play to start the demo.
@@ -48,23 +59,39 @@ track {
 }
 `.trimStart()
 
-const demo = createAudioDemo({
-  defaultTempo: 128
-})
+const demo = createAudioDemo()
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialCode)
   const [editorLocation, setEditorLocation] = useState<{ line: number, column: number } | undefined>()
 
-  const parseResult = useMemo(() => {
-    return parse(code)
-  }, [code])
+  const parseResult = useMemo(() => parse(code), [code])
+
+  const compileResult = useMemo(() => {
+    if (!parseResult.complete) {
+      return undefined
+    }
+
+    return compile(parseResult.value, compileOptions)
+  }, [parseResult])
+
+  const errors = useMemo(() => {
+    if (!parseResult.complete) {
+      return [parseResult.error]
+    }
+
+    if (compileResult?.complete === false) {
+      return compileResult.error.errors
+    }
+
+    return []
+  }, [parseResult, compileResult])
 
   useEffect(() => {
-    if (parseResult.complete) {
-      demo.setProgram(parseResult.value)
+    if (compileResult?.complete === true) {
+      demo.setProgram(compileResult.value)
     }
-  }, [parseResult])
+  }, [compileResult])
 
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
@@ -100,7 +127,7 @@ export const App: FunctionComponent = () => {
 
       <Editor value={code} onChange={setCode} onLocationChange={setEditorLocation} />
 
-      <Footer parseResult={parseResult} editorLocation={editorLocation} />
+      <Footer errors={errors} editorLocation={editorLocation} />
     </div>
   )
 }

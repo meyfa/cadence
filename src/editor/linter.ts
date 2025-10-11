@@ -1,7 +1,8 @@
 import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
-import { parse } from '../language/parser.js'
 import type { Location } from '../language/location.js'
+import { parse } from '../language/parser.js'
+import { check } from '../language/compiler/compiler.js'
 
 function convertError (message: string, location: Location | undefined): Diagnostic {
   return {
@@ -13,7 +14,8 @@ function convertError (message: string, location: Location | undefined): Diagnos
 }
 
 /**
- * A linter function for CodeMirror that uses the Cadence parser to check for errors.
+ * A linter function for CodeMirror that uses the Cadence parser/compiler to check for
+ * syntax errors and semantic errors.
  *
  * @param view The editor view to lint
  * @returns An array of diagnostics representing any parse errors found
@@ -22,10 +24,12 @@ export function cadenceLinter (view: EditorView): Diagnostic[] {
   const input = view.state.doc.sliceString(0)
 
   try {
-    const result = parse(input)
-    if (!result.complete) {
-      return [convertError(result.error.message, result.error.location)]
+    const parsed = parse(input)
+    if (!parsed.complete) {
+      return [convertError(parsed.error.message, parsed.error.location)]
     }
+
+    return check(parsed.value).map((err) => convertError(err.message, err.location))
   } catch (error) {
     if (error instanceof Error) {
       return [convertError(`Fatal error: ${error.message}`, undefined)]
@@ -33,6 +37,4 @@ export function cadenceLinter (view: EditorView): Diagnostic[] {
 
     throw error
   }
-
-  return []
 }
