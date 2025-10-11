@@ -3,10 +3,9 @@ import * as p from 'peberminta'
 import { lex } from './lexer.js'
 import * as ast from './ast.js'
 import { combineLocations, locate, type Location } from './location.js'
-import { truncateString, ParseError } from './error.js'
+import { truncateString, ParseError, type Result } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16
-const ERROR_VALUE_LIMIT = 32
 
 const keywords = ['track', 'section', 'for'] as const
 
@@ -260,23 +259,10 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
   p.end,
   (statements) => {
     const tracks = statements.filter((s) => s.type === 'TrackStatement')
-    if (tracks.length > 1) {
-      throw new ParseError('Duplicate track statement', tracks[1].location)
-    }
-
     const assignments = statements.filter((s) => s.type === 'Assignment')
 
-    const assignmentKeys = new Set<string>()
-    for (const assignment of assignments) {
-      if (assignmentKeys.has(assignment.key.name)) {
-        const context = truncateString(assignment.key.name, ERROR_VALUE_LIMIT)
-        throw new ParseError(`Duplicate definition of "${context}"`, assignment.key.location)
-      }
-      assignmentKeys.add(assignment.key.name)
-    }
-
     return ast.make('Program', combineLocations(...statements), {
-      track: tracks.at(0),
+      tracks,
       assignments
     })
   }
@@ -284,13 +270,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
 
 // Public API
 
-export type ParseResult = {
-  readonly complete: false
-  readonly error: ParseError
-} | {
-  readonly complete: true
-  readonly value: ast.Program
-}
+export type ParseResult = Result<ast.Program, ParseError>
 
 export function parse (input: string): ParseResult {
   function getLineAndColumn (offset: number): Pick<Location, 'line' | 'column'> {

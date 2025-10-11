@@ -1,19 +1,21 @@
 import type { FunctionComponent } from 'react'
 import clsx from 'clsx'
-import type { ParseResult } from '../../language/parser.js'
-import type { ParseError } from '../../language/error.js'
+import type { CompileError, ParseError } from '../../language/error.js'
 
 export const Footer: FunctionComponent<{
-  parseResult: ParseResult
+  errors: ReadonlyArray<ParseError | CompileError>
   editorLocation?: {
     line: number
     column: number
   }
-}> = ({ parseResult, editorLocation }) => {
+}> = ({ errors, editorLocation }) => {
   return (
-    <footer className='flex p-2 gap-2 text-sm text-gray-400'>
-      <div className={clsx('grow', !parseResult.complete && 'text-rose-400')}>
-        {parseResult.complete ? 'No errors' : formatParseError(parseResult.error)}
+    <footer className='flex p-2 gap-2 text-sm text-gray-400 items-start'>
+      <div className={clsx('grow', errors.length > 0 && 'text-rose-400')}>
+        {errors.length === 0 && 'No errors'}
+        {errors.map((error, index) => (
+          <div key={index}>{formatError(error)}</div>
+        ))}
       </div>
 
       {editorLocation != null && (
@@ -25,7 +27,7 @@ export const Footer: FunctionComponent<{
   )
 }
 
-function formatParseError (error: ParseError): string {
+function formatError (error: ParseError | CompileError): string {
   if (error.location == null) {
     return error.message
   }

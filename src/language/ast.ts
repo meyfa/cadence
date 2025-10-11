@@ -94,7 +94,7 @@ export interface SectionStatement extends ASTNode {
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
-  readonly track?: TrackStatement
+  readonly tracks: readonly TrackStatement[]
   readonly assignments: readonly Assignment[]
 }
 
