@@ -1,6 +1,6 @@
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header.js'
-import { createAudioDemo } from '../core/audio-demo.js'
+import { createAudioEngine } from '../core/audio.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser.js'
 import { Footer } from './components/Footer.js'
@@ -59,7 +59,7 @@ track {
 }
 `.trimStart()
 
-const demo = createAudioDemo()
+const demo = createAudioEngine()
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialCode)

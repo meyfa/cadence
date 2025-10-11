@@ -4,14 +4,14 @@ import { getSilentPattern, withPatternLength } from './pattern.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
-export interface AudioDemo {
+export interface AudioEngine {
   readonly play: () => void
   readonly stop: () => void
   readonly setVolume: (volume: number) => void
   readonly setProgram: (program: Program) => void
 }
 
-export function createAudioDemo (): AudioDemo {
+export function createAudioEngine (): AudioEngine {
   const players = new Map<InstrumentId, Player>()
   const sequences = new Map<InstrumentId, Sequence<Step>>()
 
