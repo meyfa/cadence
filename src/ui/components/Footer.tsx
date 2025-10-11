@@ -1,6 +1,7 @@
 import type { FunctionComponent } from 'react'
-import type { ParseError, ParseResult } from '../../language/parser.js'
 import clsx from 'clsx'
+import type { ParseResult } from '../../language/parser.js'
+import type { ParseError } from '../../language/error.js'
 
 export const Footer: FunctionComponent<{
   parseResult: ParseResult

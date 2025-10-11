@@ -72,7 +72,7 @@ export interface Assignment extends ASTNode {
 export interface Routing extends ASTNode {
   readonly type: 'Routing'
   readonly instrument: Identifier
-  readonly pattern: PatternLiteral | Identifier
+  readonly pattern: Expression
 }
 
 // Domain Types
