@@ -1,5 +1,5 @@
-import { gainToDb, getTransport, Sequence, Player, getDestination } from 'tone'
-import { makeNumeric, type InstrumentId, type Program, type Step } from './program.js'
+import { gainToDb, getTransport, Sequence, Player, getDestination, Frequency, intervalToFrequencyRatio } from 'tone'
+import { isPitch, makeNumeric, type InstrumentId, type Pitch, type Program, type Step } from './program.js'
 import { getSilentPattern, withPatternLength } from './pattern.js'
 
 const LOAD_TIMEOUT_MS = 3000
@@ -50,7 +50,13 @@ export function createAudioEngine (): AudioEngine {
     const loads: Array<Promise<Player>> = []
 
     for (const instrument of program.instruments.values()) {
-      const player = new Player({ autostart: false, loop: false }).toDestination()
+      const player = new Player({
+        autostart: false,
+        loop: false,
+        // declick
+        fadeIn: 0.005,
+        fadeOut: 0.005
+      }).toDestination()
       if (instrument.gain != null) {
         player.volume.value = instrument.gain.value
       }
@@ -70,6 +76,31 @@ export function createAudioEngine (): AudioEngine {
     const loadsIgnoreErrors = Promise.allSettled(loads.map((p) => p.catch(() => {})))
 
     await Promise.race([loadsIgnoreErrors, timeout])
+  }
+
+  const DEFAULT_ROOT_NOTE = 'C5' as const
+
+  const notationToMidi = new Map<Pitch, number>()
+
+  for (let octave = 0; octave <= 10; ++octave) {
+    for (const note of ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const) {
+      for (const accidental of ['', '#', 'b'] as const) {
+        const pitch = `${note}${accidental}${octave}` as Pitch
+        notationToMidi.set(pitch, Frequency(pitch).toMidi())
+      }
+    }
+  }
+
+  function playbackRateForNote (note: Pitch, root: Pitch): number {
+    const noteMidi = notationToMidi.get(note)
+    const rootMidi = notationToMidi.get(root)
+
+    if (noteMidi == null || rootMidi == null) {
+      // Fallback to neutral if parsing failed
+      return 1
+    }
+
+    return intervalToFrequencyRatio(noteMidi - rootMidi)
   }
 
   const createSequences = () => {
@@ -102,15 +133,28 @@ export function createAudioEngine (): AudioEngine {
 
     sequences.clear()
 
-    const subdivision = `${(program.beatsPerBar * program.stepsPerBeat).toFixed(0)}n`
+    const subdivision = `${program.beatsPerBar * program.stepsPerBeat}n`
 
     for (const [key, player] of players) {
       const events = sequenceEvents.get(key) ?? []
 
+      const instrument = program.instruments.get(key)
+      if (instrument == null) {
+        continue
+      }
+
       sequences.set(key, new Sequence<Step>((time, note) => {
-        if (note === 'hit') {
-          player.start(time)
+        if (note === '-') {
+          return
         }
+
+        const duration = instrument.length?.value
+
+        player.playbackRate = isPitch(note)
+          ? playbackRateForNote(note, instrument.rootNote ?? DEFAULT_ROOT_NOTE)
+          : 1
+
+        player.start(time, undefined, duration)
       }, events, subdivision))
     }
   }
@@ -150,8 +194,14 @@ export function createAudioEngine (): AudioEngine {
         sequence.stop()
         sequence.dispose()
       }
-
       sequences.clear()
+
+      for (const player of players.values()) {
+        player.stop()
+        player.dispose()
+      }
+      players.clear()
+
       resetTransport()
     },
 
