@@ -1,33 +1,49 @@
-import { gainToDb, getTransport, Sequence, Player, getDestination, Frequency, intervalToFrequencyRatio } from 'tone'
-import { isPitch, makeNumeric, type InstrumentId, type Pitch, type Program, type Step } from './program.js'
+import { gainToDb, getTransport, Sequence, Player, getDestination } from 'tone'
+import { isPitch, makeNumeric, type InstrumentId, type Program, type Step } from './program.js'
 import { getSilentPattern, withPatternLength } from './pattern.js'
+import { MutableObservable, type Observable } from './observable.js'
+import { convertPitchToPlaybackRate } from './midi.js'
 
 const LOAD_TIMEOUT_MS = 3000
+const DEFAULT_ROOT_NOTE = 'C5' as const
+
+const emptyProgram: Program = {
+  beatsPerBar: 4,
+  stepsPerBeat: 4,
+  instruments: new Map(),
+  track: {
+    tempo: makeNumeric('bpm', 128),
+    sections: []
+  }
+}
+
+export interface AudioEngineOptions {
+  readonly volume: number
+}
 
 export interface AudioEngine {
+  readonly playing: Observable<boolean>
+  readonly volume: Observable<number>
+
   readonly play: () => void
   readonly stop: () => void
+
   readonly setVolume: (volume: number) => void
+
   readonly setProgram: (program: Program) => void
 }
 
-export function createAudioEngine (): AudioEngine {
+export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
+  const playing = new MutableObservable(false)
+  const volume = new MutableObservable(options.volume)
+
   const players = new Map<InstrumentId, Player>()
   const sequences = new Map<InstrumentId, Sequence<Step>>()
 
   // Increments on play() and stop(), to cancel pending playback
   let playSession = 0
 
-  let decibels: number | undefined
-  let program: Program = {
-    beatsPerBar: 4,
-    stepsPerBeat: 4,
-    instruments: new Map(),
-    track: {
-      tempo: makeNumeric('bpm', 128),
-      sections: []
-    }
-  }
+  let program = emptyProgram
 
   const resetTransport = () => {
     const transport = getTransport()
@@ -37,10 +53,7 @@ export function createAudioEngine (): AudioEngine {
   }
 
   const configureOutput = () => {
-    if (decibels != null) {
-      getDestination().volume.value = decibels
-    }
-
+    getDestination().volume.value = convertVolumeToDb(volume.get())
     getTransport().bpm.value = program.track.tempo.value
   }
 
@@ -57,9 +70,11 @@ export function createAudioEngine (): AudioEngine {
         fadeIn: 0.005,
         fadeOut: 0.005
       }).toDestination()
+
       if (instrument.gain != null) {
         player.volume.value = instrument.gain.value
       }
+
       loads.push(player.load(instrument.sampleUrl))
       players.set(instrument.id, player)
     }
@@ -76,31 +91,6 @@ export function createAudioEngine (): AudioEngine {
     const loadsIgnoreErrors = Promise.allSettled(loads.map((p) => p.catch(() => {})))
 
     await Promise.race([loadsIgnoreErrors, timeout])
-  }
-
-  const DEFAULT_ROOT_NOTE = 'C5' as const
-
-  const notationToMidi = new Map<Pitch, number>()
-
-  for (let octave = 0; octave <= 10; ++octave) {
-    for (const note of ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const) {
-      for (const accidental of ['', '#', 'b'] as const) {
-        const pitch = `${note}${accidental}${octave}` as Pitch
-        notationToMidi.set(pitch, Frequency(pitch).toMidi())
-      }
-    }
-  }
-
-  function playbackRateForNote (note: Pitch, root: Pitch): number {
-    const noteMidi = notationToMidi.get(note)
-    const rootMidi = notationToMidi.get(root)
-
-    if (noteMidi == null || rootMidi == null) {
-      // Fallback to neutral if parsing failed
-      return 1
-    }
-
-    return intervalToFrequencyRatio(noteMidi - rootMidi)
   }
 
   const createSequences = () => {
@@ -143,75 +133,102 @@ export function createAudioEngine (): AudioEngine {
         continue
       }
 
-      sequences.set(key, new Sequence<Step>((time, note) => {
+      const callback = (time: number, note: Step) => {
         if (note === '-') {
           return
         }
 
-        const duration = instrument.length?.value
+        const rootNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
+        player.playbackRate = isPitch(note) ? convertPitchToPlaybackRate(note, rootNote) : 1
 
-        player.playbackRate = isPitch(note)
-          ? playbackRateForNote(note, instrument.rootNote ?? DEFAULT_ROOT_NOTE)
-          : 1
+        player.start(time, undefined, instrument.length?.value)
+      }
 
-        player.start(time, undefined, duration)
-      }, events, subdivision))
+      sequences.set(key, new Sequence<Step>({ callback, events, subdivision, loop: false }))
     }
   }
 
-  const startSequences = () => {
+  const startSequences = (onDone?: () => void) => {
+    let maxLength = 0
+
     for (const sequence of sequences.values()) {
+      maxLength = Math.max(maxLength, sequence.length * sequence.subdivision)
       sequence.start()
     }
+
+    if (onDone != null) {
+      getTransport().scheduleOnce(() => onDone(), `+${maxLength}`)
+    }
+  }
+
+  const play = () => {
+    const session = ++playSession
+
+    resetTransport()
+
+    configureOutput()
+    const loads = createPlayers()
+    createSequences()
+
+    playing.set(true)
+
+    const onDone = () => {
+      if (session === playSession) {
+        playing.set(false)
+      }
+    }
+
+    // Defer start until samples are loaded or timeout reached
+    waitForLoadsOrTimeout(loads, LOAD_TIMEOUT_MS).then(() => {
+      if (session === playSession) {
+        startSequences(onDone)
+        getTransport().start('+0.05')
+      }
+    }).catch((_err: unknown) => {
+      // ignore
+    })
+  }
+
+  const stop = () => {
+    // Invalidate any pending start from a previous play()
+    ++playSession
+
+    for (const sequence of sequences.values()) {
+      sequence.stop()
+      sequence.dispose()
+    }
+    sequences.clear()
+
+    for (const player of players.values()) {
+      player.stop()
+      player.dispose()
+    }
+    players.clear()
+
+    resetTransport()
+
+    playing.set(false)
+  }
+
+  const setVolume = (newVolume: number): void => {
+    volume.set(newVolume)
+    getDestination().volume.rampTo(convertVolumeToDb(newVolume), 0.05)
+  }
+
+  const setProgram = (newProgram: Program): void => {
+    program = newProgram
   }
 
   return {
-    play: () => {
-      const session = ++playSession
-
-      resetTransport()
-
-      configureOutput()
-      const loads = createPlayers()
-      createSequences()
-
-      // Defer start until samples are loaded or timeout reached
-      waitForLoadsOrTimeout(loads, LOAD_TIMEOUT_MS).then(() => {
-        if (session === playSession) {
-          startSequences()
-          getTransport().start('+0.05')
-        }
-      }).catch((_err: unknown) => {
-        // ignore
-      })
-    },
-
-    stop: () => {
-      // Invalidate any pending start from a previous play()
-      ++playSession
-
-      for (const sequence of sequences.values()) {
-        sequence.stop()
-        sequence.dispose()
-      }
-      sequences.clear()
-
-      for (const player of players.values()) {
-        player.stop()
-        player.dispose()
-      }
-      players.clear()
-
-      resetTransport()
-    },
-
-    setVolume: (volume: number) => {
-      decibels = gainToDb(Math.pow(volume, 2))
-      getDestination().volume.rampTo(decibels, 0.05)
-    },
-
-    setProgram: (newProgram) => {
-      program = newProgram
-    }
+    playing,
+    volume,
+    play,
+    stop,
+    setVolume,
+    setProgram
   }
+}
+
+function convertVolumeToDb (volume: number): number {
+  return gainToDb(Math.pow(volume, 2))
 }

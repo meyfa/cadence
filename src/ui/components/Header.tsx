@@ -8,8 +8,7 @@ export const Header: FunctionComponent<{
   onPlayPause: () => void
   volume: number
   onVolumeChange: (volume: number) => void
-  onUpdate: () => void
-}> = ({ playing, onPlayPause, volume, onVolumeChange, onUpdate }) => {
+}> = ({ playing, onPlayPause, volume, onVolumeChange }) => {
   return (
     <header className={clsx(
       'w-full border-b border-b-gray-700 flex flex-col items-center px-4 py-2 gap-2',
@@ -20,19 +19,15 @@ export const Header: FunctionComponent<{
         Cadence
       </h1>
 
-      <div className='grow flex justify-end items-center gap-4'>
-        <label className='flex gap-2'>
-          Volume
-          <Slider min={0} max={1} value={volume} onChange={onVolumeChange} />
-        </label>
-
+      <div className='grow flex items-center gap-4'>
         <Button onClick={onPlayPause}>
           {playing ? 'Stop' : 'Play'}
         </Button>
 
-        <Button onClick={onUpdate} disabled={!playing}>
-          Update
-        </Button>
+        <label className='flex gap-2'>
+          Volume
+          <Slider min={0} max={1} value={volume} onChange={onVolumeChange} />
+        </label>
       </div>
     </header>
   )

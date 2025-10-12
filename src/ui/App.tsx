@@ -1,4 +1,4 @@
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FunctionComponent, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header.js'
 import { createAudioEngine } from '../core/audio.js'
 import { Editor } from './components/Editor.js'
@@ -10,6 +10,7 @@ import { parseEditorState, serializeEditorState, type CadenceEditorState } from 
 import { demoCode } from './demo.js'
 import { lex } from '../language/lexer/lexer.js'
 import type { EditorLocation } from '../editor/editor.js'
+import { useObservable } from './hooks/observable.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -31,17 +32,20 @@ const defaultState: CadenceEditorState = {
 const storage = new BrowserLocalStorage<CadenceEditorState>('cadence-editor', serializeEditorState, parseEditorState)
 const storedState = storage.load()
 
-const initialState = {
+const initialState: CadenceEditorState = {
   ...defaultState,
   ...storedState,
   code: storedState?.code == null || storedState.code.trim() === '' ? demoCode : storedState.code
 }
 
-const engine = createAudioEngine()
+const engine = createAudioEngine({
+  volume: initialState.settings.volume
+})
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialState.code)
-  const [volume, setVolume] = useState(initialState.settings.volume)
+  const volume = useObservable(engine.volume)
+  const playing = useObservable(engine.playing)
 
   // Synchronize state with local storage
   useEffect(() => {
@@ -85,26 +89,6 @@ export const App: FunctionComponent = () => {
     }
   }, [compileResult])
 
-  // Playback state
-  const [playing, setPlaying] = useState(false)
-
-  useEffect(() => {
-    if (playing) {
-      engine.play()
-    } else {
-      engine.stop()
-    }
-  }, [playing])
-
-  const update = useCallback(() => {
-    engine.stop()
-    if (playing) {
-      engine.play()
-    }
-  }, [playing])
-
-  useEffect(() => engine.setVolume(volume), [volume])
-
   // Track editor cursor location
   const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
 
@@ -112,10 +96,9 @@ export const App: FunctionComponent = () => {
     <div className='flex flex-col h-screen'>
       <Header
         playing={playing}
-        onPlayPause={() => setPlaying((playing) => !playing)}
+        onPlayPause={() => playing ? engine.stop() : engine.play()}
         volume={volume}
-        onVolumeChange={setVolume}
-        onUpdate={update}
+        onVolumeChange={(volume) => engine.setVolume(volume)}
       />
 
       <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
