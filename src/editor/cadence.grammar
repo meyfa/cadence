@@ -7,7 +7,7 @@
 
   number { $[0-9]+ ("." $[0-9]+)? }
   string { "\"" (!["\\] | "\\" (![.] | $[.]))* "\"" }
-  pattern { "[" $[ \t\n\rx-]* "]" }
+  pattern { "[" ($[ \t\n\r] | $[-x] | $[a-gA-G] $[#b]? ($[0-9] | "10"))* "]" }
 
   "{" "}"
   "(" ")"
@@ -54,7 +54,7 @@ Literal {
 }
 
 expression {
-  "(" expression ")" | Literal | Call | VariableName | BinaryExpression
+  "(" expression ")" | "-" expression | Literal | Call | VariableName | BinaryExpression
 }
 
 BinaryExpression {

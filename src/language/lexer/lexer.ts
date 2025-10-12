@@ -14,7 +14,7 @@ const rules: Rules = [
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },
-  { name: 'pattern', regex: /\[[ \t\n\rx-]*\]/ },
+  { name: 'pattern', regex: /\[(?:[ \t\n\r]|[-x]|[a-gA-G][#b]?(?:[0-9]|10))*\]/ },
 
   { name: '{' },
   { name: '}' },

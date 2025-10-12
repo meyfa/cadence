@@ -24,5 +24,5 @@ export function getSilentPattern (length: number): Pattern {
     return []
   }
 
-  return new Array<Step>(len).fill('rest')
+  return new Array<Step>(len).fill('-')
 }

@@ -1,3 +1,4 @@
+import type { Step } from '../../core/program.js'
 import type { SourceLocation } from '../location.js'
 
 export interface ASTNode {
@@ -25,8 +26,6 @@ export interface StringLiteral extends ASTNode {
   readonly type: 'StringLiteral'
   readonly value: string
 }
-
-export type Step = 'rest' | 'hit'
 
 export interface PatternLiteral extends ASTNode {
   readonly type: 'PatternLiteral'

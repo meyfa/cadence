@@ -4,6 +4,7 @@ import * as ast from './ast.js'
 import { combineSourceLocations, getSourceLocation } from '../location.js'
 import { truncateString, type Result } from '../error.js'
 import { ParseError } from './error.js'
+import type { Step } from '../../core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -102,9 +103,37 @@ const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) 
     : undefined
 })
 
-function parsePattern (text: string): ast.Step[] {
-  return text.slice(1, -1).replace(/\s/g, '').split('')
-    .map((char): ast.Step => char === '-' ? 'rest' : 'hit')
+function parsePattern (text: string): Step[] {
+  const steps: Step[] = []
+
+  // Start after the opening '[' and stop before the closing ']'
+  for (let pos = 1, n = text.length - 1; pos < n;) {
+    const char = text[pos]
+
+    if (/\s/.test(char)) {
+      pos++
+      continue
+    }
+
+    if (char === '-' || char === 'x') {
+      steps.push(char)
+      pos++
+      continue
+    }
+
+    const noteMatch = /^([a-gA-G])([#b]?)(10|[0-9])/.exec(text.slice(pos))
+    if (noteMatch != null) {
+      const [match, note, accidental, octave] = noteMatch
+      steps.push((note.toUpperCase() + accidental + octave) as Step)
+      pos += match.length
+      continue
+    }
+
+    // Invalid character
+    break
+  }
+
+  return steps
 }
 
 const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.token((t) => {
