@@ -1,10 +1,12 @@
 import { withPatternLength } from '../../core/pattern.js'
-import { makeNumeric, type Instrument, type InstrumentId, type Program, type Routing, type Section, type Track, type Unit } from '../../core/program.js'
+import { makeNumeric, type Instrument, type InstrumentId, type Numeric, type Program, type Routing, type Section, type Track, type Unit } from '../../core/program.js'
 import * as ast from '../parser/ast.js'
+import { trackSchema } from './common.js'
 import { CompileError } from './error.js'
-import { FunctionArguments, getDefaultFunctions, type FunctionDefinition } from './functions.js'
+import { getDefaultFunctions, type FunctionDefinition } from './functions.js'
+import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { areTypesEqual, asInstrument, asNumber, asPattern, makeNumber, makePattern, makeString, typeOf, type NumberValue, type TypeInfo, type Value } from './values.js'
+import { asInstrument, asNumber, asPattern, makeNumber, makePattern, makeString, type Value } from './values.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -66,9 +68,9 @@ function nonNull<T> (value: T | null | undefined): NonNullable<T> {
   return value
 }
 
-function clamped<U extends Unit> (value: NumberValue<U>, minimum: number, maximum: number): NumberValue<U> {
-  return value.value.value < minimum || value.value.value > maximum
-    ? makeNumber(value.value.unit, Math.min(Math.max(value.value.value, minimum), maximum))
+function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: number): Numeric<U> {
+  return value.value < minimum || value.value > maximum
+    ? makeNumeric(value.unit, Math.min(Math.max(value.value, minimum), maximum))
     : value
 }
 
@@ -80,20 +82,16 @@ function processAssignments (context: Context, program: ast.Program): void {
 }
 
 function generateTrack (context: Context, track: ast.TrackStatement): Track {
-  const properties = resolveProperties(context, track.properties)
+  const properties = resolveProperties(context, track.properties, trackSchema)
 
-  let tempo = makeNumber('bpm', context.options.tempo.default)
-
-  const tempoProperty = properties.get('tempo')
-  if (tempoProperty != null) {
-    const { minimum, maximum } = context.options.tempo
-    tempo = clamped(asNumber('bpm', tempoProperty), minimum, maximum)
-  }
+  const tempo = properties.tempo != null
+    ? clamped(properties.tempo, context.options.tempo.minimum, context.options.tempo.maximum)
+    : makeNumeric('bpm', context.options.tempo.default)
 
   const sections = track.sections.map((section) => generateSection(context, section))
 
   return {
-    tempo: tempo.value,
+    tempo,
     sections
   }
 }
@@ -135,8 +133,8 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'Call': {
       const func = nonNull(context.functions.get(expression.callee.name))
-      const args = resolveArguments(context, func.arguments, expression.arguments)
-      return func.invoke(context, new FunctionArguments(args))
+      const args = resolveProperties(context, expression.arguments, func.arguments)
+      return func.invoke(context, args)
     }
 
     case 'BinaryExpression': {
@@ -214,17 +212,11 @@ function computeDivide (left: Value, right: Value): Value {
   assert(false)
 }
 
-function resolveProperties (context: Context, properties: readonly ast.Property[]): ReadonlyMap<string, Value> {
-  return new Map(properties.map(({ key, value }) => [key.name, resolve(context, value)]))
-}
+function resolveProperties<S extends PropertySchema> (context: Context, properties: readonly ast.Property[], schema: S): InferSchema<S> {
+  const allowed = new Set(schema.map((s) => s.name))
+  const values = properties
+    .filter((p) => allowed.has(p.key.name))
+    .map(({ key, value }) => [key.name, resolve(context, value).value])
 
-function resolveArguments (context: Context, expected: ReadonlyMap<string, TypeInfo>, provided: readonly ast.Property[]): ReadonlyMap<string, Value> {
-  const args = resolveProperties(context, provided)
-  assert(expected.size === args.size)
-
-  for (const [name, type] of expected) {
-    assert(areTypesEqual(type, typeOf(nonNull(args.get(name)))))
-  }
-
-  return args
+  return Object.fromEntries(values) as InferSchema<S>
 }

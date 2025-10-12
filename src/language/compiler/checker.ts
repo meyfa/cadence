@@ -4,6 +4,8 @@ import { areTypesEqual, formatType, type TypeInfo } from './values.js'
 import { getDefaultFunctions, type FunctionDefinition } from './functions.js'
 import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
+import type { PropertySchema, PropertySpec } from './schema.js'
+import { trackSchema } from './common.js'
 
 interface Context {
   readonly functions: ReadonlyMap<string, FunctionDefinition>
@@ -29,7 +31,7 @@ export function check (program: ast.Program): readonly CompileError[] {
   return [...assignmentResults, ...trackResults]
 }
 
-function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location: SourceLocation): readonly CompileError[] {
+function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location?: SourceLocation): readonly CompileError[] {
   if (!areTypesEqual(expected, actual)) {
     return [new CompileError(`Expected type ${formatType(expected)}, got ${formatType(actual)}`, location)]
   }
@@ -75,21 +77,8 @@ function checkTracks (context: Context, program: ast.Program): readonly CompileE
 function checkTrack (context: Context, track: ast.TrackStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(context, track.properties)
+  const propertiesCheck = checkProperties(context, track.properties, trackSchema, track.location)
   errors.push(...propertiesCheck.errors)
-
-  if (propertiesCheck.result != null) {
-    for (const [key, valueType] of propertiesCheck.result) {
-      // TODO avoid hardcoding known properties
-      if (!['tempo'].includes(key)) {
-        errors.push(new CompileError(`Unknown property "${key}"`, track.location))
-      }
-
-      if (key === 'tempo') {
-        errors.push(...checkTypeEquality({ type: 'Number', unit: 'bpm' }, valueType, track.location))
-      }
-    }
-  }
 
   const seenSections = new Set<string>()
 
@@ -174,7 +163,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors: [new CompileError(`Unknown function "${expression.callee.name}"`, expression.location)] }
       }
 
-      const errors = checkFunctionArguments(context, func.arguments, expression)
+      const { errors } = checkProperties(context, expression.arguments, func.arguments, expression.location)
       return { errors, result: func.returnType }
     }
 
@@ -260,13 +249,21 @@ function checkDivide (left: TypeInfo, right: TypeInfo, location: SourceLocation)
   return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
 }
 
-function checkProperties (context: Context, properties: readonly ast.Property[]): Checked<ReadonlyMap<string, TypeInfo>> {
+function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentLocation?: SourceLocation): Checked<ReadonlyMap<string, TypeInfo>> {
   const errors: CompileError[] = []
   const result = new Map<string, TypeInfo>()
 
+  const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
+
   for (const property of properties) {
     if (result.has(property.key.name)) {
-      errors.push(new CompileError(`Duplicate property named "${property.key.name}"`, property.location))
+      errors.push(new CompileError(`Duplicate property named "${property.key.name}"`, property.key.location))
+      continue
+    }
+
+    const spec = schemaAsMap.get(property.key.name)
+    if (spec == null) {
+      errors.push(new CompileError(`Unknown property "${property.key.name}"`, property.key.location))
       continue
     }
 
@@ -274,36 +271,17 @@ function checkProperties (context: Context, properties: readonly ast.Property[])
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result != null) {
+      errors.push(...checkTypeEquality(spec.type, expressionCheck.result, property.value.location))
       result.set(property.key.name, expressionCheck.result)
     }
   }
 
-  return { errors, result: errors.length > 0 ? undefined : result }
-}
-
-function checkFunctionArguments (context: Context, expected: ReadonlyMap<string, TypeInfo>, call: ast.Call): readonly CompileError[] {
-  const args = checkProperties(context, call.arguments)
-  if (args.result == null) {
-    return args.errors
-  }
-
-  const errors: CompileError[] = [...args.errors]
-
-  for (const [name, type] of expected) {
-    const argType = args.result.get(name)
-    if (argType == null) {
-      errors.push(new CompileError(`Missing required argument "${name}"`, call.location))
+  for (const spec of schema) {
+    if (spec.required && !result.has(spec.name)) {
+      errors.push(new CompileError(`Missing required property "${spec.name}"`, parentLocation))
       continue
     }
-
-    errors.push(...checkTypeEquality(type, argType, call.location))
   }
 
-  for (const name of args.result.keys()) {
-    if (!expected.has(name)) {
-      errors.push(new CompileError(`Unknown argument "${name}"`, call.location))
-    }
-  }
-
-  return errors
+  return { errors, result: errors.length > 0 ? undefined : result }
 }
