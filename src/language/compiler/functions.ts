@@ -20,16 +20,18 @@ export function defineFunction<S extends PropertySchema> (def: FunctionDefinitio
 
 const sample = defineFunction({
   arguments: [
-    { name: 'url', type: { type: 'String' }, required: true }
+    { name: 'url', type: { type: 'String' }, required: true },
+    { name: 'gain', type: { type: 'Number', unit: 'db' }, required: false }
   ],
 
   returnType: { type: 'Instrument' },
 
-  invoke: (context, { url }) => {
+  invoke: (context, { url, gain }) => {
     const currentMaxId = Math.max(0, ...Array.from(context.instruments.keys()))
     const instrument = makeInstrument({
       id: (currentMaxId + 1) as InstrumentId,
-      sampleUrl: url
+      sampleUrl: url,
+      gain
     })
 
     context.instruments.set(instrument.value.id, instrument.value)

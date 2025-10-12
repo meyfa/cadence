@@ -1,4 +1,4 @@
-import { gainToDb, getTransport, Sequence, Player } from 'tone'
+import { gainToDb, getTransport, Sequence, Player, getDestination } from 'tone'
 import { makeNumeric, type InstrumentId, type Program, type Step } from './program.js'
 import { getSilentPattern, withPatternLength } from './pattern.js'
 
@@ -36,7 +36,11 @@ export function createAudioEngine (): AudioEngine {
     transport.position = 0
   }
 
-  const configureTempo = () => {
+  const configureOutput = () => {
+    if (decibels != null) {
+      getDestination().volume.value = decibels
+    }
+
     getTransport().bpm.value = program.track.tempo.value
   }
 
@@ -47,12 +51,10 @@ export function createAudioEngine (): AudioEngine {
 
     for (const instrument of program.instruments.values()) {
       const player = new Player({ autostart: false, loop: false }).toDestination()
-      loads.push(player.load(instrument.sampleUrl))
-
-      if (decibels != null) {
-        player.volume.value = decibels
+      if (instrument.gain != null) {
+        player.volume.value = instrument.gain.value
       }
-
+      loads.push(player.load(instrument.sampleUrl))
       players.set(instrument.id, player)
     }
 
@@ -125,19 +127,16 @@ export function createAudioEngine (): AudioEngine {
 
       resetTransport()
 
-      configureTempo()
+      configureOutput()
       const loads = createPlayers()
       createSequences()
 
       // Defer start until samples are loaded or timeout reached
       waitForLoadsOrTimeout(loads, LOAD_TIMEOUT_MS).then(() => {
-        // If stop() was called or a newer play() started, abort
-        if (session !== playSession) {
-          return
+        if (session === playSession) {
+          startSequences()
+          getTransport().start('+0.05')
         }
-
-        startSequences()
-        getTransport().start('+0.05')
       }).catch((_err: unknown) => {
         // ignore
       })
@@ -158,10 +157,7 @@ export function createAudioEngine (): AudioEngine {
 
     setVolume: (volume: number) => {
       decibels = gainToDb(Math.pow(volume, 2))
-
-      for (const player of players.values()) {
-        player.volume.rampTo(decibels, 0.05)
-      }
+      getDestination().volume.rampTo(decibels, 0.05)
     },
 
     setProgram: (newProgram) => {

@@ -6,7 +6,7 @@ export const demoCode = `
 sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/"
 
 kick  = sample(url: sample_collection + "house/000_BD.wav")
-snare = sample(url: sample_collection + "808sd/SD0010.WAV")
+snare = sample(url: sample_collection + "808sd/SD0010.WAV", gain: -3 db)
 hat   = sample(url: sample_collection + "808oh/OH00.WAV")
 tom   = sample(url: sample_collection + "808mt/MT10.WAV")
 
