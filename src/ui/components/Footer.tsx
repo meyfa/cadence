@@ -1,11 +1,7 @@
 import type { FunctionComponent } from 'react'
 import clsx from 'clsx'
 import type { LocationError } from '../../language/error.js'
-
-export interface EditorLocation {
-  readonly line: number
-  readonly column: number
-}
+import type { EditorLocation } from '../../editor/editor.js'
 
 export const Footer: FunctionComponent<{
   errors: readonly LocationError[]

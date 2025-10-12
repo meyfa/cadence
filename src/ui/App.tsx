@@ -3,12 +3,13 @@ import { Header } from './components/Header.js'
 import { createAudioEngine } from '../core/audio.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser/parser.js'
-import { Footer, type EditorLocation } from './components/Footer.js'
+import { Footer } from './components/Footer.js'
 import { compile, type CompileOptions } from '../language/compiler/compiler.js'
 import { BrowserLocalStorage } from '../editor/storage.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '../editor/state.js'
 import { demoCode } from './demo.js'
 import { lex } from '../language/lexer/lexer.js'
+import type { EditorLocation } from '../editor/editor.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -117,7 +118,7 @@ export const App: FunctionComponent = () => {
         onUpdate={update}
       />
 
-      <Editor value={code} onChange={setCode} onLocationChange={setEditorLocation} />
+      <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
 
       <Footer errors={errors} editorLocation={editorLocation} />
     </div>
