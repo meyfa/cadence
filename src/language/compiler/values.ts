@@ -1,5 +1,5 @@
 import type { Instrument, Numeric, Pattern, Unit } from '../../core/program.js'
-import { CompileError } from '../error.js'
+import { CompileError } from './error.js'
 
 export interface AnyValue {
   readonly type: string

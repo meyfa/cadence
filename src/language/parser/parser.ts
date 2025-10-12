@@ -1,9 +1,9 @@
 import { Token } from 'leac'
 import * as p from 'peberminta'
-import { lex } from './lexer.js'
 import * as ast from './ast.js'
-import { combineLocations, locate, type Location } from './location.js'
-import { truncateString, ParseError, type Result } from './error.js'
+import { combineSourceLocations, getSourceLocation } from '../location.js'
+import { truncateString, type Result } from '../error.js'
+import { ParseError } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -59,7 +59,7 @@ function expect<TValue> (
       }),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected "${context}"; expected ${expected}`, locate(token))
+        throw new ParseError(`Unexpected "${context}"; expected ${expected}`, getSourceLocation(token))
       })
     )
   )
@@ -73,13 +73,13 @@ function expectLiteral (name: string, printable = `"${name}"`): p.Parser<Token, 
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
   return t.name === 'word' && !keywords.includes(t.text as Keyword)
-    ? ast.make('Identifier', locate(t), { name: t.text })
+    ? ast.make('Identifier', getSourceLocation(t), { name: t.text })
     : undefined
 })
 
 const plainNumberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.token((t) => {
   return t.name === 'number'
-    ? ast.make('NumberLiteral', locate(t), { value: Number.parseFloat(t.text) })
+    ? ast.make('NumberLiteral', getSourceLocation(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
 
@@ -90,7 +90,7 @@ const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
     undefined
   ),
   (num, unitToken) => {
-    const location = unitToken == null ? num.location : combineLocations(num, unitToken)
+    const location = unitToken == null ? num.location : combineSourceLocations(num, unitToken)
     const unit = unitToken == null ? undefined : unitToken.text as ast.Unit
     return ast.make('NumberLiteral', location, { value: num.value, unit })
   }
@@ -98,7 +98,7 @@ const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
 
 const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) => {
   return t.name === 'string'
-    ? ast.make('StringLiteral', locate(t), { value: JSON.parse(t.text) })
+    ? ast.make('StringLiteral', getSourceLocation(t), { value: JSON.parse(t.text) })
     : undefined
 })
 
@@ -109,7 +109,7 @@ function parsePattern (text: string): ast.Step[] {
 
 const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.token((t) => {
   return t.name === 'pattern'
-    ? ast.make('PatternLiteral', locate(t), { value: parsePattern(t.text) })
+    ? ast.make('PatternLiteral', getSourceLocation(t), { value: parsePattern(t.text) })
     : undefined
 })
 
@@ -127,7 +127,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
 )
 
 function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
-  return ast.make('BinaryExpression', combineLocations(left, right), {
+  return ast.make('BinaryExpression', combineSourceLocations(left, right), {
     operator: operator.text as ast.BinaryOperator,
     left,
     right
@@ -139,7 +139,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     literal('('),
     p.recursive(() => expression_),
     expectLiteral(')'),
-    (_l, v, _r) => ast.make(v.type, combineLocations(_l, _r), { ...v })
+    (_l, v, _r) => ast.make(v.type, combineSourceLocations(_l, _r), { ...v })
   ),
   value_
 )
@@ -175,7 +175,7 @@ const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   literal(':'),
   expression_,
   (key, _colon, value) => {
-    return ast.make('Property', combineLocations(key, value), { key, value })
+    return ast.make('Property', combineSourceLocations(key, value), { key, value })
   }
 )
 
@@ -196,7 +196,7 @@ const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p
     }
 
     const [, args, _rp] = callTail
-    return ast.make('Call', combineLocations(id, _rp), { callee: id, arguments: args })
+    return ast.make('Call', combineSourceLocations(id, _rp), { callee: id, arguments: args })
   }
 )
 
@@ -205,7 +205,7 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   literal('='),
   expression_,
   (key, _eq, value) => {
-    return ast.make('Assignment', combineLocations(key, value), { key, value })
+    return ast.make('Assignment', combineSourceLocations(key, value), { key, value })
   }
 )
 
@@ -214,7 +214,7 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   literal('<<'),
   expression_,
   (instrument, _arrow, pattern) => {
-    return ast.make('Routing', combineLocations(instrument, pattern), { instrument, pattern })
+    return ast.make('Routing', combineSourceLocations(instrument, pattern), { instrument, pattern })
   }
 )
 
@@ -227,7 +227,7 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
     expectLiteral('}')
   ),
   ([_section, name], [_for, length], [_lp, routings, _rp]) => {
-    return ast.make('SectionStatement', combineLocations(_section, _rp), { name, length, routings })
+    return ast.make('SectionStatement', combineSourceLocations(_section, _rp), { name, length, routings })
   }
 )
 
@@ -239,7 +239,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
     expectLiteral('}')
   ),
   (_track, [_lp, children, _rp]) => {
-    return ast.make('TrackStatement', combineLocations(_track, _rp), {
+    return ast.make('TrackStatement', combineSourceLocations(_track, _rp), {
       properties: children.filter((c) => c.type === 'Property'),
       sections: children.filter((c) => c.type === 'SectionStatement')
     })
@@ -252,7 +252,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
       p.eitherOr(trackStatement_, assignment_),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected statement beginning with "${context}"`, locate(token))
+        throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceLocation(token))
       })
     )
   ),
@@ -261,7 +261,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
     const tracks = statements.filter((s) => s.type === 'TrackStatement')
     const assignments = statements.filter((s) => s.type === 'Assignment')
 
-    return ast.make('Program', combineLocations(...statements), {
+    return ast.make('Program', combineSourceLocations(...statements), {
       tracks,
       assignments
     })
@@ -272,31 +272,10 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
 
 export type ParseResult = Result<ast.Program, ParseError>
 
-export function parse (input: string): ParseResult {
-  function getLineAndColumn (offset: number): Pick<Location, 'line' | 'column'> {
-    const lines = input.slice(0, offset).split(/(?:\r\n|\r|\n)/)
-    const line = lines.length
-    const column = (lines.at(-1)?.length ?? 0) + 1
-    return { line, column }
-  }
-
-  const lexerResult = lex(input)
-  if (!lexerResult.complete) {
-    const context = truncateString(input.slice(lexerResult.offset), ERROR_CONTEXT_LIMIT)
-
-    return {
-      complete: false,
-      error: new ParseError(`Unexpected input "${context}"`, {
-        offset: lexerResult.offset,
-        length: 1,
-        ...getLineAndColumn(lexerResult.offset)
-      })
-    }
-  }
-
+export function parse (tokens: Token[]): ParseResult {
   let value: ast.Program | undefined
   try {
-    value = p.tryParse(program_, lexerResult.tokens, {})
+    value = p.tryParse(program_, tokens, {})
   } catch (error) {
     if (error instanceof ParseError) {
       return { complete: false, error }

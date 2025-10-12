@@ -1,8 +1,8 @@
-import { CompileError } from '../error.js'
-import * as ast from '../ast.js'
+import { CompileError } from './error.js'
+import * as ast from '../parser/ast.js'
 import { areTypesEqual, formatType, type TypeInfo } from './values.js'
 import { getDefaultFunctions, type FunctionDefinition } from './functions.js'
-import type { Location } from '../location.js'
+import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
 
 interface Context {
@@ -29,7 +29,7 @@ export function check (program: ast.Program): readonly CompileError[] {
   return [...assignmentResults, ...trackResults]
 }
 
-function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location: Location): readonly CompileError[] {
+function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location: SourceLocation): readonly CompileError[] {
   if (!areTypesEqual(expected, actual)) {
     return [new CompileError(`Expected type ${formatType(expected)}, got ${formatType(actual)}`, location)]
   }
@@ -193,7 +193,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
-function checkBinaryExpression (operator: ast.BinaryOperator, left: TypeInfo, right: TypeInfo, location: Location): Checked<TypeInfo> {
+function checkBinaryExpression (operator: ast.BinaryOperator, left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
   switch (operator) {
     case '+':
       return checkPlus(left, right, location)
@@ -206,7 +206,7 @@ function checkBinaryExpression (operator: ast.BinaryOperator, left: TypeInfo, ri
   }
 }
 
-function checkPlus (left: TypeInfo, right: TypeInfo, location: Location): Checked<TypeInfo> {
+function checkPlus (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
   if (left.type === 'String' && right.type === 'String') {
     return { errors: [], result: left }
   }
@@ -222,7 +222,7 @@ function checkPlus (left: TypeInfo, right: TypeInfo, location: Location): Checke
   return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
 }
 
-function checkMinus (left: TypeInfo, right: TypeInfo, location: Location): Checked<TypeInfo> {
+function checkMinus (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
   if (left.type === 'Number' && right.type === 'Number' && left.unit === right.unit) {
     return { errors: [], result: left }
   }
@@ -230,7 +230,7 @@ function checkMinus (left: TypeInfo, right: TypeInfo, location: Location): Check
   return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
 }
 
-function checkMultiply (left: TypeInfo, right: TypeInfo, location: Location): Checked<TypeInfo> {
+function checkMultiply (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
   if (left.type === 'Number' && right.type === 'Number' && (left.unit == null || right.unit == null)) {
     return { errors: [], result: { type: 'Number', unit: left.unit ?? right.unit } }
   }
@@ -242,7 +242,7 @@ function checkMultiply (left: TypeInfo, right: TypeInfo, location: Location): Ch
   return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
 }
 
-function checkDivide (left: TypeInfo, right: TypeInfo, location: Location): Checked<TypeInfo> {
+function checkDivide (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
   if (left.type === 'Number' && right.type === 'Number') {
     if (left.unit === right.unit) {
       return { errors: [], result: { type: 'Number', unit: undefined } }

@@ -2,12 +2,13 @@ import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 're
 import { Header } from './components/Header.js'
 import { createAudioEngine } from '../core/audio.js'
 import { Editor } from './components/Editor.js'
-import { parse } from '../language/parser.js'
+import { parse } from '../language/parser/parser.js'
 import { Footer, type EditorLocation } from './components/Footer.js'
 import { compile, type CompileOptions } from '../language/compiler/compiler.js'
 import { BrowserLocalStorage } from '../editor/storage.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '../editor/state.js'
 import { demoCode } from './demo.js'
+import { lex } from '../language/lexer/lexer.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -46,18 +47,28 @@ export const App: FunctionComponent = () => {
     storage.save({ code, settings: { volume } })
   }, [code, volume])
 
-  // Parse and compile code
-  const parseResult = useMemo(() => parse(code), [code])
-  const compileResult = useMemo(() => {
-    if (!parseResult.complete) {
-      return undefined
+  // Lex, parse, and compile code
+
+  const lexResult = useMemo(() => lex(code), [code])
+
+  const parseResult = useMemo(() => {
+    if (lexResult.complete) {
+      return parse(lexResult.value)
     }
-    return compile(parseResult.value, compileOptions)
+  }, [lexResult])
+
+  const compileResult = useMemo(() => {
+    if (parseResult?.complete === true) {
+      return compile(parseResult.value, compileOptions)
+    }
   }, [parseResult])
 
   // Collect errors from parsing and compiling
   const errors = useMemo(() => {
-    if (!parseResult.complete) {
+    if (!lexResult.complete) {
+      return [lexResult.error]
+    }
+    if (parseResult?.complete === false) {
       return [parseResult.error]
     }
     if (compileResult?.complete === false) {
