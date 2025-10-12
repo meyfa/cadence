@@ -1,5 +1,5 @@
 import type { Instrument, InstrumentId } from '../../core/program.js'
-import { CompileError } from '../error.js'
+import { CompileError } from './error.js'
 import { formatType, makeInstrument, typeOf, type TypeInfo, type Value, type ValueForType } from './values.js'
 
 export interface FunctionDefinition {

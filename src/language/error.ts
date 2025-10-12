@@ -1,4 +1,4 @@
-import type { Location } from './location.js'
+import type { SourceLocation } from './location.js'
 
 export function truncateString (str: string, maxLength: number): string {
   if (str.length <= maxLength) {
@@ -18,7 +18,7 @@ export interface SuccessResult<TValue> {
   readonly value: TValue
 }
 
-export type Result<TValue, TError> = ErrorResult<TError> | SuccessResult<TValue>
+export type Result<TValue, TError> = SuccessResult<TValue> | ErrorResult<TError>
 
 export class CompoundError<TError extends Error> extends Error {
   readonly errors: readonly TError[]
@@ -30,22 +30,12 @@ export class CompoundError<TError extends Error> extends Error {
   }
 }
 
-export class ParseError extends Error {
-  location?: Location
+export abstract class LocationError extends Error {
+  readonly location?: SourceLocation
 
-  constructor (message: string, location?: Location) {
+  constructor (message: string, location?: SourceLocation) {
     super(message)
-    this.name = 'ParseError'
-    this.location = location
-  }
-}
-
-export class CompileError extends Error {
-  location?: Location
-
-  constructor (message: string, location?: Location) {
-    super(message)
-    this.name = 'CompileError'
+    this.name = 'LocationError'
     this.location = location
   }
 }

@@ -1,10 +1,11 @@
 import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
-import type { Location } from '../language/location.js'
-import { parse } from '../language/parser.js'
+import type { SourceLocation } from '../language/location.js'
+import { parse } from '../language/parser/parser.js'
 import { check } from '../language/compiler/compiler.js'
+import { lex } from '../language/lexer/lexer.js'
 
-function convertError (message: string, location: Location | undefined): Diagnostic {
+function convertError (message: string, location: SourceLocation | undefined): Diagnostic {
   return {
     from: location?.offset ?? 0,
     to: (location?.offset ?? 0) + (location?.length ?? 0),
@@ -24,7 +25,12 @@ export function cadenceLinter (view: EditorView): Diagnostic[] {
   const input = view.state.doc.sliceString(0)
 
   try {
-    const parsed = parse(input)
+    const tokens = lex(input)
+    if (!tokens.complete) {
+      return [convertError(tokens.error.message, tokens.error.location)]
+    }
+
+    const parsed = parse(tokens.value)
     if (!parsed.complete) {
       return [convertError(parsed.error.message, parsed.error.location)]
     }

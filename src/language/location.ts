@@ -1,7 +1,7 @@
 import type { Token } from 'leac'
-import * as ast from './ast.js'
+import * as ast from './parser/ast.js'
 
-export interface Location {
+export interface SourceLocation {
   readonly offset: number
   readonly length: number
   readonly line: number
@@ -10,11 +10,11 @@ export interface Location {
 
 type Locatable = Token | ast.ASTNode
 
-export function getEmptyLocation (): Location {
+export function getEmptySourceLocation (): SourceLocation {
   return { offset: 0, length: 0, line: 1, column: 1 }
 }
 
-export function locate (item: Locatable): Location {
+export function getSourceLocation (item: Locatable): SourceLocation {
   if ('location' in item) {
     return item.location
   }
@@ -27,12 +27,12 @@ export function locate (item: Locatable): Location {
   }
 }
 
-export function combineLocations (...items: Locatable[]): Location {
+export function combineSourceLocations (...items: Locatable[]): SourceLocation {
   if (items.length === 0) {
-    return getEmptyLocation()
+    return getEmptySourceLocation()
   }
 
-  const locs = items.map(locate)
+  const locs = items.map(getSourceLocation)
   const first = locs.reduce((min, loc) => (loc.offset < min.offset ? loc : min), locs[0])
   const end = Math.max(...locs.map((loc) => loc.offset + loc.length))
 

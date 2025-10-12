@@ -1,8 +1,9 @@
-import * as ast from '../ast.js'
-import { CompileError, CompoundError, type Result } from '../error.js'
+import * as ast from '../parser/ast.js'
+import { CompoundError, type Result } from '../error.js'
 import type { Program } from '../../core/program.js'
 import { check as checkerCheck } from './checker.js'
 import { generate, type GenerateOptions } from './generator.js'
+import type { CompileError } from './error.js'
 
 export type CompileOptions = GenerateOptions
 export type CompileResult = Result<Program, CompoundError<CompileError>>

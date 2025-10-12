@@ -1,8 +1,8 @@
-import type { Location } from './location.js'
+import type { SourceLocation } from '../location.js'
 
 export interface ASTNode {
   readonly type: string
-  readonly location: Location
+  readonly location: SourceLocation
 }
 
 // Basic Types
@@ -102,7 +102,7 @@ export interface Program extends ASTNode {
 
 export function make<T extends keyof NodeByType> (
   type: T,
-  location: Location,
+  location: SourceLocation,
   props: Omit<NodeByType[T], 'type' | 'location'>
 ): NodeByType[T] {
   return { type, location, ...(props as any) } as NodeByType[T]

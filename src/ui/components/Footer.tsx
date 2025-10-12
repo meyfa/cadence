@@ -1,6 +1,6 @@
 import type { FunctionComponent } from 'react'
 import clsx from 'clsx'
-import type { CompileError, ParseError } from '../../language/error.js'
+import type { LocationError } from '../../language/error.js'
 
 export interface EditorLocation {
   readonly line: number
@@ -8,7 +8,7 @@ export interface EditorLocation {
 }
 
 export const Footer: FunctionComponent<{
-  errors: ReadonlyArray<ParseError | CompileError>
+  errors: readonly LocationError[]
   editorLocation?: EditorLocation
 }> = ({ errors, editorLocation }) => {
   return (
@@ -29,7 +29,7 @@ export const Footer: FunctionComponent<{
   )
 }
 
-function formatError (error: ParseError | CompileError): string {
+function formatError (error: LocationError): string {
   if (error.location == null) {
     return error.message
   }

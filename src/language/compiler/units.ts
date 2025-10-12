@@ -1,5 +1,5 @@
 import type { Unit } from '../../core/program.js'
-import * as ast from '../ast.js'
+import * as ast from '../parser/ast.js'
 import { makeNumber, type NumberValue } from './values.js'
 
 interface Constants {
