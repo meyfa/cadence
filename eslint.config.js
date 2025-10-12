@@ -58,7 +58,17 @@ export default defineConfig([
       'react/jsx-max-props-per-line': 'off',
       'react/jsx-props-no-multi-spaces': 'off',
       'react/jsx-tag-spacing': 'off',
-      'react/jsx-wrap-multilines': 'off'
+      'react/jsx-wrap-multilines': 'off',
+
+      // node:test
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        {
+          allowForKnownSafeCalls: [
+            { from: 'package', name: ['describe', 'it', 'suite', 'test'], package: 'node:test' }
+          ]
+        }
+      ]
     }
   }
 ])
