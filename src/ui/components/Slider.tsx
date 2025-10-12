@@ -12,6 +12,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
       min={min}
       max={max}
       value={value}
+      step='any'
       onChange={(event) => onChange(event.currentTarget.valueAsNumber)}
       className='w-32'
     />
