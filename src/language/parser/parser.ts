@@ -144,14 +144,35 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   value_
 )
 
-// primary ((*|/) primary)*
+const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+  p.ab(
+    literal('-'),
+    p.recursive(() => unaryExpression_),
+    (op, expr) => {
+      // If it's a numeric literal, fold to a negative literal
+      if (expr.type === 'NumberLiteral') {
+        return ast.make('NumberLiteral', combineSourceLocations(op, expr), {
+          value: -expr.value,
+          unit: expr.unit
+        })
+      }
+
+      // Otherwise, desugar to (0 - expr) to reuse existing binary handling
+      const zero = ast.make('NumberLiteral', getSourceLocation(op), { value: 0 })
+      return makeBinaryExpression(op, zero, expr)
+    }
+  ),
+  primary_
+)
+
+// unary ((*|/) unary)*
 const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
-  primary_,
+  unaryExpression_,
   p.map(
     p.satisfy((t) => t.name === '*' || t.name === '/'),
     (op) => makeBinaryExpression.bind(undefined, op)
   ),
-  primary_
+  unaryExpression_
 )
 
 // multiplicative ((+|-) multiplicative)*

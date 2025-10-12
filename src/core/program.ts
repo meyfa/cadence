@@ -37,6 +37,7 @@ export type InstrumentId = Id<'Instrument'>
 export interface Instrument {
   readonly id: InstrumentId
   readonly sampleUrl: string
+  readonly gain?: Numeric<'db'>
 }
 
 // Top-level type
