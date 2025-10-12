@@ -23,7 +23,7 @@ export const Header: FunctionComponent<{
       <div className='grow flex justify-end items-center gap-4'>
         <label className='flex gap-2'>
           Volume
-          <Slider min={0} max={100} value={volume} onChange={onVolumeChange} />
+          <Slider min={0} max={1} value={volume} onChange={onVolumeChange} />
         </label>
 
         <Button onClick={onPlayPause}>

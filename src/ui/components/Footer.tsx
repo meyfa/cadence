@@ -2,12 +2,14 @@ import type { FunctionComponent } from 'react'
 import clsx from 'clsx'
 import type { CompileError, ParseError } from '../../language/error.js'
 
+export interface EditorLocation {
+  readonly line: number
+  readonly column: number
+}
+
 export const Footer: FunctionComponent<{
   errors: ReadonlyArray<ParseError | CompileError>
-  editorLocation?: {
-    line: number
-    column: number
-  }
+  editorLocation?: EditorLocation
 }> = ({ errors, editorLocation }) => {
   return (
     <footer className='flex p-2 gap-2 text-sm text-gray-400 items-start'>

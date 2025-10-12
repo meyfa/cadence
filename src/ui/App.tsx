@@ -3,8 +3,11 @@ import { Header } from './components/Header.js'
 import { createAudioEngine } from '../core/audio.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser.js'
-import { Footer } from './components/Footer.js'
+import { Footer, type EditorLocation } from './components/Footer.js'
 import { compile, type CompileOptions } from '../language/compiler/compiler.js'
+import { BrowserLocalStorage } from '../editor/storage.js'
+import { parseEditorState, serializeEditorState, type CadenceEditorState } from '../editor/state.js'
+import { demoCode } from './demo.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -16,104 +19,82 @@ const compileOptions: CompileOptions = {
   }
 }
 
-const initialCode = `
-# Press Play to start the demo.
-
-# Define samples to use in the track.
-
-sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/"
-
-kick  = sample(url: sample_collection + "house/000_BD.wav")
-snare = sample(url: sample_collection + "808sd/SD0010.WAV")
-hat   = sample(url: sample_collection + "808oh/OH00.WAV")
-tom   = sample(url: sample_collection + "808mt/MT10.WAV")
-
-# Define patterns using a simple step sequencer syntax where 'x' is a hit and '-' is a rest.
-# Patterns are 16th notes by default, and can be any length.
-
-kick_pattern  = [x-x- x--- x--- x---]
-snare_pattern = [---- x---]
-
-track {
-  tempo: 128 bpm
-
-  # Sections play in sequence.
-  # Patterns will loop to fill the section length, specified in bars or beats.
-
-  section intro for 4 bars {
-    kick  << kick_pattern
-    snare << snare_pattern
-  }
-
-  section main for 8 bars {
-    kick  << kick_pattern
-    snare << snare_pattern
-    hat   << [--x- --x- --x- --x-]
-    tom   << [---- -x-- ---- ---x]
-  }
-
-  section outro for 4 bars {
-    snare << snare_pattern
-    tom   << [---- -x-- ---- ---x]
+const defaultState: CadenceEditorState = {
+  code: demoCode,
+  settings: {
+    volume: 0.5
   }
 }
-`.trimStart()
 
-const demo = createAudioEngine()
+const storage = new BrowserLocalStorage<CadenceEditorState>('cadence-editor', serializeEditorState, parseEditorState)
+const storedState = storage.load()
+
+const initialState = {
+  ...defaultState,
+  ...storedState,
+  code: storedState?.code == null || storedState.code.trim() === '' ? demoCode : storedState.code
+}
+
+const engine = createAudioEngine()
 
 export const App: FunctionComponent = () => {
-  const [code, setCode] = useState(initialCode)
-  const [editorLocation, setEditorLocation] = useState<{ line: number, column: number } | undefined>()
+  const [code, setCode] = useState(initialState.code)
+  const [volume, setVolume] = useState(initialState.settings.volume)
 
+  // Synchronize state with local storage
+  useEffect(() => {
+    storage.save({ code, settings: { volume } })
+  }, [code, volume])
+
+  // Parse and compile code
   const parseResult = useMemo(() => parse(code), [code])
-
   const compileResult = useMemo(() => {
     if (!parseResult.complete) {
       return undefined
     }
-
     return compile(parseResult.value, compileOptions)
   }, [parseResult])
 
+  // Collect errors from parsing and compiling
   const errors = useMemo(() => {
     if (!parseResult.complete) {
       return [parseResult.error]
     }
-
     if (compileResult?.complete === false) {
       return compileResult.error.errors
     }
-
     return []
   }, [parseResult, compileResult])
 
+  // Update audio engine with compiled program
   useEffect(() => {
     if (compileResult?.complete === true) {
-      demo.setProgram(compileResult.value)
+      engine.setProgram(compileResult.value)
     }
   }, [compileResult])
 
+  // Playback state
   const [playing, setPlaying] = useState(false)
-  const [volume, setVolume] = useState(50)
 
   useEffect(() => {
     if (playing) {
-      demo.play()
+      engine.play()
     } else {
-      demo.stop()
+      engine.stop()
     }
   }, [playing])
 
   const update = useCallback(() => {
-    demo.stop()
+    engine.stop()
     if (playing) {
-      demo.play()
+      engine.play()
     }
   }, [playing])
 
-  useEffect(() => {
-    demo.setVolume(volume / 100)
-  }, [volume])
+  useEffect(() => engine.setVolume(volume), [volume])
+
+  // Track editor cursor location
+  const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
 
   return (
     <div className='flex flex-col h-screen'>
