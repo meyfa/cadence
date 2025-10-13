@@ -13,6 +13,8 @@ export interface AudioEngine {
   readonly playing: Observable<boolean>
   readonly play: (program: Program) => void
   readonly stop: () => void
+
+  readonly progress: Observable<number>
 }
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
@@ -24,6 +26,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   })
 
   const playing = new MutableObservable(false)
+  const progress = new MutableObservable(0)
   let session: AudioSession | undefined
 
   const play = (program: Program) => {
@@ -33,12 +36,17 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
 
     const thisSession = session = createAudioSession(program)
 
-    const unsubscribe = thisSession.ended.subscribe((ended) => {
+    const unsubscribeProgress = thisSession.progress.subscribe((p) => {
+      progress.set(p)
+    })
+
+    const unsubscribeEnded = thisSession.ended.subscribe((ended) => {
       if (ended && session === thisSession) {
         session.dispose()
         session = undefined
         playing.set(false)
-        unsubscribe()
+        unsubscribeProgress()
+        unsubscribeEnded()
       }
     })
 
@@ -52,5 +60,5 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     playing.set(false)
   }
 
-  return { volume, playing, play, stop }
+  return { volume, playing, play, stop, progress }
 }

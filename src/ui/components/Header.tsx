@@ -9,26 +9,35 @@ export const Header: FunctionComponent<{
   onPlayPause: () => void
   volume: number
   onVolumeChange: (volume: number) => void
-}> = ({ playing, onPlayPause, volume, onVolumeChange }) => {
+  progress?: number
+}> = ({ playing, onPlayPause, volume, onVolumeChange, progress }) => {
   return (
     <header className={clsx(
-      'w-full border-b border-b-gray-700 flex flex-col items-center px-4 py-2 gap-2',
-      'sm:flex-row sm:gap-4'
+      'w-full border-b border-b-gray-700 flex flex-wrap items-center px-4 py-2 gap-2'
     )}
     >
-      <h1 className='text-lg font-semibold'>
+      <div className='text-lg font-semibold mr-2'>
         Cadence
-      </h1>
-
-      <div className='grow flex items-center gap-4'>
-        <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
-          {playing ? <StopOutlined /> : <PlayArrowOutlined />}
-        </Button>
-
-        <Slider label='Volume' min={0} max={1} value={volume} onChange={onVolumeChange} step={0.02}>
-          {volume < 0.1 ? <VolumeOffOutlined /> : volume > 0.5 ? <VolumeUpOutlined /> : <VolumeDownOutlined />}
-        </Slider>
       </div>
+
+      <Slider label='Volume' min={0} max={1} value={volume} onChange={onVolumeChange} step={0.02}>
+        {volume < 0.1 ? <VolumeOffOutlined /> : volume > 0.5 ? <VolumeUpOutlined /> : <VolumeDownOutlined />}
+      </Slider>
+
+      <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
+        {playing ? <StopOutlined /> : <PlayArrowOutlined />}
+      </Button>
+
+      {progress != null && (
+        <div title='Progress' className='grow min-w-24 max-w-64 flex items-center h-8'>
+          <div className='w-full h-2 bg-gray-600 rounded-xs overflow-hidden'>
+            <div
+              className='h-full bg-white transition-all duration-100 ease-linear'
+              style={{ width: `${(progress * 100).toFixed(2)}%` }}
+            />
+          </div>
+        </div>
+      )}
     </header>
   )
 }

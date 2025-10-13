@@ -1,4 +1,4 @@
-import { Sequence, getTransport, Player } from 'tone'
+import { Sequence, Player } from 'tone'
 import { getSilentPattern, withPatternLength } from '../pattern.js'
 import { convertPitchToPlaybackRate } from '../midi.js'
 import { isPitch, type Instrument, type InstrumentId, type Program, type Step } from '../program.js'
@@ -66,18 +66,5 @@ function createCallback (instrument: Instrument, player: Player): (time: number,
     player.playbackRate = isPitch(note) ? convertPitchToPlaybackRate(note, rootNote) : 1
 
     player.start(time, undefined, instrument.length?.value)
-  }
-}
-
-export function startSequences (sequences: Map<InstrumentId, Sequence<Step>>, onDone?: () => void): void {
-  let maxLength = 0
-
-  for (const sequence of sequences.values()) {
-    maxLength = Math.max(maxLength, sequence.length * sequence.subdivision)
-    sequence.start()
-  }
-
-  if (onDone != null) {
-    getTransport().scheduleOnce(() => onDone(), `+${maxLength}`)
   }
 }
