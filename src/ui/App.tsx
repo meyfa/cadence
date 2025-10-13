@@ -46,6 +46,7 @@ export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialState.code)
   const volume = useObservable(engine.volume)
   const playing = useObservable(engine.playing)
+  const progress = useObservable(engine.progress)
 
   // Synchronize state with local storage
   useEffect(() => {
@@ -102,6 +103,7 @@ export const App: FunctionComponent = () => {
         onPlayPause={onPlayPause}
         volume={volume}
         onVolumeChange={(volume) => engine.volume.set(volume)}
+        progress={progress}
       />
 
       <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
