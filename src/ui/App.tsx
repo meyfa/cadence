@@ -1,6 +1,6 @@
-import { FunctionComponent, useEffect, useMemo, useState } from 'react'
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header.js'
-import { createAudioEngine } from '../core/audio.js'
+import { createAudioEngine } from '../core/audio/engine.js'
 import { Editor } from './components/Editor.js'
 import { parse } from '../language/parser/parser.js'
 import { Footer } from './components/Footer.js'
@@ -68,7 +68,6 @@ export const App: FunctionComponent = () => {
     }
   }, [parseResult])
 
-  // Collect errors from parsing and compiling
   const errors = useMemo(() => {
     if (!lexResult.complete) {
       return [lexResult.error]
@@ -82,12 +81,16 @@ export const App: FunctionComponent = () => {
     return []
   }, [parseResult, compileResult])
 
-  // Update audio engine with compiled program
-  useEffect(() => {
-    if (compileResult?.complete === true) {
-      engine.setProgram(compileResult.value)
+  const program = compileResult?.complete === true ? compileResult.value : undefined
+
+  // Handle play/pause
+  const onPlayPause = useCallback(() => {
+    if (playing) {
+      engine.stop()
+    } else if (program != null) {
+      engine.play(program)
     }
-  }, [compileResult])
+  }, [playing, program])
 
   // Track editor cursor location
   const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
@@ -96,9 +99,9 @@ export const App: FunctionComponent = () => {
     <div className='flex flex-col h-screen'>
       <Header
         playing={playing}
-        onPlayPause={() => playing ? engine.stop() : engine.play()}
+        onPlayPause={onPlayPause}
         volume={volume}
-        onVolumeChange={(volume) => engine.setVolume(volume)}
+        onVolumeChange={(volume) => engine.volume.set(volume)}
       />
 
       <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
