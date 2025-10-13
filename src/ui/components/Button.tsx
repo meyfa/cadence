@@ -4,7 +4,8 @@ import { FunctionComponent, PropsWithChildren } from 'react'
 export const Button: FunctionComponent<PropsWithChildren<{
   onClick?: () => void
   disabled?: boolean
-}>> = ({ children, onClick, disabled }) => {
+  title?: string
+}>> = ({ children, onClick, disabled, title }) => {
   return (
     <button
       type='button'
@@ -13,8 +14,9 @@ export const Button: FunctionComponent<PropsWithChildren<{
         onClick?.()
       }}
       disabled={disabled}
+      title={title}
       className={clsx(
-        'px-4 py-1 bg-gray-600 text-white rounded cursor-pointer outline-none',
+        'px-3 py-1 h-10 leading-none bg-gray-600 text-white rounded cursor-pointer outline-none',
         'enabled:hocus:bg-gray-500',
         'disabled:cursor-default disabled:bg-gray-700 disabled:text-gray-400'
       )}
