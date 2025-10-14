@@ -86,6 +86,7 @@ export interface SectionStatement extends ASTNode {
   readonly type: 'SectionStatement'
   readonly name: Identifier
   readonly length: Expression
+  readonly properties: readonly Property[]
   readonly routings: readonly Routing[]
 }
 

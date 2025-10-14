@@ -10,3 +10,7 @@ export const trackSchema = definePropertySchema([
     required: false
   }
 ])
+
+export const sectionSchema = definePropertySchema([
+  // no properties defined yet
+])

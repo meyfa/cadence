@@ -273,11 +273,16 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
   combine2(keyword('for'), expression_),
   combine3(
     literal('{'),
-    p.many(routing_),
+    p.many(p.eitherOr(property_, routing_)),
     expectLiteral('}')
   ),
-  ([_section, name], [_for, length], [_lp, routings, _rp]) => {
-    return ast.make('SectionStatement', combineSourceLocations(_section, _rp), { name, length, routings })
+  ([_section, name], [_for, length], [_lp, children, _rp]) => {
+    return ast.make('SectionStatement', combineSourceLocations(_section, _rp), {
+      name,
+      length,
+      properties: children.filter((c) => c.type === 'Property'),
+      routings: children.filter((c) => c.type === 'Routing')
+    })
   }
 )
 

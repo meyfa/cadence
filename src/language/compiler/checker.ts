@@ -5,7 +5,7 @@ import { getDefaultFunctions } from './functions.js'
 import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { trackSchema } from './common.js'
+import { sectionSchema, trackSchema } from './common.js'
 
 interface Context {
   // Intentionally mutable to allow building up during checking
@@ -103,6 +103,9 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   if (lengthCheck.result != null) {
     errors.push(...checkTypeEquality({ type: 'Number', unit: 'steps' }, lengthCheck.result, section.length.location))
   }
+
+  const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.location)
+  errors.push(...propertiesCheck.errors)
 
   const seenRoutings = new Set<string>()
 
