@@ -3,6 +3,7 @@ import { MutableObservable, type Observable } from '../observable.js'
 import type { Program } from '../program.js'
 import { createPlayers } from './players.js'
 import { createSequences } from './sequences.js'
+import { createBuses } from './buses.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
@@ -16,8 +17,9 @@ export interface AudioSession {
 export function createAudioSession (program: Program): AudioSession {
   const totalDuration = calculateTotalDuration(program)
 
-  const [players, playersLoaded] = createPlayers(program)
-  const sequences = createSequences(players, program)
+  const buses = createBuses(program)
+  const [players, playersLoaded] = createPlayers(program, buses)
+  const sequences = createSequences(program, players)
 
   let disposed = false
 

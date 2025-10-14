@@ -33,9 +33,10 @@ export function check (program: ast.Program): readonly CompileError[] {
   ]
 }
 
-function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location?: SourceLocation): readonly CompileError[] {
-  if (!areTypesEqual(expected, actual)) {
-    return [new CompileError(`Expected type ${formatType(expected)}, got ${formatType(actual)}`, location)]
+function checkType (options: readonly TypeInfo[], actual: TypeInfo, location?: SourceLocation): readonly CompileError[] {
+  if (!options.some((option) => areTypesEqual(option, actual))) {
+    const optionsText = options.map((o) => formatType(o)).join(' or ')
+    return [new CompileError(`Expected type ${optionsText}, got ${formatType(actual)}`, location)]
   }
 
   return []
@@ -104,14 +105,33 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   errors.push(...lengthCheck.errors)
 
   if (lengthCheck.result != null) {
-    errors.push(...checkTypeEquality({ type: 'Number', unit: 'steps' }, lengthCheck.result, section.length.location))
+    errors.push(...checkType([{ type: 'Number', unit: 'steps' }], lengthCheck.result, section.length.location))
   }
 
   const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.location)
   errors.push(...propertiesCheck.errors)
 
   for (const routing of section.routings) {
-    errors.push(...checkRouting(context, routing))
+    errors.push(...checkInstrumentRouting(context, routing))
+  }
+
+  return errors
+}
+
+function checkInstrumentRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const destination = context.resolutions.get(routing.destination.name)
+  if (destination == null) {
+    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
+  } else {
+    errors.push(...checkType([{ type: 'Instrument' }], destination, routing.destination.location))
+  }
+
+  const sourceCheck = checkExpression(context, routing.source)
+  errors.push(...sourceCheck.errors)
+  if (sourceCheck.result != null) {
+    errors.push(...checkType([{ type: 'Pattern' }], sourceCheck.result, routing.source.location))
   }
 
   return errors
@@ -131,14 +151,13 @@ function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): 
 }
 
 function checkMixer (context: Context, mixer: ast.MixerStatement): readonly CompileError[] {
+  // Mixer has a local scope
+  const mixerContext = { ...context, resolutions: new Map(context.resolutions) }
+
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(context, mixer.properties, mixerSchema, mixer.location)
+  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.location)
   errors.push(...propertiesCheck.errors)
-
-  for (const routing of mixer.routings) {
-    errors.push(...checkRouting(context, routing))
-  }
 
   const seenBuses = new Set<string>()
 
@@ -146,11 +165,21 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     if (seenBuses.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.location))
     }
-    if (context.resolutions.has(bus.name.name)) {
+    seenBuses.add(bus.name.name)
+
+    if (mixerContext.resolutions.has(bus.name.name)) {
       errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.location))
     }
-    seenBuses.add(bus.name.name)
-    errors.push(...checkBus(context, bus))
+
+    // Reserve the name in the local scope
+    mixerContext.resolutions.set(bus.name.name, { type: 'Bus' })
+
+    errors.push(...checkBus(mixerContext, bus))
+  }
+
+  // Process routings last so that all buses are known
+  for (const routing of mixer.routings) {
+    errors.push(...checkBusRouting(mixerContext, routing))
   }
 
   return errors
@@ -165,20 +194,21 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
   return errors
 }
 
-function checkRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
+function checkBusRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const instrument = context.resolutions.get(routing.instrument.name)
-  if (instrument == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.instrument.name}"`, routing.instrument.location))
+  const destination = context.resolutions.get(routing.destination.name)
+  if (destination == null) {
+    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
   } else {
-    errors.push(...checkTypeEquality({ type: 'Instrument' }, instrument, routing.instrument.location))
+    errors.push(...checkType([{ type: 'Bus' }], destination, routing.destination.location))
   }
 
-  const patternCheck = checkExpression(context, routing.pattern)
-  errors.push(...patternCheck.errors)
-  if (patternCheck.result != null) {
-    errors.push(...checkTypeEquality({ type: 'Pattern' }, patternCheck.result, routing.pattern.location))
+  const sourceCheck = checkExpression(context, routing.source)
+  errors.push(...sourceCheck.errors)
+  if (sourceCheck.result != null) {
+    const options = [{ type: 'Instrument' }, { type: 'Bus' }] as const
+    errors.push(...checkType(options, sourceCheck.result, routing.source.location))
   }
 
   return errors
@@ -321,7 +351,7 @@ function checkProperties (context: Context, properties: readonly ast.Property[],
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result != null) {
-      errors.push(...checkTypeEquality(spec.type, expressionCheck.result, property.value.location))
+      errors.push(...checkType([spec.type], expressionCheck.result, property.value.location))
       result.set(property.key.name, expressionCheck.result)
     }
   }

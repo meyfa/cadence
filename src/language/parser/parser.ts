@@ -263,8 +263,8 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   identifier_,
   literal('<<'),
   expression_,
-  (instrument, _arrow, pattern) => {
-    return ast.make('Routing', combineSourceLocations(instrument, pattern), { instrument, pattern })
+  (destination, _arrow, source) => {
+    return ast.make('Routing', combineSourceLocations(destination, source), { destination, source })
   }
 )
 

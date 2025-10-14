@@ -7,7 +7,7 @@ export const DEFAULT_ROOT_NOTE = 'C5' as const
 
 export type SequenceWithOffset = [sequence: Sequence<Step>, offset: number]
 
-export function createSequences (players: Map<InstrumentId, Player>, program: Program): readonly SequenceWithOffset[] {
+export function createSequences (program: Program, players: Map<InstrumentId, Player>): readonly SequenceWithOffset[] {
   const subdivision = `${program.beatsPerBar * program.stepsPerBeat}n`
 
   const sequences: SequenceWithOffset[] = []
@@ -20,15 +20,15 @@ export function createSequences (players: Map<InstrumentId, Player>, program: Pr
     currentOffsetSteps += section.length.value
 
     for (const routing of section.routings) {
-      const instrument = program.instruments.get(routing.instrumentId)
-      const player = players.get(routing.instrumentId)
+      const instrument = program.instruments.get(routing.destination.id)
+      const player = players.get(routing.destination.id)
 
       if (instrument == null || player == null) {
         continue
       }
 
       // For some reason, Tone.js wants a mutable events array.
-      const events = [...withPatternLength(routing.pattern, section.length.value)]
+      const events = [...withPatternLength(routing.source.value, section.length.value)]
       const sequence = new Sequence<Step>({
         callback: createCallback(instrument, player),
         events,
