@@ -14,3 +14,11 @@ export const trackSchema = definePropertySchema([
 export const sectionSchema = definePropertySchema([
   // no properties defined yet
 ])
+
+export const mixerSchema = definePropertySchema([
+  // no properties defined yet
+])
+
+export const busSchema = definePropertySchema([
+  // no properties defined yet
+])
