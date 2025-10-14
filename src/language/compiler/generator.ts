@@ -3,10 +3,10 @@ import { makeNumeric, type Instrument, type InstrumentId, type Numeric, type Pro
 import * as ast from '../parser/ast.js'
 import { trackSchema } from './common.js'
 import { CompileError } from './error.js'
-import { getDefaultFunctions, type FunctionDefinition } from './functions.js'
+import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { asInstrument, asNumber, asPattern, makeNumber, makePattern, makeString, type Value } from './values.js'
+import { asFunction, asInstrument, asNumber, asPattern, makeNumber, makePattern, makeString, type Value } from './values.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -21,7 +21,6 @@ export interface GenerateOptions {
 
 interface Context {
   readonly options: GenerateOptions
-  readonly functions: ReadonlyMap<string, FunctionDefinition>
 
   // Intentionally mutable to allow building up during generation
   readonly resolutions: Map<string, Value>
@@ -35,8 +34,7 @@ interface Context {
 export function generate (program: ast.Program, options: GenerateOptions): Program {
   const context: Context = {
     options,
-    functions: getDefaultFunctions(),
-    resolutions: new Map(),
+    resolutions: new Map(getDefaultFunctions()),
     instruments: new Map()
   }
 
@@ -132,9 +130,9 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return nonNull(context.resolutions.get(expression.name))
 
     case 'Call': {
-      const func = nonNull(context.functions.get(expression.callee.name))
-      const args = resolveProperties(context, expression.arguments, func.arguments)
-      return func.invoke(context, args)
+      const func = asFunction(nonNull(context.resolutions.get(expression.callee.name)))
+      const args = resolveProperties(context, expression.arguments, func.value.arguments)
+      return func.value.invoke(context, args)
     }
 
     case 'BinaryExpression': {

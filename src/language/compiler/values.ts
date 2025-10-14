@@ -1,5 +1,7 @@
 import type { Instrument, Numeric, Pattern, Unit } from '../../core/program.js'
 import { CompileError } from './error.js'
+import type { FunctionDefinition } from './functions.js'
+import type { PropertySchema } from './schema.js'
 
 export interface AnyValue {
   readonly type: string
@@ -21,35 +23,59 @@ export interface PatternValue extends AnyValue {
   readonly value: Pattern
 }
 
+export interface FunctionValue<S extends PropertySchema = PropertySchema, R extends TypeInfo = TypeInfo> extends AnyValue {
+  readonly type: 'Function'
+  readonly value: FunctionDefinition<S, R>
+}
+
 export interface InstrumentValue extends AnyValue {
   readonly type: 'Instrument'
   readonly value: Instrument
 }
 
-export type Value = StringValue | NumberValue | PatternValue | InstrumentValue
+export type Value = StringValue | NumberValue | PatternValue | FunctionValue | InstrumentValue
+
+// Type Information
 
 export type ValueType = Value['type']
+
+export interface TypeInfo {
+  readonly type: ValueType
+  readonly unit?: Unit
+  readonly schema?: PropertySchema
+  readonly returnType?: TypeInfo
+}
 
 export type ValueForType<T extends ValueType> =
   T extends 'String' ? StringValue
     : T extends 'Number' ? NumberValue
       : T extends 'Pattern' ? PatternValue
-        : T extends 'Instrument' ? InstrumentValue
-          : never
+        : T extends 'Function' ? FunctionValue
+          : T extends 'Instrument' ? InstrumentValue
+            : never
 
-export type Underlying<T extends ValueType> = ValueForType<T>['value']
-
-// Type Information
-
-export interface TypeInfo {
-  readonly type: ValueType
-  readonly unit?: Unit
-}
+export type ValueForTypeInfo<T extends TypeInfo> =
+  T['type'] extends 'Number'
+    ? NumberValue<T['unit']>
+    : T['type'] extends 'Function'
+      ? FunctionValue<T['schema'] extends PropertySchema ? T['schema'] : PropertySchema, T['returnType'] extends TypeInfo ? T['returnType'] : TypeInfo>
+      : ValueForType<T['type']>
 
 export function typeOf (value: Value): TypeInfo {
-  return value.type === 'Number'
-    ? { type: value.type, unit: value.value.unit }
-    : { type: value.type }
+  switch (value.type) {
+    case 'Number':
+      return { type: value.type, unit: value.value.unit }
+
+    case 'Function':
+      return {
+        type: value.type,
+        schema: value.value.arguments,
+        returnType: value.value.returnType
+      }
+
+    default:
+      return { type: value.type }
+  }
 }
 
 export function areTypesEqual (a: TypeInfo, b: TypeInfo): boolean {
@@ -64,7 +90,7 @@ export function formatType (type: TypeInfo): string {
 
 // Factory
 
-export function makeValue<T extends ValueType> (type: T, value: Underlying<T>): ValueForType<T> {
+export function makeValue<T extends ValueType> (type: T, value: ValueForType<T>['value']): ValueForType<T> {
   return { type, value } as ValueForType<T>
 }
 
@@ -72,12 +98,16 @@ export function makeString (value: string): StringValue {
   return makeValue('String', value)
 }
 
-export function makeNumber<U extends Unit> (unit: U, value: number): NumberValue<U> {
+export function makeNumber<const U extends Unit> (unit: U, value: number): NumberValue<U> {
   return makeValue('Number', { unit, value }) as NumberValue<U>
 }
 
 export function makePattern (value: Pattern): PatternValue {
   return makeValue('Pattern', value)
+}
+
+export function makeFunction<const S extends PropertySchema, const R extends TypeInfo> (value: FunctionDefinition<S, R>): FunctionValue<S, R> {
+  return makeValue('Function', value) as FunctionValue<S, R>
 }
 
 export function makeInstrument (value: Instrument): InstrumentValue {
@@ -107,6 +137,10 @@ export function asNumber<U extends Unit> (unit: U, value: Value): NumberValue<U>
 
 export function asPattern (value: Value): PatternValue {
   return asValueType('Pattern', value)
+}
+
+export function asFunction (value: Value): FunctionValue {
+  return asValueType('Function', value)
 }
 
 export function asInstrument (value: Value): InstrumentValue {

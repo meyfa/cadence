@@ -1,10 +1,10 @@
 import { isPitch, type Instrument, type InstrumentId } from '../../core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { makeInstrument, type TypeInfo, type Value } from './values.js'
+import { makeFunction, makeInstrument, type FunctionValue, type TypeInfo, type Value } from './values.js'
 
-export interface FunctionDefinition<S extends PropertySchema = PropertySchema> {
+export interface FunctionDefinition<S extends PropertySchema = PropertySchema, R extends TypeInfo = TypeInfo> {
   readonly arguments: S
-  readonly returnType: TypeInfo
+  readonly returnType: R
   readonly invoke: FunctionHandler<S>
 }
 
@@ -14,11 +14,7 @@ export interface FunctionContext {
   readonly instruments: Map<InstrumentId, Instrument>
 }
 
-export function defineFunction<const S extends PropertySchema> (def: FunctionDefinition<S>): typeof def {
-  return def
-}
-
-const sample = defineFunction({
+const sample = makeFunction({
   arguments: [
     { name: 'url', type: { type: 'String' }, required: true },
     { name: 'gain', type: { type: 'Number', unit: 'db' }, required: false },
@@ -46,8 +42,8 @@ const sample = defineFunction({
   }
 })
 
-export function getDefaultFunctions (): ReadonlyMap<string, FunctionDefinition> {
-  const functions = new Map<string, FunctionDefinition>()
+export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
+  const functions = new Map<string, FunctionValue>()
   functions.set('sample', sample)
   return functions
 }
