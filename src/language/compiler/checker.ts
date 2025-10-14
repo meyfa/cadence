@@ -1,15 +1,13 @@
 import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
-import { areTypesEqual, formatType, type TypeInfo } from './values.js'
-import { getDefaultFunctions, type FunctionDefinition } from './functions.js'
+import { areTypesEqual, formatType, typeOf, type TypeInfo } from './values.js'
+import { getDefaultFunctions } from './functions.js'
 import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
 import { trackSchema } from './common.js'
 
 interface Context {
-  readonly functions: ReadonlyMap<string, FunctionDefinition>
-
   // Intentionally mutable to allow building up during checking
   readonly resolutions: Map<string, TypeInfo>
 }
@@ -21,8 +19,7 @@ interface Checked<TValue> {
 
 export function check (program: ast.Program): readonly CompileError[] {
   const context: Context = {
-    functions: getDefaultFunctions(),
-    resolutions: new Map()
+    resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, typeOf(fn)]))
   }
 
   const assignmentResults = checkAssignments(context, program)
@@ -43,14 +40,15 @@ function checkAssignments (context: Context, program: ast.Program): readonly Com
   const errors: CompileError[] = []
 
   for (const assignment of program.assignments) {
-    if (context.resolutions.has(assignment.key.name)) {
-      errors.push(new CompileError(`Duplicate assignment to "${assignment.key.name}"`, assignment.location))
+    const duplicate = context.resolutions.has(assignment.key.name)
+    if (duplicate) {
+      errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.location))
     }
 
     const expressionCheck = checkExpression(context, assignment.value)
     errors.push(...expressionCheck.errors)
 
-    if (expressionCheck.result != null) {
+    if (!duplicate && expressionCheck.result != null) {
       context.resolutions.set(assignment.key.name, expressionCheck.result)
     }
   }
@@ -124,7 +122,7 @@ function checkRouting (context: Context, routing: ast.Routing): readonly Compile
 
   const instrument = context.resolutions.get(routing.instrument.name)
   if (instrument == null) {
-    errors.push(new CompileError(`Unresolved identifier "${routing.instrument.name}"`, routing.instrument.location))
+    errors.push(new CompileError(`Unknown identifier "${routing.instrument.name}"`, routing.instrument.location))
   } else {
     errors.push(...checkTypeEquality({ type: 'Instrument' }, instrument, routing.instrument.location))
   }
@@ -152,19 +150,23 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     case 'Identifier': {
       const valueType = context.resolutions.get(expression.name)
       if (valueType == null) {
-        return { errors: [new CompileError(`Unresolved identifier "${expression.name}"`, expression.location)] }
+        return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.location)] }
       }
       return { errors: [], result: valueType }
     }
 
     case 'Call': {
-      const func = context.functions.get(expression.callee.name)
-      if (func == null) {
-        return { errors: [new CompileError(`Unknown function "${expression.callee.name}"`, expression.location)] }
+      const callee = context.resolutions.get(expression.callee.name)
+      if (callee == null) {
+        return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.location)] }
       }
 
-      const { errors } = checkProperties(context, expression.arguments, func.arguments, expression.location)
-      return { errors, result: func.returnType }
+      if (callee.type !== 'Function' || callee.schema == null || callee.returnType == null) {
+        return { errors: [new CompileError(`"${expression.callee.name}" is not a calleetion`, expression.callee.location)] }
+      }
+
+      const { errors } = checkProperties(context, expression.arguments, callee.schema, expression.location)
+      return { errors, result: callee.returnType }
     }
 
     case 'BinaryExpression': {

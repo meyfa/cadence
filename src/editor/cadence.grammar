@@ -39,7 +39,7 @@ kw<term> { @specialize[@name={term}]<word, term> }
 }
 
 unit {
-  @specialize<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
+  @extend<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
 }
 
 VariableDefinition { word }
