@@ -24,22 +24,6 @@ type Id<Tag extends string> = number & { __tag: Tag }
 
 // Domain types
 
-export interface Track {
-  readonly tempo: Numeric<'bpm'>
-  readonly sections: readonly Section[]
-}
-
-export interface Section {
-  readonly name: string
-  readonly length: Numeric<'steps'>
-  readonly routings: readonly Routing[]
-}
-
-export interface Routing {
-  readonly instrumentId: InstrumentId
-  readonly pattern: Pattern
-}
-
 export type InstrumentId = Id<'Instrument'>
 
 export interface Instrument {
@@ -50,6 +34,57 @@ export interface Instrument {
   readonly length?: Numeric<'s'>
 }
 
+export interface Track {
+  readonly tempo: Numeric<'bpm'>
+  readonly sections: readonly Section[]
+}
+
+export interface Section {
+  readonly name: string
+  readonly length: Numeric<'steps'>
+  readonly routings: readonly InstrumentRouting[]
+}
+
+export interface InstrumentRouting {
+  readonly source: {
+    readonly type: 'Pattern'
+    readonly value: Pattern
+  }
+
+  readonly destination: {
+    readonly type: 'Instrument'
+    readonly id: InstrumentId
+  }
+}
+
+export interface Mixer {
+  readonly buses: readonly Bus[]
+  readonly routings: readonly MixerRouting[]
+}
+
+export type BusId = Id<'Bus'>
+
+export interface Bus {
+  readonly id: BusId
+  readonly name: string
+  readonly gain?: Numeric<'db'>
+}
+
+export interface MixerRouting {
+  readonly source: {
+    readonly type: 'Instrument'
+    readonly id: InstrumentId
+  } | {
+    readonly type: 'Bus'
+    readonly id: BusId
+  }
+
+  readonly destination: {
+    readonly type: 'Bus'
+    readonly id: BusId
+  }
+}
+
 // Top-level type
 
 export interface Program {
@@ -58,4 +93,5 @@ export interface Program {
 
   readonly instruments: ReadonlyMap<InstrumentId, Instrument>
   readonly track: Track
+  readonly mixer: Mixer
 }

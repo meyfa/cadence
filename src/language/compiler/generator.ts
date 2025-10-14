@@ -1,12 +1,12 @@
 import { withPatternLength } from '../../core/pattern.js'
-import { makeNumeric, type Instrument, type InstrumentId, type Numeric, type Program, type Routing, type Section, type Track, type Unit } from '../../core/program.js'
+import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Program, type Section, type Track, type Unit } from '../../core/program.js'
 import * as ast from '../parser/ast.js'
-import { trackSchema } from './common.js'
+import { busSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { asFunction, asInstrument, asNumber, asPattern, makeNumber, makePattern, makeString, type Value } from './values.js'
+import { asFunction, asInstrument, asNumber, asPattern, makeBus, makeNumber, makePattern, makeString, type Value } from './values.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -51,14 +51,16 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
         sections: []
       }
 
-  // TODO do something with the mixer
-  void mixers
+  const mixer = mixers.length > 0
+    ? generateMixer(context, mixers[0])
+    : { buses: [], routings: [] }
 
   return {
     beatsPerBar: options.beatsPerBar,
     stepsPerBeat: options.stepsPerBeat,
     instruments: context.instruments,
-    track
+    track,
+    mixer
   }
 }
 
@@ -95,27 +97,68 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
   const sections = track.sections.map((section) => generateSection(context, section))
 
-  return {
-    tempo,
-    sections
-  }
+  return { tempo, sections }
 }
 
 function generateSection (context: Context, section: ast.SectionStatement): Section {
   const name = section.name.name
   const length = asNumber('steps', resolve(context, section.length))
 
-  const routings = section.routings.map((routing): Routing => {
-    const instrument = asInstrument(nonNull(context.resolutions.get(routing.instrument.name)))
-    const pattern = asPattern(resolve(context, routing.pattern))
+  const routings = section.routings.map((routing): InstrumentRouting => {
+    const source = asPattern(resolve(context, routing.source))
+    const instrument = asInstrument(nonNull(context.resolutions.get(routing.destination.name)))
 
     return {
-      instrumentId: instrument.value.id,
-      pattern: pattern.value
+      source: {
+        type: 'Pattern',
+        value: source.value
+      },
+
+      destination: {
+        type: 'Instrument',
+        id: instrument.value.id
+      }
     }
   })
 
   return { name, length: length.value, routings }
+}
+
+function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
+  // Mixer has a local scope
+  const mixerContext = { ...context, resolutions: new Map(context.resolutions) }
+
+  const buses = mixer.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId))
+  for (const bus of buses) {
+    mixerContext.resolutions.set(bus.name, makeBus(bus))
+  }
+
+  const routings = mixer.routings.map((routing): MixerRouting => {
+    const source = resolve(mixerContext, routing.source)
+    assert(source.type === 'Instrument' || source.type === 'Bus')
+
+    const destination = nonNull(buses.find((b) => b.name === routing.destination.name))
+
+    return {
+      source: source.type === 'Instrument'
+        ? { type: source.type, id: source.value.id }
+        : { type: source.type, id: source.value.id },
+
+      destination: {
+        type: 'Bus',
+        id: destination.id
+      }
+    }
+  })
+
+  return { buses, routings }
+}
+
+function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
+  const name = bus.name.name
+  const { gain } = resolveProperties(context, bus.properties, busSchema)
+
+  return { id, name, gain }
 }
 
 /**

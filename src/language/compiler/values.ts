@@ -1,4 +1,4 @@
-import type { Instrument, Numeric, Pattern, Unit } from '../../core/program.js'
+import type { Bus, Instrument, Numeric, Pattern, Unit } from '../../core/program.js'
 import { CompileError } from './error.js'
 import type { FunctionDefinition } from './functions.js'
 import type { PropertySchema } from './schema.js'
@@ -33,7 +33,12 @@ export interface InstrumentValue extends AnyValue {
   readonly value: Instrument
 }
 
-export type Value = StringValue | NumberValue | PatternValue | FunctionValue | InstrumentValue
+export interface BusValue extends AnyValue {
+  readonly type: 'Bus'
+  readonly value: Bus
+}
+
+export type Value = StringValue | NumberValue | PatternValue | FunctionValue | InstrumentValue | BusValue
 
 // Type Information
 
@@ -52,7 +57,8 @@ export type ValueForType<T extends ValueType> =
       : T extends 'Pattern' ? PatternValue
         : T extends 'Function' ? FunctionValue
           : T extends 'Instrument' ? InstrumentValue
-            : never
+            : T extends 'Bus' ? BusValue
+              : never
 
 export type ValueForTypeInfo<T extends TypeInfo> =
   T['type'] extends 'Number'
@@ -114,6 +120,10 @@ export function makeInstrument (value: Instrument): InstrumentValue {
   return makeValue('Instrument', value)
 }
 
+export function makeBus (value: Bus): BusValue {
+  return makeValue('Bus', value)
+}
+
 // Casting
 
 export function asValueType<T extends ValueType> (type: T, value: Value): ValueForType<T> {
@@ -145,4 +155,8 @@ export function asFunction (value: Value): FunctionValue {
 
 export function asInstrument (value: Value): InstrumentValue {
   return asValueType('Instrument', value)
+}
+
+export function asBus (value: Value): BusValue {
+  return asValueType('Bus', value)
 }
