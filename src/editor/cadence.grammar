@@ -35,7 +35,7 @@ kw<term> { @specialize[@name={term}]<word, term> }
 }
 
 @top Program {
-  (Assignment | TrackStatement)*
+  (Assignment | TrackStatement | MixerStatement)*
 }
 
 unit {
@@ -98,6 +98,21 @@ SectionStatement {
   kw<"section"> VariableDefinition
   kw<"for"> expression
   SectionBlock {
-    "{" (Routing)* "}"
+    "{" (Property | Routing)* "}"
+  }
+}
+
+MixerStatement {
+  kw<"mixer">
+  MixerBlock {
+    "{" (Property | Routing | BusStatement)* "}"
+  }
+}
+
+BusStatement {
+  kw<"bus">
+  VariableDefinition
+  BusBlock {
+    "{" (Property)* "}"
   }
 }

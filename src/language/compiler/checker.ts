@@ -5,7 +5,7 @@ import { getDefaultFunctions } from './functions.js'
 import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { sectionSchema, trackSchema } from './common.js'
+import { busSchema, mixerSchema, sectionSchema, trackSchema } from './common.js'
 
 interface Context {
   // Intentionally mutable to allow building up during checking
@@ -22,10 +22,15 @@ export function check (program: ast.Program): readonly CompileError[] {
     resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, typeOf(fn)]))
   }
 
-  const assignmentResults = checkAssignments(context, program)
-  const trackResults = checkTracks(context, program)
+  const assignments = program.children.filter((c) => c.type === 'Assignment')
+  const tracks = program.children.filter((c) => c.type === 'TrackStatement')
+  const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  return [...assignmentResults, ...trackResults]
+  return [
+    ...checkAssignments(context, assignments),
+    ...checkTracks(context, tracks),
+    ...checkMixers(context, mixers)
+  ]
 }
 
 function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location?: SourceLocation): readonly CompileError[] {
@@ -36,10 +41,10 @@ function checkTypeEquality (expected: TypeInfo, actual: TypeInfo, location?: Sou
   return []
 }
 
-function checkAssignments (context: Context, program: ast.Program): readonly CompileError[] {
+function checkAssignments (context: Context, assignments: readonly ast.Assignment[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  for (const assignment of program.assignments) {
+  for (const assignment of assignments) {
     const duplicate = context.resolutions.has(assignment.key.name)
     if (duplicate) {
       errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.location))
@@ -56,16 +61,14 @@ function checkAssignments (context: Context, program: ast.Program): readonly Com
   return errors
 }
 
-function checkTracks (context: Context, program: ast.Program): readonly CompileError[] {
+function checkTracks (context: Context, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  if (program.tracks.length > 1) {
-    for (const track of program.tracks) {
+  for (const track of tracks) {
+    if (tracks.length > 1) {
       errors.push(new CompileError('Multiple track definitions', track.location))
     }
-  }
 
-  for (const track of program.tracks) {
     errors.push(...checkTrack(context, track))
   }
 
@@ -116,6 +119,54 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
     seenRoutings.add(routing.instrument.name)
     errors.push(...checkRouting(context, routing))
   }
+
+  return errors
+}
+
+function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  for (const mixer of mixers) {
+    if (mixers.length > 1) {
+      errors.push(new CompileError('Multiple mixer definitions', mixer.location))
+    }
+    errors.push(...checkMixer(context, mixer))
+  }
+
+  return errors
+}
+
+function checkMixer (context: Context, mixer: ast.MixerStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const propertiesCheck = checkProperties(context, mixer.properties, mixerSchema, mixer.location)
+  errors.push(...propertiesCheck.errors)
+
+  for (const routing of mixer.routings) {
+    errors.push(...checkRouting(context, routing))
+  }
+
+  const seenBuses = new Set<string>()
+
+  for (const bus of mixer.buses) {
+    if (seenBuses.has(bus.name.name)) {
+      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.location))
+    }
+    if (context.resolutions.has(bus.name.name)) {
+      errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.location))
+    }
+    seenBuses.add(bus.name.name)
+    errors.push(...checkBus(context, bus))
+  }
+
+  return errors
+}
+
+function checkBus (context: Context, bus: ast.BusStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const propertiesCheck = checkProperties(context, bus.properties, busSchema, bus.location)
+  errors.push(...propertiesCheck.errors)
 
   return errors
 }

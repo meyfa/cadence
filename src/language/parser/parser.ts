@@ -8,7 +8,7 @@ import type { Step } from '../../core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
-const keywords = ['track', 'section', 'for'] as const
+const keywords = ['track', 'section', 'for', 'mixer', 'bus'] as const
 
 type Keyword = (typeof keywords)[number]
 
@@ -301,10 +301,42 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
   }
 )
 
+const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
+  keyword('bus'),
+  identifier_,
+  combine3(
+    literal('{'),
+    p.many(property_),
+    expectLiteral('}')
+  ),
+  (_bus, name, [_lp, properties, _rp]) => {
+    return ast.make('BusStatement', combineSourceLocations(_bus, _rp), {
+      name,
+      properties
+    })
+  }
+)
+
+const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.ab(
+  keyword('mixer'),
+  combine3(
+    literal('{'),
+    p.many(p.eitherOr(property_, p.eitherOr(routing_, busStatement_))),
+    expectLiteral('}')
+  ),
+  (_mixer, [_lp, children, _rp]) => {
+    return ast.make('MixerStatement', combineSourceLocations(_mixer, _rp), {
+      properties: children.filter((c) => c.type === 'Property'),
+      routings: children.filter((c) => c.type === 'Routing'),
+      buses: children.filter((c) => c.type === 'BusStatement')
+    })
+  }
+)
+
 const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
   p.many(
     p.eitherOr(
-      p.eitherOr(trackStatement_, assignment_),
+      p.eitherOr(assignment_, p.eitherOr(trackStatement_, mixerStatement_)),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
         throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceLocation(token))
@@ -312,14 +344,8 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
     )
   ),
   p.end,
-  (statements) => {
-    const tracks = statements.filter((s) => s.type === 'TrackStatement')
-    const assignments = statements.filter((s) => s.type === 'Assignment')
-
-    return ast.make('Program', combineSourceLocations(...statements), {
-      tracks,
-      assignments
-    })
+  (children) => {
+    return ast.make('Program', combineSourceLocations(...children), { children })
   }
 )
 

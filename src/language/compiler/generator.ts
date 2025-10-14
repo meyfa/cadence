@@ -38,14 +38,21 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
     instruments: new Map()
   }
 
-  processAssignments(context, program)
+  const assignments = program.children.filter((c) => c.type === 'Assignment')
+  const tracks = program.children.filter((c) => c.type === 'TrackStatement')
+  const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  const track = program.tracks.length > 0
-    ? generateTrack(context, program.tracks[0])
+  processAssignments(context, assignments)
+
+  const track = tracks.length > 0
+    ? generateTrack(context, tracks[0])
     : {
         tempo: makeNumeric('bpm', options.tempo.default),
         sections: []
       }
+
+  // TODO do something with the mixer
+  void mixers
 
   return {
     beatsPerBar: options.beatsPerBar,
@@ -72,8 +79,8 @@ function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: n
     : value
 }
 
-function processAssignments (context: Context, program: ast.Program): void {
-  for (const assignment of program.assignments) {
+function processAssignments (context: Context, assignments: readonly ast.Assignment[]): void {
+  for (const assignment of assignments) {
     assert(!context.resolutions.has(assignment.key.name))
     context.resolutions.set(assignment.key.name, resolve(context, assignment.value))
   }

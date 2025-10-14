@@ -90,12 +90,24 @@ export interface SectionStatement extends ASTNode {
   readonly routings: readonly Routing[]
 }
 
+export interface MixerStatement extends ASTNode {
+  readonly type: 'MixerStatement'
+  readonly properties: readonly Property[]
+  readonly routings: readonly Routing[]
+  readonly buses: readonly BusStatement[]
+}
+
+export interface BusStatement extends ASTNode {
+  readonly type: 'BusStatement'
+  readonly name: Identifier
+  readonly properties: readonly Property[]
+}
+
 // Root Type
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
-  readonly tracks: readonly TrackStatement[]
-  readonly assignments: readonly Assignment[]
+  readonly children: ReadonlyArray<Assignment | TrackStatement | MixerStatement>
 }
 
 // Factory
@@ -122,6 +134,8 @@ export interface NodeByType {
 
   TrackStatement: TrackStatement
   SectionStatement: SectionStatement
+  MixerStatement: MixerStatement
+  BusStatement: BusStatement
 
   Program: Program
 }
