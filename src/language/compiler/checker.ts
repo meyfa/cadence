@@ -110,13 +110,7 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.location)
   errors.push(...propertiesCheck.errors)
 
-  const seenRoutings = new Set<string>()
-
   for (const routing of section.routings) {
-    if (seenRoutings.has(routing.instrument.name)) {
-      errors.push(new CompileError(`Duplicate routing for instrument "${routing.instrument.name}"`, routing.location))
-    }
-    seenRoutings.add(routing.instrument.name)
     errors.push(...checkRouting(context, routing))
   }
 

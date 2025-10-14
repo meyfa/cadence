@@ -1,6 +1,6 @@
-import { getTransport, type Sequence } from 'tone'
+import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
-import type { InstrumentId, Program, Step } from '../program.js'
+import type { Program } from '../program.js'
 import { createPlayers } from './players.js'
 import { createSequences } from './sequences.js'
 
@@ -14,9 +14,10 @@ export interface AudioSession {
 }
 
 export function createAudioSession (program: Program): AudioSession {
+  const totalDuration = calculateTotalDuration(program)
+
   const [players, playersLoaded] = createPlayers(program)
   const sequences = createSequences(players, program)
-  const totalDuration = calculateTotalDuration(sequences)
 
   let disposed = false
 
@@ -37,7 +38,7 @@ export function createAudioSession (program: Program): AudioSession {
         if (!disposed) {
           resetTransport()
           getTransport().bpm.value = program.track.tempo.value
-          sequences.forEach((sequence) => sequence.start())
+          sequences.forEach(([sequence, offset]) => sequence.start(offset))
           getTransport().scheduleOnce(() => ended.set(true), totalDuration)
           getTransport().start('+0.05')
 
@@ -55,7 +56,7 @@ export function createAudioSession (program: Program): AudioSession {
   const dispose = () => {
     if (!disposed) {
       disposed = true
-      for (const sequence of sequences.values()) {
+      for (const [sequence] of sequences.values()) {
         sequence.stop().dispose()
       }
       for (const player of players.values()) {
@@ -80,12 +81,7 @@ function resetTransport (): void {
   transport.position = 0
 }
 
-function calculateTotalDuration (sequences: Map<InstrumentId, Sequence<Step>>): number {
-  let maxLength = 0
-
-  for (const sequence of sequences.values()) {
-    maxLength = Math.max(maxLength, sequence.length * sequence.subdivision)
-  }
-
-  return maxLength
+function calculateTotalDuration (program: Program): number {
+  const steps = program.track.sections.reduce((total, section) => total + section.length.value, 0)
+  return steps * 60 / (program.stepsPerBeat * program.track.tempo.value)
 }
