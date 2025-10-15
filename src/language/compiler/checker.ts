@@ -207,7 +207,7 @@ function checkBusRouting (context: Context, routing: ast.Routing): readonly Comp
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
-    const options = [{ type: 'Instrument' }, { type: 'Bus' }] as const
+    const options = [{ type: 'Instrument' }, { type: 'Bus' }, { type: 'Group' }] as const
     errors.push(...checkType(options, sourceCheck.result, routing.source.location))
   }
 
@@ -286,6 +286,11 @@ function checkPlus (left: TypeInfo, right: TypeInfo, location: SourceLocation): 
 
   if (left.type === 'Number' && right.type === 'Number' && left.unit === right.unit) {
     return { errors: [], result: left }
+  }
+
+  const summable = ['Instrument', 'Bus', 'Group']
+  if (summable.includes(left.type) && summable.includes(right.type)) {
+    return { errors: [], result: { type: 'Group' } }
   }
 
   return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }

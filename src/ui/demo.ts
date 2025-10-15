@@ -51,13 +51,8 @@ mixer {
   # Buses can receive signals from instruments, but also other buses.
   # Anything not routed to a bus (such as 'out' here) goes to the main output.
 
-  out << drums
-  drums << kick
-  drums << snare
-  drums << hat
-  drums << tom
-
-  out << synths
+  out << drums + synths
+  drums << kick + snare + hat + tom
   synths << synth
 
   bus out {}

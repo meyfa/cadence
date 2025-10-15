@@ -38,7 +38,21 @@ export interface BusValue extends AnyValue {
   readonly value: Bus
 }
 
-export type Value = StringValue | NumberValue | PatternValue | FunctionValue | InstrumentValue | BusValue
+type RoutableValue = InstrumentValue | BusValue
+
+export interface GroupValue {
+  readonly type: 'Group'
+  readonly value: readonly RoutableValue[]
+}
+
+export type Value =
+  StringValue |
+  NumberValue |
+  PatternValue |
+  FunctionValue |
+  InstrumentValue |
+  BusValue |
+  GroupValue
 
 // Type Information
 
@@ -58,7 +72,8 @@ export type ValueForType<T extends ValueType> =
         : T extends 'Function' ? FunctionValue
           : T extends 'Instrument' ? InstrumentValue
             : T extends 'Bus' ? BusValue
-              : never
+              : T extends 'Group' ? GroupValue
+                : never
 
 export type ValueForTypeInfo<T extends TypeInfo> =
   T['type'] extends 'Number'
@@ -69,29 +84,50 @@ export type ValueForTypeInfo<T extends TypeInfo> =
 
 export function typeOf (value: Value): TypeInfo {
   switch (value.type) {
+    case 'String':
+      return { type: 'String' }
     case 'Number':
-      return { type: value.type, unit: value.value.unit }
-
+      return { type: 'Number', unit: value.value.unit }
+    case 'Pattern':
+      return { type: 'Pattern' }
     case 'Function':
-      return {
-        type: value.type,
-        schema: value.value.arguments,
-        returnType: value.value.returnType
-      }
-
-    default:
-      return { type: value.type }
+      return { type: 'Function', schema: value.value.arguments, returnType: value.value.returnType }
+    case 'Instrument':
+      return { type: 'Instrument' }
+    case 'Bus':
+      return { type: 'Bus' }
+    case 'Group':
+      return { type: 'Group' }
   }
 }
 
 export function areTypesEqual (a: TypeInfo, b: TypeInfo): boolean {
-  return a.type === b.type && (a.type !== 'Number' || a.unit === b.unit)
+  if (a.type !== b.type) return false
+  switch (a.type) {
+    case 'Number':
+      return a.unit === (b as any).unit
+    default:
+      return true
+  }
 }
 
-export function formatType (type: TypeInfo): string {
-  return type.unit != null
-    ? `${type.type}<${type.unit}>`
-    : type.type
+export function formatType (t: TypeInfo): string {
+  switch (t.type) {
+    case 'String':
+      return 'string'
+    case 'Number':
+      return t.unit != null ? `number<${t.unit}>` : 'number'
+    case 'Pattern':
+      return 'pattern'
+    case 'Function':
+      return 'function'
+    case 'Instrument':
+      return 'instrument'
+    case 'Bus':
+      return 'bus'
+    case 'Group':
+      return 'group'
+  }
 }
 
 // Factory
@@ -122,6 +158,10 @@ export function makeInstrument (value: Instrument): InstrumentValue {
 
 export function makeBus (value: Bus): BusValue {
   return makeValue('Bus', value)
+}
+
+export function makeGroup (value: readonly RoutableValue[]): GroupValue {
+  return { type: 'Group', value }
 }
 
 // Casting
@@ -159,4 +199,8 @@ export function asInstrument (value: Value): InstrumentValue {
 
 export function asBus (value: Value): BusValue {
   return asValueType('Bus', value)
+}
+
+export function asGroup (value: Value): GroupValue {
+  return asValueType('Group', value)
 }

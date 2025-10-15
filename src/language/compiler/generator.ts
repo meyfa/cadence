@@ -6,7 +6,7 @@ import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { asFunction, asInstrument, asNumber, asPattern, makeBus, makeNumber, makePattern, makeString, type Value } from './values.js'
+import { asFunction, asInstrument, asNumber, asPattern, makeBus, makeGroup, makeNumber, makePattern, makeString, type BusValue, type GroupValue, type InstrumentValue, type Value } from './values.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -133,21 +133,26 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
     mixerContext.resolutions.set(bus.name, makeBus(bus))
   }
 
-  const routings = mixer.routings.map((routing): MixerRouting => {
+  const routings = mixer.routings.flatMap((routing): MixerRouting[] => {
     const source = resolve(mixerContext, routing.source)
-    assert(source.type === 'Instrument' || source.type === 'Bus')
-
     const destination = nonNull(buses.find((b) => b.name === routing.destination.name))
 
-    return {
-      source: source.type === 'Instrument'
-        ? { type: source.type, id: source.value.id }
-        : { type: source.type, id: source.value.id },
+    const toRouting = (src: { type: 'Instrument' | 'Bus', id: InstrumentId | BusId }): MixerRouting => ({
+      source: src.type === 'Instrument'
+        ? { type: 'Instrument', id: src.id as InstrumentId }
+        : { type: 'Bus', id: src.id as BusId },
+      destination: { type: 'Bus', id: destination.id }
+    })
 
-      destination: {
-        type: 'Bus',
-        id: destination.id
-      }
+    switch (source.type) {
+      case 'Instrument':
+        return [toRouting({ type: 'Instrument', id: source.value.id })]
+      case 'Bus':
+        return [toRouting({ type: 'Bus', id: source.value.id })]
+      case 'Group':
+        return source.value.map((part) => toRouting({ type: part.type, id: part.value.id }))
+      default:
+        assert(false)
     }
   })
 
@@ -217,6 +222,26 @@ function computePlus (left: Value, right: Value): Value {
 
   if (left.type === 'Number' && right.type === 'Number') {
     return makeNumber(left.value.unit, left.value.value + right.value.value)
+  }
+
+  type Summable = InstrumentValue | BusValue | GroupValue
+  const summableTypes = ['Instrument', 'Bus', 'Group'] satisfies Array<Summable['type']>
+
+  const isSummable = (value: Value): value is Summable => (summableTypes as readonly string[]).includes(value.type)
+
+  const getSumComponents = (value: Summable) => {
+    switch (value.type) {
+      case 'Instrument':
+        return [value]
+      case 'Bus':
+        return [value]
+      case 'Group':
+        return value.value
+    }
+  }
+
+  if (isSummable(left) && isSummable(right)) {
+    return makeGroup([...getSumComponents(left), ...getSumComponents(right)])
   }
 
   assert(false)
