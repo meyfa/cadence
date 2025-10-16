@@ -240,7 +240,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       }
 
       if (callee.type !== 'Function' || callee.schema == null || callee.returnType == null) {
-        return { errors: [new CompileError(`"${expression.callee.name}" is not a calleetion`, expression.callee.location)] }
+        return { errors: [new CompileError(`"${expression.callee.name}" is not a function`, expression.callee.location)] }
       }
 
       const { errors } = checkProperties(context, expression.arguments, callee.schema, expression.location)
