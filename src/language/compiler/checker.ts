@@ -1,6 +1,6 @@
 import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
-import { areTypesEqual, formatType, typeOf, type TypeInfo } from './values.js'
+import { BusType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type Type } from './types.js'
 import { getDefaultFunctions } from './functions.js'
 import type { SourceLocation } from '../location.js'
 import { toBaseUnit } from './units.js'
@@ -9,7 +9,7 @@ import { busSchema, mixerSchema, sectionSchema, trackSchema } from './common.js'
 
 interface Context {
   // Intentionally mutable to allow building up during checking
-  readonly resolutions: Map<string, TypeInfo>
+  readonly resolutions: Map<string, Type>
 }
 
 interface Checked<TValue> {
@@ -19,7 +19,7 @@ interface Checked<TValue> {
 
 export function check (program: ast.Program): readonly CompileError[] {
   const context: Context = {
-    resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, typeOf(fn)]))
+    resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, fn.type]))
   }
 
   const assignments = program.children.filter((c) => c.type === 'Assignment')
@@ -33,10 +33,10 @@ export function check (program: ast.Program): readonly CompileError[] {
   ]
 }
 
-function checkType (options: readonly TypeInfo[], actual: TypeInfo, location?: SourceLocation): readonly CompileError[] {
-  if (!options.some((option) => areTypesEqual(option, actual))) {
-    const optionsText = options.map((o) => formatType(o)).join(' or ')
-    return [new CompileError(`Expected type ${optionsText}, got ${formatType(actual)}`, location)]
+function checkType (options: readonly Type[], actual: Type, location?: SourceLocation): readonly CompileError[] {
+  if (!options.some((option) => option.equals(actual))) {
+    const optionsText = options.map((o) => o.format()).join(' or ')
+    return [new CompileError(`Expected type ${optionsText}, got ${actual.format()}`, location)]
   }
 
   return []
@@ -105,7 +105,7 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   errors.push(...lengthCheck.errors)
 
   if (lengthCheck.result != null) {
-    errors.push(...checkType([{ type: 'Number', unit: 'steps' }], lengthCheck.result, section.length.location))
+    errors.push(...checkType([NumberType.with('steps')], lengthCheck.result, section.length.location))
   }
 
   const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.location)
@@ -125,13 +125,13 @@ function checkInstrumentRouting (context: Context, routing: ast.Routing): readon
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
   } else {
-    errors.push(...checkType([{ type: 'Instrument' }], destination, routing.destination.location))
+    errors.push(...checkType([InstrumentType], destination, routing.destination.location))
   }
 
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
-    errors.push(...checkType([{ type: 'Pattern' }], sourceCheck.result, routing.source.location))
+    errors.push(...checkType([PatternType], sourceCheck.result, routing.source.location))
   }
 
   return errors
@@ -172,7 +172,7 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     }
 
     // Reserve the name in the local scope
-    mixerContext.resolutions.set(bus.name.name, { type: 'Bus' })
+    mixerContext.resolutions.set(bus.name.name, BusType)
 
     errors.push(...checkBus(mixerContext, bus))
   }
@@ -201,29 +201,29 @@ function checkBusRouting (context: Context, routing: ast.Routing): readonly Comp
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
   } else {
-    errors.push(...checkType([{ type: 'Bus' }], destination, routing.destination.location))
+    errors.push(...checkType([BusType], destination, routing.destination.location))
   }
 
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
-    const options = [{ type: 'Instrument' }, { type: 'Bus' }, { type: 'Group' }] as const
+    const options = [InstrumentType, BusType, GroupType] as const
     errors.push(...checkType(options, sourceCheck.result, routing.source.location))
   }
 
   return errors
 }
 
-function checkExpression (context: Context, expression: ast.Expression): Checked<TypeInfo> {
+function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
     case 'StringLiteral':
-      return { errors: [], result: { type: 'String' } }
+      return { errors: [], result: StringType }
 
     case 'NumberLiteral':
-      return { errors: [], result: { type: 'Number', unit: toBaseUnit(expression.unit) } }
+      return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
 
     case 'PatternLiteral':
-      return { errors: [], result: { type: 'Pattern' } }
+      return { errors: [], result: PatternType }
 
     case 'Identifier': {
       const valueType = context.resolutions.get(expression.name)
@@ -239,12 +239,17 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.location)] }
       }
 
-      if (callee.type !== 'Function' || callee.schema == null || callee.returnType == null) {
+      if (!FunctionType.equals(callee)) {
         return { errors: [new CompileError(`"${expression.callee.name}" is not a function`, expression.callee.location)] }
       }
 
-      const { errors } = checkProperties(context, expression.arguments, callee.schema, expression.location)
-      return { errors, result: callee.returnType }
+      const { schema, returnType } = FunctionType.detail(callee)
+      if (schema == null || returnType == null) {
+        return { errors: [new CompileError(`Function "${expression.callee.name}" is missing type information`, expression.callee.location)] }
+      }
+
+      const { errors } = checkProperties(context, expression.arguments, schema, expression.location)
+      return { errors, result: returnType }
     }
 
     case 'BinaryExpression': {
@@ -262,7 +267,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
-function checkBinaryExpression (operator: ast.BinaryOperator, left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
+function checkBinaryExpression (operator: ast.BinaryOperator, left: Type, right: Type, location: SourceLocation): Checked<Type> {
   switch (operator) {
     case '+':
       return checkPlus(left, right, location)
@@ -275,68 +280,79 @@ function checkBinaryExpression (operator: ast.BinaryOperator, left: TypeInfo, ri
   }
 }
 
-function checkPlus (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
-  if (left.type === 'String' && right.type === 'String') {
+function checkPlus (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+  if (StringType.equals(left) && StringType.equals(right)) {
     return { errors: [], result: left }
   }
 
-  if (left.type === 'Pattern' && right.type === 'Pattern') {
+  if (PatternType.equals(left) && PatternType.equals(right)) {
     return { errors: [], result: left }
   }
 
-  if (left.type === 'Number' && right.type === 'Number' && left.unit === right.unit) {
+  if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
     return { errors: [], result: left }
   }
 
-  const summable = ['Instrument', 'Bus', 'Group']
-  if (summable.includes(left.type) && summable.includes(right.type)) {
-    return { errors: [], result: { type: 'Group' } }
+  const isSummable = (type: Type) => InstrumentType.equals(type) || BusType.equals(type) || GroupType.equals(type)
+  if (isSummable(left) && isSummable(right)) {
+    return { errors: [], result: GroupType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
 }
 
-function checkMinus (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
-  if (left.type === 'Number' && right.type === 'Number' && left.unit === right.unit) {
+function checkMinus (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+  if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
     return { errors: [], result: left }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
 }
 
-function checkMultiply (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
-  if (left.type === 'Number' && right.type === 'Number' && (left.unit == null || right.unit == null)) {
-    return { errors: [], result: { type: 'Number', unit: left.unit ?? right.unit } }
+function checkMultiply (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+  if (NumberType.equals(left) && NumberType.equals(right)) {
+    const { unit: leftUnit } = NumberType.detail(left)
+    const { unit: rightUnit } = NumberType.detail(right)
+    if (leftUnit == null || rightUnit == null) {
+      return { errors: [], result: NumberType.with(leftUnit ?? rightUnit) }
+    }
   }
 
-  if ((left.type === 'Pattern' && right.type === 'Number') || (left.type === 'Number' && right.type === 'Pattern')) {
-    return { errors: [], result: { type: 'Pattern' } }
+  if ((PatternType.equals(left) && NumberType.with(undefined).equals(right)) || (NumberType.with(undefined).equals(left) && PatternType.equals(right))) {
+    return { errors: [], result: PatternType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
 }
 
-function checkDivide (left: TypeInfo, right: TypeInfo, location: SourceLocation): Checked<TypeInfo> {
-  if (left.type === 'Number' && right.type === 'Number') {
-    if (left.unit === right.unit) {
-      return { errors: [], result: { type: 'Number', unit: undefined } }
+function checkDivide (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+  if (NumberType.equals(left) && NumberType.equals(right)) {
+    const { unit: leftUnit } = NumberType.detail(left)
+    const { unit: rightUnit } = NumberType.detail(right)
+
+    // equal units cancel out
+    if (leftUnit === rightUnit) {
+      return { errors: [], result: NumberType.with(undefined) }
     }
 
-    if (right.unit == null) {
+    if (rightUnit == null) {
       return { errors: [], result: left }
     }
   }
 
-  if (left.type === 'Pattern' && right.type === 'Number' && right.unit == null) {
-    return { errors: [], result: left }
+  if (PatternType.equals(left) && NumberType.with(undefined).equals(right)) {
+    const { unit: rightUnit } = NumberType.detail(right)
+    if (rightUnit == null) {
+      return { errors: [], result: left }
+    }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${formatType(left)} and ${formatType(right)}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
 }
 
-function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentLocation?: SourceLocation): Checked<ReadonlyMap<string, TypeInfo>> {
+function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentLocation?: SourceLocation): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
-  const result = new Map<string, TypeInfo>()
+  const result = new Map<string, Type>()
 
   const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
 

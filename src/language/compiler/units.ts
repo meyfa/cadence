@@ -1,6 +1,6 @@
 import type { Unit } from '../../core/program.js'
 import * as ast from '../parser/ast.js'
-import { makeNumber, type NumberValue } from './values.js'
+import { NumberType, type NumberValue } from './types.js'
 
 interface Constants {
   readonly beatsPerBar: number
@@ -14,13 +14,13 @@ export function toNumberValue (constants: Constants, literal: ast.NumberLiteral)
     case 'db':
     case 'hz':
     case 's':
-      return makeNumber(literal.unit, literal.value)
+      return NumberType.of({ unit: literal.unit, value: literal.value })
     case 'ms':
-      return makeNumber('s', literal.value / 1000)
+      return NumberType.of({ unit: 's', value: literal.value / 1000 })
     case 'bars':
-      return makeNumber('steps', literal.value * constants.beatsPerBar * constants.stepsPerBeat)
+      return NumberType.of({ unit: 'steps', value: literal.value * constants.beatsPerBar * constants.stepsPerBeat })
     case 'beats':
-      return makeNumber('steps', literal.value * constants.stepsPerBeat)
+      return NumberType.of({ unit: 'steps', value: literal.value * constants.stepsPerBeat })
   }
 }
 

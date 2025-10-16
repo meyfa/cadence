@@ -1,5 +1,5 @@
 import type { SourceLocation } from '../location.js'
-import { type TypeInfo, type ValueForTypeInfo } from './values.js'
+import { type AnyValue, type Type, type ValueFor } from './types.js'
 
 export type Properties = readonly Property[]
 
@@ -17,14 +17,14 @@ export type PropertySchema = readonly PropertySpec[]
 
 export interface PropertySpec {
   readonly name: string
-  readonly type: TypeInfo
+  readonly type: Type
   readonly required: boolean
 }
 
 export type InferSchema<S extends PropertySchema> = {
-  [P in S[number] as P['required'] extends true ? P['name'] : never]: ValueForTypeInfo<P['type']>['value']
+  [P in S[number] as P['required'] extends true ? P['name'] : never]: ValueFor<P['type']> extends AnyValue ? ValueFor<P['type']>['data'] : never
 } & {
-  [P in S[number] as P['required'] extends false ? P['name'] : never]?: ValueForTypeInfo<P['type']>['value']
+  [P in S[number] as P['required'] extends false ? P['name'] : never]?: ValueFor<P['type']> extends AnyValue ? ValueFor<P['type']>['data'] : never
 }
 
 export function definePropertySchema<const T extends PropertySchema> (schema: T): T {
