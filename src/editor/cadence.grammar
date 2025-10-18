@@ -86,6 +86,7 @@ Call {
 Routing {
   VariableName
   "<<"
+  (VariableName "<<")*
   expression
 }
 
