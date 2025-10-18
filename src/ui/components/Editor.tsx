@@ -35,6 +35,6 @@ export const Editor: FunctionComponent<{
   useEffect(() => handleRef.current?.setDocument(document), [document])
 
   return (
-    <div ref={initialize} className='flex-1 min-h-0 min-w-0 overflow-hidden relative' />
+    <div ref={initialize} className='h-full overflow-hidden relative' />
   )
 }

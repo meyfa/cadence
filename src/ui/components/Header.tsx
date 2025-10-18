@@ -13,7 +13,7 @@ export const Header: FunctionComponent<{
 }> = ({ playing, onPlayPause, volume, onVolumeChange, progress }) => {
   return (
     <header className={clsx(
-      'w-full border-b border-b-gray-700 flex flex-wrap items-center px-4 py-2 gap-2'
+      'w-full border-b border-b-gray-700 flex flex-wrap items-center px-4 py-1 gap-2'
     )}
     >
       <div className='text-lg font-semibold mr-2'>
