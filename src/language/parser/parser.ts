@@ -259,12 +259,34 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
-const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
+const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
   identifier_,
   literal('<<'),
-  expression_,
-  (destination, _arrow, source) => {
-    return ast.make('Routing', combineSourceLocations(destination, source), { destination, source })
+  p.eitherOr(p.recursive(() => routingChain_), expression_),
+  (left, _arrow, right) => {
+    // type guard
+    const isRouting = (node: ast.Expression | readonly ast.Routing[]): node is readonly ast.Routing[] => {
+      return Array.isArray(node)
+    }
+
+    if (isRouting(right)) {
+      // Given a statement like `a << b << c`, right will be the routing chain `b << c`.
+      // We need to create a routing from `a` to `b`, prepended to the rest of the chain.
+      return [
+        ast.make('Routing', combineSourceLocations(left, right[0]), {
+          destination: left,
+          source: right[0].destination
+        }),
+        ...right
+      ]
+    }
+
+    return [
+      ast.make('Routing', combineSourceLocations(left, right), {
+        destination: left,
+        source: right
+      })
+    ]
   }
 )
 
@@ -273,15 +295,17 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
   combine2(keyword('for'), expression_),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, routing_)),
+    p.many(p.eitherOr(property_, routingChain_)),
     expectLiteral('}')
   ),
   ([_section, name], [_for, length], [_lp, children, _rp]) => {
+    const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
+
     return ast.make('SectionStatement', combineSourceLocations(_section, _rp), {
       name,
       length,
-      properties: children.filter((c) => c.type === 'Property'),
-      routings: children.filter((c) => c.type === 'Routing')
+      properties: flatChildren.filter((c) => c.type === 'Property'),
+      routings: flatChildren.filter((c) => c.type === 'Routing')
     })
   }
 )
@@ -321,14 +345,16 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.ab(
   keyword('mixer'),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, p.eitherOr(routing_, busStatement_))),
+    p.many(p.eitherOr(property_, p.eitherOr(routingChain_, busStatement_))),
     expectLiteral('}')
   ),
   (_mixer, [_lp, children, _rp]) => {
+    const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
+
     return ast.make('MixerStatement', combineSourceLocations(_mixer, _rp), {
-      properties: children.filter((c) => c.type === 'Property'),
-      routings: children.filter((c) => c.type === 'Routing'),
-      buses: children.filter((c) => c.type === 'BusStatement')
+      properties: flatChildren.filter((c) => c.type === 'Property'),
+      routings: flatChildren.filter((c) => c.type === 'Routing'),
+      buses: flatChildren.filter((c) => c.type === 'BusStatement')
     })
   }
 )
