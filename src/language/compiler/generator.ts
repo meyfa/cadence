@@ -6,7 +6,7 @@ import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { asFunction, asInstrument, asNumber, asPattern, makeBus, makeGroup, makeNumber, makePattern, makeString, type BusValue, type GroupValue, type InstrumentValue, type Value } from './values.js'
+import { BusType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -102,26 +102,26 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
 function generateSection (context: Context, section: ast.SectionStatement): Section {
   const name = section.name.name
-  const length = asNumber('steps', resolve(context, section.length))
+  const length = NumberType.with('steps').cast(resolve(context, section.length))
 
   const routings = section.routings.map((routing): InstrumentRouting => {
-    const source = asPattern(resolve(context, routing.source))
-    const instrument = asInstrument(nonNull(context.resolutions.get(routing.destination.name)))
+    const source = PatternType.cast(resolve(context, routing.source))
+    const instrument = InstrumentType.cast(nonNull(context.resolutions.get(routing.destination.name)))
 
     return {
       source: {
         type: 'Pattern',
-        value: source.value
+        value: source.data
       },
 
       destination: {
         type: 'Instrument',
-        id: instrument.value.id
+        id: instrument.data.id
       }
     }
   })
 
-  return { name, length: length.value, routings }
+  return { name, length: length.data, routings }
 }
 
 function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
@@ -130,30 +130,33 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
   const buses = mixer.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId))
   for (const bus of buses) {
-    mixerContext.resolutions.set(bus.name, makeBus(bus))
+    mixerContext.resolutions.set(bus.name, BusType.of(bus))
   }
 
   const routings = mixer.routings.flatMap((routing): MixerRouting[] => {
     const source = resolve(mixerContext, routing.source)
     const destination = nonNull(buses.find((b) => b.name === routing.destination.name))
 
-    const toRouting = (src: { type: 'Instrument' | 'Bus', id: InstrumentId | BusId }): MixerRouting => ({
-      source: src.type === 'Instrument'
+    const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
+      source: src.type === 'instrument'
         ? { type: 'Instrument', id: src.id as InstrumentId }
         : { type: 'Bus', id: src.id as BusId },
       destination: { type: 'Bus', id: destination.id }
     })
 
-    switch (source.type) {
-      case 'Instrument':
-        return [toRouting({ type: 'Instrument', id: source.value.id })]
-      case 'Bus':
-        return [toRouting({ type: 'Bus', id: source.value.id })]
-      case 'Group':
-        return source.value.map((part) => toRouting({ type: part.type, id: part.value.id }))
-      default:
-        assert(false)
+    if (InstrumentType.is(source)) {
+      return [toRouting({ type: InstrumentType.name, id: source.data.id })]
     }
+
+    if (BusType.is(source)) {
+      return [toRouting({ type: BusType.name, id: source.data.id })]
+    }
+
+    if (GroupType.is(source)) {
+      return source.data.map((part) => toRouting({ type: part.type.name, id: part.data.id }))
+    }
+
+    assert(false)
   })
 
   return { buses, routings }
@@ -173,21 +176,21 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
 function resolve (context: Context, expression: ast.Expression): Value {
   switch (expression.type) {
     case 'StringLiteral':
-      return makeString(expression.value)
+      return StringType.of(expression.value)
 
     case 'NumberLiteral':
       return toNumberValue(context.options, expression)
 
     case 'PatternLiteral':
-      return makePattern(expression.value)
+      return PatternType.of(expression.value)
 
     case 'Identifier':
       return nonNull(context.resolutions.get(expression.name))
 
     case 'Call': {
-      const func = asFunction(nonNull(context.resolutions.get(expression.callee.name)))
-      const args = resolveProperties(context, expression.arguments, func.value.arguments)
-      return func.value.invoke(context, args)
+      const func = FunctionType.cast(nonNull(context.resolutions.get(expression.callee.name)))
+      const args = resolveProperties(context, expression.arguments, func.data.arguments)
+      return func.data.invoke(context, args)
     }
 
     case 'BinaryExpression': {
@@ -212,74 +215,62 @@ function computeBinaryExpression (operator: ast.BinaryOperator, left: Value, rig
 }
 
 function computePlus (left: Value, right: Value): Value {
-  if (left.type === 'String' && right.type === 'String') {
-    return makeString(left.value + right.value)
+  if (StringType.is(left) && StringType.is(right)) {
+    return StringType.of(left.data + right.data)
   }
 
-  if (left.type === 'Pattern' && right.type === 'Pattern') {
-    return makePattern([...left.value, ...right.value])
+  if (PatternType.is(left) && PatternType.is(right)) {
+    return PatternType.of([...left.data, ...right.data])
   }
 
-  if (left.type === 'Number' && right.type === 'Number') {
-    return makeNumber(left.value.unit, left.value.value + right.value.value)
+  if (NumberType.is(left) && NumberType.is(right)) {
+    return NumberType.of({ unit: left.data.unit, value: left.data.value + right.data.value })
   }
 
   type Summable = InstrumentValue | BusValue | GroupValue
-  const summableTypes = ['Instrument', 'Bus', 'Group'] satisfies Array<Summable['type']>
-
-  const isSummable = (value: Value): value is Summable => (summableTypes as readonly string[]).includes(value.type)
-
-  const getSumComponents = (value: Summable) => {
-    switch (value.type) {
-      case 'Instrument':
-        return [value]
-      case 'Bus':
-        return [value]
-      case 'Group':
-        return value.value
-    }
-  }
+  const isSummable = (value: Value) => InstrumentType.is(value) || BusType.is(value) || GroupType.is(value)
+  const getSumComponents = (value: Summable) => GroupType.is(value) ? value.data : [value]
 
   if (isSummable(left) && isSummable(right)) {
-    return makeGroup([...getSumComponents(left), ...getSumComponents(right)])
+    return GroupType.of([...getSumComponents(left), ...getSumComponents(right)])
   }
 
   assert(false)
 }
 
 function computeMinus (left: Value, right: Value): Value {
-  if (left.type === 'Number' && right.type === 'Number') {
-    return makeNumber(left.value.unit, left.value.value - right.value.value)
+  if (NumberType.is(left) && NumberType.is(right)) {
+    return NumberType.of({ unit: left.data.unit, value: left.data.value - right.data.value })
   }
 
   assert(false)
 }
 
 function computeMultiply (left: Value, right: Value): Value {
-  if (left.type === 'Number' && right.type === 'Number') {
-    return makeNumber(left.value.unit ?? right.value.unit, left.value.value * right.value.value)
+  if (NumberType.is(left) && NumberType.is(right)) {
+    return NumberType.of({ unit: left.data.unit ?? right.data.unit, value: left.data.value * right.data.value })
   }
 
-  if (left.type === 'Pattern' && right.type === 'Number' && right.value.unit == null) {
-    return makePattern(withPatternLength(left.value, left.value.length * right.value.value))
+  if (PatternType.is(left) && NumberType.is(right)) {
+    return PatternType.of(withPatternLength(left.data, left.data.length * right.data.value))
   }
 
-  if (left.type === 'Number' && left.value.unit == null && right.type === 'Pattern') {
-    return makePattern(withPatternLength(right.value, right.value.length * left.value.value))
+  if (NumberType.is(left) && PatternType.is(right)) {
+    return PatternType.of(withPatternLength(right.data, right.data.length * left.data.value))
   }
 
   assert(false)
 }
 
 function computeDivide (left: Value, right: Value): Value {
-  if (left.type === 'Number' && right.type === 'Number') {
+  if (NumberType.is(left) && NumberType.is(right)) {
     // Equal units cancel out
-    const unit = left.value.unit === right.value.unit ? undefined : left.value.unit
-    return makeNumber(unit, left.value.value / right.value.value)
+    const unit = left.data.unit === right.data.unit ? undefined : left.data.unit
+    return NumberType.of({ unit, value: left.data.value / right.data.value })
   }
 
-  if (left.type === 'Pattern' && right.type === 'Number') {
-    return makePattern(withPatternLength(left.value, left.value.length / right.value.value))
+  if (PatternType.is(left) && NumberType.is(right)) {
+    return PatternType.of(withPatternLength(left.data, left.data.length / right.data.value))
   }
 
   assert(false)
@@ -289,7 +280,7 @@ function resolveProperties<S extends PropertySchema> (context: Context, properti
   const allowed = new Set(schema.map((s) => s.name))
   const values = properties
     .filter((p) => allowed.has(p.key.name))
-    .map(({ key, value }) => [key.name, resolve(context, value).value])
+    .map(({ key, value }) => [key.name, resolve(context, value).data])
 
   return Object.fromEntries(values) as InferSchema<S>
 }

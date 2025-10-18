@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { lex } from '../../src/language/lexer/lexer.js'
+import { lex } from '../../../src/language/lexer/lexer.js'
 
 describe('language/lexer/lexer.ts', () => {
   it('should accept empty input', () => {

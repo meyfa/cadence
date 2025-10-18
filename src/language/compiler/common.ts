@@ -1,12 +1,10 @@
 import { definePropertySchema } from './schema.js'
+import { NumberType } from './types.js'
 
 export const trackSchema = definePropertySchema([
   {
     name: 'tempo',
-    type: {
-      type: 'Number',
-      unit: 'bpm'
-    },
+    type: NumberType.with('bpm'),
     required: false
   }
 ])
@@ -22,10 +20,7 @@ export const mixerSchema = definePropertySchema([
 export const busSchema = definePropertySchema([
   {
     name: 'gain',
-    type: {
-      type: 'Number',
-      unit: 'db'
-    },
+    type: NumberType.with('db'),
     required: false
   }
 ])
