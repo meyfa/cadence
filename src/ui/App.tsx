@@ -11,6 +11,8 @@ import { demoCode } from './demo.js'
 import { lex } from '../language/lexer/lexer.js'
 import type { EditorLocation } from '../editor/editor.js'
 import { useObservable } from './hooks/observable.js'
+import { TabLayout } from './layout/TabLayout.js'
+import { SettingsPage } from './pages/SettingsPage.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -96,6 +98,11 @@ export const App: FunctionComponent = () => {
   // Track editor cursor location
   const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
 
+  // Settings
+  const loadDemo = useCallback(() => {
+    setCode(demoCode)
+  }, [])
+
   return (
     <div className='flex flex-col h-screen'>
       <Header
@@ -106,7 +113,19 @@ export const App: FunctionComponent = () => {
         progress={progress}
       />
 
-      <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
+      <TabLayout tabs={[
+        {
+          title: 'Editor',
+          render: () => (
+            <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
+          )
+        },
+        {
+          title: 'Settings',
+          render: () => (<SettingsPage loadDemo={loadDemo} />)
+        }
+      ]}
+      />
 
       <Footer errors={errors} editorLocation={editorLocation} />
     </div>
