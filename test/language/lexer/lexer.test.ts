@@ -29,13 +29,13 @@ describe('language/lexer/lexer.ts', () => {
   })
 
   it('should ignore whitespace and comments', () => {
-    const result = lex(`foo #first comment\n# second comment\n  = 42`)
+    const result = lex(`foo //first comment\n// second comment\n  = 42`)
     assert.deepStrictEqual(result, {
       complete: true,
       value: [
         { name: 'word', text: 'foo', offset: 0, len: 3, line: 1, column: 1, state: '' },
-        { name: '=', text: '=', offset: 38, len: 1, line: 3, column: 3, state: '' },
-        { name: 'number', text: '42', offset: 40, len: 2, line: 3, column: 5, state: '' }
+        { name: '=', text: '=', offset: 40, len: 1, line: 3, column: 3, state: '' },
+        { name: 'number', text: '42', offset: 42, len: 2, line: 3, column: 5, state: '' }
       ]
     })
   })

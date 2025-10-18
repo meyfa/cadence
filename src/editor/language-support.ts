@@ -39,7 +39,7 @@ export const cadenceLanguage = LRLanguage.define({
   parser: parserWithMetadata,
   languageData: {
     commentTokens: {
-      line: '#'
+      line: '//'
     }
   }
 })

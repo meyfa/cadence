@@ -8,7 +8,7 @@ const ERROR_CONTEXT_LIMIT = 16
 const rules: Rules = [
   { name: 'space', regex: /[ \t\n\r]+/, discard: true },
 
-  { name: 'comment', regex: /#[^\n]*/, discard: true },
+  { name: 'comment', regex: /\/\/[^\n]*/, discard: true },
 
   { name: 'word', regex: /[a-zA-Z_][a-zA-Z_0-9]*/ },
 
