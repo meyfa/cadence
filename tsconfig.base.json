@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@core/*": ["./packages/core/src/*"],
+      "@language/*": ["./packages/language/src/*"],
+      "@editor/*": ["./packages/editor/src/*"]
+    },
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": false,
+    "outDir": "./dist",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "skipLibCheck": true
+  },
+  "include": []
+}

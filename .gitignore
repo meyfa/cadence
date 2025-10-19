@@ -1,10 +1,10 @@
-.DS_Store
-Thumbs.db
+**/.DS_Store
+**/Thumbs.db
 
-.vscode
-.idea
-*.log
+**/.vscode
+**/.idea
+**/*.log
 
-node_modules
-dist
-.env
+**/node_modules
+**/dist
+**/.env
