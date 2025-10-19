@@ -1,15 +1,17 @@
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { createCadenceEditor, type CadenceEditorHandle, EditorLocation } from '@editor/editor.js'
-import { useMutableCallback } from '../hooks/callback.js'
+import { useMutableCallback } from '../../hooks/callback.js'
+import clsx from 'clsx'
 
 const TAB_SIZE = 2
 const LINT_DELAY = 250
 
 export const Editor: FunctionComponent<{
+  className?: string
   document: string
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
-}> = ({ document, ...props }) => {
+}> = ({ className, document, ...props }) => {
   const handleRef = useRef<CadenceEditorHandle>(null)
   const onChange = useMutableCallback(props.onChange)
   const onLocationChange = useMutableCallback(props.onLocationChange)
@@ -35,6 +37,6 @@ export const Editor: FunctionComponent<{
   useEffect(() => handleRef.current?.setDocument(document), [document])
 
   return (
-    <div ref={initialize} className='h-full overflow-hidden relative' />
+    <div ref={initialize} className={clsx('overflow-hidden relative', className)} />
   )
 }
