@@ -26,11 +26,21 @@ export function check (program: ast.Program): readonly CompileError[] {
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  return [
+  const errors = [
     ...checkAssignments(context, assignments),
     ...checkTracks(context, tracks),
     ...checkMixers(context, mixers)
   ]
+
+  // Certain AST parser design decisions may result in the same error being reported multiple times.
+  // For example: Routing "c << b << a" may be interpreted as two separate routings, both causing an unknown identifier error for "b".
+  for (let i = errors.length - 1; i > 0; --i) {
+    if (errors[i].equals(errors[i - 1])) {
+      errors.pop()
+    }
+  }
+
+  return errors
 }
 
 function checkType (options: readonly Type[], actual: Type, location?: SourceLocation): readonly CompileError[] {

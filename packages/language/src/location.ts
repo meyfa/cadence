@@ -45,3 +45,7 @@ export function combineSourceLocations (...items: Locatable[]): SourceLocation {
     column: first.column
   }
 }
+
+export function areSourceLocationsEqual (a: SourceLocation, b: SourceLocation): boolean {
+  return a.offset === b.offset && a.length === b.length && a.line === b.line && a.column === b.column
+}
