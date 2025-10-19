@@ -8,5 +8,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build"
+  },
+  "dependencies": {
+    "reaflow": "5.4.1"
   }
 }
