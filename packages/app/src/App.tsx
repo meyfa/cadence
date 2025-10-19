@@ -11,6 +11,7 @@ import { useObservable } from './hooks/observable.js'
 import { TabLayout } from './layout/TabLayout.js'
 import { SettingsPage } from './pages/SettingsPage.js'
 import { EditorPage } from './pages/EditorPage.js'
+import { MixerPage } from './pages/MixerPage.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -114,6 +115,10 @@ export const App: FunctionComponent = () => {
           render: () => (
             <EditorPage value={code} onChange={setCode} errors={errors} />
           )
+        },
+        {
+          title: 'Mixer',
+          render: () => (<MixerPage program={program} />)
         },
         {
           title: 'Settings',
