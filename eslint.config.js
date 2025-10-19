@@ -9,7 +9,10 @@ export default defineConfig([
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat['jsx-runtime'],
   {
-    ignores: ['dist']
+    ignores: [
+      'dist',
+      'packages/*/dist'
+    ]
   },
   {
     languageOptions: {
@@ -26,6 +29,12 @@ export default defineConfig([
     settings: {
       react: {
         version: 'detect'
+      },
+
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.lint.json'
+        }
       }
     },
 
@@ -66,6 +75,52 @@ export default defineConfig([
         {
           allowForKnownSafeCalls: [
             { from: 'package', name: ['describe', 'it', 'suite', 'test'], package: 'node:test' }
+          ]
+        }
+      ],
+
+      'import/extensions': [
+        'error',
+        'always',
+        {
+          ignorePackages: true,
+          pattern: {
+            js: 'always',
+            grammar: 'always',
+
+            jsx: 'never',
+            ts: 'never',
+            tsx: 'never'
+          }
+        }
+      ],
+
+      // monorepo: Prevent cross-package imports that violate dependency direction
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: './packages/core',
+              from: [
+                './packages/language',
+                './packages/editor',
+                './packages/app'
+              ]
+            },
+            {
+              target: './packages/language',
+              from: [
+                './packages/editor',
+                './packages/app'
+              ]
+            },
+            {
+              target: './packages/editor',
+              from: [
+                './packages/app'
+              ]
+            }
           ]
         }
       ]
