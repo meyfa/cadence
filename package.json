@@ -5,13 +5,15 @@
   "author": "Fabian Meyer",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "dist/index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "lint": "tsc --noEmit -p tsconfig.lint.json && eslint .",
     "lint-fix": "tsc --noEmit -p tsconfig.lint.json && eslint --fix .",
-    "start": "vite",
-    "build": "vite build",
-    "test": "tsx --test \"test/**/*.test.ts\""
+    "start": "npm run --workspace=packages/app start --",
+    "build": "npm run --workspace=packages/app build",
+    "test": "npm run --workspaces --if-present test"
   },
   "repository": {
     "type": "git",

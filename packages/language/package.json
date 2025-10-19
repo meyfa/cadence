@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "@meyfa/cadence-language",
+  "version": "0.0.0",
+  "author": "Fabian Meyer",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "test": "tsx --test \"test/**/*.test.ts\""
+  }
+}
