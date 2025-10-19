@@ -11,7 +11,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
 }>> = ({ children, min, max, value, onChange, label, step }) => {
   return (
     <label
-      className='px-3 py-1 h-10 leading-none rounded flex items-center gap-3 border-2 border-gray-600 text-white select-none'
+      className='px-3 py-1 h-10 leading-none rounded flex items-center gap-3 border-2 border-neutral-600 text-white select-none'
       title={label}
     >
       {children}
