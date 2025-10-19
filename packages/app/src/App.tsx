@@ -3,16 +3,14 @@ import { createAudioEngine } from '@core/audio/engine.js'
 import { lex } from '@language/lexer/lexer.js'
 import { parse } from '@language/parser/parser.js'
 import { compile, type CompileOptions } from '@language/compiler/compiler.js'
-import type { EditorLocation } from '@editor/editor.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { Header } from './components/Header.js'
-import { Editor } from './components/Editor.js'
-import { Footer } from './components/Footer.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
 import { TabLayout } from './layout/TabLayout.js'
 import { SettingsPage } from './pages/SettingsPage.js'
+import { EditorPage } from './pages/EditorPage.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -95,9 +93,6 @@ export const App: FunctionComponent = () => {
     }
   }, [playing, program])
 
-  // Track editor cursor location
-  const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
-
   // Settings
   const loadDemo = useCallback(() => {
     setCode(demoCode)
@@ -117,7 +112,7 @@ export const App: FunctionComponent = () => {
         {
           title: 'Editor',
           render: () => (
-            <Editor document={code} onChange={setCode} onLocationChange={setEditorLocation} />
+            <EditorPage value={code} onChange={setCode} errors={errors} />
           )
         },
         {
@@ -126,8 +121,6 @@ export const App: FunctionComponent = () => {
         }
       ]}
       />
-
-      <Footer errors={errors} editorLocation={editorLocation} />
     </div>
   )
 }
