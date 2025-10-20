@@ -1,29 +1,29 @@
 type SerializeFn<TDocument> = (document: TDocument) => string
 type ParseFn<TDocument> = (data: string) => TDocument | undefined
 
-export interface Storage<TDocument> {
-  readonly load: () => TDocument | undefined
-  readonly save: (document: TDocument) => void
+export interface Storage<TSave, TLoad = TSave> {
+  readonly save: (document: TSave) => void
+  readonly load: () => TLoad | undefined
 }
 
-export class BrowserLocalStorage<TDocument> implements Storage<TDocument> {
+export class BrowserLocalStorage<TSave, TLoad = TSave> implements Storage<TSave, TLoad> {
   constructor (
     private readonly key: string,
-    private readonly serialize: SerializeFn<TDocument>,
-    private readonly parse: ParseFn<TDocument>
+    private readonly serialize: SerializeFn<TSave>,
+    private readonly parse: ParseFn<TLoad>
   ) {}
 
-  load (): TDocument | undefined {
+  save (document: TSave): void {
+    const data = this.serialize(document)
+    localStorage.setItem(this.key, data)
+  }
+
+  load (): TLoad | undefined {
     const data = localStorage.getItem(this.key)
     if (data == null) {
       return undefined
     }
 
     return this.parse(data)
-  }
-
-  save (document: TDocument): void {
-    const data = this.serialize(document)
-    localStorage.setItem(this.key, data)
   }
 }

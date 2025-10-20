@@ -1,5 +1,7 @@
+import type { Numeric, Unit } from '@core/program.js'
+
 export interface Settings {
-  readonly volume: number
+  readonly outputGain: Numeric<'db'>
 }
 
 export interface CadenceEditorState {
@@ -7,36 +9,64 @@ export interface CadenceEditorState {
   readonly code: string
 }
 
+export interface PartialCadenceEditorState {
+  readonly settings?: Partial<Settings>
+  readonly code?: string
+}
+
 export function serializeEditorState (state: CadenceEditorState): string {
   return JSON.stringify(state)
 }
 
-export function parseEditorState (data: string): CadenceEditorState | undefined {
+export function parseEditorState (input: string): PartialCadenceEditorState {
+  const data = tryJSONParse(input)
+
+  if (typeof data !== 'object' || data == null) {
+    return {}
+  }
+
+  const code = 'code' in data ? parseString(data.code) : undefined
+
+  const settingsObj = 'settings' in data && typeof data.settings === 'object' && data.settings != null
+    ? data.settings
+    : {}
+
+  const outputGain = 'outputGain' in settingsObj
+    ? parseNumeric('db', settingsObj.outputGain)
+    : undefined
+
+  return {
+    code,
+    settings: {
+      outputGain
+    }
+  }
+}
+
+function tryJSONParse (input: string): unknown {
   try {
-    const obj = JSON.parse(data)
-    if (typeof obj !== 'object' || obj == null) {
-      return undefined
-    }
-
-    if (typeof obj.code !== 'string') {
-      return undefined
-    }
-
-    if (typeof obj.settings !== 'object' || obj.settings == null) {
-      return undefined
-    }
-
-    if (typeof obj.settings.volume !== 'number') {
-      return undefined
-    }
-
-    return {
-      code: obj.code,
-      settings: {
-        volume: obj.settings.volume
-      }
-    }
+    return JSON.parse(input)
   } catch {
     return undefined
   }
+}
+
+function parseString (value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+function parseNumeric<const U extends Unit> (unit: U, value: unknown): Numeric<U> | undefined {
+  if (value == null || typeof value !== 'object') {
+    return undefined
+  }
+
+  if (!('unit' in value) || value.unit !== unit) {
+    return undefined
+  }
+
+  if (!('value' in value) || typeof value.value !== 'number') {
+    return undefined
+  }
+
+  return { unit, value: value.value }
 }
