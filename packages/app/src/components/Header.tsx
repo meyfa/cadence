@@ -2,22 +2,33 @@ import { PlayArrowOutlined, StopOutlined, VolumeDownOutlined, VolumeOffOutlined,
 import { FunctionComponent } from 'react'
 import { Button } from './Button.js'
 import { Slider } from './Slider.js'
+import { makeNumeric, type Numeric } from '@core/program.js'
 
 export const Header: FunctionComponent<{
   playing: boolean
   onPlayPause: () => void
-  volume: number
-  onVolumeChange: (volume: number) => void
+  outputGain: Numeric<'db'>
+  onOutputGainChange: (outputGain: Numeric<'db'>) => void
   progress?: number
-}> = ({ playing, onPlayPause, volume, onVolumeChange, progress }) => {
+}> = ({ playing, onPlayPause, outputGain, onOutputGainChange, progress }) => {
   return (
     <header className='w-full border-b border-b-neutral-600 flex flex-wrap items-center px-4 py-1 gap-2'>
       <div className='text-lg font-semibold mr-2'>
         Cadence
       </div>
 
-      <Slider label='Volume' min={0} max={1} value={volume} onChange={onVolumeChange} step={0.02}>
-        {volume < 0.1 ? <VolumeOffOutlined /> : volume > 0.5 ? <VolumeUpOutlined /> : <VolumeDownOutlined />}
+      <Slider
+        label='Output gain'
+        min={-60}
+        max={0}
+        value={outputGain.value}
+        onChange={(value) => onOutputGainChange(makeNumeric('db', value))}
+        step={1}
+        icon={outputGain.value < -48 ? <VolumeOffOutlined /> : outputGain.value < -18 ? <VolumeDownOutlined /> : <VolumeUpOutlined />}
+      >
+        <span className='w-12 text-right text-nowrap'>
+          {`${outputGain.value.toFixed()} dB`}
+        </span>
       </Slider>
 
       <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>

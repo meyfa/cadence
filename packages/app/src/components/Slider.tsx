@@ -1,4 +1,4 @@
-import { FunctionComponent, PropsWithChildren } from 'react'
+import { FunctionComponent, PropsWithChildren, type ReactNode } from 'react'
 import './Slider.css'
 
 export const Slider: FunctionComponent<PropsWithChildren<{
@@ -8,13 +8,14 @@ export const Slider: FunctionComponent<PropsWithChildren<{
   onChange: (value: number) => void
   label?: string
   step?: number
-}>> = ({ children, min, max, value, onChange, label, step }) => {
+  icon?: ReactNode
+}>> = ({ children, min, max, value, onChange, label, step, icon }) => {
   return (
     <label
-      className='px-3 py-1 h-10 leading-none rounded flex items-center gap-3 border-2 border-neutral-600 text-white select-none'
+      className='px-2 py-1 h-10 leading-none rounded flex items-center gap-2 border-2 border-neutral-600 text-white select-none'
       title={label}
     >
-      {children}
+      {icon}
 
       <input
         type='range'
@@ -25,6 +26,8 @@ export const Slider: FunctionComponent<PropsWithChildren<{
         onChange={(event) => onChange(event.currentTarget.valueAsNumber)}
         className='w-32 cadence-slider'
       />
+
+      {children}
     </label>
   )
 }

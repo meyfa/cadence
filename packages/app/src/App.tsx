@@ -12,6 +12,7 @@ import { TabLayout } from './layout/TabLayout.js'
 import { SettingsPage } from './pages/SettingsPage.js'
 import { EditorPage } from './pages/EditorPage.js'
 import { MixerPage } from './pages/MixerPage.js'
+import { makeNumeric } from '@core/program.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -26,33 +27,34 @@ const compileOptions: CompileOptions = {
 const defaultState: CadenceEditorState = {
   code: demoCode,
   settings: {
-    volume: 0.5
+    outputGain: makeNumeric('db', -12)
   }
 }
 
-const storage = new BrowserLocalStorage<CadenceEditorState>('cadence-editor', serializeEditorState, parseEditorState)
+const storage = new BrowserLocalStorage('cadence-editor', serializeEditorState, parseEditorState)
 const storedState = storage.load()
 
 const initialState: CadenceEditorState = {
-  ...defaultState,
-  ...storedState,
-  code: storedState?.code == null || storedState.code.trim() === '' ? demoCode : storedState.code
+  code: storedState?.code ?? defaultState.code,
+  settings: {
+    outputGain: storedState?.settings?.outputGain ?? defaultState.settings.outputGain
+  }
 }
 
 const engine = createAudioEngine({
-  volume: initialState.settings.volume
+  outputGain: initialState.settings.outputGain
 })
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialState.code)
-  const volume = useObservable(engine.volume)
+  const outputGain = useObservable(engine.outputGain)
   const playing = useObservable(engine.playing)
   const progress = useObservable(engine.progress)
 
   // Synchronize state with local storage
   useEffect(() => {
-    storage.save({ code, settings: { volume } })
-  }, [code, volume])
+    storage.save({ code, settings: { outputGain } })
+  }, [code, outputGain])
 
   // Lex, parse, and compile code
 
@@ -104,8 +106,8 @@ export const App: FunctionComponent = () => {
       <Header
         playing={playing}
         onPlayPause={onPlayPause}
-        volume={volume}
-        onVolumeChange={(volume) => engine.volume.set(volume)}
+        outputGain={outputGain}
+        onOutputGainChange={(gain) => engine.outputGain.set(gain)}
         progress={progress}
       />
 

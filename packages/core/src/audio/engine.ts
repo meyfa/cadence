@@ -1,14 +1,14 @@
-import { type Program } from '../program.js'
+import { type Numeric, type Program } from '../program.js'
 import { MutableObservable, type Observable } from '../observable.js'
 import { createAudioSession, type AudioSession } from './session.js'
-import { gainToDb, getDestination } from 'tone'
+import { getDestination } from 'tone'
 
 export interface AudioEngineOptions {
-  readonly volume: number
+  readonly outputGain: Numeric<'db'>
 }
 
 export interface AudioEngine {
-  readonly volume: MutableObservable<number>
+  readonly outputGain: MutableObservable<Numeric<'db'>>
 
   readonly playing: Observable<boolean>
   readonly play: (program: Program) => void
@@ -18,11 +18,10 @@ export interface AudioEngine {
 }
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
-  const volume = new MutableObservable(options.volume)
+  const outputGain = new MutableObservable(options.outputGain)
 
-  volume.subscribe((volume) => {
-    const volumeDecibels = gainToDb(Math.pow(volume, 2))
-    getDestination().volume.rampTo(volumeDecibels, 0.05)
+  outputGain.subscribe(({ value }) => {
+    getDestination().volume.rampTo(value, 0.05)
   })
 
   const playing = new MutableObservable(false)
@@ -60,5 +59,5 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     playing.set(false)
   }
 
-  return { volume, playing, play, stop, progress }
+  return { outputGain, playing, play, stop, progress }
 }
