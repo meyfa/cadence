@@ -1,24 +1,19 @@
-import { useCallback, useEffect, useState, type FunctionComponent } from 'react'
-import { Button } from '../components/Button.js'
 import { CheckOutlined, RestartAltOutlined } from '@mui/icons-material'
+import { useCallback, useState, type FunctionComponent } from 'react'
+import { Button } from '../components/Button.js'
 import { Footer } from '../components/Footer.js'
+import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog.js'
 
 export const SettingsPage: FunctionComponent<{
   loadDemo: () => void
 }> = ({ loadDemo }) => {
+  const [confirmLoadDemo, setConfirmLoadDemo] = useState(false)
   const [demoLoaded, setDemoLoaded] = useState(false)
 
   const onClickLoadDemo = useCallback(() => {
     loadDemo()
     setDemoLoaded(true)
   }, [loadDemo])
-
-  useEffect(() => {
-    if (demoLoaded) {
-      const timer = setTimeout(() => setDemoLoaded(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [demoLoaded])
 
   return (
     <div className='h-full flex flex-col'>
@@ -31,7 +26,7 @@ export const SettingsPage: FunctionComponent<{
           </div>
 
           <div className='flex items-center gap-4'>
-            <Button onClick={onClickLoadDemo} disabled={demoLoaded}>
+            <Button onClick={() => setConfirmLoadDemo(true)}>
               <RestartAltOutlined className='mr-2' />
               Load demo project
             </Button>
@@ -43,6 +38,18 @@ export const SettingsPage: FunctionComponent<{
               </div>
             )}
           </div>
+
+          <ConfirmationDialog
+            open={confirmLoadDemo}
+            onConfirm={() => {
+              onClickLoadDemo()
+              setConfirmLoadDemo(false)
+            }}
+            onCancel={() => setConfirmLoadDemo(false)}
+            title='Load demo project?'
+          >
+            This will delete your current project. Continue?
+          </ConfirmationDialog>
         </div>
       </div>
 
