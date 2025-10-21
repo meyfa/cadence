@@ -155,14 +155,6 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   p.recursive(() => identifierOrCall_)
 )
 
-function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
-  return ast.make('BinaryExpression', combineSourceRanges(left, right), {
-    operator: operator.text as ast.BinaryOperator,
-    left,
-    right
-  })
-}
-
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.abc(
     literal('('),
@@ -175,24 +167,33 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
 
 const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.ab(
-    literal('-'),
+    p.eitherOr(literal('+'), literal('-')),
     p.recursive(() => unaryExpression_),
     (op, expr) => {
-      // If it's a numeric literal, fold to a negative literal
+      // If it's a numeric literal, fold the unary operator directly
       if (expr.type === 'NumberLiteral') {
         return ast.make('NumberLiteral', combineSourceRanges(op, expr), {
-          value: -expr.value,
+          value: op.text === '+' ? expr.value : -expr.value,
           unit: expr.unit
         })
       }
 
-      // Otherwise, desugar to (0 - expr) to reuse existing binary handling
-      const zero = ast.make('NumberLiteral', getSourceRange(op), { value: 0 })
-      return makeBinaryExpression(op, zero, expr)
+      return ast.make('UnaryExpression', combineSourceRanges(op, expr), {
+        operator: op.text as ast.UnaryOperator,
+        argument: expr
+      })
     }
   ),
   primary_
 )
+
+function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
+  return ast.make('BinaryExpression', combineSourceRanges(left, right), {
+    operator: operator.text as ast.BinaryOperator,
+    left,
+    right
+  })
+}
 
 // unary ((*|/) unary)*
 const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
