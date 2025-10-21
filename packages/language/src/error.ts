@@ -1,4 +1,4 @@
-import type { SourceLocation } from './location.js'
+import type { SourceRange } from './range.js'
 
 export function truncateString (str: string, maxLength: number): string {
   if (str.length <= maxLength) {
@@ -30,12 +30,12 @@ export class CompoundError<TError extends Error> extends Error {
   }
 }
 
-export abstract class LocationError extends Error {
-  readonly location?: SourceLocation
+export abstract class RangeError extends Error {
+  readonly range?: SourceRange
 
-  constructor (message: string, location?: SourceLocation) {
+  constructor (message: string, range?: SourceRange) {
     super(message)
-    this.name = 'LocationError'
-    this.location = location
+    this.name = 'RangeError'
+    this.range = range
   }
 }

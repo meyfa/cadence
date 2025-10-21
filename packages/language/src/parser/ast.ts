@@ -1,9 +1,9 @@
 import type { Step } from '@core/program.js'
-import type { SourceLocation } from '../location.js'
+import type { SourceRange } from '../range.js'
 
 export interface ASTNode {
   readonly type: string
-  readonly location: SourceLocation
+  readonly range: SourceRange
 }
 
 // Basic Types
@@ -114,10 +114,10 @@ export interface Program extends ASTNode {
 
 export function make<T extends keyof NodeByType> (
   type: T,
-  location: SourceLocation,
-  props: Omit<NodeByType[T], 'type' | 'location'>
+  range: SourceRange,
+  props: Omit<NodeByType[T], 'type' | 'range'>
 ): NodeByType[T] {
-  return { type, location, ...(props as any) } as NodeByType[T]
+  return { type, range: range, ...(props as any) } as NodeByType[T]
 }
 
 export interface NodeByType {

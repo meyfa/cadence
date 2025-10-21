@@ -1,9 +1,9 @@
-import { LocationError } from '../error.js'
-import type { SourceLocation } from '../location.js'
+import { RangeError } from '../error.js'
+import type { SourceRange } from '../range.js'
 
-export class ParseError extends LocationError {
-  constructor (message: string, location?: SourceLocation) {
-    super(message, location)
+export class ParseError extends RangeError {
+  constructor (message: string, range?: SourceRange) {
+    super(message, range)
     this.name = 'ParseError'
   }
 }

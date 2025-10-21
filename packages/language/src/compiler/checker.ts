@@ -2,7 +2,7 @@ import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
 import { BusType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type Type } from './types.js'
 import { getDefaultFunctions } from './functions.js'
-import type { SourceLocation } from '../location.js'
+import type { SourceRange } from '../range.js'
 import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
 import { busSchema, mixerSchema, sectionSchema, trackSchema } from './common.js'
@@ -43,10 +43,10 @@ export function check (program: ast.Program): readonly CompileError[] {
   return errors
 }
 
-function checkType (options: readonly Type[], actual: Type, location?: SourceLocation): readonly CompileError[] {
+function checkType (options: readonly Type[], actual: Type, range?: SourceRange): readonly CompileError[] {
   if (!options.some((option) => option.equals(actual))) {
     const optionsText = options.map((o) => o.format()).join(' or ')
-    return [new CompileError(`Expected type ${optionsText}, got ${actual.format()}`, location)]
+    return [new CompileError(`Expected type ${optionsText}, got ${actual.format()}`, range)]
   }
 
   return []
@@ -58,7 +58,7 @@ function checkAssignments (context: Context, assignments: readonly ast.Assignmen
   for (const assignment of assignments) {
     const duplicate = context.resolutions.has(assignment.key.name)
     if (duplicate) {
-      errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.location))
+      errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.range))
     }
 
     const expressionCheck = checkExpression(context, assignment.value)
@@ -77,7 +77,7 @@ function checkTracks (context: Context, tracks: readonly ast.TrackStatement[]): 
 
   for (const track of tracks) {
     if (tracks.length > 1) {
-      errors.push(new CompileError('Multiple track definitions', track.location))
+      errors.push(new CompileError('Multiple track definitions', track.range))
     }
 
     errors.push(...checkTrack(context, track))
@@ -89,17 +89,17 @@ function checkTracks (context: Context, tracks: readonly ast.TrackStatement[]): 
 function checkTrack (context: Context, track: ast.TrackStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(context, track.properties, trackSchema, track.location)
+  const propertiesCheck = checkProperties(context, track.properties, trackSchema, track.range)
   errors.push(...propertiesCheck.errors)
 
   const seenSections = new Set<string>()
 
   for (const section of track.sections) {
     if (seenSections.has(section.name.name)) {
-      errors.push(new CompileError(`Duplicate section named "${section.name.name}"`, section.location))
+      errors.push(new CompileError(`Duplicate section named "${section.name.name}"`, section.range))
     }
     if (context.resolutions.has(section.name.name)) {
-      errors.push(new CompileError(`Section name "${section.name.name}" conflicts with existing identifier`, section.name.location))
+      errors.push(new CompileError(`Section name "${section.name.name}" conflicts with existing identifier`, section.name.range))
     }
     seenSections.add(section.name.name)
     errors.push(...checkSection(context, section))
@@ -115,10 +115,10 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   errors.push(...lengthCheck.errors)
 
   if (lengthCheck.result != null) {
-    errors.push(...checkType([NumberType.with('steps')], lengthCheck.result, section.length.location))
+    errors.push(...checkType([NumberType.with('steps')], lengthCheck.result, section.length.range))
   }
 
-  const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.location)
+  const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.range)
   errors.push(...propertiesCheck.errors)
 
   for (const routing of section.routings) {
@@ -133,15 +133,15 @@ function checkInstrumentRouting (context: Context, routing: ast.Routing): readon
 
   const destination = context.resolutions.get(routing.destination.name)
   if (destination == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
+    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
-    errors.push(...checkType([InstrumentType], destination, routing.destination.location))
+    errors.push(...checkType([InstrumentType], destination, routing.destination.range))
   }
 
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
-    errors.push(...checkType([PatternType], sourceCheck.result, routing.source.location))
+    errors.push(...checkType([PatternType], sourceCheck.result, routing.source.range))
   }
 
   return errors
@@ -152,7 +152,7 @@ function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): 
 
   for (const mixer of mixers) {
     if (mixers.length > 1) {
-      errors.push(new CompileError('Multiple mixer definitions', mixer.location))
+      errors.push(new CompileError('Multiple mixer definitions', mixer.range))
     }
     errors.push(...checkMixer(context, mixer))
   }
@@ -166,19 +166,19 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.location)
+  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.range)
   errors.push(...propertiesCheck.errors)
 
   const seenBuses = new Set<string>()
 
   for (const bus of mixer.buses) {
     if (seenBuses.has(bus.name.name)) {
-      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.location))
+      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
     }
     seenBuses.add(bus.name.name)
 
     if (mixerContext.resolutions.has(bus.name.name)) {
-      errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.location))
+      errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
     }
 
     // Reserve the name in the local scope
@@ -198,7 +198,7 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 function checkBus (context: Context, bus: ast.BusStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(context, bus.properties, busSchema, bus.location)
+  const propertiesCheck = checkProperties(context, bus.properties, busSchema, bus.range)
   errors.push(...propertiesCheck.errors)
 
   return errors
@@ -209,16 +209,16 @@ function checkBusRouting (context: Context, routing: ast.Routing): readonly Comp
 
   const destination = context.resolutions.get(routing.destination.name)
   if (destination == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.location))
+    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
-    errors.push(...checkType([BusType], destination, routing.destination.location))
+    errors.push(...checkType([BusType], destination, routing.destination.range))
   }
 
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
     const options = [InstrumentType, BusType, GroupType] as const
-    errors.push(...checkType(options, sourceCheck.result, routing.source.location))
+    errors.push(...checkType(options, sourceCheck.result, routing.source.range))
   }
 
   return errors
@@ -238,7 +238,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     case 'Identifier': {
       const valueType = context.resolutions.get(expression.name)
       if (valueType == null) {
-        return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.location)] }
+        return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.range)] }
       }
       return { errors: [], result: valueType }
     }
@@ -246,19 +246,19 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     case 'Call': {
       const callee = context.resolutions.get(expression.callee.name)
       if (callee == null) {
-        return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.location)] }
+        return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.range)] }
       }
 
       if (!FunctionType.equals(callee)) {
-        return { errors: [new CompileError(`"${expression.callee.name}" is not a function`, expression.callee.location)] }
+        return { errors: [new CompileError(`"${expression.callee.name}" is not a function`, expression.callee.range)] }
       }
 
       const { schema, returnType } = FunctionType.detail(callee)
       if (schema == null || returnType == null) {
-        return { errors: [new CompileError(`Function "${expression.callee.name}" is missing type information`, expression.callee.location)] }
+        return { errors: [new CompileError(`Function "${expression.callee.name}" is missing type information`, expression.callee.range)] }
       }
 
-      const { errors } = checkProperties(context, expression.arguments, schema, expression.location)
+      const { errors } = checkProperties(context, expression.arguments, schema, expression.range)
       return { errors, result: returnType }
     }
 
@@ -272,25 +272,25 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors }
       }
 
-      return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.location)
+      return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.range)
     }
   }
 }
 
-function checkBinaryExpression (operator: ast.BinaryOperator, left: Type, right: Type, location: SourceLocation): Checked<Type> {
+function checkBinaryExpression (operator: ast.BinaryOperator, left: Type, right: Type, range: SourceRange): Checked<Type> {
   switch (operator) {
     case '+':
-      return checkPlus(left, right, location)
+      return checkPlus(left, right, range)
     case '-':
-      return checkMinus(left, right, location)
+      return checkMinus(left, right, range)
     case '*':
-      return checkMultiply(left, right, location)
+      return checkMultiply(left, right, range)
     case '/':
-      return checkDivide(left, right, location)
+      return checkDivide(left, right, range)
   }
 }
 
-function checkPlus (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+function checkPlus (left: Type, right: Type, range: SourceRange): Checked<Type> {
   if (StringType.equals(left) && StringType.equals(right)) {
     return { errors: [], result: left }
   }
@@ -308,18 +308,18 @@ function checkPlus (left: Type, right: Type, location: SourceLocation): Checked<
     return { errors: [], result: GroupType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkMinus (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+function checkMinus (left: Type, right: Type, range: SourceRange): Checked<Type> {
   if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
     return { errors: [], result: left }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkMultiply (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+function checkMultiply (left: Type, right: Type, range: SourceRange): Checked<Type> {
   if (NumberType.equals(left) && NumberType.equals(right)) {
     const { unit: leftUnit } = NumberType.detail(left)
     const { unit: rightUnit } = NumberType.detail(right)
@@ -332,10 +332,10 @@ function checkMultiply (left: Type, right: Type, location: SourceLocation): Chec
     return { errors: [], result: PatternType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkDivide (left: Type, right: Type, location: SourceLocation): Checked<Type> {
+function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type> {
   if (NumberType.equals(left) && NumberType.equals(right)) {
     const { unit: leftUnit } = NumberType.detail(left)
     const { unit: rightUnit } = NumberType.detail(right)
@@ -357,10 +357,10 @@ function checkDivide (left: Type, right: Type, location: SourceLocation): Checke
     }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, location)] }
+  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentLocation?: SourceLocation): Checked<ReadonlyMap<string, Type>> {
+function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
   const result = new Map<string, Type>()
 
@@ -368,13 +368,13 @@ function checkProperties (context: Context, properties: readonly ast.Property[],
 
   for (const property of properties) {
     if (result.has(property.key.name)) {
-      errors.push(new CompileError(`Duplicate property named "${property.key.name}"`, property.key.location))
+      errors.push(new CompileError(`Duplicate property named "${property.key.name}"`, property.key.range))
       continue
     }
 
     const spec = schemaAsMap.get(property.key.name)
     if (spec == null) {
-      errors.push(new CompileError(`Unknown property "${property.key.name}"`, property.key.location))
+      errors.push(new CompileError(`Unknown property "${property.key.name}"`, property.key.range))
       continue
     }
 
@@ -382,14 +382,14 @@ function checkProperties (context: Context, properties: readonly ast.Property[],
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result != null) {
-      errors.push(...checkType([spec.type], expressionCheck.result, property.value.location))
+      errors.push(...checkType([spec.type], expressionCheck.result, property.value.range))
       result.set(property.key.name, expressionCheck.result)
     }
   }
 
   for (const spec of schema) {
     if (spec.required && !result.has(spec.name)) {
-      errors.push(new CompileError(`Missing required property "${spec.name}"`, parentLocation))
+      errors.push(new CompileError(`Missing required property "${spec.name}"`, parentRange))
       continue
     }
   }

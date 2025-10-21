@@ -1,4 +1,4 @@
-import type { SourceLocation } from '../location.js'
+import type { SourceRange } from '../range.js'
 import { type AnyValue, type Type, type ValueFor } from './types.js'
 
 export type Properties = readonly Property[]
@@ -6,10 +6,10 @@ export type Properties = readonly Property[]
 export interface Property {
   readonly key: {
     readonly name: string
-    readonly source: SourceLocation
+    readonly range: SourceRange
   }
   readonly value: {
-    readonly location: SourceLocation
+    readonly range: SourceRange
   }
 }
 
