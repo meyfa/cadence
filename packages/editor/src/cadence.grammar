@@ -56,7 +56,11 @@ Literal {
 }
 
 expression {
-  "(" expression ")" | "-" expression | Literal | Call | VariableName | BinaryExpression
+  "(" expression ")" | Literal | Call | VariableName | UnaryExpression | BinaryExpression
+}
+
+UnaryExpression {
+  ("+" | "-") expression
 }
 
 BinaryExpression {

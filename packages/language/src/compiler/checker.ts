@@ -262,6 +262,16 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       return { errors, result: returnType }
     }
 
+    case 'UnaryExpression': {
+      const argumentCheck = checkExpression(context, expression.argument)
+
+      if (argumentCheck.result == null) {
+        return { errors: argumentCheck.errors }
+      }
+
+      return checkUnaryExpression(expression.operator, argumentCheck.result, expression.range)
+    }
+
     case 'BinaryExpression': {
       const leftCheck = checkExpression(context, expression.left)
       const rightCheck = checkExpression(context, expression.right)
@@ -274,6 +284,19 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
 
       return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.range)
     }
+  }
+}
+
+function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {
+  if (!NumberType.equals(argument)) {
+    return { errors: [new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range)] }
+  }
+
+  // TypeScript will error if an operator is not handled
+  switch (operator) {
+    case '+':
+    case '-':
+      return { errors: [], result: argument }
   }
 }
 
@@ -308,7 +331,7 @@ function checkPlus (left: Type, right: Type, range: SourceRange): Checked<Type> 
     return { errors: [], result: GroupType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
+  return { errors: [new CompileError(`Incompatible operands for "+": ${left.format()} and ${right.format()}`, range)] }
 }
 
 function checkMinus (left: Type, right: Type, range: SourceRange): Checked<Type> {
@@ -316,7 +339,7 @@ function checkMinus (left: Type, right: Type, range: SourceRange): Checked<Type>
     return { errors: [], result: left }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
+  return { errors: [new CompileError(`Incompatible operands for "-": ${left.format()} and ${right.format()}`, range)] }
 }
 
 function checkMultiply (left: Type, right: Type, range: SourceRange): Checked<Type> {
@@ -332,7 +355,7 @@ function checkMultiply (left: Type, right: Type, range: SourceRange): Checked<Ty
     return { errors: [], result: PatternType }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
+  return { errors: [new CompileError(`Incompatible operands for "*": ${left.format()} and ${right.format()}`, range)] }
 }
 
 function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type> {
@@ -357,7 +380,7 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
     }
   }
 
-  return { errors: [new CompileError(`Incompatible operands: ${left.format()} and ${right.format()}`, range)] }
+  return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
 }
 
 function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {

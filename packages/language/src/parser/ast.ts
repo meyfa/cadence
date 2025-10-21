@@ -36,6 +36,17 @@ export type Literal = NumberLiteral | StringLiteral | PatternLiteral
 
 export type Value = Literal | Call | Identifier
 
+// Expression Types
+
+export const unaryOperators = ['+', '-'] as const
+export type UnaryOperator = typeof unaryOperators[number]
+
+export interface UnaryExpression extends ASTNode {
+  readonly type: 'UnaryExpression'
+  readonly operator: UnaryOperator
+  readonly argument: Expression
+}
+
 export const binaryOperators = ['+', '-', '*', '/'] as const
 export type BinaryOperator = typeof binaryOperators[number]
 
@@ -46,7 +57,7 @@ export interface BinaryExpression extends ASTNode {
   readonly right: Expression
 }
 
-export type Expression = Value | BinaryExpression
+export type Expression = Value | UnaryExpression | BinaryExpression
 
 // Composite Types
 
@@ -125,6 +136,8 @@ export interface NodeByType {
   NumberLiteral: NumberLiteral
   StringLiteral: StringLiteral
   PatternLiteral: PatternLiteral
+
+  UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression
 
   Property: Property

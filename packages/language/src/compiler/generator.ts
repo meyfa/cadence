@@ -193,12 +193,35 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return func.data.invoke(context, args)
     }
 
+    case 'UnaryExpression': {
+      const arg = resolve(context, expression.argument)
+      return computeUnaryExpression(expression.operator, arg)
+    }
+
     case 'BinaryExpression': {
       const left = resolve(context, expression.left)
       const right = resolve(context, expression.right)
       return computeBinaryExpression(expression.operator, left, right)
     }
   }
+}
+
+function computeUnaryExpression (operator: ast.UnaryOperator, argument: Value): Value {
+  switch (operator) {
+    case '+':
+      if (NumberType.is(argument)) {
+        return argument
+      }
+      break
+
+    case '-':
+      if (NumberType.is(argument)) {
+        return NumberType.of({ unit: argument.data.unit, value: -argument.data.value })
+      }
+      break
+  }
+
+  assert(false)
 }
 
 function computeBinaryExpression (operator: ast.BinaryOperator, left: Value, right: Value): Value {
