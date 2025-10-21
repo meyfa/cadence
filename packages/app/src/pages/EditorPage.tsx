@@ -1,5 +1,5 @@
 import type { EditorLocation } from '@editor/editor.js'
-import type { LocationError } from '@language/error.js'
+import type { RangeError } from '@language/error.js'
 import { useState, type FunctionComponent } from 'react'
 import { Editor } from '../components/editor/Editor.js'
 import { EditorFooter } from '../components/editor/EditorFooter.js'
@@ -7,7 +7,7 @@ import { EditorFooter } from '../components/editor/EditorFooter.js'
 export const EditorPage: FunctionComponent<{
   value: string
   onChange: (value: string) => void
-  errors: readonly LocationError[]
+  errors: readonly RangeError[]
 }> = ({ value, onChange, errors }) => {
   const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
 

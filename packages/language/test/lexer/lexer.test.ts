@@ -25,7 +25,7 @@ describe('lexer/lexer.ts', () => {
     assert.strictEqual(result.complete, false)
     assert.strictEqual(result.error.name, 'LexError')
     assert.strictEqual(result.error.message, 'Unexpected input "$"')
-    assert.deepStrictEqual(result.error.location, { offset: 9, length: 1, line: 1, column: 10 })
+    assert.deepStrictEqual(result.error.range, { offset: 9, length: 1, line: 1, column: 10 })
   })
 
   it('should ignore whitespace and comments', () => {

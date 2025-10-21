@@ -1,5 +1,5 @@
 import type { EditorLocation } from '@editor/editor.js'
-import type { LocationError } from '@language/error.js'
+import type { RangeError } from '@language/error.js'
 import type { FunctionComponent } from 'react'
 import { Footer } from '../Footer.js'
 import clsx from 'clsx'
@@ -7,7 +7,7 @@ import clsx from 'clsx'
 const MAX_ERRORS_DISPLAYED = 5
 
 export const EditorFooter: FunctionComponent<{
-  errors: readonly LocationError[]
+  errors: readonly RangeError[]
   editorLocation?: EditorLocation
 }> = ({ errors, editorLocation }) => {
   return (
@@ -31,10 +31,10 @@ export const EditorFooter: FunctionComponent<{
   )
 }
 
-function formatError (error: LocationError): string {
-  if (error.location == null) {
+function formatError (error: RangeError): string {
+  if (error.range == null) {
     return error.message
   }
 
-  return `${error.message} at line ${error.location.line}, column ${error.location.column}`
+  return `${error.message} at line ${error.range.line}, column ${error.range.column}`
 }

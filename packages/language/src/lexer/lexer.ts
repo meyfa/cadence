@@ -1,7 +1,7 @@
 import { createLexer, type Options, type Rules, type Token } from 'leac'
 import { LexError } from './error.js'
 import { truncateString, type Result } from '../error.js'
-import type { SourceLocation } from '../location.js'
+import type { SourceRange } from '../range.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -43,7 +43,7 @@ const lexer = createLexer(rules, state, options)
 export type LexResult = Result<Token[], LexError>
 
 export function lex (input: string): LexResult {
-  function getLineAndColumn (offset: number): Pick<SourceLocation, 'line' | 'column'> {
+  function getLineAndColumn (offset: number): Pick<SourceRange, 'line' | 'column'> {
     const lines = input.slice(0, offset).split(/(?:\r\n|\r|\n)/)
     const line = lines.length
     const column = (lines.at(-1)?.length ?? 0) + 1

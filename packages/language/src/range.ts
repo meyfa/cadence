@@ -1,7 +1,7 @@
 import type { Token } from 'leac'
 import * as ast from './parser/ast.js'
 
-export interface SourceLocation {
+export interface SourceRange {
   readonly offset: number
   readonly length: number
   readonly line: number
@@ -10,13 +10,13 @@ export interface SourceLocation {
 
 type Locatable = Token | ast.ASTNode
 
-export function getEmptySourceLocation (): SourceLocation {
+export function getEmptySourceRange (): SourceRange {
   return { offset: 0, length: 0, line: 1, column: 1 }
 }
 
-export function getSourceLocation (item: Locatable): SourceLocation {
-  if ('location' in item) {
-    return item.location
+export function getSourceRange (item: Locatable): SourceRange {
+  if ('range' in item) {
+    return item.range
   }
 
   return {
@@ -27,14 +27,14 @@ export function getSourceLocation (item: Locatable): SourceLocation {
   }
 }
 
-export function combineSourceLocations (...items: Locatable[]): SourceLocation {
+export function combineSourceRanges (...items: Locatable[]): SourceRange {
   if (items.length === 0) {
-    return getEmptySourceLocation()
+    return getEmptySourceRange()
   }
 
-  const locs = items.map(getSourceLocation)
-  const first = locs.reduce((min, loc) => (loc.offset < min.offset ? loc : min), locs[0])
-  const end = Math.max(...locs.map((loc) => loc.offset + loc.length))
+  const ranges = items.map(getSourceRange)
+  const first = ranges.reduce((min, range) => (range.offset < min.offset ? range : min), ranges[0])
+  const end = Math.max(...ranges.map((range) => range.offset + range.length))
 
   return {
     offset: first.offset,
@@ -46,6 +46,6 @@ export function combineSourceLocations (...items: Locatable[]): SourceLocation {
   }
 }
 
-export function areSourceLocationsEqual (a: SourceLocation, b: SourceLocation): boolean {
+export function areSourceRangesEqual (a: SourceRange, b: SourceRange): boolean {
   return a.offset === b.offset && a.length === b.length && a.line === b.line && a.column === b.column
 }

@@ -1,7 +1,7 @@
 import { Token } from 'leac'
 import * as p from 'peberminta'
 import * as ast from './ast.js'
-import { combineSourceLocations, getSourceLocation } from '../location.js'
+import { combineSourceRanges, getSourceRange } from '../range.js'
 import { truncateString, type Result } from '../error.js'
 import { ParseError } from './error.js'
 import type { Step } from '@core/program.js'
@@ -60,7 +60,7 @@ function expect<TValue> (
       }),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected "${context}"; expected ${expected}`, getSourceLocation(token))
+        throw new ParseError(`Unexpected "${context}"; expected ${expected}`, getSourceRange(token))
       })
     )
   )
@@ -74,13 +74,13 @@ function expectLiteral (name: string, printable = `"${name}"`): p.Parser<Token, 
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
   return t.name === 'word' && !keywords.includes(t.text as Keyword)
-    ? ast.make('Identifier', getSourceLocation(t), { name: t.text })
+    ? ast.make('Identifier', getSourceRange(t), { name: t.text })
     : undefined
 })
 
 const plainNumberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.token((t) => {
   return t.name === 'number'
-    ? ast.make('NumberLiteral', getSourceLocation(t), { value: Number.parseFloat(t.text) })
+    ? ast.make('NumberLiteral', getSourceRange(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
 
@@ -91,15 +91,15 @@ const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
     undefined
   ),
   (num, unitToken) => {
-    const location = unitToken == null ? num.location : combineSourceLocations(num, unitToken)
+    const range = unitToken == null ? num.range : combineSourceRanges(num, unitToken)
     const unit = unitToken == null ? undefined : unitToken.text as ast.Unit
-    return ast.make('NumberLiteral', location, { value: num.value, unit })
+    return ast.make('NumberLiteral', range, { value: num.value, unit })
   }
 )
 
 const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) => {
   return t.name === 'string'
-    ? ast.make('StringLiteral', getSourceLocation(t), { value: JSON.parse(t.text) })
+    ? ast.make('StringLiteral', getSourceRange(t), { value: JSON.parse(t.text) })
     : undefined
 })
 
@@ -138,7 +138,7 @@ function parsePattern (text: string): Step[] {
 
 const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.token((t) => {
   return t.name === 'pattern'
-    ? ast.make('PatternLiteral', getSourceLocation(t), { value: parsePattern(t.text) })
+    ? ast.make('PatternLiteral', getSourceRange(t), { value: parsePattern(t.text) })
     : undefined
 })
 
@@ -156,7 +156,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
 )
 
 function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
-  return ast.make('BinaryExpression', combineSourceLocations(left, right), {
+  return ast.make('BinaryExpression', combineSourceRanges(left, right), {
     operator: operator.text as ast.BinaryOperator,
     left,
     right
@@ -168,7 +168,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     literal('('),
     p.recursive(() => expression_),
     expectLiteral(')'),
-    (_l, v, _r) => ast.make(v.type, combineSourceLocations(_l, _r), { ...v })
+    (_l, v, _r) => ast.make(v.type, combineSourceRanges(_l, _r), { ...v })
   ),
   value_
 )
@@ -180,14 +180,14 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     (op, expr) => {
       // If it's a numeric literal, fold to a negative literal
       if (expr.type === 'NumberLiteral') {
-        return ast.make('NumberLiteral', combineSourceLocations(op, expr), {
+        return ast.make('NumberLiteral', combineSourceRanges(op, expr), {
           value: -expr.value,
           unit: expr.unit
         })
       }
 
       // Otherwise, desugar to (0 - expr) to reuse existing binary handling
-      const zero = ast.make('NumberLiteral', getSourceLocation(op), { value: 0 })
+      const zero = ast.make('NumberLiteral', getSourceRange(op), { value: 0 })
       return makeBinaryExpression(op, zero, expr)
     }
   ),
@@ -225,7 +225,7 @@ const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   literal(':'),
   expression_,
   (key, _colon, value) => {
-    return ast.make('Property', combineSourceLocations(key, value), { key, value })
+    return ast.make('Property', combineSourceRanges(key, value), { key, value })
   }
 )
 
@@ -246,7 +246,7 @@ const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p
     }
 
     const [, args, _rp] = callTail
-    return ast.make('Call', combineSourceLocations(id, _rp), { callee: id, arguments: args })
+    return ast.make('Call', combineSourceRanges(id, _rp), { callee: id, arguments: args })
   }
 )
 
@@ -255,7 +255,7 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   literal('='),
   expression_,
   (key, _eq, value) => {
-    return ast.make('Assignment', combineSourceLocations(key, value), { key, value })
+    return ast.make('Assignment', combineSourceRanges(key, value), { key, value })
   }
 )
 
@@ -273,7 +273,7 @@ const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
       // Given a statement like `a << b << c`, right will be the routing chain `b << c`.
       // We need to create a routing from `a` to `b`, prepended to the rest of the chain.
       return [
-        ast.make('Routing', combineSourceLocations(left, right[0]), {
+        ast.make('Routing', combineSourceRanges(left, right[0]), {
           destination: left,
           source: right[0].destination
         }),
@@ -282,7 +282,7 @@ const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
     }
 
     return [
-      ast.make('Routing', combineSourceLocations(left, right), {
+      ast.make('Routing', combineSourceRanges(left, right), {
         destination: left,
         source: right
       })
@@ -301,7 +301,7 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
   ([_section, name], [_for, length], [_lp, children, _rp]) => {
     const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
 
-    return ast.make('SectionStatement', combineSourceLocations(_section, _rp), {
+    return ast.make('SectionStatement', combineSourceRanges(_section, _rp), {
       name,
       length,
       properties: flatChildren.filter((c) => c.type === 'Property'),
@@ -318,7 +318,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
     expectLiteral('}')
   ),
   (_track, [_lp, children, _rp]) => {
-    return ast.make('TrackStatement', combineSourceLocations(_track, _rp), {
+    return ast.make('TrackStatement', combineSourceRanges(_track, _rp), {
       properties: children.filter((c) => c.type === 'Property'),
       sections: children.filter((c) => c.type === 'SectionStatement')
     })
@@ -334,7 +334,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
     expectLiteral('}')
   ),
   (_bus, name, [_lp, properties, _rp]) => {
-    return ast.make('BusStatement', combineSourceLocations(_bus, _rp), {
+    return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
       name,
       properties
     })
@@ -351,7 +351,7 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.ab(
   (_mixer, [_lp, children, _rp]) => {
     const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
 
-    return ast.make('MixerStatement', combineSourceLocations(_mixer, _rp), {
+    return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
       properties: flatChildren.filter((c) => c.type === 'Property'),
       routings: flatChildren.filter((c) => c.type === 'Routing'),
       buses: flatChildren.filter((c) => c.type === 'BusStatement')
@@ -365,13 +365,13 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
       p.eitherOr(assignment_, p.eitherOr(trackStatement_, mixerStatement_)),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceLocation(token))
+        throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))
       })
     )
   ),
   p.end,
   (children) => {
-    return ast.make('Program', combineSourceLocations(...children), { children })
+    return ast.make('Program', combineSourceRanges(...children), { children })
   }
 )
 
