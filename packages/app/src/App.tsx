@@ -13,6 +13,7 @@ import { SettingsPage } from './pages/SettingsPage.js'
 import { EditorPage } from './pages/EditorPage.js'
 import { MixerPage } from './pages/MixerPage.js'
 import { makeNumeric } from '@core/program.js'
+import { TimelinePage } from './pages/TimelinePage.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -117,6 +118,10 @@ export const App: FunctionComponent = () => {
           render: () => (
             <EditorPage value={code} onChange={setCode} errors={errors} />
           )
+        },
+        {
+          title: 'Timeline',
+          render: () => (<TimelinePage program={program} playbackProgress={playing ? progress : undefined} />)
         },
         {
           title: 'Mixer',

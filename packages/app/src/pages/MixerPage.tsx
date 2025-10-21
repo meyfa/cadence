@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { useMemo, useRef, type FunctionComponent } from 'react'
 import { Canvas, Edge, MarkerArrow, Node, type CanvasRef, type EdgeData, type NodeData } from 'reaflow'
 import { Footer } from '../components/Footer.js'
-import { pluralize } from '../utilities/pluralize.js'
+import { pluralize } from '../utilities/strings.js'
 import { Button } from '../components/Button.js'
 import { CenterFocusWeakOutlined } from '@mui/icons-material'
 
@@ -147,7 +147,7 @@ export const MixerPage: FunctionComponent<{
         {tree == null && (
           <div className='p-4'>
             <div className='text-xl mb-4'>
-              No graph available
+              Graph not available
             </div>
 
             Check your program for errors.
