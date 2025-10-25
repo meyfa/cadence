@@ -1,7 +1,7 @@
 import type { PaneNode } from '@editor/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
-import { Fragment, type FunctionComponent, type ReactNode } from 'react'
+import { type FunctionComponent, type ReactNode } from 'react'
 
 export const PaneNodeView: FunctionComponent<{
   node: PaneNode<ReactNode>
@@ -27,9 +27,9 @@ export const PaneNodeView: FunctionComponent<{
           </Tab>
         ))}
       </TabList>
-      <TabPanels className='flex-1 min-h-0 min-w-0 relative'>
+      <TabPanels className='flex-1 min-h-0 min-w-0'>
         {tabs.map((tab) => (
-          <TabPanel key={tab.id} as={Fragment}>
+          <TabPanel key={tab.id} unmount={false} className='h-full w-full relative'>
             {tab.render()}
           </TabPanel>
         ))}
