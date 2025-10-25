@@ -7,7 +7,7 @@ export const ProblemsPane: FunctionComponent<{
 }> = ({ errors }) => {
   return (
     <div className='h-full overflow-auto p-4'>
-      <div className={clsx('grow', errors.length > 0 ? 'text-rose-400' : 'text-neutral-300')}>
+      <div className={clsx('grow', errors.length > 0 ? 'text-content-300' : 'text-content-100')}>
         {errors.length === 0 && 'No problems detected'}
         {errors.map((error, index) => (
           <div key={index}>{formatError(error)}</div>

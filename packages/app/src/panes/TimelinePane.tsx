@@ -9,7 +9,7 @@ export const TimelinePane: FunctionComponent<{
   return (
     <div className='h-full overflow-auto overflow-x-scroll'>
       {program == null && (
-        <div className='p-4 text-neutral-300'>
+        <div className='p-4 text-content-100'>
           Timeline not available. Check your program for errors.
         </div>
       )}

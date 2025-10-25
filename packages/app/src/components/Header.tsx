@@ -12,7 +12,7 @@ export const Header: FunctionComponent<{
   progress?: number
 }> = ({ playing, onPlayPause, outputGain, onOutputGainChange, progress }) => {
   return (
-    <header className='flex flex-wrap items-center px-4 py-1 gap-2'>
+    <header className='flex flex-wrap items-center px-4 py-1 gap-2 bg-surface-200'>
       <div className='text-lg font-semibold mr-2'>
         Cadence
       </div>
@@ -27,9 +27,9 @@ export const Header: FunctionComponent<{
 
       {progress != null && (
         <div title='Progress' className='grow min-w-24 max-w-64 flex items-center h-8'>
-          <div className='w-full h-2 bg-neutral-600 rounded-xs overflow-hidden'>
+          <div className='w-full h-2 bg-surface-200 border border-frame-200 rounded-xs overflow-hidden'>
             <div
-              className='h-full bg-white transition-all duration-100 ease-linear'
+              className='h-full bg-content-200 transition-all duration-100 ease-linear'
               style={{ width: `${(progress * 100).toFixed(2)}%` }}
             />
           </div>

@@ -12,7 +12,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
 }>> = ({ children, min, max, value, onChange, label, step, icon }) => {
   return (
     <label
-      className='w-full px-2 py-1 h-10 leading-none rounded flex items-center gap-2 border-2 border-neutral-600 text-white select-none'
+      className='w-full px-2 py-1 h-10 leading-none rounded flex items-center gap-2 border border-frame-200 text-content-300 select-none'
       title={label}
     >
       {icon}

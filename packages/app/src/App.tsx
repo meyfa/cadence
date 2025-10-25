@@ -19,6 +19,7 @@ import { MixerPane } from './panes/MixerPane.js'
 import { ProblemsPane } from './panes/ProblemsPane.js'
 import { SettingsPane } from './panes/SettingsPane.js'
 import { TimelinePane } from './panes/TimelinePane.js'
+import { applyThemeSetting } from './theme.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -109,9 +110,8 @@ export const App: FunctionComponent = () => {
   }, [playing, lastProgram])
 
   // Settings
-  const loadDemo = useCallback(() => {
-    setCode(demoCode)
-  }, [])
+  useEffect(() => applyThemeSetting(theme), [theme])
+  const loadDemo = useCallback(() => setCode(demoCode), [])
 
   // Layout
 

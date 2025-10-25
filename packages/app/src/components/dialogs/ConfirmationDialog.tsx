@@ -12,10 +12,10 @@ export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{
 }>> = ({ open, onConfirm, onCancel, title, children, confirmText, cancelText }) => {
   return (
     <Dialog open={open} onClose={(value) => value ? onConfirm() : onCancel()} className='relative z-50'>
-      <DialogBackdrop className='fixed inset-0 bg-black/30' />
+      <DialogBackdrop className='fixed inset-0 bg-dialog-backdrop' />
 
       <div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
-        <DialogPanel className='max-w-lg p-8 flex flex-col gap-8 rounded bg-neutral-800 border border-neutral-500 shadow-lg'>
+        <DialogPanel className='max-w-lg p-8 flex flex-col gap-8 rounded bg-surface-100 border border-frame-100 shadow-lg'>
           <DialogTitle className='text-xl leading-none'>
             {title}
           </DialogTitle>

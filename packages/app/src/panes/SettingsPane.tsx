@@ -1,5 +1,5 @@
 import { type Numeric } from '@core/program.js'
-import type { Theme } from '@editor/state.js'
+import type { ThemeSetting } from '@editor/state.js'
 import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
 import { useCallback, useState, type FunctionComponent } from 'react'
 import { Button } from '../components/Button.js'
@@ -8,16 +8,19 @@ import { Radio } from '../components/radio/Radio.js'
 import { RadioGroup } from '../components/radio/RadioGroup.js'
 import { GainSlider } from '../components/settings/GainSlider.js'
 import { SettingsPanel } from '../components/settings/SettingsPanel.js'
+import { useSystemTheme } from '../theme.js'
 
 export const SettingsPane: FunctionComponent<{
-  theme: Theme
-  onChangeTheme: (theme: Theme) => void
+  theme: ThemeSetting
+  onChangeTheme: (theme: ThemeSetting) => void
 
   outputGain: Numeric<'db'>
   onChangeOutputGain: (outputGain: Numeric<'db'>) => void
 
   loadDemo: () => void
 }> = ({ theme, outputGain, onChangeOutputGain, onChangeTheme, loadDemo }) => {
+  const systemTheme = useSystemTheme()
+
   const [confirmLoadDemo, setConfirmLoadDemo] = useState(false)
   const [demoLoaded, setDemoLoaded] = useState(false)
 
@@ -27,7 +30,7 @@ export const SettingsPane: FunctionComponent<{
   }, [loadDemo])
 
   return (
-    <div className='h-full overflow-auto p-4 text-white'>
+    <div className='h-full overflow-auto p-4 text-content-300'>
       <div className='max-w-4xl mx-auto flex flex-col gap-4 items-start'>
         <div className='text-xl'>
           Settings
@@ -40,12 +43,13 @@ export const SettingsPane: FunctionComponent<{
         </SettingsPanel>
 
         <SettingsPanel title='Theme'>
-          Light theme is not yet available. Please check back later.
-
-          <RadioGroup value={theme} onChange={(value) => onChangeTheme(value as Theme)}>
+          <RadioGroup value={theme} onChange={(value) => onChangeTheme(value as ThemeSetting)}>
             <Radio value='dark'>Dark</Radio>
-            <Radio value='light' disabled>Light</Radio>
-            <Radio value='system' disabled>System</Radio>
+            <Radio value='light'>Light</Radio>
+            <Radio value='system'>
+              System
+              {systemTheme === 'light' ? ' (light)' : ' (dark)'}
+            </Radio>
           </RadioGroup>
         </SettingsPanel>
 
@@ -80,7 +84,7 @@ export const SettingsPane: FunctionComponent<{
         </SettingsPanel>
 
         <SettingsPanel title='About Cadence'>
-          <a href='https://github.com/meyfa/cadence' target='_blank' rel='noreferrer' className='outline-none hocus:underline hocus:text-white'>
+          <a href='https://github.com/meyfa/cadence' target='_blank' rel='noreferrer' className='outline-none hocus:underline text-content-200 hocus:text-content-300'>
             <GitHub className='mr-2' />
             github.com/meyfa/cadence
           </a>

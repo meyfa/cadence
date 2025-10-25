@@ -40,8 +40,8 @@ const ResizeHandle: FunctionComponent<{
       >
         <div
           className={clsx(
-            dragging ? 'bg-blue-400' : 'bg-transparent',
-            'group-hover:bg-blue-400 transition-colors duration-200',
+            dragging ? 'bg-accent-400' : 'bg-transparent',
+            'group-hover:bg-accent-400 group-hover:shadow-md transition-colors duration-200',
             direction === 'horizontal' ? 'w-1 h-full' : 'h-1 w-full'
           )}
         />

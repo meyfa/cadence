@@ -10,10 +10,10 @@ export const Radio: FunctionComponent<PropsWithChildren<{
     <HUIRadio
       value={value}
       className={clsx(
-        'group flex items-center gap-4 px-4 py-2 rounded-sm select-none enabled:cursor-pointer',
-        'bg-neutral-700 data-checked:bg-neutral-600 enabled:hocus:bg-neutral-600',
-        'border border-neutral-600 data-checked:border-neutral-400 enabled:hocus:border-neutral-400',
-        'text-neutral-500 enabled:text-neutral-300 data-checked:text-white enabled:hocus:text-white'
+        'group flex items-center gap-4 px-4 py-2 rounded-sm select-none not-data-disabled:cursor-pointer',
+        'bg-surface-200 data-checked:bg-surface-300 not-data-disabled:hocus:bg-surface-300',
+        'border border-frame-200 data-checked:border-frame-300 not-data-disabled:hocus:border-frame-300',
+        'text-content-100 not-data-disabled:text-content-200 data-checked:text-content-300 not-data-disabled:hocus:text-content-300'
       )}
       disabled={disabled}
     >
