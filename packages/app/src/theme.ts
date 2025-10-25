@@ -10,27 +10,32 @@ export type Theme = typeof themes[number]
 const THEME_TRANSITION_DURATION_MS = 200
 
 const prefersLightColorScheme = window.matchMedia('(prefers-color-scheme: light)')
-prefersLightColorScheme.addEventListener('change', () => updateTheme())
+prefersLightColorScheme.addEventListener('change', () => updateEffectiveTheme())
+
+const themeChangeListeners = new Set<() => void>()
 
 export function useTheme (): Theme {
-  return getTheme() ?? getSystemTheme()
-}
+  const [theme, setTheme] = useState<Theme>(() => {
+    return getEffectiveTheme() ?? getSystemTheme()
+  })
 
-export function applyThemeSetting (setting: ThemeSetting): void {
-  document.documentElement.setAttribute('data-theme-setting', setting)
-  updateTheme()
+  useEffect(() => {
+    const listener = () => setTheme(getEffectiveTheme() ?? getSystemTheme())
+    themeChangeListeners.add(listener)
+    return () => {
+      themeChangeListeners.delete(listener)
+    }
+  }, [])
+
+  return theme
 }
 
 export function useSystemTheme (): Theme {
   const [theme, setTheme] = useState<Theme>(() => getSystemTheme())
 
   useEffect(() => {
-    const listener = () => {
-      setTheme(getSystemTheme())
-    }
-
+    const listener = () => setTheme(getSystemTheme())
     prefersLightColorScheme.addEventListener('change', listener)
-
     return () => {
       prefersLightColorScheme.removeEventListener('change', listener)
     }
@@ -39,27 +44,32 @@ export function useSystemTheme (): Theme {
   return theme
 }
 
+export function applyThemeSetting (setting: ThemeSetting): void {
+  document.documentElement.setAttribute('data-theme-setting', setting)
+  updateEffectiveTheme()
+}
+
 function getSystemTheme (): Theme {
   return prefersLightColorScheme.matches ? LIGHT_THEME : DARK_THEME
 }
 
-function getTheme (): Theme | undefined {
-  if (document.documentElement.classList.contains(LIGHT_THEME)) {
-    return LIGHT_THEME
-  }
-
+function getEffectiveTheme (): Theme | undefined {
   if (document.documentElement.classList.contains(DARK_THEME)) {
     return DARK_THEME
+  }
+
+  if (document.documentElement.classList.contains(LIGHT_THEME)) {
+    return LIGHT_THEME
   }
 
   return undefined
 }
 
-function updateTheme (): void {
+function updateEffectiveTheme (): void {
   const setting = document.documentElement.getAttribute('data-theme-setting')
   const theme = setting === DARK_THEME || setting === LIGHT_THEME ? setting : getSystemTheme()
 
-  const previousTheme = getTheme()
+  const previousTheme = getEffectiveTheme()
   if (previousTheme === theme) {
     return
   }
@@ -76,4 +86,8 @@ function updateTheme (): void {
 
   document.documentElement.classList.toggle(LIGHT_THEME, theme === LIGHT_THEME)
   document.documentElement.classList.toggle(DARK_THEME, theme === DARK_THEME)
+
+  for (const listener of themeChangeListeners) {
+    listener()
+  }
 }
