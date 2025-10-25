@@ -120,7 +120,8 @@ const TimelineSection: FunctionComponent<{
     <div
       className={clsx(
         'px-2 py-1 text-sm leading-tight text-nowrap overflow-hidden text-ellipsis',
-        'rounded-md border border-neutral-500 bg-neutral-700'
+        'rounded-md border border-neutral-500 bg-neutral-700',
+        'transition-all duration-200 ease-in-out'
       )}
       style={{ width: sectionWidth }}
     >

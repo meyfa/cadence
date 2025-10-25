@@ -13,9 +13,9 @@ export const PaneNodeView: FunctionComponent<{
   return (
     <TabGroup className='flex flex-col h-full' defaultIndex={defaultTabIndex >= 0 ? defaultTabIndex : 0}>
       <TabList className='border-y border-y-neutral-700 bg-neutral-800 flex items-center text-sm font-semibold'>
-        {tabs.map((tab, index) => (
+        {tabs.map((tab) => (
           <Tab
-            key={index}
+            key={tab.id}
             className={({ selected }) => clsx(
               'px-4 h-7 leading-none outline-none bg-neutral-600 border-t enabled:cursor-pointer',
               selected
@@ -24,6 +24,11 @@ export const PaneNodeView: FunctionComponent<{
             )}
           >
             {tab.title}
+            {tab.notificationCount != null && tab.notificationCount > 0 && (
+              <span className='inline-block ml-1 px-1.5 py-0.5 text-xs font-normal leading-none text-white bg-rose-600 rounded-full'>
+                {tab.notificationCount}
+              </span>
+            )}
           </Tab>
         ))}
       </TabList>
