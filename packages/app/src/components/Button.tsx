@@ -16,9 +16,11 @@ export const Button: FunctionComponent<PropsWithChildren<{
       disabled={disabled}
       title={title}
       className={clsx(
-        'px-3 py-1 h-10 leading-none text-nowrap bg-neutral-600 border border-transparent text-white rounded cursor-pointer outline-none',
-        'enabled:hocus:bg-neutral-600 enabled:hocus:border-neutral-400',
-        'disabled:cursor-default disabled:bg-neutral-700 disabled:text-neutral-400'
+        'px-3 py-1 h-10 leading-none text-nowrap rounded outline-none border',
+        'bg-surface-100 enabled:bg-surface-200 enabled:hocus:bg-surface-300',
+        'text-content-100 enabled:text-content-200 enabled:hocus:text-content-300',
+        'border-transparent enabled:border-frame-200 enabled:hocus:border-frame-300',
+        'cursor-default enabled:cursor-pointer'
       )}
     >
       {children}

@@ -136,14 +136,14 @@ export const MixerPane: FunctionComponent<{
 
   const graphNode = useMemo(() => {
     return (
-      <Node rx={6} ry={6} style={{ fill: 'var(--color-neutral-700)', stroke: 'var(--color-neutral-500)', strokeWidth: 1 }} >
+      <Node rx={6} ry={6} style={{ fill: 'var(--color-surface-200)', stroke: 'var(--color-frame-200)', strokeWidth: 1 }}>
         {(node) => (
           <foreignObject width={node.width} height={node.height} x={0} y={0}>
             <div className='w-full h-full px-4 py-1 flex flex-col justify-center leading-snug text-sm'>
-              <div className='text-neutral-300'>
+              <div className='text-content-100'>
                 {getNodeType(node.node)}
               </div>
-              <div className='text-white whitespace-nowrap text-ellipsis overflow-hidden'>
+              <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
                 {getNodeLabel(node.node)}
               </div>
             </div>
@@ -157,7 +157,7 @@ export const MixerPane: FunctionComponent<{
     return (
       <Edge
         style={{
-          stroke: 'var(--color-neutral-500)',
+          stroke: 'var(--color-frame-200)',
           strokeWidth: 2,
           strokeDasharray: (edge).data?.unconnected === true ? '2 4' : undefined
         }}
@@ -167,14 +167,14 @@ export const MixerPane: FunctionComponent<{
 
   const arrow = useMemo(() => {
     return (
-      <MarkerArrow size={4} style={{ fill: 'var(--color-neutral-500)' }} />
+      <MarkerArrow size={4} style={{ fill: 'var(--color-frame-200)' }} />
     )
   }, [])
 
   return (
-    <div className='h-full overflow-none text-white relative'>
+    <div className='h-full overflow-none text-content-300 relative'>
       {tree == null && (
-        <div className='p-4 text-neutral-300'>
+        <div className='p-4 text-content-100'>
           Graph not available. Check your program for errors.
         </div>
       )}

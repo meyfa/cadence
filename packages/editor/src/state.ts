@@ -1,9 +1,9 @@
 import type { Numeric, Unit } from '@core/program.js'
 
-export type Theme = 'dark' | 'light' | 'system'
+export type ThemeSetting = 'dark' | 'light' | 'system'
 
 export interface Settings {
-  readonly theme: Theme
+  readonly theme: ThemeSetting
   readonly outputGain: Numeric<'db'>
 }
 
