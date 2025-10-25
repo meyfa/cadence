@@ -1,11 +1,13 @@
-import { EditorState, type SelectionRange, type Text } from '@codemirror/state'
-import { EditorView, keymap } from '@codemirror/view'
-import { basicSetup } from 'codemirror'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { indentWithTab } from '@codemirror/commands'
 import { linter } from '@codemirror/lint'
+import { Compartment, EditorState, type SelectionRange, type Text } from '@codemirror/state'
+import { EditorView, keymap } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
 import { cadenceLanguageSupport } from './language-support.js'
 import { cadenceLinter } from './linter.js'
+import { cadenceDarkTheme, cadenceLightTheme } from './theme.js'
+
+export type EditorTheme = 'dark' | 'light'
 
 export interface EditorLocation {
   readonly line: number
@@ -14,6 +16,8 @@ export interface EditorLocation {
 
 export interface CadenceEditorOptions {
   readonly document: string
+
+  readonly theme: EditorTheme
 
   readonly tabSize: number
   readonly lintDelay: number
@@ -25,6 +29,7 @@ export interface CadenceEditorOptions {
 export interface CadenceEditorHandle {
   readonly view: EditorView
   readonly setDocument: (value: string) => void
+  readonly setTheme: (theme: EditorTheme) => void
   readonly destroy: () => void
 }
 
@@ -41,6 +46,8 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
     }
   })
 
+  const themeConfig = new Compartment()
+
   const state = EditorState.create({
     doc: options.document,
     extensions: [
@@ -54,7 +61,9 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
         { key: 'Ctrl-s', run: () => true }
       ]),
 
-      oneDark,
+      themeConfig.of(
+        options.theme === 'light' ? cadenceLightTheme : cadenceDarkTheme
+      ),
 
       EditorView.theme({
         '&.cm-editor': {
@@ -86,6 +95,14 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
           changes: { from: 0, to: view.state.doc.length, insert: value }
         })
       }
+    },
+
+    setTheme: (theme: EditorTheme) => {
+      view.dispatch({
+        effects: themeConfig.reconfigure(
+          theme === 'light' ? cadenceLightTheme : cadenceDarkTheme
+        )
+      })
     },
 
     destroy: () => view.destroy()
