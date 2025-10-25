@@ -1,6 +1,9 @@
 import type { Numeric, Unit } from '@core/program.js'
 
+export type Theme = 'dark' | 'light' | 'system'
+
 export interface Settings {
+  readonly theme: Theme
   readonly outputGain: Numeric<'db'>
 }
 
@@ -31,6 +34,10 @@ export function parseEditorState (input: string): PartialCadenceEditorState {
     ? data.settings
     : {}
 
+  const theme = 'theme' in settingsObj && (settingsObj.theme === 'dark' || settingsObj.theme === 'light' || settingsObj.theme === 'system')
+    ? settingsObj.theme
+    : undefined
+
   const outputGain = 'outputGain' in settingsObj
     ? parseNumeric('db', settingsObj.outputGain)
     : undefined
@@ -38,6 +45,7 @@ export function parseEditorState (input: string): PartialCadenceEditorState {
   return {
     code,
     settings: {
+      theme,
       outputGain
     }
   }

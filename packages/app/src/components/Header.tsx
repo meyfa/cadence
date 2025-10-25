@@ -1,8 +1,8 @@
-import { PlayArrowOutlined, StopOutlined, VolumeDownOutlined, VolumeOffOutlined, VolumeUpOutlined } from '@mui/icons-material'
+import { type Numeric } from '@core/program.js'
+import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import { FunctionComponent } from 'react'
 import { Button } from './Button.js'
-import { Slider } from './Slider.js'
-import { makeNumeric, type Numeric } from '@core/program.js'
+import { GainSlider } from './settings/GainSlider.js'
 
 export const Header: FunctionComponent<{
   playing: boolean
@@ -17,19 +17,9 @@ export const Header: FunctionComponent<{
         Cadence
       </div>
 
-      <Slider
-        label='Output gain'
-        min={-60}
-        max={0}
-        value={outputGain.value}
-        onChange={(value) => onOutputGainChange(makeNumeric('db', value))}
-        step={1}
-        icon={outputGain.value < -48 ? <VolumeOffOutlined /> : outputGain.value < -18 ? <VolumeDownOutlined /> : <VolumeUpOutlined />}
-      >
-        <span className='w-12 text-right text-nowrap'>
-          {`${outputGain.value.toFixed()} dB`}
-        </span>
-      </Slider>
+      <div className='w-56'>
+        <GainSlider label='Output gain' gain={outputGain} onChange={onOutputGainChange} />
+      </div>
 
       <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
         {playing ? <StopOutlined /> : <PlayArrowOutlined />}
