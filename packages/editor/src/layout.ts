@@ -6,6 +6,7 @@ export interface Tab<E = unknown> {
   readonly id: string
   readonly title: string
   readonly render: Render<E>
+  readonly notificationCount?: number
 }
 
 export type LayoutNode<E = unknown> = PaneNode<E> | SplitNode<E>

@@ -12,9 +12,11 @@ import { EditorFooter } from './components/editor/EditorFooter.js'
 import { Header } from './components/Header.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
+import { usePrevious } from './hooks/previous.js'
 import { DockLayoutView } from './layout/DockLayoutView.js'
 import { EditorPage } from './panes/EditorPane.js'
 import { MixerPage } from './panes/MixerPane.js'
+import { ProblemsPane } from './panes/ProblemsPane.js'
 import { SettingsPage } from './panes/SettingsPane.js'
 import { TimelinePage } from './panes/TimelinePane.js'
 
@@ -90,15 +92,16 @@ export const App: FunctionComponent = () => {
   }, [parseResult, compileResult])
 
   const program = compileResult?.complete === true ? compileResult.value : undefined
+  const lastProgram = usePrevious(program)
 
   // Handle play/pause
   const onPlayPause = useCallback(() => {
     if (playing) {
       engine.stop()
-    } else if (program != null) {
-      engine.play(program)
+    } else if (lastProgram != null) {
+      engine.play(lastProgram)
     }
-  }, [playing, program])
+  }, [playing, lastProgram])
 
   // Settings
   const loadDemo = useCallback(() => {
@@ -131,7 +134,7 @@ export const App: FunctionComponent = () => {
               {
                 id: 'mixer',
                 title: 'Mixer',
-                render: () => (<MixerPage program={program} />)
+                render: () => (<MixerPage program={lastProgram} />)
               },
               {
                 id: 'settings',
@@ -146,9 +149,15 @@ export const App: FunctionComponent = () => {
             type: 'pane',
             tabs: [
               {
+                id: 'problems',
+                title: 'Problems',
+                render: () => (<ProblemsPane errors={errors} />),
+                notificationCount: errors.length
+              },
+              {
                 id: 'timeline',
                 title: 'Timeline',
-                render: () => (<TimelinePage program={program} playbackProgress={playing ? progress : undefined} />)
+                render: () => (<TimelinePage program={lastProgram} playbackProgress={playing ? progress : undefined} />)
               }
             ],
             activeTabId: 'timeline'
@@ -156,7 +165,7 @@ export const App: FunctionComponent = () => {
         ]
       }
     }
-  }, [code, program, playing, progress, loadDemo])
+  }, [code, errors, lastProgram, playing, progress, loadDemo])
 
   return (
     <div className='flex flex-col h-dvh'>
