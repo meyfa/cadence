@@ -49,7 +49,7 @@ function getNodeLabel ({ data }: NodeData<MixerNodeData>): string {
   return 'unknown'
 }
 
-export const MixerPage: FunctionComponent<{
+export const MixerPane: FunctionComponent<{
   program: Program | undefined
 }> = ({ program }) => {
   const tree = useMemo(() => {

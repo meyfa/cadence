@@ -14,11 +14,11 @@ import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
 import { usePrevious } from './hooks/previous.js'
 import { DockLayoutView } from './layout/DockLayoutView.js'
-import { EditorPage } from './panes/EditorPane.js'
-import { MixerPage } from './panes/MixerPane.js'
+import { EditorPane } from './panes/EditorPane.js'
+import { MixerPane } from './panes/MixerPane.js'
 import { ProblemsPane } from './panes/ProblemsPane.js'
-import { SettingsPage } from './panes/SettingsPane.js'
-import { TimelinePage } from './panes/TimelinePane.js'
+import { SettingsPane } from './panes/SettingsPane.js'
+import { TimelinePane } from './panes/TimelinePane.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -33,6 +33,7 @@ const compileOptions: CompileOptions = {
 const defaultState: CadenceEditorState = {
   code: demoCode,
   settings: {
+    theme: 'dark',
     outputGain: makeNumeric('db', -12)
   }
 }
@@ -43,6 +44,7 @@ const storedState = storage.load()
 const initialState: CadenceEditorState = {
   code: storedState?.code ?? defaultState.code,
   settings: {
+    theme: storedState?.settings?.theme ?? defaultState.settings.theme,
     outputGain: storedState?.settings?.outputGain ?? defaultState.settings.outputGain
   }
 }
@@ -53,14 +55,17 @@ const engine = createAudioEngine({
 
 export const App: FunctionComponent = () => {
   const [code, setCode] = useState(initialState.code)
+
+  const [theme, setTheme] = useState(initialState.settings.theme)
   const outputGain = useObservable(engine.outputGain)
+
   const playing = useObservable(engine.playing)
   const progress = useObservable(engine.progress)
 
   // Synchronize state with local storage
   useEffect(() => {
-    storage.save({ code, settings: { outputGain } })
-  }, [code, outputGain])
+    storage.save({ code, settings: { theme, outputGain } })
+  }, [code, theme, outputGain])
 
   // Lex, parse, and compile code
 
@@ -128,18 +133,26 @@ export const App: FunctionComponent = () => {
                 id: 'editor',
                 title: 'Editor',
                 render: () => (
-                  <EditorPage value={code} onChange={setCode} onLocationChange={setEditorLocation} />
+                  <EditorPane value={code} onChange={setCode} onLocationChange={setEditorLocation} />
                 )
               },
               {
                 id: 'mixer',
                 title: 'Mixer',
-                render: () => (<MixerPage program={lastProgram} />)
+                render: () => (<MixerPane program={lastProgram} />)
               },
               {
                 id: 'settings',
                 title: 'Settings',
-                render: () => (<SettingsPage loadDemo={loadDemo} />)
+                render: () => (
+                  <SettingsPane
+                    theme={theme}
+                    onChangeTheme={setTheme}
+                    outputGain={outputGain}
+                    onChangeOutputGain={(gain) => engine.outputGain.set(gain)}
+                    loadDemo={loadDemo}
+                  />
+                )
               }
             ],
             activeTabId: 'editor'
@@ -157,7 +170,7 @@ export const App: FunctionComponent = () => {
               {
                 id: 'timeline',
                 title: 'Timeline',
-                render: () => (<TimelinePage program={lastProgram} playbackProgress={playing ? progress : undefined} />)
+                render: () => (<TimelinePane program={lastProgram} playbackProgress={playing ? progress : undefined} />)
               }
             ],
             activeTabId: 'timeline'
@@ -165,7 +178,7 @@ export const App: FunctionComponent = () => {
         ]
       }
     }
-  }, [code, errors, lastProgram, playing, progress, loadDemo])
+  }, [code, errors, lastProgram, playing, progress, theme, outputGain, loadDemo])
 
   return (
     <div className='flex flex-col h-dvh'>

@@ -2,7 +2,7 @@ import type { EditorLocation } from '@editor/editor.js'
 import { type FunctionComponent } from 'react'
 import { Editor } from '../components/editor/Editor.js'
 
-export const EditorPage: FunctionComponent<{
+export const EditorPane: FunctionComponent<{
   value: string
   onChange: (value: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
