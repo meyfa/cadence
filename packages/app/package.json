@@ -10,6 +10,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "react-resizable-panels": "3.0.6",
     "reaflow": "5.4.1"
   }
 }

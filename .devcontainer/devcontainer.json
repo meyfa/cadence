@@ -17,7 +17,9 @@
         "editor.tabSize": 2,
         "javascript.preferences.importModuleSpecifierEnding": "js",
         "typescript.preferences.importModuleSpecifierEnding": "js",
-        "typescript.preferences.preferTypeOnlyAutoImports": true
+        "typescript.preferences.preferTypeOnlyAutoImports": true,
+        "javascript.preferences.quoteStyle": "single",
+        "typescript.preferences.quoteStyle": "single"
       }
     }
   }

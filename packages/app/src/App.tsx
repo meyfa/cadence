@@ -1,19 +1,22 @@
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import { createAudioEngine } from '@core/audio/engine.js'
-import { lex } from '@language/lexer/lexer.js'
-import { parse } from '@language/parser/parser.js'
-import { compile, type CompileOptions } from '@language/compiler/compiler.js'
+import { makeNumeric } from '@core/program.js'
+import type { EditorLocation } from '@editor/editor.js'
+import { DockLayout } from '@editor/layout.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
+import { compile, type CompileOptions } from '@language/compiler/compiler.js'
+import { lex } from '@language/lexer/lexer.js'
+import { parse } from '@language/parser/parser.js'
+import { FunctionComponent, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { EditorFooter } from './components/editor/EditorFooter.js'
 import { Header } from './components/Header.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
-import { TabLayout } from './layout/TabLayout.js'
-import { SettingsPage } from './pages/SettingsPage.js'
-import { EditorPage } from './pages/EditorPage.js'
-import { MixerPage } from './pages/MixerPage.js'
-import { makeNumeric } from '@core/program.js'
-import { TimelinePage } from './pages/TimelinePage.js'
+import { DockLayoutView } from './layout/DockLayoutView.js'
+import { EditorPage } from './panes/EditorPane.js'
+import { MixerPage } from './panes/MixerPane.js'
+import { SettingsPage } from './panes/SettingsPane.js'
+import { TimelinePage } from './panes/TimelinePane.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -102,6 +105,59 @@ export const App: FunctionComponent = () => {
     setCode(demoCode)
   }, [])
 
+  // Layout
+
+  const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
+
+  const layout = useMemo<DockLayout<ReactNode>>(() => {
+    return {
+      main: {
+        id: 'main-split',
+        type: 'split',
+        direction: 'vertical',
+        sizes: [0.8, 0.2],
+        children: [
+          {
+            id: 'main-tabs',
+            type: 'pane',
+            tabs: [
+              {
+                id: 'editor',
+                title: 'Editor',
+                render: () => (
+                  <EditorPage value={code} onChange={setCode} onLocationChange={setEditorLocation} />
+                )
+              },
+              {
+                id: 'mixer',
+                title: 'Mixer',
+                render: () => (<MixerPage program={program} />)
+              },
+              {
+                id: 'settings',
+                title: 'Settings',
+                render: () => (<SettingsPage loadDemo={loadDemo} />)
+              }
+            ],
+            activeTabId: 'editor'
+          },
+          {
+            id: 'bottom-dock',
+            type: 'pane',
+            tabs: [
+              {
+                id: 'timeline',
+                title: 'Timeline',
+                render: () => (<TimelinePage program={program} playbackProgress={playing ? progress : undefined} />)
+              }
+            ],
+            activeTabId: 'timeline'
+          }
+        ]
+      }
+    }
+  }, [code, program, playing, progress, loadDemo])
+
   return (
     <div className='flex flex-col h-screen'>
       <Header
@@ -112,26 +168,14 @@ export const App: FunctionComponent = () => {
         progress={progress}
       />
 
-      <TabLayout tabs={[
-        {
-          title: 'Editor',
-          render: () => (
-            <EditorPage value={code} onChange={setCode} errors={errors} />
-          )
-        },
-        {
-          title: 'Timeline',
-          render: () => (<TimelinePage program={program} playbackProgress={playing ? progress : undefined} />)
-        },
-        {
-          title: 'Mixer',
-          render: () => (<MixerPage program={program} />)
-        },
-        {
-          title: 'Settings',
-          render: () => (<SettingsPage loadDemo={loadDemo} />)
-        }
-      ]}
+      <DockLayoutView
+        layout={layout}
+        className='flex-1 min-h-0 min-w-0'
+      />
+
+      <EditorFooter
+        errors={errors}
+        editorLocation={editorLocation}
       />
     </div>
   )

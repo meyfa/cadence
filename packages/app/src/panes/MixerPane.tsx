@@ -1,11 +1,8 @@
 import { BusId, type Bus, type Instrument, type InstrumentId, type Program } from '@core/program.js'
-import clsx from 'clsx'
-import { useMemo, useRef, type FunctionComponent } from 'react'
-import { Canvas, Edge, MarkerArrow, Node, type CanvasRef, type EdgeData, type NodeData } from 'reaflow'
-import { Footer } from '../components/Footer.js'
-import { pluralize } from '../utilities/strings.js'
-import { Button } from '../components/Button.js'
 import { CenterFocusWeakOutlined } from '@mui/icons-material'
+import { useCallback, useMemo, useRef, type FunctionComponent } from 'react'
+import { Canvas, Edge, MarkerArrow, Node, type CanvasRef, type EdgeData, type NodeData } from 'reaflow'
+import { Button } from '../components/Button.js'
 
 type MixerNodeData = {
   readonly type: 'output'
@@ -55,10 +52,6 @@ function getNodeLabel ({ data }: NodeData<MixerNodeData>): string {
 export const MixerPage: FunctionComponent<{
   program: Program | undefined
 }> = ({ program }) => {
-  const instrumentCount = program?.instruments.size
-  const busCount = program?.mixer.buses.length
-  const routingCount = program?.mixer.routings.length
-
   const tree = useMemo(() => {
     if (program == null) {
       return undefined
@@ -141,89 +134,80 @@ export const MixerPage: FunctionComponent<{
 
   const canvasRef = useRef<CanvasRef>(null)
 
+  const graphNode = useMemo(() => {
+    return (
+      <Node rx={6} ry={6} style={{ fill: 'var(--color-neutral-700)', stroke: 'var(--color-neutral-500)', strokeWidth: 1 }} >
+        {(node) => (
+          <foreignObject width={node.width} height={node.height} x={0} y={0}>
+            <div className='w-full h-full px-4 py-1 flex flex-col justify-center leading-snug text-sm'>
+              <div className='text-neutral-300'>
+                {getNodeType(node.node)}
+              </div>
+              <div className='text-white whitespace-nowrap text-ellipsis overflow-hidden'>
+                {getNodeLabel(node.node)}
+              </div>
+            </div>
+          </foreignObject>
+        )}
+      </Node>
+    )
+  }, [])
+
+  const renderEdge = useCallback((edge: EdgeData<MixerEdgeData>) => {
+    return (
+      <Edge
+        style={{
+          stroke: 'var(--color-neutral-500)',
+          strokeWidth: 2,
+          strokeDasharray: (edge).data?.unconnected === true ? '2 4' : undefined
+        }}
+      />
+    )
+  }, [])
+
+  const arrow = useMemo(() => {
+    return (
+      <MarkerArrow size={4} style={{ fill: 'var(--color-neutral-500)' }} />
+    )
+  }, [])
+
   return (
-    <div className='h-full flex flex-col'>
-      <div className='flex-1 min-h-0 overflow-none text-white relative'>
-        {tree == null && (
-          <div className='p-4'>
-            <div className='text-xl mb-4'>
-              Graph not available
-            </div>
-
-            Check your program for errors.
-          </div>
-        )}
-
-        {tree != null && (
-          <div className='absolute top-4 right-4 z-10'>
-            <Button onClick={() => canvasRef.current?.fitCanvas?.()}>
-              <CenterFocusWeakOutlined className='mr-2' />
-              Center
-            </Button>
-          </div>
-        )}
-
-        {tree != null && (
-          <Canvas
-            animated={false}
-            ref={canvasRef}
-            readonly
-            nodes={tree.nodes}
-            edges={tree.edges}
-            direction='LEFT'
-            fit={true}
-            pannable={true}
-            panType='drag'
-            zoomable={false}
-            minZoom={0}
-            maxZoom={0}
-            node={(
-              <Node rx={8} ry={8} style={{ fill: 'var(--color-neutral-800)', stroke: 'var(--color-neutral-500)', strokeWidth: 2 }} >
-                {(node) => (
-                  <foreignObject width={node.width} height={node.height} x={0} y={0}>
-                    <div className='w-full h-full px-4 py-1 flex flex-col justify-center leading-snug text-sm'>
-                      <div className='text-neutral-400'>
-                        {getNodeType(node.node)}
-                      </div>
-                      <div className='text-white whitespace-nowrap text-ellipsis overflow-hidden'>
-                        {getNodeLabel(node.node)}
-                      </div>
-                    </div>
-                  </foreignObject>
-                )}
-              </Node>
-            )}
-            // eslint-disable-next-line react/no-unstable-nested-components
-            edge={(edge) => (
-              <Edge
-                style={{
-                  stroke: 'var(--color-neutral-500)',
-                  strokeWidth: 2,
-                  strokeDasharray: (edge as EdgeData<MixerEdgeData>).data?.unconnected === true ? '2 4' : undefined
-                }}
-              />
-            )}
-            arrow={(
-              <MarkerArrow size={4} style={{ fill: 'var(--color-neutral-500)' }} />
-            )}
-          />
-        )}
-      </div>
-
-      <Footer>
-        <div className={clsx('flex-1', instrumentCount == null && 'text-rose-400')}>
-          {instrumentCount != null && busCount != null && routingCount != null && (
-            <div>
-              {`${pluralize(instrumentCount, 'instrument')}, ${pluralize(busCount, 'bus')}, ${pluralize(routingCount, 'routing')}`}
-            </div>
-          )}
-          {instrumentCount == null && (
-            <div>
-              Program not available
-            </div>
-          )}
+    <div className='h-full overflow-none text-white relative'>
+      {tree == null && (
+        <div className='p-4 text-neutral-300'>
+          Graph not available. Check your program for errors.
         </div>
-      </Footer>
+      )}
+
+      {tree != null && (
+        <div className='absolute top-4 right-4 z-10'>
+          <Button onClick={() => canvasRef.current?.fitCanvas?.()}>
+            <CenterFocusWeakOutlined className='mr-2' />
+            Center
+          </Button>
+        </div>
+      )}
+
+      {tree != null && (
+        <Canvas
+          animated={false}
+          ref={canvasRef}
+          readonly
+          nodes={tree.nodes}
+          edges={tree.edges}
+          direction='LEFT'
+          fit={true}
+          pannable={true}
+          panType='drag'
+          zoomable={false}
+          minZoom={0}
+          maxZoom={0}
+          node={graphNode}
+          edge={renderEdge}
+          arrow={arrow}
+          className='select-none'
+        />
+      )}
     </div>
   )
 }

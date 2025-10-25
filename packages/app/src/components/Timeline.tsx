@@ -30,7 +30,7 @@ export const Timeline: FunctionComponent<{
   }, [])
 
   return (
-    <div className='p-4 overflow-x-auto' onWheel={onWheel}>
+    <div className='h-full' onWheel={onWheel}>
       <div className='inline-block relative'>
         <TimeRuler
           beatsPerBar={program.beatsPerBar}
@@ -83,18 +83,18 @@ const TimeRuler: FunctionComponent<{
   }, [beatsPerBar, stepsPerBeat, totalBeats])
 
   return (
-    <div className='flex w-fit border-t-2 border-t-neutral-500 select-none'>
+    <div className='flex w-fit select-none'>
       {marks.map((mark, index) => (
         <div
           key={index}
           className={clsx(
             'border-l border-l-neutral-500',
-            mark === 0 ? 'h-6' : 'h-2'
+            mark === 0 ? 'h-4' : 'h-1'
           )}
           style={{ width: beatWidth }}
         >
           {mark === 0 && (
-            <div className='text-xs font-bold mt-2 ml-1 text-white'>
+            <div className='text-xs font-bold mt-0.5 ml-1 text-white'>
               {index / beatsPerBar}
             </div>
           )}

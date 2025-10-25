@@ -12,7 +12,7 @@ export const Header: FunctionComponent<{
   progress?: number
 }> = ({ playing, onPlayPause, outputGain, onOutputGainChange, progress }) => {
   return (
-    <header className='w-full border-b border-b-neutral-600 flex flex-wrap items-center px-4 py-1 gap-2'>
+    <header className='flex flex-wrap items-center px-4 py-1 gap-2'>
       <div className='text-lg font-semibold mr-2'>
         Cadence
       </div>
