@@ -159,7 +159,7 @@ export const App: FunctionComponent = () => {
   }, [code, program, playing, progress, loadDemo])
 
   return (
-    <div className='flex flex-col h-screen'>
+    <div className='flex flex-col h-dvh'>
       <Header
         playing={playing}
         onPlayPause={onPlayPause}
