@@ -1,4 +1,4 @@
-import type { ThemeSetting } from '@editor/state.js'
+import type { ThemeSetting } from '@editor/state/settings.js'
 import { useEffect, useState } from 'react'
 
 const DARK_THEME = 'dark'

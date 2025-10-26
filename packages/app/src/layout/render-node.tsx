@@ -1,4 +1,4 @@
-import type { LayoutNode } from '@editor/layout.js'
+import type { LayoutNode } from '@editor/state/layout.js'
 import type { ReactNode } from 'react'
 import type { TabRendererContext } from '../panes/render-tab.js'
 import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
