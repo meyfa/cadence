@@ -1,15 +1,16 @@
-export type Render<E> = () => E
-
 export type SplitDirection = 'horizontal' | 'vertical'
 
-export interface Tab<E = unknown> {
-  readonly id: string
-  readonly title: string
-  readonly render: Render<E>
-  readonly notificationCount?: number
+export interface SerializedComponent {
+  readonly type: string
+  readonly props?: Record<string, unknown>
 }
 
-export type LayoutNode<E = unknown> = PaneNode<E> | SplitNode<E>
+export interface Tab {
+  readonly id: string
+  readonly component: SerializedComponent
+}
+
+export type LayoutNode = PaneNode | SplitNode
 export type NodeType = LayoutNode['type']
 
 export interface BaseLayoutNode {
@@ -17,19 +18,19 @@ export interface BaseLayoutNode {
   readonly id: string
 }
 
-export interface PaneNode<E = unknown> extends BaseLayoutNode {
+export interface PaneNode extends BaseLayoutNode {
   readonly type: 'pane'
-  readonly tabs: ReadonlyArray<Tab<E>>
+  readonly tabs: readonly Tab[]
   readonly activeTabId: string
 }
 
-export interface SplitNode<E = unknown> extends BaseLayoutNode {
+export interface SplitNode extends BaseLayoutNode {
   readonly type: 'split'
   readonly direction: SplitDirection
-  readonly children: ReadonlyArray<LayoutNode<E>>
+  readonly children: readonly LayoutNode[]
   readonly sizes: readonly number[]
 }
 
-export interface DockLayout<E = unknown> {
-  readonly main: LayoutNode<E>
+export interface DockLayout {
+  readonly main: LayoutNode
 }

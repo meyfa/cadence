@@ -1,4 +1,5 @@
 import type { Numeric, Unit } from '@core/program.js'
+import type { DockLayout } from './layout.js'
 
 export type ThemeSetting = 'dark' | 'light' | 'system'
 
@@ -9,11 +10,13 @@ export interface Settings {
 
 export interface CadenceEditorState {
   readonly settings: Settings
+  readonly layout: DockLayout
   readonly code: string
 }
 
 export interface PartialCadenceEditorState {
   readonly settings?: Partial<Settings>
+  readonly layout?: DockLayout
   readonly code?: string
 }
 
@@ -28,8 +31,7 @@ export function parseEditorState (input: string): PartialCadenceEditorState {
     return {}
   }
 
-  const code = 'code' in data ? parseString(data.code) : undefined
-
+  // settings
   const settingsObj = 'settings' in data && typeof data.settings === 'object' && data.settings != null
     ? data.settings
     : {}
@@ -42,12 +44,22 @@ export function parseEditorState (input: string): PartialCadenceEditorState {
     ? parseNumeric('db', settingsObj.outputGain)
     : undefined
 
+  // layout
+  // TODO validate layout structure
+  const layout = 'layout' in data && typeof data.layout === 'object' && data.layout != null
+    ? data.layout as DockLayout
+    : undefined
+
+  // code
+  const code = 'code' in data ? parseString(data.code) : undefined
+
   return {
-    code,
     settings: {
       theme,
       outputGain
-    }
+    },
+    layout,
+    code
   }
 }
 

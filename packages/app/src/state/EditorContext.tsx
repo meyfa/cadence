@@ -12,11 +12,7 @@ const initialEditorState: EditorState = {
 }
 
 function editorReducer (state: EditorState, action: SetStateAction<EditorState>): EditorState {
-  if (typeof action === 'function') {
-    return action(state)
-  }
-
-  return action
+  return typeof action === 'function' ? action(state) : action
 }
 
 export const EditorContext = createContext<EditorState>(initialEditorState)

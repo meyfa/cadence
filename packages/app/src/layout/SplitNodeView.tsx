@@ -1,27 +1,57 @@
-import type { SplitDirection, SplitNode } from '@editor/layout.js'
-import { Fragment, useState, type FunctionComponent, type ReactNode } from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { renderNode } from './render-node.js'
+import type { LayoutNode, SplitDirection, SplitNode } from '@editor/layout.js'
 import clsx from 'clsx'
+import { Fragment, useCallback, useState, type FunctionComponent } from 'react'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import type { TabRendererContext } from '../panes/render-tab.js'
+import { useChildNodeDispatch, type LayoutNodeDispatch } from '../state/LayoutContext.js'
+import { renderNode } from './render-node.js'
 
 export const SplitNodeView: FunctionComponent<{
-  node: SplitNode<ReactNode>
-}> = ({ node }) => {
+  node: SplitNode
+  dispatch: LayoutNodeDispatch
+  tabRendererContext: TabRendererContext
+}> = ({ node, dispatch, tabRendererContext }) => {
   const { direction, children, sizes } = node
 
+  const onLayout = useCallback((newSizes: number[]) => {
+    dispatch((node) => {
+      if (node.type !== 'split') {
+        return node
+      }
+
+      return { ...node, sizes: newSizes.map((size) => size / 100) }
+    })
+  }, [dispatch])
+
   return (
-    <PanelGroup direction={direction}>
+    <PanelGroup direction={direction} onLayout={onLayout}>
       {children.map((child, index) => (
         <Fragment key={child.id}>
-          <Panel id={child.id} defaultSize={sizes[index] * 100} minSize={10}>
-            {renderNode(child)}
-          </Panel>
-          {index < children.length - 1 && (
-            <ResizeHandle direction={direction} />
-          )}
+          <SplitNodeChildView
+            parentDispatch={dispatch}
+            child={child}
+            size={sizes[index]}
+            tabRendererContext={tabRendererContext}
+          />
+          {index < children.length - 1 && (<ResizeHandle direction={direction} />)}
         </Fragment>
       ))}
     </PanelGroup>
+  )
+}
+
+const SplitNodeChildView: FunctionComponent<{
+  parentDispatch: LayoutNodeDispatch
+  child: LayoutNode
+  size: number
+  tabRendererContext: TabRendererContext
+}> = ({ parentDispatch, child, size, tabRendererContext }) => {
+  const childDispatch = useChildNodeDispatch(parentDispatch, child.id)
+
+  return (
+    <Panel id={child.id} defaultSize={size * 100} minSize={10}>
+      {renderNode(child, childDispatch, tabRendererContext)}
+    </Panel>
   )
 }
 
