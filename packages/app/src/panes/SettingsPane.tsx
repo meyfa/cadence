@@ -1,4 +1,4 @@
-import type { ThemeSetting } from '@editor/state.js'
+import type { ThemeSetting } from '@editor/state/settings.js'
 import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
 import { useCallback, useState, type FunctionComponent } from 'react'
 import { Button } from '../components/Button.js'

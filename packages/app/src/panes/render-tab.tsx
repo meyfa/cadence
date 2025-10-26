@@ -1,4 +1,4 @@
-import type { SerializedComponent } from '@editor/layout.js'
+import type { SerializedComponent } from '@editor/state/layout.js'
 import type { ReactNode } from 'react'
 import { useCompilationState, type CompilationState } from '../state/CompilationContext.js'
 import { EditorPane } from './EditorPane.js'

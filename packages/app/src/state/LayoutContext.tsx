@@ -1,4 +1,4 @@
-import { DockLayout, type LayoutNode } from '@editor/layout.js'
+import { DockLayout, type LayoutNode } from '@editor/state/layout.js'
 import { createContext, useCallback, useContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 import { TabTypes } from '../panes/render-tab.js'
 

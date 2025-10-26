@@ -1,4 +1,4 @@
-import type { PaneNode, SerializedComponent } from '@editor/layout.js'
+import type { PaneNode, SerializedComponent } from '@editor/state/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
 import { useCallback, type FunctionComponent } from 'react'

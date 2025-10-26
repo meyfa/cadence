@@ -1,4 +1,4 @@
-import type { LayoutNode, SplitDirection, SplitNode } from '@editor/layout.js'
+import type { LayoutNode, SplitDirection, SplitNode } from '@editor/state/layout.js'
 import clsx from 'clsx'
 import { Fragment, useCallback, useState, type FunctionComponent } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'

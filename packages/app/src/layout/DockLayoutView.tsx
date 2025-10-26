@@ -1,4 +1,4 @@
-import type { DockLayout } from '@editor/layout.js'
+import type { DockLayout } from '@editor/state/layout.js'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { useTabRendererContext } from '../panes/render-tab.js'
