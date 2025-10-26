@@ -1,25 +1,18 @@
 import { createAudioEngine } from '@core/audio/engine.js'
 import { makeNumeric } from '@core/program.js'
-import type { EditorLocation } from '@editor/editor.js'
-import { DockLayout } from '@editor/layout.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
-import { compile, type CompileOptions } from '@language/compiler/compiler.js'
-import { lex } from '@language/lexer/lexer.js'
-import { parse } from '@language/parser/parser.js'
-import { FunctionComponent, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { type CompileOptions } from '@language/compiler/compiler.js'
+import { FunctionComponent, useEffect } from 'react'
 import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
+import { Main } from './components/Main.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
-import { usePrevious } from './hooks/previous.js'
-import { DockLayoutView } from './layout/DockLayoutView.js'
-import { EditorPane } from './panes/EditorPane.js'
-import { MixerPane } from './panes/MixerPane.js'
-import { ProblemsPane } from './panes/ProblemsPane.js'
-import { SettingsPane } from './panes/SettingsPane.js'
-import { TimelinePane } from './panes/TimelinePane.js'
-import { applyThemeSetting } from './theme.js'
+import { AudioEngineContext } from './state/AudioEngineContext.js'
+import { CompilationProvider } from './state/CompilationContext.js'
+import { EditorProvider, useEditor } from './state/EditorContext.js'
+import { applyThemeSetting, useThemeSetting } from './theme.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -55,150 +48,44 @@ const engine = createAudioEngine({
 })
 
 export const App: FunctionComponent = () => {
-  const [code, setCode] = useState(initialState.code)
+  return (
+    <AudioEngineContext value={engine}>
+      <EditorProvider>
+        <CompilationProvider compileOptions={compileOptions}>
+          <StorageSync />
+          <div className='flex flex-col h-dvh'>
+            <Header />
+            <Main />
+            <Footer />
+          </div>
+        </CompilationProvider>
+      </EditorProvider>
+    </AudioEngineContext>
+  )
+}
 
-  const [theme, setTheme] = useState(initialState.settings.theme)
+// Helper component for syncing to storage
+const StorageSync: FunctionComponent = () => {
+  const theme = useThemeSetting()
   const outputGain = useObservable(engine.outputGain)
 
-  const playing = useObservable(engine.playing)
-  const progress = useObservable(engine.progress)
+  const [editor, editorDispatch] = useEditor()
 
-  // Synchronize state with local storage
+  // Apply initial data on mount
   useEffect(() => {
-    storage.save({ code, settings: { theme, outputGain } })
-  }, [code, theme, outputGain])
+    applyThemeSetting(initialState.settings.theme)
+    editorDispatch((state) => ({ ...state, code: initialState.code }))
+  }, [])
 
-  // Lex, parse, and compile code
+  useEffect(() => {
+    storage.save({
+      settings: {
+        theme,
+        outputGain
+      },
+      code: editor.code
+    })
+  }, [theme, outputGain, editor.code])
 
-  const lexResult = useMemo(() => lex(code), [code])
-
-  const parseResult = useMemo(() => {
-    if (lexResult.complete) {
-      return parse(lexResult.value)
-    }
-  }, [lexResult])
-
-  const compileResult = useMemo(() => {
-    if (parseResult?.complete === true) {
-      return compile(parseResult.value, compileOptions)
-    }
-  }, [parseResult])
-
-  const errors = useMemo(() => {
-    if (!lexResult.complete) {
-      return [lexResult.error]
-    }
-    if (parseResult?.complete === false) {
-      return [parseResult.error]
-    }
-    if (compileResult?.complete === false) {
-      return compileResult.error.errors
-    }
-    return []
-  }, [parseResult, compileResult])
-
-  const program = compileResult?.complete === true ? compileResult.value : undefined
-  const lastProgram = usePrevious(program)
-
-  // Handle play/pause
-  const onPlayPause = useCallback(() => {
-    if (playing) {
-      engine.stop()
-    } else if (lastProgram != null) {
-      engine.play(lastProgram)
-    }
-  }, [playing, lastProgram])
-
-  // Settings
-  useEffect(() => applyThemeSetting(theme), [theme])
-  const loadDemo = useCallback(() => setCode(demoCode), [])
-
-  // Layout
-
-  const [editorLocation, setEditorLocation] = useState<EditorLocation | undefined>()
-
-  const layout = useMemo<DockLayout<ReactNode>>(() => {
-    return {
-      main: {
-        id: 'main-split',
-        type: 'split',
-        direction: 'vertical',
-        sizes: [0.8, 0.2],
-        children: [
-          {
-            id: 'main-tabs',
-            type: 'pane',
-            tabs: [
-              {
-                id: 'editor',
-                title: 'Editor',
-                render: () => (
-                  <EditorPane value={code} onChange={setCode} onLocationChange={setEditorLocation} />
-                )
-              },
-              {
-                id: 'mixer',
-                title: 'Mixer',
-                render: () => (<MixerPane program={lastProgram} />)
-              },
-              {
-                id: 'settings',
-                title: 'Settings',
-                render: () => (
-                  <SettingsPane
-                    theme={theme}
-                    onChangeTheme={setTheme}
-                    outputGain={outputGain}
-                    onChangeOutputGain={(gain) => engine.outputGain.set(gain)}
-                    loadDemo={loadDemo}
-                  />
-                )
-              }
-            ],
-            activeTabId: 'editor'
-          },
-          {
-            id: 'bottom-dock',
-            type: 'pane',
-            tabs: [
-              {
-                id: 'problems',
-                title: 'Problems',
-                render: () => (<ProblemsPane errors={errors} />),
-                notificationCount: errors.length
-              },
-              {
-                id: 'timeline',
-                title: 'Timeline',
-                render: () => (<TimelinePane program={lastProgram} playbackProgress={playing ? progress : undefined} />)
-              }
-            ],
-            activeTabId: 'timeline'
-          }
-        ]
-      }
-    }
-  }, [code, errors, lastProgram, playing, progress, theme, outputGain, loadDemo])
-
-  return (
-    <div className='flex flex-col h-dvh'>
-      <Header
-        playing={playing}
-        onPlayPause={onPlayPause}
-        outputGain={outputGain}
-        onOutputGainChange={(gain) => engine.outputGain.set(gain)}
-        progress={progress}
-      />
-
-      <DockLayoutView
-        layout={layout}
-        className='flex-1 min-h-0 min-w-0'
-      />
-
-      <Footer
-        errors={errors}
-        editorLocation={editorLocation}
-      />
-    </div>
-  )
+  return null
 }

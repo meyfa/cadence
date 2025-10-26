@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 const DARK_THEME = 'dark'
 const LIGHT_THEME = 'light'
 
+// system is a valid theme setting, but not a theme itself
+const SYSTEM_THEME = 'system'
+
 export const themes = Object.freeze([DARK_THEME, LIGHT_THEME] as const)
 export type Theme = typeof themes[number]
 
@@ -12,18 +15,45 @@ const THEME_TRANSITION_DURATION_MS = 200
 const prefersLightColorScheme = window.matchMedia('(prefers-color-scheme: light)')
 prefersLightColorScheme.addEventListener('change', () => updateEffectiveTheme())
 
-const themeChangeListeners = new Set<() => void>()
+const themeSettingChangeListeners = new Set<() => void>()
+const effectiveThemeChangeListeners = new Set<() => void>()
 
-export function useTheme (): Theme {
+function dispatchThemeSettingChange (): void {
+  for (const listener of themeSettingChangeListeners) {
+    listener()
+  }
+}
+
+function dispatchEffectiveThemeChange (): void {
+  for (const listener of effectiveThemeChangeListeners) {
+    listener()
+  }
+}
+
+export function useThemeSetting (): ThemeSetting {
+  const [setting, setSetting] = useState<ThemeSetting>(() => getThemeSetting())
+
+  useEffect(() => {
+    const listener = () => setSetting(getThemeSetting())
+    themeSettingChangeListeners.add(listener)
+    return () => {
+      themeSettingChangeListeners.delete(listener)
+    }
+  }, [])
+
+  return setting
+}
+
+export function useEffectiveTheme (): Theme {
   const [theme, setTheme] = useState<Theme>(() => {
     return getEffectiveTheme() ?? getSystemTheme()
   })
 
   useEffect(() => {
     const listener = () => setTheme(getEffectiveTheme() ?? getSystemTheme())
-    themeChangeListeners.add(listener)
+    effectiveThemeChangeListeners.add(listener)
     return () => {
-      themeChangeListeners.delete(listener)
+      effectiveThemeChangeListeners.delete(listener)
     }
   }, [])
 
@@ -45,12 +75,23 @@ export function useSystemTheme (): Theme {
 }
 
 export function applyThemeSetting (setting: ThemeSetting): void {
-  document.documentElement.setAttribute('data-theme-setting', setting)
+  if (document.documentElement.dataset.themeSetting === setting) {
+    return
+  }
+
+  document.documentElement.dataset.themeSetting = setting
+  dispatchThemeSettingChange()
+
   updateEffectiveTheme()
 }
 
-function getSystemTheme (): Theme {
-  return prefersLightColorScheme.matches ? LIGHT_THEME : DARK_THEME
+function getThemeSetting (): ThemeSetting {
+  const setting = document.documentElement.dataset.themeSetting
+  if (setting === DARK_THEME || setting === LIGHT_THEME) {
+    return setting
+  }
+
+  return SYSTEM_THEME
 }
 
 function getEffectiveTheme (): Theme | undefined {
@@ -65,9 +106,13 @@ function getEffectiveTheme (): Theme | undefined {
   return undefined
 }
 
+function getSystemTheme (): Theme {
+  return prefersLightColorScheme.matches ? LIGHT_THEME : DARK_THEME
+}
+
 function updateEffectiveTheme (): void {
-  const setting = document.documentElement.getAttribute('data-theme-setting')
-  const theme = setting === DARK_THEME || setting === LIGHT_THEME ? setting : getSystemTheme()
+  const setting = getThemeSetting()
+  const theme = setting === SYSTEM_THEME ? getSystemTheme() : setting
 
   const previousTheme = getEffectiveTheme()
   if (previousTheme === theme) {
@@ -87,7 +132,5 @@ function updateEffectiveTheme (): void {
   document.documentElement.classList.toggle(LIGHT_THEME, theme === LIGHT_THEME)
   document.documentElement.classList.toggle(DARK_THEME, theme === DARK_THEME)
 
-  for (const listener of themeChangeListeners) {
-    listener()
-  }
+  dispatchEffectiveThemeChange()
 }

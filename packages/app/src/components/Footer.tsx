@@ -1,14 +1,17 @@
-import type { EditorLocation } from '@editor/editor.js'
-import type { RangeError } from '@language/error.js'
-import type { FunctionComponent, PropsWithChildren } from 'react'
+import { type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCompilationState } from '../state/CompilationContext.js'
 import { pluralize } from '../utilities/strings.js'
+import { useEditor } from '../state/EditorContext.js'
 
 export const Footer: FunctionComponent<{
-  errors: readonly RangeError[]
-  editorLocation?: EditorLocation
   onClickErrors?: () => void
   onClickLocation?: () => void
-}> = ({ errors, editorLocation, onClickErrors, onClickLocation }) => {
+}> = ({ onClickErrors, onClickLocation }) => {
+  const { errors } = useCompilationState()
+
+  const [editor] = useEditor()
+  const editorLocation = editor.caret
+
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
       <FooterButton onClick={onClickErrors}>
