@@ -1,7 +1,7 @@
 import type { LayoutNode, SplitDirection, SplitNode } from '@editor/state/layout.js'
 import clsx from 'clsx'
-import { Fragment, useCallback, useState, type FunctionComponent } from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Fragment, useCallback, useEffect, useRef, useState, type FunctionComponent } from 'react'
+import { ImperativePanelHandle, Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import type { TabRendererContext } from '../panes/render-tab.js'
 import { useChildNodeDispatch, type LayoutNodeDispatch } from '../state/LayoutContext.js'
 import { renderNode } from './render-node.js'
@@ -48,8 +48,15 @@ const SplitNodeChildView: FunctionComponent<{
 }> = ({ parentDispatch, child, size, tabRendererContext }) => {
   const childDispatch = useChildNodeDispatch(parentDispatch, child.id)
 
+  const panelRef = useRef<ImperativePanelHandle>(null)
+
+  // Ensure the panel resizes when the size prop changes
+  useEffect(() => {
+    panelRef.current?.resize(size * 100)
+  }, [size])
+
   return (
-    <Panel id={child.id} defaultSize={size * 100} minSize={10}>
+    <Panel ref={panelRef} id={child.id} defaultSize={size * 100} minSize={10}>
       {renderNode(child, childDispatch, tabRendererContext)}
     </Panel>
   )
