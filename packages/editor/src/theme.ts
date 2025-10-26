@@ -28,6 +28,7 @@ const darkColors = {
   background: '#1d1f20',
   foreground: '#abb2bf',
   panelBackground: '#21252b',
+  foldPlaceholder: '#ddd',
   selection: '#3e4451',
   highlightBackground: '#2c313a',
   activeLineBackground: '#6688ee0b',
@@ -54,6 +55,7 @@ const lightColors = {
   background: '#eff0f1',
   foreground: '#383a42',
   panelBackground: '#e7e8ea',
+  foldPlaceholder: '#555',
   selection: '#b8d4f6',
   highlightBackground: '#cccfd4',
   activeLineBackground: '#2031640b',
@@ -127,7 +129,7 @@ const cadenceEditorTheme = (dark: boolean) => {
     '.cm-foldPlaceholder': {
       backgroundColor: 'transparent',
       border: 'none',
-      color: '#ddd'
+      color: colors.foldPlaceholder
     },
 
     '.cm-tooltip': {
