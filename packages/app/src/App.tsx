@@ -1,18 +1,18 @@
 import { createAudioEngine } from '@core/audio/engine.js'
 import { makeNumeric } from '@core/program.js'
-import type { DockLayout } from '@editor/state/layout.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { type CompileOptions } from '@language/compiler/compiler.js'
 import { FunctionComponent, useEffect } from 'react'
+import { CommandPalette } from './components/CommandPalette.js'
 import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
 import { Main } from './components/Main.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
-import { TabTypes } from './panes/render-tab.js'
 import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
+import { defaultLayout } from './state/default-layout.js'
 import { EditorProvider, useEditor } from './state/EditorContext.js'
 import { LayoutProvider, useLayout } from './state/LayoutContext.js'
 import { applyThemeSetting, useThemeSetting } from './theme.js'
@@ -27,36 +27,6 @@ const compileOptions: CompileOptions = {
     default: 128,
     minimum: 1,
     maximum: 400
-  }
-}
-
-const defaultLayout: DockLayout = {
-  main: {
-    id: 'main-split',
-    type: 'split',
-    direction: 'vertical',
-    sizes: [0.8, 0.2],
-    children: [
-      {
-        id: 'main-tabs',
-        type: 'pane',
-        tabs: [
-          { id: 'editor', component: { type: TabTypes.Editor } },
-          { id: 'mixer', component: { type: TabTypes.Mixer } },
-          { id: 'settings', component: { type: TabTypes.Settings } }
-        ],
-        activeTabId: 'editor'
-      },
-      {
-        id: 'bottom-dock',
-        type: 'pane',
-        tabs: [
-          { id: 'problems', component: { type: TabTypes.Problems } },
-          { id: 'timeline', component: { type: TabTypes.Timeline } }
-        ],
-        activeTabId: 'timeline'
-      }
-    ]
   }
 }
 
@@ -92,6 +62,9 @@ export const App: FunctionComponent = () => {
         <CompilationProvider compileOptions={compileOptions}>
           <LayoutProvider>
             <StorageSync />
+
+            <CommandPalette />
+
             <div className='flex flex-col h-dvh'>
               <Header />
               <Main />
