@@ -8,7 +8,7 @@ import { compile, type CompileOptions } from '@language/compiler/compiler.js'
 import { lex } from '@language/lexer/lexer.js'
 import { parse } from '@language/parser/parser.js'
 import { FunctionComponent, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { EditorFooter } from './components/editor/EditorFooter.js'
+import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
@@ -195,7 +195,7 @@ export const App: FunctionComponent = () => {
         className='flex-1 min-h-0 min-w-0'
       />
 
-      <EditorFooter
+      <Footer
         errors={errors}
         editorLocation={editorLocation}
       />
