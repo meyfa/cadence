@@ -1,10 +1,11 @@
 import type { RangeError } from '@language/error.js'
 import clsx from 'clsx'
-import type { FunctionComponent } from 'react'
+import { type FunctionComponent } from 'react'
+import { useCompilationState } from '../state/CompilationContext.js'
 
-export const ProblemsPane: FunctionComponent<{
-  errors: readonly RangeError[]
-}> = ({ errors }) => {
+export const ProblemsPane: FunctionComponent = () => {
+  const { errors } = useCompilationState()
+
   return (
     <div className='h-full overflow-auto p-4'>
       <div className={clsx('grow', errors.length > 0 ? 'text-content-300' : 'text-content-100')}>

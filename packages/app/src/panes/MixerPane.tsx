@@ -1,8 +1,10 @@
-import { BusId, type Bus, type Instrument, type InstrumentId, type Program } from '@core/program.js'
+import { BusId, type Bus, type Instrument, type InstrumentId } from '@core/program.js'
 import { CenterFocusWeakOutlined } from '@mui/icons-material'
 import { useCallback, useMemo, useRef, type FunctionComponent } from 'react'
 import { Canvas, Edge, MarkerArrow, Node, type CanvasRef, type EdgeData, type NodeData } from 'reaflow'
 import { Button } from '../components/Button.js'
+import { usePrevious } from '../hooks/previous.js'
+import { useCompilationState } from '../state/CompilationContext.js'
 
 type MixerNodeData = {
   readonly type: 'output'
@@ -49,9 +51,10 @@ function getNodeLabel ({ data }: NodeData<MixerNodeData>): string {
   return 'unknown'
 }
 
-export const MixerPane: FunctionComponent<{
-  program: Program | undefined
-}> = ({ program }) => {
+export const MixerPane: FunctionComponent = () => {
+  const { program: currentProgram } = useCompilationState()
+  const program = usePrevious(currentProgram)
+
   const tree = useMemo(() => {
     if (program == null) {
       return undefined

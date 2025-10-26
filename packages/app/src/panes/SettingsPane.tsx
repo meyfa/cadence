@@ -1,4 +1,3 @@
-import { type Numeric } from '@core/program.js'
 import type { ThemeSetting } from '@editor/state.js'
 import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
 import { useCallback, useState, type FunctionComponent } from 'react'
@@ -8,26 +7,27 @@ import { Radio } from '../components/radio/Radio.js'
 import { RadioGroup } from '../components/radio/RadioGroup.js'
 import { GainSlider } from '../components/settings/GainSlider.js'
 import { SettingsPanel } from '../components/settings/SettingsPanel.js'
-import { useSystemTheme } from '../theme.js'
+import { demoCode } from '../demo.js'
+import { useObservable } from '../hooks/observable.js'
+import { useAudioEngine } from '../state/AudioEngineContext.js'
+import { useEditor } from '../state/EditorContext.js'
+import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../theme.js'
 
-export const SettingsPane: FunctionComponent<{
-  theme: ThemeSetting
-  onChangeTheme: (theme: ThemeSetting) => void
-
-  outputGain: Numeric<'db'>
-  onChangeOutputGain: (outputGain: Numeric<'db'>) => void
-
-  loadDemo: () => void
-}> = ({ theme, outputGain, onChangeOutputGain, onChangeTheme, loadDemo }) => {
+export const SettingsPane: FunctionComponent = () => {
+  const themeSetting = useThemeSetting()
   const systemTheme = useSystemTheme()
 
+  const engine = useAudioEngine()
+  const outputGain = useObservable(engine.outputGain)
+
+  const [, editorDispatch] = useEditor()
   const [confirmLoadDemo, setConfirmLoadDemo] = useState(false)
   const [demoLoaded, setDemoLoaded] = useState(false)
 
   const onClickLoadDemo = useCallback(() => {
-    loadDemo()
+    editorDispatch((state) => ({ ...state, code: demoCode }))
     setDemoLoaded(true)
-  }, [loadDemo])
+  }, [editorDispatch])
 
   return (
     <div className='h-full overflow-auto p-4 text-content-300'>
@@ -39,11 +39,11 @@ export const SettingsPane: FunctionComponent<{
         <SettingsPanel title='Output gain'>
           Adjust the output gain of the audio engine.
 
-          <GainSlider label='Output gain' gain={outputGain} onChange={onChangeOutputGain} />
+          <GainSlider label='Output gain' gain={outputGain} onChange={(gain) => engine.outputGain.set(gain)} />
         </SettingsPanel>
 
         <SettingsPanel title='Theme'>
-          <RadioGroup value={theme} onChange={(value) => onChangeTheme(value as ThemeSetting)}>
+          <RadioGroup value={themeSetting} onChange={(value) => applyThemeSetting(value as ThemeSetting)}>
             <Radio value='dark'>Dark</Radio>
             <Radio value='light'>Light</Radio>
             <Radio value='system'>

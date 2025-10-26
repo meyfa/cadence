@@ -1,11 +1,17 @@
-import { type Program } from '@core/program.js'
 import { type FunctionComponent } from 'react'
 import { Timeline } from '../components/Timeline.js'
+import { useObservable } from '../hooks/observable.js'
+import { usePrevious } from '../hooks/previous.js'
+import { useAudioEngine } from '../state/AudioEngineContext.js'
+import { useCompilationState } from '../state/CompilationContext.js'
 
-export const TimelinePane: FunctionComponent<{
-  program: Program | undefined
-  playbackProgress?: number
-}> = ({ program, playbackProgress }) => {
+export const TimelinePane: FunctionComponent = () => {
+  const { program: currentProgram } = useCompilationState()
+  const program = usePrevious(currentProgram)
+
+  const engine = useAudioEngine()
+  const progress = useObservable(engine.progress)
+
   return (
     <div className='h-full overflow-auto overflow-x-scroll'>
       {program == null && (
@@ -15,7 +21,7 @@ export const TimelinePane: FunctionComponent<{
       )}
 
       {program != null && (
-        <Timeline program={program} playbackProgress={playbackProgress} />
+        <Timeline program={program} playbackProgress={progress} />
       )}
     </div>
   )

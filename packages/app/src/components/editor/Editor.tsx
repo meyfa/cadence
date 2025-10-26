@@ -1,8 +1,8 @@
-import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
-import { createCadenceEditor, type CadenceEditorHandle, EditorLocation } from '@editor/editor.js'
-import { useMutableCallback } from '../../hooks/callback.js'
+import { createCadenceEditor, EditorLocation, type CadenceEditorHandle } from '@editor/editor.js'
 import clsx from 'clsx'
-import { useTheme } from '../../theme.js'
+import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
+import { useMutableCallback } from '../../hooks/callback.js'
+import { useEffectiveTheme } from '../../theme.js'
 
 const TAB_SIZE = 2
 const LINT_DELAY = 250
@@ -13,7 +13,7 @@ export const Editor: FunctionComponent<{
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
 }> = ({ className, document, ...props }) => {
-  const theme = useTheme()
+  const theme = useEffectiveTheme()
 
   const handleRef = useRef<CadenceEditorHandle>(null)
   const onChange = useMutableCallback(props.onChange)
