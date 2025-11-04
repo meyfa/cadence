@@ -1,37 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { useGlobalKeydown } from '../hooks/keyboard.js'
 import clsx from 'clsx'
-import { commands, useCommandContext, type Command } from '../commands.js'
+import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import { commands, findCommandForKeyboardShortcut, useCommandContext, type Command } from '../commands.js'
+import { useGlobalKeydown } from '../hooks/keyboard.js'
 
 export const CommandPalette: FunctionComponent = () => {
   const paletteRef = useRef<HTMLDivElement>(null)
 
   const [open, setOpen] = useState(false)
-
-  const handleKeydown = useCallback((event: KeyboardEvent) => {
-    const handleEvent = (open: boolean): void => {
-      event.preventDefault()
-      setOpen(open)
-    }
-
-    if (event.key === 'F1') {
-      handleEvent(true)
-      return
-    }
-
-    // Note: Ctrl-Shift-P may be reserved by some browsers
-    if ((event.ctrlKey || event.metaKey) && event.code === 'KeyP') {
-      handleEvent(true)
-      return
-    }
-
-    if (event.key === 'Escape') {
-      handleEvent(false)
-      return
-    }
-  }, [])
-
-  useGlobalKeydown(handleKeydown)
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
@@ -76,6 +51,46 @@ export const CommandPalette: FunctionComponent = () => {
     }
   }, [dispatchCommand, searchResults])
 
+  const handleKeydown = useCallback((event: KeyboardEvent) => {
+    const togglePalette = (open: boolean): void => {
+      event.preventDefault()
+      setOpen(open)
+    }
+
+    if (event.key === 'F1') {
+      togglePalette(true)
+      return
+    }
+
+    if (event.key === 'Escape') {
+      togglePalette(false)
+      return
+    }
+
+    const { code, shiftKey: shift, altKey: alt } = event
+    const ctrl = event.ctrlKey || event.metaKey
+
+    // For now, we require at least one modifier key to avoid interfering with typing
+    if (!ctrl && !shift && !alt) {
+      return
+    }
+
+    // TODO: Refactor this to use the same keyboard shortcut handling as commands
+    // Note: Ctrl-Shift-P may be reserved by some browsers
+    if (ctrl && code === 'KeyP') {
+      togglePalette(true)
+      return
+    }
+
+    const matchedCommand = findCommandForKeyboardShortcut({ code, ctrl, shift, alt })
+    if (matchedCommand != null) {
+      event.preventDefault()
+      dispatchCommand(matchedCommand)
+    }
+  }, [dispatchCommand])
+
+  useGlobalKeydown(handleKeydown)
+
   if (!open) {
     return null
   }
@@ -114,20 +129,56 @@ export const CommandPalette: FunctionComponent = () => {
           )}
 
           {searchResults.map((command) => (
-            <button
-              key={command.id}
-              type='button'
-              className={clsx(
-                'w-full text-start p-2 leading-none rounded cursor-pointer border border-transparent bg-surface-200 text-content-200 outline-none',
-                'hocus:bg-surface-300 hocus:border-frame-300 hocus:text-content-300'
-              )}
-              onClick={() => dispatchCommand(command)}
-            >
-              {command.label}
-            </button>
+            <SearchResult key={command.id} command={command} dispatchCommand={dispatchCommand} />
           ))}
         </div>
       </div>
     </div>
+  )
+}
+
+const SearchResult: FunctionComponent<{
+  command: Command
+  dispatchCommand: (command: Command) => void
+}> = ({ command, dispatchCommand }) => {
+  // Show only the first shortcut due to space constraints
+  const shortcut = command.keyboardShortcuts?.at(0)
+
+  return (
+    <button
+      type='button'
+      className={clsx(
+        'w-full flex items-center text-start px-2 leading-none rounded cursor-pointer border border-transparent bg-surface-200 text-content-200 outline-none',
+        'hocus:bg-surface-300 hocus:border-frame-300 hocus:text-content-300'
+      )}
+      onClick={() => dispatchCommand(command)}
+    >
+      <div className='grow py-2'>
+        {command.label}
+      </div>
+      <div className='text-sm'>
+        {shortcut != null && (
+          <>
+            {shortcut.ctrl && (<KeyboardKey isModifier>Ctrl</KeyboardKey>)}
+            {shortcut.shift && (<KeyboardKey isModifier>Shift</KeyboardKey>)}
+            {shortcut.alt && (<KeyboardKey isModifier>Alt</KeyboardKey>)}
+            <KeyboardKey>{shortcut.code}</KeyboardKey>
+          </>
+        )}
+      </div>
+    </button>
+  )
+}
+
+const KeyboardKey: FunctionComponent<PropsWithChildren<{
+  isModifier?: boolean
+}>> = ({ children, isModifier }) => {
+  return (
+    <>
+      <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
+        {children}
+      </span>
+      {isModifier && (<span className='mx-1 text-content-100'>+</span>)}
+    </>
   )
 }

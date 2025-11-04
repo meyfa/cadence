@@ -10,6 +10,7 @@ import { applyThemeSetting } from './theme.js'
 export interface Command {
   readonly id: string
   readonly label: string
+  readonly keyboardShortcuts?: readonly KeyboardShortcut[]
   readonly action: (context: CommandContext) => void
 }
 
@@ -17,6 +18,13 @@ export interface CommandContext {
   readonly layoutDispatch: LayoutDispatch
   readonly audioEngine: AudioEngine
   readonly lastProgram: Program | undefined
+}
+
+export interface KeyboardShortcut {
+  readonly ctrl?: boolean
+  readonly shift?: boolean
+  readonly alt?: boolean
+  readonly code: string
 }
 
 export function useCommandContext (): CommandContext {
@@ -34,10 +42,32 @@ export function useCommandContext (): CommandContext {
   }
 }
 
+export function matchKeyboardShortcut (details: Required<KeyboardShortcut>, shortcut: KeyboardShortcut): boolean {
+  return (
+    (shortcut.ctrl == null || details.ctrl === shortcut.ctrl) &&
+    (shortcut.shift == null || details.shift === shortcut.shift) &&
+    (shortcut.alt == null || details.alt === shortcut.alt) &&
+    details.code === shortcut.code
+  )
+}
+
+export function findCommandForKeyboardShortcut (details: Required<KeyboardShortcut>): Command | undefined {
+  return commands.find((command) => {
+    if (command.keyboardShortcuts == null) {
+      return false
+    }
+
+    return command.keyboardShortcuts.some((shortcut) => matchKeyboardShortcut(details, shortcut))
+  })
+}
+
 export const commands: readonly Command[] = Object.freeze([
   {
     id: 'playback.toggle',
     label: 'Playback: Toggle (play/stop)',
+    keyboardShortcuts: [
+      { ctrl: true, shift: true, code: 'Space' }
+    ],
     action: ({ audioEngine, lastProgram }) => {
       if (audioEngine.playing.get()) {
         audioEngine.stop()
