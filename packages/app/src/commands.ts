@@ -18,6 +18,7 @@ export interface CommandContext {
   readonly layoutDispatch: LayoutDispatch
   readonly audioEngine: AudioEngine
   readonly lastProgram: Program | undefined
+  readonly showCommandPalette: () => void
 }
 
 export interface KeyboardShortcut {
@@ -27,7 +28,9 @@ export interface KeyboardShortcut {
   readonly code: string
 }
 
-export function useCommandContext (): CommandContext {
+export function useCommandContext (handlers: {
+  showCommandPalette: () => void
+}): CommandContext {
   const [, layoutDispatch] = useLayout()
 
   const audioEngine = useAudioEngine()
@@ -38,7 +41,8 @@ export function useCommandContext (): CommandContext {
   return {
     layoutDispatch,
     audioEngine,
-    lastProgram
+    lastProgram,
+    showCommandPalette: handlers.showCommandPalette
   }
 }
 
@@ -59,6 +63,14 @@ export function findCommandForKeyboardShortcut (details: Required<KeyboardShortc
 
     return command.keyboardShortcuts.some((shortcut) => matchKeyboardShortcut(details, shortcut))
   })
+}
+
+export function formatKeyCode (code: string): string {
+  if (code.startsWith('Key')) {
+    return code.slice(3)
+  }
+
+  return code
 }
 
 export const commands: readonly Command[] = Object.freeze([
@@ -106,6 +118,19 @@ export const commands: readonly Command[] = Object.freeze([
     label: 'Layout: Reset to default',
     action: ({ layoutDispatch }) => {
       layoutDispatch(defaultLayout)
+    }
+  },
+
+  {
+    id: 'commands.show-all',
+    label: 'Show all commands',
+    keyboardShortcuts: [
+      // Ctrl-Shift-P may be reserved by some browsers
+      { ctrl: true, code: 'KeyP' },
+      { code: 'F1' }
+    ],
+    action: ({ showCommandPalette }) => {
+      showCommandPalette()
     }
   }
 ])

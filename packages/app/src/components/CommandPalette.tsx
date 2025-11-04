@@ -1,22 +1,32 @@
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { commands, findCommandForKeyboardShortcut, useCommandContext, type Command } from '../commands.js'
+import { commands, findCommandForKeyboardShortcut, formatKeyCode, useCommandContext, type Command } from '../commands.js'
 import { useGlobalKeydown } from '../hooks/keyboard.js'
 
 export const CommandPalette: FunctionComponent = () => {
   const paletteRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const showCommandPalette = useCallback(() => {
+    setOpen(true)
+    setTimeout(() => searchRef.current?.focus(), 0)
+  }, [])
+
+  const hideCommandPalette = useCallback(() => {
+    setOpen(false)
+    setSearch('')
+  }, [])
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
     const next = e.relatedTarget as HTMLElement | null
     if (!next || !paletteRef.current?.contains(next)) {
-      setOpen(false)
+      hideCommandPalette()
     }
-  }, [])
-
-  const [search, setSearch] = useState('')
+  }, [hideCommandPalette])
 
   // Reset search when closing
   useEffect(() => {
@@ -35,15 +45,17 @@ export const CommandPalette: FunctionComponent = () => {
     return commands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
   }, [search])
 
-  const commandContext = useCommandContext()
+  const commandContext = useCommandContext({ showCommandPalette })
 
   const dispatchCommand = useCallback((command: Command) => {
+    // Important: close before calling action, in case action needs to open the palette
+    hideCommandPalette()
     command.action(commandContext)
-    setOpen(false)
-  }, [commandContext])
+  }, [commandContext, hideCommandPalette])
 
   const handleInputKeydown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    const hasModifiers = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
+    if (event.key === 'Enter' && !hasModifiers) {
       const firstCommand = searchResults.at(0)
       if (firstCommand != null) {
         dispatchCommand(firstCommand)
@@ -52,33 +64,18 @@ export const CommandPalette: FunctionComponent = () => {
   }, [dispatchCommand, searchResults])
 
   const handleKeydown = useCallback((event: KeyboardEvent) => {
-    const togglePalette = (open: boolean): void => {
-      event.preventDefault()
-      setOpen(open)
-    }
-
-    if (event.key === 'F1') {
-      togglePalette(true)
-      return
-    }
-
-    if (event.key === 'Escape') {
-      togglePalette(false)
-      return
-    }
-
     const { code, shiftKey: shift, altKey: alt } = event
     const ctrl = event.ctrlKey || event.metaKey
 
-    // For now, we require at least one modifier key to avoid interfering with typing
-    if (!ctrl && !shift && !alt) {
+    if (open && event.key === 'Escape' && !ctrl && !shift && !alt) {
+      event.preventDefault()
+      hideCommandPalette()
       return
     }
 
-    // TODO: Refactor this to use the same keyboard shortcut handling as commands
-    // Note: Ctrl-Shift-P may be reserved by some browsers
-    if (ctrl && code === 'KeyP') {
-      togglePalette(true)
+    // Avoid interfering with typing
+    const isFunctionKey = /^F\d{1,2}$/.test(code)
+    if (!isFunctionKey && !ctrl && !shift && !alt) {
       return
     }
 
@@ -87,7 +84,7 @@ export const CommandPalette: FunctionComponent = () => {
       event.preventDefault()
       dispatchCommand(matchedCommand)
     }
-  }, [dispatchCommand])
+  }, [open, dispatchCommand, hideCommandPalette])
 
   useGlobalKeydown(handleKeydown)
 
@@ -96,10 +93,7 @@ export const CommandPalette: FunctionComponent = () => {
   }
 
   return (
-    <div
-      className='pointer-events-none fixed inset-0 justify-center items-start flex p-2 z-50'
-      onClick={(event) => event.target === event.currentTarget && setOpen(false)}
-    >
+    <div className='pointer-events-none fixed inset-0 justify-center items-start flex p-2 z-50'>
       <div
         ref={paletteRef}
         tabIndex={-1}
@@ -109,6 +103,7 @@ export const CommandPalette: FunctionComponent = () => {
         aria-label='Command palette'
       >
         <input
+          ref={searchRef}
           type='text'
           className={clsx(
             'w-full p-2 border border-frame-200 rounded-sm bg-surface-200 text-content-200 outline-none',
@@ -127,7 +122,6 @@ export const CommandPalette: FunctionComponent = () => {
               No commands found.
             </div>
           )}
-
           {searchResults.map((command) => (
             <SearchResult key={command.id} command={command} dispatchCommand={dispatchCommand} />
           ))}
@@ -162,7 +156,7 @@ const SearchResult: FunctionComponent<{
             {shortcut.ctrl && (<KeyboardKey isModifier>Ctrl</KeyboardKey>)}
             {shortcut.shift && (<KeyboardKey isModifier>Shift</KeyboardKey>)}
             {shortcut.alt && (<KeyboardKey isModifier>Alt</KeyboardKey>)}
-            <KeyboardKey>{shortcut.code}</KeyboardKey>
+            <KeyboardKey>{formatKeyCode(shortcut.code)}</KeyboardKey>
           </>
         )}
       </div>
