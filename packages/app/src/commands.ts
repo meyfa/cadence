@@ -1,5 +1,6 @@
 import type { AudioEngine } from '@core/audio/engine.js'
 import type { Program } from '@core/program.js'
+import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import { usePrevious } from './hooks/previous.js'
 import { useAudioEngine } from './state/AudioEngineContext.js'
 import { useCompilationState } from './state/CompilationContext.js'
@@ -21,13 +22,6 @@ export interface CommandContext {
   readonly showCommandPalette: () => void
 }
 
-export interface KeyboardShortcut {
-  readonly ctrl?: boolean
-  readonly shift?: boolean
-  readonly alt?: boolean
-  readonly code: string
-}
-
 export function useCommandContext (handlers: {
   showCommandPalette: () => void
 }): CommandContext {
@@ -46,31 +40,8 @@ export function useCommandContext (handlers: {
   }
 }
 
-export function matchKeyboardShortcut (details: Required<KeyboardShortcut>, shortcut: KeyboardShortcut): boolean {
-  return (
-    (shortcut.ctrl == null || details.ctrl === shortcut.ctrl) &&
-    (shortcut.shift == null || details.shift === shortcut.shift) &&
-    (shortcut.alt == null || details.alt === shortcut.alt) &&
-    details.code === shortcut.code
-  )
-}
-
-export function findCommandForKeyboardShortcut (details: Required<KeyboardShortcut>): Command | undefined {
-  return commands.find((command) => {
-    if (command.keyboardShortcuts == null) {
-      return false
-    }
-
-    return command.keyboardShortcuts.some((shortcut) => matchKeyboardShortcut(details, shortcut))
-  })
-}
-
-export function formatKeyCode (code: string): string {
-  if (code.startsWith('Key')) {
-    return code.slice(3)
-  }
-
-  return code
+export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Command | undefined {
+  return keyboardShortcuts.get(shortcut)
 }
 
 export const commands: readonly Command[] = Object.freeze([
@@ -78,7 +49,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: 'playback.toggle',
     label: 'Playback: Toggle (play/stop)',
     keyboardShortcuts: [
-      { ctrl: true, shift: true, code: 'Space' }
+      'Ctrl+Shift+Space'
     ],
     action: ({ audioEngine, lastProgram }) => {
       if (audioEngine.playing.get()) {
@@ -126,11 +97,30 @@ export const commands: readonly Command[] = Object.freeze([
     label: 'Show all commands',
     keyboardShortcuts: [
       // Ctrl-Shift-P may be reserved by some browsers
-      { ctrl: true, code: 'KeyP' },
-      { code: 'F1' }
+      'Ctrl+P',
+      'Ctrl+Shift+P',
+      'F1'
     ],
     action: ({ showCommandPalette }) => {
       showCommandPalette()
     }
   }
-])
+] satisfies Command[])
+
+const keyboardShortcuts = ((): ReadonlyMap<KeyboardShortcut, Command> => {
+  const map = new Map<KeyboardShortcut, Command>()
+  for (const command of commands) {
+    for (const unnormalizedShortcut of command.keyboardShortcuts ?? []) {
+      const shortcut = normalizeKeyboardShortcut(unnormalizedShortcut)
+
+      const existing = map.get(shortcut)
+      if (existing != null) {
+        // Throwing is okay here since all commands are defined statically
+        throw new Error(`Keyboard shortcut conflict: ${JSON.stringify(shortcut)} is assigned to both ${JSON.stringify(existing.id)} and ${JSON.stringify(command.id)}`)
+      }
+
+      map.set(shortcut, command)
+    }
+  }
+  return map
+})()

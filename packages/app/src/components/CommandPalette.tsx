@@ -1,6 +1,7 @@
+import { convertCodeToKey, hasModifierKey, isFunctionKey, parseKeyboardShortcut, serializeKeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import clsx from 'clsx'
-import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { commands, findCommandForKeyboardShortcut, formatKeyCode, useCommandContext, type Command } from '../commands.js'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
+import { commands, findCommandForKeyboardShortcut, useCommandContext, type Command } from '../commands.js'
 import { useGlobalKeydown } from '../hooks/keyboard.js'
 
 export const CommandPalette: FunctionComponent = () => {
@@ -67,19 +68,20 @@ export const CommandPalette: FunctionComponent = () => {
     const { code, shiftKey: shift, altKey: alt } = event
     const ctrl = event.ctrlKey || event.metaKey
 
-    if (open && event.key === 'Escape' && !ctrl && !shift && !alt) {
+    const keyboardShortcut = serializeKeyboardShortcut({ code, ctrl, shift, alt })
+
+    if (open && keyboardShortcut === 'Escape') {
       event.preventDefault()
       hideCommandPalette()
       return
     }
 
     // Avoid interfering with typing
-    const isFunctionKey = /^F\d{1,2}$/.test(code)
-    if (!isFunctionKey && !ctrl && !shift && !alt) {
+    if (!hasModifierKey(keyboardShortcut) && !isFunctionKey(convertCodeToKey(code))) {
       return
     }
 
-    const matchedCommand = findCommandForKeyboardShortcut({ code, ctrl, shift, alt })
+    const matchedCommand = findCommandForKeyboardShortcut(keyboardShortcut)
     if (matchedCommand != null) {
       event.preventDefault()
       dispatchCommand(matchedCommand)
@@ -137,6 +139,7 @@ const SearchResult: FunctionComponent<{
 }> = ({ command, dispatchCommand }) => {
   // Show only the first shortcut due to space constraints
   const shortcut = command.keyboardShortcuts?.at(0)
+  const shortcutParts = shortcut != null ? parseKeyboardShortcut(shortcut) : undefined
 
   return (
     <button
@@ -150,29 +153,20 @@ const SearchResult: FunctionComponent<{
       <div className='grow py-2'>
         {command.label}
       </div>
-      <div className='text-sm'>
-        {shortcut != null && (
-          <>
-            {shortcut.ctrl && (<KeyboardKey isModifier>Ctrl</KeyboardKey>)}
-            {shortcut.shift && (<KeyboardKey isModifier>Shift</KeyboardKey>)}
-            {shortcut.alt && (<KeyboardKey isModifier>Alt</KeyboardKey>)}
-            <KeyboardKey>{formatKeyCode(shortcut.code)}</KeyboardKey>
-          </>
-        )}
-      </div>
+      {shortcutParts != null && (
+        <div className='text-sm'>
+          {shortcutParts.map((part, index) => (
+            <Fragment key={part}>
+              <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
+                {part}
+              </span>
+              {index < shortcutParts.length - 1 && (
+                <span className='mx-1 text-content-100'>+</span>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      )}
     </button>
-  )
-}
-
-const KeyboardKey: FunctionComponent<PropsWithChildren<{
-  isModifier?: boolean
-}>> = ({ children, isModifier }) => {
-  return (
-    <>
-      <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
-        {children}
-      </span>
-      {isModifier && (<span className='mx-1 text-content-100'>+</span>)}
-    </>
   )
 }
