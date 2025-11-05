@@ -1,6 +1,6 @@
 import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
-import type { Program } from '../program.js'
+import type { Numeric, Program } from '../program.js'
 import { createPlayers } from './players.js'
 import { createSequences } from './sequences.js'
 import { createBuses } from './buses.js'
@@ -14,8 +14,12 @@ export interface AudioSession {
   readonly dispose: () => void
 }
 
-export function createAudioSession (program: Program): AudioSession {
+export function createAudioSession (program: Program, position: Numeric<'steps'>): AudioSession {
+  const bpm = program.track.tempo.value
   const totalDuration = calculateTotalDuration(program)
+  const startOffsetSeconds = (position.value * 60) / (program.stepsPerBeat * bpm)
+  const initialProgress = totalDuration > 0 ? Math.min(1, startOffsetSeconds / totalDuration) : 0
+  const startAtOrAfterEnd = totalDuration <= 0 || startOffsetSeconds >= totalDuration
 
   const buses = createBuses(program)
   const [players, playersLoaded] = createPlayers(program, buses)
@@ -24,7 +28,7 @@ export function createAudioSession (program: Program): AudioSession {
   let disposed = false
 
   const ended = new MutableObservable(false)
-  const progress = new MutableObservable(0)
+  const progress = new MutableObservable(initialProgress)
 
   let progressInterval: ReturnType<typeof setInterval> | undefined
 
@@ -39,13 +43,20 @@ export function createAudioSession (program: Program): AudioSession {
       .then(() => {
         if (!disposed) {
           resetTransport()
-          getTransport().bpm.value = program.track.tempo.value
+          getTransport().bpm.value = bpm
+
+          if (startAtOrAfterEnd) {
+            ended.set(true)
+            progress.set(1)
+            return
+          }
+
           sequences.forEach(([sequence, offset]) => sequence.start(offset))
           getTransport().scheduleOnce(() => ended.set(true), totalDuration)
-          getTransport().start('+0.05')
+          getTransport().start('+0.05', startOffsetSeconds)
 
           progressInterval = setInterval(() => {
-            if (!disposed) {
+            if (!disposed && getTransport().state === 'started') {
               const progressValue = getTransport().seconds / Math.max(0.001, totalDuration)
               progress.set(Math.max(0, Math.min(1, progressValue)))
             }

@@ -2,7 +2,7 @@ import { convertCodeToKey, hasModifierKey, isFunctionKey, parseKeyboardShortcut,
 import clsx from 'clsx'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { commands, findCommandForKeyboardShortcut, useCommandContext, type Command } from '../commands.js'
-import { useGlobalKeydown } from '../hooks/keyboard.js'
+import { useGlobalKeydown } from '../hooks/input.js'
 
 export const CommandPalette: FunctionComponent = () => {
   const paletteRef = useRef<HTMLDivElement>(null)
@@ -64,7 +64,7 @@ export const CommandPalette: FunctionComponent = () => {
     }
   }, [dispatchCommand, searchResults])
 
-  const handleKeydown = useCallback((event: KeyboardEvent) => {
+  useGlobalKeydown((event) => {
     const { code, shiftKey: shift, altKey: alt } = event
     const ctrl = event.ctrlKey || event.metaKey
 
@@ -87,8 +87,6 @@ export const CommandPalette: FunctionComponent = () => {
       dispatchCommand(matchedCommand)
     }
   }, [open, dispatchCommand, hideCommandPalette])
-
-  useGlobalKeydown(handleKeydown)
 
   if (!open) {
     return null
