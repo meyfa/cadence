@@ -22,8 +22,8 @@ html.dark {
   /* remove all default colors to avoid accidental usage */
   --color-*: initial;
 
-  --color-surface-100: light-dark(hsl(210 6% 88%), hsl(210 6% 8%));
-  --color-surface-200: light-dark(hsl(210 6% 94%), hsl(210 6% 12%));
+  --color-surface-100: light-dark(hsl(210 6% 90%), hsl(210 6% 8%));
+  --color-surface-200: light-dark(hsl(210 6% 96%), hsl(210 6% 12%));
   --color-surface-300: light-dark(hsl(210 6% 100%), hsl(210 6% 20%));
 
   --color-frame-100: light-dark(hsl(210 6% 70%), hsl(210 6% 28%));
