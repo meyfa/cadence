@@ -3,8 +3,9 @@ import { makeNumeric } from '@core/program.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { type CompileOptions } from '@language/compiler/compiler.js'
-import { FunctionComponent, useEffect } from 'react'
+import { FunctionComponent, useEffect, useState } from 'react'
 import { CommandPalette } from './components/CommandPalette.js'
+import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
 import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
 import { Main } from './components/Main.js'
@@ -56,12 +57,28 @@ const engine = createAudioEngine({
 })
 
 export const App: FunctionComponent = () => {
+  const [hasExternalChange, setHasExternalChange] = useState(false)
+
   return (
     <AudioEngineContext value={engine}>
       <EditorProvider>
         <CompilationProvider compileOptions={compileOptions}>
           <LayoutProvider>
-            <StorageSync />
+            <StorageSync
+              onExternalChange={() => setHasExternalChange(true)}
+              disablePersistence={hasExternalChange}
+            />
+
+            <ConfirmationDialog
+              open={hasExternalChange}
+              title='External changes detected'
+              onConfirm={() => window.location.reload()}
+              onCancel={() => setHasExternalChange(false)}
+              confirmText='Reload'
+              cancelText='Ignore'
+            >
+              The editor state has changed in another tab or window. Reload to apply the changes?
+            </ConfirmationDialog>
 
             <CommandPalette />
 
@@ -78,7 +95,10 @@ export const App: FunctionComponent = () => {
 }
 
 // Helper component for syncing to storage
-const StorageSync: FunctionComponent = () => {
+const StorageSync: FunctionComponent<{
+  onExternalChange: () => void
+  disablePersistence?: boolean
+}> = ({ onExternalChange, disablePersistence }) => {
   const theme = useThemeSetting()
   const outputGain = useObservable(engine.outputGain)
 
@@ -94,8 +114,33 @@ const StorageSync: FunctionComponent = () => {
     editorDispatch((state) => ({ ...state, code: initialState.code }))
   }, [])
 
+  // Update on external storage changes (e.g. other tabs)
+  useEffect(() => {
+    return storage.onExternalChange(() => {
+      const externalState = storage.load()
+      if (externalState == null) {
+        return
+      }
+
+      // Syncing anything but basic settings can easily cause loops or mess up the user's current work.
+      const { settings } = externalState
+      if (settings?.theme != null) {
+        applyThemeSetting(settings.theme)
+      }
+      if (settings?.outputGain != null) {
+        engine.outputGain.set(settings.outputGain)
+      }
+
+      onExternalChange()
+    })
+  }, [onExternalChange, engine])
+
   // Debounced persistence
   useEffect(() => {
+    if (disablePersistence === true) {
+      return
+    }
+
     const handle = setTimeout(() => {
       storage.save({
         settings: {
@@ -108,7 +153,7 @@ const StorageSync: FunctionComponent = () => {
     }, STORAGE_DEBOUNCE_MS)
 
     return () => clearTimeout(handle)
-  }, [theme, outputGain, layout, code])
+  }, [disablePersistence, theme, outputGain, layout, code])
 
   return null
 }
