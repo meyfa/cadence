@@ -14,8 +14,6 @@ export const Header: FunctionComponent = () => {
   const engine = useAudioEngine()
 
   const playing = useObservable(engine.playing)
-  const progress = useObservable(engine.progress)
-
   const outputGain = useObservable(engine.outputGain)
 
   const onPlayPause = useCallback(() => {
@@ -39,15 +37,6 @@ export const Header: FunctionComponent = () => {
       <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
         {playing ? <StopOutlined /> : <PlayArrowOutlined />}
       </Button>
-
-      <div title='Progress' className='grow min-w-24 max-w-64 flex items-center h-8'>
-        <div className='w-full h-2 bg-surface-200 border border-frame-200 rounded-xs overflow-hidden'>
-          <div
-            className='h-full bg-content-200 transition-all duration-100 ease-linear'
-            style={{ width: `${(progress * 100).toFixed(2)}%` }}
-          />
-        </div>
-      </div>
     </header>
   )
 }
