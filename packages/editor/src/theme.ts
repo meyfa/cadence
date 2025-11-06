@@ -52,7 +52,7 @@ const lightColors = {
   violet: '#a62694',
 
   invalid: '#000000',
-  background: '#eff0f1',
+  background: '#ffffff',
   foreground: '#383a42',
   panelBackground: '#e7e8ea',
   foldPlaceholder: '#555',

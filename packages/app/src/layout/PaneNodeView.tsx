@@ -56,7 +56,7 @@ const TabTitle: FunctionComponent<{
   return (
     <Tab
       className={({ selected }) => clsx(
-        'px-4 h-7 leading-none outline-none border-t-2 enabled:cursor-pointer',
+        'px-4 h-7 leading-none outline-none border-t-2 border-r border-r-surface-100 enabled:cursor-pointer',
         selected
           ? 'bg-surface-300 border-t-accent-600 dark:border-t-accent-400 text-content-300'
           : 'bg-surface-200 border-t-transparent text-content-200 enabled:hocus:bg-surface-300 enabled:hocus:text-content-300'
