@@ -1,8 +1,8 @@
-import type { PaneNode, SerializedComponent } from '@editor/state/layout.js'
+import type { Tab as LayoutTab, PaneNode, SerializedComponent } from '@editor/state/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
-import clsx from 'clsx'
 import { useCallback, type FunctionComponent } from 'react'
-import { renderTabComponent, renderTabNotificationCount, renderTabTitle, type TabRendererContext } from '../panes/render-tab.js'
+import { TabComponent } from '../components/TabComponent.js'
+import { renderTabContent, type TabRendererContext } from '../panes/render-tab.js'
 import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
 
 export const PaneNodeView: FunctionComponent<{
@@ -34,7 +34,7 @@ export const PaneNodeView: FunctionComponent<{
     >
       <TabList className='bg-surface-200 border-y border-y-frame-200 flex items-center text-sm font-semibold'>
         {tabs.map((tab) => (
-          <TabTitle key={tab.id} component={tab.component} context={tabRendererContext} />
+          <TabTitle key={tab.id} tab={tab} context={tabRendererContext} />
         ))}
       </TabList>
       <TabPanels className='flex-1 min-h-0 min-w-0'>
@@ -47,27 +47,13 @@ export const PaneNodeView: FunctionComponent<{
 }
 
 const TabTitle: FunctionComponent<{
-  component: SerializedComponent
+  tab: LayoutTab
   context: TabRendererContext
-}> = ({ component, context }) => {
-  const title = renderTabTitle(component, context)
-  const notificationCount = renderTabNotificationCount(component, context)
-
+}> = ({ tab, context }) => {
   return (
-    <Tab
-      className={({ selected }) => clsx(
-        'px-4 h-7 leading-none outline-none border-t-2 border-r border-r-surface-100 enabled:cursor-pointer',
-        selected
-          ? 'bg-surface-300 border-t-accent-600 dark:border-t-accent-400 text-content-300'
-          : 'bg-surface-200 border-t-transparent text-content-200 enabled:hocus:bg-surface-300 enabled:hocus:text-content-300'
-      )}
-    >
-      {title}
-
-      {notificationCount > 0 && (
-        <span className='inline-block ml-1 px-1.5 py-0.5 text-xs leading-none bg-error-surface text-error-content rounded-full'>
-          {notificationCount}
-        </span>
+    <Tab className='outline-none'>
+      {({ disabled, selected }) => (
+        <TabComponent tab={tab} context={context} disabled={disabled} selected={selected} />
       )}
     </Tab>
   )
@@ -79,7 +65,7 @@ const TabContent: FunctionComponent<{
 }> = ({ component, context }) => {
   return (
     <TabPanel unmount={false} className='h-full w-full relative'>
-      {renderTabComponent(component, context)}
+      {renderTabContent(component, context)}
     </TabPanel>
   )
 }
