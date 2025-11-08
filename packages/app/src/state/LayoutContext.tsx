@@ -29,9 +29,9 @@ export function useLayoutNodeDispatch (parent: LayoutDispatch, child: keyof Dock
   }, [parent, child])
 }
 
-export function useChildNodeDispatch (parent: LayoutNodeDispatch, childId: string): LayoutNodeDispatch {
+export function useChildNodeDispatch (parent: LayoutNodeDispatch | undefined, childId: string): LayoutNodeDispatch | undefined {
   return useCallback((action: SetStateAction<LayoutNode>) => {
-    parent((node) => {
+    parent?.((node) => {
       if (node.type !== 'split') {
         return node
       }

@@ -1,3 +1,5 @@
+import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Tab as LayoutTab, PaneNode, SerializedComponent } from '@editor/state/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useCallback, type FunctionComponent } from 'react'
@@ -7,16 +9,16 @@ import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
 
 export const PaneNodeView: FunctionComponent<{
   node: PaneNode
-  dispatch: LayoutNodeDispatch
   tabRendererContext: TabRendererContext
-}> = ({ node, dispatch, tabRendererContext }) => {
+  dispatch?: LayoutNodeDispatch
+}> = ({ node, tabRendererContext, dispatch }) => {
   const { tabs, activeTabId } = node
 
   const selectedIndex = tabs.findIndex((tab) => tab.id === activeTabId)
   const onSelectionChange = useCallback((index: number) => {
     const selectedTab = tabs.at(index)
     if (selectedTab != null) {
-      dispatch((node) => {
+      dispatch?.((node) => {
         if (node.type !== 'pane') {
           return node
         }
@@ -32,10 +34,15 @@ export const PaneNodeView: FunctionComponent<{
       selectedIndex={selectedIndex >= 0 ? selectedIndex : 0}
       onChange={onSelectionChange}
     >
-      <TabList className='bg-surface-200 border-y border-y-frame-200 flex items-center text-sm font-semibold'>
-        {tabs.map((tab) => (
-          <TabTitle key={tab.id} tab={tab} context={tabRendererContext} />
-        ))}
+      <TabList className='bg-surface-200 border-y border-y-frame-200 flex items-center'>
+        <SortableContext
+          items={tabs.map((tab) => tab.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          {tabs.map((tab) => (
+            <TabTitle key={tab.id} tab={tab} context={tabRendererContext} />
+          ))}
+        </SortableContext>
       </TabList>
       <TabPanels className='flex-1 min-h-0 min-w-0'>
         {tabs.map((tab) => (
@@ -50,8 +57,16 @@ const TabTitle: FunctionComponent<{
   tab: LayoutTab
   context: TabRendererContext
 }> = ({ tab, context }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: tab.id })
+
   return (
-    <Tab className='outline-none'>
+    <Tab
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+      className='outline-none'
+    >
       {({ disabled, selected }) => (
         <TabComponent tab={tab} context={context} disabled={disabled} selected={selected} />
       )}
