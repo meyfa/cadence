@@ -8,13 +8,13 @@ import { renderNode } from './render-node.js'
 
 export const SplitNodeView: FunctionComponent<{
   node: SplitNode
-  dispatch: LayoutNodeDispatch
   tabRendererContext: TabRendererContext
-}> = ({ node, dispatch, tabRendererContext }) => {
+  dispatch?: LayoutNodeDispatch
+}> = ({ node, tabRendererContext, dispatch }) => {
   const { direction, children, sizes } = node
 
   const onLayout = useCallback((newSizes: number[]) => {
-    dispatch((node) => {
+    dispatch?.((node) => {
       if (node.type !== 'split') {
         return node
       }
@@ -41,11 +41,11 @@ export const SplitNodeView: FunctionComponent<{
 }
 
 const SplitNodeChildView: FunctionComponent<{
-  parentDispatch: LayoutNodeDispatch
   child: LayoutNode
   size: number
   tabRendererContext: TabRendererContext
-}> = ({ parentDispatch, child, size, tabRendererContext }) => {
+  parentDispatch?: LayoutNodeDispatch
+}> = ({ child, size, tabRendererContext, parentDispatch }) => {
   const childDispatch = useChildNodeDispatch(parentDispatch, child.id)
 
   const panelRef = useRef<ImperativePanelHandle>(null)
@@ -57,7 +57,7 @@ const SplitNodeChildView: FunctionComponent<{
 
   return (
     <Panel ref={panelRef} id={child.id} defaultSize={size * 100} minSize={10}>
-      {renderNode(child, childDispatch, tabRendererContext)}
+      {renderNode(child, tabRendererContext, childDispatch)}
     </Panel>
   )
 }

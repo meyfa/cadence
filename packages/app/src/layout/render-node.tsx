@@ -7,17 +7,17 @@ import { SplitNodeView } from './SplitNodeView.js'
 
 export function renderNode (
   node: LayoutNode,
-  dispatch: LayoutNodeDispatch,
-  tabRendererContext: TabRendererContext
+  tabRendererContext: TabRendererContext,
+  dispatch?: LayoutNodeDispatch
 ): ReactNode {
   if (node.type === 'pane') {
     return (
-      <PaneNodeView node={node} dispatch={dispatch} tabRendererContext={tabRendererContext} />
+      <PaneNodeView node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
     )
   }
 
   // node.type === 'split'
   return (
-    <SplitNodeView node={node} dispatch={dispatch} tabRendererContext={tabRendererContext} />
+    <SplitNodeView node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
   )
 }
