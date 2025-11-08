@@ -43,7 +43,7 @@ html.dark {
   /* var(--color-black), var(--color-white) */
   --color-error-content: light-dark(#000, #fff);
 
-  --color-dialog-backdrop: light-dark(rgba(0 0 0 / 20%), rgba(0 0 0 / 40%));
+  --color-dialog-backdrop: light-dark(hsl(210 6% 0% / 28%), hsl(210 6% 16% / 52%));
 }
 
 html.theme-transition :is(*, *::before, *::after) {

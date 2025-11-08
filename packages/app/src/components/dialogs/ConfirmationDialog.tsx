@@ -15,16 +15,16 @@ export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{
       <DialogBackdrop className='fixed inset-0 bg-dialog-backdrop' />
 
       <div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
-        <DialogPanel className='max-w-lg p-8 flex flex-col gap-8 rounded bg-surface-100 border border-frame-100 shadow-lg'>
-          <DialogTitle className='text-xl leading-none'>
+        <DialogPanel className='max-w-lg rounded-md bg-surface-100 border border-frame-100 shadow-lg overflow-clip'>
+          <DialogTitle className='text-lg leading-none p-4 bg-surface-200 border-b border-frame-100'>
             {title}
           </DialogTitle>
 
-          <div>
+          <div className='p-4'>
             {children}
           </div>
 
-          <div className='flex gap-4 justify-end'>
+          <div className='flex gap-2 justify-end p-4'>
             <Button onClick={() => onConfirm()}>
               {confirmText ?? 'Okay'}
             </Button>
