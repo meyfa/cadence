@@ -61,7 +61,7 @@ const tabRenderers: ReadonlyMap<TabType, TabRenderer> = (() => new Map<TabType, 
   }]
 ]))()
 
-export function renderTabComponent (data: SerializedComponent, context: TabRendererContext): ReactNode {
+export function renderTabContent (data: SerializedComponent, context: TabRendererContext): ReactNode {
   const renderer = tabRenderers.get(data.type as TabType)
   if (renderer != null) {
     return renderer.render(data.props, context)
