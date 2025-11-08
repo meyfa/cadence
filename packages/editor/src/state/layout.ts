@@ -1,4 +1,4 @@
-import { readonly, type StructValidation } from '@editor/utilities/validation.js'
+import { brandedString, readonly, type StructValidation } from '@editor/utilities/validation.js'
 import { array, enums, lazy, literal, number, optional, record, string, type, union, unknown, type Struct } from 'superstruct'
 
 // Types
@@ -10,8 +10,11 @@ export interface SerializedComponent {
   readonly props?: Record<string, unknown>
 }
 
+export type TabId = string & { __brand: 'TabId' }
+export type LayoutNodeId = string & { __brand: 'LayoutNodeId' }
+
 export interface Tab {
-  readonly id: string
+  readonly id: TabId
   readonly component: SerializedComponent
 }
 
@@ -20,13 +23,13 @@ export type NodeType = LayoutNode['type']
 
 export interface BaseLayoutNode {
   readonly type: string
-  readonly id: string
+  readonly id: LayoutNodeId
 }
 
 export interface PaneNode extends BaseLayoutNode {
   readonly type: 'pane'
   readonly tabs: readonly Tab[]
-  readonly activeTabId: string
+  readonly activeTabId: TabId
 }
 
 export interface SplitNode extends BaseLayoutNode {
@@ -50,20 +53,20 @@ const serializedComponent: Struct<SerializedComponent> = type({
 })
 
 const tab: Struct<Tab> = type({
-  id: string(),
+  id: brandedString<TabId>(),
   component: serializedComponent
 })
 
 const paneNode: Struct<PaneNode> = type({
   type: literal('pane'),
-  id: string(),
+  id: brandedString<LayoutNodeId>(),
   tabs: readonly(array(tab)),
-  activeTabId: string()
+  activeTabId: brandedString<TabId>()
 })
 
 const splitNode: Struct<SplitNode> = type({
   type: literal('split'),
-  id: string(),
+  id: brandedString<LayoutNodeId>(),
   direction: splitDirection,
   children: readonly(array(lazy(() => layoutNode))),
   sizes: readonly(array(number()))

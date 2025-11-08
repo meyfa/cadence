@@ -1,15 +1,15 @@
-import { DockLayout, type LayoutNode } from '@editor/state/layout.js'
+import { DockLayout, type LayoutNode, type LayoutNodeId, type TabId } from '@editor/state/layout.js'
 import { createContext, useCallback, useContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 import { TabTypes } from '../panes/render-tab.js'
 
 const initialLayout: DockLayout = {
   main: {
-    id: 'root',
+    id: 'root' as LayoutNodeId,
     type: 'pane',
     tabs: [
-      { id: 'editor', component: { type: TabTypes.Editor } }
+      { id: 'editor' as TabId, component: { type: TabTypes.Editor } }
     ],
-    activeTabId: 'editor'
+    activeTabId: 'editor' as TabId
   }
 }
 
