@@ -1,5 +1,5 @@
 import { randomId } from '@editor/utilities/id.js'
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, TabId } from '../state/layout.js'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, Tab, TabId } from '../state/layout.js'
 import { arrayInsert, arrayMove, arrayRemove } from '../utilities/arrays.js'
 
 export function findPane (layout: DockLayout, predicate: (pane: PaneNode) => boolean): PaneNode | undefined {
@@ -21,6 +21,23 @@ export function findPaneById (layout: DockLayout, nodeId: LayoutNodeId): PaneNod
 
 export function findPaneByTabId (layout: DockLayout, tabId: TabId): PaneNode | undefined {
   return findPane(layout, (pane) => pane.tabs.some((tab) => tab.id === tabId))
+}
+
+export function findTab (layout: DockLayout, predicate: (tab: Tab) => boolean): Tab | undefined {
+  const findInNode = (node: LayoutNode): Tab | undefined => {
+    switch (node.type) {
+      case 'pane':
+        return node.tabs.find(predicate)
+      case 'split':
+        return node.children.map(findInNode).find((item) => item != null)
+    }
+  }
+
+  return layout.main != null ? findInNode(layout.main) : undefined
+}
+
+export function findTabByComponentType (layout: DockLayout, componentType: string): Tab | undefined {
+  return findTab(layout, (tab) => tab.component.type === componentType)
 }
 
 export function activateTabInPane (layout: DockLayout, tabId: TabId): DockLayout {
