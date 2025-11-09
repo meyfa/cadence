@@ -1,3 +1,4 @@
+import { randomId } from '@editor/utilities/id.js'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, TabId } from '../state/layout.js'
 import { arrayInsert, arrayMove, arrayRemove } from '../utilities/arrays.js'
 
@@ -153,7 +154,7 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
 
   const newPaneNode: PaneNode = {
     type: 'pane',
-    id: randomLayoutNodeId(),
+    id: randomId() as LayoutNodeId,
     tabs: [tab],
     activeTabId: tab.id
   }
@@ -163,7 +164,7 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
       siblingNode.id,
       {
         type: 'split',
-        id: randomLayoutNodeId(),
+        id: randomId() as LayoutNodeId,
         direction: splitDirection,
         sizes: [0.5, 0.5],
         children: isBefore ? [newPaneNode, siblingNode] : [siblingNode, newPaneNode]
@@ -275,11 +276,4 @@ function normalizeLayout (layout: DockLayout): DockLayout {
     ...layout,
     main: layout.main != null ? normalizeNode(layout.main) : layout.main
   }
-}
-
-const randomLayoutNodeId = (): LayoutNodeId => randomId() as LayoutNodeId
-
-function randomId (): string {
-  // TODO better random ID generation
-  return Math.random().toString(36).slice(2, 10)
 }
