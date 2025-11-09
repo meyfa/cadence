@@ -1,16 +1,8 @@
-import { DockLayout, type LayoutNode, type LayoutNodeId, type TabId } from '@editor/state/layout.js'
+import { DockLayout, type LayoutNode } from '@editor/state/layout.js'
 import { createContext, useCallback, useContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
-import { TabTypes } from '../panes/render-tab.js'
 
 const initialLayout: DockLayout = {
-  main: {
-    id: 'root' as LayoutNodeId,
-    type: 'pane',
-    tabs: [
-      { id: 'editor' as TabId, component: { type: TabTypes.Editor } }
-    ],
-    activeTabId: 'editor' as TabId
-  }
+  main: undefined
 }
 
 function layoutReducer (state: DockLayout, action: SetStateAction<DockLayout>): DockLayout {
@@ -22,10 +14,16 @@ export type LayoutNodeDispatch = Dispatch<SetStateAction<LayoutNode>>
 
 export function useLayoutNodeDispatch (parent: LayoutDispatch, child: keyof DockLayout): LayoutNodeDispatch {
   return useCallback((action: SetStateAction<LayoutNode>) => {
-    parent((layout) => ({
-      ...layout,
-      [child]: typeof action === 'function' ? action(layout[child]) : action
-    }))
+    parent((layout) => {
+      if (layout[child] == null) {
+        return layout
+      }
+
+      return {
+        ...layout,
+        [child]: typeof action === 'function' ? action(layout[child]) : action
+      }
+    })
   }, [parent, child])
 }
 

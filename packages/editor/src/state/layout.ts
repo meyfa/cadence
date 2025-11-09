@@ -40,7 +40,7 @@ export interface SplitNode extends BaseLayoutNode {
 }
 
 export interface DockLayout {
-  readonly main: LayoutNode
+  readonly main?: LayoutNode
 }
 
 // Schema
@@ -75,7 +75,7 @@ const splitNode: Struct<SplitNode> = type({
 const layoutNode: Struct<LayoutNode> = union([paneNode, splitNode])
 
 export const dockLayoutSchema: Struct<DockLayout> = type({
-  main: layoutNode
+  main: optional(layoutNode)
 })
 
 // Validation
