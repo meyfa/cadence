@@ -1,7 +1,7 @@
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import type { Tab as LayoutTab, PaneNode, SerializedComponent } from '@editor/state/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
+import clsx from 'clsx'
 import { useCallback, type FunctionComponent } from 'react'
 import { TabComponent } from '../components/TabComponent.js'
 import { renderTabContent, type TabRendererContext } from '../panes/render-tab.js'
@@ -57,18 +57,30 @@ const TabTitle: FunctionComponent<{
   tab: LayoutTab
   context: TabRendererContext
 }> = ({ tab, context }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: tab.id })
+  const { attributes, listeners, setNodeRef, transform, isDragging, isOver } = useSortable({ id: tab.id })
+
+  const showDropIndicator = isOver && !isDragging
+  const dropIndicatorOnRightSide = showDropIndicator && (transform?.x ?? 0) < 0
 
   return (
     <Tab
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
-      className='outline-none'
+      className='outline-none relative'
     >
       {({ disabled, selected }) => (
-        <TabComponent tab={tab} context={context} disabled={disabled} selected={selected} />
+        <>
+          <TabComponent tab={tab} context={context} disabled={disabled} selected={selected} />
+          {showDropIndicator && (
+            <div
+              className={clsx(
+                'absolute top-0 bottom-0 w-0.5 bg-content-300',
+                dropIndicatorOnRightSide ? 'right-0' : 'left-0'
+              )}
+            />
+          )}
+        </>
       )}
     </Tab>
   )

@@ -15,12 +15,10 @@ export function findPaneByTabId (layout: DockLayout, tabId: TabId): PaneNode | u
 }
 
 export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
-  // Moving finalizes the preview, which may merge panes
-  // TODO Implement pane merging when a pane becomes empty
-  return moveTabBetweenPanesPreview(layout, tabId, beforeTabId)
-}
+  if (tabId === beforeTabId) {
+    return layout
+  }
 
-export function moveTabBetweenPanesPreview (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
   const sourcePane = findPaneByTabId(layout, tabId)
   const targetPane = findPaneByTabId(layout, beforeTabId)
   if (sourcePane == null || targetPane == null) {
