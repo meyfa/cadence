@@ -25,7 +25,7 @@ export const Header: FunctionComponent = () => {
   }, [engine, playing, lastProgram])
 
   return (
-    <header className='flex flex-wrap items-center px-4 py-1 gap-2 bg-surface-200'>
+    <header className='flex flex-wrap items-center px-4 py-1 gap-2 bg-surface-200 border-b border-b-frame-200'>
       <div className='text-lg font-semibold mr-2'>
         Cadence
       </div>
