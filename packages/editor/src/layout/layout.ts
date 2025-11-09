@@ -22,80 +22,67 @@ export function findPaneByTabId (layout: DockLayout, tabId: TabId): PaneNode | u
   return findPane(layout, (pane) => pane.tabs.some((tab) => tab.id === tabId))
 }
 
-export function moveTabIntoPane (
-  layout: DockLayout,
-  tabId: TabId,
-  targetNodeId: LayoutNodeId
-): DockLayout {
+export function activateTabInPane (layout: DockLayout, tabId: TabId): DockLayout {
+  const pane = findPaneByTabId(layout, tabId)
+  if (pane == null) {
+    return layout
+  }
+
+  return updateNodesInLayout(layout, new Map([
+    [
+      pane.id,
+      {
+        ...pane,
+        activeTabId: tabId
+      }
+    ]
+  ]), { normalize: false })
+}
+
+export function moveTabIntoPane (layout: DockLayout, tabId: TabId, targetNodeId: LayoutNodeId): DockLayout {
   const sourcePane = findPaneByTabId(layout, tabId)
   const targetPane = findPaneById(layout, targetNodeId)
-  if (sourcePane == null || targetPane == null) {
-    return layout
+
+  if (sourcePane == null || targetPane == null || sourcePane === targetPane) {
+    return activateTabInPane(layout, tabId)
   }
 
-  if (sourcePane === targetPane) {
-    return updateNodesInLayout(layout, new Map([
-      [
-        sourcePane.id,
-        {
-          ...sourcePane,
-          activeTabId: tabId
-        }
-      ]
-    ]))
-  }
-
+  // This must exist
   const tabIndex = sourcePane.tabs.findIndex((tab) => tab.id === tabId)
-  const tab = sourcePane.tabs.at(tabIndex)
-  const selectedTab = targetPane.tabs.find((tab) => tab.id === targetPane.activeTabId) ?? targetPane.tabs.at(0)
-  if (tab == null || selectedTab == null) {
-    return layout
-  }
+  const tab = sourcePane.tabs[tabIndex]
 
-  const activeTabIdAfterMove = sourcePane.activeTabId === tabId
-    ? sourcePane.tabs.find((tab) => tab.id !== tabId)?.id ?? ('' as TabId)
-    : sourcePane.activeTabId
+  // If not found, the tab will be inserted at the start
+  const insertPosition = targetPane.tabs.findIndex((tab) => tab.id === targetPane.activeTabId) + 1
 
   return updateNodesInLayout(layout, new Map([
     [
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex),
-        activeTabId: activeTabIdAfterMove
+        tabs: arrayRemove(sourcePane.tabs, tabIndex)
       }
     ],
     [
       targetPane.id,
       {
         ...targetPane,
-        tabs: arrayInsert(
-          targetPane.tabs,
-          targetPane.tabs.findIndex((t) => t.id === selectedTab.id) + 1,
-          tab
-        ),
-        activeTabId: tab.id
+        tabs: arrayInsert(targetPane.tabs, insertPosition, tab),
+        activeTabId: tabId
       }
     ]
   ]))
 }
 
 export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
-  if (tabId === beforeTabId) {
-    return layout
-  }
-
   const sourcePane = findPaneByTabId(layout, tabId)
   const targetPane = findPaneByTabId(layout, beforeTabId)
   if (sourcePane == null || targetPane == null) {
     return layout
   }
 
+  // We know for sure that both tabs exist in their panes
   const tabIndex = sourcePane.tabs.findIndex((tab) => tab.id === tabId)
   const beforeTabIndex = targetPane.tabs.findIndex((tab) => tab.id === beforeTabId)
-  if (tabIndex < 0 || beforeTabIndex < 0) {
-    return layout
-  }
 
   if (sourcePane === targetPane) {
     return updateNodesInLayout(layout, new Map([
@@ -110,70 +97,55 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
     ]))
   }
 
-  const tabToMove = sourcePane.tabs[tabIndex]
-  const activeTabIdAfterMove = sourcePane.activeTabId === tabId
-    ? sourcePane.tabs.find((tab) => tab.id !== tabId)?.id ?? ('' as TabId)
-    : sourcePane.activeTabId
-
   return updateNodesInLayout(layout, new Map([
     [
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex),
-        activeTabId: activeTabIdAfterMove
+        tabs: arrayRemove(sourcePane.tabs, tabIndex)
       }
     ],
     [
       targetPane.id,
       {
         ...targetPane,
-        tabs: arrayInsert(targetPane.tabs, beforeTabIndex, tabToMove),
+        tabs: arrayInsert(targetPane.tabs, beforeTabIndex, sourcePane.tabs[tabIndex]),
         activeTabId: tabId
       }
     ]
   ]))
 }
 
-export function moveTabToSplit (
-  layout: DockLayout,
-  tabId: TabId,
-  siblingNodeId: LayoutNodeId,
-  placement: 'north' | 'south' | 'east' | 'west'
-): DockLayout {
+export type SplitPlacement = 'north' | 'south' | 'east' | 'west'
+
+export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: LayoutNodeId, placement: SplitPlacement): DockLayout {
   const sourcePane = findPaneByTabId(layout, tabId)
   if (sourcePane == null) {
     return layout
   }
 
+  // We know for sure this index exists
   const tabIndex = sourcePane.tabs.findIndex((tab) => tab.id === tabId)
-  if (tabIndex < 0) {
-    return layout
-  }
+  const tab = sourcePane.tabs[tabIndex]
 
   // First pass: remove the tab from its source pane
-
-  const tabToMove = sourcePane.tabs[tabIndex]
-  const activeTabIdAfterMove = sourcePane.activeTabId === tabId
-    ? sourcePane.tabs.find((tab) => tab.id !== tabId)?.id ?? ('' as TabId)
-    : sourcePane.activeTabId
 
   const layoutAfterRemoval = updateNodesInLayout(layout, new Map([
     [
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex),
-        activeTabId: activeTabIdAfterMove
+        tabs: arrayRemove(sourcePane.tabs, tabIndex)
       }
     ]
   ]), { normalize: false })
 
   // Second pass: create a new pane with the moved tab and insert it into a new split
 
-  const siblingNode = findPaneById(layoutAfterRemoval, siblingNodeId)
+  const siblingNode = findPaneById(layoutAfterRemoval, siblingId)
   if (siblingNode == null) {
-    return layoutAfterRemoval
+    // Cannot find the sibling node, abort
+    return layout
   }
 
   const splitDirection = (placement === 'north' || placement === 'south') ? 'vertical' : 'horizontal'
@@ -182,8 +154,8 @@ export function moveTabToSplit (
   const newPaneNode: PaneNode = {
     type: 'pane',
     id: randomLayoutNodeId(),
-    tabs: [tabToMove],
-    activeTabId: tabToMove.id
+    tabs: [tab],
+    activeTabId: tab.id
   }
 
   return updateNodesInLayout(layoutAfterRemoval, new Map([
@@ -200,19 +172,17 @@ export function moveTabToSplit (
   ]))
 }
 
-function updateNodesInLayout (
-  layout: DockLayout,
-  updates: ReadonlyMap<LayoutNodeId, LayoutNode>,
-  options?: {
-    normalize?: boolean
-  }
-): DockLayout {
+type NodeUpdates = ReadonlyMap<LayoutNodeId, LayoutNode>
+
+interface NodeUpdateOptions {
+  readonly normalize?: boolean
+}
+
+function updateNodesInLayout (layout: DockLayout, updates: NodeUpdates, options?: NodeUpdateOptions): DockLayout {
   const applied = new Set<LayoutNodeId>()
 
   const updateNode = (node: LayoutNode): LayoutNode => {
-    const updatedNode = applied.has(node.id)
-      ? node
-      : updates.get(node.id) ?? node
+    const updatedNode = applied.has(node.id) ? node : (updates.get(node.id) ?? node)
     applied.add(node.id)
 
     switch (updatedNode.type) {

@@ -18,16 +18,14 @@ function getPaneNodeDropTargetId (node: PaneNode, zone: PaneNodeDropTarget): str
   return `${node.id}:${zone}`
 }
 
-export function parsePaneNodeDropTarget (id: string): { nodeId: LayoutNodeId, target: PaneNodeDropTarget } | undefined {
-  const [nodeId, target] = id.split(':')
-  if (paneNodeDropTargets.includes(target as PaneNodeDropTarget)) {
-    return {
-      nodeId: nodeId as LayoutNodeId,
-      target: target as PaneNodeDropTarget
-    }
-  }
+interface PaneNodeDropTargetInfo {
+  readonly nodeId: LayoutNodeId
+  readonly target: PaneNodeDropTarget
+}
 
-  return undefined
+export function parsePaneNodeDropTarget (id: string): PaneNodeDropTargetInfo | undefined {
+  const [nodeId, target] = id.split(':') as [LayoutNodeId, PaneNodeDropTarget]
+  return paneNodeDropTargets.includes(target) ? { nodeId, target } : undefined
 }
 
 export const PaneNodeView: FunctionComponent<{
@@ -41,13 +39,7 @@ export const PaneNodeView: FunctionComponent<{
   const onSelectionChange = useCallback((index: number) => {
     const selectedTab = tabs.at(index)
     if (selectedTab != null) {
-      dispatch?.((node) => {
-        if (node.type !== 'pane') {
-          return node
-        }
-
-        return { ...node, activeTabId: selectedTab.id }
-      })
+      dispatch?.((node) => node.type === 'pane' ? { ...node, activeTabId: selectedTab.id } : node)
     }
   }, [dispatch, tabs])
 
@@ -145,10 +137,11 @@ const TabTitle: FunctionComponent<{
         <>
           <TabComponent tab={tab} context={context} disabled={disabled || isSorting} selected={selected} />
           {showDropIndicator && (
-            <div className={clsx(
-              'absolute top-0 bottom-0 w-0.5 bg-content-300',
-              dropIndicatorOnRightSide ? 'right-0' : 'left-0'
-            )}
+            <div
+              className={clsx(
+                'absolute top-0 bottom-0 w-0.5 bg-content-300',
+                dropIndicatorOnRightSide ? 'right-0' : 'left-0'
+              )}
             />
           )}
         </>
