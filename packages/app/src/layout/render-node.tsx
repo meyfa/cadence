@@ -12,7 +12,7 @@ export function renderNode (
 ): ReactNode {
   if (node == null) {
     return (
-      <div className='w-full h-full flex items-center justify-center text-surface-300 text-4xl font-semibold select-none overflow-clip border-t border-t-frame-200'>
+      <div className='w-full h-full flex items-center justify-center text-surface-300 text-4xl font-semibold select-none overflow-clip'>
         Cadence
       </div>
     )

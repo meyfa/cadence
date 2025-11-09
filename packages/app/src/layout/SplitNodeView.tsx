@@ -31,6 +31,7 @@ export const SplitNodeView: FunctionComponent<{
             parentDispatch={dispatch}
             child={child}
             size={sizes[index]}
+            order={index}
             tabRendererContext={tabRendererContext}
           />
           {index < children.length - 1 && (<ResizeHandle direction={direction} />)}
@@ -43,9 +44,10 @@ export const SplitNodeView: FunctionComponent<{
 const SplitNodeChildView: FunctionComponent<{
   child: LayoutNode
   size: number
+  order: number
   tabRendererContext: TabRendererContext
   parentDispatch?: LayoutNodeDispatch
-}> = ({ child, size, tabRendererContext, parentDispatch }) => {
+}> = ({ child, size, order, tabRendererContext, parentDispatch }) => {
   const childDispatch = useChildNodeDispatch(parentDispatch, child.id)
 
   const panelRef = useRef<ImperativePanelHandle>(null)
@@ -56,7 +58,7 @@ const SplitNodeChildView: FunctionComponent<{
   }, [size])
 
   return (
-    <Panel ref={panelRef} id={child.id} defaultSize={size * 100} minSize={10}>
+    <Panel ref={panelRef} id={child.id} order={order} defaultSize={size * 100} minSize={10}>
       {renderNode(child, tabRendererContext, childDispatch)}
     </Panel>
   )
@@ -68,10 +70,13 @@ const ResizeHandle: FunctionComponent<{
   const [dragging, setDragging] = useState(false)
 
   return (
-    <PanelResizeHandle className='relative z-10' onDragging={setDragging}>
+    <PanelResizeHandle
+      className={clsx('relative z-10 bg-frame-200', direction === 'horizontal' ? 'w-px' : 'h-px')}
+      onDragging={setDragging}
+    >
       <div
         className={clsx(
-          'absolute group inset-0 flex items-center',
+          'absolute group inset-0 flex items-center justify-center',
           direction === 'horizontal' ? '-left-[5px] -right-[5px]' : '-top-[5px] -bottom-[5px]'
         )}
       >
