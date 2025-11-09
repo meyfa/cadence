@@ -11,7 +11,7 @@ export function findPaneByTabId (layout: DockLayout, tabId: TabId): PaneNode | u
     }
   }
 
-  return findInNode(layout.main)
+  return layout.main != null ? findInNode(layout.main) : undefined
 }
 
 export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
@@ -88,5 +88,5 @@ function updateNodesInLayout (layout: DockLayout, updates: ReadonlyMap<LayoutNod
     }
   }
 
-  return { ...layout, main: updateNode(layout.main) }
+  return { ...layout, main: layout.main != null ? updateNode(layout.main) : undefined }
 }
