@@ -58,8 +58,8 @@
     "codemirror": "6.0.2",
     "leac": "0.7.0",
     "peberminta": "0.10.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "tone": "15.1.22"
   }
 }
