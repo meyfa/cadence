@@ -3,7 +3,7 @@ import { array, enums, lazy, literal, number, optional, record, string, type, un
 
 // Types
 
-export type SplitDirection = 'horizontal' | 'vertical'
+export type SplitOrientation = 'horizontal' | 'vertical'
 
 export interface SerializedComponent {
   readonly type: string
@@ -34,7 +34,7 @@ export interface PaneNode extends BaseLayoutNode {
 
 export interface SplitNode extends BaseLayoutNode {
   readonly type: 'split'
-  readonly direction: SplitDirection
+  readonly orientation: SplitOrientation
   readonly children: readonly LayoutNode[]
   readonly sizes: readonly number[]
 }
@@ -45,7 +45,7 @@ export interface DockLayout {
 
 // Schema
 
-const splitDirection: Struct<SplitDirection> = enums(['horizontal', 'vertical'])
+const splitOrientation: Struct<SplitOrientation> = enums(['horizontal', 'vertical'])
 
 const serializedComponent: Struct<SerializedComponent> = type({
   type: string(),
@@ -67,7 +67,7 @@ const paneNode: Struct<PaneNode> = type({
 const splitNode: Struct<SplitNode> = type({
   type: literal('split'),
   id: brandedString<LayoutNodeId>(),
-  direction: splitDirection,
+  orientation: splitOrientation,
   children: readonly(array(lazy(() => layoutNode))),
   sizes: readonly(array(number()))
 })

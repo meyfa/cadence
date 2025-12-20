@@ -166,7 +166,7 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
     return layout
   }
 
-  const splitDirection = (placement === 'north' || placement === 'south') ? 'vertical' : 'horizontal'
+  const splitOrientation = (placement === 'north' || placement === 'south') ? 'vertical' : 'horizontal'
   const isBefore = placement === 'north' || placement === 'west'
 
   const newPaneNode: PaneNode = {
@@ -182,7 +182,7 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
       {
         type: 'split',
         id: randomId() as LayoutNodeId,
-        direction: splitDirection,
+        orientation: splitOrientation,
         sizes: [0.5, 0.5],
         children: isBefore ? [newPaneNode, siblingNode] : [siblingNode, newPaneNode]
       }
@@ -236,11 +236,11 @@ function normalizeLayout (layout: DockLayout): DockLayout {
     const children: LayoutNode[] = []
     const sizes: number[] = []
 
-    for (let i = 0; i < node.children.length; ++i) {
-      const child = normalizeNode(node.children[i])
-      if (child != null) {
-        children.push(child)
-        sizes.push(node.sizes[i] ?? 1)
+    for (const [index, child] of node.children.entries()) {
+      const normalized = normalizeNode(child)
+      if (normalized != null) {
+        children.push(normalized)
+        sizes.push(node.sizes[index] ?? 1)
       }
     }
 
@@ -249,18 +249,17 @@ function normalizeLayout (layout: DockLayout): DockLayout {
       return undefined
     }
 
-    // Merge child splits with the same direction
+    // Merge child splits with the same orientation
     const mergedChildren: LayoutNode[] = []
     const mergedSizes: number[] = []
 
-    for (let i = 0; i < children.length; ++i) {
-      const child = children[i]
-      const size = sizes[i] ?? 1
+    for (const [index, child] of children.entries()) {
+      const size = sizes.at(index) ?? 1
 
-      if (child.type === 'split' && child.direction === node.direction) {
-        for (let j = 0; j < child.children.length; ++j) {
-          mergedChildren.push(child.children[j])
-          mergedSizes.push(size * (child.sizes[j] ?? 1))
+      if (child.type === 'split' && child.orientation === node.orientation) {
+        for (const [otherIndex, otherChild] of child.children.entries()) {
+          mergedChildren.push(otherChild)
+          mergedSizes.push(size * (child.sizes.at(otherIndex) ?? 1))
         }
       } else {
         mergedChildren.push(child)
