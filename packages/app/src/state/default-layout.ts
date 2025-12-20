@@ -5,7 +5,7 @@ export const defaultLayout: DockLayout = {
   main: {
     id: 'main-split' as LayoutNodeId,
     type: 'split',
-    direction: 'vertical',
+    orientation: 'vertical',
     sizes: [0.8, 0.2],
     children: [
       {

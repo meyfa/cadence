@@ -18,14 +18,16 @@ export function renderNode (
     )
   }
 
+  // Each component should have a key attribute to reset state when switching nodes
+
   if (node.type === 'pane') {
     return (
-      <PaneNodeView node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
+      <PaneNodeView key={node.id} node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
     )
   }
 
   // node.type === 'split'
   return (
-    <SplitNodeView node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
+    <SplitNodeView key={node.id} node={node} tabRendererContext={tabRendererContext} dispatch={dispatch} />
   )
 }
