@@ -1,6 +1,6 @@
 import { BusId, type Bus, type Instrument, type InstrumentId } from '@core/program.js'
 import { CenterFocusWeakOutlined } from '@mui/icons-material'
-import { useCallback, useMemo, useRef, type FunctionComponent } from 'react'
+import { useCallback, useMemo, useRef, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Canvas, Edge, MarkerArrow, Node, type CanvasRef, type EdgeData, type NodeData } from 'reaflow'
 import { Button } from '../components/Button.js'
 import { usePrevious } from '../hooks/previous.js'
@@ -183,34 +183,65 @@ export const MixerPane: FunctionComponent = () => {
       )}
 
       {tree != null && (
-        <div className='absolute top-4 right-4 z-10'>
-          <Button onClick={() => canvasRef.current?.fitCanvas?.()}>
-            <CenterFocusWeakOutlined className='mr-2' />
-            Center
-          </Button>
-        </div>
-      )}
+        <>
+          <div className='absolute top-2 left-2 p-2 z-10 bg-surface-200 rounded-md flex flex-col gap-1 select-none'>
+            <LegendItem text='Source/destination'>
+              <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'>
+                <rect x='1' y='1' width='22' height='14' rx='4' ry='4' stroke='var(--color-frame-200)' strokeWidth='1' fill='var(--color-surface-200)' />
+              </svg>
+            </LegendItem>
+            <LegendItem text='Routing (explicit)'>
+              <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'>
+                <line x1='1' y1='7' x2='23' y2='7' stroke='var(--color-frame-200)' strokeWidth='2' />
+              </svg>
+            </LegendItem>
+            <LegendItem text='Routing (default)'>
+              <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'>
+                <line x1='1' y1='7' x2='23' y2='7' stroke='var(--color-frame-200)' strokeWidth='2' strokeDasharray='2 4' />
+              </svg>
+            </LegendItem>
+          </div>
 
-      {tree != null && (
-        <Canvas
-          animated={false}
-          ref={canvasRef}
-          readonly
-          nodes={tree.nodes}
-          edges={tree.edges}
-          direction='LEFT'
-          fit={true}
-          pannable={true}
-          panType='drag'
-          zoomable={false}
-          minZoom={0}
-          maxZoom={0}
-          node={graphNode}
-          edge={renderEdge}
-          arrow={arrow}
-          className='select-none'
-        />
+          <div className='absolute top-4 right-4 z-10'>
+            <Button onClick={() => canvasRef.current?.fitCanvas?.()}>
+              <CenterFocusWeakOutlined className='mr-2' />
+              Center
+            </Button>
+          </div>
+
+          <Canvas
+            animated={false}
+            ref={canvasRef}
+            readonly
+            nodes={tree.nodes}
+            edges={tree.edges}
+            direction='LEFT'
+            fit={true}
+            pannable={true}
+            panType='drag'
+            zoomable={false}
+            minZoom={0}
+            maxZoom={0}
+            node={graphNode}
+            edge={renderEdge}
+            arrow={arrow}
+            className='select-none'
+          />
+        </>
       )}
+    </div>
+  )
+}
+
+const LegendItem: FunctionComponent<PropsWithChildren<{
+  text: string
+}>> = ({ text, children }) => {
+  return (
+    <div className='flex items-center gap-2 text-sm'>
+      <div className='w-6 h-4 flex items-center justify-center'>
+        {children}
+      </div>
+      {text}
     </div>
   )
 }
