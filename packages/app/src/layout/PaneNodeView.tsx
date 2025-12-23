@@ -4,6 +4,7 @@ import type { LayoutNodeId, Tab as LayoutTab, PaneNode, SerializedComponent } fr
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
 import { useCallback, type FunctionComponent, type PropsWithChildren } from 'react'
+import { PanelErrorBoundary } from '../components/PanelErrorBoundary.js'
 import { TabComponent } from '../components/TabComponent.js'
 import { renderTabContent, type TabRendererContext } from '../panes/render-tab.js'
 import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
@@ -156,7 +157,9 @@ const TabContent: FunctionComponent<{
 }> = ({ component, context }) => {
   return (
     <TabPanel unmount={false} className='h-full w-full relative'>
-      {renderTabContent(component, context)}
+      <PanelErrorBoundary>
+        {renderTabContent(component, context)}
+      </PanelErrorBoundary>
     </TabPanel>
   )
 }
