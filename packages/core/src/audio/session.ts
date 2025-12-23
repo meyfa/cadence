@@ -1,9 +1,10 @@
 import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
-import type { Numeric, Program } from '../program.js'
+import type { Program } from '../program.js'
+import { createBuses } from './buses.js'
 import { createPlayers } from './players.js'
 import { createSequences } from './sequences.js'
-import { createBuses } from './buses.js'
+import type { StepRange } from './types.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
@@ -14,12 +15,19 @@ export interface AudioSession {
   readonly dispose: () => void
 }
 
-export function createAudioSession (program: Program, position: Numeric<'steps'>): AudioSession {
+export function createAudioSession (program: Program, range: StepRange): AudioSession {
   const bpm = program.track.tempo.value
   const totalDuration = calculateTotalDuration(program)
-  const startOffsetSeconds = (position.value * 60) / (program.stepsPerBeat * bpm)
+
+  const startOffsetSeconds = (range.start.value * 60) / (program.stepsPerBeat * bpm)
+  const endOffsetSeconds = range.end != null
+    ? (range.end.value * 60) / (program.stepsPerBeat * bpm)
+    : totalDuration
+
   const initialProgress = totalDuration > 0 ? Math.min(1, startOffsetSeconds / totalDuration) : 0
-  const startAtOrAfterEnd = totalDuration <= 0 || startOffsetSeconds >= totalDuration
+
+  // If true, nothing should be played at all, because the start is after the end
+  const endImmediately = endOffsetSeconds <= 0 || startOffsetSeconds >= endOffsetSeconds
 
   const buses = createBuses(program)
   const [players, playersLoaded] = createPlayers(program, buses)
@@ -45,14 +53,14 @@ export function createAudioSession (program: Program, position: Numeric<'steps'>
           resetTransport()
           getTransport().bpm.value = bpm
 
-          if (startAtOrAfterEnd) {
+          if (endImmediately) {
             ended.set(true)
             progress.set(1)
             return
           }
 
           sequences.forEach(([sequence, offset]) => sequence.start(offset))
-          getTransport().scheduleOnce(() => ended.set(true), totalDuration)
+          getTransport().scheduleOnce(() => ended.set(true), endOffsetSeconds)
           getTransport().start('+0.05', startOffsetSeconds)
 
           progressInterval = setInterval(() => {

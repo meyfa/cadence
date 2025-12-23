@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/program.js'
+import type { StepRange } from '@core/audio/types.js'
 import { useCallback, type FunctionComponent } from 'react'
 import { Timeline } from '../components/Timeline.js'
 import { useObservable } from '../hooks/observable.js'
@@ -12,10 +12,8 @@ export const TimelinePane: FunctionComponent = () => {
 
   const engine = useAudioEngine()
 
-  const startPosition = useObservable(engine.startPosition)
-  const setStartPosition = useCallback((position: Numeric<'steps'>) => {
-    engine.startPosition.set(position)
-  }, [engine])
+  const range = useObservable(engine.range)
+  const setRange = useCallback((range: StepRange) => engine.range.set(range), [engine])
 
   const playing = useObservable(engine.playing)
   const progress = useObservable(engine.progress)
@@ -31,8 +29,8 @@ export const TimelinePane: FunctionComponent = () => {
       {program != null && (
         <Timeline
           program={program}
-          startPosition={startPosition}
-          setStartPosition={setStartPosition}
+          selection={range}
+          setSelection={setRange}
           playbackProgress={playing ? progress : undefined}
         />
       )}
