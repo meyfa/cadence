@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.20
+
 ARG BUILDPLATFORM
 
 # build
@@ -5,11 +7,7 @@ FROM --platform=$BUILDPLATFORM node:lts-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-
-COPY packages/app/package*.json ./packages/app/
-COPY packages/core/package*.json ./packages/core/
-COPY packages/editor/package*.json ./packages/editor/
-COPY packages/language/package*.json ./packages/language/
+COPY --parents ./packages/*/package*.json ./
 
 RUN npm ci
 
