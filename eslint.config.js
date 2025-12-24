@@ -105,6 +105,7 @@ export default defineConfig([
               from: [
                 './packages/language',
                 './packages/editor',
+                './packages/flowchart',
                 './packages/app'
               ]
             },
@@ -112,12 +113,23 @@ export default defineConfig([
               target: './packages/language',
               from: [
                 './packages/editor',
+                './packages/flowchart',
                 './packages/app'
               ]
             },
             {
               target: './packages/editor',
               from: [
+                './packages/flowchart',
+                './packages/app'
+              ]
+            },
+            {
+              target: './packages/flowchart',
+              from: [
+                './packages/core',
+                './packages/language',
+                './packages/editor',
                 './packages/app'
               ]
             }
