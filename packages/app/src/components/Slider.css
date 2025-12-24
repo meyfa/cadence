@@ -1,6 +1,7 @@
+/* slider */
+
 .cadence-slider {
   appearance: none;
-  height: 32px;
   background: transparent;
   outline: none;
   margin: 0;
@@ -8,23 +9,56 @@
   display: block;
 }
 
+.cadence-slider-horizontal {
+  height: 32px;
+}
+
+.cadence-slider-vertical {
+  width: 40px;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
+}
+
 .cadence-slider:focus {
   outline: none;
 }
 
+/* track: WebKit */
+
 .cadence-slider::-webkit-slider-runnable-track {
-  height: 8px;
   background: var(--color-content-50);
   border-radius: 2px;
+}
+
+.cadence-slider-horizontal::-webkit-slider-runnable-track {
+  height: 8px;
   margin-top: 12px;
   margin-bottom: 12px;
 }
 
+.cadence-slider-vertical::-webkit-slider-runnable-track {
+  width: 8px;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+/* track: Firefox */
+
 .cadence-slider::-moz-range-track {
-  height: 8px;
   background: var(--color-content-50);
   border-radius: 2px;
 }
+
+.cadence-slider-horizontal::-moz-range-track {
+  height: 8px;
+}
+
+.cadence-slider-vertical::-moz-range-track {
+  width: 8px;
+}
+
+/* track: IE */
 
 .cadence-slider::-ms-fill-lower,
 .cadence-slider::-ms-fill-upper {
@@ -32,23 +66,54 @@
   border-radius: 2px;
 }
 
+/* thumb: WebKit */
+
 .cadence-slider::-webkit-slider-thumb {
   appearance: none;
-  width: 8px;
-  height: 20px;
   background: var(--color-content-200);
   border: 1px solid var(--color-frame-300);
   border-radius: 2px;
+}
+
+.cadence-slider-horizontal::-webkit-slider-thumb {
+  width: 8px;
+  height: 20px;
   margin-top: -6px;
 }
 
+.cadence-slider-vertical::-webkit-slider-thumb {
+  width: 20px;
+  height: 8px;
+  margin-left: -6px;
+}
+
+.cadence-slider:active::-webkit-slider-thumb {
+  background: var(--color-content-300);
+}
+
+/* thumb: Firefox */
+
 .cadence-slider::-moz-range-thumb {
-  width: 8px;
-  height: 20px;
   background: var(--color-content-200);
   border: 1px solid var(--color-frame-300);
   border-radius: 2px;
 }
+
+.cadence-slider-horizontal::-moz-range-thumb {
+  width: 8px;
+  height: 20px;
+}
+
+.cadence-slider-vertical::-moz-range-thumb {
+  width: 20px;
+  height: 8px;
+}
+
+.cadence-slider:active::-moz-range-thumb {
+  background: var(--color-content-300);
+}
+
+/* thumb: IE */
 
 .cadence-slider::-ms-thumb {
   width: 8px;
@@ -56,14 +121,6 @@
   background: var(--color-content-200);
   border: 1px solid var(--color-frame-300);
   border-radius: 2px;
-}
-
-.cadence-slider:active::-webkit-slider-thumb {
-  background: var(--color-content-300);
-}
-
-.cadence-slider:active::-moz-range-thumb {
-  background: var(--color-content-300);
 }
 
 .cadence-slider:active::-ms-thumb {

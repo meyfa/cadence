@@ -25,18 +25,26 @@ export const Header: FunctionComponent = () => {
   }, [engine, playing, lastProgram])
 
   return (
-    <header className='flex flex-wrap items-center px-4 py-1 gap-2 bg-surface-200 border-b border-b-frame-200'>
-      <div className='text-lg font-semibold mr-2'>
+    <header className='flex flex-wrap items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
+      <div className='text-lg font-semibold mr-1'>
         Cadence
-      </div>
-
-      <div className='w-56'>
-        <GainSlider label='Output gain' gain={outputGain} onChange={(gain) => engine.outputGain.set(gain)} />
       </div>
 
       <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
         {playing ? <StopOutlined /> : <PlayArrowOutlined />}
       </Button>
+
+      <div className='relative h-full w-12'>
+        <div className='absolute top-0 left-0 z-20'>
+          <GainSlider
+            orientation='vertical'
+            label='Output gain'
+            gain={outputGain}
+            onChange={(gain) => engine.outputGain.set(gain)}
+            collapsible={true}
+          />
+        </div>
+      </div>
     </header>
   )
 }
