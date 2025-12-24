@@ -5,6 +5,7 @@ import { usePrevious } from '../hooks/previous.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { Button } from './Button.js'
+import { CommandPalette } from './CommandPalette.js'
 import { GainSlider } from './settings/GainSlider.js'
 
 export const Header: FunctionComponent = () => {
@@ -25,26 +26,36 @@ export const Header: FunctionComponent = () => {
   }, [engine, playing, lastProgram])
 
   return (
-    <header className='flex flex-wrap items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
-      <div className='text-lg font-semibold mr-1'>
-        Cadence
-      </div>
+    <header className='grid grid-cols-3 items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
+      <div className='flex items-center gap-1 h-full'>
+        <div className='text-lg font-semibold mr-1'>
+          Cadence
+        </div>
 
-      <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
-        {playing ? <StopOutlined /> : <PlayArrowOutlined />}
-      </Button>
+        <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
+          {playing ? <StopOutlined /> : <PlayArrowOutlined />}
+        </Button>
 
-      <div className='relative h-full w-12'>
-        <div className='absolute top-0 left-0 z-20'>
-          <GainSlider
-            orientation='vertical'
-            label='Output gain'
-            gain={outputGain}
-            onChange={(gain) => engine.outputGain.set(gain)}
-            collapsible={true}
-          />
+        <div className='relative h-full w-12'>
+          <div className='absolute top-0 left-0 z-20'>
+            <GainSlider
+              orientation='vertical'
+              label='Output gain'
+              gain={outputGain}
+              onChange={(gain) => engine.outputGain.set(gain)}
+              collapsible={true}
+            />
+          </div>
         </div>
       </div>
+
+      <div className='flex justify-center'>
+        <div className='w-full min-w-32 max-w-lg'>
+          <CommandPalette />
+        </div>
+      </div>
+
+      <div />
     </header>
   )
 }
