@@ -1,7 +1,8 @@
-import { convertCodeToKey, hasModifierKey, isFunctionKey, parseKeyboardShortcut, serializeKeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, parseKeyboardShortcut, serializeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { commands, findCommandForKeyboardShortcut, useCommandContext, type Command } from '../commands.js'
+import { CommandId, commands, findCommandForKeyboardShortcut, getCommandById, useCommandContext, type Command } from '../commands.js'
 import { useGlobalKeydown } from '../hooks/input.js'
 
 export const CommandPalette: FunctionComponent = () => {
@@ -20,6 +21,8 @@ export const CommandPalette: FunctionComponent = () => {
     setOpen(false)
     setSearch('')
   }, [])
+
+  const showCommand = useMemo(() => getCommandById(CommandId.CommandsShowAll), [])
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
@@ -89,7 +92,28 @@ export const CommandPalette: FunctionComponent = () => {
   }, [open, dispatchCommand, hideCommandPalette])
 
   if (!open) {
-    return null
+    const shortcut = showCommand?.keyboardShortcuts?.at(0)
+
+    return (
+      <button
+        type='button'
+        title='Open command palette'
+        className={clsx(
+          'px-2 h-8 cursor-pointer flex items-center justify-center gap-2 w-full text-sm whitespace-nowrap outline-none overflow-hidden',
+          'bg-surface-200 text-content-200 rounded-md border border-frame-200 hocus:bg-surface-300 hocus:text-content-300'
+        )}
+        onClick={showCommandPalette}
+      >
+        <Search />
+        Commands…
+
+        {shortcut != null && (
+          <div className='ml-auto hidden md:block'>
+            <KeyboardShortcut shortcut={shortcut} />
+          </div>
+        )}
+      </button>
+    )
   }
 
   return (
@@ -106,10 +130,10 @@ export const CommandPalette: FunctionComponent = () => {
           ref={searchRef}
           type='text'
           className={clsx(
-            'w-full p-2 border border-frame-200 rounded-sm bg-surface-200 text-content-200 outline-none',
+            'w-full px-2 py-1 border border-frame-200 rounded-sm bg-surface-200 text-content-200 outline-none',
             'focus:border-frame-300 focus:bg-surface-300 focus:text-content-300'
           )}
-          placeholder='Type a command...'
+          placeholder='Commands…'
           autoFocus
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -137,34 +161,43 @@ const SearchResult: FunctionComponent<{
 }> = ({ command, dispatchCommand }) => {
   // Show only the first shortcut due to space constraints
   const shortcut = command.keyboardShortcuts?.at(0)
-  const shortcutParts = shortcut != null ? parseKeyboardShortcut(shortcut) : undefined
 
   return (
     <button
       type='button'
       className={clsx(
         'w-full flex items-center text-start px-2 leading-none rounded cursor-pointer border border-transparent bg-surface-200 text-content-200 outline-none',
-        'hocus:bg-surface-300 hocus:border-frame-300 hocus:text-content-300'
+        'hocus:bg-surface-300 focus:bg-surface-300 focus:border-frame-300'
       )}
       onClick={() => dispatchCommand(command)}
     >
-      <div className='grow py-2'>
+      <div className='grow py-1'>
         {command.label}
       </div>
-      {shortcutParts != null && (
-        <div className='text-sm'>
-          {shortcutParts.map((part, index) => (
-            <Fragment key={part}>
-              <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
-                {part}
-              </span>
-              {index < shortcutParts.length - 1 && (
-                <span className='mx-1 text-content-100'>+</span>
-              )}
-            </Fragment>
-          ))}
-        </div>
+      {shortcut != null && (
+        <KeyboardShortcut shortcut={shortcut} />
       )}
     </button>
+  )
+}
+
+const KeyboardShortcut: FunctionComponent<{
+  shortcut: KeyboardShortcut
+}> = ({ shortcut }) => {
+  const parts = parseKeyboardShortcut(shortcut)
+
+  return (
+    <div className='flex items-center gap-0.5 text-sm'>
+      {parts.map((part, index) => (
+        <Fragment key={part}>
+          <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
+            {part}
+          </span>
+          {index < parts.length - 1 && (
+            <span className='text-content-100'>+</span>
+          )}
+        </Fragment>
+      ))}
+    </div>
   )
 }

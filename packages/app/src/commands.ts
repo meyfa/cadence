@@ -40,13 +40,26 @@ export function useCommandContext (handlers: {
   }
 }
 
+export function getCommandById (id: string): Command | undefined {
+  return commandsById.get(id)
+}
+
 export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Command | undefined {
   return keyboardShortcuts.get(shortcut)
 }
 
+export const CommandId = Object.freeze({
+  PlaybackToggle: 'playback.toggle',
+  ThemeDark: 'theme.dark',
+  ThemeLight: 'theme.light',
+  ThemeSystem: 'theme.system',
+  LayoutReset: 'layout.reset',
+  CommandsShowAll: 'commands.show-all'
+} as const)
+
 export const commands: readonly Command[] = Object.freeze([
   {
-    id: 'playback.toggle',
+    id: CommandId.PlaybackToggle,
     label: 'Playback: Toggle (play/stop)',
     keyboardShortcuts: [
       'Ctrl+Shift+Space'
@@ -61,7 +74,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: 'theme.dark',
+    id: CommandId.ThemeDark,
     label: 'Theme: Dark',
     action: () => {
       applyThemeSetting('dark')
@@ -69,7 +82,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: 'theme.light',
+    id: CommandId.ThemeLight,
     label: 'Theme: Light',
     action: () => {
       applyThemeSetting('light')
@@ -77,7 +90,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: 'theme.system',
+    id: CommandId.ThemeSystem,
     label: 'Theme: System',
     action: () => {
       applyThemeSetting('system')
@@ -85,7 +98,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: 'layout.reset',
+    id: CommandId.LayoutReset,
     label: 'Layout: Reset to default',
     action: ({ layoutDispatch }) => {
       layoutDispatch(defaultLayout)
@@ -93,7 +106,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: 'commands.show-all',
+    id: CommandId.CommandsShowAll,
     label: 'Show all commands',
     keyboardShortcuts: [
       // Ctrl-Shift-P may be reserved by some browsers
@@ -106,6 +119,14 @@ export const commands: readonly Command[] = Object.freeze([
     }
   }
 ] satisfies Command[])
+
+const commandsById = ((): ReadonlyMap<string, Command> => {
+  const map = new Map<string, Command>()
+  for (const command of commands) {
+    map.set(command.id, command)
+  }
+  return map
+})()
 
 const keyboardShortcuts = ((): ReadonlyMap<KeyboardShortcut, Command> => {
   const map = new Map<KeyboardShortcut, Command>()

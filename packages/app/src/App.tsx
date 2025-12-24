@@ -4,7 +4,6 @@ import { parseEditorState, serializeEditorState, type CadenceEditorState } from 
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { type CompileOptions } from '@language/compiler/compiler.js'
 import { FunctionComponent, useEffect, useState } from 'react'
-import { CommandPalette } from './components/CommandPalette.js'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
 import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
@@ -79,8 +78,6 @@ export const App: FunctionComponent = () => {
             >
               The editor state has changed in another tab or window. Reload to apply the changes?
             </ConfirmationDialog>
-
-            <CommandPalette />
 
             <div className='flex flex-col h-dvh'>
               <Header />
