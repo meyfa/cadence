@@ -14,7 +14,8 @@ export default defineConfig({
     alias: {
       '@core': path.resolve(import.meta.dirname, '../core/src'),
       '@language': path.resolve(import.meta.dirname, '../language/src'),
-      '@editor': path.resolve(import.meta.dirname, '../editor/src')
+      '@editor': path.resolve(import.meta.dirname, '../editor/src'),
+      '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src')
     }
   },
   build: {

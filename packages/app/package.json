@@ -14,7 +14,6 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "react-error-boundary": "6.0.0",
-    "react-resizable-panels": "4.0.13",
-    "reaflow": "5.4.1"
+    "react-resizable-panels": "4.0.13"
   }
 }
