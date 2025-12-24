@@ -1,24 +1,34 @@
 import { makeNumeric, type Numeric } from '@core/program.js'
-import { VolumeDownOutlined, VolumeOffOutlined, VolumeUpOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../Slider.js'
+import { GainIcon } from './GainIcon.js'
+import clsx from 'clsx'
 
 export const GainSlider: FunctionComponent<{
   gain: Numeric<'db'>
   onChange: (gain: Numeric<'db'>) => void
   label: string
-}> = ({ gain, onChange, label }) => {
+  orientation?: 'horizontal' | 'vertical'
+  collapsible?: boolean
+}> = ({ gain, onChange, label, orientation, collapsible }) => {
   return (
     <Slider
       label={label}
+      orientation={orientation}
       min={-60}
       max={0}
       value={gain.value}
       onChange={(value) => onChange(makeNumeric('db', value))}
       step={1}
-      icon={gain.value < -48 ? <VolumeOffOutlined /> : gain.value < -18 ? <VolumeDownOutlined /> : <VolumeUpOutlined />}
+      icon={<GainIcon gain={gain} />}
+      collapsible={collapsible}
     >
-      <span className='w-12 text-right text-nowrap'>
+      <span
+        className={clsx(
+          'text-right text-nowrap',
+          orientation === 'vertical' ? 'text-sm' : 'w-12'
+        )}
+      >
         {`${gain.value.toFixed()} dB`}
       </span>
     </Slider>
