@@ -36,7 +36,7 @@ export const Header: FunctionComponent = () => {
           {playing ? <StopOutlined /> : <PlayArrowOutlined />}
         </Button>
 
-        <div className='relative h-full w-12'>
+        <div className='relative h-full w-11'>
           <div className='absolute top-0 left-0 z-20'>
             <GainSlider
               orientation='vertical'
