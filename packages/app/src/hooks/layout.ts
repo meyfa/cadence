@@ -1,22 +1,24 @@
 import { activateTabInPane, findTabByComponentType } from '@editor/layout/layout.js'
 import { useCallback } from 'react'
-import { useLayout } from '../state/LayoutContext.js'
+import { useLayout, type LayoutDispatch } from '../state/LayoutContext.js'
 
 type ActivateTabOfType = (type: string) => void
 
 export function useActivateTabOfType (): ActivateTabOfType {
   const [, layoutDispatch] = useLayout()
 
-  return useCallback((type: string) => {
-    layoutDispatch((layout) => {
-      const tab = findTabByComponentType(layout, type)
+  return useCallback((type: string) => activateTabOfType(layoutDispatch, type), [layoutDispatch])
+}
 
-      if (tab == null) {
-        // TODO Create the tab if it doesn't exist
-        return layout
-      }
+export function activateTabOfType (layoutDispatch: LayoutDispatch, type: string): void {
+  layoutDispatch((layout) => {
+    const tab = findTabByComponentType(layout, type)
 
-      return activateTabInPane(layout, tab.id)
-    })
-  }, [layoutDispatch])
+    if (tab == null) {
+      // TODO Create the tab if it doesn't exist
+      return layout
+    }
+
+    return activateTabInPane(layout, tab.id)
+  })
 }

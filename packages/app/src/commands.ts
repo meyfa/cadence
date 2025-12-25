@@ -1,7 +1,9 @@
 import type { AudioEngine } from '@core/audio/engine.js'
 import type { Program } from '@core/program.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import { activateTabOfType } from './hooks/layout.js'
 import { usePrevious } from './hooks/previous.js'
+import { TabTypes } from './panes/render-tab.js'
 import { useAudioEngine } from './state/AudioEngineContext.js'
 import { useCompilationState } from './state/CompilationContext.js'
 import { useLayout, type LayoutDispatch } from './state/LayoutContext.js'
@@ -50,6 +52,11 @@ export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Com
 
 export const CommandId = Object.freeze({
   PlaybackToggle: 'playback.toggle',
+  ViewEditor: 'view.editor',
+  ViewMixer: 'view.mixer',
+  ViewSettings: 'view.settings',
+  ViewProblems: 'view.problems',
+  ViewTimeline: 'view.timeline',
   ThemeDark: 'theme.dark',
   ThemeLight: 'theme.light',
   ThemeSystem: 'theme.system',
@@ -70,6 +77,46 @@ export const commands: readonly Command[] = Object.freeze([
       } else if (lastProgram != null) {
         audioEngine.play(lastProgram)
       }
+    }
+  },
+
+  {
+    id: CommandId.ViewSettings,
+    label: 'Show view: Settings',
+    action: ({ layoutDispatch }) => {
+      activateTabOfType(layoutDispatch, TabTypes.Settings)
+    }
+  },
+
+  {
+    id: CommandId.ViewEditor,
+    label: 'Show view: Editor',
+    action: ({ layoutDispatch }) => {
+      activateTabOfType(layoutDispatch, TabTypes.Editor)
+    }
+  },
+
+  {
+    id: CommandId.ViewMixer,
+    label: 'Show view: Mixer',
+    action: ({ layoutDispatch }) => {
+      activateTabOfType(layoutDispatch, TabTypes.Mixer)
+    }
+  },
+
+  {
+    id: CommandId.ViewProblems,
+    label: 'Show view: Problems',
+    action: ({ layoutDispatch }) => {
+      activateTabOfType(layoutDispatch, TabTypes.Problems)
+    }
+  },
+
+  {
+    id: CommandId.ViewTimeline,
+    label: 'Show view: Timeline',
+    action: ({ layoutDispatch }) => {
+      activateTabOfType(layoutDispatch, TabTypes.Timeline)
     }
   },
 
