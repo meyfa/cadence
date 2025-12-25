@@ -15,8 +15,10 @@ function editorReducer (state: EditorState, action: SetStateAction<EditorState>)
   return typeof action === 'function' ? action(state) : action
 }
 
+export type EditorDispatch = Dispatch<SetStateAction<EditorState>>
+
 export const EditorContext = createContext<EditorState>(initialEditorState)
-export const EditorDispatchContext = createContext<Dispatch<SetStateAction<EditorState>>>(undefined as any)
+export const EditorDispatchContext = createContext<EditorDispatch>(undefined as any)
 
 export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState)
@@ -30,7 +32,7 @@ export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children 
   )
 }
 
-export function useEditor (): [EditorState, Dispatch<SetStateAction<EditorState>>] {
+export function useEditor (): [EditorState, EditorDispatch] {
   const state = useContext(EditorContext)
   const dispatch = useContext(EditorDispatchContext)
 

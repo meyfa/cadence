@@ -6,9 +6,11 @@ import { usePrevious } from './hooks/previous.js'
 import { TabTypes } from './panes/render-tab.js'
 import { useAudioEngine } from './state/AudioEngineContext.js'
 import { useCompilationState } from './state/CompilationContext.js'
+import { useEditor, type EditorDispatch, type EditorState } from './state/EditorContext.js'
 import { useLayout, type LayoutDispatch } from './state/LayoutContext.js'
 import { defaultLayout } from './state/default-layout.js'
 import { applyThemeSetting } from './theme.js'
+import { openTextFile, saveTextFile } from './utilities/files.js'
 
 export interface Command {
   readonly id: string
@@ -20,6 +22,10 @@ export interface Command {
 export interface CommandContext {
   readonly layoutDispatch: LayoutDispatch
   readonly audioEngine: AudioEngine
+  readonly editor: {
+    readonly state: EditorState
+    readonly dispatch: EditorDispatch
+  }
   readonly lastProgram: Program | undefined
   readonly showCommandPalette: () => void
 }
@@ -31,12 +37,18 @@ export function useCommandContext (handlers: {
 
   const audioEngine = useAudioEngine()
 
+  const [editor, editorDispatch] = useEditor()
+
   const { program: currentProgram } = useCompilationState()
   const lastProgram = usePrevious(currentProgram)
 
   return {
     layoutDispatch,
     audioEngine,
+    editor: {
+      state: editor,
+      dispatch: editorDispatch
+    },
     lastProgram,
     showCommandPalette: handlers.showCommandPalette
   }
@@ -52,6 +64,8 @@ export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Com
 
 export const CommandId = Object.freeze({
   PlaybackToggle: 'playback.toggle',
+  FileOpen: 'file.open',
+  FileSave: 'file.save',
   ViewEditor: 'view.editor',
   ViewMixer: 'view.mixer',
   ViewSettings: 'view.settings',
@@ -63,6 +77,10 @@ export const CommandId = Object.freeze({
   LayoutReset: 'layout.reset',
   CommandsShowAll: 'commands.show-all'
 } as const)
+
+const DEFAULT_FILENAME = 'track.cadence'
+const FILE_ACCEPT = '.cadence,text/plain'
+const FILE_OPEN_TIMEOUT_MS = 5000
 
 export const commands: readonly Command[] = Object.freeze([
   {
@@ -77,6 +95,44 @@ export const commands: readonly Command[] = Object.freeze([
       } else if (lastProgram != null) {
         audioEngine.play(lastProgram)
       }
+    }
+  },
+
+  {
+    id: CommandId.FileOpen,
+    label: 'File: Open',
+    keyboardShortcuts: [
+      'Ctrl+O'
+    ],
+    action: ({ editor }) => {
+      openTextFile({
+        accept: FILE_ACCEPT,
+        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT_MS)
+      }).then((content) => {
+        if (content != null) {
+          editor.dispatch((state) => ({
+            ...state,
+            code: content,
+            caret: undefined
+          }))
+        }
+      }).catch(() => {
+        // ignore errors
+      })
+    }
+  },
+
+  {
+    id: CommandId.FileSave,
+    label: 'File: Save',
+    keyboardShortcuts: [
+      'Ctrl+S'
+    ],
+    action: ({ editor }) => {
+      saveTextFile({
+        filename: DEFAULT_FILENAME,
+        content: editor.state.code
+      })
     }
   },
 
