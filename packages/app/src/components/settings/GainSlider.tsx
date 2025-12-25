@@ -29,7 +29,8 @@ export const GainSlider: FunctionComponent<{
           orientation === 'vertical' ? 'text-sm' : 'w-12'
         )}
       >
-        {`${gain.value.toFixed()} dB`}
+        {gain.value.toFixed()}
+        {orientation === 'vertical' ? null : ' dB'}
       </span>
     </Slider>
   )

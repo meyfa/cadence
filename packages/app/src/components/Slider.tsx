@@ -72,7 +72,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
           'leading-none rounded flex items-center justify-center gap-2 select-none px-2 py-1',
           'bg-surface-200 border border-frame-200 text-content-300',
           'outline-none cursor-pointer hocus:bg-surface-300 hocus:border-frame-300',
-          vertical ? 'w-12 h-10 flex-col' : 'w-full h-10 flex-row'
+          vertical ? 'w-11 h-9 flex-col' : 'w-full h-9 flex-row'
         )}
         title={label}
       >
@@ -87,11 +87,11 @@ export const Slider: FunctionComponent<PropsWithChildren<{
       className={clsx(
         'leading-none rounded flex items-center justify-center gap-2 bg-surface-200 border border-frame-200 text-content-300 select-none px-2 py-1',
         collapsible ? 'bg-surface-300 border border-frame-300 text-content-300' : 'bg-surface-200 border border-frame-200 text-content-300',
-        vertical ? 'w-12 h-full min-h-56 flex-col' : 'w-full h-10 min-w-56 flex-row'
+        vertical ? 'w-11 h-full min-h-56 flex-col' : 'w-full h-9 min-w-56 flex-row'
       )}
       title={label}
     >
-      <div className={clsx('flex items-center justify-center', vertical ? 'h-[calc(2rem-2px)] flex-col' : 'w-6 flex-row')}>
+      <div className={clsx('flex items-center justify-center', vertical ? 'h-[calc(1.75rem-2px)] flex-col' : 'w-6 flex-row')}>
         {icon ?? <Adjust />}
       </div>
 
