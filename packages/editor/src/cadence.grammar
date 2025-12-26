@@ -120,6 +120,11 @@ BusStatement {
   kw<"bus">
   VariableDefinition
   BusBlock[group=Block] {
-    "{" (Property)* "}"
+    "{" (Property | EffectStatement)* "}"
   }
+}
+
+EffectStatement {
+  kw<"effect">
+  expression
 }

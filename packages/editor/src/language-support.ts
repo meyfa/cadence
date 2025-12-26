@@ -21,7 +21,7 @@ const parserWithMetadata = parser.configure({
 
       '+ - "*" "/"': t.arithmeticOperator,
 
-      'track section for mixer bus': t.keyword,
+      'track section for mixer bus effect': t.keyword,
 
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,

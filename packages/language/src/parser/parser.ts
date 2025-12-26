@@ -8,7 +8,7 @@ import type { Step } from '@core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
-const keywords = ['track', 'section', 'for', 'mixer', 'bus'] as const
+const keywords = ['track', 'section', 'for', 'mixer', 'bus', 'effect'] as const
 
 type Keyword = (typeof keywords)[number]
 
@@ -326,18 +326,29 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
   }
 )
 
+const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.ab(
+  keyword('effect'),
+  expression_,
+  (_effect, expression) => {
+    return ast.make('EffectStatement', combineSourceRanges(_effect, expression), {
+      expression
+    })
+  }
+)
+
 const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
   keyword('bus'),
   identifier_,
   combine3(
     literal('{'),
-    p.many(property_),
+    p.many(p.eitherOr(property_, effectStatement_)),
     expectLiteral('}')
   ),
-  (_bus, name, [_lp, properties, _rp]) => {
+  (_bus, name, [_lp, children, _rp]) => {
     return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
       name,
-      properties
+      properties: children.filter((c) => c.type === 'Property'),
+      effects: children.filter((c) => c.type === 'EffectStatement')
     })
   }
 )

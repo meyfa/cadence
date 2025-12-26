@@ -1,9 +1,10 @@
-import { Player, type ToneAudioNode } from 'tone'
+import { Player } from 'tone'
 import type { BusId, InstrumentId, Program } from '../program.js'
+import type { BusNodes } from './buses.js'
 
 type PlayersReturn = [players: Map<InstrumentId, Player>, loaded: Promise<void>]
 
-export function createPlayers (program: Program, buses: ReadonlyMap<BusId, ToneAudioNode>): PlayersReturn {
+export function createPlayers (program: Program, buses: ReadonlyMap<BusId, BusNodes>): PlayersReturn {
   const players = new Map<InstrumentId, Player>()
   const loads: Array<Promise<Player>> = []
 
@@ -30,7 +31,8 @@ export function createPlayers (program: Program, buses: ReadonlyMap<BusId, ToneA
     }
 
     const source = players.get(routing.source.id)
-    const destination = buses.get(routing.destination.id)
+    const destination = buses.get(routing.destination.id)?.input
+
     if (source != null && destination != null) {
       source.connect(destination)
     }

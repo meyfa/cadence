@@ -1,6 +1,6 @@
 import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
-import { BusType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type Type } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type Type } from './types.js'
 import { getDefaultFunctions } from './functions.js'
 import type { SourceRange } from '../range.js'
 import { toBaseUnit } from './units.js'
@@ -200,6 +200,15 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
 
   const propertiesCheck = checkProperties(context, bus.properties, busSchema, bus.range)
   errors.push(...propertiesCheck.errors)
+
+  for (const effect of bus.effects) {
+    const effectCheck = checkExpression(context, effect.expression)
+    errors.push(...effectCheck.errors)
+
+    if (effectCheck.result != null) {
+      errors.push(...checkType([EffectType], effectCheck.result, effect.expression.range))
+    }
+  }
 
   return errors
 }
