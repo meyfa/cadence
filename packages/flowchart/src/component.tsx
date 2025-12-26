@@ -10,8 +10,8 @@ const LAYOUT_OPTIONS = Object.freeze({
 })
 
 export interface FlowchartProps<TNodeData = unknown, TEdgeData = unknown> {
-  readonly nodes: Array<FlowNode<TNodeData>>
-  readonly edges: Array<FlowEdge<TEdgeData>>
+  readonly nodes: ReadonlyArray<FlowNode<TNodeData>>
+  readonly edges: ReadonlyArray<FlowEdge<TEdgeData>>
   readonly renderNode: RenderFlowNode<TNodeData>
 }
 
