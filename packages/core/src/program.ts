@@ -68,6 +68,15 @@ export interface Bus {
   readonly id: BusId
   readonly name: string
   readonly gain?: Numeric<'db'>
+  readonly effects: readonly Effect[]
+}
+
+export type Effect = DelayEffect
+
+export interface DelayEffect {
+  readonly type: 'delay'
+  readonly time: Numeric<'steps'>
+  readonly feedback: Numeric<undefined>
 }
 
 export interface MixerRouting {

@@ -1,6 +1,6 @@
 import { isPitch, type Instrument, type InstrumentId } from '@core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { FunctionType, InstrumentType, NumberType, StringType, type FunctionValue, type Type, type Value } from './types.js'
+import { EffectType, FunctionType, InstrumentType, NumberType, StringType, type FunctionValue, type Type, type Value } from './types.js'
 
 export interface FunctionDefinition<S extends PropertySchema = PropertySchema, R extends Type = Type> {
   readonly arguments: S
@@ -13,6 +13,20 @@ export type FunctionHandler<S extends PropertySchema> = (context: FunctionContex
 export interface FunctionContext {
   readonly instruments: Map<InstrumentId, Instrument>
 }
+
+export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
+  const functions = new Map<string, FunctionValue>()
+
+  // sources
+  functions.set('sample', sample)
+
+  // effects
+  functions.set('delay', delay)
+
+  return functions
+}
+
+// sources
 
 const sample = FunctionType.of({
   arguments: [
@@ -42,8 +56,21 @@ const sample = FunctionType.of({
   }
 })
 
-export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
-  const functions = new Map<string, FunctionValue>()
-  functions.set('sample', sample)
-  return functions
-}
+// effects
+
+const delay = FunctionType.of({
+  arguments: [
+    { name: 'time', type: NumberType.with('steps'), required: true },
+    { name: 'feedback', type: NumberType.with(undefined), required: true }
+  ],
+
+  returnType: EffectType,
+
+  invoke: (context, { time, feedback }) => {
+    return EffectType.of({
+      type: 'delay',
+      time,
+      feedback
+    })
+  }
+})

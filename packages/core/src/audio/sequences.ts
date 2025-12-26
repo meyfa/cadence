@@ -1,18 +1,21 @@
 import { Sequence, Player } from 'tone'
 import { withPatternLength } from '../pattern.js'
 import { convertPitchToPlaybackRate } from '../midi.js'
-import { isPitch, type Instrument, type InstrumentId, type Program, type Step } from '../program.js'
+import { isPitch, makeNumeric, type Instrument, type InstrumentId, type Program, type Step } from '../program.js'
+import { stepsToSeconds } from './time.js'
 
 export const DEFAULT_ROOT_NOTE = 'C5' as const
 
 export type SequenceWithOffset = [sequence: Sequence<Step>, offset: number]
+
+const STEP = makeNumeric('steps', 1)
 
 export function createSequences (program: Program, players: Map<InstrumentId, Player>): readonly SequenceWithOffset[] {
   const subdivision = `${program.beatsPerBar * program.stepsPerBeat}n`
 
   const sequences: SequenceWithOffset[] = []
 
-  const timePerStep = 60 / (program.stepsPerBeat * program.track.tempo.value)
+  const timePerStep = stepsToSeconds(STEP, program.track.tempo, program.stepsPerBeat).value
   let currentOffsetSteps = 0
 
   for (const section of program.track.sections) {

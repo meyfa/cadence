@@ -9,6 +9,7 @@ snare = sample(url: sample_collection + "808sd/SD0010.WAV", gain: -3 db)
 hat   = sample(url: sample_collection + "808oh/OH00.WAV")
 tom   = sample(url: sample_collection + "808mt/MT10.WAV")
 synth = sample(url: sample_collection + "moog/002_Mighty Moog C4.wav", root_note: "C4", length: 0.5s)
+clap  = sample(url: sample_collection + "808/CP.WAV")
 
 // Define some reusable patterns (step sequences). 'x' is a hit, '-' is a rest.
 kick_pattern  = [x-x- x--- x--- x---]
@@ -18,6 +19,8 @@ snare_pattern = [---- x---]
 // The * operator repeats a pattern, and + concatenates patterns.
 arp_intro   = [----] * 8 + [D3 - - D4 - - F4 -] * 4
 arp_main    = [D3 - - D4 - - G4 G4] + [D3 - - D4 - G5 G4 F4]
+
+clap_pattern = [x---] + [----] * 7
 
 track {
   tempo: 128 bpm
@@ -36,12 +39,14 @@ track {
     hat   << [--x- --x- --x- --x-]
     tom   << [---- -x-- ---- ---x]
     synth << arp_main
+    clap  << clap_pattern
   }
 
   section outro for 4 bars {
     snare << snare_pattern
     tom   << [---- -x-- ---- ---x]
     synth << arp_main
+    clap  << clap_pattern
   }
 }
 
@@ -53,6 +58,7 @@ mixer {
 
   out << drums << kick + snare + hat + tom
   out << synths << synth
+  out << clap_delay << clap
 
   bus out {}
 
@@ -62,6 +68,10 @@ mixer {
 
   bus synths {
     gain: -9 db
+  }
+
+  bus clap_delay {
+    effect delay(time: 0.5 beats, feedback: 0.6)
   }
 }
 `.trimStart()

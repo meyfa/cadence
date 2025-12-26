@@ -4,6 +4,7 @@ import type { Program } from '../program.js'
 import { createBuses } from './buses.js'
 import { createPlayers } from './players.js'
 import { createSequences } from './sequences.js'
+import { calculateTotalDuration, stepsToSeconds } from './time.js'
 import type { StepRange } from './types.js'
 
 const LOAD_TIMEOUT_MS = 3000
@@ -16,18 +17,17 @@ export interface AudioSession {
 }
 
 export function createAudioSession (program: Program, range: StepRange): AudioSession {
-  const bpm = program.track.tempo.value
   const totalDuration = calculateTotalDuration(program)
 
-  const startOffsetSeconds = (range.start.value * 60) / (program.stepsPerBeat * bpm)
-  const endOffsetSeconds = range.end != null
-    ? (range.end.value * 60) / (program.stepsPerBeat * bpm)
+  const startOffset = stepsToSeconds(range.start, program.track.tempo, program.stepsPerBeat)
+  const endOffset = range.end != null
+    ? stepsToSeconds(range.end, program.track.tempo, program.stepsPerBeat)
     : totalDuration
 
-  const initialProgress = totalDuration > 0 ? Math.min(1, startOffsetSeconds / totalDuration) : 0
+  const initialProgress = totalDuration.value > 0 ? Math.min(1, startOffset.value / totalDuration.value) : 0
 
   // If true, nothing should be played at all, because the start is after the end
-  const endImmediately = endOffsetSeconds <= 0 || startOffsetSeconds >= endOffsetSeconds
+  const endImmediately = endOffset.value <= 0 || startOffset.value >= endOffset.value
 
   const buses = createBuses(program)
   const [players, playersLoaded] = createPlayers(program, buses)
@@ -49,47 +49,60 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
 
     Promise.race([playersLoaded, timeout])
       .then(() => {
-        if (!disposed) {
-          resetTransport()
-          getTransport().bpm.value = bpm
-
-          if (endImmediately) {
-            ended.set(true)
-            progress.set(1)
-            return
-          }
-
-          sequences.forEach(([sequence, offset]) => sequence.start(offset))
-          getTransport().scheduleOnce(() => ended.set(true), endOffsetSeconds)
-          getTransport().start('+0.05', startOffsetSeconds)
-
-          progressInterval = setInterval(() => {
-            if (!disposed && getTransport().state === 'started') {
-              const progressValue = getTransport().seconds / Math.max(0.001, totalDuration)
-              progress.set(Math.max(0, Math.min(1, progressValue)))
-            }
-          }, 16)
+        if (disposed) {
+          return
         }
+
+        resetTransport()
+        getTransport().bpm.value = program.track.tempo.value
+
+        if (endImmediately) {
+          ended.set(true)
+          progress.set(1)
+          return
+        }
+
+        sequences.forEach(([sequence, offset]) => sequence.start(offset))
+        getTransport().scheduleOnce(() => ended.set(true), endOffset.value)
+        getTransport().start('+0.05', startOffset.value)
+
+        progressInterval = setInterval(() => {
+          if (!disposed && getTransport().state === 'started') {
+            const progressValue = getTransport().seconds / Math.max(0.001, totalDuration.value)
+            progress.set(Math.max(0, Math.min(1, progressValue)))
+          }
+        }, 16)
       })
       .catch(() => {})
   }
 
   const dispose = () => {
-    if (!disposed) {
-      disposed = true
-      for (const [sequence] of sequences.values()) {
-        sequence.stop().dispose()
-      }
-      for (const player of players.values()) {
-        player.stop().dispose()
-      }
-      resetTransport()
-      if (progressInterval) {
-        clearInterval(progressInterval)
-        progressInterval = undefined
-      }
-      progress.set(0)
+    if (disposed) {
+      return
     }
+
+    disposed = true
+
+    for (const busNodes of buses.values()) {
+      busNodes.dispose()
+    }
+
+    for (const [sequence] of sequences.values()) {
+      sequence.stop().dispose()
+    }
+
+    for (const player of players.values()) {
+      player.stop().dispose()
+    }
+
+    resetTransport()
+
+    if (progressInterval) {
+      clearInterval(progressInterval)
+      progressInterval = undefined
+    }
+
+    progress.set(0)
   }
 
   return { start, dispose, ended, progress }
@@ -100,9 +113,4 @@ function resetTransport (): void {
   transport.stop()
   transport.cancel()
   transport.position = 0
-}
-
-function calculateTotalDuration (program: Program): number {
-  const steps = program.track.sections.reduce((total, section) => total + section.length.value, 0)
-  return steps * 60 / (program.stepsPerBeat * program.track.tempo.value)
 }

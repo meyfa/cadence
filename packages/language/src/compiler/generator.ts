@@ -6,7 +6,7 @@ import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { toNumberValue } from './units.js'
-import { BusType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -166,7 +166,11 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   const name = bus.name.name
   const { gain } = resolveProperties(context, bus.properties, busSchema)
 
-  return { id, name, gain }
+  const effects = bus.effects.map((effect) => {
+    return EffectType.cast(resolve(context, effect.expression)).data
+  })
+
+  return { id, name, gain, effects }
 }
 
 /**

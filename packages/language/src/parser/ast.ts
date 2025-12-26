@@ -112,6 +112,12 @@ export interface BusStatement extends ASTNode {
   readonly type: 'BusStatement'
   readonly name: Identifier
   readonly properties: readonly Property[]
+  readonly effects: readonly EffectStatement[]
+}
+
+export interface EffectStatement extends ASTNode {
+  readonly type: 'EffectStatement'
+  readonly expression: Expression
 }
 
 // Root Type
@@ -149,6 +155,7 @@ export interface NodeByType {
   SectionStatement: SectionStatement
   MixerStatement: MixerStatement
   BusStatement: BusStatement
+  EffectStatement: EffectStatement
 
   Program: Program
 }
