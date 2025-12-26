@@ -1,5 +1,5 @@
 import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '@editor/mixer/flowchart.js'
-import { Flowchart } from '@flowchart/index.js'
+import { Flowchart, type RenderFlowNode } from '@flowchart/index.js'
 import clsx from 'clsx'
 import { useCallback, useMemo, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { usePrevious } from '../hooks/previous.js'
@@ -23,6 +23,11 @@ const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
     strokeWidth: 2,
     strokeDasharray: '2 4',
     markerEnd: 'arrow' as const
+  },
+
+  highlightEdgeStyle: {
+    stroke: 'var(--color-accent-400)',
+    strokeWidth: 3
   }
 }
 
@@ -48,13 +53,12 @@ export const MixerPane: FunctionComponent = () => {
       : createMixerFlowchart(program, FLOWCHART_OPTIONS)
   }, [program])
 
-  const renderNode = useCallback((node: MixerFlowNode) => {
+  const renderNode: RenderFlowNode<MixerFlowNode['data']> = useCallback(({ node, highlight }) => {
     return (
       <div
         className={clsx(
-          'w-full h-full',
-          'bg-surface-200 border border-frame-200 rounded-md',
-          'px-2 py-1 flex flex-col justify-center leading-snug text-sm'
+          'w-full h-full px-2 py-1 flex flex-col justify-center leading-snug text-sm rounded-md border',
+          highlight ? 'bg-surface-300 border-accent-400 ring-1 ring-accent-400' : 'bg-surface-200 border-frame-200'
         )}
       >
         <div className='text-content-100'>

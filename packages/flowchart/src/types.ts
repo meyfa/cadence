@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react'
 
-export type RenderFlowNode<TData = unknown> = (node: FlowNode<TData>) => ReactNode
+export interface RenderFlowNodeProps<TData = unknown> {
+  readonly node: FlowNode<TData>
+  readonly highlight: boolean
+}
+
+export type RenderFlowNode<TData = unknown> = (props: RenderFlowNodeProps<TData>) => ReactNode
 
 export type FlowNodeId = string & { __brand: '@meyfa/cadence-flowchart:node-id' }
 export type FlowEdgeId = string & { __brand: '@meyfa/cadence-flowchart:edge-id' }
@@ -20,6 +25,7 @@ export interface FlowEdge<TData = unknown> {
   readonly to: FlowNodeId
   readonly data: TData
   readonly style?: FlowEdgeStyle
+  readonly highlightStyle?: Partial<FlowEdgeStyle>
 }
 
 export interface FlowEdgeStyle {

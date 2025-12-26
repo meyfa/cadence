@@ -1,4 +1,4 @@
-import type { FlowEdge, FlowNode, FlowNodeId } from './types.js'
+import type { FlowEdge, FlowNode, FlowNodeId } from '../types.js'
 
 export interface LayoutOptions {
   readonly nodeSpacingX: number
@@ -6,8 +6,9 @@ export interface LayoutOptions {
 }
 
 export interface Layout<TNodeData = unknown, TEdgeData = unknown> {
-  readonly nodes: Array<LayoutNode<TNodeData>>
-  readonly edges: Array<LayoutEdge<TEdgeData>>
+  readonly nodes: ReadonlyArray<LayoutNode<TNodeData>>
+  readonly edges: ReadonlyArray<LayoutEdge<TEdgeData>>
+  readonly connections: Connections<TEdgeData>
   readonly totalWidth: number
   readonly totalHeight: number
 }
@@ -21,6 +22,11 @@ export interface LayoutNode<TData = unknown> {
 export interface LayoutEdge<TData = unknown> {
   readonly edge: FlowEdge<TData>
   readonly path: string
+}
+
+export interface Connections<TData> {
+  readonly incoming: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
+  readonly outgoing: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
 }
 
 export function computeLayout<TNodeData = unknown, TEdgeData = unknown> (
@@ -37,11 +43,6 @@ export function computeLayout<TNodeData = unknown, TEdgeData = unknown> (
   const columns = computeColumns(nodes, distances)
 
   return layoutNodesAndEdges(columns, connections, options)
-}
-
-interface Connections<TData> {
-  readonly incoming: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
-  readonly outgoing: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
 }
 
 function computeNodeConnections<TNodeData, TEdgeData> (
@@ -130,12 +131,13 @@ function computeColumns<TNodeData> (
 
 function layoutNodesAndEdges<TNodeData, TEdgeData> (
   columns: ReadonlyArray<ReadonlyArray<FlowNode<TNodeData>>>,
-  { incoming, outgoing }: Connections<TEdgeData>,
+  connections: Connections<TEdgeData>,
   options: LayoutOptions
 ): Layout<TNodeData, TEdgeData> {
   const layout = {
     nodes: [] as Array<LayoutNode<TNodeData>>,
     edges: [] as Array<LayoutEdge<TEdgeData>>,
+    connections,
     totalWidth: 0,
     totalHeight: 0
   }
@@ -167,7 +169,7 @@ function layoutNodesAndEdges<TNodeData, TEdgeData> (
     x += options.nodeSpacingX
   }
 
-  for (const [fromNodeId, outgoingEdges] of outgoing.entries()) {
+  for (const [fromNodeId, outgoingEdges] of connections.outgoing.entries()) {
     const fromNode = nodeMap.get(fromNodeId)
     if (fromNode == null) {
       continue
