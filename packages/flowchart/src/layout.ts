@@ -24,8 +24,8 @@ export interface LayoutEdge<TData = unknown> {
 }
 
 export function computeLayout<TNodeData = unknown, TEdgeData = unknown> (
-  nodes: Array<FlowNode<TNodeData>>,
-  edges: Array<FlowEdge<TEdgeData>>,
+  nodes: ReadonlyArray<FlowNode<TNodeData>>,
+  edges: ReadonlyArray<FlowEdge<TEdgeData>>,
   options: LayoutOptions
 ): Layout<TNodeData, TEdgeData> {
   const connections = computeNodeConnections(nodes, edges)
@@ -40,13 +40,13 @@ export function computeLayout<TNodeData = unknown, TEdgeData = unknown> (
 }
 
 interface Connections<TData> {
-  readonly incoming: ReadonlyMap<FlowNodeId, Array<FlowEdge<TData>>>
-  readonly outgoing: ReadonlyMap<FlowNodeId, Array<FlowEdge<TData>>>
+  readonly incoming: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
+  readonly outgoing: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
 }
 
 function computeNodeConnections<TNodeData, TEdgeData> (
-  nodes: Array<FlowNode<TNodeData>>,
-  edges: Array<FlowEdge<TEdgeData>>
+  nodes: ReadonlyArray<FlowNode<TNodeData>>,
+  edges: ReadonlyArray<FlowEdge<TEdgeData>>
 ): Connections<TEdgeData> {
   const incoming = new Map<FlowNodeId, Array<FlowEdge<TEdgeData>>>()
   const outgoing = new Map<FlowNodeId, Array<FlowEdge<TEdgeData>>>()

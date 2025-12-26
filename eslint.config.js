@@ -118,18 +118,17 @@ export default defineConfig([
               ]
             },
             {
-              target: './packages/editor',
-              from: [
-                './packages/flowchart',
-                './packages/app'
-              ]
-            },
-            {
               target: './packages/flowchart',
               from: [
                 './packages/core',
                 './packages/language',
                 './packages/editor',
+                './packages/app'
+              ]
+            },
+            {
+              target: './packages/editor',
+              from: [
                 './packages/app'
               ]
             }
