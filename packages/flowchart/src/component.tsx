@@ -1,5 +1,5 @@
-import { useLayoutEffect, useMemo, useState, type ReactElement } from 'react'
-import { computeLayout } from './internal/layout.js'
+import { useLayoutEffect, useMemo, useState, type FunctionComponent, type ReactElement } from 'react'
+import { computeLayout, type LayoutEdge } from './internal/layout.js'
 import { getMarkerKey, getMarkerPath } from './internal/markers.js'
 import { getEdgeStyle } from './internal/style.js'
 import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeId, type Marker, type RenderFlowNode } from './types.js'
@@ -144,28 +144,49 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
           ))}
         </defs>
 
-        {layout.edges.map((edge) => {
-          const style = resolvedEdgeStyle.get(edge.edge.id) ?? getEdgeStyle(edge.edge.style)
+        {/* draw non-highlighted edges first */}
+        {
+          layout.edges
+            .filter(({ edge }) => !highlightEdges.has(edge.id))
+            .map((edge) => {
+              const style = resolvedEdgeStyle.get(edge.edge.id)
+              return style != null ? (<FlowchartEdge key={edge.edge.id} edge={edge} style={style} />) : null
+            })
+        }
 
-          const markerEnd = style.markerEnd != null
-            ? `url(#${CSS.escape(getMarkerKey({ marker: style.markerEnd, stroke: style.stroke }))})`
-            : undefined
-
-          return (
-            <path
-              key={edge.edge.id}
-              d={edge.path}
-              style={{
-                stroke: style.stroke,
-                strokeWidth: style.strokeWidth,
-                strokeDasharray: style.strokeDasharray,
-                fill: 'none'
-              }}
-              markerEnd={markerEnd}
-            />
-          )
-        })}
+        {/* draw highlighted edges on top */}
+        {
+          highlightEdges.size > 0 && layout.edges
+            .filter(({ edge }) => highlightEdges.has(edge.id))
+            .map((edge) => {
+              const style = resolvedEdgeStyle.get(edge.edge.id)
+              return style != null ? (<FlowchartEdge key={edge.edge.id} edge={edge} style={style} />) : null
+            })
+        }
       </svg>
     </div>
+  )
+}
+
+const FlowchartEdge: FunctionComponent<{
+  edge: LayoutEdge
+  style: FlowEdgeStyle
+}> = ({ edge, style }) => {
+  const markerEnd = style.markerEnd != null
+    ? `url(#${CSS.escape(getMarkerKey({ marker: style.markerEnd, stroke: style.stroke }))})`
+    : undefined
+
+  return (
+    <path
+      key={edge.edge.id}
+      d={edge.path}
+      style={{
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        strokeDasharray: style.strokeDasharray,
+        fill: 'none'
+      }}
+      markerEnd={markerEnd}
+    />
   )
 }
