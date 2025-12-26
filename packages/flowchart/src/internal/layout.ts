@@ -143,14 +143,19 @@ function layoutNodesAndEdges<TNodeData, TEdgeData> (
   }
 
   const nodeMap = new Map<FlowNodeId, LayoutNode<TNodeData>>()
+  const columnMap = new Map<FlowNodeId, number>()
 
   let x = 0
 
-  for (const column of columns) {
+  for (let columnIndex = 0; columnIndex < columns.length; ++columnIndex) {
+    const column = columns[columnIndex]
+
     let y = 0
     let maxWidth = 0
 
     for (const node of column) {
+      columnMap.set(node.id, columnIndex)
+
       const layoutNode = { node, x, y }
       layout.nodes.push(layoutNode)
       nodeMap.set(node.id, layoutNode)
@@ -181,24 +186,75 @@ function layoutNodesAndEdges<TNodeData, TEdgeData> (
         continue
       }
 
-      const x1 = fromNode.x
-      const y1 = fromNode.y + (fromNode.node.height / 2)
-      const x2 = toNode.x + toNode.node.width
-      const y2 = toNode.y + (toNode.node.height / 2)
+      const fromColumnIndex = columnMap.get(fromNode.node.id) ?? 0
+      const toColumnIndex = columnMap.get(toNode.node.id) ?? 0
 
-      const dx = x2 - x1
-      const dy = y2 - y1
+      if (Math.abs(toColumnIndex - fromColumnIndex) <= 1) {
+        layout.edges.push(createSimpleEdge(fromNode, toNode, outgoingEdge, options))
+        continue
+      }
 
-      const cp1x = x1 + dx * 0.5
-      const cp1y = y1 + dy * 0.25
-      const cp2x = x2 - dx * 0.5
-      const cp2y = y2 - dy * 0.25
-
-      const path = `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`
-
-      layout.edges.push({ edge: outgoingEdge, path })
+      layout.edges.push(createColumnSpanningEdge(fromNode, toNode, outgoingEdge, options))
     }
   }
 
   return layout
+}
+
+function createSimpleEdge<TNodeData, TEdgeData> (
+  fromNode: LayoutNode<TNodeData>,
+  toNode: LayoutNode<TNodeData>,
+  edge: FlowEdge<TEdgeData>,
+  options: LayoutOptions
+): LayoutEdge<TEdgeData> {
+  const x1 = fromNode.x
+  const y1 = fromNode.y + 0.5 * fromNode.node.height
+  const x2 = toNode.x + toNode.node.width
+  const y2 = toNode.y + 0.5 * toNode.node.height
+
+  const dx = x2 - x1
+  const dy = y2 - y1
+
+  const cp1x = x1 + Math.sign(dx) * options.nodeSpacingX * 0.75
+  const cp1y = y1 + Math.sign(dy) * options.nodeSpacingY * 0.25
+  const cp2x = x2 - Math.sign(dx) * options.nodeSpacingX * 0.75
+  const cp2y = y2 - Math.sign(dy) * options.nodeSpacingY * 0.25
+
+  const path = `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`
+
+  return { edge, path }
+}
+
+function createColumnSpanningEdge<TNodeData, TEdgeData> (
+  fromNode: LayoutNode<TNodeData>,
+  toNode: LayoutNode<TNodeData>,
+  edge: FlowEdge<TEdgeData>,
+  options: LayoutOptions
+): LayoutEdge<TEdgeData> {
+  // To avoid edges crossing over nodes in intermediate columns, create a path that
+  // goes down between the fromNode and the one below, then across, then into the toNode.
+
+  const xFrom = fromNode.x
+  const yFrom = fromNode.y + 0.5 * fromNode.node.height
+
+  const xTo = toNode.x + toNode.node.width
+  const yTo = toNode.y + 0.5 * toNode.node.height
+
+  const direction = Math.sign(xTo - xFrom)
+
+  const xAcrossStart = xFrom + direction * options.nodeSpacingX
+  const xAcrossEnd = xTo - direction * options.nodeSpacingX
+  const yAcross = fromNode.y + fromNode.node.height + 0.5 * options.nodeSpacingY
+
+  const path = [
+    `M ${xFrom} ${yFrom}`,
+    // cubic bezier to the across start
+    `C ${0.25 * xFrom + 0.75 * xAcrossStart} ${yFrom}, ${xFrom} ${yAcross}, ${xAcrossStart} ${yAcross}`,
+    // line across
+    `L ${xAcrossEnd} ${yAcross}`,
+    // cubic bezier to the toNode
+    `C ${xTo} ${yAcross}, ${0.25 * xTo + 0.75 * xAcrossEnd} ${yTo}, ${xTo} ${yTo}`
+  ].join(' ')
+
+  return { edge, path }
 }
