@@ -22,6 +22,7 @@ export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
 
   // effects
   functions.set('delay', delay)
+  functions.set('reverb', reverb)
 
   return functions
 }
@@ -71,6 +72,23 @@ const delay = FunctionType.of({
       type: 'delay',
       time,
       feedback
+    })
+  }
+})
+
+const reverb = FunctionType.of({
+  arguments: [
+    { name: 'decay', type: NumberType.with('s'), required: true },
+    { name: 'mix', type: NumberType.with(undefined), required: true }
+  ],
+
+  returnType: EffectType,
+
+  invoke: (context, args) => {
+    return EffectType.of({
+      type: 'reverb',
+      decay: args.decay,
+      mix: args.mix
     })
   }
 })

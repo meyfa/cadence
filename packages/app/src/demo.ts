@@ -67,11 +67,14 @@ mixer {
   }
 
   bus synths {
-    gain: -9 db
+    gain: -10 db
   }
+
+  // A bus can have zero or more effects.
 
   bus clap_delay {
     effect delay(time: 0.5 beats, feedback: 0.6)
+    effect reverb(decay: 1s, mix: 0.3)
   }
 }
 `.trimStart()

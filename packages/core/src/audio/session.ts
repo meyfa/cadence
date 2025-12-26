@@ -29,7 +29,7 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
   // If true, nothing should be played at all, because the start is after the end
   const endImmediately = endOffset.value <= 0 || startOffset.value >= endOffset.value
 
-  const buses = createBuses(program)
+  const [buses, busesLoaded] = createBuses(program)
   const [players, playersLoaded] = createPlayers(program, buses)
   const sequences = createSequences(program, players)
 
@@ -45,9 +45,10 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
       return
     }
 
+    const loaded = Promise.all([busesLoaded, playersLoaded])
     const timeout = new Promise((resolve) => setTimeout(resolve, LOAD_TIMEOUT_MS))
 
-    Promise.race([playersLoaded, timeout])
+    Promise.race([loaded, timeout])
       .then(() => {
         if (disposed) {
           return
