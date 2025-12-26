@@ -71,12 +71,18 @@ export interface Bus {
   readonly effects: readonly Effect[]
 }
 
-export type Effect = DelayEffect
+export type Effect = DelayEffect | ReverbEffect
 
 export interface DelayEffect {
   readonly type: 'delay'
   readonly time: Numeric<'steps'>
   readonly feedback: Numeric<undefined>
+}
+
+export interface ReverbEffect {
+  readonly type: 'reverb'
+  readonly decay: Numeric<'s'>
+  readonly mix: Numeric<undefined>
 }
 
 export interface MixerRouting {

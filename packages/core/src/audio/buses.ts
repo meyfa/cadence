@@ -1,4 +1,4 @@
-import { connectSeries, FeedbackDelay, Gain, type ToneAudioNode } from 'tone'
+import { connectSeries, FeedbackDelay, Gain, Reverb, type ToneAudioNode } from 'tone'
 import type { BusId, Effect, Program } from '../program.js'
 import { stepsToSeconds } from './time.js'
 
@@ -9,14 +9,19 @@ export interface BusNodes {
   readonly dispose: () => void
 }
 
-export function createBuses (program: Program): ReadonlyMap<BusId, BusNodes> {
+export type BusesReturn = [buses: ReadonlyMap<BusId, BusNodes>, loaded: Promise<void>]
+
+export function createBuses (program: Program): BusesReturn {
   const busNodes = new Map<BusId, BusNodes>()
+  const promises: Array<Promise<any>> = []
 
   for (const bus of program.mixer.buses) {
     const nodes: ToneAudioNode[] = []
 
     for (const effect of bus.effects) {
-      nodes.push(createEffect(program, effect))
+      const [effectNode, effectLoaded] = createEffect(program, effect)
+      nodes.push(effectNode)
+      promises.push(effectLoaded)
     }
 
     nodes.push(new Gain(bus.gain?.value, 'decibels'))
@@ -56,16 +61,27 @@ export function createBuses (program: Program): ReadonlyMap<BusId, BusNodes> {
     busNodes.get(id)?.output.toDestination()
   }
 
-  return busNodes
+  return [busNodes, Promise.allSettled(promises).then(() => undefined)]
 }
 
-function createEffect (program: Program, effect: Effect): ToneAudioNode {
+function createEffect (program: Program, effect: Effect): [ToneAudioNode, Promise<void>] {
   switch (effect.type) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    case 'delay':
-      return new FeedbackDelay({
-        delayTime: stepsToSeconds(effect.time, program.track.tempo, program.stepsPerBeat).value,
-        feedback: Math.max(0, Math.min(1.0, effect.feedback.value))
+    case 'delay': {
+      return [
+        new FeedbackDelay({
+          delayTime: stepsToSeconds(effect.time, program.track.tempo, program.stepsPerBeat).value,
+          feedback: Math.max(0, Math.min(1.0, effect.feedback.value))
+        }),
+        Promise.resolve()
+      ]
+    }
+
+    case 'reverb': {
+      const reverb = new Reverb({
+        decay: effect.decay.value,
+        wet: Math.max(0, Math.min(1.0, effect.mix.value))
       })
+      return [reverb, reverb.generate().then(() => undefined)]
+    }
   }
 }
