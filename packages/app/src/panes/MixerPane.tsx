@@ -70,7 +70,7 @@ export const MixerPane: FunctionComponent = () => {
 
     const addEdge = (from: FlowNodeId, to: FlowNodeId, data: MixerEdgeData = {}) => {
       edges.push({
-        id: `${from}-${to}` as FlowEdgeId,
+        id: `${edges.length}-${from}-${to}` as FlowEdgeId,
         from,
         to,
         data,
