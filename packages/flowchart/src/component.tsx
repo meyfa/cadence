@@ -1,8 +1,8 @@
-import { useMemo, type ReactElement } from 'react'
-import { computeLayout } from './layout.js'
-import { getMarkerKey, getMarkerPath } from './markers.js'
-import { getEdgeStyle } from './style.js'
-import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type Marker, type RenderFlowNode } from './types.js'
+import { useLayoutEffect, useMemo, useState, type ReactElement } from 'react'
+import { computeLayout } from './internal/layout.js'
+import { getMarkerKey, getMarkerPath } from './internal/markers.js'
+import { getEdgeStyle } from './internal/style.js'
+import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeId, type Marker, type RenderFlowNode } from './types.js'
 
 const LAYOUT_OPTIONS = Object.freeze({
   nodeSpacingX: 80,
@@ -24,13 +24,49 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
     return computeLayout(nodes, edges, LAYOUT_OPTIONS)
   }, [nodes, edges])
 
+  const [hoveredNodeId, setHoveredNodeId] = useState<FlowNodeId | undefined>(undefined)
+
+  // Clear hovered node ID if the node is removed.
+  useLayoutEffect(() => {
+    setHoveredNodeId((current) => {
+      if (current != null && nodes.some((node) => node.id === current)) {
+        return current
+      }
+      return undefined
+    })
+  }, [nodes])
+
+  const [highlightNodes, highlightEdges] = useMemo(() => {
+    const highlightNodes = new Set<FlowNodeId>()
+    const highlightEdges = new Set<FlowEdgeId>()
+
+    const explore = (nodeId: FlowNodeId) => {
+      if (!highlightNodes.has(nodeId)) {
+        highlightNodes.add(nodeId)
+        for (const edge of layout.connections.outgoing.get(nodeId) ?? []) {
+          highlightEdges.add(edge.id)
+          explore(edge.to)
+        }
+      }
+    }
+
+    if (hoveredNodeId != null) {
+      explore(hoveredNodeId)
+    }
+
+    return [highlightNodes, highlightEdges]
+  }, [hoveredNodeId, layout.connections])
+
   const resolvedEdgeStyle = useMemo<Map<FlowEdgeId, FlowEdgeStyle>>(() => {
     const map = new Map<FlowEdgeId, FlowEdgeStyle>()
+
     for (const edge of edges) {
-      map.set(edge.id, getEdgeStyle(edge.style))
+      const style = getEdgeStyle(edge.style, highlightEdges.has(edge.id) ? edge.highlightStyle : undefined)
+      map.set(edge.id, style)
     }
+
     return map
-  }, [edges])
+  }, [edges, highlightEdges])
 
   // Determine which markers are needed and with which colors.
   // This is required because markers do not inherit their fill color from the line's stroke,
@@ -40,9 +76,8 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
   const markers = useMemo<MarkerDefinition[]>(() => {
     const markerDefinitions = new Map<string, MarkerDefinition>()
 
-    for (const edge of edges) {
-      const style = resolvedEdgeStyle.get(edge.id)
-      if (style?.markerEnd == null) {
+    for (const style of resolvedEdgeStyle.values()) {
+      if (style.markerEnd == null) {
         continue
       }
 
@@ -59,7 +94,7 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
     }
 
     return Array.from(markerDefinitions.values())
-  }, [edges])
+  }, [resolvedEdgeStyle])
 
   return (
     <div className='relative' style={{ width: layout.totalWidth, height: layout.totalHeight }}>
@@ -73,8 +108,10 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
             width: node.node.width,
             height: node.node.height
           }}
+          onMouseEnter={() => setHoveredNodeId(node.node.id)}
+          onMouseLeave={() => setHoveredNodeId(undefined)}
         >
-          {renderNode(node.node)}
+          {renderNode({ node: node.node, highlight: highlightNodes.has(node.node.id) })}
         </div>
       ))}
 

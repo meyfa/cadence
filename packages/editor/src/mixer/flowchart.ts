@@ -37,6 +37,7 @@ export interface MixerFlowchartOptions {
   readonly nodeSize: Pick<MixerFlowNode, 'width' | 'height'>
   readonly explicitEdgeStyle: FlowEdgeStyle
   readonly implicitEdgeStyle: FlowEdgeStyle
+  readonly highlightEdgeStyle?: Partial<FlowEdgeStyle>
 }
 
 export interface MixerFlowchart {
@@ -92,7 +93,8 @@ function createEdges (program: Program, options: MixerFlowchartOptions, nodes: N
   const insertEdge = (edge: Pick<MixerFlowEdge, 'from' | 'to' | 'data'>): void => {
     const id = `${edges.length}-${edge.from}-${edge.to}` as FlowEdgeId
     const style = edge.data.explicit ? explicitEdgeStyle : implicitEdgeStyle
-    edges.push({ ...edge, id, style })
+    const highlightStyle = options.highlightEdgeStyle
+    edges.push({ ...edge, id, style, highlightStyle })
   }
 
   const routedObjects = Object.fromEntries(
