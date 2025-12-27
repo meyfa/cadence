@@ -35,8 +35,8 @@ html.dark {
   --color-content-200: light-dark(hsl(210 6% 18%), hsl(210 6% 84%));
   --color-content-300: light-dark(hsl(210 6% 0%), hsl(210 6% 100%));
 
-  --color-accent-400: oklch(70.7% 0.165 254.624);
-  --color-accent-600: oklch(54.6% 0.245 262.881);
+  --color-accent-100: light-dark(oklch(70.7% 0.165 254.624), oklch(54.6% 0.245 262.881));
+  --color-accent-200: light-dark(oklch(54.6% 0.245 262.881), oklch(70.7% 0.165 254.624));
 
   /* var(--color-red-300), var(--color-red-700) */
   --color-error-surface: light-dark(oklch(80.8% 0.114 19.571), oklch(51.4% 0.222 16.935));

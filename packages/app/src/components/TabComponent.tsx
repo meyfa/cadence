@@ -65,7 +65,7 @@ export const TabComponent: FunctionComponent<{
         'group select-none flex items-center gap-2 px-4 h-7 text-sm font-semibold leading-none border-t-2 border-r border-r-surface-100',
         disabled ? 'pointer-events-none' : 'cursor-pointer',
         selected
-          ? 'bg-surface-300 border-t-accent-600 dark:border-t-accent-400 text-content-300'
+          ? 'bg-surface-300 border-t-accent-200 text-content-300'
           : 'bg-surface-200 border-t-transparent text-content-200 hocus:bg-surface-300 hocus:text-content-300'
       )}
       onMouseDown={onMouseDown}

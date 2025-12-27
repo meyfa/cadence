@@ -26,7 +26,7 @@ const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   },
 
   highlightEdgeStyle: {
-    stroke: 'var(--color-accent-400)',
+    stroke: 'var(--color-accent-200)',
     strokeWidth: 3
   }
 }
@@ -58,7 +58,7 @@ export const MixerPane: FunctionComponent = () => {
       <div
         className={clsx(
           'w-full h-full px-2 py-1 flex flex-col justify-center leading-snug text-sm rounded-md border',
-          highlight ? 'bg-surface-300 border-accent-400 ring-1 ring-accent-400' : 'bg-surface-200 border-frame-200'
+          highlight ? 'bg-surface-300 border-accent-200 ring-1 ring-accent-200' : 'bg-surface-200 border-frame-200'
         )}
       >
         <div className='text-content-100'>
