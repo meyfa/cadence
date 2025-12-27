@@ -88,7 +88,7 @@ export const Timeline: FunctionComponent<{
 
         {playbackProgress != null && (
           <div
-            className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-400 pointer-events-none'
+            className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-100 pointer-events-none'
             style={{
               left: `${playbackProgress * 100}%`
             }}
@@ -200,7 +200,7 @@ const TimeRuler: FunctionComponent<{
     >
       {selection.end != null && (
         <div
-          className='absolute top-0 h-[calc(100%+0.5rem)] bg-accent-400 opacity-30 pointer-events-none -z-10'
+          className='absolute top-0 h-[calc(100%+0.5rem)] bg-accent-100 opacity-40 pointer-events-none -z-10'
           style={{
             left: `${(selection.start.value / totalStepCount) * 100}%`,
             width: `${((selection.end.value - selection.start.value) / totalStepCount) * 100}%`

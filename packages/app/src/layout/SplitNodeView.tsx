@@ -115,9 +115,9 @@ const ResizeHandle: FunctionComponent<{
           className={clsx(
             'transition-colors duration-200',
             orientation === 'horizontal' ? 'w-1 h-full' : 'h-1 w-full',
-            'group-data-[separator=hover]:bg-accent-400 group-data-[separator=hover]:shadow-md',
-            'group-focus-visible:bg-accent-400 group-focus-visible:shadow-md',
-            'group-data-[separator=active]:bg-accent-400'
+            'group-data-[separator=hover]:bg-accent-200 group-data-[separator=hover]:shadow-md',
+            'group-focus-visible:bg-accent-200 group-focus-visible:shadow-md',
+            'group-data-[separator=active]:bg-accent-200'
           )}
         />
       </div>

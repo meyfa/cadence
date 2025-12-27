@@ -119,13 +119,13 @@ const PaneNodeDropArea: FunctionComponent<{
     <div
       ref={setNodeRef}
       className={clsx(
-        'absolute pointer-events-none opacity-20 transition-colors duration-200',
+        'absolute pointer-events-none opacity-25 transition-colors duration-200',
         zone === 'north' && 'top-0 left-0 right-0 h-1/4',
         zone === 'south' && 'bottom-0 left-0 right-0 h-1/4',
         zone === 'east' && 'top-0 right-0 bottom-0 w-1/4',
         zone === 'west' && 'top-0 left-0 bottom-0 w-1/4',
         zone === 'center' && 'inset-0',
-        isOver && 'bg-accent-600 dark:bg-accent-400'
+        isOver && 'bg-accent-200'
       )}
     />
   )
