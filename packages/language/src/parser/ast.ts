@@ -70,7 +70,7 @@ export interface Property extends ASTNode {
 export interface Call extends ASTNode {
   readonly type: 'Call'
   readonly callee: Identifier
-  readonly arguments: readonly Property[]
+  readonly arguments: ReadonlyArray<Expression | Property>
 }
 
 export interface Assignment extends ASTNode {

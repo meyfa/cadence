@@ -236,7 +236,7 @@ const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p
   p.option(
     combine3(
       literal('('),
-      p.sepBy(property_, literal(',')),
+      p.sepBy(p.eitherOr(property_, expression_), literal(',')),
       expectLiteral(')')
     ),
     undefined
