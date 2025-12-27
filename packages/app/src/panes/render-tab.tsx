@@ -31,33 +31,38 @@ interface TabRenderer {
   readonly render: (props: SerializedComponent['props'], context: TabRendererContext) => ReactNode
   readonly title: (props: SerializedComponent['props'], context: TabRendererContext) => string
   readonly notificationCount?: (props: SerializedComponent['props'], context: TabRendererContext) => number
+  readonly closable?: boolean
 }
 
 const tabRenderers: ReadonlyMap<TabType, TabRenderer> = (() => new Map<TabType, TabRenderer>([
-  [TabTypes.Settings, {
-    render: () => (<SettingsPane />),
-    title: () => 'Settings'
-  }],
-
   [TabTypes.Editor, {
     render: () => (<EditorPane />),
     title: () => 'Editor'
   }],
 
+  [TabTypes.Settings, {
+    render: () => (<SettingsPane />),
+    title: () => 'Settings',
+    closable: true
+  }],
+
   [TabTypes.Problems, {
     render: () => (<ProblemsPane />),
     title: () => 'Problems',
-    notificationCount: (_props, { compilation }) => compilation.errors.length
+    notificationCount: (_props, { compilation }) => compilation.errors.length,
+    closable: true
   }],
 
   [TabTypes.Mixer, {
     render: () => (<MixerPane />),
-    title: () => 'Mixer'
+    title: () => 'Mixer',
+    closable: true
   }],
 
   [TabTypes.Timeline, {
     render: () => (<TimelinePane />),
-    title: () => 'Timeline'
+    title: () => 'Timeline',
+    closable: true
   }]
 ]))()
 
@@ -90,4 +95,9 @@ export function renderTabNotificationCount (data: SerializedComponent, context: 
   }
 
   return 0
+}
+
+export function isTabCloseable (data: SerializedComponent): boolean {
+  const renderer = tabRenderers.get(data.type as TabType)
+  return renderer?.closable ?? false
 }
