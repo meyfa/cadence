@@ -1,5 +1,5 @@
 import { randomId } from '@editor/utilities/id.js'
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, Tab, TabId } from '../state/layout.js'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, Tab, TabId } from '../state/layout.js'
 import { arrayInsert, arrayMove, arrayRemove } from '../utilities/arrays.js'
 
 export function findPane (layout: DockLayout, predicate: (pane: PaneNode) => boolean): PaneNode | undefined {
@@ -38,6 +38,89 @@ export function findTab (layout: DockLayout, predicate: (tab: Tab) => boolean): 
 
 export function findTabByComponentType (layout: DockLayout, componentType: string): Tab | undefined {
   return findTab(layout, (tab) => tab.component.type === componentType)
+}
+
+export function createTab (layout: DockLayout, component: SerializedComponent): DockLayout {
+  // TODO Improve tab placement logic
+
+  const tab: Tab = {
+    id: randomId() as TabId,
+    component
+  }
+
+  // Find the "largest" tab pane
+  let targetPane: PaneNode | undefined
+  let targetPaneSize = 0
+
+  const recurse = (node: LayoutNode, size: number): void => {
+    switch (node.type) {
+      case 'pane':
+        if (size > targetPaneSize) {
+          targetPane = node
+          targetPaneSize = size
+        }
+        break
+
+      case 'split':
+        for (const [index, child] of node.children.entries()) {
+          const childSize = size * (node.sizes.at(index) ?? 1)
+          recurse(child, childSize)
+        }
+        break
+    }
+  }
+
+  if (layout.main != null) {
+    recurse(layout.main, 1)
+  }
+
+  // Create a new pane if none exists
+  if (targetPane == null) {
+    const newPane: PaneNode = {
+      type: 'pane',
+      id: randomId() as LayoutNodeId,
+      tabs: [tab],
+      activeTabId: tab.id
+    }
+
+    return {
+      ...layout,
+      main: newPane
+    }
+  }
+
+  return updateNodesInLayout(layout, new Map([
+    [
+      targetPane.id,
+      {
+        ...targetPane,
+        tabs: [...targetPane.tabs, tab],
+        activeTabId: tab.id
+      }
+    ]
+  ]))
+}
+
+export function removeTabFromPane (layout: DockLayout, tabId: TabId): DockLayout {
+  const pane = findPaneByTabId(layout, tabId)
+  if (pane == null) {
+    return layout
+  }
+
+  const tabIndex = pane.tabs.findIndex((tab) => tab.id === tabId)
+  if (tabIndex === -1) {
+    return layout
+  }
+
+  return updateNodesInLayout(layout, new Map([
+    [
+      pane.id,
+      {
+        ...pane,
+        tabs: arrayRemove(pane.tabs, tabIndex)
+      }
+    ]
+  ]))
 }
 
 export function activateTabInPane (layout: DockLayout, tabId: TabId): DockLayout {

@@ -1,13 +1,14 @@
 import { useDroppable } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
-import type { LayoutNodeId, Tab as LayoutTab, PaneNode, SerializedComponent } from '@editor/state/layout.js'
+import type { LayoutNodeId, Tab as LayoutTab, PaneNode } from '@editor/state/layout.js'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
 import { useCallback, type FunctionComponent, type PropsWithChildren } from 'react'
 import { PanelErrorBoundary } from '../components/PanelErrorBoundary.js'
 import { TabComponent } from '../components/TabComponent.js'
 import { renderTabContent, type TabRendererContext } from '../panes/render-tab.js'
-import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
+import { useLayout, type LayoutNodeDispatch } from '../state/LayoutContext.js'
+import { removeTabFromPane } from '@editor/layout/layout.js'
 
 const paneNodeDropZones = ['north', 'south', 'east', 'west', 'center'] as const
 type PaneNodeDropZone = typeof paneNodeDropZones[number]
@@ -44,6 +45,13 @@ export const PaneNodeView: FunctionComponent<{
     }
   }, [dispatch, tabs])
 
+  // TODO unify this with the LayoutNodeDispatch prop
+  const [, layoutDispatch] = useLayout()
+
+  const onClose = useCallback((tab: LayoutTab) => {
+    layoutDispatch((layout) => removeTabFromPane(layout, tab.id))
+  }, [layoutDispatch])
+
   return (
     <TabGroup
       className='flex flex-col h-full'
@@ -56,13 +64,13 @@ export const PaneNodeView: FunctionComponent<{
           strategy={horizontalListSortingStrategy}
         >
           {tabs.map((tab) => (
-            <TabTitle key={tab.id} tab={tab} context={tabRendererContext} />
+            <TabTitle key={tab.id} tab={tab} context={tabRendererContext} onClose={onClose} />
           ))}
         </SortableContext>
       </TabListDroppable>
       <TabPanelsDroppable node={node} className='flex-1 min-h-0 min-w-0'>
         {tabs.map((tab) => (
-          <TabContent key={tab.id} component={tab.component} context={tabRendererContext} />
+          <TabContent key={tab.id} tab={tab} context={tabRendererContext} />
         ))}
       </TabPanelsDroppable>
     </TabGroup>
@@ -126,7 +134,8 @@ const PaneNodeDropArea: FunctionComponent<{
 const TabTitle: FunctionComponent<{
   tab: LayoutTab
   context: TabRendererContext
-}> = ({ tab, context }) => {
+  onClose?: (tab: LayoutTab) => void
+}> = ({ tab, context, onClose }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging, isOver, isSorting } = useSortable({ id: tab.id })
 
   const showDropIndicator = isOver && !isDragging
@@ -136,7 +145,13 @@ const TabTitle: FunctionComponent<{
     <Tab ref={setNodeRef} {...attributes} {...listeners} className='outline-none relative'>
       {({ disabled, selected }) => (
         <>
-          <TabComponent tab={tab} context={context} disabled={disabled || isSorting} selected={selected} />
+          <TabComponent
+            tab={tab}
+            context={context}
+            disabled={disabled || isSorting}
+            selected={selected}
+            onClose={onClose}
+          />
           {showDropIndicator && (
             <div
               className={clsx(
@@ -152,13 +167,13 @@ const TabTitle: FunctionComponent<{
 }
 
 const TabContent: FunctionComponent<{
-  component: SerializedComponent
+  tab: LayoutTab
   context: TabRendererContext
-}> = ({ component, context }) => {
+}> = ({ tab, context }) => {
   return (
     <TabPanel unmount={false} className='h-full w-full relative'>
       <PanelErrorBoundary>
-        {renderTabContent(component, context)}
+        {renderTabContent(tab.component, context)}
       </PanelErrorBoundary>
     </TabPanel>
   )
