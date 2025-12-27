@@ -84,7 +84,11 @@ Assignment {
 
 Call {
   Callee { word }
-  "(" (Property ("," Property)*)? ")"
+  "(" (argument ("," argument)*)? ")"
+}
+
+argument {
+  Property | expression
 }
 
 Routing {

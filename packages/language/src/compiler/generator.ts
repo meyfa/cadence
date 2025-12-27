@@ -193,7 +193,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'Call': {
       const func = FunctionType.cast(nonNull(context.resolutions.get(expression.callee.name)))
-      const args = resolveProperties(context, expression.arguments, func.data.arguments)
+      const args = resolveArguments(context, expression.arguments, func.data.arguments)
       return func.data.invoke(context, args)
     }
 
@@ -310,4 +310,34 @@ function resolveProperties<S extends PropertySchema> (context: Context, properti
     .map(({ key, value }) => [key.name, resolve(context, value).data])
 
   return Object.fromEntries(values) as InferSchema<S>
+}
+
+function resolveArguments<S extends PropertySchema> (context: Context, args: ReadonlyArray<ast.Expression | ast.Property>, schema: S): InferSchema<S> {
+  const entries: Array<[string, Value['data']]> = []
+
+  // positionals
+  for (let i = 0; i < args.length; ++i) {
+    const arg = args[i]
+    if (arg.type === 'Property') {
+      break
+    }
+
+    const param = schema.at(i)
+    assert(param != null)
+
+    entries.push([param.name, resolve(context, arg).data])
+  }
+
+  // named
+  for (let i = entries.length; i < args.length; ++i) {
+    const arg = args[i]
+    assert(arg.type === 'Property')
+
+    const param = schema.find((s) => s.name === arg.key.name)
+    assert(param != null)
+
+    entries.push([param.name, resolve(context, arg.value).data])
+  }
+
+  return Object.fromEntries(entries) as InferSchema<S>
 }

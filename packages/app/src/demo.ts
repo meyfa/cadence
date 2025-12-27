@@ -4,12 +4,12 @@ export const demoCode = `
 sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/"
 
 // Define samples to use in the track.
-kick  = sample(url: sample_collection + "house/000_BD.wav")
-snare = sample(url: sample_collection + "808sd/SD0010.WAV", gain: -3 db)
-hat   = sample(url: sample_collection + "808oh/OH00.WAV")
-tom   = sample(url: sample_collection + "808mt/MT10.WAV")
-synth = sample(url: sample_collection + "moog/002_Mighty Moog C4.wav", root_note: "C4", length: 0.5s)
-clap  = sample(url: sample_collection + "808/CP.WAV")
+kick  = sample(sample_collection + "house/000_BD.wav")
+snare = sample(sample_collection + "808sd/SD0010.WAV", gain: -3 db)
+hat   = sample(sample_collection + "808oh/OH00.WAV")
+tom   = sample(sample_collection + "808mt/MT10.WAV")
+synth = sample(sample_collection + "moog/002_Mighty Moog C4.wav", root_note: "C4", length: 0.5s)
+clap  = sample(sample_collection + "808/CP.WAV")
 
 // Define some reusable patterns (step sequences). 'x' is a hit, '-' is a rest.
 kick_pattern  = [x-x- x--- x--- x---]

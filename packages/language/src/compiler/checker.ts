@@ -267,7 +267,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors: [new CompileError(`Function "${expression.callee.name}" is missing type information`, expression.callee.range)] }
       }
 
-      const { errors } = checkProperties(context, expression.arguments, schema, expression.range)
+      const { errors } = checkArguments(context, expression.arguments, schema, expression.range)
       return { errors, result: returnType }
     }
 
@@ -422,7 +422,71 @@ function checkProperties (context: Context, properties: readonly ast.Property[],
   for (const spec of schema) {
     if (spec.required && !result.has(spec.name)) {
       errors.push(new CompileError(`Missing required property "${spec.name}"`, parentRange))
+    }
+  }
+
+  return { errors, result: errors.length > 0 ? undefined : result }
+}
+
+function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | ast.Property>, schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {
+  const errors: CompileError[] = []
+  const result = new Map<string, Type>()
+
+  const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
+
+  const checkArgumentValue = (spec: PropertySpec, value: ast.Expression): void => {
+    const expressionCheck = checkExpression(context, value)
+    errors.push(...expressionCheck.errors)
+
+    if (expressionCheck.result != null) {
+      errors.push(...checkType([spec.type], expressionCheck.result, value.range))
+      result.set(spec.name, expressionCheck.result)
+    }
+  }
+
+  let index = 0
+
+  // Positional arguments
+  for (; index < args.length; ++index) {
+    const arg = args[index]
+    if (arg.type === 'Property') {
+      break
+    }
+
+    const spec = schema.at(index)
+    if (spec == null) {
+      errors.push(new CompileError(`Unknown positional argument`, arg.range))
       continue
+    }
+
+    checkArgumentValue(spec, arg)
+  }
+
+  // Named arguments
+  for (; index < args.length; ++index) {
+    const arg = args[index]
+    if (arg.type !== 'Property') {
+      errors.push(new CompileError(`Unexpected positional argument after named arguments`, arg.range))
+      continue
+    }
+
+    const spec = schemaAsMap.get(arg.key.name)
+    if (spec == null) {
+      errors.push(new CompileError(`Unknown argument "${arg.key.name}"`, arg.key.range))
+      continue
+    }
+
+    if (result.has(arg.key.name)) {
+      errors.push(new CompileError(`Duplicate argument named "${arg.key.name}"`, arg.key.range))
+      continue
+    }
+
+    checkArgumentValue(spec, arg.value)
+  }
+
+  for (const spec of schema) {
+    if (spec.required && !result.has(spec.name)) {
+      errors.push(new CompileError(`Missing required argument "${spec.name}"`, parentRange))
     }
   }
 
