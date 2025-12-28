@@ -81,7 +81,17 @@ export interface Bus {
   readonly effects: readonly Effect[]
 }
 
-export type Effect = DelayEffect | ReverbEffect
+export type Effect = GainEffect | PanEffect | DelayEffect | ReverbEffect
+
+export interface GainEffect {
+  readonly type: 'gain'
+  readonly gain: Numeric<'db'>
+}
+
+export interface PanEffect {
+  readonly type: 'pan'
+  readonly pan: Numeric<undefined>
+}
 
 export interface DelayEffect {
   readonly type: 'delay'

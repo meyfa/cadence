@@ -25,6 +25,8 @@ export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
   functions.set('sample', sample)
 
   // effects
+  functions.set('gain', gain)
+  functions.set('pan', pan)
   functions.set('delay', delay)
   functions.set('reverb', reverb)
 
@@ -76,6 +78,36 @@ const sample = FunctionType.of({
 })
 
 // effects
+
+const gain = FunctionType.of({
+  arguments: [
+    { name: 'gain', type: NumberType.with('db'), required: true }
+  ],
+
+  returnType: EffectType,
+
+  invoke: (context, { gain }) => {
+    return EffectType.of({
+      type: 'gain',
+      gain
+    })
+  }
+})
+
+const pan = FunctionType.of({
+  arguments: [
+    { name: 'pan', type: NumberType.with(undefined), required: true }
+  ],
+
+  returnType: EffectType,
+
+  invoke: (context, { pan }) => {
+    return EffectType.of({
+      type: 'pan',
+      pan
+    })
+  }
+})
 
 const delay = FunctionType.of({
   arguments: [
