@@ -7,41 +7,28 @@ describe('pattern.ts', () => {
     it('should create a finite pattern with the correct length and steps', () => {
       const steps = ['x', '-', 'x'] as const
       const pattern = createPattern(steps)
-
       assert.strictEqual(pattern.finite, true)
       assert.strictEqual(pattern.length.value, steps.length)
-
-      const evaluatedSteps = [...pattern.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, steps)
+      assert.deepStrictEqual([...pattern.evaluate()], steps)
     })
 
     it('should create an empty pattern when given an empty array', () => {
       const steps: readonly [] = []
       const pattern = createPattern(steps)
-
       assert.strictEqual(pattern.finite, true)
       assert.strictEqual(pattern.length.value, 0)
-
-      const evaluatedSteps = [...pattern.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, steps)
+      assert.deepStrictEqual([...pattern.evaluate()], steps)
     })
   })
 
   describe('concatPatterns()', () => {
     it('should concatenate two finite patterns correctly', () => {
-      const firstSteps = ['x', '-'] as const
-      const secondSteps = ['-', 'x', 'x'] as const
-
-      const first = createPattern(firstSteps)
-      const second = createPattern(secondSteps)
-
-      const concatenated = concatPatterns(first, second)
-
+      const first = ['x', '-'] as const
+      const second = ['-', 'x', 'x'] as const
+      const concatenated = concatPatterns(createPattern(first), createPattern(second))
       assert.strictEqual(concatenated.finite, true)
-      assert.strictEqual(concatenated.length.value, firstSteps.length + secondSteps.length)
-
-      const evaluatedSteps = [...concatenated.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, [...firstSteps, ...secondSteps])
+      assert.strictEqual(concatenated.length.value, first.length + second.length)
+      assert.deepStrictEqual([...concatenated.evaluate()], [...first, ...second])
     })
 
     it('should return the second pattern if the first is empty', () => {
@@ -70,12 +57,12 @@ describe('pattern.ts', () => {
     it('should create an infinite pattern when no step count is provided', () => {
       const steps = ['x', '-'] as const
       const pattern = createPattern(steps)
-      const loopedPattern = loopPattern(pattern)
+      const looped = loopPattern(pattern)
 
-      assert.strictEqual(loopedPattern.finite, false)
+      assert.strictEqual(looped.finite, false)
 
       const evaluatedSteps = []
-      const iterator = loopedPattern.evaluate()[Symbol.iterator]()
+      const iterator = looped.evaluate()[Symbol.iterator]()
 
       for (let i = 0; i < 6; i++) {
         evaluatedSteps.push(iterator.next().value)
@@ -87,22 +74,34 @@ describe('pattern.ts', () => {
     it('should loop a finite pattern to a specific number of steps', () => {
       const steps = ['x', '-'] as const
       const pattern = createPattern(steps)
-      const loopedPattern = loopPattern(pattern, 5)
+      const looped = loopPattern(pattern, 5)
 
-      assert.strictEqual(loopedPattern.finite, true)
-      assert.strictEqual(loopedPattern.length.value, 5)
+      assert.strictEqual(looped.finite, true)
+      assert.strictEqual(looped.length.value, 5)
 
-      const evaluatedSteps = [...loopedPattern.evaluate()]
+      const evaluatedSteps = [...looped.evaluate()]
       assert.deepStrictEqual(evaluatedSteps, ['x', '-', 'x', '-', 'x'])
     })
 
     it('should return the same pattern if it is infinite and no step count is provided', () => {
       const steps = ['x', '-'] as const
       const pattern = loopPattern(createPattern(steps))
+      const looped = loopPattern(pattern)
+      assert.strictEqual(looped, pattern)
+    })
 
-      const loopedPattern = loopPattern(pattern)
+    it('should return empty pattern when looping an empty pattern', () => {
+      const pattern = loopPattern(createPattern([]), 10)
+      assert.strictEqual(pattern.finite, true)
+      assert.strictEqual(pattern.length.value, 0)
+      assert.deepStrictEqual([...pattern.evaluate()], [])
+    })
 
-      assert.strictEqual(loopedPattern, pattern)
+    it('should return empty pattern when looping an empty pattern infinitely', () => {
+      const pattern = loopPattern(createPattern([]))
+      assert.strictEqual(pattern.finite, true)
+      assert.strictEqual(pattern.length.value, 0)
+      assert.deepStrictEqual([...pattern.evaluate()], [])
     })
   })
 
@@ -111,43 +110,31 @@ describe('pattern.ts', () => {
       const steps = ['x', '-'] as const
       const pattern = createPattern(steps)
       const multiplied = multiplyPattern(pattern, 0)
-
       assert.strictEqual(multiplied.finite, true)
       assert.strictEqual(multiplied.length.value, 0)
-
-      const evaluatedSteps = [...multiplied.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, [])
+      assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should repeat the pattern the specified number of times', () => {
       const steps = ['x', '-'] as const
       const pattern = createPattern(steps)
       const multiplied = multiplyPattern(pattern, 3)
-
       assert.strictEqual(multiplied.finite, true)
       assert.strictEqual(multiplied.length.value, steps.length * 3)
-
-      const evaluatedSteps = [...multiplied.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, ['x', '-', 'x', '-', 'x', '-'])
+      assert.deepStrictEqual([...multiplied.evaluate()], ['x', '-', 'x', '-', 'x', '-'])
     })
 
     it('should handle fractional multiplication', () => {
-      const steps = ['x', '-', 'x', '-'] as const
-      const pattern = createPattern(steps)
+      const pattern = createPattern(['x', '-', 'x', '-'])
       const multiplied = multiplyPattern(pattern, 1 / 3)
-
       assert.strictEqual(multiplied.finite, true)
       assert.strictEqual(multiplied.length.value, 1)
-
-      const evaluatedSteps = [...multiplied.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, ['x'])
+      assert.deepStrictEqual([...multiplied.evaluate()], ['x'])
     })
 
     it('should return an infinite pattern when multiplying an infinite pattern', () => {
-      const steps = ['x', '-'] as const
-      const pattern = createPattern(steps)
-      const infinite = loopPattern(pattern)
-      const multiplied = multiplyPattern(infinite, 5)
+      const pattern = loopPattern(createPattern(['x', '-']))
+      const multiplied = multiplyPattern(pattern, 5)
 
       assert.strictEqual(multiplied.finite, false)
 

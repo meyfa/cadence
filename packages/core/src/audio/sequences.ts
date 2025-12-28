@@ -1,8 +1,8 @@
+import { renderPatternSteps } from '@core/pattern.js'
 import { Player, Sequence } from 'tone'
 import { convertPitchToPlaybackRate } from '../midi.js'
 import { isPitch, makeNumeric, type Instrument, type InstrumentId, type Program, type Step } from '../program.js'
 import { stepsToSeconds } from './time.js'
-import { loopPattern, renderPatternSteps } from '@core/pattern.js'
 
 export const DEFAULT_ROOT_NOTE = 'C5' as const
 
@@ -30,7 +30,7 @@ export function createSequences (program: Program, players: Map<InstrumentId, Pl
         continue
       }
 
-      const events = renderPatternSteps(loopPattern(routing.source.value), section.length.value)
+      const events = renderPatternSteps(routing.source.value, section.length.value)
       const sequence = new Sequence<Step>({
         callback: createCallback(instrument, player),
         events,

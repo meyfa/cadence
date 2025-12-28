@@ -43,13 +43,25 @@ export function concatPatterns (first: Pattern, second: Pattern): Pattern {
 
 /**
  * Loop a pattern to reach a specific number of steps, or infinitely if no step count is provided.
+ *
+ * Notable behaviors:
+ * - Empty patterns will stay empty when looped, regardless of the step count.
+ * - Patterns that are longer than the specified step count will be truncated.
+ * - Patterns that are shorter than the specified step count will be repeated (and possibly truncated) to fit.
  */
 export function loopPattern (pattern: Pattern, steps?: number): Pattern {
+  // Looping an empty pattern always results in an empty pattern
+  if (pattern.finite && pattern.length.value === 0) {
+    return pattern
+  }
+
   if (steps == null) {
+    // Pattern is already infinite
     if (!pattern.finite) {
       return pattern
     }
 
+    // Pattern is finite, and not empty, so it can be looped
     return {
       finite: false,
       length: zeroSteps,
@@ -68,6 +80,7 @@ export function loopPattern (pattern: Pattern, steps?: number): Pattern {
     return emptyPattern
   }
 
+  // Pattern is guaranteed not to be empty, but may or may not be finite
   return {
     finite: true,
     length: makeNumeric('steps', len),
@@ -112,7 +125,7 @@ export function renderPatternSteps (pattern: Pattern, length: number): Step[] {
     return []
   }
 
-  const steps = new Array<Step>(length).fill('-')
+  const steps = new Array<Step>(count).fill('-')
 
   let index = 0
   for (const step of pattern.evaluate()) {
