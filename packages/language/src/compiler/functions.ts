@@ -1,6 +1,7 @@
+import { loopPattern } from '@core/pattern.js'
 import { isPitch, type Instrument, type InstrumentId } from '@core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { EffectType, FunctionType, InstrumentType, NumberType, StringType, type FunctionValue, type Type, type Value } from './types.js'
+import { EffectType, FunctionType, InstrumentType, NumberType, PatternType, StringType, type FunctionValue, type Type, type Value } from './types.js'
 
 export interface FunctionDefinition<S extends PropertySchema = PropertySchema, R extends Type = Type> {
   readonly arguments: S
@@ -17,6 +18,9 @@ export interface FunctionContext {
 export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
   const functions = new Map<string, FunctionValue>()
 
+  // patterns
+  functions.set('loop', loop)
+
   // sources
   functions.set('sample', sample)
 
@@ -26,6 +30,20 @@ export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
 
   return functions
 }
+
+// patterns
+
+const loop = FunctionType.of({
+  arguments: [
+    { name: 'pattern', type: PatternType, required: true }
+  ],
+
+  returnType: PatternType,
+
+  invoke: (_context, { pattern }) => {
+    return PatternType.of(loopPattern(pattern))
+  }
+})
 
 // sources
 

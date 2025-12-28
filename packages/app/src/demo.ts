@@ -12,8 +12,9 @@ synth = sample(sample_collection + "moog/002_Mighty Moog C4.wav", root_note: "C4
 clap  = sample(sample_collection + "808/CP.WAV")
 
 // Define some reusable patterns (step sequences). 'x' is a hit, '-' is a rest.
-kick_pattern  = [x-x- x--- x--- x---]
-snare_pattern = [---- x---]
+// To make a pattern repeat indefinitely, use the loop() function.
+kick_pattern  = loop([x-x- x--- x--- x---])
+snare_pattern = loop([---- x---])
 
 // Patterns can also define pitches for melodic instruments.
 // The * operator repeats a pattern, and + concatenates patterns.
@@ -25,7 +26,8 @@ clap_pattern = [x---] + [----] * 7
 track {
   tempo: 128 bpm
 
-  // Sections play in sequence. Patterns loop within sections.
+  // Sections play in sequence. Patterns will trigger notes for their
+  // defined length or the length of the section, whichever is shorter.
 
   section intro for 4 bars {
     kick  << kick_pattern
@@ -36,16 +38,16 @@ track {
   section main for 8 bars {
     kick  << kick_pattern
     snare << snare_pattern
-    hat   << [--x- --x- --x- --x-]
-    tom   << [---- -x-- ---- ---x]
-    synth << arp_main
-    clap  << clap_pattern
+    hat   << loop([--x-])
+    tom   << loop([---- -x-- ---- ---x])
+    synth << loop(arp_main)
+    clap  << loop(clap_pattern)
   }
 
   section outro for 4 bars {
     snare << snare_pattern
-    tom   << [---- -x-- ---- ---x]
-    synth << arp_main
+    tom   << loop([---- -x-- ---- ---x])
+    synth << loop(arp_main)
     clap  << clap_pattern
   }
 }
