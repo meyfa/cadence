@@ -1,12 +1,12 @@
-import { withPatternLength } from '@core/pattern.js'
+import { concatPatterns, createPattern, multiplyPattern } from '@core/pattern.js'
 import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Program, type Section, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import { busSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { toNumberValue } from './units.js'
 import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
+import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -186,7 +186,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return toNumberValue(context.options, expression)
 
     case 'PatternLiteral':
-      return PatternType.of(expression.value)
+      return PatternType.of(createPattern(expression.value))
 
     case 'Identifier':
       return nonNull(context.resolutions.get(expression.name))
@@ -247,7 +247,7 @@ function computePlus (left: Value, right: Value): Value {
   }
 
   if (PatternType.is(left) && PatternType.is(right)) {
-    return PatternType.of([...left.data, ...right.data])
+    return PatternType.of(concatPatterns(left.data, right.data))
   }
 
   if (NumberType.is(left) && NumberType.is(right)) {
@@ -279,11 +279,11 @@ function computeMultiply (left: Value, right: Value): Value {
   }
 
   if (PatternType.is(left) && NumberType.is(right)) {
-    return PatternType.of(withPatternLength(left.data, left.data.length * right.data.value))
+    return PatternType.of(multiplyPattern(left.data, right.data.value))
   }
 
   if (NumberType.is(left) && PatternType.is(right)) {
-    return PatternType.of(withPatternLength(right.data, right.data.length * left.data.value))
+    return PatternType.of(multiplyPattern(right.data, left.data.value))
   }
 
   assert(false)
@@ -297,7 +297,7 @@ function computeDivide (left: Value, right: Value): Value {
   }
 
   if (PatternType.is(left) && NumberType.is(right)) {
-    return PatternType.of(withPatternLength(left.data, left.data.length / right.data.value))
+    return PatternType.of(multiplyPattern(left.data, 1.0 / right.data.value))
   }
 
   assert(false)
