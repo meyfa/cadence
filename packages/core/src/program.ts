@@ -14,7 +14,17 @@ export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 export type Pitch = `${Note}${Octave}`
 
 export type Step = '-' | 'x' | Pitch
-export type Pattern = readonly Step[]
+
+export interface Pattern {
+  readonly finite: boolean
+  readonly length: Numeric<'steps'>
+
+  /**
+   * Obtain an iterable of steps. If the pattern is finite, at most length steps will be yielded.
+   * If the pattern is infinite, steps will be yielded indefinitely.
+   */
+  readonly evaluate: () => Iterable<Step>
+}
 
 export function isPitch (value: unknown): value is Pitch {
   return typeof value === 'string' && /^[A-G][#b]?(?:10|[0-9])$/.test(value)
