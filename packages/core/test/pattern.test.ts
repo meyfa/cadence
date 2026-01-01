@@ -1,34 +1,35 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { concatPatterns, createPattern, loopPattern, multiplyPattern, renderPatternSteps } from '../src/pattern.js'
+import { concatPatterns, createPattern, loopPattern, multiplyPattern, renderPatternEvents } from '../src/pattern.js'
+import { makeNumeric } from '../src/program.js'
 
 describe('pattern.ts', () => {
   describe('createPattern()', () => {
-    it('should create a finite pattern with the correct length and steps', () => {
-      const steps = ['x', '-', 'x'] as const
-      const pattern = createPattern(steps)
-      assert.strictEqual(pattern.finite, true)
-      assert.strictEqual(pattern.length.value, steps.length)
-      assert.deepStrictEqual([...pattern.evaluate()], steps)
+    it('should create a finite pattern with the correct length and events', () => {
+      const pattern = createPattern(['x', '-', 'x'])
+      assert.strictEqual(pattern.length?.value, 3)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 2) }
+      ])
     })
 
     it('should create an empty pattern when given an empty array', () => {
-      const steps: readonly [] = []
-      const pattern = createPattern(steps)
-      assert.strictEqual(pattern.finite, true)
-      assert.strictEqual(pattern.length.value, 0)
-      assert.deepStrictEqual([...pattern.evaluate()], steps)
+      const pattern = createPattern([])
+      assert.strictEqual(pattern.length?.value, 0)
+      assert.deepStrictEqual([...pattern.evaluate()], [])
     })
   })
 
   describe('concatPatterns()', () => {
     it('should concatenate two finite patterns correctly', () => {
-      const first = ['x', '-'] as const
-      const second = ['-', 'x', 'x'] as const
-      const concatenated = concatPatterns(createPattern(first), createPattern(second))
-      assert.strictEqual(concatenated.finite, true)
-      assert.strictEqual(concatenated.length.value, first.length + second.length)
-      assert.deepStrictEqual([...concatenated.evaluate()], [...first, ...second])
+      const concatenated = concatPatterns(createPattern(['x', '-']), createPattern(['-', 'x', 'x']))
+      assert.strictEqual(concatenated.length?.value, 5)
+      assert.deepStrictEqual([...concatenated.evaluate()], [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 3) },
+        { time: makeNumeric('steps', 4) }
+      ])
     })
 
     it('should return the second pattern if the first is empty', () => {
@@ -54,133 +55,175 @@ describe('pattern.ts', () => {
   })
 
   describe('loopPattern()', () => {
-    it('should create an infinite pattern when no step count is provided', () => {
-      const steps = ['x', '-'] as const
-      const pattern = createPattern(steps)
+    it('should create an infinite pattern when no duration is provided', () => {
+      const pattern = createPattern(['x', '-'])
       const looped = loopPattern(pattern)
 
-      assert.strictEqual(looped.finite, false)
+      assert.strictEqual(looped.length, undefined)
 
-      const evaluatedSteps = []
+      const evaluated = []
       const iterator = looped.evaluate()[Symbol.iterator]()
 
-      for (let i = 0; i < 6; i++) {
-        evaluatedSteps.push(iterator.next().value)
+      for (let i = 0; i < 4; i++) {
+        evaluated.push(iterator.next().value)
       }
 
-      assert.deepStrictEqual(evaluatedSteps, ['x', '-', 'x', '-', 'x', '-'])
+      assert.deepStrictEqual(evaluated, [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 2) },
+        { time: makeNumeric('steps', 4) },
+        { time: makeNumeric('steps', 6) }
+      ])
     })
 
-    it('should loop a finite pattern to a specific number of steps', () => {
-      const steps = ['x', '-'] as const
-      const pattern = createPattern(steps)
-      const looped = loopPattern(pattern, 5)
+    it('should loop a finite pattern to a specific length', () => {
+      const pattern = createPattern(['x', '-'])
+      const looped = loopPattern(pattern, makeNumeric('steps', 5))
 
-      assert.strictEqual(looped.finite, true)
-      assert.strictEqual(looped.length.value, 5)
+      assert.strictEqual(looped.length?.value, 5)
 
-      const evaluatedSteps = [...looped.evaluate()]
-      assert.deepStrictEqual(evaluatedSteps, ['x', '-', 'x', '-', 'x'])
+      const evaluated = [...looped.evaluate()]
+      assert.deepStrictEqual(evaluated, [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 2) },
+        { time: makeNumeric('steps', 4) }
+      ])
     })
 
-    it('should return the same pattern if it is infinite and no step count is provided', () => {
-      const steps = ['x', '-'] as const
-      const pattern = loopPattern(createPattern(steps))
+    it('should return the same pattern if it is infinite and no duration is provided', () => {
+      const pattern = loopPattern(createPattern(['x', '-']))
       const looped = loopPattern(pattern)
       assert.strictEqual(looped, pattern)
     })
 
     it('should return empty pattern when looping an empty pattern', () => {
-      const pattern = loopPattern(createPattern([]), 10)
-      assert.strictEqual(pattern.finite, true)
-      assert.strictEqual(pattern.length.value, 0)
+      const pattern = loopPattern(createPattern([]), makeNumeric('steps', 10))
+      assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
     })
 
     it('should return empty pattern when looping an empty pattern infinitely', () => {
       const pattern = loopPattern(createPattern([]))
-      assert.strictEqual(pattern.finite, true)
-      assert.strictEqual(pattern.length.value, 0)
+      assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
     })
   })
 
   describe('multiplyPattern()', () => {
     it('should return an empty pattern when multiplied by 0', () => {
-      const steps = ['x', '-'] as const
-      const pattern = createPattern(steps)
+      const pattern = createPattern(['x', '-'])
       const multiplied = multiplyPattern(pattern, 0)
-      assert.strictEqual(multiplied.finite, true)
-      assert.strictEqual(multiplied.length.value, 0)
+      assert.strictEqual(multiplied.length?.value, 0)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should repeat the pattern the specified number of times', () => {
-      const steps = ['x', '-'] as const
-      const pattern = createPattern(steps)
+      const pattern = createPattern(['x', '-'])
       const multiplied = multiplyPattern(pattern, 3)
-      assert.strictEqual(multiplied.finite, true)
-      assert.strictEqual(multiplied.length.value, steps.length * 3)
-      assert.deepStrictEqual([...multiplied.evaluate()], ['x', '-', 'x', '-', 'x', '-'])
+      assert.strictEqual(multiplied.length?.value, 6)
+      assert.deepStrictEqual([...multiplied.evaluate()], [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 2) },
+        { time: makeNumeric('steps', 4) }
+      ])
     })
 
     it('should handle fractional multiplication', () => {
       const pattern = createPattern(['x', '-', 'x', '-'])
       const multiplied = multiplyPattern(pattern, 1 / 3)
-      assert.strictEqual(multiplied.finite, true)
-      assert.strictEqual(multiplied.length.value, 1)
-      assert.deepStrictEqual([...multiplied.evaluate()], ['x'])
+      assert.strictEqual(multiplied.length?.value, 4 / 3)
+      assert.deepStrictEqual([...multiplied.evaluate()], [
+        { time: makeNumeric('steps', 0) }
+      ])
     })
 
     it('should return an infinite pattern when multiplying an infinite pattern', () => {
       const pattern = loopPattern(createPattern(['x', '-']))
       const multiplied = multiplyPattern(pattern, 5)
 
-      assert.strictEqual(multiplied.finite, false)
+      assert.strictEqual(multiplied.length, undefined)
 
-      const evaluatedSteps = []
+      const evaluated = []
       const iterator = multiplied.evaluate()[Symbol.iterator]()
 
-      for (let i = 0; i < 6; i++) {
-        evaluatedSteps.push(iterator.next().value)
+      for (let i = 0; i < 4; i++) {
+        evaluated.push(iterator.next().value)
       }
 
-      assert.deepStrictEqual(evaluatedSteps, ['x', '-', 'x', '-', 'x', '-'])
+      assert.deepStrictEqual(evaluated, [
+        { time: makeNumeric('steps', 0) },
+        { time: makeNumeric('steps', 2) },
+        { time: makeNumeric('steps', 4) },
+        { time: makeNumeric('steps', 6) }
+      ])
+    })
+
+    it('should handle rest patterns correctly', () => {
+      const pattern = createPattern(['-', '-'])
+      const multiplied = multiplyPattern(pattern, 2)
+      assert.strictEqual(multiplied.length?.value, 4)
+      assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
   })
 
-  describe('renderPatternSteps()', () => {
-    it('should render the correct number of steps from a finite pattern', () => {
+  describe('renderPatternEvents()', () => {
+    it('should render the correct number of events from a finite pattern', () => {
       const pattern = createPattern(['x', '-', 'x', 'x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 0), [])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 1), ['x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 3), ['x', '-', 'x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 4), ['x', '-', 'x', 'x'])
-    })
-
-    it('should pad with rests', () => {
       assert.deepStrictEqual(
-        renderPatternSteps(createPattern([]), 2),
-        ['-', '-']
+        renderPatternEvents(pattern, makeNumeric('steps', 0)),
+        []
       )
       assert.deepStrictEqual(
-        renderPatternSteps(createPattern(['x', '-', 'x', 'x']), 8),
-        ['x', '-', 'x', 'x', '-', '-', '-', '-']
+        renderPatternEvents(pattern, makeNumeric('steps', 1)),
+        [{ time: makeNumeric('steps', 0) }]
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 3)),
+        [{ time: makeNumeric('steps', 0) }, { time: makeNumeric('steps', 2) }]
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 4)),
+        [{ time: makeNumeric('steps', 0) }, { time: makeNumeric('steps', 2) }, { time: makeNumeric('steps', 3) }]
+      )
+    })
+
+    it('should not produce additional events', () => {
+      assert.deepStrictEqual(
+        renderPatternEvents(createPattern([]), makeNumeric('steps', 2)),
+        []
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(createPattern(['x', '-']), makeNumeric('steps', 8)),
+        [{ time: makeNumeric('steps', 0) }]
       )
     })
 
     it('should truncate longer patterns', () => {
       const pattern = createPattern(['x', '-', 'x', 'x', '-', 'x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 4), ['x', '-', 'x', 'x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 2), ['x', '-'])
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 3)),
+        [{ time: makeNumeric('steps', 0) }, { time: makeNumeric('steps', 2) }]
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 2)),
+        [{ time: makeNumeric('steps', 0) }]
+      )
     })
 
-    it('should render steps from an infinite pattern', () => {
+    it('should render events from an infinite pattern', () => {
       const pattern = loopPattern(createPattern(['x', '-']))
-      assert.deepStrictEqual(renderPatternSteps(pattern, 0), [])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 1), ['x'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 4), ['x', '-', 'x', '-'])
-      assert.deepStrictEqual(renderPatternSteps(pattern, 7), ['x', '-', 'x', '-', 'x', '-', 'x'])
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 0)),
+        []
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 1)),
+        [{ time: makeNumeric('steps', 0) }]
+      )
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, makeNumeric('steps', 3)),
+        [{ time: makeNumeric('steps', 0) }, { time: makeNumeric('steps', 2) }]
+      )
     })
   })
 })
