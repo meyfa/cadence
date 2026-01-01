@@ -2,8 +2,8 @@ import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
 import type { Program } from '../program.js'
 import { createBuses } from './buses.js'
+import { createParts } from './parts.js'
 import { createPlayers } from './players.js'
-import { createSequences } from './sequences.js'
 import { calculateTotalDuration, stepsToSeconds } from './time.js'
 import type { StepRange } from './types.js'
 
@@ -17,6 +17,12 @@ export interface AudioSession {
 }
 
 export function createAudioSession (program: Program, range: StepRange): AudioSession {
+  const transport = getTransport()
+
+  // This must be done before any objects are created that may refer to the transport
+  resetTransport(transport)
+  transport.bpm.value = program.track.tempo.value
+
   const totalDuration = calculateTotalDuration(program)
 
   const startOffset = stepsToSeconds(range.start, program.track.tempo, program.stepsPerBeat)
@@ -31,7 +37,7 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
 
   const [buses, busesLoaded] = createBuses(program)
   const [players, playersLoaded] = createPlayers(program, buses)
-  const sequences = createSequences(program, players)
+  const parts = createParts(program, players)
 
   let disposed = false
 
@@ -54,22 +60,19 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
           return
         }
 
-        resetTransport()
-        getTransport().bpm.value = program.track.tempo.value
-
         if (endImmediately) {
           ended.set(true)
           progress.set(1)
           return
         }
 
-        sequences.forEach(([sequence, offset]) => sequence.start(offset))
-        getTransport().scheduleOnce(() => ended.set(true), endOffset.value)
-        getTransport().start('+0.05', startOffset.value)
+        parts.forEach((part) => part.start(0))
+        transport.scheduleOnce(() => ended.set(true), endOffset.value)
+        transport.start('+0.05', startOffset.value)
 
         progressInterval = setInterval(() => {
-          if (!disposed && getTransport().state === 'started') {
-            const progressValue = getTransport().seconds / Math.max(0.001, totalDuration.value)
+          if (!disposed && transport.state === 'started') {
+            const progressValue = transport.seconds / Math.max(0.001, totalDuration.value)
             progress.set(Math.max(0, Math.min(1, progressValue)))
           }
         }, 16)
@@ -88,15 +91,15 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
       busNodes.dispose()
     }
 
-    for (const [sequence] of sequences.values()) {
-      sequence.stop().dispose()
+    for (const part of parts.values()) {
+      part.stop().dispose()
     }
 
     for (const player of players.values()) {
       player.stop().dispose()
     }
 
-    resetTransport()
+    resetTransport(transport)
 
     if (progressInterval) {
       clearInterval(progressInterval)
@@ -109,8 +112,7 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
   return { start, dispose, ended, progress }
 }
 
-function resetTransport (): void {
-  const transport = getTransport()
+function resetTransport (transport: ReturnType<typeof getTransport>): void {
   transport.stop()
   transport.cancel()
   transport.position = 0

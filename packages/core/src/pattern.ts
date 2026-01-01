@@ -1,18 +1,35 @@
-import { makeNumeric, type Pattern, type Step } from './program.js'
+import { isPitch, makeNumeric, type NoteEvent, type Numeric, type Pattern, type Step } from './program.js'
 
 const zeroSteps = makeNumeric('steps', 0)
 
 const emptyPattern: Pattern = {
-  finite: true,
-  length: makeNumeric('steps', 0),
-  evaluate: function* (): Iterable<Step> {}
+  length: zeroSteps,
+  evaluate: () => []
 }
 
+/**
+ * Create a pattern with length equal to the number of steps, equally spaced.
+ */
 export function createPattern (steps: readonly Step[]): Pattern {
+  const events: NoteEvent[] = []
+
+  for (let i = 0; i < steps.length; ++i) {
+    const step = steps[i]
+    if (step === '-') {
+      continue
+    }
+
+    if (isPitch(step)) {
+      events.push({ time: makeNumeric('steps', i), pitch: step })
+      continue
+    }
+
+    events.push({ time: makeNumeric('steps', i) })
+  }
+
   return {
-    finite: true,
     length: makeNumeric('steps', steps.length),
-    evaluate: () => steps
+    evaluate: () => events
   }
 }
 
@@ -20,81 +37,108 @@ export function createPattern (steps: readonly Step[]): Pattern {
  * Concatenate two patterns into a single pattern.
  */
 export function concatPatterns (first: Pattern, second: Pattern): Pattern {
-  if (!first.finite || (second.finite && second.length.value === 0)) {
+  // first is infinite or second is empty
+  if (first.length == null || second.length?.value === 0) {
     return first
   }
 
+  // first is empty
   if (first.length.value === 0) {
     return second
   }
 
-  const finite = second.finite
-  const length = makeNumeric('steps', !finite ? 0 : first.length.value + second.length.value)
+  const length = second.length != null
+    ? makeNumeric('steps', first.length.value + second.length.value)
+    : undefined
+
+  const secondOffset = first.length.value
 
   return {
-    finite,
     length,
-    evaluate: function* (): Iterable<Step> {
+    evaluate: function* () {
       yield* first.evaluate()
-      yield* second.evaluate()
+
+      for (const event of second.evaluate()) {
+        yield {
+          ...event,
+          time: makeNumeric('steps', event.time.value + secondOffset)
+        }
+      }
     }
   }
 }
 
 /**
- * Loop a pattern to reach a specific number of steps, or infinitely if no step count is provided.
+ * Loop a pattern to achieve a specific length, or infinitely if no duration is provided.
  *
  * Notable behaviors:
- * - Empty patterns will stay empty when looped, regardless of the step count.
- * - Patterns that are longer than the specified step count will be truncated.
- * - Patterns that are shorter than the specified step count will be repeated (and possibly truncated) to fit.
+ * - Empty patterns will stay empty when looped, regardless of the specified duration.
+ * - Patterns that are longer than the specified duration will be truncated.
+ * - Patterns that are shorter than the specified duration will be repeated (and possibly truncated) to fit.
  */
-export function loopPattern (pattern: Pattern, steps?: number): Pattern {
+export function loopPattern (pattern: Pattern, duration?: Numeric<'steps'>): Pattern {
+  const patternLength = pattern.length?.value
+
   // Looping an empty pattern always results in an empty pattern
-  if (pattern.finite && pattern.length.value === 0) {
+  if (patternLength != null && patternLength <= 0) {
     return pattern
   }
 
-  if (steps == null) {
+  if (duration == null) {
     // Pattern is already infinite
-    if (!pattern.finite) {
+    if (patternLength == null) {
       return pattern
     }
 
-    // Pattern is finite, and not empty, so it can be looped
+    // Input pattern is finite, and not empty, so it can be looped
     return {
-      finite: false,
-      length: zeroSteps,
-      evaluate: function* (): Iterable<Step> {
-        for (;;) {
-          for (const step of pattern.evaluate()) {
-            yield step
+      length: undefined,
+      evaluate: function* () {
+        let hasEvents = false
+        let offset = 0
+
+        do {
+          for (const event of pattern.evaluate()) {
+            hasEvents = true
+            yield {
+              ...event,
+              time: makeNumeric('steps', event.time.value + offset)
+            }
           }
-        }
+
+          offset += patternLength
+        } while (hasEvents)
       }
     }
   }
 
-  const len = Math.floor(steps)
-  if (len <= 0 || !Number.isFinite(len)) {
+  if (duration.value <= 0 || !Number.isFinite(duration.value)) {
     return emptyPattern
   }
 
-  // Pattern is guaranteed not to be empty, but may or may not be finite
+  // Input pattern is guaranteed not to be empty, but may or may not be finite
   return {
-    finite: true,
-    length: makeNumeric('steps', len),
-    evaluate: function* (): Iterable<Step> {
-      let count = 0
-      for (;;) {
-        for (const step of pattern.evaluate()) {
-          if (count >= len) {
+    length: duration,
+    evaluate: function* () {
+      let hasEvents = false
+      let offset = 0
+
+      do {
+        for (const event of pattern.evaluate()) {
+          if (offset + event.time.value >= duration.value) {
             return
           }
-          yield step
-          ++count
+
+          hasEvents = true
+          yield {
+            ...event,
+            time: makeNumeric('steps', event.time.value + offset)
+          }
         }
-      }
+
+        // will only get here if pattern is finite
+        offset += patternLength ?? 0
+      } while (hasEvents)
     }
   }
 }
@@ -107,33 +151,31 @@ export function loopPattern (pattern: Pattern, steps?: number): Pattern {
  */
 export function multiplyPattern (pattern: Pattern, times: number): Pattern {
   // Infinite patterns remain infinite when multiplied
-  if (!pattern.finite) {
+  if (pattern.length == null) {
     return pattern
   }
 
   // This also handles the zero and negative cases
-  return loopPattern(pattern, pattern.length.value * times)
+  return loopPattern(pattern, makeNumeric('steps', pattern.length.value * times))
 }
 
 /**
- * Render a pattern to a fixed number of steps. Longer patterns will be truncated,
- * while shorter patterns will be padded with rests.
+ * Render a pattern to up to a specific time. Longer patterns will be truncated,
+ * while shorter patterns will stay as-is (no additional events are produced).
  */
-export function renderPatternSteps (pattern: Pattern, length: number): Step[] {
-  const count = Math.floor(length)
-  if (count <= 0 || !Number.isFinite(count)) {
+export function renderPatternEvents (pattern: Pattern, end: Numeric<'steps'>): NoteEvent[] {
+  if (end.value <= 0 || !Number.isFinite(end.value)) {
     return []
   }
 
-  const steps = new Array<Step>(count).fill('-')
+  const events: NoteEvent[] = []
 
-  let index = 0
-  for (const step of pattern.evaluate()) {
-    if (index >= count) {
+  for (const event of pattern.evaluate()) {
+    if (event.time.value >= end.value) {
       break
     }
-    steps[index++] = step
+    events.push(event)
   }
 
-  return steps
+  return events
 }

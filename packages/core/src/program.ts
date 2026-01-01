@@ -15,15 +15,27 @@ export type Pitch = `${Note}${Octave}`
 
 export type Step = '-' | 'x' | Pitch
 
-export interface Pattern {
-  readonly finite: boolean
-  readonly length: Numeric<'steps'>
+export interface NoteEvent {
+  readonly time: Numeric<'steps'>
 
   /**
-   * Obtain an iterable of steps. If the pattern is finite, at most length steps will be yielded.
-   * If the pattern is infinite, steps will be yielded indefinitely.
+   * The pitch associated with the event. If undefined, indicates that the instrument's default pitch should be used.
    */
-  readonly evaluate: () => Iterable<Step>
+  readonly pitch?: Pitch
+}
+
+export interface Pattern {
+  /**
+   * The length of the pattern. This may be any non-negative value (not necessarily an integer).
+   * If undefined, the pattern is infinite.
+   */
+  readonly length?: Numeric<'steps'>
+
+  /**
+   * Obtain all note events in the pattern, starting at time 0 and increasing monotonically.
+   * It is up to the caller to stop iteration when desired (e.g. at a certain end time).
+   */
+  readonly evaluate: () => Iterable<NoteEvent>
 }
 
 export function isPitch (value: unknown): value is Pitch {
