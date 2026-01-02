@@ -1,9 +1,9 @@
-import type { StepRange } from '@core/audio/types.js'
+import type { BeatRange } from '@core/audio/types.js'
 import { makeNumeric, type Numeric, type Program, type Section } from '@core/program.js'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { useGlobalMouseMove, useGlobalMouseUp } from '../hooks/input.js'
-import { formatStepDuration } from '../utilities/strings.js'
+import { formatBeatDuration } from '../utilities/strings.js'
 
 const TIMELINE_ZOOM_MIN = 4
 const TIMELINE_ZOOM_MAX = 64
@@ -21,11 +21,11 @@ const SELECTION_PIXELS_PER_NOTCH = 10
 
 export const Timeline: FunctionComponent<{
   program: Program
-  selection: StepRange
-  setSelection: (range: StepRange) => void
+  selection: BeatRange
+  setSelection: (range: BeatRange) => void
   playbackProgress?: number
 }> = ({ program, selection, setSelection, playbackProgress }) => {
-  const totalStepCount = program.track.sections.reduce((sum, section) => sum + section.length.value, 0)
+  const trackLength = makeNumeric('beats', program.track.sections.reduce((sum, section) => sum + section.length.value, 0))
 
   const [beatWidth, setBeatWidth] = useState(TIMELINE_ZOOM_DEFAULT)
 
@@ -42,15 +42,14 @@ export const Timeline: FunctionComponent<{
   }, [])
 
   const isRangeSelection = selection.end != null && selection.end.value > selection.start.value
-  const showSelection = totalStepCount > 0 && (isRangeSelection || selection.start.value > 0)
+  const showSelection = trackLength.value > 0 && (isRangeSelection || selection.start.value > 0)
 
   return (
     <div className='h-full' onWheel={onWheel}>
       <div className='inline-block relative'>
         <TimeRuler
           beatsPerBar={program.beatsPerBar}
-          stepsPerBeat={program.stepsPerBeat}
-          totalStepCount={totalStepCount}
+          trackLength={trackLength}
           beatWidth={beatWidth}
           selection={selection}
           onSelect={setSelection}
@@ -62,7 +61,6 @@ export const Timeline: FunctionComponent<{
               key={index}
               section={section}
               beatsPerBar={program.beatsPerBar}
-              stepsPerBeat={program.stepsPerBeat}
               beatWidth={beatWidth}
             />
           ))}
@@ -72,7 +70,7 @@ export const Timeline: FunctionComponent<{
           <TimelineMarker
             variant={isRangeSelection ? 'start' : 'cursor'}
             position={selection.start}
-            totalStepCount={totalStepCount}
+            trackLength={trackLength}
             dimmed={playbackProgress != null}
           />
         )}
@@ -81,7 +79,7 @@ export const Timeline: FunctionComponent<{
           <TimelineMarker
             variant='end'
             position={selection.end}
-            totalStepCount={totalStepCount}
+            trackLength={trackLength}
             dimmed={playbackProgress != null}
           />
         )}
@@ -101,13 +99,12 @@ export const Timeline: FunctionComponent<{
 
 const TimeRuler: FunctionComponent<{
   beatsPerBar: number
-  stepsPerBeat: number
-  totalStepCount: number
+  trackLength: Numeric<'beats'>
   beatWidth: number
-  selection: StepRange
-  onSelect: (range: StepRange) => void
-}> = ({ beatsPerBar, stepsPerBeat, totalStepCount, beatWidth, selection, onSelect }) => {
-  const totalBeats = Math.ceil(totalStepCount / stepsPerBeat)
+  selection: BeatRange
+  onSelect: (range: BeatRange) => void
+}> = ({ beatsPerBar, trackLength, beatWidth, selection, onSelect }) => {
+  const totalBeats = Math.ceil(trackLength.value)
 
   const marks = useMemo<readonly number[]>(() => {
     const result: number[] = []
@@ -117,40 +114,33 @@ const TimeRuler: FunctionComponent<{
     }
 
     return result
-  }, [beatsPerBar, stepsPerBeat, totalBeats])
+  }, [beatsPerBar, totalBeats])
 
   const timelineRef = useRef<HTMLDivElement>(null)
   const [isSelecting, setIsSelecting] = useState(false)
-  const [selectionStart, setSelectionStart] = useState<Numeric<'steps'> | undefined>(undefined)
+  const [selectionStart, setSelectionStart] = useState<Numeric<'beats'> | undefined>(undefined)
 
-  const computeStepFromEvent = useCallback((event: MouseEvent | React.MouseEvent): Numeric<'steps'> | undefined => {
+  const computeTimeFromEvent = useCallback((event: MouseEvent | React.MouseEvent): Numeric<'beats'> | undefined => {
     const rect = timelineRef.current?.getBoundingClientRect()
-    if (rect == null) {
+    if (rect == null || beatWidth <= 0) {
       return undefined
     }
 
-    const stepWidth = beatWidth / stepsPerBeat
-    if (stepWidth <= 0) {
-      return undefined
-    }
-
-    const granularitySteps = stepWidth >= SELECTION_PIXELS_PER_NOTCH
+    const granularityBeats = beatWidth >= SELECTION_PIXELS_PER_NOTCH
       ? 1
-      : beatWidth >= SELECTION_PIXELS_PER_NOTCH
-        ? stepsPerBeat
-        : beatsPerBar * stepsPerBeat
+      : beatsPerBar
 
     const positionInPixels = event.clientX - rect.left
-    const positionInSteps = positionInPixels / stepWidth
+    const positionInBeats = positionInPixels / beatWidth
 
-    const snappedStepIndex = Math.round(positionInSteps / granularitySteps) * granularitySteps
-    const clampedStepIndex = Math.max(0, Math.min(snappedStepIndex, totalStepCount))
+    const snappedIndex = Math.round(positionInBeats / granularityBeats) * granularityBeats
+    const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength.value))
 
-    return makeNumeric('steps', clampedStepIndex)
-  }, [beatsPerBar, stepsPerBeat, beatWidth, totalStepCount])
+    return makeNumeric('beats', clampedIndex)
+  }, [beatsPerBar, beatWidth, trackLength])
 
   const updateSelection = useCallback((event: MouseEvent | React.MouseEvent) => {
-    const position = computeStepFromEvent(event)
+    const position = computeTimeFromEvent(event)
     if (position == null || selectionStart == null) {
       return
     }
@@ -164,7 +154,7 @@ const TimeRuler: FunctionComponent<{
       start: position.value < selectionStart.value ? position : selectionStart,
       end: position.value >= selectionStart.value ? position : selectionStart
     })
-  }, [onSelect, selectionStart, computeStepFromEvent])
+  }, [onSelect, selectionStart, computeTimeFromEvent])
 
   const onMouseDown = useCallback((event: React.MouseEvent) => {
     if (event.button !== 0) {
@@ -173,13 +163,13 @@ const TimeRuler: FunctionComponent<{
 
     event.preventDefault()
 
-    const position = computeStepFromEvent(event)
+    const position = computeTimeFromEvent(event)
     if (position != null) {
       setIsSelecting(true)
       setSelectionStart(position)
       onSelect({ start: position })
     }
-  }, [onSelect, computeStepFromEvent])
+  }, [onSelect, computeTimeFromEvent])
 
   useGlobalMouseUp(() => {
     setIsSelecting(false)
@@ -202,8 +192,8 @@ const TimeRuler: FunctionComponent<{
         <div
           className='absolute top-0 h-[calc(100%+0.5rem)] bg-accent-100 opacity-40 pointer-events-none -z-10'
           style={{
-            left: `${(selection.start.value / totalStepCount) * 100}%`,
-            width: `${((selection.end.value - selection.start.value) / totalStepCount) * 100}%`
+            left: `${(selection.start.value / trackLength.value) * 100}%`,
+            width: `${((selection.end.value - selection.start.value) / trackLength.value) * 100}%`
           }}
         />
       )}
@@ -234,14 +224,13 @@ const TimeRuler: FunctionComponent<{
 const TimelineSection: FunctionComponent<{
   section: Section
   beatsPerBar: number
-  stepsPerBeat: number
   beatWidth: number
-}> = ({ section, beatsPerBar, stepsPerBeat, beatWidth }) => {
-  const sectionWidth = (section.length.value / stepsPerBeat) * beatWidth
+}> = ({ section, beatsPerBar, beatWidth }) => {
+  const sectionWidth = section.length.value * beatWidth
 
   const lengthString = useMemo(() => {
-    return formatStepDuration(section.length.value, { beatsPerBar, stepsPerBeat })
-  }, [section, beatsPerBar, stepsPerBeat])
+    return formatBeatDuration(section.length, beatsPerBar)
+  }, [section, beatsPerBar])
 
   return (
     <div
@@ -271,10 +260,10 @@ const markerPathData = {
 
 const TimelineMarker: FunctionComponent<{
   variant: 'cursor' | 'start' | 'end'
-  position: Numeric<'steps'>
-  totalStepCount: number
+  position: Numeric<'beats'>
+  trackLength: Numeric<'beats'>
   dimmed: boolean
-}> = ({ variant, position, totalStepCount, dimmed }) => {
+}> = ({ variant, position, trackLength, dimmed }) => {
   return (
     <div
       className={clsx(
@@ -282,7 +271,7 @@ const TimelineMarker: FunctionComponent<{
         dimmed ? 'text-content-50' : 'text-content-100'
       )}
       style={{
-        left: `${(position.value / totalStepCount) * 100}%`
+        left: `${(position.value / trackLength.value) * 100}%`
       }}
     >
       <svg className='w-5 h-2.5 -ml-2.5' viewBox='0 0 16 8' fill='none' xmlns='http://www.w3.org/2000/svg'>

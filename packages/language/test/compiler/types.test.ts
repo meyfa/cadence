@@ -257,8 +257,8 @@ describe('compiler/types.ts', () => {
         const funcType2 = NumberType.with('s')
         assert.strictEqual(funcType2.format(), 'number<s>')
 
-        const funcType3 = NumberType.with('steps')
-        assert.strictEqual(funcType3.format(), 'number<steps>')
+        const funcType3 = NumberType.with('beats')
+        assert.strictEqual(funcType3.format(), 'number<beats>')
       })
     })
 

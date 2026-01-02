@@ -111,7 +111,7 @@ const pan = FunctionType.of({
 
 const delay = FunctionType.of({
   arguments: [
-    { name: 'time', type: NumberType.with('steps'), required: true },
+    { name: 'time', type: NumberType.with('beats'), required: true },
     { name: 'feedback', type: NumberType.with(undefined), required: true }
   ],
 

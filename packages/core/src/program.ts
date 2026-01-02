@@ -1,4 +1,4 @@
-export type Unit = undefined | 'bpm' | 'steps' | 's' | 'hz' | 'db'
+export type Unit = undefined | 'bpm' | 'beats' | 's' | 'hz' | 'db'
 
 export interface Numeric<U extends Unit> {
   readonly unit: U
@@ -16,7 +16,7 @@ export type Pitch = `${Note}${Octave}`
 export type Step = '-' | 'x' | Pitch
 
 export interface NoteEvent {
-  readonly time: Numeric<'steps'>
+  readonly time: Numeric<'beats'>
 
   /**
    * The pitch associated with the event. If undefined, indicates that the instrument's default pitch should be used.
@@ -29,7 +29,7 @@ export interface Pattern {
    * The length of the pattern. This may be any non-negative value (not necessarily an integer).
    * If undefined, the pattern is infinite.
    */
-  readonly length?: Numeric<'steps'>
+  readonly length?: Numeric<'beats'>
 
   /**
    * Obtain all note events in the pattern, starting at time 0 and increasing monotonically.
@@ -63,7 +63,7 @@ export interface Track {
 
 export interface Section {
   readonly name: string
-  readonly length: Numeric<'steps'>
+  readonly length: Numeric<'beats'>
   readonly routings: readonly InstrumentRouting[]
 }
 
@@ -107,7 +107,7 @@ export interface PanEffect {
 
 export interface DelayEffect {
   readonly type: 'delay'
-  readonly time: Numeric<'steps'>
+  readonly time: Numeric<'beats'>
   readonly feedback: Numeric<undefined>
 }
 
@@ -136,7 +136,6 @@ export interface MixerRouting {
 
 export interface Program {
   readonly beatsPerBar: number
-  readonly stepsPerBeat: number
 
   readonly instruments: ReadonlyMap<InstrumentId, Instrument>
   readonly track: Track

@@ -1,3 +1,5 @@
+import type { Numeric } from '@core/program.js'
+
 export function pluralize (count: number, singular: string, plural = singular.at(-1) === 's' ? `${singular}es` : `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`
 }
@@ -22,21 +24,12 @@ export function formatDuration (seconds: number): string {
   return `${sign}${secs}s`
 }
 
-export function formatStepDuration (steps: number, options: {
-  readonly beatsPerBar: number
-  readonly stepsPerBeat: number
-}): string {
-  const { beatsPerBar, stepsPerBeat } = options
-  const stepsPerBar = beatsPerBar * stepsPerBeat
+export function formatBeatDuration (duration: Numeric<'beats'>, beatsPerBar: number): string {
+  const sign = duration.value < 0 ? '-' : ''
+  let remainingBeats = Math.abs(duration.value)
 
-  const sign = steps < 0 ? '-' : ''
-  let remainingSteps = Math.round(Math.abs(steps))
+  const bars = Math.floor(remainingBeats / beatsPerBar)
+  remainingBeats -= bars * beatsPerBar
 
-  const bars = Math.floor(remainingSteps / stepsPerBar)
-  remainingSteps -= bars * stepsPerBar
-
-  const beats = Math.floor(remainingSteps / stepsPerBeat)
-  remainingSteps -= beats * stepsPerBeat
-
-  return `${sign}${bars}:${beats}:${remainingSteps}`
+  return `${sign}${bars}:${remainingBeats.toFixed(2)}`
 }

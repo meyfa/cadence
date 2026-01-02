@@ -57,7 +57,6 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
 
   return {
     beatsPerBar: options.beatsPerBar,
-    stepsPerBeat: options.stepsPerBeat,
     instruments: context.instruments,
     track,
     mixer
@@ -102,7 +101,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
 function generateSection (context: Context, section: ast.SectionStatement): Section {
   const name = section.name.name
-  const length = NumberType.with('steps').cast(resolve(context, section.length))
+  const length = NumberType.with('beats').cast(resolve(context, section.length))
 
   const routings = section.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))
@@ -186,7 +185,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return toNumberValue(context.options, expression)
 
     case 'PatternLiteral':
-      return PatternType.of(createPattern(expression.value))
+      return PatternType.of(createPattern(expression.value, context.options.stepsPerBeat))
 
     case 'Identifier':
       return nonNull(context.resolutions.get(expression.name))
