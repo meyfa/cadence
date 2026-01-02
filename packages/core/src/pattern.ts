@@ -1,16 +1,23 @@
-import { isPitch, makeNumeric, type NoteEvent, type Numeric, type Pattern, type Step } from './program.js'
+import { makeNumeric, type NoteEvent, type Numeric, type Pattern, type Step } from './program.js'
 
-const zeroSteps = makeNumeric('steps', 0)
+const zeroBeats = makeNumeric('beats', 0)
 
 const emptyPattern: Pattern = {
-  length: zeroSteps,
+  length: zeroBeats,
   evaluate: () => []
 }
 
 /**
- * Create a pattern with length equal to the number of steps, equally spaced.
+ * Create a pattern with equally spaced steps based on the provided subdivision.
+ * For example, assuming a 4/4 time signature, a subdivision of 1 would create quarter notes,
+ * while a subdivision of 4 would create sixteenth notes.
  */
-export function createPattern (steps: readonly Step[]): Pattern {
+export function createPattern (steps: readonly Step[], subdivision: number): Pattern {
+  if (steps.length === 0 || subdivision <= 0 || !Number.isFinite(subdivision)) {
+    return emptyPattern
+  }
+
+  const length = makeNumeric('beats', steps.length / subdivision)
   const events: NoteEvent[] = []
 
   for (let i = 0; i < steps.length; ++i) {
@@ -19,18 +26,11 @@ export function createPattern (steps: readonly Step[]): Pattern {
       continue
     }
 
-    if (isPitch(step)) {
-      events.push({ time: makeNumeric('steps', i), pitch: step })
-      continue
-    }
-
-    events.push({ time: makeNumeric('steps', i) })
+    const time = makeNumeric('beats', i / subdivision)
+    events.push(step === 'x' ? { time } : { time, pitch: step })
   }
 
-  return {
-    length: makeNumeric('steps', steps.length),
-    evaluate: () => events
-  }
+  return { length, evaluate: () => events }
 }
 
 /**
@@ -48,7 +48,7 @@ export function concatPatterns (first: Pattern, second: Pattern): Pattern {
   }
 
   const length = second.length != null
-    ? makeNumeric('steps', first.length.value + second.length.value)
+    ? makeNumeric('beats', first.length.value + second.length.value)
     : undefined
 
   const secondOffset = first.length.value
@@ -61,7 +61,7 @@ export function concatPatterns (first: Pattern, second: Pattern): Pattern {
       for (const event of second.evaluate()) {
         yield {
           ...event,
-          time: makeNumeric('steps', event.time.value + secondOffset)
+          time: makeNumeric('beats', event.time.value + secondOffset)
         }
       }
     }
@@ -76,7 +76,7 @@ export function concatPatterns (first: Pattern, second: Pattern): Pattern {
  * - Patterns that are longer than the specified duration will be truncated.
  * - Patterns that are shorter than the specified duration will be repeated (and possibly truncated) to fit.
  */
-export function loopPattern (pattern: Pattern, duration?: Numeric<'steps'>): Pattern {
+export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pattern {
   const patternLength = pattern.length?.value
 
   // Looping an empty pattern always results in an empty pattern
@@ -102,7 +102,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'steps'>): Pat
             hasEvents = true
             yield {
               ...event,
-              time: makeNumeric('steps', event.time.value + offset)
+              time: makeNumeric('beats', event.time.value + offset)
             }
           }
 
@@ -132,7 +132,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'steps'>): Pat
           hasEvents = true
           yield {
             ...event,
-            time: makeNumeric('steps', event.time.value + offset)
+            time: makeNumeric('beats', event.time.value + offset)
           }
         }
 
@@ -156,14 +156,14 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
   }
 
   // This also handles the zero and negative cases
-  return loopPattern(pattern, makeNumeric('steps', pattern.length.value * times))
+  return loopPattern(pattern, makeNumeric('beats', pattern.length.value * times))
 }
 
 /**
  * Render a pattern to up to a specific time. Longer patterns will be truncated,
  * while shorter patterns will stay as-is (no additional events are produced).
  */
-export function renderPatternEvents (pattern: Pattern, end: Numeric<'steps'>): NoteEvent[] {
+export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): NoteEvent[] {
   if (end.value <= 0 || !Number.isFinite(end.value)) {
     return []
   }

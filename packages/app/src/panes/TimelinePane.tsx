@@ -1,4 +1,4 @@
-import type { StepRange } from '@core/audio/types.js'
+import type { BeatRange } from '@core/audio/types.js'
 import { useCallback, type FunctionComponent } from 'react'
 import { Timeline } from '../components/Timeline.js'
 import { useObservable } from '../hooks/observable.js'
@@ -13,7 +13,7 @@ export const TimelinePane: FunctionComponent = () => {
   const engine = useAudioEngine()
 
   const range = useObservable(engine.range)
-  const setRange = useCallback((range: StepRange) => engine.range.set(range), [engine])
+  const setRange = useCallback((range: BeatRange) => engine.range.set(range), [engine])
 
   const playing = useObservable(engine.playing)
   const progress = useObservable(engine.progress)

@@ -1,6 +1,6 @@
 import { connectSeries, FeedbackDelay, Gain, Panner, Reverb, type ToneAudioNode } from 'tone'
 import type { BusId, Effect, Program } from '../program.js'
-import { stepsToSeconds } from './time.js'
+import { beatsToSeconds } from './time.js'
 
 export interface BusNodes {
   readonly input: ToneAudioNode
@@ -83,7 +83,7 @@ function createEffect (program: Program, effect: Effect): [ToneAudioNode, Promis
     case 'delay': {
       return [
         new FeedbackDelay({
-          delayTime: stepsToSeconds(effect.time, program.track.tempo, program.stepsPerBeat).value,
+          delayTime: beatsToSeconds(effect.time, program.track.tempo).value,
           feedback: Math.max(0, Math.min(1.0, effect.feedback.value))
         }),
         Promise.resolve()

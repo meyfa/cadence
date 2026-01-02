@@ -115,7 +115,7 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
   errors.push(...lengthCheck.errors)
 
   if (lengthCheck.result != null) {
-    errors.push(...checkType([NumberType.with('steps')], lengthCheck.result, section.length.range))
+    errors.push(...checkType([NumberType.with('beats')], lengthCheck.result, section.length.range))
   }
 
   const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.range)

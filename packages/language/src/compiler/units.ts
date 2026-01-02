@@ -4,7 +4,6 @@ import { NumberType, type NumberValue } from './types.js'
 
 interface Constants {
   readonly beatsPerBar: number
-  readonly stepsPerBeat: number
 }
 
 export function toNumberValue (constants: Constants, literal: ast.NumberLiteral): NumberValue {
@@ -14,13 +13,12 @@ export function toNumberValue (constants: Constants, literal: ast.NumberLiteral)
     case 'db':
     case 'hz':
     case 's':
+    case 'beats':
       return NumberType.of({ unit: literal.unit, value: literal.value })
     case 'ms':
       return NumberType.of({ unit: 's', value: literal.value / 1000 })
     case 'bars':
-      return NumberType.of({ unit: 'steps', value: literal.value * constants.beatsPerBar * constants.stepsPerBeat })
-    case 'beats':
-      return NumberType.of({ unit: 'steps', value: literal.value * constants.stepsPerBeat })
+      return NumberType.of({ unit: 'beats', value: literal.value * constants.beatsPerBar })
   }
 }
 
@@ -34,11 +32,11 @@ export function toBaseUnit (unit: ast.Unit | undefined): Unit {
     case 'db':
     case 'hz':
     case 's':
+    case 'beats':
       return unit
     case 'ms':
       return 's'
     case 'bars':
-    case 'beats':
-      return 'steps'
+      return 'beats'
   }
 }

@@ -2,26 +2,26 @@ import { renderPatternEvents } from '@core/pattern.js'
 import { Part, Player } from 'tone'
 import { convertPitchToPlaybackRate } from '../midi.js'
 import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '../program.js'
-import { stepsToSeconds } from './time.js'
+import { beatsToSeconds } from './time.js'
 
 export const DEFAULT_ROOT_NOTE = 'C5' as const
 
-const STEP = makeNumeric('steps', 1)
+const BEAT = makeNumeric('beats', 1)
 
 export function createParts (program: Program, players: Map<InstrumentId, Player>): readonly Part[] {
   const eventsByInstrument = new Map<InstrumentId, Array<[number, NoteEvent]>>()
 
-  const timePerStep = stepsToSeconds(STEP, program.track.tempo, program.stepsPerBeat).value
-  let currentOffsetSteps = 0
+  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
+  let currentOffsetBeats = 0
 
   for (const section of program.track.sections) {
-    const startOffset = currentOffsetSteps * timePerStep
-    currentOffsetSteps += section.length.value
+    const startOffset = currentOffsetBeats * timePerBeat
+    currentOffsetBeats += section.length.value
 
     for (const routing of section.routings) {
       const events = renderPatternEvents(routing.source.value, section.length)
       const values: Array<[number, NoteEvent]> = events.map((event) => [
-        startOffset + event.time.value * timePerStep,
+        startOffset + event.time.value * timePerBeat,
         event
       ])
 

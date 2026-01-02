@@ -1,8 +1,8 @@
-import { makeNumeric, type Numeric, type Program } from '../program.js'
-import { MutableObservable, type Observable } from '../observable.js'
-import { createAudioSession, type AudioSession } from './session.js'
 import { getDestination } from 'tone'
-import type { StepRange } from './types.js'
+import { MutableObservable, type Observable } from '../observable.js'
+import { makeNumeric, type Numeric, type Program } from '../program.js'
+import { createAudioSession, type AudioSession } from './session.js'
+import type { BeatRange } from './types.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
@@ -15,7 +15,7 @@ export interface AudioEngine {
   readonly play: (program: Program) => void
   readonly stop: () => void
 
-  readonly range: MutableObservable<StepRange>
+  readonly range: MutableObservable<BeatRange>
   readonly progress: Observable<number>
 }
 
@@ -27,7 +27,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   })
 
   const playing = new MutableObservable(false)
-  const range = new MutableObservable({ start: makeNumeric('steps', 0) })
+  const range = new MutableObservable({ start: makeNumeric('beats', 0) })
   const progress = new MutableObservable(0)
   let session: AudioSession | undefined
 

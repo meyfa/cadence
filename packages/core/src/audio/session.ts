@@ -4,8 +4,8 @@ import type { Program } from '../program.js'
 import { createBuses } from './buses.js'
 import { createParts } from './parts.js'
 import { createPlayers } from './players.js'
-import { calculateTotalDuration, stepsToSeconds } from './time.js'
-import type { StepRange } from './types.js'
+import { beatsToSeconds, calculateTotalDuration } from './time.js'
+import type { BeatRange } from './types.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
@@ -16,7 +16,7 @@ export interface AudioSession {
   readonly dispose: () => void
 }
 
-export function createAudioSession (program: Program, range: StepRange): AudioSession {
+export function createAudioSession (program: Program, range: BeatRange): AudioSession {
   const transport = getTransport()
 
   // This must be done before any objects are created that may refer to the transport
@@ -25,9 +25,9 @@ export function createAudioSession (program: Program, range: StepRange): AudioSe
 
   const totalDuration = calculateTotalDuration(program)
 
-  const startOffset = stepsToSeconds(range.start, program.track.tempo, program.stepsPerBeat)
+  const startOffset = beatsToSeconds(range.start, program.track.tempo)
   const endOffset = range.end != null
-    ? stepsToSeconds(range.end, program.track.tempo, program.stepsPerBeat)
+    ? beatsToSeconds(range.end, program.track.tempo)
     : totalDuration
 
   const initialProgress = totalDuration.value > 0 ? Math.min(1, startOffset.value / totalDuration.value) : 0
