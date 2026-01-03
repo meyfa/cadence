@@ -7,14 +7,7 @@
 
   number { $[0-9]+ ("." $[0-9]+)? }
   string { "\"" (!["\\] | "\\" (![.] | $[.]))* "\"" }
-  pattern {
-    "["
-    (
-      $[ \t\n\r] |
-      ($[-x] | $[a-gA-G] $[#b]? ($[0-9] | "10")) ($[ \t\n\r]* ":" $[ \t\n\r]* number)?
-    )*
-    "]"
-  }
+  step { $[-x] | $[a-gA-G] $[#b]? ($[0-9] | "10") }
 
   "{" "}"
   "(" ")"
@@ -56,7 +49,11 @@ VariableName { word }
 
 NumberLiteral { number unit? }
 StringLiteral { string }
-PatternLiteral { pattern }
+PatternLiteral {
+  "["
+  (step (":" number)?)*
+  "]"
+}
 
 Literal {
   NumberLiteral | StringLiteral | PatternLiteral

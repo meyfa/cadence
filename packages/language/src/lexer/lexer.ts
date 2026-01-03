@@ -5,8 +5,28 @@ import type { SourceRange } from '../range.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
+const options: Options = {
+  lineNumbers: true
+}
+
+const commonRules: Rules = [
+  { name: 'space', regex: /[ \t\n\r]+/, discard: true }
+]
+
+const patternRules: Rules = [
+  ...commonRules,
+
+  { name: 'step', regex: /[-x]|[a-gA-G][#b]?(?:[0-9]|10)/ },
+  { name: ':' },
+  { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
+
+  { name: ']', pop: true }
+]
+
+const patternLexer = createLexer(patternRules, 'pattern', options)
+
 const rules: Rules = [
-  { name: 'space', regex: /[ \t\n\r]+/, discard: true },
+  ...commonRules,
 
   { name: 'comment', regex: /\/\/[^\n]*/, discard: true },
 
@@ -14,7 +34,7 @@ const rules: Rules = [
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },
-  { name: 'pattern', regex: /\[(?:[ \t\n\r]|(?:[-x]|[a-gA-G][#b]?(?:[0-9]|10))(?:[ \t\n\r]*:[ \t\n\r]*[0-9]+(\.[0-9]+)?)?)*\]/ },
+  { name: '[', push: patternLexer },
 
   { name: '{' },
   { name: '}' },
@@ -32,13 +52,7 @@ const rules: Rules = [
   { name: '/' }
 ]
 
-const state = undefined
-
-const options: Options = {
-  lineNumbers: true
-}
-
-const lexer = createLexer(rules, state, options)
+const lexer = createLexer(rules, undefined, options)
 
 export type LexResult = Result<Token[], LexError>
 
