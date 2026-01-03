@@ -3,7 +3,7 @@ import { makeNumeric } from '@core/program.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { type CompileOptions } from '@language/compiler/compiler.js'
-import { FunctionComponent, useEffect, useState } from 'react'
+import { FunctionComponent, useEffect, useLayoutEffect, useState } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
 import { Footer } from './components/Footer.js'
 import { Header } from './components/Header.js'
@@ -104,7 +104,7 @@ const StorageSync: FunctionComponent<{
   const { code } = editor
 
   // Apply initial data on mount
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyThemeSetting(initialState.settings.theme)
     layoutDispatch(initialState.layout)
     editorDispatch((state) => ({ ...state, code: initialState.code }))

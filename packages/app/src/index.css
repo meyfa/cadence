@@ -7,6 +7,10 @@
   }
 }
 
+html {
+  color-scheme: light dark;
+}
+
 html.light {
   color-scheme: light;
 }
