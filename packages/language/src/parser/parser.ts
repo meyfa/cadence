@@ -4,7 +4,7 @@ import * as ast from './ast.js'
 import { combineSourceRanges, getSourceRange } from '../range.js'
 import { truncateString, type Result } from '../error.js'
 import { ParseError } from './error.js'
-import { makeNumeric, type Step } from '@core/program.js'
+import { isPitch, makeNumeric, type Step } from '@core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -103,67 +103,39 @@ const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) 
     : undefined
 })
 
-function parsePattern (text: string): Step[] {
-  const steps: Step[] = []
-
-  // Start after the opening '[' and stop before the closing ']'
-  for (let pos = 1, n = text.length - 1; pos < n;) {
-    const char = text[pos]
-
-    if (/\s/.test(char)) {
-      pos++
-      continue
+const patternStep_: p.Parser<Token, unknown, Step> = p.ab(
+  p.token((t) => {
+    return t.name === 'step' && (t.text === '-' || t.text === 'x' || isPitch(t.text))
+      ? { value: t.text } satisfies Step
+      : undefined
+  }),
+  p.option(
+    combine2(
+      literal(':'),
+      expect(numberLiteral_, 'number')
+    ),
+    undefined
+  ),
+  (step, lengthPart) => {
+    if (lengthPart == null) {
+      return step
     }
 
-    let value: Step['value'] | undefined
-
-    if (char === '-' || char === 'x') {
-      value = char
-      pos++
-    }
-
-    const noteMatch = /^([a-gA-G])([#b]?)(10|[0-9])/.exec(text.slice(pos))
-    if (noteMatch != null) {
-      const [match, note, accidental, octave] = noteMatch
-      value = (note.toUpperCase() + accidental + octave) as Step['value']
-      pos += match.length
-    }
-
-    if (value == null) {
-      // Invalid character
-      break
-    }
-
-    // Check for optional length specifier
-    const delimiter = /^\s*:\s*/.exec(text.slice(pos))
-    if (delimiter != null) {
-      pos += delimiter[0].length
-
-      const lengthMatch = /^([0-9]+(\.[0-9]+)?)/.exec(text.slice(pos))
-      if (lengthMatch == null) {
-        // Invalid length
-        break
-      }
-
-      const lengthValue = Number.parseFloat(lengthMatch[0])
-      pos += lengthMatch[0].length
-
-      steps.push({ value, length: makeNumeric(undefined, lengthValue) })
-
-      continue
-    }
-
-    steps.push({ value })
+    const [, length] = lengthPart
+    return { ...step, length: makeNumeric(undefined, length.value) }
   }
+)
 
-  return steps
-}
-
-const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.token((t) => {
-  return t.name === 'pattern'
-    ? ast.make('PatternLiteral', getSourceRange(t), { value: parsePattern(t.text) })
-    : undefined
-})
+const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.abc(
+  literal('['),
+  p.many(patternStep_),
+  expectLiteral(']'),
+  (_lbracket, steps, _rbracket) => {
+    return ast.make('PatternLiteral', combineSourceRanges(_lbracket, _rbracket), {
+      value: steps
+    })
+  }
+)
 
 const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
   stringLiteral_,
