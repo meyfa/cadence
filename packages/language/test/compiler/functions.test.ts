@@ -64,6 +64,77 @@ describe('compiler/functions.ts', () => {
       const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
       assert.deepStrictEqual(events, [])
     })
+
+    it('should support times parameter', () => {
+      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const context = createFunctionContext()
+
+      const result = loop.data.invoke(context, {
+        pattern,
+        times: makeNumeric(undefined, 3)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length, makeNumeric('beats', 1.5 * 3))
+
+      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 5.0))
+
+      assert.deepStrictEqual(events, [
+        { time: makeNumeric('beats', 0) },
+        { time: makeNumeric('beats', 1), pitch: 'C4' },
+        { time: makeNumeric('beats', 1.5) },
+        { time: makeNumeric('beats', 2.5), pitch: 'C4' },
+        { time: makeNumeric('beats', 3.0) },
+        { time: makeNumeric('beats', 4.0), pitch: 'C4' }
+      ])
+    })
+
+    it('should support times parameter of zero', () => {
+      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const context = createFunctionContext()
+
+      const result = loop.data.invoke(context, {
+        pattern,
+        times: makeNumeric(undefined, 0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should treat negative times parameter as zero', () => {
+      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const context = createFunctionContext()
+
+      const result = loop.data.invoke(context, {
+        pattern,
+        times: makeNumeric(undefined, -2)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should support fractional times parameter', () => {
+      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const context = createFunctionContext()
+
+      const result = loop.data.invoke(context, {
+        pattern,
+        times: makeNumeric(undefined, 0.5)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length, makeNumeric('beats', 1.5 * 0.5))
+
+      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+
+      assert.deepStrictEqual(events, [
+        { time: makeNumeric('beats', 0) }
+      ])
+    })
   })
 
   describe('sample', () => {

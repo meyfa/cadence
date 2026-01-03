@@ -12,16 +12,17 @@ synth = sample(sample_collection + "moog/002_Mighty Moog C4.wav", root_note: "C4
 clap  = sample(sample_collection + "808/CP.WAV")
 
 // Define some reusable patterns (step sequences). 'x' is a hit, '-' is a rest.
-// To make a pattern repeat indefinitely, use the loop() function.
+// Use the loop(pattern) function to make a pattern repeat infinitely, or
+// loop(pattern, times) to repeat a pattern for a specific amount.
+// Patterns can be concatenated using the + operator.
 kick_pattern  = loop([x-x- x--- x--- x---])
 snare_pattern = loop([---- x---])
 
-// Patterns can also define pitches for melodic instruments.
-// The * operator repeats a pattern, and + concatenates patterns.
-arp_intro   = [----] * 8 + [D3 - - D4 - - F4 -] * 4
+// Patterns can also define pitches (note and octave) for melodic instruments.
+arp_intro   = loop([----], 8) + loop([D3 - - D4 - - F4 -], 4)
 arp_main    = [D3 - - D4 - - G4 G4] + [D3 - - D4 - G5 G4 F4]
 
-clap_pattern = [x---] + [----] * 7
+clap_pattern = [x---] + loop([----], 7)
 
 track {
   tempo: 128 bpm

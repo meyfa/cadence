@@ -1,5 +1,5 @@
-import { loopPattern } from '@core/pattern.js'
-import { isPitch, type Instrument, type InstrumentId } from '@core/program.js'
+import { createPattern, loopPattern } from '@core/pattern.js'
+import { isPitch, makeNumeric, type Instrument, type InstrumentId } from '@core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { EffectType, FunctionType, InstrumentType, NumberType, PatternType, StringType, type FunctionValue, type Type, type Value } from './types.js'
 
@@ -37,13 +37,30 @@ export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
 
 const loop = FunctionType.of({
   arguments: [
-    { name: 'pattern', type: PatternType, required: true }
+    { name: 'pattern', type: PatternType, required: true },
+    { name: 'times', type: NumberType.with(undefined), required: false }
   ],
 
   returnType: PatternType,
 
-  invoke: (_context, { pattern }) => {
-    return PatternType.of(loopPattern(pattern))
+  invoke: (_context, { pattern, times }) => {
+    if (times == null) {
+      return PatternType.of(loopPattern(pattern))
+    }
+
+    const factor = times.value
+    if (factor <= 0 || !Number.isFinite(factor)) {
+      return PatternType.of(createPattern([], 1))
+    }
+
+    if (pattern.length == null) {
+      // infinite pattern multiplied by finite factor remains infinite
+      return PatternType.of(loopPattern(pattern))
+    }
+
+    const duration = makeNumeric('beats', pattern.length.value * factor)
+
+    return PatternType.of(loopPattern(pattern, duration))
   }
 })
 
