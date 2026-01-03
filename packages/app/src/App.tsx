@@ -22,7 +22,6 @@ const STORAGE_DEBOUNCE_MS = 250
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
-  stepsPerBeat: 4,
   tempo: {
     default: 128,
     minimum: 1,
