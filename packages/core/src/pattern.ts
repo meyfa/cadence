@@ -144,19 +144,45 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
 }
 
 /**
- * Multiply a pattern by a numeric factor.
+ * Multiply a pattern by a numeric factor, keeping the sequence of events the same but adjusting their timing.
  *
- * If the pattern is infinite, the resulting pattern will remain infinite.
- * Otherwise, the resulting pattern will be finite, with its length multiplied by the factor.
+ * For example, multiplying a pattern of length 2 by 3 will produce a pattern of length 6 where each event occurs
+ * at three times the original time.
+ *
+ * The factor must be strictly positive (> 0), otherwise an empty pattern is returned.
  */
 export function multiplyPattern (pattern: Pattern, times: number): Pattern {
-  // Infinite patterns remain infinite when multiplied
-  if (pattern.length == null) {
+  // empty pattern remains empty
+  if (pattern.length != null && pattern.length.value <= 0) {
     return pattern
   }
 
-  // This also handles the zero and negative cases
-  return loopPattern(pattern, makeNumeric('beats', pattern.length.value * times))
+  // multiplying by 1 returns the same pattern
+  if (times === 1) {
+    return pattern
+  }
+
+  // invalid factor results in empty pattern
+  if (times <= 0 || !Number.isFinite(times)) {
+    return createPattern([], 1)
+  }
+
+  // infinite pattern remains infinite, otherwise scale length
+  const length = pattern.length != null
+    ? makeNumeric('beats', pattern.length.value * times)
+    : undefined
+
+  return {
+    length,
+    evaluate: function* () {
+      for (const event of pattern.evaluate()) {
+        yield {
+          ...event,
+          time: makeNumeric('beats', event.time.value * times)
+        }
+      }
+    }
+  }
 }
 
 /**

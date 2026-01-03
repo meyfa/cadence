@@ -129,30 +129,36 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
-    it('should repeat the pattern the specified number of times', () => {
+    it('should return an empty pattern when multiplied by a negative number', () => {
       const pattern = createPattern(['x', '-'], 1)
-      const multiplied = multiplyPattern(pattern, 3)
-      assert.strictEqual(multiplied.length?.value, 6)
+      const multiplied = multiplyPattern(pattern, -1)
+      assert.strictEqual(multiplied.length?.value, 0)
+      assert.deepStrictEqual([...multiplied.evaluate()], [])
+    })
+
+    it('should keep pattern the same for factor of 1', () => {
+      const pattern = createPattern(['x', '-', 'x'], 1)
+      const multiplied = multiplyPattern(pattern, 1)
+      assert.strictEqual(multiplied.length?.value, 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
         { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2) },
-        { time: makeNumeric('beats', 4) }
+        { time: makeNumeric('beats', 2) }
       ])
     })
 
-    it('should handle fractional multiplication', () => {
-      const pattern = createPattern(['x', '-', 'x', '-'], 1)
-      const multiplied = multiplyPattern(pattern, 1 / 3)
-      assert.strictEqual(multiplied.length?.value, 4 / 3)
+    it('should multiply the length and timing of events by the given factor', () => {
+      const pattern = createPattern(['x', '-', 'x'], 1)
+      const multiplied = multiplyPattern(pattern, 3)
+      assert.strictEqual(multiplied.length?.value, 9)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: makeNumeric('beats', 0) }
+        { time: makeNumeric('beats', 0) },
+        { time: makeNumeric('beats', 6) }
       ])
     })
 
-    it('should return an infinite pattern when multiplying an infinite pattern', () => {
+    it('should keep infinite patterns infinite', () => {
       const pattern = loopPattern(createPattern(['x', '-'], 1))
-      const multiplied = multiplyPattern(pattern, 5)
-
+      const multiplied = multiplyPattern(pattern, 4)
       assert.strictEqual(multiplied.length, undefined)
 
       const evaluated = []
@@ -164,17 +170,41 @@ describe('pattern.ts', () => {
 
       assert.deepStrictEqual(evaluated, [
         { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2) },
-        { time: makeNumeric('beats', 4) },
-        { time: makeNumeric('beats', 6) }
+        { time: makeNumeric('beats', 8) },
+        { time: makeNumeric('beats', 16) },
+        { time: makeNumeric('beats', 24) }
       ])
     })
 
-    it('should handle rest patterns correctly', () => {
-      const pattern = createPattern(['-', '-'], 1)
-      const multiplied = multiplyPattern(pattern, 2)
-      assert.strictEqual(multiplied.length?.value, 4)
+    it('should return an empty pattern when multiplying an empty pattern', () => {
+      const pattern = createPattern([], 1)
+      const multiplied = multiplyPattern(pattern, 5)
+      assert.strictEqual(multiplied.length?.value, 0)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
+    })
+
+    it('should handle non-empty patterns with no events', () => {
+      const pattern = createPattern(['-', '-', '-'], 1)
+      const multiplied = multiplyPattern(pattern, 2)
+      assert.strictEqual(multiplied.length?.value, 6)
+      assert.deepStrictEqual([...multiplied.evaluate()], [])
+    })
+
+    it('should handle infinite patterns with no events', () => {
+      const pattern = loopPattern(createPattern(['-', '-', '-'], 1))
+      const multiplied = multiplyPattern(pattern, 2)
+      assert.strictEqual(multiplied.length, undefined)
+      assert.deepStrictEqual([...multiplied.evaluate()], [])
+    })
+
+    it('should handle fractional factors', () => {
+      const pattern = createPattern(['x', '-', '-', 'x'], 1)
+      const multiplied = multiplyPattern(pattern, 1 / 3)
+      assert.strictEqual(multiplied.length?.value, 4 / 3)
+      assert.deepStrictEqual([...multiplied.evaluate()], [
+        { time: makeNumeric('beats', 0) },
+        { time: makeNumeric('beats', 1) }
+      ])
     })
   })
 

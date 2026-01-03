@@ -383,10 +383,7 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
   }
 
   if (PatternType.equals(left) && NumberType.with(undefined).equals(right)) {
-    const { unit: rightUnit } = NumberType.detail(right)
-    if (rightUnit == null) {
-      return { errors: [], result: left }
-    }
+    return { errors: [], result: left }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }

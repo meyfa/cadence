@@ -10,7 +10,6 @@ import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
-  readonly stepsPerBeat: number
 
   readonly tempo: {
     readonly default: number
@@ -185,7 +184,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return toNumberValue(context.options, expression)
 
     case 'PatternLiteral':
-      return PatternType.of(createPattern(expression.value, context.options.stepsPerBeat))
+      return PatternType.of(createPattern(expression.value, 1))
 
     case 'Identifier':
       return nonNull(context.resolutions.get(expression.name))

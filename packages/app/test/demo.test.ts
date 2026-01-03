@@ -27,8 +27,7 @@ describe('demo.ts', () => {
         minimum: 1,
         maximum: 400
       },
-      beatsPerBar: 4,
-      stepsPerBeat: 4
+      beatsPerBar: 4
     })
     assert.strictEqual(compileResult.complete, true, getResultError(compileResult))
   })
