@@ -4,7 +4,7 @@ import * as ast from './ast.js'
 import { combineSourceRanges, getSourceRange } from '../range.js'
 import { truncateString, type Result } from '../error.js'
 import { ParseError } from './error.js'
-import type { Step } from '@core/program.js'
+import { makeNumeric, type Step } from '@core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -115,22 +115,45 @@ function parsePattern (text: string): Step[] {
       continue
     }
 
+    let value: Step['value'] | undefined
+
     if (char === '-' || char === 'x') {
-      steps.push(char)
+      value = char
       pos++
-      continue
     }
 
     const noteMatch = /^([a-gA-G])([#b]?)(10|[0-9])/.exec(text.slice(pos))
     if (noteMatch != null) {
       const [match, note, accidental, octave] = noteMatch
-      steps.push((note.toUpperCase() + accidental + octave) as Step)
+      value = (note.toUpperCase() + accidental + octave) as Step['value']
       pos += match.length
+    }
+
+    if (value == null) {
+      // Invalid character
+      break
+    }
+
+    // Check for optional length specifier
+    const delimiter = /^\s*:\s*/.exec(text.slice(pos))
+    if (delimiter != null) {
+      pos += delimiter[0].length
+
+      const lengthMatch = /^([0-9]+(\.[0-9]+)?)/.exec(text.slice(pos))
+      if (lengthMatch == null) {
+        // Invalid length
+        break
+      }
+
+      const lengthValue = Number.parseFloat(lengthMatch[0])
+      pos += lengthMatch[0].length
+
+      steps.push({ value, length: makeNumeric(undefined, lengthValue) })
+
       continue
     }
 
-    // Invalid character
-    break
+    steps.push({ value })
   }
 
   return steps

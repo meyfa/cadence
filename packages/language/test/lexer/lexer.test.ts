@@ -39,4 +39,22 @@ describe('lexer/lexer.ts', () => {
       ]
     })
   })
+
+  it('should lex patterns', () => {
+    const result1 = lex('[x-x- --x-]')
+    assert.deepStrictEqual(result1, {
+      complete: true,
+      value: [
+        { name: 'pattern', text: '[x-x- --x-]', offset: 0, len: 11, line: 1, column: 1, state: '' }
+      ]
+    })
+
+    const result2 = lex('[C4 - E4 :0.5 - G4:1.0 - : 1 ]')
+    assert.deepStrictEqual(result2, {
+      complete: true,
+      value: [
+        { name: 'pattern', text: '[C4 - E4 :0.5 - G4:1.0 - : 1 ]', offset: 0, len: 30, line: 1, column: 1, state: '' }
+      ]
+    })
+  })
 })
