@@ -13,7 +13,14 @@ export type Note = `${'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'}${'' | '#' | 'b'}`
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 export type Pitch = `${Note}${Octave}`
 
-export type Step = '-' | 'x' | Pitch
+export interface Step {
+  readonly value: '-' | 'x' | Pitch
+
+  /**
+   * The duration of the step relative to the pattern's subdivision. Defaults to 1.
+   */
+  readonly length?: Numeric<undefined>
+}
 
 export interface NoteEvent {
   readonly time: Numeric<'beats'>

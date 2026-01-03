@@ -17,18 +17,21 @@ export function createPattern (steps: readonly Step[], subdivision: number): Pat
     return emptyPattern
   }
 
-  const length = makeNumeric('beats', steps.length / subdivision)
   const events: NoteEvent[] = []
 
-  for (let i = 0; i < steps.length; ++i) {
-    const step = steps[i]
-    if (step === '-') {
-      continue
+  const defaultStepLength = 1 / subdivision
+  let offset = 0
+
+  for (const step of steps) {
+    if (step.value !== '-') {
+      const time = makeNumeric('beats', offset)
+      events.push(step.value === 'x' ? { time } : { time, pitch: step.value })
     }
 
-    const time = makeNumeric('beats', i / subdivision)
-    events.push(step === 'x' ? { time } : { time, pitch: step })
+    offset += defaultStepLength * (step.length?.value ?? 1)
   }
+
+  const length = makeNumeric('beats', offset)
 
   return { length, evaluate: () => events }
 }

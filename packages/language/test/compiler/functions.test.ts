@@ -19,7 +19,12 @@ describe('compiler/functions.ts', () => {
     assert.ok(loop != null)
 
     it('should loop finite patterns infinitely', () => {
-      const pattern = createPattern(['x', '-', '-', 'G5'], 4)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: '-' },
+        { value: 'G5' }
+      ], 4)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, { pattern })
@@ -37,7 +42,11 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should keep infinite patterns infinite', () => {
-      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, { pattern })
@@ -66,7 +75,11 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support times parameter', () => {
-      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, {
@@ -89,7 +102,11 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support times parameter of zero', () => {
-      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, {
@@ -104,7 +121,11 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should treat negative times parameter as zero', () => {
-      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, {
@@ -119,7 +140,11 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support fractional times parameter', () => {
-      const pattern = createPattern(['x', '-', 'C4'], 2)
+      const pattern = createPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, {
