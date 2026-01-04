@@ -427,7 +427,13 @@ function checkProperties (context: Context, properties: readonly ast.Property[],
 
 function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | ast.Property>, schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
+
   const result = new Map<string, Type>()
+
+  // Remember which argument had errors in their expression check. Otherwise,
+  // in addition to reporting the expression's error, we would also report the argument as missing,
+  // which is not correct.
+  const errorArguments = new Set<string>()
 
   const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
 
@@ -435,10 +441,13 @@ function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | 
     const expressionCheck = checkExpression(context, value)
     errors.push(...expressionCheck.errors)
 
-    if (expressionCheck.result != null) {
-      errors.push(...checkType([spec.type], expressionCheck.result, value.range))
-      result.set(spec.name, expressionCheck.result)
+    if (expressionCheck.result == null) {
+      errorArguments.add(spec.name)
+      return
     }
+
+    errors.push(...checkType([spec.type], expressionCheck.result, value.range))
+    result.set(spec.name, expressionCheck.result)
   }
 
   let index = 0
@@ -482,7 +491,7 @@ function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | 
   }
 
   for (const spec of schema) {
-    if (spec.required && !result.has(spec.name)) {
+    if (spec.required && !result.has(spec.name) && !errorArguments.has(spec.name)) {
       errors.push(new CompileError(`Missing required argument "${spec.name}"`, parentRange))
     }
   }
