@@ -1,26 +1,40 @@
-import { Player } from 'tone'
+import { Sampler } from 'tone'
 import type { BusId, InstrumentId, Program } from '../program.js'
 import type { BusNodes } from './buses.js'
+import { DEFAULT_ROOT_NOTE } from './constants.js'
 
-type PlayersReturn = [players: Map<InstrumentId, Player>, loaded: Promise<void>]
+type PlayersReturn = [players: Map<InstrumentId, Sampler>, loaded: Promise<void>]
 
 export function createPlayers (program: Program, buses: ReadonlyMap<BusId, BusNodes>): PlayersReturn {
-  const players = new Map<InstrumentId, Player>()
-  const loads: Array<Promise<Player>> = []
+  const players = new Map<InstrumentId, Sampler>()
+  const loads: Array<Promise<Sampler>> = []
 
   for (const instrument of program.instruments.values()) {
-    const player = new Player({
+    let resolve: (sampler: Sampler) => void
+    let reject: (error: Error) => void
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/withResolvers#description
+    // eslint-disable-next-line promise/param-names
+    const loadPromise = new Promise<Sampler>((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+
+    const sampler = new Sampler({
+      onload: () => resolve(sampler),
+      onerror: (error) => reject(error),
+      urls: {
+        [instrument.rootNote ?? DEFAULT_ROOT_NOTE]: instrument.sampleUrl
+      },
       volume: instrument.gain?.value,
-      autostart: false,
-      loop: false,
       // declick
-      fadeIn: 0.005,
-      fadeOut: 0.005
+      attack: 0.005,
+      release: 0.005
     })
 
     // TODO report loading errors to the user
-    loads.push(player.load(instrument.sampleUrl).catch(() => player))
-    players.set(instrument.id, player)
+    loads.push(loadPromise.catch(() => sampler))
+    players.set(instrument.id, sampler)
   }
 
   const unrouted = new Set<InstrumentId>(players.keys())

@@ -22,7 +22,7 @@ snare_pattern = loop([-x])
 arp_intro   = loop([-], 8) + loop([D3 - - D4 - - F4 -] / 4, 4)
 arp_main    = ([D3 - - D4 - - G4 G4] + [D3 - - D4 - G5 G4 F4]) / 4
 
-// Steps can have custom lengths. The hit below is 8 times as it would normally be.
+// Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
 
 track {

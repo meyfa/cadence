@@ -4,6 +4,9 @@ import { concatPatterns, createPattern, loopPattern, multiplyPattern, renderPatt
 import { makeNumeric } from '../src/program.js'
 
 describe('pattern.ts', () => {
+  // helper to create Numeric<'beats'>
+  const beats = (value: number) => makeNumeric('beats', value)
+
   describe('createPattern()', () => {
     it('should create a finite pattern with the correct length and events', () => {
       const pattern = createPattern([
@@ -13,8 +16,8 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2) }
+        { time: beats(0), gate: beats(1) },
+        { time: beats(2), gate: beats(1) }
       ])
     })
 
@@ -32,8 +35,8 @@ describe('pattern.ts', () => {
       ], 2)
       assert.strictEqual(pattern.length?.value, 1.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 1) }
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1), gate: beats(0.5) }
       ])
     })
 
@@ -45,8 +48,8 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 3) }
+        { time: beats(0), gate: beats(2) },
+        { time: beats(3), gate: beats(0.5) }
       ])
     })
   })
@@ -59,9 +62,9 @@ describe('pattern.ts', () => {
       )
       assert.strictEqual(concatenated.length?.value, 3.5)
       assert.deepStrictEqual([...concatenated.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2.5) },
-        { time: makeNumeric('beats', 3) }
+        { time: beats(0), gate: beats(1) },
+        { time: beats(2.5), gate: beats(0.5) },
+        { time: beats(3), gate: beats(0.5) }
       ])
     })
 
@@ -102,24 +105,24 @@ describe('pattern.ts', () => {
       }
 
       assert.deepStrictEqual(evaluated, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 1.5) },
-        { time: makeNumeric('beats', 3) },
-        { time: makeNumeric('beats', 4.5) }
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1.5), gate: beats(0.5) },
+        { time: beats(3), gate: beats(0.5) },
+        { time: beats(4.5), gate: beats(0.5) }
       ])
     })
 
     it('should loop a finite pattern to a specific length', () => {
       const pattern = createPattern([{ value: 'x' }, { value: '-' }], 1)
-      const looped = loopPattern(pattern, makeNumeric('beats', 5))
+      const looped = loopPattern(pattern, beats(5))
 
       assert.strictEqual(looped.length?.value, 5)
 
       const evaluated = [...looped.evaluate()]
       assert.deepStrictEqual(evaluated, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2) },
-        { time: makeNumeric('beats', 4) }
+        { time: beats(0), gate: beats(1) },
+        { time: beats(2), gate: beats(1) },
+        { time: beats(4), gate: beats(1) }
       ])
     })
 
@@ -130,7 +133,7 @@ describe('pattern.ts', () => {
     })
 
     it('should return empty pattern when looping an empty pattern', () => {
-      const pattern = loopPattern(createPattern([], 1), makeNumeric('beats', 10))
+      const pattern = loopPattern(createPattern([], 1), beats(10))
       assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
     })
@@ -166,8 +169,8 @@ describe('pattern.ts', () => {
       const multiplied = multiplyPattern(pattern, 1)
       assert.strictEqual(multiplied.length?.value, 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 2) }
+        { time: beats(0), gate: beats(1) },
+        { time: beats(2), gate: beats(1) }
       ])
     })
 
@@ -180,8 +183,8 @@ describe('pattern.ts', () => {
       const multiplied = multiplyPattern(pattern, 3)
       assert.strictEqual(multiplied.length?.value, 9)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 6) }
+        { time: beats(0), gate: beats(3) },
+        { time: beats(6), gate: beats(3) }
       ])
     })
 
@@ -198,10 +201,10 @@ describe('pattern.ts', () => {
       }
 
       assert.deepStrictEqual(evaluated, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 8) },
-        { time: makeNumeric('beats', 16) },
-        { time: makeNumeric('beats', 24) }
+        { time: beats(0), gate: beats(4) },
+        { time: beats(8), gate: beats(4) },
+        { time: beats(16), gate: beats(4) },
+        { time: beats(24), gate: beats(4) }
       ])
     })
 
@@ -231,8 +234,8 @@ describe('pattern.ts', () => {
       const multiplied = multiplyPattern(pattern, 1 / 3)
       assert.strictEqual(multiplied.length?.value, 4 / 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 1) }
+        { time: beats(0), gate: beats(1 / 3) },
+        { time: beats(1), gate: beats(1 / 3) }
       ])
     })
   })
@@ -241,31 +244,42 @@ describe('pattern.ts', () => {
     it('should render the correct number of events from a finite pattern', () => {
       const pattern = createPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }, { value: 'x' }], 1)
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 0)),
+        renderPatternEvents(pattern, beats(0)),
         []
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 1)),
-        [{ time: makeNumeric('beats', 0) }]
+        renderPatternEvents(pattern, beats(1)),
+        [
+          { time: beats(0), gate: beats(1) }
+        ]
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 3)),
-        [{ time: makeNumeric('beats', 0) }, { time: makeNumeric('beats', 2) }]
+        renderPatternEvents(pattern, beats(3)),
+        [
+          { time: beats(0), gate: beats(1) },
+          { time: beats(2), gate: beats(1) }
+        ]
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 4)),
-        [{ time: makeNumeric('beats', 0) }, { time: makeNumeric('beats', 2) }, { time: makeNumeric('beats', 3) }]
+        renderPatternEvents(pattern, beats(4)),
+        [
+          { time: beats(0), gate: beats(1) },
+          { time: beats(2), gate: beats(1) },
+          { time: beats(3), gate: beats(1) }
+        ]
       )
     })
 
     it('should not produce additional events', () => {
       assert.deepStrictEqual(
-        renderPatternEvents(createPattern([], 1), makeNumeric('beats', 2)),
+        renderPatternEvents(createPattern([], 1), beats(2)),
         []
       )
       assert.deepStrictEqual(
-        renderPatternEvents(createPattern([{ value: 'x' }, { value: '-' }], 1), makeNumeric('beats', 8)),
-        [{ time: makeNumeric('beats', 0) }]
+        renderPatternEvents(createPattern([{ value: 'x' }, { value: '-' }], 1), beats(8)),
+        [
+          { time: beats(0), gate: beats(1) }
+        ]
       )
     })
 
@@ -279,28 +293,38 @@ describe('pattern.ts', () => {
         { value: 'x' }
       ], 1)
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 3)),
-        [{ time: makeNumeric('beats', 0) }, { time: makeNumeric('beats', 2) }]
+        renderPatternEvents(pattern, beats(3)),
+        [
+          { time: beats(0), gate: beats(1) },
+          { time: beats(2), gate: beats(1) }
+        ]
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 2)),
-        [{ time: makeNumeric('beats', 0) }]
+        renderPatternEvents(pattern, beats(2)),
+        [
+          { time: beats(0), gate: beats(1) }
+        ]
       )
     })
 
     it('should render events from an infinite pattern', () => {
       const pattern = loopPattern(createPattern([{ value: 'x' }, { value: '-' }], 1))
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 0)),
+        renderPatternEvents(pattern, beats(0)),
         []
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 1)),
-        [{ time: makeNumeric('beats', 0) }]
+        renderPatternEvents(pattern, beats(1)),
+        [
+          { time: beats(0), gate: beats(1) }
+        ]
       )
       assert.deepStrictEqual(
-        renderPatternEvents(pattern, makeNumeric('beats', 3)),
-        [{ time: makeNumeric('beats', 0) }, { time: makeNumeric('beats', 2) }]
+        renderPatternEvents(pattern, beats(3)),
+        [
+          { time: beats(0), gate: beats(1) },
+          { time: beats(2), gate: beats(1) }
+        ]
       )
     })
   })
