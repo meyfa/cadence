@@ -12,9 +12,10 @@ export function makeNumeric<U extends Unit> (unit: U, value: number): Numeric<U>
 export type Note = `${'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'}${'' | '#' | 'b'}`
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 export type Pitch = `${Note}${Octave}`
+export type StepValue = '-' | 'x' | Pitch
 
 export interface Step {
-  readonly value: '-' | 'x' | Pitch
+  readonly value: StepValue
 
   /**
    * The duration of the step relative to the pattern's subdivision. Defaults to 1.
@@ -47,6 +48,10 @@ export interface Pattern {
 
 export function isPitch (value: unknown): value is Pitch {
   return typeof value === 'string' && /^[A-G][#b]?(?:10|[0-9])$/.test(value)
+}
+
+export function isStepValue (value: unknown): value is StepValue {
+  return value === '-' || value === 'x' || isPitch(value)
 }
 
 type Id<Tag extends string> = number & { __tag: Tag }

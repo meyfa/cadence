@@ -9,24 +9,8 @@ const options: Options = {
   lineNumbers: true
 }
 
-const commonRules: Rules = [
-  { name: 'space', regex: /[ \t\n\r]+/, discard: true }
-]
-
-const patternRules: Rules = [
-  ...commonRules,
-
-  { name: 'step', regex: /[-x]|[a-gA-G][#b]?(?:[0-9]|10)/ },
-  { name: ':' },
-  { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
-
-  { name: ']', pop: true }
-]
-
-const patternLexer = createLexer(patternRules, 'pattern', options)
-
 const rules: Rules = [
-  ...commonRules,
+  { name: 'space', regex: /[ \t\n\r]+/, discard: true },
 
   { name: 'comment', regex: /\/\/[^\n]*/, discard: true },
 
@@ -34,7 +18,9 @@ const rules: Rules = [
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },
-  { name: '[', push: patternLexer },
+
+  { name: '[' },
+  { name: ']' },
 
   { name: '{' },
   { name: '}' },

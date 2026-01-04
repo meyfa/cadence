@@ -1,4 +1,4 @@
-import type { Step } from '@core/program.js'
+import type { StepValue } from '@core/program.js'
 import type { SourceRange } from '../range.js'
 
 export interface ASTNode {
@@ -27,14 +27,20 @@ export interface StringLiteral extends ASTNode {
   readonly value: string
 }
 
-export interface PatternLiteral extends ASTNode {
-  readonly type: 'PatternLiteral'
-  readonly value: readonly Step[]
+export type Literal = NumberLiteral | StringLiteral
+
+export interface Step extends ASTNode {
+  readonly type: 'Step'
+  readonly value: StepValue
+  readonly length?: Expression
 }
 
-export type Literal = NumberLiteral | StringLiteral | PatternLiteral
+export interface Pattern extends ASTNode {
+  readonly type: 'Pattern'
+  readonly steps: readonly Step[]
+}
 
-export type Value = Literal | Call | Identifier
+export type Value = Literal | Pattern | Call | Identifier
 
 // Expression Types
 
@@ -141,7 +147,9 @@ export interface NodeByType {
   Identifier: Identifier
   NumberLiteral: NumberLiteral
   StringLiteral: StringLiteral
-  PatternLiteral: PatternLiteral
+
+  Step: Step
+  Pattern: Pattern
 
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression
