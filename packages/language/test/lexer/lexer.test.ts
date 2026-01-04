@@ -20,6 +20,18 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex identifiers', () => {
+    const result = lex('x_#1 yVar _anotherVar')
+    assert.deepStrictEqual(result, {
+      complete: true,
+      value: [
+        { name: 'word', text: 'x_#1', offset: 0, len: 4, line: 1, column: 1, state: '' },
+        { name: 'word', text: 'yVar', offset: 5, len: 4, line: 1, column: 6, state: '' },
+        { name: 'word', text: '_anotherVar', offset: 10, len: 11, line: 1, column: 11, state: '' }
+      ]
+    })
+  })
+
   it('should handle invalid input', () => {
     const result = lex('foo = 42 $')
     assert.strictEqual(result.complete, false)

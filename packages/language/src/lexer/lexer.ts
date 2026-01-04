@@ -30,7 +30,7 @@ const rules: Rules = [
 
   { name: 'comment', regex: /\/\/[^\n]*/, discard: true },
 
-  { name: 'word', regex: /[a-zA-Z_][a-zA-Z_0-9]*/ },
+  { name: 'word', regex: /[a-zA-Z_][a-zA-Z_0-9#]*/ },
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
   { name: 'string', regex: /"([^"\\]|\\.)*"/ },
