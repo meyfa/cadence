@@ -241,8 +241,29 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     case 'NumberLiteral':
       return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
 
-    case 'PatternLiteral':
+    case 'Pattern': {
+      for (const step of expression.steps) {
+        if (step.length == null) {
+          continue
+        }
+
+        const errors: CompileError[] = []
+
+        const lengthCheck = checkExpression(context, step.length)
+        errors.push(...lengthCheck.errors)
+
+        if (lengthCheck.result != null) {
+          const lengthErrors = checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range)
+          errors.push(...lengthErrors)
+        }
+
+        if (errors.length > 0) {
+          return { errors }
+        }
+      }
+
       return { errors: [], result: PatternType }
+    }
 
     case 'Identifier': {
       const valueType = context.resolutions.get(expression.name)

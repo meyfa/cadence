@@ -183,8 +183,16 @@ function resolve (context: Context, expression: ast.Expression): Value {
     case 'NumberLiteral':
       return toNumberValue(context.options, expression)
 
-    case 'PatternLiteral':
-      return PatternType.of(createPattern(expression.value, 1))
+    case 'Pattern':
+      return PatternType.of(createPattern(expression.steps.map((step) => {
+        if (step.length == null) {
+          return { value: step.value }
+        }
+        return {
+          value: step.value,
+          length: NumberType.with(undefined).cast(resolve(context, step.length)).data
+        }
+      }), 1))
 
     case 'Identifier':
       return nonNull(context.resolutions.get(expression.name))

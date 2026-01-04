@@ -1,10 +1,10 @@
+import { isStepValue } from '@core/program.js'
 import { Token } from 'leac'
 import * as p from 'peberminta'
-import * as ast from './ast.js'
-import { combineSourceRanges, getSourceRange } from '../range.js'
 import { truncateString, type Result } from '../error.js'
+import { combineSourceRanges, getSourceRange, type SourceRange } from '../range.js'
+import * as ast from './ast.js'
 import { ParseError } from './error.js'
-import { isPitch, makeNumeric, type Step } from '@core/program.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -103,50 +103,86 @@ const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) 
     : undefined
 })
 
-const patternStep_: p.Parser<Token, unknown, Step> = p.ab(
+function splitStepsFromWordToken (text: string, tokenRange: SourceRange): ast.Step[] {
+  const steps: ast.Step[] = []
+  let offset = 0
+
+  while (offset < text.length) {
+    const match = /^(?:x|[a-gA-G][#b]?(?:[0-9]|10))/.exec(text.slice(offset))
+
+    const stepValue = match != null ? match[0] : text[offset]
+    const stepRange: SourceRange = {
+      offset: tokenRange.offset + offset,
+      line: tokenRange.line,
+      column: tokenRange.column + offset,
+      length: stepValue.length
+    }
+
+    if (!isStepValue(stepValue)) {
+      throw new ParseError(`Invalid step value in pattern: "${stepValue}"`, stepRange)
+    }
+
+    steps.push(ast.make('Step', stepRange, { value: stepValue }))
+    offset += stepValue.length
+  }
+
+  return steps
+}
+
+// The lexer is unable to distinguish e.g. 'xx' (two step tokens) from 'xx' (one word token).
+// Therefore, we have to split step tokens out of word tokens here.
+const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
   p.token((t) => {
-    return t.name === 'step' && (t.text === '-' || t.text === 'x' || isPitch(t.text))
-      ? { value: t.text } satisfies Step
-      : undefined
+    const tokenRange = getSourceRange(t)
+    if (t.name === '-') {
+      return [ast.make('Step', tokenRange, { value: t.name })]
+    }
+    if (t.name === 'word') {
+      return splitStepsFromWordToken(t.text, tokenRange)
+    }
+    return undefined
   }),
   p.option(
     combine2(
       literal(':'),
-      expect(numberLiteral_, 'number')
+      p.recursive(() => expression_)
     ),
     undefined
   ),
-  (step, lengthPart) => {
-    if (lengthPart == null) {
-      return step
+  (steps, lengthPart) => {
+    // By construction, the length only applies to the last step
+    const lastStep = steps.at(-1)
+    if (lastStep == null || lengthPart == null) {
+      return steps
     }
 
-    const [, length] = lengthPart
-    return { ...step, length: makeNumeric(undefined, length.value) }
+    return [
+      ...steps.slice(0, -1),
+      ast.make('Step', lastStep.range, { value: lastStep.value, length: lengthPart[1] })
+    ]
   }
 )
 
-const patternLiteral_: p.Parser<Token, unknown, ast.PatternLiteral> = p.abc(
+const pattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   literal('['),
-  p.many(patternStep_),
+  p.many(steps_),
   expectLiteral(']'),
-  (_lbracket, steps, _rbracket) => {
-    return ast.make('PatternLiteral', combineSourceRanges(_lbracket, _rbracket), {
-      value: steps
-    })
+  (_lbracket, manySteps, _rbracket) => {
+    const steps = manySteps.flat()
+    return ast.make('Pattern', combineSourceRanges(_lbracket, _rbracket), { steps })
   }
 )
 
 const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
   stringLiteral_,
-  p.eitherOr(
-    numberLiteral_,
-    patternLiteral_
-  )
+  numberLiteral_
 )
 
 const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
-  literal_,
+  p.eitherOr(
+    literal_,
+    pattern_
+  ),
   p.recursive(() => identifierOrCall_)
 )
 
