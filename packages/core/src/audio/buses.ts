@@ -1,101 +1,46 @@
-import { connectSeries, FeedbackDelay, Gain, Panner, Reverb, type ToneAudioNode } from 'tone'
-import type { BusId, Effect, Program } from '../program.js'
-import { beatsToSeconds } from './time.js'
+import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '../program.js'
+import { createEffect } from './effects.js'
+import type { BusInstance, EffectInstance } from './instances.js'
 
-export interface BusNodes {
-  readonly input: ToneAudioNode
-  readonly output: ToneAudioNode
+const UNITY_GAIN = makeNumeric('db', 0)
 
-  readonly dispose: () => void
+export function createBuses (program: Program): ReadonlyMap<BusId, BusInstance> {
+  return new Map(
+    program.mixer.buses.map((bus) => [bus.id, createBus(program, bus)])
+  )
 }
 
-export type BusesReturn = [buses: ReadonlyMap<BusId, BusNodes>, loaded: Promise<void>]
+function createBus (program: Program, bus: Bus): BusInstance {
+  const effects: EffectInstance[] = []
+  const promises: Array<Promise<void>> = []
 
-export function createBuses (program: Program): BusesReturn {
-  const busNodes = new Map<BusId, BusNodes>()
-  const promises: Array<Promise<any>> = []
-
-  for (const bus of program.mixer.buses) {
-    const nodes: ToneAudioNode[] = []
-
-    for (const effect of bus.effects) {
-      const [effectNode, effectLoaded] = createEffect(program, effect)
-      nodes.push(effectNode)
-      promises.push(effectLoaded)
-    }
-
-    nodes.push(new Gain(bus.gain?.value, 'decibels'))
-
-    const output = nodes.at(-1)
-    if (output == null) {
-      throw new Error()
-    }
-
-    connectSeries(...nodes)
-
-    busNodes.set(bus.id, {
-      input: nodes[0],
-      output,
-      dispose: () => nodes.forEach((node) => node.dispose())
-    })
+  const appendEffect = (effect: Effect) => {
+    const instance = createEffect(program, effect)
+    effects.at(-1)?.output.connect(instance.input)
+    effects.push(instance)
+    promises.push(instance.loaded)
   }
 
-  const unrouted = new Set<BusId>(busNodes.keys())
-
-  for (const routing of program.mixer.routings) {
-    if (routing.source.type !== 'Bus') {
-      continue
-    }
-
-    const source = busNodes.get(routing.source.id)?.output
-    const destination = busNodes.get(routing.destination.id)?.input
-
-    if (source != null && destination != null) {
-      source.connect(destination)
-    }
-
-    unrouted.delete(routing.source.id)
+  for (const effect of bus.effects) {
+    appendEffect(effect)
   }
 
-  for (const id of unrouted) {
-    busNodes.get(id)?.output.toDestination()
+  // ensure there is always at least one node
+  if (bus.gain != null || effects.length === 0) {
+    appendEffect({ type: 'gain', gain: bus.gain ?? UNITY_GAIN })
   }
 
-  return [busNodes, Promise.allSettled(promises).then(() => undefined)]
-}
+  const first = effects.at(0)
+  const last = effects.at(-1)
 
-function createEffect (program: Program, effect: Effect): [ToneAudioNode, Promise<void>] {
-  switch (effect.type) {
-    case 'gain': {
-      return [
-        new Gain(effect.gain.value, 'decibels'),
-        Promise.resolve()
-      ]
-    }
+  if (first == null || last == null) {
+    throw new Error()
+  }
 
-    case 'pan': {
-      return [
-        new Panner(Math.max(-1, Math.min(1, effect.pan.value))),
-        Promise.resolve()
-      ]
-    }
-
-    case 'delay': {
-      return [
-        new FeedbackDelay({
-          delayTime: beatsToSeconds(effect.time, program.track.tempo).value,
-          feedback: Math.max(0, Math.min(1.0, effect.feedback.value))
-        }),
-        Promise.resolve()
-      ]
-    }
-
-    case 'reverb': {
-      const reverb = new Reverb({
-        decay: effect.decay.value,
-        wet: Math.max(0, Math.min(1.0, effect.mix.value))
-      })
-      return [reverb, reverb.generate().then(() => undefined)]
-    }
+  return {
+    input: first.input,
+    output: last.output,
+    loaded: Promise.all(promises).then(() => undefined),
+    dispose: () => effects.forEach((item) => item.dispose())
   }
 }

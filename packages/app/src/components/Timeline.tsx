@@ -1,4 +1,4 @@
-import type { BeatRange } from '@core/audio/types.js'
+import type { BeatRange } from '@core/types.js'
 import { makeNumeric, type Numeric, type Program, type Section } from '@core/program.js'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'

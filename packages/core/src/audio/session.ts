@@ -1,11 +1,12 @@
 import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
 import type { Program } from '../program.js'
+import type { BeatRange } from '../types.js'
 import { createBuses } from './buses.js'
+import { createInstruments } from './instruments.js'
 import { createParts } from './parts.js'
-import { createPlayers } from './players.js'
+import { setupRoutings } from './routings.js'
 import { beatsToSeconds, calculateTotalDuration } from './time.js'
-import type { BeatRange } from './types.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
@@ -35,9 +36,17 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
   // If true, nothing should be played at all, because the start is after the end
   const endImmediately = endOffset.value <= 0 || startOffset.value >= endOffset.value
 
-  const [buses, busesLoaded] = createBuses(program)
-  const [players, playersLoaded] = createPlayers(program, buses)
-  const parts = createParts(program, players)
+  const buses = createBuses(program)
+  const instruments = createInstruments(program)
+  const parts = createParts(program, instruments)
+
+  const instances = [
+    ...buses.values(),
+    ...instruments.values(),
+    ...parts.values()
+  ]
+
+  setupRoutings(program, instruments, buses)
 
   let disposed = false
 
@@ -46,37 +55,39 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
 
   let progressInterval: ReturnType<typeof setInterval> | undefined
 
+  const startNow = () => {
+    if (disposed) {
+      return
+    }
+
+    if (endImmediately) {
+      ended.set(true)
+      progress.set(1)
+      return
+    }
+
+    parts.forEach((part) => part.start(0))
+    transport.scheduleOnce(() => ended.set(true), endOffset.value)
+    transport.start('+0.05', startOffset.value)
+
+    progressInterval = setInterval(() => {
+      if (!disposed && transport.state === 'started') {
+        const progressValue = transport.seconds / Math.max(0.001, totalDuration.value)
+        progress.set(Math.max(0, Math.min(1, progressValue)))
+      }
+    }, 16)
+  }
+
   const start = () => {
     if (disposed) {
       return
     }
 
-    const loaded = Promise.all([busesLoaded, playersLoaded])
-    const timeout = new Promise((resolve) => setTimeout(resolve, LOAD_TIMEOUT_MS))
-
-    Promise.race([loaded, timeout])
-      .then(() => {
-        if (disposed) {
-          return
-        }
-
-        if (endImmediately) {
-          ended.set(true)
-          progress.set(1)
-          return
-        }
-
-        parts.forEach((part) => part.start(0))
-        transport.scheduleOnce(() => ended.set(true), endOffset.value)
-        transport.start('+0.05', startOffset.value)
-
-        progressInterval = setInterval(() => {
-          if (!disposed && transport.state === 'started') {
-            const progressValue = transport.seconds / Math.max(0.001, totalDuration.value)
-            progress.set(Math.max(0, Math.min(1, progressValue)))
-          }
-        }, 16)
-      })
+    Promise.race([
+      Promise.allSettled(instances.map((item) => item.loaded.catch(() => {}))),
+      new Promise((resolve) => setTimeout(resolve, LOAD_TIMEOUT_MS))
+    ])
+      .then(() => startNow())
       .catch(() => {})
   }
 
@@ -87,16 +98,8 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
 
     disposed = true
 
-    for (const busNodes of buses.values()) {
-      busNodes.dispose()
-    }
-
-    for (const part of parts.values()) {
-      part.stop().dispose()
-    }
-
-    for (const player of players.values()) {
-      player.releaseAll().dispose()
+    for (const item of instances) {
+      item.dispose()
     }
 
     resetTransport(transport)
