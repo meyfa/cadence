@@ -7,11 +7,9 @@ export function beatsToSeconds (
   return makeNumeric('s', (beats.value * 60) / tempo.value)
 }
 
-export function calculateTotalDuration (program: Program): Numeric<'s'> {
-  const beats = makeNumeric(
+export function calculateTotalLength (program: Program): Numeric<'beats'> {
+  return makeNumeric(
     'beats',
     program.track.sections.reduce((total, section) => total + section.length.value, 0)
   )
-
-  return beatsToSeconds(beats, program.track.tempo)
 }
