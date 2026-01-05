@@ -1,6 +1,7 @@
-import { parser } from './cadence.grammar'
-import { foldNodeProp, foldInside, LRLanguage, LanguageSupport } from '@codemirror/language'
+import { foldInside, foldNodeProp, LanguageSupport, LRLanguage } from '@codemirror/language'
+import { keywords } from '@language/constants.js'
 import { styleTags, tags as t } from '@lezer/highlight'
+import { parser } from './cadence.grammar'
 
 const parserWithMetadata = parser.configure({
   props: [
@@ -22,7 +23,7 @@ const parserWithMetadata = parser.configure({
 
       '+ - "*" "/"': t.arithmeticOperator,
 
-      'track section for mixer bus effect': t.keyword,
+      [keywords.join(' ')]: t.keyword,
 
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
