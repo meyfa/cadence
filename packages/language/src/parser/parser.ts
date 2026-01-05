@@ -145,7 +145,8 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
   p.option(
     combine2(
       literal(':'),
-      p.recursive(() => expression_)
+      // Require parantheses around complex length expressions
+      p.recursive(() => primary_)
     ),
     undefined
   ),
@@ -156,9 +157,11 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
       return steps
     }
 
+    const length = lengthPart[1]
+
     return [
       ...steps.slice(0, -1),
-      ast.make('Step', lastStep.range, { value: lastStep.value, length: lengthPart[1] })
+      ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, length })
     ]
   }
 )

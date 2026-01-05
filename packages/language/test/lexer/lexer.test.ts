@@ -101,7 +101,7 @@ describe('lexer/lexer.ts', () => {
   })
 
   it('should lex patterns with expressions', () => {
-    const result = lex('[x:foo([x:bar])+(1.0) -:(baz)]')
+    const result = lex('[x:(foo([x:bar])+1.0) -:(baz)]')
     assert.deepStrictEqual(result, {
       complete: true,
       value: [
@@ -109,18 +109,18 @@ describe('lexer/lexer.ts', () => {
 
         { name: 'word', text: 'x', offset: 1, len: 1, line: 1, column: 2, state: '' },
         { name: ':', text: ':', offset: 2, len: 1, line: 1, column: 3, state: '' },
-        { name: 'word', text: 'foo', offset: 3, len: 3, line: 1, column: 4, state: '' },
-        { name: '(', text: '(', offset: 6, len: 1, line: 1, column: 7, state: '' },
-        { name: '[', text: '[', offset: 7, len: 1, line: 1, column: 8, state: '' },
+        { name: '(', text: '(', offset: 3, len: 1, line: 1, column: 4, state: '' },
+        { name: 'word', text: 'foo', offset: 4, len: 3, line: 1, column: 5, state: '' },
+        { name: '(', text: '(', offset: 7, len: 1, line: 1, column: 8, state: '' },
+        { name: '[', text: '[', offset: 8, len: 1, line: 1, column: 9, state: '' },
 
-        { name: 'word', text: 'x', offset: 8, len: 1, line: 1, column: 9, state: '' },
-        { name: ':', text: ':', offset: 9, len: 1, line: 1, column: 10, state: '' },
-        { name: 'word', text: 'bar', offset: 10, len: 3, line: 1, column: 11, state: '' },
+        { name: 'word', text: 'x', offset: 9, len: 1, line: 1, column: 10, state: '' },
+        { name: ':', text: ':', offset: 10, len: 1, line: 1, column: 11, state: '' },
+        { name: 'word', text: 'bar', offset: 11, len: 3, line: 1, column: 12, state: '' },
 
-        { name: ']', text: ']', offset: 13, len: 1, line: 1, column: 14, state: '' },
-        { name: ')', text: ')', offset: 14, len: 1, line: 1, column: 15, state: '' },
-        { name: '+', text: '+', offset: 15, len: 1, line: 1, column: 16, state: '' },
-        { name: '(', text: '(', offset: 16, len: 1, line: 1, column: 17, state: '' },
+        { name: ']', text: ']', offset: 14, len: 1, line: 1, column: 15, state: '' },
+        { name: ')', text: ')', offset: 15, len: 1, line: 1, column: 16, state: '' },
+        { name: '+', text: '+', offset: 16, len: 1, line: 1, column: 17, state: '' },
         { name: 'number', text: '1.0', offset: 17, len: 3, line: 1, column: 18, state: '' },
         { name: ')', text: ')', offset: 20, len: 1, line: 1, column: 21, state: '' },
 
