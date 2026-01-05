@@ -1,75 +1,109 @@
 import { renderPatternEvents } from '@core/pattern.js'
-import { Part, type Sampler } from 'tone'
+import { Part } from 'tone'
 import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '../program.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
+import type { InstrumentInstance, PartInstance } from './instances.js'
 import { beatsToSeconds } from './time.js'
 
-const BEAT = makeNumeric('beats', 1)
+export function createParts (
+  program: Program,
+  instruments: ReadonlyMap<InstrumentId, InstrumentInstance>
+): readonly PartInstance[] {
+  const noteEvents = createNoteEventMap(program)
 
-export function createParts (program: Program, players: Map<InstrumentId, Sampler>): readonly Part[] {
-  const eventsByInstrument = new Map<InstrumentId, Array<[number, NoteEvent]>>()
+  const result: PartInstance[] = []
 
-  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
-  let currentOffsetBeats = 0
-
-  for (const section of program.track.sections) {
-    const startOffset = currentOffsetBeats * timePerBeat
-    currentOffsetBeats += section.length.value
-
-    for (const routing of section.routings) {
-      const events = renderPatternEvents(routing.source.value, section.length)
-      const values: Array<[number, NoteEvent]> = events.map((event) => [
-        startOffset + event.time.value * timePerBeat,
-        event
-      ])
-
-      const instrumentEvents = eventsByInstrument.get(routing.destination.id)
-      if (instrumentEvents == null) {
-        eventsByInstrument.set(routing.destination.id, values)
-        continue
-      }
-
-      instrumentEvents.push(...values)
-    }
-  }
-
-  const result: Part[] = []
-
-  for (const [instrumentId, values] of eventsByInstrument.entries()) {
+  for (const [instrumentId, values] of noteEvents.entries()) {
     const instrument = program.instruments.get(instrumentId)
-    const player = players.get(instrumentId)
-    if (instrument == null || player == null) {
+    const instance = instruments.get(instrumentId)
+
+    if (instrument == null || instance == null) {
       continue
     }
 
-    result.push(new Part(createCallback(instrument, player, timePerBeat), values))
+    const callback = createInstrumentCallback(program, instrument, instance)
+    const part = new Part(callback, values)
+
+    result.push({
+      loaded: Promise.resolve(),
+
+      dispose: () => {
+        part.stop().dispose()
+      },
+
+      start: (time) => {
+        part.start(time)
+      }
+    })
   }
 
   return result
 }
 
-type PlayerCallback = (time: number, event: NoteEvent) => void
+type NoteEventMap = ReadonlyMap<InstrumentId, Array<readonly [number, NoteEvent]>>
+type InstrumentCallback = (time: number, event: NoteEvent) => void
 
-function createCallback (instrument: Instrument, player: Sampler, timePerBeat: number): PlayerCallback {
-  const instrumentLength = instrument.length?.value
+const BEAT = makeNumeric('beats', 1)
+
+function createNoteEventMap (program: Program): NoteEventMap {
+  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
+
+  const map = new Map<InstrumentId, Array<[number, NoteEvent]>>()
+
+  let offsetBeats = 0
+
+  for (const section of program.track.sections) {
+    for (const routing of section.routings) {
+      const patternEvents = renderPatternEvents(routing.source.value, section.length)
+        .map((event): [number, NoteEvent] => {
+          return [(offsetBeats + event.time.value) * timePerBeat, event]
+        })
+
+      const events = map.get(routing.destination.id)
+      if (events == null) {
+        map.set(routing.destination.id, patternEvents)
+      } else {
+        events.push(...patternEvents)
+      }
+    }
+
+    offsetBeats += section.length.value
+  }
+
+  return map
+}
+
+function createInstrumentCallback (
+  program: Program,
+  instrument: Instrument,
+  instance: InstrumentInstance
+): InstrumentCallback {
+  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
+  const defaultNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
 
   return (time: number, event: NoteEvent) => {
-    if (!player.loaded) {
-      return
-    }
-
-    const note = event.pitch ?? instrument.rootNote ?? DEFAULT_ROOT_NOTE
-
-    const gateSeconds = event.gate != null ? event.gate.value * timePerBeat : undefined
-    const duration = gateSeconds != null && instrumentLength != null
-      ? Math.min(gateSeconds, instrumentLength)
-      : (gateSeconds ?? instrumentLength)
+    const note = event.pitch ?? defaultNote
+    const duration = getNoteDuration(instrument, event, timePerBeat)
 
     if (duration == null) {
-      player.triggerAttack(note, time)
+      instance.triggerAttack(note, time)
       return
     }
 
-    player.triggerAttackRelease(note, duration, time)
+    if (duration > 0 && Number.isFinite(duration)) {
+      instance.triggerAttack(note, time)
+      instance.triggerRelease(note, time + duration)
+    }
   }
+}
+
+function getNoteDuration (instrument: Instrument, event: NoteEvent, timePerBeat: number): number | undefined {
+  const instrumentSeconds = instrument.length?.value
+  const gateSeconds = event.gate != null ? event.gate.value * timePerBeat : undefined
+
+  if (gateSeconds == null || instrumentSeconds == null) {
+    return gateSeconds ?? instrumentSeconds
+  }
+
+  return Math.min(gateSeconds, instrumentSeconds)
 }
