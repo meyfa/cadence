@@ -1,4 +1,5 @@
 import { isStepValue } from '@core/program.js'
+import { isKeyword, type Keyword } from '@language/constants.js'
 import { Token } from 'leac'
 import * as p from 'peberminta'
 import { truncateString, type Result } from '../error.js'
@@ -7,10 +8,6 @@ import * as ast from './ast.js'
 import { ParseError } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16
-
-const keywords = ['track', 'section', 'for', 'mixer', 'bus', 'effect'] as const
-
-type Keyword = (typeof keywords)[number]
 
 // Parser helpers
 
@@ -73,7 +70,7 @@ function expectLiteral (name: string, printable = `"${name}"`): p.Parser<Token, 
 // Grammar
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
-  return t.name === 'word' && !keywords.includes(t.text as Keyword)
+  return t.name === 'word' && !isKeyword(t.text)
     ? ast.make('Identifier', getSourceRange(t), { name: t.text })
     : undefined
 })
