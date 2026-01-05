@@ -19,6 +19,11 @@ export const mixerSchema = definePropertySchema([
 
 export const busSchema = definePropertySchema([
   {
+    name: 'pan',
+    type: NumberType.with(undefined),
+    required: false
+  },
+  {
     name: 'gain',
     type: NumberType.with('db'),
     required: false

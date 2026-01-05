@@ -74,9 +74,13 @@ mixer {
     gain: -10 db
   }
 
-  // A bus can have zero or more effects.
+  // A bus can have zero or more effects, which are applied in order.
+  // input -> effects... -> pan -> gain -> output
 
   bus clap_delay {
+    pan: -0.25
+    gain: 3 db
+
     effect delay(time: 0.5 beats, feedback: 0.6)
     effect reverb(decay: 1s, mix: 0.3)
   }
