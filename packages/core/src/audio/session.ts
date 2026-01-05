@@ -1,18 +1,18 @@
 import { getTransport } from 'tone'
 import { MutableObservable, type Observable } from '../observable.js'
-import type { Program } from '../program.js'
+import { makeNumeric, type Numeric, type Program } from '../program.js'
 import type { BeatRange } from '../types.js'
 import { createBuses } from './buses.js'
 import { createInstruments } from './instruments.js'
 import { createParts } from './parts.js'
 import { setupRoutings } from './routings.js'
-import { beatsToSeconds, calculateTotalDuration } from './time.js'
+import { beatsToSeconds, calculateTotalLength } from './time.js'
 
 const LOAD_TIMEOUT_MS = 3000
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
-  readonly progress: Observable<number>
+  readonly position: Observable<Numeric<'beats'>>
   readonly start: () => void
   readonly dispose: () => void
 }
@@ -24,17 +24,12 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
   resetTransport(transport)
   transport.bpm.value = program.track.tempo.value
 
-  const totalDuration = calculateTotalDuration(program)
-
-  const startOffset = beatsToSeconds(range.start, program.track.tempo)
-  const endOffset = range.end != null
-    ? beatsToSeconds(range.end, program.track.tempo)
-    : totalDuration
-
-  const initialProgress = totalDuration.value > 0 ? Math.min(1, startOffset.value / totalDuration.value) : 0
+  const endPosition = range.end ?? calculateTotalLength(program)
+  const startTime = beatsToSeconds(range.start, program.track.tempo)
+  const endTime = beatsToSeconds(endPosition, program.track.tempo)
 
   // If true, nothing should be played at all, because the start is after the end
-  const endImmediately = endOffset.value <= 0 || startOffset.value >= endOffset.value
+  const endImmediately = endPosition.value <= 0 || range.start.value >= endPosition.value
 
   const buses = createBuses(program)
   const instruments = createInstruments(program)
@@ -51,7 +46,7 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
   let disposed = false
 
   const ended = new MutableObservable(false)
-  const progress = new MutableObservable(initialProgress)
+  const position = new MutableObservable(range.start)
 
   let progressInterval: ReturnType<typeof setInterval> | undefined
 
@@ -62,18 +57,17 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
 
     if (endImmediately) {
       ended.set(true)
-      progress.set(1)
+      position.set(endPosition)
       return
     }
 
     parts.forEach((part) => part.start(0))
-    transport.scheduleOnce(() => ended.set(true), endOffset.value)
-    transport.start('+0.05', startOffset.value)
+    transport.scheduleOnce(() => ended.set(true), endTime.value)
+    transport.start('+0.05', startTime.value)
 
     progressInterval = setInterval(() => {
       if (!disposed && transport.state === 'started') {
-        const progressValue = transport.seconds / Math.max(0.001, totalDuration.value)
-        progress.set(Math.max(0, Math.min(1, progressValue)))
+        position.set(makeNumeric('beats', transport.seconds * program.track.tempo.value / 60))
       }
     }, 16)
   }
@@ -109,10 +103,10 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
       progressInterval = undefined
     }
 
-    progress.set(0)
+    position.set(endPosition)
   }
 
-  return { start, dispose, ended, progress }
+  return { start, dispose, ended, position }
 }
 
 function resetTransport (transport: ReturnType<typeof getTransport>): void {

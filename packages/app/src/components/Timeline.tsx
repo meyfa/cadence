@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { useGlobalMouseMove, useGlobalMouseUp } from '../hooks/input.js'
 import { formatBeatDuration } from '../utilities/strings.js'
+import { calculateTotalLength } from '@core/audio/time.js'
 
 const TIMELINE_ZOOM_MIN = 4
 const TIMELINE_ZOOM_MAX = 64
@@ -23,9 +24,9 @@ export const Timeline: FunctionComponent<{
   program: Program
   selection: BeatRange
   setSelection: (range: BeatRange) => void
-  playbackProgress?: number
-}> = ({ program, selection, setSelection, playbackProgress }) => {
-  const trackLength = makeNumeric('beats', program.track.sections.reduce((sum, section) => sum + section.length.value, 0))
+  playbackPosition?: Numeric<'beats'>
+}> = ({ program, selection, setSelection, playbackPosition }) => {
+  const trackLength = calculateTotalLength(program)
 
   const [beatWidth, setBeatWidth] = useState(TIMELINE_ZOOM_DEFAULT)
 
@@ -71,7 +72,7 @@ export const Timeline: FunctionComponent<{
             variant={isRangeSelection ? 'start' : 'cursor'}
             position={selection.start}
             trackLength={trackLength}
-            dimmed={playbackProgress != null}
+            dimmed={playbackPosition != null}
           />
         )}
 
@@ -80,15 +81,15 @@ export const Timeline: FunctionComponent<{
             variant='end'
             position={selection.end}
             trackLength={trackLength}
-            dimmed={playbackProgress != null}
+            dimmed={playbackPosition != null}
           />
         )}
 
-        {playbackProgress != null && (
+        {playbackPosition != null && (
           <div
             className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-100 pointer-events-none'
             style={{
-              left: `${playbackProgress * 100}%`
+              left: `${(playbackPosition.value / trackLength.value) * 100}%`
             }}
           />
         )}
