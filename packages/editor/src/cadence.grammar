@@ -55,12 +55,16 @@ Literal {
 
 Pattern {
   "["
-  ((word | "-") (":" expression)?)*
+  ((word | "-") (":" primary)?)*
   "]"
 }
 
+primary {
+  "(" expression ")" | Literal | Pattern | Call | VariableName
+}
+
 expression {
-  "(" expression ")" | Literal | Pattern | Call | VariableName | UnaryExpression | BinaryExpression
+  primary | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
