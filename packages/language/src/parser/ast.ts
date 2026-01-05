@@ -33,6 +33,7 @@ export interface Step extends ASTNode {
   readonly type: 'Step'
   readonly value: StepValue
   readonly length?: Expression
+  readonly gate?: Expression
 }
 
 export interface Pattern extends ASTNode {

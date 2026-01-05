@@ -72,4 +72,73 @@ describe('parser/parser.ts', () => {
       })
     })
   })
+
+  it('should parse a pattern with gate', () => {
+    const result = parse([
+      { name: 'word', text: 'pattern', offset: 0, len: 7, line: 1, column: 1, state: '' },
+      { name: '=', text: '=', offset: 8, len: 1, line: 1, column: 9, state: '' },
+      { name: '[', text: '[', offset: 10, len: 1, line: 1, column: 11, state: '' },
+      { name: 'word', text: 'C4', offset: 11, len: 2, line: 1, column: 12, state: '' },
+      { name: '(', text: '(', offset: 13, len: 1, line: 1, column: 14, state: '' },
+      { name: 'number', text: '2.0', offset: 14, len: 3, line: 1, column: 15, state: '' },
+      { name: ')', text: ')', offset: 17, len: 1, line: 1, column: 18, state: '' },
+      { name: '-', text: '-', offset: 18, len: 1, line: 1, column: 19, state: '' },
+      { name: ']', text: ']', offset: 19, len: 1, line: 1, column: 20, state: '' }
+    ])
+    assert.deepStrictEqual(result, {
+      complete: true,
+      value: ast.make('Program', { offset: 0, length: 20, line: 1, column: 1 }, {
+        children: [
+          ast.make('Assignment', { offset: 0, length: 20, line: 1, column: 1 }, {
+            key: ast.make('Identifier', { offset: 0, length: 7, line: 1, column: 1 }, { name: 'pattern' }),
+            value: ast.make('Pattern', { offset: 10, length: 10, line: 1, column: 11 }, {
+              steps: [
+                ast.make('Step', { offset: 11, length: 7, line: 1, column: 12 }, {
+                  value: 'C4',
+                  gate: ast.make('NumberLiteral', { offset: 14, length: 3, line: 1, column: 15 }, { value: 2.0, unit: undefined })
+                }),
+                ast.make('Step', { offset: 18, length: 1, line: 1, column: 19 }, { value: '-' })
+              ]
+            })
+          })
+        ]
+      })
+    })
+  })
+
+  it('should parse a pattern with gate and length', () => {
+    const result = parse([
+      { name: 'word', text: 'pattern', offset: 0, len: 7, line: 1, column: 1, state: '' },
+      { name: '=', text: '=', offset: 8, len: 1, line: 1, column: 9, state: '' },
+      { name: '[', text: '[', offset: 10, len: 1, line: 1, column: 11, state: '' },
+      { name: 'word', text: 'C4', offset: 11, len: 2, line: 1, column: 12, state: '' },
+      { name: '(', text: '(', offset: 13, len: 1, line: 1, column: 14, state: '' },
+      { name: 'number', text: '2.0', offset: 14, len: 3, line: 1, column: 15, state: '' },
+      { name: ')', text: ')', offset: 17, len: 1, line: 1, column: 18, state: '' },
+      { name: ':', text: ':', offset: 18, len: 1, line: 1, column: 19, state: '' },
+      { name: 'number', text: '1.5', offset: 19, len: 3, line: 1, column: 20, state: '' },
+      { name: '-', text: '-', offset: 22, len: 1, line: 1, column: 23, state: '' },
+      { name: ']', text: ']', offset: 23, len: 1, line: 1, column: 24, state: '' }
+    ])
+    assert.deepStrictEqual(result, {
+      complete: true,
+      value: ast.make('Program', { offset: 0, length: 24, line: 1, column: 1 }, {
+        children: [
+          ast.make('Assignment', { offset: 0, length: 24, line: 1, column: 1 }, {
+            key: ast.make('Identifier', { offset: 0, length: 7, line: 1, column: 1 }, { name: 'pattern' }),
+            value: ast.make('Pattern', { offset: 10, length: 14, line: 1, column: 11 }, {
+              steps: [
+                ast.make('Step', { offset: 11, length: 11, line: 1, column: 12 }, {
+                  value: 'C4',
+                  gate: ast.make('NumberLiteral', { offset: 14, length: 3, line: 1, column: 15 }, { value: 2.0, unit: undefined }),
+                  length: ast.make('NumberLiteral', { offset: 19, length: 3, line: 1, column: 20 }, { value: 1.5, unit: undefined })
+                }),
+                ast.make('Step', { offset: 22, length: 1, line: 1, column: 23 }, { value: '-' })
+              ]
+            })
+          })
+        ]
+      })
+    })
+  })
 })

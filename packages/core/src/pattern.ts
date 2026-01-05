@@ -25,7 +25,12 @@ export function createPattern (steps: readonly Step[], subdivision: number): Pat
 
   for (const step of steps) {
     const stepLength = defaultStepLength * (step.length?.value ?? 1)
-    const gate = makeNumeric('beats', stepLength)
+    if (stepLength <= 0 || !Number.isFinite(stepLength)) {
+      continue
+    }
+
+    const stepGate = defaultStepLength * (step.gate?.value ?? step.length?.value ?? 1)
+    const gate = makeNumeric('beats', stepGate)
 
     if (step.value !== '-') {
       const time = makeNumeric('beats', offset)

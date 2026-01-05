@@ -55,7 +55,7 @@ Literal {
 
 Pattern {
   "["
-  ((word | "-") (":" primary)?)*
+  ((word | "-") ("(" argumentList? ")")? (":" primary)?)*
   "]"
 }
 
@@ -92,7 +92,11 @@ Assignment {
 
 Call {
   Callee { word }
-  "(" (argument ("," argument)*)? ")"
+  "(" argumentList? ")"
+}
+
+argumentList {
+  argument ("," argument)*
 }
 
 argument {

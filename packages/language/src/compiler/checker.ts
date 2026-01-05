@@ -243,19 +243,10 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
 
     case 'Pattern': {
       for (const step of expression.steps) {
-        if (step.length == null) {
-          continue
-        }
-
-        const errors: CompileError[] = []
-
-        const lengthCheck = checkExpression(context, step.length)
-        errors.push(...lengthCheck.errors)
-
-        if (lengthCheck.result != null) {
-          const lengthErrors = checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range)
-          errors.push(...lengthErrors)
-        }
+        const errors: CompileError[] = [
+          ...checkStepLength(context, step),
+          ...checkStepGate(context, step)
+        ]
 
         if (errors.length > 0) {
           return { errors }
@@ -315,6 +306,32 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.range)
     }
   }
+}
+
+function checkStepLength (context: Context, step: ast.Step): readonly CompileError[] {
+  if (step.length == null) {
+    return []
+  }
+
+  const lengthCheck = checkExpression(context, step.length)
+  if (lengthCheck.result == null) {
+    return lengthCheck.errors
+  }
+
+  return checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range)
+}
+
+function checkStepGate (context: Context, step: ast.Step): readonly CompileError[] {
+  if (step.gate == null) {
+    return []
+  }
+
+  const gateCheck = checkExpression(context, step.gate)
+  if (gateCheck.result == null) {
+    return gateCheck.errors
+  }
+
+  return checkType([NumberType.with(undefined)], gateCheck.result, step.gate.range)
 }
 
 function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {

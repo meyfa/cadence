@@ -52,6 +52,44 @@ describe('pattern.ts', () => {
         { time: beats(3), gate: beats(0.5) }
       ])
     })
+
+    it('should skip steps with non-positive lengths', () => {
+      const pattern = createPattern([
+        { value: 'C1', length: makeNumeric(undefined, 0) },
+        { value: 'C2', length: makeNumeric(undefined, -1) },
+        { value: 'C3' }
+      ], 1)
+      assert.strictEqual(pattern.length?.value, 1)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { pitch: 'C3', time: beats(0), gate: beats(1) }
+      ])
+    })
+
+    it('should handle steps with custom gates', () => {
+      const pattern = createPattern([
+        { value: 'x', gate: makeNumeric(undefined, 0.5) },
+        { value: '-' },
+        { value: 'x', gate: makeNumeric(undefined, 0.25) }
+      ], 1)
+      assert.strictEqual(pattern.length?.value, 3)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(2), gate: beats(0.25) }
+      ])
+    })
+
+    it('should handle steps with both custom lengths and gates', () => {
+      const pattern = createPattern([
+        { value: 'x', length: makeNumeric(undefined, 2), gate: makeNumeric(undefined, 1.5) },
+        { value: '-' },
+        { value: 'x', length: makeNumeric(undefined, 0.5), gate: makeNumeric(undefined, 0.1) }
+      ], 1)
+      assert.strictEqual(pattern.length?.value, 3.5)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { time: beats(0), gate: beats(1.5) },
+        { time: beats(3), gate: beats(0.1) }
+      ])
+    })
   })
 
   describe('concatPatterns()', () => {
