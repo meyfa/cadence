@@ -12,6 +12,9 @@ function createFunctionContext (): FunctionContext {
 }
 
 describe('compiler/functions.ts', () => {
+  // helper to create Numeric<'beats'>
+  const beats = (value: number) => makeNumeric('beats', value)
+
   const functions = getDefaultFunctions()
 
   describe('loop', () => {
@@ -31,13 +34,13 @@ describe('compiler/functions.ts', () => {
       const resultPattern = PatternType.cast(result)
       assert.strictEqual(resultPattern.data.length, undefined)
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 0.75), pitch: 'G5' },
-        { time: makeNumeric('beats', 1) },
-        { time: makeNumeric('beats', 1.75), pitch: 'G5' }
+        { time: beats(0), gate: beats(0.25) },
+        { time: beats(0.75), gate: beats(0.25), pitch: 'G5' },
+        { time: beats(1), gate: beats(0.25) },
+        { time: beats(1.75), gate: beats(0.25), pitch: 'G5' }
       ])
     })
 
@@ -53,12 +56,12 @@ describe('compiler/functions.ts', () => {
       const resultPattern = PatternType.cast(result)
       assert.strictEqual(resultPattern.data.length, undefined)
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 1), pitch: 'C4' },
-        { time: makeNumeric('beats', 1.5) }
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
+        { time: beats(1.5), gate: beats(0.5) }
       ])
     })
 
@@ -70,7 +73,7 @@ describe('compiler/functions.ts', () => {
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length?.value, 0)
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
       assert.deepStrictEqual(events, [])
     })
 
@@ -87,17 +90,17 @@ describe('compiler/functions.ts', () => {
         times: makeNumeric(undefined, 3)
       })
       const resultPattern = PatternType.cast(result)
-      assert.deepStrictEqual(resultPattern.data.length, makeNumeric('beats', 1.5 * 3))
+      assert.deepStrictEqual(resultPattern.data.length, beats(1.5 * 3))
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 5.0))
+      const events = renderPatternEvents(resultPattern.data, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: makeNumeric('beats', 0) },
-        { time: makeNumeric('beats', 1), pitch: 'C4' },
-        { time: makeNumeric('beats', 1.5) },
-        { time: makeNumeric('beats', 2.5), pitch: 'C4' },
-        { time: makeNumeric('beats', 3.0) },
-        { time: makeNumeric('beats', 4.0), pitch: 'C4' }
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
+        { time: beats(1.5), gate: beats(0.5) },
+        { time: beats(2.5), gate: beats(0.5), pitch: 'C4' },
+        { time: beats(3.0), gate: beats(0.5) },
+        { time: beats(4.0), gate: beats(0.5), pitch: 'C4' }
       ])
     })
 
@@ -116,7 +119,7 @@ describe('compiler/functions.ts', () => {
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length?.value, 0)
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
       assert.deepStrictEqual(events, [])
     })
 
@@ -135,7 +138,7 @@ describe('compiler/functions.ts', () => {
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length?.value, 0)
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
       assert.deepStrictEqual(events, [])
     })
 
@@ -152,12 +155,12 @@ describe('compiler/functions.ts', () => {
         times: makeNumeric(undefined, 0.5)
       })
       const resultPattern = PatternType.cast(result)
-      assert.deepStrictEqual(resultPattern.data.length, makeNumeric('beats', 1.5 * 0.5))
+      assert.deepStrictEqual(resultPattern.data.length, beats(1.5 * 0.5))
 
-      const events = renderPatternEvents(resultPattern.data, makeNumeric('beats', 2.0))
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: makeNumeric('beats', 0) }
+        { time: beats(0), gate: beats(0.5) }
       ])
     })
   })
@@ -253,13 +256,13 @@ describe('compiler/functions.ts', () => {
     it('should create delay effect', () => {
       const context = createFunctionContext()
       const result = delay.data.invoke(context, {
-        time: makeNumeric('beats', 0.5),
+        time: beats(0.5),
         feedback: makeNumeric(undefined, 0.3)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'delay',
-        time: makeNumeric('beats', 0.5),
+        time: beats(0.5),
         feedback: makeNumeric(undefined, 0.3)
       })
     })

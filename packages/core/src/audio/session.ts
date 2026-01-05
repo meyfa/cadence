@@ -96,7 +96,7 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
     }
 
     for (const player of players.values()) {
-      player.stop().dispose()
+      player.releaseAll().dispose()
     }
 
     resetTransport(transport)

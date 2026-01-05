@@ -27,6 +27,12 @@ export interface NoteEvent {
   readonly time: Numeric<'beats'>
 
   /**
+   * The gate (duration) of the note event in beats. If undefined, the note is never released (held indefinitely),
+   * and may or may not be cut off by subsequent notes depending on the instrument's behavior.
+   */
+  readonly gate?: Numeric<'beats'>
+
+  /**
    * The pitch associated with the event. If undefined, indicates that the instrument's default pitch should be used.
    */
   readonly pitch?: Pitch

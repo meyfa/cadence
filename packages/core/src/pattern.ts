@@ -20,15 +20,19 @@ export function createPattern (steps: readonly Step[], subdivision: number): Pat
   const events: NoteEvent[] = []
 
   const defaultStepLength = 1 / subdivision
+
   let offset = 0
 
   for (const step of steps) {
+    const stepLength = defaultStepLength * (step.length?.value ?? 1)
+    const gate = makeNumeric('beats', stepLength)
+
     if (step.value !== '-') {
       const time = makeNumeric('beats', offset)
-      events.push(step.value === 'x' ? { time } : { time, pitch: step.value })
+      events.push(step.value === 'x' ? { time, gate } : { time, gate, pitch: step.value })
     }
 
-    offset += defaultStepLength * (step.length?.value ?? 1)
+    offset += stepLength
   }
 
   const length = makeNumeric('beats', offset)
@@ -181,7 +185,10 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
       for (const event of pattern.evaluate()) {
         yield {
           ...event,
-          time: makeNumeric('beats', event.time.value * times)
+          time: makeNumeric('beats', event.time.value * times),
+          gate: event.gate != null
+            ? makeNumeric('beats', event.gate.value * times)
+            : undefined
         }
       }
     }

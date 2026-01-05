@@ -1,14 +1,12 @@
 import { renderPatternEvents } from '@core/pattern.js'
-import { Part, Player } from 'tone'
-import { convertPitchToPlaybackRate } from '../midi.js'
+import { Part, type Sampler } from 'tone'
 import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '../program.js'
+import { DEFAULT_ROOT_NOTE } from './constants.js'
 import { beatsToSeconds } from './time.js'
-
-export const DEFAULT_ROOT_NOTE = 'C5' as const
 
 const BEAT = makeNumeric('beats', 1)
 
-export function createParts (program: Program, players: Map<InstrumentId, Player>): readonly Part[] {
+export function createParts (program: Program, players: Map<InstrumentId, Sampler>): readonly Part[] {
   const eventsByInstrument = new Map<InstrumentId, Array<[number, NoteEvent]>>()
 
   const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
@@ -44,24 +42,34 @@ export function createParts (program: Program, players: Map<InstrumentId, Player
       continue
     }
 
-    result.push(new Part(createCallback(instrument, player), values))
+    result.push(new Part(createCallback(instrument, player, timePerBeat), values))
   }
 
   return result
 }
 
-function createCallback (instrument: Instrument, player: Player): (time: number, event: NoteEvent) => void {
-  const duration = instrument.length?.value
+type PlayerCallback = (time: number, event: NoteEvent) => void
+
+function createCallback (instrument: Instrument, player: Sampler, timePerBeat: number): PlayerCallback {
+  const instrumentLength = instrument.length?.value
 
   return (time: number, event: NoteEvent) => {
     if (!player.loaded) {
       return
     }
 
-    const rootNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
-    const playbackRate = event.pitch != null ? convertPitchToPlaybackRate(event.pitch, rootNote) : 1
+    const note = event.pitch ?? instrument.rootNote ?? DEFAULT_ROOT_NOTE
 
-    player.playbackRate = playbackRate
-    player.start(time, undefined, duration)
+    const gateSeconds = event.gate != null ? event.gate.value * timePerBeat : undefined
+    const duration = gateSeconds != null && instrumentLength != null
+      ? Math.min(gateSeconds, instrumentLength)
+      : (gateSeconds ?? instrumentLength)
+
+    if (duration == null) {
+      player.triggerAttack(note, time)
+      return
+    }
+
+    player.triggerAttackRelease(note, duration, time)
   }
 }
