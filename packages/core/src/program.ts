@@ -113,6 +113,7 @@ export type BusId = Id<'Bus'>
 export interface Bus {
   readonly id: BusId
   readonly name: string
+  readonly pan?: Numeric<undefined>
   readonly gain?: Numeric<'db'>
   readonly effects: readonly Effect[]
 }

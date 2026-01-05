@@ -25,6 +25,10 @@ function createBus (program: Program, bus: Bus): BusInstance {
     appendEffect(effect)
   }
 
+  if (bus.pan != null) {
+    appendEffect({ type: 'pan', pan: bus.pan })
+  }
+
   // ensure there is always at least one node
   if (bus.gain != null || effects.length === 0) {
     appendEffect({ type: 'gain', gain: bus.gain ?? UNITY_GAIN })

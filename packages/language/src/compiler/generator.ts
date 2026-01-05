@@ -162,13 +162,13 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
 function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   const name = bus.name.name
-  const { gain } = resolveProperties(context, bus.properties, busSchema)
+  const properties = resolveProperties(context, bus.properties, busSchema)
 
   const effects = bus.effects.map((effect) => {
     return EffectType.cast(resolve(context, effect.expression)).data
   })
 
-  return { id, name, gain, effects }
+  return { id, name, ...properties, effects }
 }
 
 /**
