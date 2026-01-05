@@ -21,6 +21,12 @@ export interface Step {
    * The duration of the step relative to the pattern's subdivision. Defaults to 1.
    */
   readonly length?: Numeric<undefined>
+
+  /**
+   * The gate (duration) of the step relative to the pattern's subdivision.
+   * If undefined, the gate is equal to the step's length.
+   */
+  readonly gate?: Numeric<undefined>
 }
 
 export interface NoteEvent {

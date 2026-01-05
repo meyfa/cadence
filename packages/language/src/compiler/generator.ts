@@ -185,13 +185,21 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'Pattern':
       return PatternType.of(createPattern(expression.steps.map((step) => {
-        if (step.length == null) {
-          return { value: step.value }
+        const { value } = step
+
+        const length = step.length != null
+          ? NumberType.with(undefined).cast(resolve(context, step.length)).data
+          : undefined
+
+        const gate = step.gate != null
+          ? NumberType.with(undefined).cast(resolve(context, step.gate)).data
+          : undefined
+
+        if (length == null) {
+          return gate == null ? { value } : { value, gate }
         }
-        return {
-          value: step.value,
-          length: NumberType.with(undefined).cast(resolve(context, step.length)).data
-        }
+
+        return gate == null ? { value, length } : { value, length, gate }
       }), 1))
 
     case 'Identifier':

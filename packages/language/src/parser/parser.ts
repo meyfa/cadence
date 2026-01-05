@@ -131,7 +131,7 @@ function splitStepsFromWordToken (text: string, tokenRange: SourceRange): ast.St
 
 // The lexer is unable to distinguish e.g. 'xx' (two step tokens) from 'xx' (one word token).
 // Therefore, we have to split step tokens out of word tokens here.
-const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
+const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   p.token((t) => {
     const tokenRange = getSourceRange(t)
     if (t.name === '-') {
@@ -143,6 +143,14 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
     return undefined
   }),
   p.option(
+    combine3(
+      literal('('),
+      p.recursive(() => expression_),
+      expectLiteral(')')
+    ),
+    undefined
+  ),
+  p.option(
     combine2(
       literal(':'),
       // Require parantheses around complex length expressions
@@ -150,18 +158,38 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.ab(
     ),
     undefined
   ),
-  (steps, lengthPart) => {
+  (steps, parameters, stepLength) => {
     // By construction, the length only applies to the last step
     const lastStep = steps.at(-1)
-    if (lastStep == null || lengthPart == null) {
+    if (lastStep == null) {
       return steps
     }
 
-    const length = lengthPart[1]
+    const length = stepLength?.[1]
+
+    if (parameters == null) {
+      if (length == null) {
+        return steps
+      }
+
+      return [
+        ...steps.slice(0, -1),
+        ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, length })
+      ]
+    }
+
+    const [, gate, _rp] = parameters
+
+    if (length == null) {
+      return [
+        ...steps.slice(0, -1),
+        ast.make('Step', combineSourceRanges(lastStep, _rp), { value: lastStep.value, gate })
+      ]
+    }
 
     return [
       ...steps.slice(0, -1),
-      ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, length })
+      ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, gate, length })
     ]
   }
 )

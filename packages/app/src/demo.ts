@@ -19,8 +19,8 @@ snare_pattern = loop([-x])
 
 // Patterns can also define pitches (note and octave) for melodic instruments.
 // Division and multiplication (/, *) change pattern timing. Here, /4 creates 16th notes.
-arp_intro   = loop([-], 8) + loop([D3 - - D4 - - F4 -] / 4, 4)
-arp_main    = ([D3 - - D4 - - G4 G4] + [D3 - - D4 - G5 G4 F4]) / 4
+arp_intro   = loop([-], 8) + loop([D3:3 D4:3 F4 -] / 4, 4)
+arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 
 // Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
