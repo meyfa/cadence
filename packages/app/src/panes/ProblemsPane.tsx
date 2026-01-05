@@ -1,27 +1,48 @@
-import type { RangeError } from '@language/error.js'
+import { RangeError } from '@language/error.js'
 import clsx from 'clsx'
 import { type FunctionComponent } from 'react'
-import { useCompilationState } from '../state/CompilationContext.js'
+import { useProblems, type Problem } from '../hooks/problems.js'
 
 export const ProblemsPane: FunctionComponent = () => {
-  const { errors } = useCompilationState()
+  const problems = useProblems()
 
   return (
     <div className='h-full overflow-auto p-4'>
-      <div className={clsx('grow', errors.length > 0 ? 'text-content-300' : 'text-content-100')}>
-        {errors.length === 0 && 'No problems detected'}
-        {errors.map((error, index) => (
-          <div key={index}>{formatError(error)}</div>
+      <div className={clsx('grow', problems.length > 0 ? 'text-content-300' : 'text-content-100')}>
+        {problems.length === 0 && (
+          <div className='text-content-100'>
+            No problems found.
+          </div>
+        )}
+
+        {problems.map((problem, index) => (
+          <div key={index}>
+            <span className='text-content-100'>
+              {formatProblemSource(problem.source)}
+            </span>
+            {' '}
+            {formatError(problem.error)}
+          </div>
         ))}
       </div>
     </div>
   )
 }
 
-function formatError (error: RangeError): string {
-  if (error.range == null) {
+function formatProblemSource (source: Problem['source']): string {
+  switch (source) {
+    case 'compiler':
+      return 'Compiler:'
+    case 'playback':
+      return 'Playback:'
+  }
+}
+
+function formatError (error: Error): string {
+  const range = error instanceof RangeError ? error.range : undefined
+  if (range == null) {
     return error.message
   }
 
-  return `${error.message} at line ${error.range.line}, column ${error.range.column}`
+  return `${error.message} at line ${range.line}, column ${range.column}`
 }
