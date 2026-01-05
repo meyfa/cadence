@@ -1,14 +1,14 @@
 import { type FunctionComponent, type PropsWithChildren } from 'react'
 import { useActivateTabOfType } from '../hooks/layout.js'
+import { useProblems } from '../hooks/problems.js'
 import { TabTypes } from '../panes/render-tab.js'
-import { useCompilationState } from '../state/CompilationContext.js'
 import { useEditor } from '../state/EditorContext.js'
 import { pluralize } from '../utilities/strings.js'
 
 export const Footer: FunctionComponent = () => {
   const activateTab = useActivateTabOfType()
 
-  const { errors } = useCompilationState()
+  const problems = useProblems()
 
   const [editor] = useEditor()
   const editorLocation = editor.caret
@@ -16,7 +16,7 @@ export const Footer: FunctionComponent = () => {
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
       <FooterButton onClick={() => activateTab(TabTypes.Problems)}>
-        {errors.length === 0 ? 'No errors' : pluralize(errors.length, 'error')}
+        {problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')}
       </FooterButton>
 
       <div className='flex-1' />

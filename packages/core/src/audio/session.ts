@@ -8,11 +8,17 @@ import { createParts } from './parts.js'
 import { setupRoutings } from './routings.js'
 import { beatsToSeconds, calculateTotalLength } from './time.js'
 
+const ErrorMessages = Object.freeze({
+  LoadTimeout: 'Timeout while loading assets; some audio may be missing.',
+  Unknown: 'An unknown error occurred during audio playback.'
+})
+
 const LOAD_TIMEOUT_MS = 3000
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
   readonly position: Observable<Numeric<'beats'>>
+  readonly errors: Observable<readonly Error[]>
   readonly start: () => void
   readonly dispose: () => void
 }
@@ -47,6 +53,12 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
 
   const ended = new MutableObservable(false)
   const position = new MutableObservable(range.start)
+  const errors = new MutableObservable<readonly Error[]>([])
+
+  const appendError = (err: unknown) => {
+    const error = err instanceof Error ? err : new Error(ErrorMessages.Unknown)
+    errors.set([...errors.get(), error])
+  }
 
   let progressInterval: ReturnType<typeof setInterval> | undefined
 
@@ -77,12 +89,25 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
       return
     }
 
-    Promise.race([
-      Promise.allSettled(instances.map((item) => item.loaded.catch(() => {}))),
-      new Promise((resolve) => setTimeout(resolve, LOAD_TIMEOUT_MS))
-    ])
-      .then(() => startNow())
-      .catch(() => {})
+    type RaceResult = 'loaded' | 'timeout'
+
+    const loaded: Promise<RaceResult> = Promise.all(
+      instances.map((item) => item.loaded.catch(appendError))
+    ).then(() => 'loaded')
+
+    const timeout = new Promise<RaceResult>((resolve) => {
+      setTimeout(resolve, LOAD_TIMEOUT_MS, 'timeout')
+    })
+
+    Promise.race([loaded, timeout])
+      .then((result) => {
+        if (result === 'timeout') {
+          appendError(new Error(ErrorMessages.LoadTimeout))
+        }
+
+        startNow()
+      })
+      .catch(appendError)
   }
 
   const dispose = () => {
@@ -106,7 +131,7 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
     position.set(endPosition)
   }
 
-  return { start, dispose, ended, position }
+  return { ended, position, errors, start, dispose }
 }
 
 function resetTransport (transport: ReturnType<typeof getTransport>): void {

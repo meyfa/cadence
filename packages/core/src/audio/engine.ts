@@ -17,6 +17,7 @@ export interface AudioEngine {
 
   readonly range: MutableObservable<BeatRange>
   readonly position: Observable<Numeric<'beats'>>
+  readonly errors: Observable<readonly Error[]>
 }
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
@@ -29,6 +30,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const playing = new MutableObservable(false)
   const range = new MutableObservable({ start: makeNumeric('beats', 0) })
   const position = new MutableObservable(range.get().start)
+  const errors = new MutableObservable<readonly Error[]>([])
 
   let session: AudioSession | undefined
 
@@ -38,20 +40,31 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     }
 
     const thisSession = session = createAudioSession(program, range.get())
+    const subscriptions: Array<() => void> = []
 
-    const unsubscribePosition = thisSession.position.subscribe((p) => {
-      position.set(p)
-    })
+    subscriptions.push(thisSession.errors.subscribe((value) => {
+      errors.set(value)
+    }))
 
-    const unsubscribeEnded = thisSession.ended.subscribe((ended) => {
-      if (ended && session === thisSession) {
+    subscriptions.push(thisSession.position.subscribe((value) => {
+      position.set(value)
+    }))
+
+    subscriptions.push(thisSession.ended.subscribe((ended) => {
+      if (!ended) {
+        return
+      }
+
+      if (session === thisSession) {
         session.dispose()
         session = undefined
         playing.set(false)
-        unsubscribePosition()
-        unsubscribeEnded()
       }
-    })
+
+      for (const unsubscribe of subscriptions) {
+        unsubscribe()
+      }
+    }))
 
     thisSession.start()
     playing.set(true)
@@ -63,5 +76,5 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     playing.set(false)
   }
 
-  return { outputGain, playing, play, stop, range, position }
+  return { outputGain, playing, play, stop, range, position, errors }
 }

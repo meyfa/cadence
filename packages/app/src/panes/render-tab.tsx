@@ -1,6 +1,6 @@
 import type { SerializedComponent } from '@editor/state/layout.js'
 import type { ReactNode } from 'react'
-import { useCompilationState, type CompilationState } from '../state/CompilationContext.js'
+import { useProblems, type Problem } from '../hooks/problems.js'
 import { EditorPane } from './EditorPane.js'
 import { MixerPane } from './MixerPane.js'
 import { ProblemsPane } from './ProblemsPane.js'
@@ -19,12 +19,12 @@ export type TabType = typeof TabTypes[keyof typeof TabTypes]
 
 // State that the tab renderers can access. This is to avoid calling hooks outside of components.
 export interface TabRendererContext {
-  readonly compilation: CompilationState
+  readonly problems: readonly Problem[]
 }
 
 export function useTabRendererContext (): TabRendererContext {
-  const compilation = useCompilationState()
-  return { compilation }
+  const problems = useProblems()
+  return { problems }
 }
 
 interface TabRenderer {
@@ -49,7 +49,7 @@ const tabRenderers: ReadonlyMap<TabType, TabRenderer> = (() => new Map<TabType, 
   [TabTypes.Problems, {
     render: () => (<ProblemsPane />),
     title: () => 'Problems',
-    notificationCount: (_props, { compilation }) => compilation.errors.length,
+    notificationCount: (_props, { problems }) => problems.length,
     closable: true
   }],
 
