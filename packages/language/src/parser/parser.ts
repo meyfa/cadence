@@ -119,7 +119,7 @@ function splitStepsFromWordToken (text: string, tokenRange: SourceRange): ast.St
       throw new ParseError(`Invalid step value in pattern: "${stepValue}"`, stepRange)
     }
 
-    steps.push(ast.make('Step', stepRange, { value: stepValue }))
+    steps.push(ast.make('Step', stepRange, { value: stepValue, parameters: [] }))
     offset += stepValue.length
   }
 
@@ -132,7 +132,9 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   p.token((t) => {
     const tokenRange = getSourceRange(t)
     if (t.name === '-') {
-      return [ast.make('Step', tokenRange, { value: t.name })]
+      return [
+        ast.make('Step', tokenRange, { value: t.name, parameters: [] })
+      ]
     }
     if (t.name === 'word') {
       return splitStepsFromWordToken(t.text, tokenRange)
@@ -142,7 +144,13 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   p.option(
     combine3(
       literal('('),
-      p.recursive(() => expression_),
+      p.sepBy(
+        p.eitherOr(
+          p.recursive(() => property_),
+          p.recursive(() => expression_)
+        ),
+        literal(',')
+      ),
       expectLiteral(')')
     ),
     undefined
@@ -155,7 +163,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
     ),
     undefined
   ),
-  (steps, parameters, stepLength) => {
+  (steps, callTail, stepLength) => {
     // By construction, the length only applies to the last step
     const lastStep = steps.at(-1)
     if (lastStep == null) {
@@ -164,29 +172,40 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
 
     const length = stepLength?.[1]
 
-    if (parameters == null) {
+    if (callTail == null) {
       if (length == null) {
         return steps
       }
 
       return [
         ...steps.slice(0, -1),
-        ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, length })
+        ast.make('Step', combineSourceRanges(lastStep, length), {
+          value: lastStep.value,
+          length,
+          parameters: []
+        })
       ]
     }
 
-    const [, gate, _rp] = parameters
+    const [, parameters, _rp] = callTail
 
     if (length == null) {
       return [
         ...steps.slice(0, -1),
-        ast.make('Step', combineSourceRanges(lastStep, _rp), { value: lastStep.value, gate })
+        ast.make('Step', combineSourceRanges(lastStep, _rp), {
+          value: lastStep.value,
+          parameters
+        })
       ]
     }
 
     return [
       ...steps.slice(0, -1),
-      ast.make('Step', combineSourceRanges(lastStep, length), { value: lastStep.value, gate, length })
+      ast.make('Step', combineSourceRanges(lastStep, length), {
+        value: lastStep.value,
+        length,
+        parameters
+      })
     ]
   }
 )

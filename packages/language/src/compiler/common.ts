@@ -29,3 +29,11 @@ export const busSchema = definePropertySchema([
     required: false
   }
 ])
+
+export const stepSchema = definePropertySchema([
+  {
+    name: 'gate',
+    type: NumberType.with(undefined),
+    required: false
+  }
+])

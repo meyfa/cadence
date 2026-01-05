@@ -96,11 +96,8 @@ Call {
 }
 
 argumentList {
-  argument ("," argument)*
-}
-
-argument {
-  Property | expression
+  (Property | expression)
+  ("," (Property | expression))*
 }
 
 Routing {

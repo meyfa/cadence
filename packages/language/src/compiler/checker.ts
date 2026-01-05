@@ -5,7 +5,7 @@ import { getDefaultFunctions } from './functions.js'
 import type { SourceRange } from '../range.js'
 import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { busSchema, mixerSchema, sectionSchema, trackSchema } from './common.js'
+import { busSchema, mixerSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
 
 interface Context {
   // Intentionally mutable to allow building up during checking
@@ -244,8 +244,8 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     case 'Pattern': {
       for (const step of expression.steps) {
         const errors: CompileError[] = [
-          ...checkStepLength(context, step),
-          ...checkStepGate(context, step)
+          ...checkStepParameters(context, step),
+          ...checkStepLength(context, step)
         ]
 
         if (errors.length > 0) {
@@ -321,17 +321,10 @@ function checkStepLength (context: Context, step: ast.Step): readonly CompileErr
   return checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range)
 }
 
-function checkStepGate (context: Context, step: ast.Step): readonly CompileError[] {
-  if (step.gate == null) {
-    return []
-  }
+function checkStepParameters (context: Context, step: ast.Step): readonly CompileError[] {
+  const { errors } = checkArguments(context, step.parameters, stepSchema, step.range)
 
-  const gateCheck = checkExpression(context, step.gate)
-  if (gateCheck.result == null) {
-    return gateCheck.errors
-  }
-
-  return checkType([NumberType.with(undefined)], gateCheck.result, step.gate.range)
+  return errors
 }
 
 function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {
