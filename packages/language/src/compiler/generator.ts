@@ -1,7 +1,7 @@
 import { concatPatterns, createPattern, multiplyPattern } from '@core/pattern.js'
 import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Program, type Section, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
-import { busSchema, trackSchema } from './common.js'
+import { busSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
@@ -191,15 +191,13 @@ function resolve (context: Context, expression: ast.Expression): Value {
           ? NumberType.with(undefined).cast(resolve(context, step.length)).data
           : undefined
 
-        const gate = step.gate != null
-          ? NumberType.with(undefined).cast(resolve(context, step.gate)).data
-          : undefined
+        const parameters = resolveArguments(context, step.parameters, stepSchema)
 
         if (length == null) {
-          return gate == null ? { value } : { value, gate }
+          return { value, ...parameters }
         }
 
-        return gate == null ? { value, length } : { value, length, gate }
+        return { value, length, ...parameters }
       }), 1))
 
     case 'Identifier':

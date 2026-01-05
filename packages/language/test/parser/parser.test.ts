@@ -104,16 +104,17 @@ describe('parser/parser.ts', () => {
             value: {
               type: 'Pattern',
               steps: [
-                { type: 'Step', value: 'x' },
-                { type: 'Step', value: 'x' },
-                { type: 'Step', value: '-' },
+                { type: 'Step', value: 'x', parameters: [] },
+                { type: 'Step', value: 'x', parameters: [] },
+                { type: 'Step', value: '-', parameters: [] },
                 {
                   type: 'Step',
                   value: 'D4',
-                  length: { type: 'NumberLiteral', value: 0.5, unit: undefined }
+                  length: { type: 'NumberLiteral', value: 0.5, unit: undefined },
+                  parameters: []
                 },
-                { type: 'Step', value: '-' },
-                { type: 'Step', value: 'G4' }
+                { type: 'Step', value: '-', parameters: [] },
+                { type: 'Step', value: 'G4', parameters: [] }
               ]
             }
           }
@@ -148,9 +149,11 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'C4',
-                  gate: { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                  parameters: [
+                    { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                  ]
                 },
-                { type: 'Step', value: '-' }
+                { type: 'Step', value: '-', parameters: [] }
               ]
             }
           }
@@ -187,10 +190,64 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'C4',
-                  gate: { type: 'NumberLiteral', value: 2.0, unit: undefined },
-                  length: { type: 'NumberLiteral', value: 1.5, unit: undefined }
+                  length: { type: 'NumberLiteral', value: 1.5, unit: undefined },
+                  parameters: [
+                    { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                  ]
                 },
-                { type: 'Step', value: '-' }
+                { type: 'Step', value: '-', parameters: [] }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  })
+
+  it('should parse a pattern with named arguments', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'pattern' },
+      { name: '=' },
+      { name: '[' },
+      { name: 'word', text: 'C4' },
+      { name: '(' },
+      { name: 'word', text: 'gate' },
+      { name: ':' },
+      { name: 'number', text: '2.0' },
+      { name: ')' },
+      { name: ':' },
+      { name: 'number', text: '1.5' },
+      { name: '-' },
+      { name: ']' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'pattern' },
+            value: {
+              type: 'Pattern',
+              steps: [
+                {
+                  type: 'Step',
+                  value: 'C4',
+                  length: {
+                    type: 'NumberLiteral',
+                    value: 1.5,
+                    unit: undefined
+                  },
+                  parameters: [
+                    {
+                      type: 'Property',
+                      key: { type: 'Identifier', name: 'gate' },
+                      value: { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                    }
+                  ]
+                },
+                { type: 'Step', value: '-', parameters: [] }
               ]
             }
           }
