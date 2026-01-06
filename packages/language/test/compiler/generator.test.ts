@@ -19,6 +19,7 @@ describe('compiler/generator.ts', () => {
 
   it('should produce a correct empty program', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: []
     })
     const result = generate(program, OPTIONS)
@@ -38,6 +39,7 @@ describe('compiler/generator.ts', () => {
 
   it('should set track tempo from AST', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         ast.make('TrackStatement', RANGE, {
           properties: [
@@ -56,6 +58,7 @@ describe('compiler/generator.ts', () => {
 
   it('should clamp track tempo to maximum', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         ast.make('TrackStatement', RANGE, {
           properties: [
@@ -74,6 +77,7 @@ describe('compiler/generator.ts', () => {
 
   it('should support tempo from a variable', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         // foo = 90 bpm
         ast.make('Assignment', RANGE, {
@@ -104,8 +108,40 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 180))
   })
 
-  it('should support shadowing of predefined names', () => {
+  it('should support imported names', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+        })
+      ],
+      children: [
+        // mygain = gain
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'mygain' }),
+          value: ast.make('Identifier', RANGE, { name: 'gain' })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [
+            ast.make('Property', RANGE, {
+              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
+              value: ast.make('Identifier', RANGE, { name: 'mygain' })
+            })
+          ],
+          sections: []
+        })
+      ]
+    })
+    assert.doesNotThrow(() => generate(program, OPTIONS))
+  })
+
+  it('should support shadowing of imported names', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+        })
+      ],
       children: [
         // gain = 140 bpm
         ast.make('Assignment', RANGE, {
@@ -129,6 +165,7 @@ describe('compiler/generator.ts', () => {
 
   it('should allow sections and buses to shadow top-level variables', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'foo' }),

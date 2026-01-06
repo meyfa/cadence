@@ -15,7 +15,7 @@ describe('compiler/functions.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => makeNumeric('beats', value)
 
-  const functions = getDefaultFunctions()
+  const functions = getDefaultFunctions(['patterns', 'instruments', 'effects'])
 
   describe('loop', () => {
     const loop = functions.get('loop')

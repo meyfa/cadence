@@ -1,6 +1,11 @@
 export const demoCode = `
 // Press Play to start the demo.
 
+// Import some functions from the standard library.
+use "instruments" as *  // sample
+use "patterns" as *     // loop
+use "effects" as *      // delay, reverb, ...
+
 sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/"
 
 // Define samples to use in the track.

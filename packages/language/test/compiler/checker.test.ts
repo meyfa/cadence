@@ -10,7 +10,47 @@ describe('compiler/checker.ts', () => {
   describe('valid', () => {
     it('should accept an empty program', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
+
+    it('should accept use statements without alias', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'patterns' })
+          }),
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          })
+        ],
+        children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
+
+    it('should define names from imported libraries', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'instruments' })
+          })
+        ],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
+            value: ast.make('Call', RANGE, {
+              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+              arguments: [
+                ast.make('StringLiteral', RANGE, { value: 'piano.wav' })
+              ]
+            })
+          })
+        ]
       })
       const errors = check(program)
       assert.strictEqual(errors.length, 0)
@@ -18,6 +58,7 @@ describe('compiler/checker.ts', () => {
 
     it('should accept a program with one track and unique sections', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
@@ -44,6 +85,7 @@ describe('compiler/checker.ts', () => {
 
     it('should accept variable declarations and usages in correct order', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
@@ -59,8 +101,13 @@ describe('compiler/checker.ts', () => {
       assert.strictEqual(errors.length, 0)
     })
 
-    it('should allow shadowing of predefined functions', () => {
+    it('should allow shadowing of imported names', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          })
+        ],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'gain' }),
@@ -74,6 +121,7 @@ describe('compiler/checker.ts', () => {
 
     it('should allow sections and buses to shadow top-level variables', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
@@ -109,8 +157,72 @@ describe('compiler/checker.ts', () => {
   })
 
   describe('invalid', () => {
+    it('should reject imports of unknown libraries', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'unknownlib' })
+          })
+        ],
+        children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
+    it('should reject duplicate non-alias imports', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          }),
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          })
+        ],
+        children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
+    // TODO: Adapt this test when alias imports are supported
+    it('should reject imports with alias', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('StringLiteral', RANGE, { value: 'effects' }),
+            alias: 'myalias'
+          })
+        ],
+        children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
+    it('should not define names from non-imported libraries', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
+            value: ast.make('Call', RANGE, {
+              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+              arguments: [
+                ast.make('StringLiteral', RANGE, { value: 'piano.wav' })
+              ]
+            })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
     it('should reject variable usage before declaration', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
@@ -128,6 +240,7 @@ describe('compiler/checker.ts', () => {
 
     it('should reject variable reassignment', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
@@ -145,6 +258,7 @@ describe('compiler/checker.ts', () => {
 
     it('should reject duplicate track blocks', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
@@ -162,6 +276,7 @@ describe('compiler/checker.ts', () => {
 
     it('should reject duplicate section blocks within a track', () => {
       const program = ast.make('Program', RANGE, {
+        imports: [],
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
@@ -189,6 +304,7 @@ describe('compiler/checker.ts', () => {
 
   it('should reject duplicate mixer blocks', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         ast.make('MixerStatement', RANGE, {
           properties: [],
@@ -208,6 +324,7 @@ describe('compiler/checker.ts', () => {
 
   it('should reject duplicate bus blocks within a mixer', () => {
     const program = ast.make('Program', RANGE, {
+      imports: [],
       children: [
         ast.make('MixerStatement', RANGE, {
           properties: [],

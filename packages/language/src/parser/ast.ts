@@ -29,6 +29,20 @@ export interface StringLiteral extends ASTNode {
 
 export type Literal = NumberLiteral | StringLiteral
 
+// Imports
+
+export interface UseStatement extends ASTNode {
+  readonly type: 'UseStatement'
+  readonly library: StringLiteral
+
+  /**
+   * The alias to use for the imported library. If undefined, imports all symbols directly.
+   */
+  readonly alias?: string
+}
+
+// Patterns
+
 export interface Step extends ASTNode {
   readonly type: 'Step'
   readonly value: StepValue
@@ -40,8 +54,6 @@ export interface Pattern extends ASTNode {
   readonly type: 'Pattern'
   readonly steps: readonly Step[]
 }
-
-export type Value = Literal | Pattern | Call | Identifier
 
 // Expression Types
 
@@ -64,6 +76,7 @@ export interface BinaryExpression extends ASTNode {
   readonly right: Expression
 }
 
+export type Value = Literal | Pattern | Call | Identifier
 export type Expression = Value | UnaryExpression | BinaryExpression
 
 // Composite Types
@@ -131,6 +144,7 @@ export interface EffectStatement extends ASTNode {
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
+  readonly imports: readonly UseStatement[]
   readonly children: ReadonlyArray<Assignment | TrackStatement | MixerStatement>
 }
 
@@ -148,6 +162,8 @@ export interface NodeByType {
   Identifier: Identifier
   NumberLiteral: NumberLiteral
   StringLiteral: StringLiteral
+
+  UseStatement: UseStatement
 
   Step: Step
   Pattern: Pattern
