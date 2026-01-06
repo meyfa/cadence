@@ -41,9 +41,108 @@ describe('compiler/checker.ts', () => {
       const errors = check(program)
       assert.strictEqual(errors.length, 0)
     })
+
+    it('should accept variable declarations and usages in correct order', () => {
+      const program = ast.make('Program', RANGE, {
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'foo' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+          }),
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'bar' }),
+            value: ast.make('Identifier', RANGE, { name: 'foo' })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
+
+    it('should allow shadowing of predefined functions', () => {
+      const program = ast.make('Program', RANGE, {
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'gain' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 3, unit: 'db' })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
+
+    it('should allow sections and buses to shadow top-level variables', () => {
+      const program = ast.make('Program', RANGE, {
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'foo' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+          }),
+          ast.make('TrackStatement', RANGE, {
+            properties: [],
+            sections: [
+              ast.make('SectionStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'foo' }),
+                length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+                properties: [],
+                routings: []
+              })
+            ]
+          }),
+          ast.make('MixerStatement', RANGE, {
+            properties: [],
+            routings: [],
+            buses: [
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'foo' }),
+                properties: [],
+                effects: []
+              })
+            ]
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
   })
 
   describe('invalid', () => {
+    it('should reject variable usage before declaration', () => {
+      const program = ast.make('Program', RANGE, {
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'foo' }),
+            value: ast.make('Identifier', RANGE, { name: 'bar' })
+          }),
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'bar' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 100 })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
+    it('should reject variable reassignment', () => {
+      const program = ast.make('Program', RANGE, {
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'foo' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+          }),
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'foo' }),
+            value: ast.make('NumberLiteral', RANGE, { value: 100 })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 1)
+    })
+
     it('should reject duplicate track blocks', () => {
       const program = ast.make('Program', RANGE, {
         children: [

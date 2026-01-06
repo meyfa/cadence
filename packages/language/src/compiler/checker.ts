@@ -7,20 +7,12 @@ import { toBaseUnit } from './units.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
 import { busSchema, mixerSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
 
-interface Context {
-  // Intentionally mutable to allow building up during checking
-  readonly resolutions: Map<string, Type>
-}
-
-interface Checked<TValue> {
-  readonly errors: readonly CompileError[]
-  readonly result?: TValue
-}
-
 export function check (program: ast.Program): readonly CompileError[] {
-  const context: Context = {
+  const top: Context = {
     resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, fn.type]))
   }
+
+  const context = createLocalScope(top)
 
   const assignments = program.children.filter((c) => c.type === 'Assignment')
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
@@ -43,6 +35,41 @@ export function check (program: ast.Program): readonly CompileError[] {
   return errors
 }
 
+interface Context {
+  readonly parent?: Context
+  readonly resolutions: ReadonlyMap<string, Type>
+}
+
+interface MutableContext extends Context {
+  readonly resolutions: Map<string, Type>
+}
+
+interface Checked<TValue> {
+  readonly errors: readonly CompileError[]
+  readonly result?: TValue
+}
+
+function createLocalScope (parent: Context): MutableContext {
+  return {
+    parent,
+    resolutions: new Map()
+  }
+}
+
+function resolve (context: Context, name: string): Type | undefined {
+  let current: Context | undefined = context
+
+  while (current != null) {
+    const valueType = current.resolutions.get(name)
+    if (valueType != null) {
+      return valueType
+    }
+    current = current.parent
+  }
+
+  return undefined
+}
+
 function checkType (options: readonly Type[], actual: Type, range?: SourceRange): readonly CompileError[] {
   if (!options.some((option) => option.equals(actual))) {
     const optionsText = options.map((o) => o.format()).join(' or ')
@@ -52,7 +79,7 @@ function checkType (options: readonly Type[], actual: Type, range?: SourceRange)
   return []
 }
 
-function checkAssignments (context: Context, assignments: readonly ast.Assignment[]): readonly CompileError[] {
+function checkAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
   for (const assignment of assignments) {
@@ -72,7 +99,7 @@ function checkAssignments (context: Context, assignments: readonly ast.Assignmen
   return errors
 }
 
-function checkTracks (context: Context, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
+function checkTracks (context: MutableContext, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
   for (const track of tracks) {
@@ -86,28 +113,30 @@ function checkTracks (context: Context, tracks: readonly ast.TrackStatement[]): 
   return errors
 }
 
-function checkTrack (context: Context, track: ast.TrackStatement): readonly CompileError[] {
-  const errors: CompileError[] = []
+function checkTrack (context: MutableContext, track: ast.TrackStatement): readonly CompileError[] {
+  const trackContext = createLocalScope(context)
 
-  const propertiesCheck = checkProperties(context, track.properties, trackSchema, track.range)
-  errors.push(...propertiesCheck.errors)
+  const errors: CompileError[] = []
 
   const seenSections = new Set<string>()
 
   for (const section of track.sections) {
     if (seenSections.has(section.name.name)) {
       errors.push(new CompileError(`Duplicate section named "${section.name.name}"`, section.range))
-    } else if (context.resolutions.has(section.name.name)) {
+    } else if (trackContext.resolutions.has(section.name.name)) {
       errors.push(new CompileError(`Section name "${section.name.name}" conflicts with existing identifier`, section.name.range))
     }
 
     seenSections.add(section.name.name)
 
     // Reserve the name in the local scope
-    context.resolutions.set(section.name.name, SectionType)
+    trackContext.resolutions.set(section.name.name, SectionType)
 
-    errors.push(...checkSection(context, section))
+    errors.push(...checkSection(trackContext, section))
   }
+
+  const propertiesCheck = checkProperties(trackContext, track.properties, trackSchema, track.range)
+  errors.push(...propertiesCheck.errors)
 
   return errors
 }
@@ -135,7 +164,7 @@ function checkSection (context: Context, section: ast.SectionStatement): readonl
 function checkInstrumentRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const destination = context.resolutions.get(routing.destination.name)
+  const destination = resolve(context, routing.destination.name)
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
@@ -165,13 +194,9 @@ function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): 
 }
 
 function checkMixer (context: Context, mixer: ast.MixerStatement): readonly CompileError[] {
-  // Mixer has a local scope
-  const mixerContext = { ...context, resolutions: new Map(context.resolutions) }
+  const mixerContext = createLocalScope(context)
 
   const errors: CompileError[] = []
-
-  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.range)
-  errors.push(...propertiesCheck.errors)
 
   const seenBuses = new Set<string>()
 
@@ -189,6 +214,9 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 
     errors.push(...checkBus(mixerContext, bus))
   }
+
+  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.range)
+  errors.push(...propertiesCheck.errors)
 
   // Process routings last so that all buses are known
   for (const routing of mixer.routings) {
@@ -219,7 +247,7 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
 function checkBusRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const destination = context.resolutions.get(routing.destination.name)
+  const destination = resolve(context, routing.destination.name)
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
@@ -260,7 +288,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     }
 
     case 'Identifier': {
-      const valueType = context.resolutions.get(expression.name)
+      const valueType = resolve(context, expression.name)
       if (valueType == null) {
         return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.range)] }
       }
@@ -268,7 +296,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     }
 
     case 'Call': {
-      const callee = context.resolutions.get(expression.callee.name)
+      const callee = resolve(context, expression.callee.name)
       if (callee == null) {
         return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.range)] }
       }

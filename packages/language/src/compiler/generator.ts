@@ -5,7 +5,7 @@ import { busSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
 import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -18,24 +18,21 @@ export interface GenerateOptions {
   }
 }
 
-interface Context {
-  readonly options: GenerateOptions
-
-  // Intentionally mutable to allow building up during generation
-  readonly resolutions: Map<string, Value>
-  readonly instruments: Map<InstrumentId, Instrument>
-}
-
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
  * semantically checked and is valid.
  */
 export function generate (program: ast.Program, options: GenerateOptions): Program {
-  const context: Context = {
+  const top: TopLevelContext = {
+    get top () {
+      return top
+    },
     options,
-    resolutions: new Map(getDefaultFunctions()),
-    instruments: new Map()
+    instruments: new Map(),
+    resolutions: new Map(getDefaultFunctions())
   }
+
+  const context = createLocalScope(top)
 
   const assignments = program.children.filter((c) => c.type === 'Assignment')
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
@@ -56,9 +53,33 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
 
   return {
     beatsPerBar: options.beatsPerBar,
-    instruments: context.instruments,
+    instruments: top.instruments,
     track,
     mixer
+  }
+}
+
+interface Context {
+  readonly top: TopLevelContext
+  readonly parent?: Context
+
+  readonly resolutions: ReadonlyMap<string, Value>
+}
+
+interface TopLevelContext extends Context {
+  readonly options: GenerateOptions
+  readonly instruments: Map<InstrumentId, Instrument>
+}
+
+interface MutableContext extends Context {
+  readonly resolutions: Map<string, Value>
+}
+
+function createLocalScope (parent: Context): MutableContext {
+  return {
+    top: parent.top,
+    parent,
+    resolutions: new Map()
   }
 }
 
@@ -79,7 +100,7 @@ function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: n
     : value
 }
 
-function processAssignments (context: Context, assignments: readonly ast.Assignment[]): void {
+function processAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): void {
   for (const assignment of assignments) {
     assert(!context.resolutions.has(assignment.key.name))
     context.resolutions.set(assignment.key.name, resolve(context, assignment.value))
@@ -87,13 +108,21 @@ function processAssignments (context: Context, assignments: readonly ast.Assignm
 }
 
 function generateTrack (context: Context, track: ast.TrackStatement): Track {
-  const properties = resolveProperties(context, track.properties, trackSchema)
+  const { options } = context.top
+
+  const trackContext = createLocalScope(context)
+
+  const sections = track.sections.map((section) => generateSection(trackContext, section))
+  for (const section of sections) {
+    assert(!trackContext.resolutions.has(section.name))
+    trackContext.resolutions.set(section.name, SectionType.of(section))
+  }
+
+  const properties = resolveProperties(trackContext, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
-    ? clamped(properties.tempo, context.options.tempo.minimum, context.options.tempo.maximum)
-    : makeNumeric('bpm', context.options.tempo.default)
-
-  const sections = track.sections.map((section) => generateSection(context, section))
+    ? clamped(properties.tempo, options.tempo.minimum, options.tempo.maximum)
+    : makeNumeric('bpm', options.tempo.default)
 
   return { tempo, sections }
 }
@@ -104,7 +133,7 @@ function generateSection (context: Context, section: ast.SectionStatement): Sect
 
   const routings = section.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))
-    const instrument = InstrumentType.cast(nonNull(context.resolutions.get(routing.destination.name)))
+    const instrument = InstrumentType.cast(resolve(context, routing.destination))
 
     return {
       source: {
@@ -123,11 +152,11 @@ function generateSection (context: Context, section: ast.SectionStatement): Sect
 }
 
 function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
-  // Mixer has a local scope
-  const mixerContext = { ...context, resolutions: new Map(context.resolutions) }
+  const mixerContext = createLocalScope(context)
 
   const buses = mixer.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId))
   for (const bus of buses) {
+    assert(!mixerContext.resolutions.has(bus.name))
     mixerContext.resolutions.set(bus.name, BusType.of(bus))
   }
 
@@ -181,7 +210,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return StringType.of(expression.value)
 
     case 'NumberLiteral':
-      return toNumberValue(context.options, expression)
+      return toNumberValue(context.top.options, expression)
 
     case 'Pattern':
       return PatternType.of(createPattern(expression.steps.map((step) => {
@@ -200,13 +229,24 @@ function resolve (context: Context, expression: ast.Expression): Value {
         return { value, length, ...parameters }
       }), 1))
 
-    case 'Identifier':
-      return nonNull(context.resolutions.get(expression.name))
+    case 'Identifier': {
+      let current: Context | undefined = context
+
+      while (current != null) {
+        const value = current.resolutions.get(expression.name)
+        if (value != null) {
+          return value
+        }
+        current = current.parent
+      }
+
+      throw new CompileError(`Unknown identifier "${expression.name}"`, expression.range)
+    }
 
     case 'Call': {
-      const func = FunctionType.cast(nonNull(context.resolutions.get(expression.callee.name)))
+      const func = FunctionType.cast(resolve(context, expression.callee))
       const args = resolveArguments(context, expression.arguments, func.data.arguments)
-      return func.data.invoke(context, args)
+      return func.data.invoke(context.top, args)
     }
 
     case 'UnaryExpression': {

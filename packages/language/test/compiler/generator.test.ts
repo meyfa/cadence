@@ -8,18 +8,20 @@ import * as ast from '../../src/parser/ast.js'
 describe('compiler/generator.ts', () => {
   const RANGE = getEmptySourceRange()
 
+  const OPTIONS = {
+    tempo: {
+      default: 120,
+      minimum: 1,
+      maximum: 300
+    },
+    beatsPerBar: 4
+  }
+
   it('should produce a correct empty program', () => {
     const program = ast.make('Program', RANGE, {
       children: []
     })
-    const result = generate(program, {
-      tempo: {
-        default: 120,
-        minimum: 1,
-        maximum: 300
-      },
-      beatsPerBar: 4
-    })
+    const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result, {
       beatsPerBar: 4,
       instruments: new Map(),
@@ -48,14 +50,7 @@ describe('compiler/generator.ts', () => {
         })
       ]
     })
-    const result = generate(program, {
-      tempo: {
-        default: 120,
-        minimum: 1,
-        maximum: 300
-      },
-      beatsPerBar: 4
-    })
+    const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 140))
   })
 
@@ -73,14 +68,7 @@ describe('compiler/generator.ts', () => {
         })
       ]
     })
-    const result = generate(program, {
-      tempo: {
-        default: 120,
-        minimum: 1,
-        maximum: 300
-      },
-      beatsPerBar: 4
-    })
+    const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 300))
   })
 
@@ -112,14 +100,66 @@ describe('compiler/generator.ts', () => {
         })
       ]
     })
-    const result = generate(program, {
-      tempo: {
-        default: 120,
-        minimum: 1,
-        maximum: 300
-      },
-      beatsPerBar: 4
-    })
+    const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 180))
+  })
+
+  it('should support shadowing of predefined names', () => {
+    const program = ast.make('Program', RANGE, {
+      children: [
+        // gain = 140 bpm
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'gain' }),
+          value: ast.make('NumberLiteral', RANGE, { value: 140, unit: 'bpm' })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [
+            ast.make('Property', RANGE, {
+              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
+              value: ast.make('Identifier', RANGE, { name: 'gain' })
+            })
+          ],
+          sections: []
+        })
+      ]
+    })
+    const result = generate(program, OPTIONS)
+    assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 140))
+  })
+
+  it('should allow sections and buses to shadow top-level variables', () => {
+    const program = ast.make('Program', RANGE, {
+      children: [
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'foo' }),
+          value: ast.make('NumberLiteral', RANGE, { value: 42 })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          sections: [
+            ast.make('SectionStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'foo' }),
+              length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+              properties: [],
+              routings: []
+            })
+          ]
+        }),
+        ast.make('MixerStatement', RANGE, {
+          properties: [],
+          routings: [],
+          buses: [
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'foo' }),
+              properties: [],
+              effects: []
+            })
+          ]
+        })
+      ]
+    })
+    const result = generate(program, OPTIONS)
+    assert.deepStrictEqual(result.track.sections[0].name, 'foo')
+    assert.deepStrictEqual(result.mixer.buses[0].name, 'foo')
   })
 })
