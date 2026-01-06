@@ -3,6 +3,12 @@ import { isPitch, makeNumeric, type Instrument, type InstrumentId } from '@core/
 import type { InferSchema, PropertySchema } from './schema.js'
 import { EffectType, FunctionType, InstrumentType, NumberType, PatternType, StringType, type FunctionValue, type Type, type Value } from './types.js'
 
+export const standardLibraryModuleNames: ReadonlySet<string> = Object.freeze(new Set([
+  'patterns',
+  'instruments',
+  'effects'
+]))
+
 export interface FunctionDefinition<S extends PropertySchema = PropertySchema, R extends Type = Type> {
   readonly arguments: S
   readonly returnType: R
@@ -15,20 +21,23 @@ export interface FunctionContext {
   readonly instruments: Map<InstrumentId, Instrument>
 }
 
-export function getDefaultFunctions (): ReadonlyMap<string, FunctionValue> {
+export function getDefaultFunctions (imports: readonly string[]): ReadonlyMap<string, FunctionValue> {
   const functions = new Map<string, FunctionValue>()
 
-  // patterns
-  functions.set('loop', loop)
+  if (imports.includes('patterns')) {
+    functions.set('loop', loop)
+  }
 
-  // sources
-  functions.set('sample', sample)
+  if (imports.includes('instruments')) {
+    functions.set('sample', sample)
+  }
 
-  // effects
-  functions.set('gain', gain)
-  functions.set('pan', pan)
-  functions.set('delay', delay)
-  functions.set('reverb', reverb)
+  if (imports.includes('effects')) {
+    functions.set('gain', gain)
+    functions.set('pan', pan)
+    functions.set('delay', delay)
+    functions.set('reverb', reverb)
+  }
 
   return functions
 }

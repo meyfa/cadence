@@ -329,6 +329,28 @@ const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p
   }
 )
 
+const useStatement_: p.Parser<Token, unknown, ast.UseStatement> = p.ab(
+  combine2(
+    keyword('use'),
+    expect(stringLiteral_, 'module name')
+  ),
+  combine2(
+    expect(keyword('as'), 'keyword "as"'),
+    expect(
+      p.eitherOr(identifier_, literal('*')),
+      'alias identifier or "*"'
+    )
+  ),
+  ([_use, libraryToken], [_as, aliasToken]) => {
+    const range = combineSourceRanges(_use, aliasToken)
+    if (aliasToken.name === '*') {
+      return ast.make('UseStatement', range, { library: libraryToken })
+    }
+
+    return ast.make('UseStatement', range, { library: libraryToken, alias: (aliasToken as ast.Identifier).name })
+  }
+)
+
 const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   identifier_,
   literal('='),
@@ -449,7 +471,8 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.ab(
   }
 )
 
-const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
+const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
+  p.many(useStatement_),
   p.many(
     p.eitherOr(
       p.eitherOr(assignment_, p.eitherOr(trackStatement_, mixerStatement_)),
@@ -460,8 +483,11 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.ab(
     )
   ),
   p.end,
-  (children) => {
-    return ast.make('Program', combineSourceRanges(...children), { children })
+  (imports, children) => {
+    return ast.make('Program', combineSourceRanges(...children), {
+      imports,
+      children
+    })
   }
 )
 

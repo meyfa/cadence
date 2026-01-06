@@ -1,15 +1,22 @@
-import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type Type } from './types.js'
-import { getDefaultFunctions } from './functions.js'
 import type { SourceRange } from '../range.js'
-import { toBaseUnit } from './units.js'
-import type { PropertySchema, PropertySpec } from './schema.js'
 import { busSchema, mixerSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
+import { CompileError } from './error.js'
+import { getDefaultFunctions, standardLibraryModuleNames } from './functions.js'
+import type { PropertySchema, PropertySpec } from './schema.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type Type } from './types.js'
+import { toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
+  const importResult = checkImports(program.imports)
+  if (importResult.result == null) {
+    return importResult.errors
+  }
+
   const top: Context = {
-    resolutions: new Map([...getDefaultFunctions()].map(([name, fn]) => [name, fn.type]))
+    resolutions: new Map(
+      [...getDefaultFunctions(importResult.result)].map(([name, fn]) => [name, fn.type])
+    )
   }
 
   const context = createLocalScope(top)
@@ -77,6 +84,38 @@ function checkType (options: readonly Type[], actual: Type, range?: SourceRange)
   }
 
   return []
+}
+
+function checkImports (imports: readonly ast.UseStatement[]): Checked<readonly string[]> {
+  const errors: CompileError[] = []
+  const result: string[] = []
+
+  const seenImports = new Set<string>()
+
+  for (const statement of imports) {
+    const libraryName = statement.library.value
+
+    if (!standardLibraryModuleNames.has(libraryName)) {
+      errors.push(new CompileError(`Unknown module "${libraryName}"`, statement.range))
+      continue
+    }
+
+    if (seenImports.has(libraryName)) {
+      errors.push(new CompileError(`Duplicate import of "${libraryName}"`, statement.range))
+      continue
+    }
+    seenImports.add(libraryName)
+
+    // TODO remove once aliases are supported
+    if (statement.alias != null) {
+      errors.push(new CompileError(`Import aliases are not supported yet`, statement.range))
+      continue
+    }
+
+    result.push(libraryName)
+  }
+
+  return { errors, result: errors.length > 0 ? undefined : result }
 }
 
 function checkAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): readonly CompileError[] {

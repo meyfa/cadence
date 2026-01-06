@@ -53,9 +53,60 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: []
       }
     })
+  })
+
+  it('should parse use statements', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'use' },
+      { name: 'string', text: '"mylib"' },
+      { name: 'word', text: 'as' },
+      { name: 'word', text: 'myalias' },
+      { name: 'word', text: 'use' },
+      { name: 'string', text: '"otherlib"' },
+      { name: 'word', text: 'as' },
+      { name: '*' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [
+          {
+            type: 'UseStatement',
+            library: {
+              type: 'StringLiteral',
+              value: 'mylib'
+            },
+            alias: 'myalias'
+          },
+          {
+            type: 'UseStatement',
+            library: {
+              type: 'StringLiteral',
+              value: 'otherlib'
+            }
+          }
+        ],
+        children: []
+      }
+    })
+  })
+
+  it('should reject use statements after other statements', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'foo' },
+      { name: '=' },
+      { name: 'number', text: '42' },
+      { name: 'word', text: 'use' },
+      { name: 'string', text: '"mylib"' },
+      { name: 'word', text: 'as' },
+      { name: 'myalias' }
+    ]))
+    assert.strictEqual(result.complete, false)
   })
 
   it('should parse a simple assignment', () => {
@@ -68,6 +119,7 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: [
           {
             type: 'Assignment',
@@ -97,6 +149,7 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: [
           {
             type: 'Assignment',
@@ -139,6 +192,7 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: [
           {
             type: 'Assignment',
@@ -180,6 +234,7 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: [
           {
             type: 'Assignment',
@@ -224,6 +279,7 @@ describe('parser/parser.ts', () => {
       complete: true,
       value: {
         type: 'Program',
+        imports: [],
         children: [
           {
             type: 'Assignment',

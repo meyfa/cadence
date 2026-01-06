@@ -23,13 +23,15 @@ export interface GenerateOptions {
  * semantically checked and is valid.
  */
 export function generate (program: ast.Program, options: GenerateOptions): Program {
+  const imports = program.imports.map((item) => item.library.value)
+
   const top: TopLevelContext = {
     get top () {
       return top
     },
     options,
     instruments: new Map(),
-    resolutions: new Map(getDefaultFunctions())
+    resolutions: new Map(getDefaultFunctions(imports))
   }
 
   const context = createLocalScope(top)

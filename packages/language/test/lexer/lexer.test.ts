@@ -73,6 +73,23 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex use statements', () => {
+    const result = lex('use "effects" as fx\nuse "patterns" as *')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'word', text: 'use' },
+        { name: 'string', text: '"effects"' },
+        { name: 'word', text: 'as' },
+        { name: 'word', text: 'fx' },
+        { name: 'word', text: 'use' },
+        { name: 'string', text: '"patterns"' },
+        { name: 'word', text: 'as' },
+        { name: '*', text: '*' }
+      ]
+    })
+  })
+
   it('should lex simple patterns', () => {
     const result = lex('[x-x- --xx]')
     assert.deepStrictEqual(stripTokenMeta(result), {
