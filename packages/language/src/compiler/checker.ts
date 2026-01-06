@@ -1,6 +1,6 @@
 import { CompileError } from './error.js'
 import * as ast from '../parser/ast.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, StringType, type Type } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type Type } from './types.js'
 import { getDefaultFunctions } from './functions.js'
 import type { SourceRange } from '../range.js'
 import { toBaseUnit } from './units.js'
@@ -97,11 +97,15 @@ function checkTrack (context: Context, track: ast.TrackStatement): readonly Comp
   for (const section of track.sections) {
     if (seenSections.has(section.name.name)) {
       errors.push(new CompileError(`Duplicate section named "${section.name.name}"`, section.range))
-    }
-    if (context.resolutions.has(section.name.name)) {
+    } else if (context.resolutions.has(section.name.name)) {
       errors.push(new CompileError(`Section name "${section.name.name}" conflicts with existing identifier`, section.name.range))
     }
+
     seenSections.add(section.name.name)
+
+    // Reserve the name in the local scope
+    context.resolutions.set(section.name.name, SectionType)
+
     errors.push(...checkSection(context, section))
   }
 
@@ -174,12 +178,11 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
   for (const bus of mixer.buses) {
     if (seenBuses.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-    }
-    seenBuses.add(bus.name.name)
-
-    if (mixerContext.resolutions.has(bus.name.name)) {
+    } else if (mixerContext.resolutions.has(bus.name.name)) {
       errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
     }
+
+    seenBuses.add(bus.name.name)
 
     // Reserve the name in the local scope
     mixerContext.resolutions.set(bus.name.name, BusType)
