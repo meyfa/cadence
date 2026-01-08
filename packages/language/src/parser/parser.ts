@@ -210,13 +210,34 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   }
 )
 
-const pattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
+const patternChildren_: p.Parser<Token, unknown, ReadonlyArray<ast.Step | ast.Pattern>> = p.map(
+  p.many(
+    p.eitherOr(
+      steps_,
+      p.eitherOr(
+        p.recursive(() => serialPattern_),
+        p.recursive(() => parallelPattern_)
+      )
+    )
+  ),
+  (children) => children.flat()
+)
+
+const serialPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   literal('['),
-  p.many(steps_),
+  patternChildren_,
   expectLiteral(']'),
-  (_lbracket, manySteps, _rbracket) => {
-    const steps = manySteps.flat()
-    return ast.make('Pattern', combineSourceRanges(_lbracket, _rbracket), { steps })
+  (_l, children, _r) => {
+    return ast.make('Pattern', combineSourceRanges(_l, _r), { mode: 'serial', children })
+  }
+)
+
+const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
+  literal('<'),
+  p.filter(patternChildren_, (children) => children.length > 0),
+  expectLiteral('>'),
+  (_l, children, _r) => {
+    return ast.make('Pattern', combineSourceRanges(_l, _r), { mode: 'parallel', children })
   }
 )
 
@@ -228,7 +249,7 @@ const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
 const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   p.eitherOr(
     literal_,
-    pattern_
+    serialPattern_
   ),
   p.recursive(() => identifierOrCall_)
 )

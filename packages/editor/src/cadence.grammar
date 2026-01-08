@@ -53,10 +53,22 @@ Literal {
   NumberLiteral | StringLiteral
 }
 
-Pattern {
+Pattern { serialPattern }
+
+serialPattern {
   "["
-  ((word | "-") ("(" argumentList? ")")? (":" primary)?)*
+  (step | serialPattern | parallelPattern)*
   "]"
+}
+
+parallelPattern {
+  "<"
+  (step | serialPattern | parallelPattern)*
+  ">"
+}
+
+step {
+  (word | "-") ("(" argumentList? ")")? (":" primary)?
 }
 
 primary {

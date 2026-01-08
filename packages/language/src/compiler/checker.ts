@@ -312,17 +312,10 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
 
     case 'Pattern': {
-      for (const step of expression.steps) {
-        const errors: CompileError[] = [
-          ...checkStepParameters(context, step),
-          ...checkStepLength(context, step)
-        ]
-
-        if (errors.length > 0) {
-          return { errors }
-        }
+      const errors = checkPattern(context, expression)
+      if (errors.length > 0) {
+        return { errors }
       }
-
       return { errors: [], result: PatternType }
     }
 
@@ -378,21 +371,39 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
-function checkStepLength (context: Context, step: ast.Step): readonly CompileError[] {
-  if (step.length == null) {
-    return []
+function checkPattern (context: Context, pattern: ast.Pattern): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  for (const item of pattern.children) {
+    switch (item.type) {
+      case 'Step':
+        errors.push(...checkStep(context, item))
+        break
+
+      case 'Pattern':
+        errors.push(...checkPattern(context, item))
+        break
+    }
   }
 
-  const lengthCheck = checkExpression(context, step.length)
-  if (lengthCheck.result == null) {
-    return lengthCheck.errors
-  }
-
-  return checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range)
+  return errors
 }
 
-function checkStepParameters (context: Context, step: ast.Step): readonly CompileError[] {
-  const { errors } = checkArguments(context, step.parameters, stepSchema, step.range)
+function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  if (step.length != null) {
+    const lengthCheck = checkExpression(context, step.length)
+    if (lengthCheck.result == null) {
+      errors.push(...lengthCheck.errors)
+      return errors
+    }
+
+    errors.push(...checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range))
+  }
+
+  const parametersCheck = checkArguments(context, step.parameters, stepSchema, step.range)
+  errors.push(...parametersCheck.errors)
 
   return errors
 }

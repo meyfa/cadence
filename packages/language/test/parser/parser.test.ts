@@ -131,7 +131,7 @@ describe('parser/parser.ts', () => {
     })
   })
 
-  it('should parse a pattern', () => {
+  it('should parse a serial pattern', () => {
     const result = parse(makeTokens([
       { name: 'word', text: 'foo' },
       { name: '=' },
@@ -156,7 +156,8 @@ describe('parser/parser.ts', () => {
             key: { type: 'Identifier', name: 'foo' },
             value: {
               type: 'Pattern',
-              steps: [
+              mode: 'serial',
+              children: [
                 { type: 'Step', value: 'x', parameters: [] },
                 { type: 'Step', value: 'x', parameters: [] },
                 { type: 'Step', value: '-', parameters: [] },
@@ -169,6 +170,33 @@ describe('parser/parser.ts', () => {
                 { type: 'Step', value: '-', parameters: [] },
                 { type: 'Step', value: 'G4', parameters: [] }
               ]
+            }
+          }
+        ]
+      }
+    })
+  })
+
+  it('should parse an empty serial pattern', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'foo' },
+      { name: '=' },
+      { name: '[' },
+      { name: ']' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'foo' },
+            value: {
+              type: 'Pattern',
+              mode: 'serial',
+              children: []
             }
           }
         ]
@@ -199,7 +227,8 @@ describe('parser/parser.ts', () => {
             key: { type: 'Identifier', name: 'pattern' },
             value: {
               type: 'Pattern',
-              steps: [
+              mode: 'serial',
+              children: [
                 {
                   type: 'Step',
                   value: 'C4',
@@ -241,7 +270,8 @@ describe('parser/parser.ts', () => {
             key: { type: 'Identifier', name: 'pattern' },
             value: {
               type: 'Pattern',
-              steps: [
+              mode: 'serial',
+              children: [
                 {
                   type: 'Step',
                   value: 'C4',
@@ -286,7 +316,8 @@ describe('parser/parser.ts', () => {
             key: { type: 'Identifier', name: 'pattern' },
             value: {
               type: 'Pattern',
-              steps: [
+              mode: 'serial',
+              children: [
                 {
                   type: 'Step',
                   value: 'C4',
@@ -310,5 +341,77 @@ describe('parser/parser.ts', () => {
         ]
       }
     })
+  })
+
+  it('should parse a pattern with parallel steps', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'pattern' },
+      { name: '=' },
+      { name: '[' },
+      { name: '<' },
+      { name: 'word', text: 'C4' },
+      { name: ':' },
+      { name: 'number', text: '0.75' },
+      { name: '-' },
+      { name: ':' },
+      { name: 'number', text: '0.25' },
+      { name: '>' },
+      { name: 'word', text: 'E4' },
+      { name: ']' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'pattern' },
+            value: {
+              type: 'Pattern',
+              mode: 'serial',
+              children: [
+                {
+                  type: 'Pattern',
+                  mode: 'parallel',
+                  children: [
+                    {
+                      type: 'Step',
+                      value: 'C4',
+                      length: { type: 'NumberLiteral', value: 0.75, unit: undefined },
+                      parameters: []
+                    },
+                    {
+                      type: 'Step',
+                      value: '-',
+                      length: { type: 'NumberLiteral', value: 0.25, unit: undefined },
+                      parameters: []
+                    }
+                  ]
+                },
+                {
+                  type: 'Step',
+                  value: 'E4',
+                  parameters: []
+                }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  })
+
+  it('should reject empty parallel patterns', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'pattern' },
+      { name: '=' },
+      { name: '[' },
+      { name: '<' },
+      { name: '>' },
+      { name: ']' }
+    ]))
+    assert.strictEqual(result.complete, false)
   })
 })

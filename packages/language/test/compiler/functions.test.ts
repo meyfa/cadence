@@ -1,4 +1,4 @@
-import { createPattern, renderPatternEvents } from '@core/pattern.js'
+import { createSerialPattern, renderPatternEvents } from '@core/pattern.js'
 import { makeNumeric } from '@core/program.js'
 import { getDefaultFunctions, type FunctionContext } from '@language/compiler/functions.js'
 import assert from 'node:assert'
@@ -22,7 +22,7 @@ describe('compiler/functions.ts', () => {
     assert.ok(loop != null)
 
     it('should loop finite patterns infinitely', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: '-' },
@@ -45,7 +45,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should keep infinite patterns infinite', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
@@ -66,7 +66,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should return empty pattern when looping empty pattern', () => {
-      const pattern = createPattern([], 4)
+      const pattern = createSerialPattern([], 4)
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, { pattern })
@@ -78,7 +78,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support times parameter', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
@@ -105,7 +105,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support times parameter of zero', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
@@ -124,7 +124,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should treat negative times parameter as zero', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
@@ -143,7 +143,7 @@ describe('compiler/functions.ts', () => {
     })
 
     it('should support fractional times parameter', () => {
-      const pattern = createPattern([
+      const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
