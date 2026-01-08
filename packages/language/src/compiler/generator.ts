@@ -1,5 +1,5 @@
-import { concatPatterns, createPattern, multiplyPattern } from '@core/pattern.js'
-import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Program, type Section, type Track, type Unit } from '@core/program.js'
+import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
+import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Pattern, type Program, type Section, type Step, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import { busSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
@@ -215,21 +215,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return toNumberValue(context.top.options, expression)
 
     case 'Pattern':
-      return PatternType.of(createPattern(expression.steps.map((step) => {
-        const { value } = step
-
-        const length = step.length != null
-          ? NumberType.with(undefined).cast(resolve(context, step.length)).data
-          : undefined
-
-        const parameters = resolveArguments(context, step.parameters, stepSchema)
-
-        if (length == null) {
-          return { value, ...parameters }
-        }
-
-        return { value, length, ...parameters }
-      }), 1))
+      return generatePattern(context, expression)
 
     case 'Identifier': {
       let current: Context | undefined = context
@@ -262,6 +248,67 @@ function resolve (context: Context, expression: ast.Expression): Value {
       return computeBinaryExpression(expression.operator, left, right)
     }
   }
+}
+
+function generatePattern (context: Context, expression: ast.Pattern): Value {
+  const subdivision = 1
+
+  // Optimizations for common cases
+
+  // Also handles empty patterns ([].every(...) === true)
+  if (expression.children.every((item) => item.type === 'Step')) {
+    const steps = expression.children.map((step) => generateStep(context, step))
+    const pattern = expression.mode === 'serial'
+      ? createSerialPattern(steps, subdivision)
+      : createParallelPattern(steps)
+    return PatternType.of(pattern)
+  }
+
+  if (expression.children.every((item) => item.type === 'Pattern')) {
+    const patterns = expression.children.map((pattern) => PatternType.cast(generatePattern(context, pattern)).data)
+    const pattern = expression.mode === 'serial'
+      ? concatPatterns(patterns)
+      : mergePatterns(patterns)
+    return PatternType.of(pattern)
+  }
+
+  // General case (mixed steps and sub-patterns)
+
+  const parts: Pattern[] = []
+
+  for (const item of expression.children) {
+    switch (item.type) {
+      case 'Step': {
+        parts.push(createSerialPattern([generateStep(context, item)], subdivision))
+        break
+      }
+
+      case 'Pattern': {
+        parts.push(PatternType.cast(generatePattern(context, item)).data)
+        break
+      }
+    }
+  }
+
+  return PatternType.of(
+    expression.mode === 'serial' ? concatPatterns(parts) : mergePatterns(parts)
+  )
+}
+
+function generateStep (context: Context, expression: ast.Step): Step {
+  const { value } = expression
+
+  const length = expression.length != null
+    ? NumberType.with(undefined).cast(resolve(context, expression.length)).data
+    : undefined
+
+  const parameters = resolveArguments(context, expression.parameters, stepSchema)
+
+  if (length == null) {
+    return { value, ...parameters }
+  }
+
+  return { value, length, ...parameters }
 }
 
 function computeUnaryExpression (operator: ast.UnaryOperator, argument: Value): Value {
@@ -301,7 +348,7 @@ function computePlus (left: Value, right: Value): Value {
   }
 
   if (PatternType.is(left) && PatternType.is(right)) {
-    return PatternType.of(concatPatterns(left.data, right.data))
+    return PatternType.of(concatPatterns([left.data, right.data]))
   }
 
   if (NumberType.is(left) && NumberType.is(right)) {

@@ -7,73 +7,192 @@ const emptyPattern: Pattern = {
   evaluate: () => []
 }
 
+function isPositiveFiniteNumber (value: number): boolean {
+  return value > 0 && Number.isFinite(value)
+}
+
+function getSumOfLengths (patterns: readonly Pattern[]): Pattern['length'] {
+  let sum = 0
+
+  for (const pattern of patterns) {
+    // Infinite pattern makes the sum infinite
+    if (pattern.length == null) {
+      return undefined
+    }
+    sum += pattern.length.value
+  }
+
+  return makeNumeric('beats', sum)
+}
+
+function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
+  let max = 0
+
+  for (const pattern of patterns) {
+    if (pattern.length == null) {
+      return undefined
+    }
+    max = Math.max(max, pattern.length.value)
+  }
+
+  return makeNumeric('beats', max)
+}
+
+function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLength = 1.0): void {
+  if (step.value === '-') {
+    return
+  }
+
+  const time = makeNumeric('beats', offset)
+
+  const stepGate = baseLength * (step.gate?.value ?? step.length?.value ?? 1)
+  const gate = makeNumeric('beats', stepGate)
+
+  events.push(step.value === 'x' ? { time, gate } : { time, gate, pitch: step.value })
+}
+
 /**
  * Create a pattern with equally spaced steps based on the provided subdivision.
  * For example, assuming a 4/4 time signature, a subdivision of 1 would create quarter notes,
  * while a subdivision of 4 would create sixteenth notes.
  */
-export function createPattern (steps: readonly Step[], subdivision: number): Pattern {
-  if (steps.length === 0 || subdivision <= 0 || !Number.isFinite(subdivision)) {
+export function createSerialPattern (steps: readonly Step[], subdivision: number): Pattern {
+  if (steps.length === 0 || !isPositiveFiniteNumber(subdivision)) {
     return emptyPattern
   }
 
-  const events: NoteEvent[] = []
-
   const defaultStepLength = 1 / subdivision
 
+  const events: NoteEvent[] = []
   let offset = 0
 
   for (const step of steps) {
     const stepLength = defaultStepLength * (step.length?.value ?? 1)
-    if (stepLength <= 0 || !Number.isFinite(stepLength)) {
+    if (!isPositiveFiniteNumber(stepLength)) {
       continue
     }
 
-    const stepGate = defaultStepLength * (step.gate?.value ?? step.length?.value ?? 1)
-    const gate = makeNumeric('beats', stepGate)
-
-    if (step.value !== '-') {
-      const time = makeNumeric('beats', offset)
-      events.push(step.value === 'x' ? { time, gate } : { time, gate, pitch: step.value })
-    }
-
+    pushStepEvent(events, step, offset, defaultStepLength)
     offset += stepLength
   }
 
-  const length = makeNumeric('beats', offset)
-
-  return { length, evaluate: () => events }
+  return {
+    length: makeNumeric('beats', offset),
+    evaluate: () => events
+  }
 }
 
 /**
- * Concatenate two patterns into a single pattern.
+ * Create a pattern where all steps occur simultaneously at time 0.
+ * The pattern's length is the maximum length of the provided steps.
  */
-export function concatPatterns (first: Pattern, second: Pattern): Pattern {
-  // first is infinite or second is empty
-  if (first.length == null || second.length?.value === 0) {
-    return first
+export function createParallelPattern (steps: readonly Step[]): Pattern {
+  if (steps.length === 0) {
+    return emptyPattern
   }
 
-  // first is empty
-  if (first.length.value === 0) {
-    return second
+  const events: NoteEvent[] = []
+  let maxLength = 0
+
+  for (const step of steps) {
+    const stepLength = step.length?.value ?? 1
+    if (!isPositiveFiniteNumber(stepLength)) {
+      continue
+    }
+
+    pushStepEvent(events, step, 0)
+    maxLength = Math.max(maxLength, stepLength)
   }
-
-  const length = second.length != null
-    ? makeNumeric('beats', first.length.value + second.length.value)
-    : undefined
-
-  const secondOffset = first.length.value
 
   return {
-    length,
-    evaluate: function* () {
-      yield* first.evaluate()
+    length: makeNumeric('beats', maxLength),
+    evaluate: () => events
+  }
+}
 
-      for (const event of second.evaluate()) {
-        yield {
-          ...event,
-          time: makeNumeric('beats', event.time.value + secondOffset)
+/**
+ * Concatenate multiple patterns into a single pattern, creating a serial arrangement.
+ */
+export function concatPatterns (patterns: readonly Pattern[]): Pattern {
+  // We only need to consider non-empty patterns, and only up to (and including) the first infinite one.
+  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length.value > 0)
+  const infiniteIndex = nonEmptyPatterns.findIndex((p) => p.length == null)
+  const filteredPatterns = infiniteIndex >= 0 ? nonEmptyPatterns.slice(0, infiniteIndex + 1) : nonEmptyPatterns
+
+  if (filteredPatterns.length <= 1) {
+    return filteredPatterns.at(0) ?? emptyPattern
+  }
+
+  // Precompute offsets for each pattern
+  const offsets: number[] = []
+
+  let cumulativeOffset = 0
+  for (const pattern of filteredPatterns) {
+    offsets.push(cumulativeOffset)
+    cumulativeOffset += pattern.length?.value ?? 0
+  }
+
+  return {
+    length: getSumOfLengths(filteredPatterns),
+
+    evaluate: function* () {
+      yield* filteredPatterns[0].evaluate()
+
+      for (let i = 1; i < filteredPatterns.length; ++i) {
+        const pattern = filteredPatterns[i]
+        const offset = offsets[i]
+
+        for (const event of pattern.evaluate()) {
+          yield {
+            ...event,
+            time: makeNumeric('beats', event.time.value + offset)
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Merge multiple patterns into a single pattern, creating a parallel arrangement.
+ */
+export function mergePatterns (patterns: readonly Pattern[]): Pattern {
+  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length.value > 0)
+  if (nonEmptyPatterns.length <= 1) {
+    return nonEmptyPatterns.at(0) ?? emptyPattern
+  }
+
+  return {
+    length: getMaxLength(nonEmptyPatterns),
+
+    evaluate: function* () {
+      const iterables = nonEmptyPatterns.map((p) => p.evaluate())
+      const iterators = iterables.map((it) => it[Symbol.iterator]())
+      const nextEvents = iterators.map((it) => it.next())
+
+      for (;;) {
+        let earliestTime: number | undefined
+
+        for (const nextEvent of nextEvents) {
+          if (!nextEvent.done) {
+            const eventTime = nextEvent.value.time.value
+            if (earliestTime == null || eventTime < earliestTime) {
+              earliestTime = eventTime
+            }
+          }
+        }
+
+        if (earliestTime == null) {
+          // all iterators are done
+          break
+        }
+
+        for (let i = 0; i < nextEvents.length; i++) {
+          const nextEvent = nextEvents[i]
+          if (!nextEvent.done && nextEvent.value.time.value === earliestTime) {
+            yield nextEvent.value
+            nextEvents[i] = iterators[i].next()
+          }
         }
       }
     }
@@ -105,6 +224,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
     // Input pattern is finite, and not empty, so it can be looped
     return {
       length: undefined,
+
       evaluate: function* () {
         let hasEvents = false
         let offset = 0
@@ -124,13 +244,14 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
     }
   }
 
-  if (duration.value <= 0 || !Number.isFinite(duration.value)) {
+  if (!isPositiveFiniteNumber(duration.value)) {
     return emptyPattern
   }
 
   // Input pattern is guaranteed not to be empty, but may or may not be finite
   return {
     length: duration,
+
     evaluate: function* () {
       let hasEvents = false
       let offset = 0
@@ -175,17 +296,14 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
   }
 
   // invalid factor results in empty pattern
-  if (times <= 0 || !Number.isFinite(times)) {
-    return createPattern([], 1)
+  if (!isPositiveFiniteNumber(times)) {
+    return emptyPattern
   }
 
-  // infinite pattern remains infinite, otherwise scale length
-  const length = pattern.length != null
-    ? makeNumeric('beats', pattern.length.value * times)
-    : undefined
-
   return {
-    length,
+    // infinite pattern remains infinite, otherwise scale length
+    length: pattern.length != null ? makeNumeric('beats', pattern.length.value * times) : undefined,
+
     evaluate: function* () {
       for (const event of pattern.evaluate()) {
         yield {
@@ -205,7 +323,7 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
  * while shorter patterns will stay as-is (no additional events are produced).
  */
 export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): NoteEvent[] {
-  if (end.value <= 0 || !Number.isFinite(end.value)) {
+  if (!isPositiveFiniteNumber(end.value)) {
     return []
   }
 

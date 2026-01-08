@@ -50,9 +50,12 @@ export interface Step extends ASTNode {
   readonly parameters: ReadonlyArray<Expression | Property>
 }
 
+type PatternMode = 'serial' | 'parallel'
+
 export interface Pattern extends ASTNode {
   readonly type: 'Pattern'
-  readonly steps: readonly Step[]
+  readonly mode: PatternMode
+  readonly children: ReadonlyArray<Step | Pattern>
 }
 
 // Expression Types

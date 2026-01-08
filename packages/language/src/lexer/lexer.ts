@@ -35,7 +35,10 @@ const rules: Rules = [
   { name: '+' },
   { name: '-' },
   { name: '*' },
-  { name: '/' }
+  { name: '/' },
+
+  { name: '<' },
+  { name: '>' }
 ]
 
 const lexer = createLexer(rules, undefined, options)

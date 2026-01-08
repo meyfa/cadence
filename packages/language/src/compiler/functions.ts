@@ -1,4 +1,4 @@
-import { createPattern, loopPattern } from '@core/pattern.js'
+import { createSerialPattern, loopPattern } from '@core/pattern.js'
 import { isPitch, makeNumeric, type Instrument, type InstrumentId } from '@core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { EffectType, FunctionType, InstrumentType, NumberType, PatternType, StringType, type FunctionValue, type Type, type Value } from './types.js'
@@ -59,7 +59,7 @@ const loop = FunctionType.of({
 
     const factor = times.value
     if (factor <= 0 || !Number.isFinite(factor)) {
-      return PatternType.of(createPattern([], 1))
+      return PatternType.of(createSerialPattern([], 1))
     }
 
     if (pattern.length == null) {
