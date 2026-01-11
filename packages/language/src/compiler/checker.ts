@@ -399,14 +399,16 @@ function checkPattern (context: Context, pattern: ast.Pattern): readonly Compile
   const errors: CompileError[] = []
 
   for (const item of pattern.children) {
-    switch (item.type) {
-      case 'Step':
-        errors.push(...checkStep(context, item))
-        break
+    if (item.type === 'Step') {
+      errors.push(...checkStep(context, item))
+      continue
+    }
 
-      case 'Pattern':
-        errors.push(...checkPattern(context, item))
-        break
+    const itemCheck = checkExpression(context, item)
+    errors.push(...itemCheck.errors)
+
+    if (itemCheck.result != null) {
+      errors.push(...checkType([PatternType], itemCheck.result, item.range))
     }
   }
 

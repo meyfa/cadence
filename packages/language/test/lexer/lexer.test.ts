@@ -231,4 +231,22 @@ describe('lexer/lexer.ts', () => {
       ]
     })
   })
+
+  it('should lex patterns with interpolations', () => {
+    const result = lex('[C4{some_chord * 2}-]')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: '[', text: '[' },
+        { name: 'word', text: 'C4' },
+        { name: '{', text: '{' },
+        { name: 'word', text: 'some_chord' },
+        { name: '*', text: '*' },
+        { name: 'number', text: '2' },
+        { name: '}', text: '}' },
+        { name: '-', text: '-' },
+        { name: ']', text: ']' }
+      ]
+    })
+  })
 })

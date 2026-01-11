@@ -154,6 +154,47 @@ describe('compiler/checker.ts', () => {
       const errors = check(program)
       assert.strictEqual(errors.length, 0)
     })
+
+    it('should accept a pattern with interpolation', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'some_chord' }),
+            value: ast.make('Pattern', RANGE, {
+              mode: 'parallel',
+              children: [
+                ast.make('Step', RANGE, { value: 'D4', parameters: [] }),
+                ast.make('Step', RANGE, { value: 'G4', parameters: [] })
+              ]
+            })
+          }),
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'my_pattern' }),
+            value: ast.make('Pattern', RANGE, {
+              mode: 'serial',
+              children: [
+                ast.make('Step', RANGE, { value: 'C4', parameters: [] }),
+                ast.make('BinaryExpression', RANGE, {
+                  operator: '+',
+                  left: ast.make('Identifier', RANGE, { name: 'some_chord' }),
+                  right: ast.make('Pattern', RANGE, {
+                    mode: 'parallel',
+                    children: [
+                      ast.make('Step', RANGE, { value: 'E4', parameters: [] }),
+                      ast.make('Step', RANGE, { value: 'A4', parameters: [] })
+                    ]
+                  })
+                }),
+                ast.make('Step', RANGE, { value: 'E4', parameters: [] })
+              ]
+            })
+          })
+        ]
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
   })
 
   describe('invalid', () => {
@@ -341,6 +382,27 @@ describe('compiler/checker.ts', () => {
               effects: []
             })
           ]
+        })
+      ]
+    })
+    const errors = check(program)
+    assert.strictEqual(errors.length, 1)
+  })
+
+  it('should reject patterns with interpolation of the wrong type', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'my_pattern' }),
+          value: ast.make('Pattern', RANGE, {
+            mode: 'serial',
+            children: [
+              ast.make('Step', RANGE, { value: 'C4', parameters: [] }),
+              ast.make('Number', RANGE, { unit: undefined, value: 42 }),
+              ast.make('Step', RANGE, { value: 'E4', parameters: [] })
+            ]
+          })
         })
       ]
     })

@@ -279,46 +279,39 @@ function generateString (context: Context, parts: ReadonlyArray<string | ast.Exp
 function generatePattern (context: Context, expression: ast.Pattern): PatternValue {
   const subdivision = 1
 
-  // Optimizations for common cases
+  const create = expression.mode === 'serial'
+    ? (steps: readonly Step[]) => createSerialPattern(steps, subdivision)
+    : (steps: readonly Step[]) => createParallelPattern(steps)
 
-  // Also handles empty patterns ([].every(...) === true)
-  if (expression.children.every((item) => item.type === 'Step')) {
-    const steps = expression.children.map((step) => generateStep(context, step))
-    const pattern = expression.mode === 'serial'
-      ? createSerialPattern(steps, subdivision)
-      : createParallelPattern(steps)
-    return PatternType.of(pattern)
+  const combine = expression.mode === 'serial'
+    ? (patterns: readonly Pattern[]) => concatPatterns(patterns)
+    : (patterns: readonly Pattern[]) => mergePatterns(patterns)
+
+  const resolved = expression.children.map((child) => {
+    return child.type === 'Step'
+      ? generateStep(context, child)
+      : PatternType.cast(resolve(context, child)).data
+  })
+
+  const isStep = (item: Step | Pattern): item is Step => 'value' in item
+  const stepCount = resolved.filter(isStep).length
+
+  // all steps or empty pattern
+  if (stepCount === resolved.length) {
+    return PatternType.of(create(resolved as readonly Step[]))
   }
 
-  if (expression.children.every((item) => item.type === 'Pattern')) {
-    const patterns = expression.children.map((pattern) => generatePattern(context, pattern).data)
-    const pattern = expression.mode === 'serial'
-      ? concatPatterns(patterns)
-      : mergePatterns(patterns)
-    return PatternType.of(pattern)
+  // all sub-patterns
+  if (stepCount === 0) {
+    return PatternType.of(combine(resolved as readonly Pattern[]))
   }
 
-  // General case (mixed steps and sub-patterns)
+  // general case (mixed steps and sub-patterns)
+  const patterns = resolved.map((child) => {
+    return isStep(child) ? create([child]) : child
+  })
 
-  const parts: Pattern[] = []
-
-  for (const item of expression.children) {
-    switch (item.type) {
-      case 'Step': {
-        parts.push(createSerialPattern([generateStep(context, item)], subdivision))
-        break
-      }
-
-      case 'Pattern': {
-        parts.push(generatePattern(context, item).data)
-        break
-      }
-    }
-  }
-
-  return PatternType.of(
-    expression.mode === 'serial' ? concatPatterns(parts) : mergePatterns(parts)
-  )
+  return PatternType.of(combine(patterns))
 }
 
 function generateStep (context: Context, expression: ast.Step): Step {
