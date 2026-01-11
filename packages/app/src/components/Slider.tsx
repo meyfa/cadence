@@ -48,7 +48,8 @@ export const Slider: FunctionComponent<PropsWithChildren<{
 
   useGlobalMouseUp((event) => {
     // do not collapse if clicking on the slider itself
-    if (event.target instanceof Node && containerRef.current?.contains(event.target)) {
+    const container = containerRef.current
+    if (container != null && event.composedPath().includes(container)) {
       return
     }
 
