@@ -53,6 +53,61 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex string literals', () => {
+    const result = lex('"hello world" "" "string with escaped \\"quotes\\", \\\\ backslashes, and \\{braces}"')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'hello world' },
+        { name: '"', text: '"' },
+        { name: '"', text: '"' },
+        { name: '"', text: '"' },
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'string with escaped ' },
+        { name: 'stringEscape', text: '\\"' },
+        { name: 'stringContent', text: 'quotes' },
+        { name: 'stringEscape', text: '\\"' },
+        { name: 'stringContent', text: ', ' },
+        { name: 'stringEscape', text: '\\\\' },
+        { name: 'stringContent', text: ' backslashes, and ' },
+        { name: 'stringEscape', text: '\\{' },
+        { name: 'stringContent', text: 'braces}' },
+        { name: '"', text: '"' }
+      ]
+    })
+  })
+
+  it('should lex string literals with interpolations', () => {
+    const result = lex('"value is {x + 1}" "multiple {a} and {b * 2} interpolations"')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'value is ' },
+        { name: '{', text: '{' },
+        { name: 'word', text: 'x' },
+        { name: '+', text: '+' },
+        { name: 'number', text: '1' },
+        { name: '}', text: '}' },
+        { name: '"', text: '"' },
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'multiple ' },
+        { name: '{', text: '{' },
+        { name: 'word', text: 'a' },
+        { name: '}', text: '}' },
+        { name: 'stringContent', text: ' and ' },
+        { name: '{', text: '{' },
+        { name: 'word', text: 'b' },
+        { name: '*', text: '*' },
+        { name: 'number', text: '2' },
+        { name: '}', text: '}' },
+        { name: 'stringContent', text: ' interpolations' },
+        { name: '"', text: '"' }
+      ]
+    })
+  })
+
   it('should handle invalid input', () => {
     const result = lex('foo = 42 $')
     assert.strictEqual(result.complete, false)
@@ -79,11 +134,15 @@ describe('lexer/lexer.ts', () => {
       complete: true,
       value: [
         { name: 'word', text: 'use' },
-        { name: 'string', text: '"effects"' },
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'effects' },
+        { name: '"', text: '"' },
         { name: 'word', text: 'as' },
         { name: 'word', text: 'fx' },
         { name: 'word', text: 'use' },
-        { name: 'string', text: '"patterns"' },
+        { name: '"', text: '"' },
+        { name: 'stringContent', text: 'patterns' },
+        { name: '"', text: '"' },
         { name: 'word', text: 'as' },
         { name: '*', text: '*' }
       ]

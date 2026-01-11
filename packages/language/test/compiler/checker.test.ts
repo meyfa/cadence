@@ -21,10 +21,10 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'patterns' })
+            library: ast.make('String', RANGE, { parts: ['patterns'] })
           }),
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { parts: ['effects'] })
           })
         ],
         children: []
@@ -37,7 +37,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'instruments' })
+            library: ast.make('String', RANGE, { parts: ['instruments'] })
           })
         ],
         children: [
@@ -46,7 +46,7 @@ describe('compiler/checker.ts', () => {
             value: ast.make('Call', RANGE, {
               callee: ast.make('Identifier', RANGE, { name: 'sample' }),
               arguments: [
-                ast.make('String', RANGE, { value: 'piano.wav' })
+                ast.make('String', RANGE, { parts: ['piano.wav'] })
               ]
             })
           })
@@ -105,7 +105,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { parts: ['effects'] })
           })
         ],
         children: [
@@ -161,7 +161,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'unknownlib' })
+            library: ast.make('String', RANGE, { parts: ['unknownlib'] })
           })
         ],
         children: []
@@ -174,10 +174,10 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { parts: ['effects'] })
           }),
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { parts: ['effects'] })
           })
         ],
         children: []
@@ -191,7 +191,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { value: 'effects' }),
+            library: ast.make('String', RANGE, { parts: ['effects'] }),
             alias: 'myalias'
           })
         ],
@@ -210,7 +210,7 @@ describe('compiler/checker.ts', () => {
             value: ast.make('Call', RANGE, {
               callee: ast.make('Identifier', RANGE, { name: 'sample' }),
               arguments: [
-                ast.make('String', RANGE, { value: 'piano.wav' })
+                ast.make('String', RANGE, { parts: ['piano.wav'] })
               ]
             })
           })

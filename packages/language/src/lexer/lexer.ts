@@ -1,4 +1,4 @@
-import { createLexer, type Options, type Rules, type Token } from 'leac'
+import { createLexer, type Lexer, type Options, type Rules, type Token } from 'leac'
 import { LexError } from './error.js'
 import { truncateString, type Result } from '../error.js'
 import type { SourceRange } from '../range.js'
@@ -9,7 +9,22 @@ const options: Options = {
   lineNumbers: true
 }
 
-const rules: Rules = [
+function lazy (fn: () => Lexer): Lexer {
+  let lexer: Lexer | undefined
+  return (str: string, offset?: number) => {
+    lexer ??= fn()
+    return lexer(str, offset)
+  }
+}
+
+const stringLexer = createLexer([
+  { name: '"', pop: true },
+  { name: 'stringEscape', regex: /\\./ },
+  { name: 'stringContent', regex: /[^"\\{]+/ },
+  { name: '{', push: lazy(() => interpolationLexer) }
+], undefined, options)
+
+const commonRules: Rules = [
   { name: 'space', regex: /[ \t\n\r]+/, discard: true },
 
   { name: 'comment', regex: /\/\/[^\n]*/, discard: true },
@@ -17,13 +32,11 @@ const rules: Rules = [
   { name: 'word', regex: /[a-zA-Z_][a-zA-Z_0-9#]*/ },
 
   { name: 'number', regex: /[0-9]+(\.[0-9]+)?/ },
-  { name: 'string', regex: /"([^"\\]|\\.)*"/ },
+
+  { name: '"', push: stringLexer },
 
   { name: '[' },
   { name: ']' },
-
-  { name: '{' },
-  { name: '}' },
   { name: '(' },
   { name: ')' },
   { name: ',' },
@@ -41,7 +54,17 @@ const rules: Rules = [
   { name: '>' }
 ]
 
-const lexer = createLexer(rules, undefined, options)
+const interpolationLexer = createLexer([
+  ...commonRules,
+  { name: '{', push: lazy((): Lexer => interpolationLexer) },
+  { name: '}', pop: true }
+], undefined, options)
+
+const mainLexer = createLexer([
+  ...commonRules,
+  { name: '{' },
+  { name: '}' }
+], undefined, options)
 
 export type LexResult = Result<Token[], LexError>
 
@@ -53,7 +76,7 @@ export function lex (input: string): LexResult {
     return { line, column }
   }
 
-  const lexerResult = lexer(input)
+  const lexerResult = mainLexer(input)
   if (!lexerResult.complete) {
     const context = truncateString(input.slice(lexerResult.offset), ERROR_CONTEXT_LIMIT)
 
