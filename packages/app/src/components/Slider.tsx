@@ -17,6 +17,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
 }>> = ({ children, min, max, value, onChange, label, orientation, step, icon, collapsible }) => {
   const containerRef = useRef<HTMLLabelElement>(null)
   const sliderRef = useRef<HTMLInputElement>(null)
+  const interactingRef = useRef(false)
 
   const vertical = orientation === 'vertical'
   const [collapsed, setCollapsed] = useState(false)
@@ -41,12 +42,26 @@ export const Slider: FunctionComponent<PropsWithChildren<{
   }, [onChange])
 
   const onSliderBlur = useCallback(() => {
+    // Safari may emit a blur event while interacting with the native range control.
+    if (interactingRef.current) {
+      return
+    }
+
     if (collapsible === true) {
       setCollapsed(true)
     }
   }, [collapsible])
 
+  const onSliderMouseDown = useCallback(() => {
+    interactingRef.current = true
+  }, [])
+
   useGlobalMouseUp((event) => {
+    if (interactingRef.current) {
+      interactingRef.current = false
+      sliderRef.current?.focus()
+    }
+
     // do not collapse if clicking on the slider itself
     const container = containerRef.current
     if (container != null && event.composedPath().includes(container)) {
@@ -110,6 +125,7 @@ export const Slider: FunctionComponent<PropsWithChildren<{
               vertical ? 'cadence-slider-vertical' : 'cadence-slider-horizontal'
             )}
             onChange={onSliderChange}
+            onMouseDown={onSliderMouseDown}
             onBlur={onSliderBlur}
           />
 
