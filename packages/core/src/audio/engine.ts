@@ -33,14 +33,33 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const errors = new MutableObservable<readonly Error[]>([])
 
   let session: AudioSession | undefined
+  let stopSession: (() => void) | undefined
 
   const play = (program: Program) => {
     if (session != null) {
       return
     }
 
-    const thisSession = session = createAudioSession(program, range.get())
     const subscriptions: Array<() => void> = []
+
+    const thisSession = session = createAudioSession(program, range.get())
+
+    const stopThisSession = stopSession = () => {
+      thisSession.dispose()
+
+      for (const unsubscribe of subscriptions) {
+        unsubscribe()
+      }
+
+      if (session === thisSession) {
+        session = undefined
+        playing.set(false)
+      }
+
+      if (stopSession === stopThisSession) {
+        stopSession = undefined
+      }
+    }
 
     subscriptions.push(thisSession.errors.subscribe((value) => {
       errors.set(value)
@@ -51,18 +70,8 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     }))
 
     subscriptions.push(thisSession.ended.subscribe((ended) => {
-      if (!ended) {
-        return
-      }
-
-      if (session === thisSession) {
-        session.dispose()
-        session = undefined
-        playing.set(false)
-      }
-
-      for (const unsubscribe of subscriptions) {
-        unsubscribe()
+      if (ended) {
+        stopThisSession()
       }
     }))
 
@@ -71,9 +80,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   }
 
   const stop = () => {
-    session?.dispose()
-    session = undefined
-    playing.set(false)
+    stopSession?.()
   }
 
   return { outputGain, playing, play, stop, range, position, errors }
