@@ -46,12 +46,8 @@ unit {
 VariableDefinition { word }
 VariableName { word }
 
-NumberLiteral { number unit? }
-StringLiteral { string }
-
-Literal {
-  NumberLiteral | StringLiteral
-}
+Number { number unit? }
+String { string }
 
 Pattern { serialPattern }
 
@@ -72,7 +68,7 @@ step {
 }
 
 primary {
-  "(" expression ")" | Literal | Pattern | Call | VariableName
+  "(" expression ")" | Number | String | Pattern | Call | VariableName
 }
 
 expression {
@@ -97,7 +93,7 @@ Property {
 }
 
 UseStatement {
-  kw<"use"> StringLiteral
+  kw<"use"> String
   kw<"as"> (word | "*")
 }
 

@@ -75,14 +75,14 @@ const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
     : undefined
 })
 
-const plainNumberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.token((t) => {
+const plainNumber_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
   return t.name === 'number'
-    ? ast.make('NumberLiteral', getSourceRange(t), { value: Number.parseFloat(t.text) })
+    ? ast.make('Number', getSourceRange(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
 
-const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
-  plainNumberLiteral_,
+const number_: p.Parser<Token, unknown, ast.Number> = p.ab(
+  plainNumber_,
   p.option(
     p.satisfy((t) => t.name === 'word' && ast.units.includes(t.text as ast.Unit)),
     undefined
@@ -90,13 +90,13 @@ const numberLiteral_: p.Parser<Token, unknown, ast.NumberLiteral> = p.ab(
   (num, unitToken) => {
     const range = unitToken == null ? num.range : combineSourceRanges(num, unitToken)
     const unit = unitToken == null ? undefined : unitToken.text as ast.Unit
-    return ast.make('NumberLiteral', range, { value: num.value, unit })
+    return ast.make('Number', range, { value: num.value, unit })
   }
 )
 
-const stringLiteral_: p.Parser<Token, unknown, ast.StringLiteral> = p.token((t) => {
+const string_: p.Parser<Token, unknown, ast.String> = p.token((t) => {
   return t.name === 'string'
-    ? ast.make('StringLiteral', getSourceRange(t), { value: JSON.parse(t.text) })
+    ? ast.make('String', getSourceRange(t), { value: JSON.parse(t.text) })
     : undefined
 })
 
@@ -241,14 +241,12 @@ const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   }
 )
 
-const literal_: p.Parser<Token, unknown, ast.Literal> = p.eitherOr(
-  stringLiteral_,
-  numberLiteral_
-)
-
 const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
   p.eitherOr(
-    literal_,
+    p.eitherOr(
+      number_,
+      string_
+    ),
     serialPattern_
   ),
   p.recursive(() => identifierOrCall_)
@@ -270,8 +268,8 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     p.recursive(() => unaryExpression_),
     (op, expr) => {
       // If it's a numeric literal, fold the unary operator directly
-      if (expr.type === 'NumberLiteral') {
-        return ast.make('NumberLiteral', combineSourceRanges(op, expr), {
+      if (expr.type === 'Number') {
+        return ast.make('Number', combineSourceRanges(op, expr), {
           value: op.text === '+' ? expr.value : -expr.value,
           unit: expr.unit
         })
@@ -353,7 +351,7 @@ const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p
 const useStatement_: p.Parser<Token, unknown, ast.UseStatement> = p.ab(
   combine2(
     keyword('use'),
-    expect(stringLiteral_, 'module name')
+    expect(string_, 'module name')
   ),
   combine2(
     expect(keyword('as'), 'keyword "as"'),

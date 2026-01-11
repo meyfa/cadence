@@ -305,10 +305,10 @@ function checkBusRouting (context: Context, routing: ast.Routing): readonly Comp
 
 function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
-    case 'StringLiteral':
+    case 'String':
       return { errors: [], result: StringType }
 
-    case 'NumberLiteral':
+    case 'Number':
       return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
 
     case 'Pattern': {

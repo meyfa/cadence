@@ -8,8 +8,8 @@ const parserWithMetadata = parser.configure({
     styleTags({
       Comment: t.comment,
 
-      NumberLiteral: t.number,
-      StringLiteral: t.string,
+      Number: t.number,
+      String: t.string,
 
       Pattern: t.string,
 
