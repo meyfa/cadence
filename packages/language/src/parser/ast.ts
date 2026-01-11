@@ -16,24 +16,22 @@ export interface Identifier extends ASTNode {
   readonly name: string
 }
 
-export interface NumberLiteral extends ASTNode {
-  readonly type: 'NumberLiteral'
+export interface Number extends ASTNode {
+  readonly type: 'Number'
   readonly value: number
   readonly unit?: Unit
 }
 
-export interface StringLiteral extends ASTNode {
-  readonly type: 'StringLiteral'
+export interface String extends ASTNode {
+  readonly type: 'String'
   readonly value: string
 }
-
-export type Literal = NumberLiteral | StringLiteral
 
 // Imports
 
 export interface UseStatement extends ASTNode {
   readonly type: 'UseStatement'
-  readonly library: StringLiteral
+  readonly library: String
 
   /**
    * The alias to use for the imported library. If undefined, imports all symbols directly.
@@ -79,7 +77,7 @@ export interface BinaryExpression extends ASTNode {
   readonly right: Expression
 }
 
-export type Value = Literal | Pattern | Call | Identifier
+export type Value = Number | String | Pattern | Call | Identifier
 export type Expression = Value | UnaryExpression | BinaryExpression
 
 // Composite Types
@@ -163,8 +161,8 @@ export function make<T extends keyof NodeByType> (
 
 export interface NodeByType {
   Identifier: Identifier
-  NumberLiteral: NumberLiteral
-  StringLiteral: StringLiteral
+  Number: Number
+  String: String
 
   UseStatement: UseStatement
 

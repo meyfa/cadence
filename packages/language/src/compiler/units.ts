@@ -6,7 +6,7 @@ interface Constants {
   readonly beatsPerBar: number
 }
 
-export function toNumberValue (constants: Constants, literal: ast.NumberLiteral): NumberValue {
+export function toNumberValue (constants: Constants, literal: ast.Number): NumberValue {
   switch (literal.unit) {
     case undefined:
     case 'bpm':

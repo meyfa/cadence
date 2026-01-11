@@ -78,7 +78,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'UseStatement',
             library: {
-              type: 'StringLiteral',
+              type: 'String',
               value: 'mylib'
             },
             alias: 'myalias'
@@ -86,7 +86,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'UseStatement',
             library: {
-              type: 'StringLiteral',
+              type: 'String',
               value: 'otherlib'
             }
           }
@@ -124,7 +124,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Assignment',
             key: { type: 'Identifier', name: 'foo' },
-            value: { type: 'NumberLiteral', value: 42, unit: undefined }
+            value: { type: 'Number', value: 42, unit: undefined }
           }
         ]
       }
@@ -164,7 +164,7 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'D4',
-                  length: { type: 'NumberLiteral', value: 0.5, unit: undefined },
+                  length: { type: 'Number', value: 0.5, unit: undefined },
                   parameters: []
                 },
                 { type: 'Step', value: '-', parameters: [] },
@@ -233,7 +233,7 @@ describe('parser/parser.ts', () => {
                   type: 'Step',
                   value: 'C4',
                   parameters: [
-                    { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                    { type: 'Number', value: 2.0, unit: undefined }
                   ]
                 },
                 { type: 'Step', value: '-', parameters: [] }
@@ -275,9 +275,9 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'C4',
-                  length: { type: 'NumberLiteral', value: 1.5, unit: undefined },
+                  length: { type: 'Number', value: 1.5, unit: undefined },
                   parameters: [
-                    { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                    { type: 'Number', value: 2.0, unit: undefined }
                   ]
                 },
                 { type: 'Step', value: '-', parameters: [] }
@@ -322,7 +322,7 @@ describe('parser/parser.ts', () => {
                   type: 'Step',
                   value: 'C4',
                   length: {
-                    type: 'NumberLiteral',
+                    type: 'Number',
                     value: 1.5,
                     unit: undefined
                   },
@@ -330,7 +330,7 @@ describe('parser/parser.ts', () => {
                     {
                       type: 'Property',
                       key: { type: 'Identifier', name: 'gate' },
-                      value: { type: 'NumberLiteral', value: 2.0, unit: undefined }
+                      value: { type: 'Number', value: 2.0, unit: undefined }
                     }
                   ]
                 },
@@ -379,13 +379,13 @@ describe('parser/parser.ts', () => {
                     {
                       type: 'Step',
                       value: 'C4',
-                      length: { type: 'NumberLiteral', value: 0.75, unit: undefined },
+                      length: { type: 'Number', value: 0.75, unit: undefined },
                       parameters: []
                     },
                     {
                       type: 'Step',
                       value: '-',
-                      length: { type: 'NumberLiteral', value: 0.25, unit: undefined },
+                      length: { type: 'Number', value: 0.25, unit: undefined },
                       parameters: []
                     }
                   ]

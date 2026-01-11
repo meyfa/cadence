@@ -208,10 +208,10 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
  */
 function resolve (context: Context, expression: ast.Expression): Value {
   switch (expression.type) {
-    case 'StringLiteral':
+    case 'String':
       return StringType.of(expression.value)
 
-    case 'NumberLiteral':
+    case 'Number':
       return toNumberValue(context.top.options, expression)
 
     case 'Pattern':

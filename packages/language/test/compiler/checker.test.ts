@@ -21,10 +21,10 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'patterns' })
+            library: ast.make('String', RANGE, { value: 'patterns' })
           }),
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { value: 'effects' })
           })
         ],
         children: []
@@ -37,7 +37,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'instruments' })
+            library: ast.make('String', RANGE, { value: 'instruments' })
           })
         ],
         children: [
@@ -46,7 +46,7 @@ describe('compiler/checker.ts', () => {
             value: ast.make('Call', RANGE, {
               callee: ast.make('Identifier', RANGE, { name: 'sample' }),
               arguments: [
-                ast.make('StringLiteral', RANGE, { value: 'piano.wav' })
+                ast.make('String', RANGE, { value: 'piano.wav' })
               ]
             })
           })
@@ -65,13 +65,13 @@ describe('compiler/checker.ts', () => {
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
                 properties: [],
                 routings: []
               }),
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'main' }),
-                length: ast.make('NumberLiteral', RANGE, { value: 8, unit: 'bars' }),
+                length: ast.make('Number', RANGE, { value: 8, unit: 'bars' }),
                 properties: [],
                 routings: []
               })
@@ -89,7 +89,7 @@ describe('compiler/checker.ts', () => {
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+            value: ast.make('Number', RANGE, { value: 42 })
           }),
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'bar' }),
@@ -105,13 +105,13 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { value: 'effects' })
           })
         ],
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'gain' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 3, unit: 'db' })
+            value: ast.make('Number', RANGE, { value: 3, unit: 'db' })
           })
         ]
       })
@@ -125,14 +125,14 @@ describe('compiler/checker.ts', () => {
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+            value: ast.make('Number', RANGE, { value: 42 })
           }),
           ast.make('TrackStatement', RANGE, {
             properties: [],
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'foo' }),
-                length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
                 properties: [],
                 routings: []
               })
@@ -161,7 +161,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'unknownlib' })
+            library: ast.make('String', RANGE, { value: 'unknownlib' })
           })
         ],
         children: []
@@ -174,10 +174,10 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { value: 'effects' })
           }),
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+            library: ast.make('String', RANGE, { value: 'effects' })
           })
         ],
         children: []
@@ -191,7 +191,7 @@ describe('compiler/checker.ts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
           ast.make('UseStatement', RANGE, {
-            library: ast.make('StringLiteral', RANGE, { value: 'effects' }),
+            library: ast.make('String', RANGE, { value: 'effects' }),
             alias: 'myalias'
           })
         ],
@@ -210,7 +210,7 @@ describe('compiler/checker.ts', () => {
             value: ast.make('Call', RANGE, {
               callee: ast.make('Identifier', RANGE, { name: 'sample' }),
               arguments: [
-                ast.make('StringLiteral', RANGE, { value: 'piano.wav' })
+                ast.make('String', RANGE, { value: 'piano.wav' })
               ]
             })
           })
@@ -230,7 +230,7 @@ describe('compiler/checker.ts', () => {
           }),
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'bar' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 100 })
+            value: ast.make('Number', RANGE, { value: 100 })
           })
         ]
       })
@@ -244,11 +244,11 @@ describe('compiler/checker.ts', () => {
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 42 })
+            value: ast.make('Number', RANGE, { value: 42 })
           }),
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('NumberLiteral', RANGE, { value: 100 })
+            value: ast.make('Number', RANGE, { value: 100 })
           })
         ]
       })
@@ -283,13 +283,13 @@ describe('compiler/checker.ts', () => {
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
                 properties: [],
                 routings: []
               }),
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('NumberLiteral', RANGE, { value: 8, unit: 'bars' }),
+                length: ast.make('Number', RANGE, { value: 8, unit: 'bars' }),
                 properties: [],
                 routings: []
               })

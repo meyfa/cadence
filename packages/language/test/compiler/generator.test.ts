@@ -45,7 +45,7 @@ describe('compiler/generator.ts', () => {
           properties: [
             ast.make('Property', RANGE, {
               key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('NumberLiteral', RANGE, { value: 140, unit: 'bpm' })
+              value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
             })
           ],
           sections: []
@@ -64,7 +64,7 @@ describe('compiler/generator.ts', () => {
           properties: [
             ast.make('Property', RANGE, {
               key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('NumberLiteral', RANGE, { value: 400, unit: 'bpm' })
+              value: ast.make('Number', RANGE, { value: 400, unit: 'bpm' })
             })
           ],
           sections: []
@@ -82,7 +82,7 @@ describe('compiler/generator.ts', () => {
         // foo = 90 bpm
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'foo' }),
-          value: ast.make('NumberLiteral', RANGE, { value: 90, unit: 'bpm' })
+          value: ast.make('Number', RANGE, { value: 90, unit: 'bpm' })
         }),
         // bar = foo * 2
         ast.make('Assignment', RANGE, {
@@ -90,7 +90,7 @@ describe('compiler/generator.ts', () => {
           value: ast.make('BinaryExpression', RANGE, {
             operator: '*',
             left: ast.make('Identifier', RANGE, { name: 'foo' }),
-            right: ast.make('NumberLiteral', RANGE, { value: 2, unit: undefined })
+            right: ast.make('Number', RANGE, { value: 2, unit: undefined })
           })
         }),
         ast.make('TrackStatement', RANGE, {
@@ -112,7 +112,7 @@ describe('compiler/generator.ts', () => {
     const program = ast.make('Program', RANGE, {
       imports: [
         ast.make('UseStatement', RANGE, {
-          library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          library: ast.make('String', RANGE, { value: 'effects' })
         })
       ],
       children: [
@@ -139,14 +139,14 @@ describe('compiler/generator.ts', () => {
     const program = ast.make('Program', RANGE, {
       imports: [
         ast.make('UseStatement', RANGE, {
-          library: ast.make('StringLiteral', RANGE, { value: 'effects' })
+          library: ast.make('String', RANGE, { value: 'effects' })
         })
       ],
       children: [
         // gain = 140 bpm
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'gain' }),
-          value: ast.make('NumberLiteral', RANGE, { value: 140, unit: 'bpm' })
+          value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
         }),
         ast.make('TrackStatement', RANGE, {
           properties: [
@@ -169,14 +169,14 @@ describe('compiler/generator.ts', () => {
       children: [
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'foo' }),
-          value: ast.make('NumberLiteral', RANGE, { value: 42 })
+          value: ast.make('Number', RANGE, { value: 42 })
         }),
         ast.make('TrackStatement', RANGE, {
           properties: [],
           sections: [
             ast.make('SectionStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              length: ast.make('NumberLiteral', RANGE, { value: 4, unit: 'bars' }),
+              length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
               properties: [],
               routings: []
             })
