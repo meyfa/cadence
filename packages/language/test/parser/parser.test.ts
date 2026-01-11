@@ -454,4 +454,47 @@ describe('parser/parser.ts', () => {
     ]))
     assert.strictEqual(result.complete, false)
   })
+
+  it('should parse patterns with interpolations', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'pattern' },
+      { name: '=' },
+      { name: '[' },
+      { name: 'word', text: 'C4' },
+      { name: '-' },
+      { name: '{' },
+      { name: 'word', text: 'some_pattern' },
+      { name: '*' },
+      { name: 'number', text: '2' },
+      { name: '}' },
+      { name: ']' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'pattern' },
+            value: {
+              type: 'Pattern',
+              mode: 'serial',
+              children: [
+                { type: 'Step', value: 'C4', parameters: [] },
+                { type: 'Step', value: '-', parameters: [] },
+                {
+                  type: 'BinaryExpression',
+                  operator: '*',
+                  left: { type: 'Identifier', name: 'some_pattern' },
+                  right: { type: 'Number', value: 2, unit: undefined }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  })
 })

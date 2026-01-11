@@ -48,6 +48,12 @@ unit {
   @extend<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
 }
 
+interpolationExpression {
+  "{"
+  expression
+  "}"
+}
+
 VariableDefinition { word }
 VariableName { word }
 
@@ -61,23 +67,17 @@ Number { number unit? }
   }
 }
 
-interpolationExpression {
-  "{"
-  expression
-  "}"
-}
-
 Pattern { serialPattern }
 
 serialPattern {
   "["
-  (step | serialPattern | parallelPattern)*
+  (step | serialPattern | parallelPattern | interpolationExpression)*
   "]"
 }
 
 parallelPattern {
   "<"
-  (step | serialPattern | parallelPattern)*
+  (step | serialPattern | parallelPattern | interpolationExpression)*
   ">"
 }
 

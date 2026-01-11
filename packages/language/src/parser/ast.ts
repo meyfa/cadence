@@ -39,7 +39,7 @@ type PatternMode = 'serial' | 'parallel'
 export interface Pattern extends ASTNode {
   readonly type: 'Pattern'
   readonly mode: PatternMode
-  readonly children: ReadonlyArray<Step | Pattern>
+  readonly children: ReadonlyArray<Step | Expression>
 }
 
 // Imports

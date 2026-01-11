@@ -277,13 +277,25 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   }
 )
 
-const patternChildren_: p.Parser<Token, unknown, ReadonlyArray<ast.Step | ast.Pattern>> = p.map(
+const patternInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
+  literal('{'),
+  p.recursive(() => expression_),
+  expectLiteral('}'),
+  (_l, expr, _r) => {
+    return ast.make(expr.type, combineSourceRanges(_l, _r), { ...expr })
+  }
+)
+
+const patternChildren_: p.Parser<Token, unknown, ReadonlyArray<ast.Step | ast.Expression>> = p.map(
   p.many(
     p.eitherOr(
       steps_,
       p.eitherOr(
-        p.recursive(() => serialPattern_),
-        p.recursive(() => parallelPattern_)
+        p.eitherOr(
+          p.recursive(() => serialPattern_),
+          p.recursive(() => parallelPattern_)
+        ),
+        patternInterpolation_
       )
     )
   ),
