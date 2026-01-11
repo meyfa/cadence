@@ -1,5 +1,6 @@
 import type { EditorLocation } from '@editor/editor.js'
-import { createContext, useContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import { useSafeContext } from '../hooks/context.js'
 
 export interface EditorState {
   readonly code: string
@@ -17,8 +18,8 @@ function editorReducer (state: EditorState, action: SetStateAction<EditorState>)
 
 export type EditorDispatch = Dispatch<SetStateAction<EditorState>>
 
-export const EditorContext = createContext<EditorState>(initialEditorState)
-export const EditorDispatchContext = createContext<EditorDispatch>(undefined as any)
+export const EditorContext = createContext<EditorState | undefined>(undefined)
+export const EditorDispatchContext = createContext<EditorDispatch | undefined>(undefined)
 
 export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState)
@@ -33,8 +34,8 @@ export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children 
 }
 
 export function useEditor (): [EditorState, EditorDispatch] {
-  const state = useContext(EditorContext)
-  const dispatch = useContext(EditorDispatchContext)
+  const state = useSafeContext(EditorContext, 'EditorContext')
+  const dispatch = useSafeContext(EditorDispatchContext, 'EditorDispatchContext')
 
   return [state, dispatch]
 }

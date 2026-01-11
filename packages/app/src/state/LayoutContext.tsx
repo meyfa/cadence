@@ -1,5 +1,6 @@
 import { DockLayout, type LayoutNode } from '@editor/state/layout.js'
-import { createContext, useCallback, useContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import { createContext, useCallback, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import { useSafeContext } from '../hooks/context.js'
 
 const initialLayout: DockLayout = {
   main: undefined
@@ -47,8 +48,8 @@ export function useChildNodeDispatch (parent: LayoutNodeDispatch | undefined, ch
   }, [parent, childId])
 }
 
-export const LayoutContext = createContext<DockLayout>(initialLayout)
-export const LayoutDispatchContext = createContext<Dispatch<SetStateAction<DockLayout>>>(undefined as any)
+export const LayoutContext = createContext<DockLayout | undefined>(undefined)
+export const LayoutDispatchContext = createContext<Dispatch<SetStateAction<DockLayout>> | undefined>(undefined)
 
 export const LayoutProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = useReducer(layoutReducer, initialLayout)
@@ -63,8 +64,8 @@ export const LayoutProvider: FunctionComponent<PropsWithChildren> = ({ children 
 }
 
 export function useLayout (): [DockLayout, LayoutDispatch] {
-  const state = useContext(LayoutContext)
-  const dispatch = useContext(LayoutDispatchContext)
+  const state = useSafeContext(LayoutContext, 'LayoutContext')
+  const dispatch = useSafeContext(LayoutDispatchContext, 'LayoutDispatchContext')
 
   return [state, dispatch]
 }

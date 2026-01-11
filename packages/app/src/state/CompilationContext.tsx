@@ -1,16 +1,12 @@
 import type { CompileOptions } from '@language/compiler/compiler.js'
-import { createContext, useContext, type FunctionComponent, type PropsWithChildren } from 'react'
+import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompiler, type CompileResult } from '../hooks/compiler.js'
+import { useSafeContext } from '../hooks/context.js'
 import { useEditor } from './EditorContext.js'
 
 export type CompilationState = CompileResult
 
-const initialCompilationState: CompilationState = {
-  program: undefined,
-  errors: []
-}
-
-export const CompilationContext = createContext<CompilationState>(initialCompilationState)
+export const CompilationContext = createContext<CompilationState | undefined>(undefined)
 
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
   compileOptions: CompileOptions
@@ -26,5 +22,5 @@ export const CompilationProvider: FunctionComponent<PropsWithChildren<{
 }
 
 export function useCompilationState (): CompilationState {
-  return useContext(CompilationContext)
+  return useSafeContext(CompilationContext, 'CompilationContext')
 }
