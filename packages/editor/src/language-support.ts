@@ -10,7 +10,6 @@ const parserWithMetadata = parser.configure({
 
       Number: t.number,
       String: t.string,
-
       Pattern: t.string,
 
       '{ }': t.brace,

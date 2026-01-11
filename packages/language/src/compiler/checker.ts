@@ -8,16 +8,16 @@ import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberTyp
 import { toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
-  const importResult = checkImports(program.imports)
+  const emptyScope = createGlobalScope(new Map())
+
+  const importResult = checkImports(emptyScope, program.imports)
   if (importResult.result == null) {
     return importResult.errors
   }
 
-  const top: Context = {
-    resolutions: new Map(
-      [...getDefaultFunctions(importResult.result)].map(([name, fn]) => [name, fn.type])
-    )
-  }
+  const top = createGlobalScope(new Map(
+    [...getDefaultFunctions(importResult.result)].map(([name, fn]) => [name, fn.type])
+  ))
 
   const context = createLocalScope(top)
 
@@ -56,6 +56,12 @@ interface Checked<TValue> {
   readonly result?: TValue
 }
 
+function createGlobalScope (initialResolutions: ReadonlyMap<string, Type>): Context {
+  return {
+    resolutions: initialResolutions
+  }
+}
+
 function createLocalScope (parent: Context): MutableContext {
   return {
     parent,
@@ -86,14 +92,19 @@ function checkType (options: readonly Type[], actual: Type, range?: SourceRange)
   return []
 }
 
-function checkImports (imports: readonly ast.UseStatement[]): Checked<readonly string[]> {
+function checkImports (context: Context, imports: readonly ast.UseStatement[]): Checked<readonly string[]> {
   const errors: CompileError[] = []
   const result: string[] = []
 
   const seenImports = new Set<string>()
 
   for (const statement of imports) {
-    const libraryName = statement.library.value
+    if (!statement.library.parts.every((part) => typeof part === 'string')) {
+      errors.push(new CompileError(`Imports cannot use string interpolation`, statement.library.range))
+      continue
+    }
+
+    const libraryName = statement.library.parts.join('')
 
     if (!standardLibraryModuleNames.has(libraryName)) {
       errors.push(new CompileError(`Unknown module "${libraryName}"`, statement.range))
@@ -305,11 +316,24 @@ function checkBusRouting (context: Context, routing: ast.Routing): readonly Comp
 
 function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
-    case 'String':
-      return { errors: [], result: StringType }
-
     case 'Number':
       return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
+
+    case 'String': {
+      const errors: CompileError[] = []
+
+      for (const part of expression.parts) {
+        if (typeof part !== 'string') {
+          const partCheck = checkExpression(context, part)
+          if (partCheck.result == null) {
+            return { errors: partCheck.errors }
+          }
+          errors.push(...checkType([StringType], partCheck.result, part.range))
+        }
+      }
+
+      return { errors, result: StringType }
+    }
 
     case 'Pattern': {
       const errors = checkPattern(context, expression)

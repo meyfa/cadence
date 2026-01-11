@@ -62,11 +62,15 @@ describe('parser/parser.ts', () => {
   it('should parse use statements', () => {
     const result = parse(makeTokens([
       { name: 'word', text: 'use' },
-      { name: 'string', text: '"mylib"' },
+      { name: '"' },
+      { name: 'stringContent', text: 'mylib' },
+      { name: '"' },
       { name: 'word', text: 'as' },
       { name: 'word', text: 'myalias' },
       { name: 'word', text: 'use' },
-      { name: 'string', text: '"otherlib"' },
+      { name: '"' },
+      { name: 'stringContent', text: 'otherlib' },
+      { name: '"' },
       { name: 'word', text: 'as' },
       { name: '*' }
     ]))
@@ -79,7 +83,7 @@ describe('parser/parser.ts', () => {
             type: 'UseStatement',
             library: {
               type: 'String',
-              value: 'mylib'
+              parts: ['mylib']
             },
             alias: 'myalias'
           },
@@ -87,7 +91,7 @@ describe('parser/parser.ts', () => {
             type: 'UseStatement',
             library: {
               type: 'String',
-              value: 'otherlib'
+              parts: ['otherlib']
             }
           }
         ],
@@ -102,9 +106,11 @@ describe('parser/parser.ts', () => {
       { name: '=' },
       { name: 'number', text: '42' },
       { name: 'word', text: 'use' },
-      { name: 'string', text: '"mylib"' },
+      { name: '"' },
+      { name: 'stringContent', text: 'mylib' },
+      { name: '"' },
       { name: 'word', text: 'as' },
-      { name: 'myalias' }
+      { name: 'word', text: 'myalias' }
     ]))
     assert.strictEqual(result.complete, false)
   })
@@ -125,6 +131,40 @@ describe('parser/parser.ts', () => {
             type: 'Assignment',
             key: { type: 'Identifier', name: 'foo' },
             value: { type: 'Number', value: 42, unit: undefined }
+          }
+        ]
+      }
+    })
+  })
+
+  it('should parse string literals with escapes and interpolations', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'foo' },
+      { name: '=' },
+      { name: '"' },
+      { name: 'stringContent', text: 'a ' },
+      { name: 'stringEscape', text: '\\{' },
+      { name: 'stringContent', text: ' b ' },
+      { name: '{' },
+      { name: 'word', text: 'x' },
+      { name: '}' },
+      { name: 'stringContent', text: ' c' },
+      { name: '"' }
+    ]))
+
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'foo' },
+            value: {
+              type: 'String',
+              parts: ['a { b ', { type: 'Identifier', name: 'x' }, ' c']
+            }
           }
         ]
       }

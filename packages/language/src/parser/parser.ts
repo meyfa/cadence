@@ -94,11 +94,78 @@ const number_: p.Parser<Token, unknown, ast.Number> = p.ab(
   }
 )
 
-const string_: p.Parser<Token, unknown, ast.String> = p.token((t) => {
-  return t.name === 'string'
-    ? ast.make('String', getSourceRange(t), { value: JSON.parse(t.text) })
-    : undefined
+const stringContent_: p.Parser<Token, unknown, string> = p.token((t) => {
+  return t.name === 'stringContent' ? t.text : undefined
 })
+
+const stringEscape_: p.Parser<Token, unknown, string> = p.token((t) => {
+  if (t.name !== 'stringEscape') {
+    return undefined
+  }
+
+  // We treat `\\x` as escaping the next character `x`, similar to many languages.
+  // This is required so `\\{` can be used to write a literal `{` in strings.
+  // (JSON.parse would keep the backslash for `\\{`.)
+  const escaped = t.text[1]
+  switch (escaped) {
+    case '"':
+      return '"'
+    case '\\':
+      return '\\'
+    case 'n':
+      return '\n'
+    case 'r':
+      return '\r'
+    case 't':
+      return '\t'
+    case 'b':
+      return '\b'
+    case 'f':
+      return '\f'
+    case 'v':
+      return '\v'
+    default:
+      return escaped
+  }
+})
+
+const stringInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
+  literal('{'),
+  p.recursive(() => expression_),
+  expectLiteral('}'),
+  (_l, expr, _r) => {
+    return ast.make(expr.type, combineSourceRanges(_l, _r), { ...expr })
+  }
+)
+
+const string_: p.Parser<Token, unknown, ast.String> = p.abc(
+  literal('"'),
+  p.many(
+    p.eitherOr(
+      p.eitherOr(
+        stringContent_,
+        stringEscape_
+      ),
+      stringInterpolation_
+    )
+  ),
+  expectLiteral('"'),
+  (_l, parts, _r) => {
+    const mergedParts: Array<string | ast.Expression> = []
+
+    for (const part of parts) {
+      const last = mergedParts.at(-1)
+      if (typeof part === 'string' && typeof last === 'string') {
+        mergedParts[mergedParts.length - 1] = last + part
+        continue
+      }
+
+      mergedParts.push(part)
+    }
+
+    return ast.make('String', combineSourceRanges(_l, _r), { parts: mergedParts })
+  }
+)
 
 function splitStepsFromWordToken (text: string, tokenRange: SourceRange): ast.Step[] {
   const steps: ast.Step[] = []

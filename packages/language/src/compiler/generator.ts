@@ -5,7 +5,7 @@ import { busSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type Type, type Value } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
 import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -23,7 +23,10 @@ export interface GenerateOptions {
  * semantically checked and is valid.
  */
 export function generate (program: ast.Program, options: GenerateOptions): Program {
-  const imports = program.imports.map((item) => item.library.value)
+  const emptyScope = createGlobalScope(options, new Map())
+  const imports = program.imports.map((item) => {
+    return generateString(emptyScope, item.library.parts).data
+  })
 
   const top: TopLevelContext = {
     get top () {
@@ -75,6 +78,19 @@ interface TopLevelContext extends Context {
 
 interface MutableContext extends Context {
   readonly resolutions: Map<string, Value>
+}
+
+function createGlobalScope (options: GenerateOptions, initialResolutions: ReadonlyMap<string, Value>): TopLevelContext {
+  const scope: TopLevelContext = {
+    get top () {
+      return scope
+    },
+    options,
+    instruments: new Map(),
+    resolutions: new Map(initialResolutions)
+  }
+
+  return scope
 }
 
 function createLocalScope (parent: Context): MutableContext {
@@ -208,11 +224,11 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
  */
 function resolve (context: Context, expression: ast.Expression): Value {
   switch (expression.type) {
-    case 'String':
-      return StringType.of(expression.value)
-
     case 'Number':
       return toNumberValue(context.top.options, expression)
+
+    case 'String':
+      return generateString(context, expression.parts)
 
     case 'Pattern':
       return generatePattern(context, expression)
@@ -250,7 +266,17 @@ function resolve (context: Context, expression: ast.Expression): Value {
   }
 }
 
-function generatePattern (context: Context, expression: ast.Pattern): Value {
+function generateString (context: Context, parts: ReadonlyArray<string | ast.Expression>): StringValue {
+  const resolvedParts = parts.map((part) => {
+    return typeof part === 'string'
+      ? part
+      : StringType.cast(resolve(context, part)).data
+  })
+
+  return StringType.of(resolvedParts.join(''))
+}
+
+function generatePattern (context: Context, expression: ast.Pattern): PatternValue {
   const subdivision = 1
 
   // Optimizations for common cases
@@ -265,7 +291,7 @@ function generatePattern (context: Context, expression: ast.Pattern): Value {
   }
 
   if (expression.children.every((item) => item.type === 'Pattern')) {
-    const patterns = expression.children.map((pattern) => PatternType.cast(generatePattern(context, pattern)).data)
+    const patterns = expression.children.map((pattern) => generatePattern(context, pattern).data)
     const pattern = expression.mode === 'serial'
       ? concatPatterns(patterns)
       : mergePatterns(patterns)
@@ -284,7 +310,7 @@ function generatePattern (context: Context, expression: ast.Pattern): Value {
       }
 
       case 'Pattern': {
-        parts.push(PatternType.cast(generatePattern(context, item)).data)
+        parts.push(generatePattern(context, item).data)
         break
       }
     }

@@ -24,22 +24,8 @@ export interface Number extends ASTNode {
 
 export interface String extends ASTNode {
   readonly type: 'String'
-  readonly value: string
+  readonly parts: ReadonlyArray<string | Expression>
 }
-
-// Imports
-
-export interface UseStatement extends ASTNode {
-  readonly type: 'UseStatement'
-  readonly library: String
-
-  /**
-   * The alias to use for the imported library. If undefined, imports all symbols directly.
-   */
-  readonly alias?: string
-}
-
-// Patterns
 
 export interface Step extends ASTNode {
   readonly type: 'Step'
@@ -54,6 +40,18 @@ export interface Pattern extends ASTNode {
   readonly type: 'Pattern'
   readonly mode: PatternMode
   readonly children: ReadonlyArray<Step | Pattern>
+}
+
+// Imports
+
+export interface UseStatement extends ASTNode {
+  readonly type: 'UseStatement'
+  readonly library: String
+
+  /**
+   * The alias to use for the imported library. If undefined, imports all symbols directly.
+   */
+  readonly alias?: string
 }
 
 // Expression Types
@@ -156,18 +154,24 @@ export function make<T extends keyof NodeByType> (
   range: SourceRange,
   props: Omit<NodeByType[T], 'type' | 'range'>
 ): NodeByType[T] {
-  return { type, range: range, ...(props as any) } as NodeByType[T]
+  return {
+    ...(props as any),
+
+    // must come last to override props
+    type,
+    range
+  } as NodeByType[T]
 }
 
 export interface NodeByType {
   Identifier: Identifier
+
   Number: Number
   String: String
-
-  UseStatement: UseStatement
-
   Step: Step
   Pattern: Pattern
+
+  UseStatement: UseStatement
 
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression

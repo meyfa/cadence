@@ -112,7 +112,7 @@ describe('compiler/generator.ts', () => {
     const program = ast.make('Program', RANGE, {
       imports: [
         ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { value: 'effects' })
+          library: ast.make('String', RANGE, { parts: ['effects'] })
         })
       ],
       children: [
@@ -139,7 +139,7 @@ describe('compiler/generator.ts', () => {
     const program = ast.make('Program', RANGE, {
       imports: [
         ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { value: 'effects' })
+          library: ast.make('String', RANGE, { parts: ['effects'] })
         })
       ],
       children: [
