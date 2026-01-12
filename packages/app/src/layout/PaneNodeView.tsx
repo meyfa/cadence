@@ -142,7 +142,7 @@ const TabTitle: FunctionComponent<{
   const dropIndicatorOnRightSide = showDropIndicator && (transform?.x ?? 0) < 0
 
   return (
-    <Tab ref={setNodeRef} {...attributes} {...listeners} className='outline-none relative'>
+    <Tab as='div' ref={setNodeRef} {...attributes} {...listeners} className='outline-none relative'>
       {({ disabled, selected }) => (
         <>
           <TabComponent
