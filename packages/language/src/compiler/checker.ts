@@ -211,7 +211,7 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
     errors.push(...checkSection(trackContext, section))
   }
 
-  const propertiesCheck = checkProperties(trackContext, track.properties, trackSchema, track.range)
+  const propertiesCheck = checkArgumentList(trackContext, track.properties, trackSchema, track.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   return errors
@@ -220,14 +220,7 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
 function checkSection (context: Context, section: ast.SectionStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const lengthCheck = checkExpression(context, section.length)
-  errors.push(...lengthCheck.errors)
-
-  if (lengthCheck.result != null) {
-    errors.push(...checkType([NumberType.with('beats')], lengthCheck.result, section.length.range))
-  }
-
-  const propertiesCheck = checkProperties(context, section.properties, sectionSchema, section.range)
+  const propertiesCheck = checkArgumentList(context, section.properties, sectionSchema, section.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   for (const routing of section.routings) {
@@ -291,7 +284,7 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     errors.push(...checkBus(mixerContext, bus))
   }
 
-  const propertiesCheck = checkProperties(mixerContext, mixer.properties, mixerSchema, mixer.range)
+  const propertiesCheck = checkArgumentList(mixerContext, mixer.properties, mixerSchema, mixer.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   // Process routings last so that all buses are known
@@ -305,7 +298,7 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 function checkBus (context: Context, bus: ast.BusStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkProperties(context, bus.properties, busSchema, bus.range)
+  const propertiesCheck = checkArgumentList(context, bus.properties, busSchema, bus.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   for (const effect of bus.effects) {
@@ -425,7 +418,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors: [new CompileError(`Function is missing type information`, expression.range)] }
       }
 
-      const { errors } = checkArguments(context, expression.arguments, schema, expression.range)
+      const { errors } = checkArgumentList(context, expression.arguments, schema, expression.range)
       return { errors, result: returnType }
     }
   }
@@ -464,7 +457,7 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
     errors.push(...checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range))
   }
 
-  const parametersCheck = checkArguments(context, step.parameters, stepSchema, step.range)
+  const parametersCheck = checkArgumentList(context, step.parameters, stepSchema, step.range)
   errors.push(...parametersCheck.errors)
 
   return errors
@@ -581,43 +574,13 @@ function checkPropertyAccess (object: Type, property: ast.Identifier, range: Sou
   return { errors: [new CompileError(`Cannot access properties of type ${object.format()}`, property.range)] }
 }
 
-function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {
-  const errors: CompileError[] = []
-  const result = new Map<string, Type>()
-
-  const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
-
-  for (const property of properties) {
-    if (result.has(property.key.name)) {
-      errors.push(new CompileError(`Duplicate property named "${property.key.name}"`, property.key.range))
-      continue
-    }
-
-    const spec = schemaAsMap.get(property.key.name)
-    if (spec == null) {
-      errors.push(new CompileError(`Unknown property "${property.key.name}"`, property.key.range))
-      continue
-    }
-
-    const expressionCheck = checkExpression(context, property.value)
-    errors.push(...expressionCheck.errors)
-
-    if (expressionCheck.result != null) {
-      errors.push(...checkType([spec.type], expressionCheck.result, property.value.range))
-      result.set(property.key.name, expressionCheck.result)
-    }
-  }
-
-  for (const spec of schema) {
-    if (spec.required && !result.has(spec.name)) {
-      errors.push(new CompileError(`Missing required property "${spec.name}"`, parentRange))
-    }
-  }
-
-  return { errors, result: errors.length > 0 ? undefined : result }
-}
-
-function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | ast.Property>, schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {
+function checkArgumentList (
+  context: Context,
+  args: ast.ArgumentList,
+  schema: PropertySchema,
+  parentRange: SourceRange,
+  kind = 'argument'
+): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
 
   const result = new Map<string, Type>()
@@ -653,7 +616,7 @@ function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | 
 
     const spec = schema.at(index)
     if (spec == null) {
-      errors.push(new CompileError(`Unknown positional argument`, arg.range))
+      errors.push(new CompileError(`Unknown positional ${kind}`, arg.range))
       continue
     }
 
@@ -664,18 +627,18 @@ function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | 
   for (; index < args.length; ++index) {
     const arg = args[index]
     if (arg.type !== 'Property') {
-      errors.push(new CompileError(`Unexpected positional argument after named arguments`, arg.range))
+      errors.push(new CompileError(`Unexpected positional ${kind} after named ${kind}s`, arg.range))
       continue
     }
 
     const spec = schemaAsMap.get(arg.key.name)
     if (spec == null) {
-      errors.push(new CompileError(`Unknown argument "${arg.key.name}"`, arg.key.range))
+      errors.push(new CompileError(`Unknown ${kind} "${arg.key.name}"`, arg.key.range))
       continue
     }
 
     if (result.has(arg.key.name)) {
-      errors.push(new CompileError(`Duplicate argument named "${arg.key.name}"`, arg.key.range))
+      errors.push(new CompileError(`Duplicate ${kind} named "${arg.key.name}"`, arg.key.range))
       continue
     }
 
@@ -684,7 +647,7 @@ function checkArguments (context: Context, args: ReadonlyArray<ast.Expression | 
 
   for (const spec of schema) {
     if (spec.required && !result.has(spec.name) && !errorArguments.has(spec.name)) {
-      errors.push(new CompileError(`Missing required argument "${spec.name}"`, parentRange))
+      errors.push(new CompileError(`Missing required ${kind} "${spec.name}"`, parentRange))
     }
   }
 

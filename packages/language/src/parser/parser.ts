@@ -530,8 +530,13 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
 
     return ast.make('SectionStatement', combineSourceRanges(_section, _rp), {
       name,
-      length,
-      properties: flatChildren.filter((c) => c.type === 'Property'),
+      properties: [
+        ast.make('Property', length.range, {
+          key: ast.make('Identifier', length.range, { name: 'length' }),
+          value: length
+        }),
+        ...flatChildren.filter((c) => c.type === 'Property')
+      ],
       routings: flatChildren.filter((c) => c.type === 'Routing')
     })
   }

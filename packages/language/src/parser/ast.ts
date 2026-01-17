@@ -31,7 +31,7 @@ export interface Step extends ASTNode {
   readonly type: 'Step'
   readonly value: StepValue
   readonly length?: Expression
-  readonly parameters: ReadonlyArray<Expression | Property>
+  readonly parameters: ArgumentList
 }
 
 type PatternMode = 'serial' | 'parallel'
@@ -110,25 +110,26 @@ export interface Routing extends ASTNode {
   readonly source: Expression
 }
 
+export type ArgumentList = ReadonlyArray<Expression | Property>
+
 // Domain Types
 
 export interface TrackStatement extends ASTNode {
   readonly type: 'TrackStatement'
-  readonly properties: readonly Property[]
+  readonly properties: ArgumentList
   readonly sections: readonly SectionStatement[]
 }
 
 export interface SectionStatement extends ASTNode {
   readonly type: 'SectionStatement'
   readonly name: Identifier
-  readonly length: Expression
-  readonly properties: readonly Property[]
+  readonly properties: ArgumentList
   readonly routings: readonly Routing[]
 }
 
 export interface MixerStatement extends ASTNode {
   readonly type: 'MixerStatement'
-  readonly properties: readonly Property[]
+  readonly properties: ArgumentList
   readonly routings: readonly Routing[]
   readonly buses: readonly BusStatement[]
 }
@@ -136,7 +137,7 @@ export interface MixerStatement extends ASTNode {
 export interface BusStatement extends ASTNode {
   readonly type: 'BusStatement'
   readonly name: Identifier
-  readonly properties: readonly Property[]
+  readonly properties: ArgumentList
   readonly effects: readonly EffectStatement[]
 }
 
