@@ -135,6 +135,28 @@ describe('compiler/generator.ts', () => {
     assert.doesNotThrow(() => generate(program, OPTIONS))
   })
 
+  it('should support import aliases', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('String', RANGE, { parts: ['effects'] }),
+          alias: 'fx'
+        })
+      ],
+      children: [
+        // mygain = fx.gain
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'mygain' }),
+          value: ast.make('PropertyAccess', RANGE, {
+            object: ast.make('Identifier', RANGE, { name: 'fx' }),
+            property: ast.make('Identifier', RANGE, { name: 'gain' })
+          })
+        })
+      ]
+    })
+    assert.doesNotThrow(() => generate(program, OPTIONS))
+  })
+
   it('should support shadowing of imported names', () => {
     const program = ast.make('Program', RANGE, {
       imports: [

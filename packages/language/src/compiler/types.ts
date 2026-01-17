@@ -1,6 +1,7 @@
 import type { Bus, Effect, Instrument, Numeric, Pattern, Section, Unit } from '@core/program.js'
 import type { FunctionDefinition } from './functions.js'
 import type { PropertySchema } from './schema.js'
+import type { ModuleDefinition } from './modules.js'
 
 export interface AnyValue<D = unknown> {
   readonly type: Type
@@ -59,8 +60,19 @@ function makeType<const T extends string, const G extends object, V extends AnyV
 
 // Specific types
 
-export type Value = FunctionValue | NumberValue | StringValue | PatternValue | InstrumentValue | SectionValue | EffectValue | BusValue | GroupValue
+export type Value = |
+  ModuleValue |
+  FunctionValue |
+  NumberValue |
+  StringValue |
+  PatternValue |
+  InstrumentValue |
+  SectionValue |
+  EffectValue |
+  BusValue |
+  GroupValue
 
+export type ModuleValue = AnyValue<ModuleDefinition>
 export type FunctionValue<S extends PropertySchema = PropertySchema, R extends Type = Type> = AnyValue<FunctionDefinition<S, R>>
 export type NumberValue<U extends Unit = Unit> = AnyValue<Numeric<U>>
 export type StringValue = AnyValue<string>
@@ -72,6 +84,32 @@ export type BusValue = AnyValue<Bus>
 export type GroupValue = AnyValue<ReadonlyArray<InstrumentValue | BusValue>>
 
 export type ValueFor<T extends Type> = ReturnType<T['of']>
+
+export const ModuleType = {
+  ...makeType<'module', {}, ModuleValue>('module'),
+
+  // override for better inference
+  of: (data: ModuleDefinition): ModuleValue => ({
+    type: ModuleType.with({ definition: data }),
+    data
+  }),
+
+  with: (generics: Readonly<{ definition: ModuleDefinition }>) => {
+    return makeType<'module', typeof generics, ModuleValue>('module', generics, {
+      format () {
+        return `module("${this.generics?.definition.name}")`
+      },
+
+      equals (other: Type): other is Type<'module', Readonly<{ definition: ModuleDefinition }>, ModuleValue> {
+        return other.name === 'module' && ModuleType.detail(other).definition === generics.definition
+      }
+    })
+  },
+
+  detail: (type: Type): Readonly<{ definition?: ModuleDefinition }> => {
+    return type.generics as Readonly<{ definition?: ModuleDefinition }>
+  }
+}
 
 export const FunctionType = {
   ...makeType<'function', {}, FunctionValue>('function'),
@@ -103,7 +141,7 @@ export const NumberType = {
   with: <const U extends Unit> (unit: U) => {
     return makeType<'number', { readonly unit: U }, NumberValue<U>>('number', { unit }, {
       format () {
-        return this.generics?.unit == null ? 'number' : `number<${this.generics.unit}>`
+        return this.generics?.unit == null ? 'number' : `number(${this.generics.unit})`
       },
 
       equals (other: Type): other is Type<'number', { readonly unit: U }, NumberValue<U>> {
