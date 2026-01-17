@@ -24,12 +24,46 @@ export function formatDuration (seconds: number): string {
   return `${sign}${secs}s`
 }
 
-export function formatBeatDuration (duration: Numeric<'beats'>, beatsPerBar: number): string {
-  const sign = duration.value < 0 ? '-' : ''
+interface BeatDurationParts {
+  readonly sign: number
+  readonly bars: number
+  readonly beats: number
+}
+
+function getBeatDurationParts (duration: Numeric<'beats'>, beatsPerBar: number): BeatDurationParts {
+  const sign = Math.sign(duration.value)
   let remainingBeats = Math.abs(duration.value)
 
   const bars = Math.floor(remainingBeats / beatsPerBar)
   remainingBeats -= bars * beatsPerBar
 
-  return `${sign}${bars}:${remainingBeats.toFixed(2)}`
+  return {
+    sign,
+    bars,
+    beats: remainingBeats
+  }
+}
+
+export function formatBeatDuration (duration: Numeric<'beats'>, beatsPerBar: number): string {
+  const { sign, bars, beats } = getBeatDurationParts(duration, beatsPerBar)
+  return `${sign < 0 ? '-' : ''}${bars}:${beats.toFixed(2)}`
+}
+
+export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerBar: number): string {
+  const { sign, bars, beats } = getBeatDurationParts(duration, beatsPerBar)
+  const parts: string[] = []
+
+  if (bars > 0) {
+    parts.push(pluralize(bars, 'bar'))
+  }
+
+  if (beats > 0) {
+    parts.push(pluralize(beats, 'beat'))
+  }
+
+  if (parts.length === 0) {
+    return '0 beats'
+  }
+
+  return `${sign < 0 ? '-' : ''}${parts.join(' ')}`
 }

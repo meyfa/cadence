@@ -1,10 +1,11 @@
-import type { BeatRange } from '@core/types.js'
+import { calculateTotalLength } from '@core/audio/time.js'
 import { makeNumeric, type Numeric, type Program, type Section } from '@core/program.js'
+import type { BeatRange } from '@core/types.js'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { useGlobalMouseMove, useGlobalMouseUp } from '../hooks/input.js'
-import { formatBeatDuration } from '../utilities/strings.js'
-import { calculateTotalLength } from '@core/audio/time.js'
+import { formatBeatDuration, formatBeatDurationAsWords } from '../utilities/strings.js'
+import { Popover } from './Popover.js'
 
 const TIMELINE_ZOOM_MIN = 4
 const TIMELINE_ZOOM_MAX = 64
@@ -232,31 +233,54 @@ const TimelineSection: FunctionComponent<{
   const maxPaddingX = Math.max(0, (sectionWidth - borderWidth * 2) / 2)
   const paddingX = Math.min(8, maxPaddingX)
 
-  const lengthString = useMemo(() => {
-    return formatBeatDuration(section.length, beatsPerBar)
+  const [lengthShort, lengthLong] = useMemo(() => {
+    return [
+      formatBeatDuration(section.length, beatsPerBar),
+      formatBeatDurationAsWords(section.length, beatsPerBar)
+    ]
   }, [section, beatsPerBar])
 
-  return (
-    <div
-      className={clsx(
-        'py-1 text-sm leading-tight text-nowrap overflow-clip text-ellipsis select-none rounded-md',
-        'bg-surface-200 border-frame-200 text-content-200'
-      )}
-      style={{
-        width: sectionWidth,
-        paddingLeft: paddingX,
-        paddingRight: paddingX,
-        borderStyle: borderWidth > 0 ? 'solid' : 'none',
-        borderWidth,
-        transition: `width ${TIMELINE_TRANSITION_DURATION} ${TIMELINE_TRANSITION_EASING}`
-      }}
-    >
-      {section.name}
+  // must be reactive, so no ref
+  const [container, setContainer] = useState<HTMLElement | null>(null)
 
-      <div className='text-content-100'>
-        {lengthString}
-      </div>
-    </div>
+  const [popoverOpen, setPopoverOpen] = useState(false)
+  const openPopover = useCallback(() => setPopoverOpen(true), [])
+  const closePopover = useCallback(() => setPopoverOpen(false), [])
+
+  return (
+    <>
+      <button
+        type='button'
+        className={clsx(
+          'py-1 text-sm leading-tight text-start text-nowrap overflow-clip text-ellipsis select-none rounded-md -outline-offset-2 cursor-pointer',
+          'bg-surface-200 border-frame-200 text-content-200',
+          'hocus:outline-2 hocus:outline-accent-200 hocus:bg-surface-300 hocus:border-frame-300 hocus:text-content-300'
+        )}
+        style={{
+          width: sectionWidth,
+          paddingLeft: paddingX,
+          paddingRight: paddingX,
+          borderStyle: borderWidth > 0 ? 'solid' : 'none',
+          borderWidth,
+          transition: `width ${TIMELINE_TRANSITION_DURATION} ${TIMELINE_TRANSITION_EASING}`
+        }}
+        ref={setContainer}
+        onClick={openPopover}
+      >
+        {section.name}
+
+        <div className='text-content-100'>
+          {lengthShort}
+        </div>
+      </button>
+
+      {popoverOpen && (
+        <Popover anchor={container} onClose={closePopover}>
+          <div className='font-bold'>{`section.${section.name}`}</div>
+          <div>length: {lengthLong}</div>
+        </Popover>
+      )}
+    </>
   )
 }
 

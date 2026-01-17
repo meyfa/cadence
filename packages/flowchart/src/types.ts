@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
+import type { ComponentType } from 'react'
 
 export interface RenderFlowNodeProps<TData = unknown> {
   readonly node: FlowNode<TData>
   readonly highlight: boolean
 }
 
-export type RenderFlowNode<TData = unknown> = (props: RenderFlowNodeProps<TData>) => ReactNode
+export type FlowNodeComponent<TData = unknown> = ComponentType<RenderFlowNodeProps<TData>>
 
 export type FlowNodeId = string & { __brand: '@meyfa/cadence-flowchart:node-id' }
 export type FlowEdgeId = string & { __brand: '@meyfa/cadence-flowchart:edge-id' }
