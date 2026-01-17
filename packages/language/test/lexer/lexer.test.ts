@@ -53,6 +53,19 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex number literals', () => {
+    const result = lex('42 3.14 0.001 1000.0')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'number', text: '42' },
+        { name: 'number', text: '3.14' },
+        { name: 'number', text: '0.001' },
+        { name: 'number', text: '1000.0' }
+      ]
+    })
+  })
+
   it('should lex string literals', () => {
     const result = lex('"hello world" "" "string with escaped \\"quotes\\", \\\\ backslashes, and \\{braces}"')
     assert.deepStrictEqual(stripTokenMeta(result), {
@@ -246,6 +259,22 @@ describe('lexer/lexer.ts', () => {
         { name: '}', text: '}' },
         { name: '-', text: '-' },
         { name: ']', text: ']' }
+      ]
+    })
+  })
+
+  it('should lex property access', () => {
+    const result = lex('(object.foo).bar')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: '(', text: '(' },
+        { name: 'word', text: 'object' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'foo' },
+        { name: ')', text: ')' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'bar' }
       ]
     })
   })

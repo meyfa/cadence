@@ -247,12 +247,6 @@ function resolve (context: Context, expression: ast.Expression): Value {
       throw new CompileError(`Unknown identifier "${expression.name}"`, expression.range)
     }
 
-    case 'Call': {
-      const func = FunctionType.cast(resolve(context, expression.callee))
-      const args = resolveArguments(context, expression.arguments, func.data.arguments)
-      return func.data.invoke(context.top, args)
-    }
-
     case 'UnaryExpression': {
       const arg = resolve(context, expression.argument)
       return computeUnaryExpression(expression.operator, arg)
@@ -262,6 +256,19 @@ function resolve (context: Context, expression: ast.Expression): Value {
       const left = resolve(context, expression.left)
       const right = resolve(context, expression.right)
       return computeBinaryExpression(expression.operator, left, right)
+    }
+
+    case 'PropertyAccess': {
+      const object = resolve(context, expression.object)
+      // TODO implement property access
+      assert(false)
+      return object
+    }
+
+    case 'Call': {
+      const func = FunctionType.cast(resolve(context, expression.callee))
+      const args = resolveArguments(context, expression.arguments, func.data.arguments)
+      return func.data.invoke(context.top, args)
     }
   }
 }

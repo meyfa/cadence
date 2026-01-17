@@ -75,8 +75,20 @@ export interface BinaryExpression extends ASTNode {
   readonly right: Expression
 }
 
-export type Value = Number | String | Pattern | Call | Identifier
-export type Expression = Value | UnaryExpression | BinaryExpression
+export interface PropertyAccess extends ASTNode {
+  readonly type: 'PropertyAccess'
+  readonly object: Expression
+  readonly property: Identifier
+}
+
+export interface Call extends ASTNode {
+  readonly type: 'Call'
+  readonly callee: Expression
+  readonly arguments: ReadonlyArray<Expression | Property>
+}
+
+export type Value = Number | String | Pattern | Identifier
+export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAccess | Call
 
 // Composite Types
 
@@ -84,12 +96,6 @@ export interface Property extends ASTNode {
   readonly type: 'Property'
   readonly key: Identifier
   readonly value: Expression
-}
-
-export interface Call extends ASTNode {
-  readonly type: 'Call'
-  readonly callee: Identifier
-  readonly arguments: ReadonlyArray<Expression | Property>
 }
 
 export interface Assignment extends ASTNode {
@@ -175,6 +181,7 @@ export interface NodeByType {
 
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression
+  PropertyAccess: PropertyAccess
 
   Property: Property
   Call: Call
