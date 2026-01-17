@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useState, type FunctionComponent, type ReactE
 import { computeLayout, type LayoutEdge } from './internal/layout.js'
 import { getMarkerKey, getMarkerPath } from './internal/markers.js'
 import { getEdgeStyle } from './internal/style.js'
-import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeId, type Marker, type RenderFlowNode } from './types.js'
+import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeComponent, type FlowNodeId, type Marker } from './types.js'
 
 const LAYOUT_OPTIONS = Object.freeze({
   nodeSpacingX: 80,
@@ -12,13 +12,13 @@ const LAYOUT_OPTIONS = Object.freeze({
 export interface FlowchartProps<TNodeData = unknown, TEdgeData = unknown> {
   readonly nodes: ReadonlyArray<FlowNode<TNodeData>>
   readonly edges: ReadonlyArray<FlowEdge<TEdgeData>>
-  readonly renderNode: RenderFlowNode<TNodeData>
+  readonly NodeComponent: FlowNodeComponent<TNodeData>
 }
 
 export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
   nodes,
   edges,
-  renderNode
+  NodeComponent
 }: FlowchartProps<TNodeData, TEdgeData>): ReactElement {
   const layout = useMemo(() => {
     return computeLayout(nodes, edges, LAYOUT_OPTIONS)
@@ -111,7 +111,7 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
           onMouseEnter={() => setHoveredNodeId(node.node.id)}
           onMouseLeave={() => setHoveredNodeId(undefined)}
         >
-          {renderNode({ node: node.node, highlight: highlightNodes.has(node.node.id) })}
+          <NodeComponent node={node.node} highlight={highlightNodes.has(node.node.id)} />
         </div>
       ))}
 

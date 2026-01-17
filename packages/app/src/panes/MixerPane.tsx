@@ -1,9 +1,12 @@
 import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '@editor/mixer/flowchart.js'
-import { Flowchart, type RenderFlowNode } from '@flowchart/index.js'
+import { Flowchart } from '@flowchart/index.js'
 import clsx from 'clsx'
-import { useCallback, useMemo, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
+import { Popover } from '../components/Popover.js'
 import { usePrevious } from '../hooks/previous.js'
 import { useCompilationState } from '../state/CompilationContext.js'
+import { pluralize } from '../utilities/strings.js'
+import type { Bus, Instrument } from '@core/program.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   nodeSize: {
@@ -53,24 +56,6 @@ export const MixerPane: FunctionComponent = () => {
       : createMixerFlowchart(program, FLOWCHART_OPTIONS)
   }, [program])
 
-  const renderNode: RenderFlowNode<MixerFlowNode['data']> = useCallback(({ node, highlight }) => {
-    return (
-      <div
-        className={clsx(
-          'w-full h-full px-2 py-1 flex flex-col justify-center leading-snug text-sm rounded-md border',
-          highlight ? 'bg-surface-300 border-accent-200 ring-1 ring-accent-200' : 'bg-surface-200 border-frame-200'
-        )}
-      >
-        <div className='text-content-100'>
-          {node.data.type}
-        </div>
-        <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
-          {getNodeLabel(node)}
-        </div>
-      </div>
-    )
-  }, [])
-
   return (
     <div className='h-full text-content-300 relative flex flex-col overflow-none'>
       {flowchart == null && (
@@ -95,7 +80,7 @@ export const MixerPane: FunctionComponent = () => {
 
           <div className='flex-1 overflow-auto'>
             <div className='w-fit p-4 select-none'>
-              <Flowchart renderNode={renderNode} {...flowchart} />
+              <Flowchart NodeComponent={MixerNode} {...flowchart} />
             </div>
           </div>
         </>
@@ -140,5 +125,84 @@ const FlowchartEdgeIcon: FunctionComponent<{
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'>
       <line x1='1' y1='7' x2='23' y2='7' style={style} />
     </svg>
+  )
+}
+
+const MixerNode: FunctionComponent<{
+  node: MixerFlowNode
+  highlight?: boolean
+}> = ({ node, highlight }) => {
+  // must be reactive, so no ref
+  const [container, setContainer] = useState<HTMLElement | null>(null)
+
+  const [popover, setPopover] = useState<boolean>(false)
+  const openPopover = useCallback(() => setPopover(true), [])
+  const closePopover = useCallback(() => setPopover(false), [])
+
+  return (
+    <>
+      <button
+        type='button'
+        className={clsx(
+          'w-full h-full px-2 py-1 flex flex-col justify-center text-start leading-snug text-sm rounded-md border cursor-pointer',
+          highlight ? 'bg-surface-300 border-accent-200 ring-1 ring-accent-200' : 'bg-surface-200 border-frame-200'
+        )}
+        ref={setContainer}
+        onClick={openPopover}
+      >
+        <div className='text-content-100'>
+          {node.data.type}
+        </div>
+        <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
+          {getNodeLabel(node)}
+        </div>
+      </button>
+
+      {popover && (
+        <Popover anchor={container} onClose={closePopover}>
+          {node.data.type === 'Output' && (<OutputNodeInfo />)}
+          {node.data.type === 'Bus' && (<BusNodeInfo object={node.data.object} />)}
+          {node.data.type === 'Instrument' && (<InstrumentNodeInfo object={node.data.object} />)}
+        </Popover>
+      )}
+    </>
+  )
+}
+
+const OutputNodeInfo: FunctionComponent = () => {
+  return (
+    <>
+      <div>(Output)</div>
+    </>
+  )
+}
+
+const BusNodeInfo: FunctionComponent<{
+  object: Bus
+}> = ({ object }) => {
+  return (
+    <>
+      <div className='font-bold'>bus.{object.name}</div>
+      {object.gain != null && (
+        <div>gain: {object.gain.value.toFixed(2)} {object.gain.unit}</div>
+      )}
+      {object.pan != null && (
+        <div>pan: {object.pan.value.toFixed(2)}</div>
+      )}
+      {object.effects.length > 0 && (
+        <div>+ {pluralize(object.effects.length, 'effect')}</div>
+      )}
+    </>
+  )
+}
+
+const InstrumentNodeInfo: FunctionComponent<{
+  object: Instrument
+}> = ({ object }) => {
+  return (
+    <>
+      <div className='font-bold'>(Instrument)</div>
+      <div className='max-w-96'>url: {object.sampleUrl}</div>
+    </>
   )
 }
