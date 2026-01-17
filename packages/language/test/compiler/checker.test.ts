@@ -3,6 +3,7 @@ import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'
 import * as ast from '../../src/parser/ast.js'
+import { CompileError } from '@language/compiler/error.js'
 
 describe('compiler/checker.ts', () => {
   const RANGE = getEmptySourceRange()
@@ -13,8 +14,7 @@ describe('compiler/checker.ts', () => {
         imports: [],
         children: []
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should accept use statements without alias', () => {
@@ -29,8 +29,7 @@ describe('compiler/checker.ts', () => {
         ],
         children: []
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should define names from imported libraries', () => {
@@ -52,8 +51,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should accept imports with alias', () => {
@@ -66,8 +64,7 @@ describe('compiler/checker.ts', () => {
         ],
         children: []
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should accept a program with one track and unique sections', () => {
@@ -93,8 +90,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should accept variable declarations and usages in correct order', () => {
@@ -111,8 +107,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should allow shadowing of imported names', () => {
@@ -129,8 +124,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should allow sections and buses to shadow top-level variables', () => {
@@ -165,8 +159,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
 
     it('should accept a pattern with interpolation', () => {
@@ -206,8 +199,7 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 0)
+      assert.deepStrictEqual(check(program), [])
     })
   })
 
@@ -221,8 +213,9 @@ describe('compiler/checker.ts', () => {
         ],
         children: []
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Unknown module "unknownlib"', RANGE)
+      ])
     })
 
     it('should reject duplicate non-alias imports', () => {
@@ -237,8 +230,9 @@ describe('compiler/checker.ts', () => {
         ],
         children: []
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Duplicate import of "effects"', RANGE)
+      ])
     })
 
     it('should not define names from non-imported libraries', () => {
@@ -256,8 +250,9 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Unknown identifier "sample"', RANGE)
+      ])
     })
 
     it('should reject variable usage before declaration', () => {
@@ -274,8 +269,9 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Unknown identifier "bar"', RANGE)
+      ])
     })
 
     it('should reject variable reassignment', () => {
@@ -292,8 +288,9 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Identifier "foo" is already defined', RANGE)
+      ])
     })
 
     it('should reject duplicate track blocks', () => {
@@ -310,8 +307,9 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Multiple track definitions', RANGE)
+      ])
     })
 
     it('should reject duplicate section blocks within a track', () => {
@@ -337,8 +335,9 @@ describe('compiler/checker.ts', () => {
           })
         ]
       })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Duplicate section named "intro"', RANGE)
+      ])
     })
   })
 
@@ -358,8 +357,9 @@ describe('compiler/checker.ts', () => {
         })
       ]
     })
-    const errors = check(program)
-    assert.strictEqual(errors.length, 1)
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Multiple mixer definitions', RANGE)
+    ])
   })
 
   it('should reject duplicate bus blocks within a mixer', () => {
@@ -384,8 +384,9 @@ describe('compiler/checker.ts', () => {
         })
       ]
     })
-    const errors = check(program)
-    assert.strictEqual(errors.length, 1)
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Duplicate bus named "foo"', RANGE)
+    ])
   })
 
   it('should reject patterns with interpolation of the wrong type', () => {
@@ -405,7 +406,8 @@ describe('compiler/checker.ts', () => {
         })
       ]
     })
-    const errors = check(program)
-    assert.strictEqual(errors.length, 1)
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Expected type pattern, got number', RANGE)
+    ])
   })
 })
