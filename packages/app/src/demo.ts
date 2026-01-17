@@ -30,19 +30,17 @@ arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 // Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
 
-track {
-  tempo: 128 bpm
-
+track (128 bpm) {
   // Sections play in sequence. Patterns will trigger notes for their
   // defined length or the length of the section, whichever is shorter.
 
-  section intro for 4 bars {
+  section intro (4 bars) {
     kick  << kick_pattern
     snare << snare_pattern
     synth << arp_intro
   }
 
-  section main for 8 bars {
+  section main (8 bars) {
     kick  << kick_pattern
     snare << snare_pattern
     hat   << loop([--x-] / 4)
@@ -51,7 +49,7 @@ track {
     clap  << loop(clap_pattern)
   }
 
-  section outro for 4 bars {
+  section outro (4 bars) {
     snare << snare_pattern
     tom   << loop([---- -x-- ---- ---x] / 4)
     synth << loop(arp_main)
@@ -70,22 +68,13 @@ mixer {
   out << clap_delay << clap
 
   bus out {}
-
-  bus drums {
-    gain: -1.5 db
-  }
-
-  bus synths {
-    gain: -10 db
-  }
+  bus drums (gain: -1.5 db) {}
+  bus synths (gain: -10 db) {}
 
   // A bus can have zero or more effects, which are applied in order.
   // input -> effects... -> pan -> gain -> output
 
-  bus clap_delay {
-    pan: -0.25
-    gain: 3 db
-
+  bus clap_delay (gain: 3 db, pan: -0.25) {
     effect fx.delay(time: 0.5 beats, feedback: 0.6)
     effect fx.reverb(decay: 1s, mix: 0.3)
   }
