@@ -497,4 +497,187 @@ describe('parser/parser.ts', () => {
       }
     })
   })
+
+  it('should parse property access expressions', () => {
+    // x = object.foo.bar
+    const nonParenthesized = makeTokens([
+      { name: 'word', text: 'x' },
+      { name: '=' },
+      { name: 'word', text: 'object' },
+      { name: '.' },
+      { name: 'word', text: 'foo' },
+      { name: '.' },
+      { name: 'word', text: 'bar' }
+    ])
+
+    // x = (object.foo).bar
+    const parenthesized = makeTokens([
+      { name: 'word', text: 'x' },
+      { name: '=' },
+      { name: '(' },
+      { name: 'word', text: 'object' },
+      { name: '.' },
+      { name: 'word', text: 'foo' },
+      { name: ')' },
+      { name: '.' },
+      { name: 'word', text: 'bar' }
+    ])
+
+    // both should produce the same AST
+    for (const tokens of [nonParenthesized, parenthesized]) {
+      const result = parse(tokens)
+      assert.deepStrictEqual(stripRanges(result), {
+        complete: true,
+        value: {
+          type: 'Program',
+          imports: [],
+          children: [
+            {
+              type: 'Assignment',
+              key: { type: 'Identifier', name: 'x' },
+              value: {
+                type: 'PropertyAccess',
+                object: {
+                  type: 'PropertyAccess',
+                  object: {
+                    type: 'Identifier',
+                    name: 'object'
+                  },
+                  property: {
+                    type: 'Identifier',
+                    name: 'foo'
+                  }
+                },
+                property: {
+                  type: 'Identifier',
+                  name: 'bar'
+                }
+              }
+            }
+          ]
+        }
+      })
+    }
+  })
+
+  it('should parse property access with function calls', () => {
+    // x = object.method1().method2()
+    const nonParenthesized = makeTokens([
+      { name: 'word', text: 'x' },
+      { name: '=' },
+      { name: 'word', text: 'object' },
+      { name: '.' },
+      { name: 'word', text: 'method1' },
+      { name: '(' },
+      { name: ')' },
+      { name: '.' },
+      { name: 'word', text: 'method2' },
+      { name: '(' },
+      { name: ')' }
+    ])
+
+    // x = (object.method1()).method2()
+    const parenthesized = makeTokens([
+      { name: 'word', text: 'x' },
+      { name: '=' },
+      { name: '(' },
+      { name: 'word', text: 'object' },
+      { name: '.' },
+      { name: 'word', text: 'method1' },
+      { name: '(' },
+      { name: ')' },
+      { name: '.' },
+      { name: 'word', text: 'method2' },
+      { name: ')' },
+      { name: '(' },
+      { name: ')' }
+    ])
+
+    for (const tokens of [nonParenthesized, parenthesized]) {
+      const result = parse(tokens)
+      assert.deepStrictEqual(stripRanges(result), {
+        complete: true,
+        value: {
+          type: 'Program',
+          imports: [],
+          children: [
+            {
+              type: 'Assignment',
+              key: { type: 'Identifier', name: 'x' },
+              value: {
+                type: 'Call',
+                callee: {
+                  type: 'PropertyAccess',
+                  object: {
+                    type: 'Call',
+                    callee: {
+                      type: 'PropertyAccess',
+                      object: {
+                        type: 'Identifier',
+                        name: 'object'
+                      },
+                      property: {
+                        type: 'Identifier',
+                        name: 'method1'
+                      }
+                    },
+                    arguments: []
+                  },
+                  property: {
+                    type: 'Identifier',
+                    name: 'method2'
+                  }
+                },
+                arguments: []
+              }
+            }
+          ]
+        }
+      })
+    }
+  })
+
+  it('should parse calling the result of a call', () => {
+    // x = factory()(arg1, arg2)
+    const result = parse(makeTokens([
+      { name: 'word', text: 'x' },
+      { name: '=' },
+      { name: 'word', text: 'factory' },
+      { name: '(' },
+      { name: ')' },
+      { name: '(' },
+      { name: 'word', text: 'arg1' },
+      { name: ',' },
+      { name: 'word', text: 'arg2' },
+      { name: ')' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'x' },
+            value: {
+              type: 'Call',
+              callee: {
+                type: 'Call',
+                callee: {
+                  type: 'Identifier',
+                  name: 'factory'
+                },
+                arguments: []
+              },
+              arguments: [
+                { type: 'Identifier', name: 'arg1' },
+                { type: 'Identifier', name: 'arg2' }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  })
 })

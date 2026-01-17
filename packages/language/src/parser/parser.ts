@@ -328,7 +328,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
     ),
     serialPattern_
   ),
-  p.recursive(() => identifierOrCall_)
+  identifier_
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -339,6 +339,54 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     (_l, v, _r) => ast.make(v.type, combineSourceRanges(_l, _r), { ...v })
   ),
   value_
+)
+
+// Parse an identifier, a property access, or a call; chained as needed.
+const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
+  primary_,
+  p.many(
+    p.eitherOr(
+      p.ab(
+        literal('.'),
+        expect(identifier_, 'property name'),
+        (_dot, property) => property
+      ),
+      combine3(
+        literal('('),
+        p.sepBy(
+          p.eitherOr(
+            p.recursive(() => property_),
+            p.recursive(() => optionalExpression_)
+          ),
+          literal(',')
+        ),
+        expectLiteral(')')
+      )
+    )
+  ),
+  (object, suffixes) => {
+    let currentObject: ast.Expression = object
+
+    for (const suffix of suffixes) {
+      // property access
+      if (!Array.isArray(suffix)) {
+        currentObject = ast.make('PropertyAccess', combineSourceRanges(currentObject, suffix), {
+          object: currentObject,
+          property: suffix
+        })
+        continue
+      }
+
+      // call
+      const [, args, _rp] = suffix
+      currentObject = ast.make('Call', combineSourceRanges(currentObject, _rp), {
+        callee: currentObject,
+        arguments: args
+      })
+    }
+
+    return currentObject
+  }
 )
 
 const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -360,7 +408,7 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
       })
     }
   ),
-  primary_
+  accessOrCall_
 )
 
 function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
@@ -392,8 +440,9 @@ const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAsso
 )
 
 // The top-level expression parser
+const optionalExpression_: p.Parser<Token, unknown, ast.Expression> = additiveExpression_
 const expression_: p.Parser<Token, unknown, ast.Expression> = expect(
-  additiveExpression_,
+  optionalExpression_,
   'expression'
 )
 
@@ -403,27 +452,6 @@ const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   expression_,
   (key, _colon, value) => {
     return ast.make('Property', combineSourceRanges(key, value), { key, value })
-  }
-)
-
-// Parse an identifier, or an identifier followed by call arguments, without backtracking
-const identifierOrCall_: p.Parser<Token, unknown, ast.Identifier | ast.Call> = p.ab(
-  identifier_,
-  p.option(
-    combine3(
-      literal('('),
-      p.sepBy(p.eitherOr(property_, expression_), literal(',')),
-      expectLiteral(')')
-    ),
-    undefined
-  ),
-  (id, callTail) => {
-    if (callTail == null) {
-      return id
-    }
-
-    const [, args, _rp] = callTail
-    return ast.make('Call', combineSourceRanges(id, _rp), { callee: id, arguments: args })
   }
 )
 

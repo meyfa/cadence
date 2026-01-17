@@ -16,6 +16,7 @@
   "{" "}"
   "(" ")"
   ","
+  "."
 
   "="
   ":"
@@ -86,11 +87,11 @@ step {
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | Call | VariableName
+  "(" expression ")" | Number | String | Pattern | VariableName
 }
 
 expression {
-  primary | UnaryExpression | BinaryExpression
+  primary | UnaryExpression | BinaryExpression | PropertyAccess | Call
 }
 
 UnaryExpression {
@@ -102,6 +103,17 @@ BinaryExpression {
   (expression !plus "-" expression) |
   (expression !multiply "*" expression) |
   (expression !multiply "/" expression)
+}
+
+PropertyAccess {
+  primary
+  "."
+  MemberAccess { word }
+}
+
+Call {
+  Callee { primary }
+  "(" argumentList? ")"
 }
 
 Property {
@@ -119,11 +131,6 @@ Assignment {
   VariableDefinition
   "="
   expression
-}
-
-Call {
-  Callee { word }
-  "(" argumentList? ")"
 }
 
 argumentList {

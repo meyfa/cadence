@@ -351,25 +351,6 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       return { errors: [], result: valueType }
     }
 
-    case 'Call': {
-      const callee = resolve(context, expression.callee.name)
-      if (callee == null) {
-        return { errors: [new CompileError(`Unknown identifier "${expression.callee.name}"`, expression.range)] }
-      }
-
-      if (!FunctionType.equals(callee)) {
-        return { errors: [new CompileError(`"${expression.callee.name}" is not a function`, expression.callee.range)] }
-      }
-
-      const { schema, returnType } = FunctionType.detail(callee)
-      if (schema == null || returnType == null) {
-        return { errors: [new CompileError(`Function "${expression.callee.name}" is missing type information`, expression.callee.range)] }
-      }
-
-      const { errors } = checkArguments(context, expression.arguments, schema, expression.range)
-      return { errors, result: returnType }
-    }
-
     case 'UnaryExpression': {
       const argumentCheck = checkExpression(context, expression.argument)
 
@@ -391,6 +372,35 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       }
 
       return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.range)
+    }
+
+    case 'PropertyAccess': {
+      const objectCheck = checkExpression(context, expression.object)
+      if (objectCheck.result == null) {
+        return { errors: objectCheck.errors }
+      }
+
+      return { errors: [new CompileError(`Cannot access properties of type ${objectCheck.result.format()}`, expression.property.range)] }
+    }
+
+    case 'Call': {
+      const calleeCheck = checkExpression(context, expression.callee)
+      if (calleeCheck.result == null) {
+        return { errors: calleeCheck.errors }
+      }
+
+      const callee = calleeCheck.result
+      if (!FunctionType.equals(calleeCheck.result)) {
+        return { errors: [new CompileError(`Cannot call value of type ${callee.format()}`, expression.range)] }
+      }
+
+      const { schema, returnType } = FunctionType.detail(callee)
+      if (schema == null || returnType == null) {
+        return { errors: [new CompileError(`Function is missing type information`, expression.range)] }
+      }
+
+      const { errors } = checkArguments(context, expression.arguments, schema, expression.range)
+      return { errors, result: returnType }
     }
   }
 }
