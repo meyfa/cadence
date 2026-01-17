@@ -2,22 +2,18 @@ import * as ast from '../parser/ast.js'
 import type { SourceRange } from '../range.js'
 import { busSchema, mixerSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
-import { getDefaultFunctions, standardLibraryModuleNames } from './functions.js'
+import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type Type } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PatternType, SectionType, StringType, type ModuleValue, type Type } from './types.js'
 import { toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
-  const emptyScope = createGlobalScope(new Map())
-
-  const importResult = checkImports(emptyScope, program.imports)
+  const importResult = checkImports(program.imports)
   if (importResult.result == null) {
     return importResult.errors
   }
 
-  const top = createGlobalScope(new Map(
-    [...getDefaultFunctions(importResult.result)].map(([name, fn]) => [name, fn.type])
-  ))
+  const top = createGlobalScope(importResult.result)
 
   const context = createLocalScope(top)
 
@@ -69,6 +65,15 @@ function createLocalScope (parent: Context): MutableContext {
   }
 }
 
+function ensureStandardModule (moduleName: string): ModuleValue {
+  const module = getStandardModule(moduleName)
+  if (module == null) {
+    throw new Error(`Missing standard library module: ${moduleName}`)
+  }
+
+  return module
+}
+
 function resolve (context: Context, name: string): Type | undefined {
   let current: Context | undefined = context
 
@@ -92,11 +97,11 @@ function checkType (options: readonly Type[], actual: Type, range?: SourceRange)
   return []
 }
 
-function checkImports (context: Context, imports: readonly ast.UseStatement[]): Checked<readonly string[]> {
+function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
-  const result: string[] = []
 
-  const seenImports = new Set<string>()
+  const defaults = new Set<string>()
+  const aliases = new Map<string, string>()
 
   for (const statement of imports) {
     if (!statement.library.parts.every((part) => typeof part === 'string')) {
@@ -111,22 +116,43 @@ function checkImports (context: Context, imports: readonly ast.UseStatement[]): 
       continue
     }
 
-    if (seenImports.has(libraryName)) {
-      errors.push(new CompileError(`Duplicate import of "${libraryName}"`, statement.range))
-      continue
-    }
-    seenImports.add(libraryName)
+    if (statement.alias == null) {
+      if (defaults.has(libraryName)) {
+        errors.push(new CompileError(`Duplicate import of "${libraryName}"`, statement.range))
+      }
 
-    // TODO remove once aliases are supported
-    if (statement.alias != null) {
-      errors.push(new CompileError(`Import aliases are not supported yet`, statement.range))
+      defaults.add(libraryName)
       continue
     }
 
-    result.push(libraryName)
+    if (aliases.has(statement.alias)) {
+      errors.push(new CompileError(`Duplicate import alias "${statement.alias}"`, statement.range))
+      continue
+    }
+
+    aliases.set(statement.alias, libraryName)
   }
 
-  return { errors, result: errors.length > 0 ? undefined : result }
+  if (errors.length > 0) {
+    return { errors }
+  }
+
+  const result = new Map<string, Type>()
+
+  // defaults must come before aliases to allow aliasing over default imports
+  for (const importName of defaults) {
+    const module = ensureStandardModule(importName)
+    for (const [name, value] of module.data.exports.entries()) {
+      result.set(name, value.type)
+    }
+  }
+
+  for (const [alias, importName] of aliases) {
+    const module = ensureStandardModule(importName)
+    result.set(alias, module.type)
+  }
+
+  return { errors, result }
 }
 
 function checkAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): readonly CompileError[] {
@@ -380,7 +406,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
         return { errors: objectCheck.errors }
       }
 
-      return { errors: [new CompileError(`Cannot access properties of type ${objectCheck.result.format()}`, expression.property.range)] }
+      return checkPropertyAccess(objectCheck.result, expression.property, expression.range)
     }
 
     case 'Call': {
@@ -535,6 +561,24 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
   }
 
   return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
+}
+
+function checkPropertyAccess (object: Type, property: ast.Identifier, range: SourceRange): Checked<Type> {
+  if (ModuleType.equals(object)) {
+    const { definition } = ModuleType.detail(object)
+    if (definition == null) {
+      return { errors: [new CompileError(`Module is missing type information`, property.range)] }
+    }
+
+    const propertyType = definition.exports.get(property.name)?.type
+    if (propertyType != null) {
+      return { errors: [], result: propertyType }
+    }
+
+    return { errors: [new CompileError(`Module "${definition.name}" has no export named "${property.name}"`, property.range)] }
+  }
+
+  return { errors: [new CompileError(`Cannot access properties of type ${object.format()}`, property.range)] }
 }
 
 function checkProperties (context: Context, properties: readonly ast.Property[], schema: PropertySchema, parentRange?: SourceRange): Checked<ReadonlyMap<string, Type>> {

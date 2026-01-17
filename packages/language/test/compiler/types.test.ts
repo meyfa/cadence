@@ -1,13 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { BusValue, FunctionType, type FunctionValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, BusType, GroupType, InstrumentType, NumberType, type NumberValue, PatternType, StringType, type ValueFor, type Value } from '../../src/compiler/types.js'
+import { BusType, BusValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 
 describe('compiler/types.ts', () => {
+  const testModuleDefinition: ModuleDefinition = {
+    name: 'testModule',
+    exports: new Map<string, Value>([
+      ['foo', NumberType.with('s').of({ unit: 's', value: 10 })],
+      ['bar', StringType.of('hello')]
+    ])
+  }
+
   describe('ValueFor', () => {
     it('should yield correct basic types', () => {
+      expectTypeEquals<ModuleValue, ValueFor<typeof ModuleType>>()
       expectTypeEquals<FunctionValue, ValueFor<typeof FunctionType>>()
       expectTypeEquals<NumberValue, ValueFor<typeof NumberType>>()
       expectTypeEquals<StringValue, ValueFor<typeof StringType>>()
@@ -15,6 +25,11 @@ describe('compiler/types.ts', () => {
       expectTypeEquals<InstrumentValue, ValueFor<typeof InstrumentType>>()
       expectTypeEquals<BusValue, ValueFor<typeof BusType>>()
       expectTypeEquals<GroupValue, ValueFor<typeof GroupType>>()
+    })
+
+    it('should honor module generics', () => {
+      const moduleWithExports = ModuleType.with({ definition: testModuleDefinition })
+      expectTypeEquals<ModuleValue, ValueFor<typeof moduleWithExports>>()
     })
 
     it('should honor function generics', () => {
@@ -44,6 +59,24 @@ describe('compiler/types.ts', () => {
 
       assert.strictEqual(StringType.equals(StringType), true)
       assert.strictEqual(StringType.equals(PatternType), false)
+    })
+
+    it('should compare module types based on definition', () => {
+      const moduleType1 = ModuleType.with({ definition: testModuleDefinition })
+      const moduleType2 = ModuleType.with({ definition: testModuleDefinition })
+
+      assert.strictEqual(moduleType1.equals(moduleType2), true)
+
+      const differentModuleDefinition: ModuleDefinition = {
+        name: 'differentModule',
+        exports: new Map<string, Value>([
+          ['baz', NumberType.with('hz').of({ unit: 'hz', value: 440 })]
+        ])
+      }
+
+      const moduleType3 = ModuleType.with({ definition: differentModuleDefinition })
+
+      assert.strictEqual(moduleType1.equals(moduleType3), false)
     })
 
     it('should compare all function types equal', () => {
@@ -88,6 +121,14 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(PatternType.is(strValue), false)
     })
 
+    it('should identify module values correctly', () => {
+      const type = ModuleType.with({ definition: testModuleDefinition })
+      for (const value of [type.of(testModuleDefinition), ModuleType.of(testModuleDefinition)]) {
+        assert.strictEqual(type.is(value), true)
+        assert.strictEqual(ModuleType.is(value), true)
+      }
+    })
+
     it('should identify function values correctly', () => {
       const funcValue = FunctionType.of({
         arguments: [
@@ -122,8 +163,16 @@ describe('compiler/types.ts', () => {
       })
 
       assert.throws(() => NumberType.with('s').cast(strValue), {
-        message: 'Cannot cast value of type string to type number<s>'
+        message: 'Cannot cast value of type string to type number(s)'
       })
+    })
+
+    it('should cast module values correctly', () => {
+      const moduleValue: Value = ModuleType.of(testModuleDefinition)
+
+      const castedModule = ModuleType.cast(moduleValue)
+      expectTypeEquals<ModuleValue, typeof castedModule>()
+      assert.strictEqual(castedModule, moduleValue)
     })
 
     it('should cast function values correctly', () => {
@@ -148,6 +197,61 @@ describe('compiler/types.ts', () => {
       const castedNumWithGenerics = NumberType.with('s').cast(numValue)
       expectTypeEquals<NumberValue<'s'>, typeof castedNumWithGenerics>()
       assert.strictEqual(castedNumWithGenerics, numValue)
+    })
+  })
+
+  describe('ModuleType', () => {
+    it('should have correct name, generics, format', () => {
+      assert.strictEqual(ModuleType.name, 'module')
+      assert.strictEqual(ModuleType.generics, undefined)
+      assert.strictEqual(ModuleType.format(), 'module')
+    })
+
+    describe('of()', () => {
+      it('should narrow type correctly', () => {
+        const moduleDef: ModuleDefinition = {
+          name: 'myModule',
+          exports: new Map<string, Value>()
+        }
+
+        const module = ModuleType.of(moduleDef)
+        expectTypeEquals<ModuleValue, typeof module>()
+
+        const moduleType = module.type
+        assert.deepStrictEqual(moduleType.generics, { definition: moduleDef })
+      })
+    })
+
+    describe('with()', () => {
+      it('should set correct name and generics', () => {
+        const generics = {
+          definition: testModuleDefinition
+        }
+
+        const moduleType = ModuleType.with(generics)
+        assert.strictEqual(moduleType.name, 'module')
+        assert.deepStrictEqual(moduleType.generics, generics)
+      })
+
+      it('should have correct format', () => {
+        const generics = {
+          definition: testModuleDefinition
+        }
+
+        const moduleType = ModuleType.with(generics)
+        assert.strictEqual(moduleType.format(), 'module("testModule")')
+      })
+    })
+
+    describe('detail()', () => {
+      it('should return generics', () => {
+        const generics = {
+          definition: testModuleDefinition
+        }
+
+        const moduleType = ModuleType.with(generics)
+        assert.deepStrictEqual(ModuleType.detail(moduleType), generics)
+      })
     })
   })
 
@@ -255,10 +359,10 @@ describe('compiler/types.ts', () => {
         assert.strictEqual(funcType.format(), 'number')
 
         const funcType2 = NumberType.with('s')
-        assert.strictEqual(funcType2.format(), 'number<s>')
+        assert.strictEqual(funcType2.format(), 'number(s)')
 
         const funcType3 = NumberType.with('beats')
-        assert.strictEqual(funcType3.format(), 'number<beats>')
+        assert.strictEqual(funcType3.format(), 'number(beats)')
       })
     })
 

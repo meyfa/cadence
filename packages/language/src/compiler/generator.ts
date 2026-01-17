@@ -3,10 +3,10 @@ import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, 
 import * as ast from '../parser/ast.js'
 import { busSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
-import { getDefaultFunctions } from './functions.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
 import { toNumberValue } from './units.js'
+import { getStandardModule } from './modules.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -23,19 +23,7 @@ export interface GenerateOptions {
  * semantically checked and is valid.
  */
 export function generate (program: ast.Program, options: GenerateOptions): Program {
-  const emptyScope = createGlobalScope(options, new Map())
-  const imports = program.imports.map((item) => {
-    return generateString(emptyScope, item.library.parts).data
-  })
-
-  const top: TopLevelContext = {
-    get top () {
-      return top
-    },
-    options,
-    instruments: new Map(),
-    resolutions: new Map(getDefaultFunctions(imports))
-  }
+  const top = createGlobalScope(options, processImports(program.imports))
 
   const context = createLocalScope(top)
 
@@ -116,6 +104,38 @@ function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: n
   return value.value < minimum || value.value > maximum
     ? makeNumeric(value.unit, Math.min(Math.max(value.value, minimum), maximum))
     : value
+}
+
+function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<string, Value> {
+  const getModule = (library: ast.String) => {
+    // Checker guarantees this is a simple string
+    const name = library.parts.filter((part) => typeof part === 'string').join('')
+
+    const module = getStandardModule(name)
+    assert(module != null)
+
+    return module
+  }
+
+  const result = new Map<string, Value>()
+
+  // Process default imports first, such that aliases can override them
+
+  for (const statement of imports) {
+    if (statement.alias == null) {
+      for (const [name, value] of getModule(statement.library).data.exports) {
+        result.set(name, value)
+      }
+    }
+  }
+
+  for (const statement of imports) {
+    if (statement.alias != null) {
+      result.set(statement.alias, getModule(statement.library))
+    }
+  }
+
+  return result
 }
 
 function processAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): void {
@@ -264,9 +284,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'PropertyAccess': {
       const object = resolve(context, expression.object)
-      // TODO implement property access
-      assert(false)
-      return object
+      return resolvePropertyAccess(context, object, expression)
     }
 
     case 'Call': {
@@ -429,6 +447,17 @@ function computeDivide (left: Value, right: Value): Value {
 
   if (PatternType.is(left) && NumberType.is(right)) {
     return PatternType.of(multiplyPattern(left.data, 1.0 / right.data.value))
+  }
+
+  assert(false)
+}
+
+function resolvePropertyAccess (context: Context, object: Value, expression: ast.PropertyAccess): Value {
+  if (ModuleType.is(object)) {
+    const property = object.data.exports.get(expression.property.name)
+    if (property != null) {
+      return property
+    }
   }
 
   assert(false)

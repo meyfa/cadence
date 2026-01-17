@@ -56,6 +56,20 @@ describe('compiler/checker.ts', () => {
       assert.strictEqual(errors.length, 0)
     })
 
+    it('should accept imports with alias', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['effects'] }),
+            alias: 'myalias'
+          })
+        ],
+        children: []
+      })
+      const errors = check(program)
+      assert.strictEqual(errors.length, 0)
+    })
+
     it('should accept a program with one track and unique sections', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
@@ -219,21 +233,6 @@ describe('compiler/checker.ts', () => {
           }),
           ast.make('UseStatement', RANGE, {
             library: ast.make('String', RANGE, { parts: ['effects'] })
-          })
-        ],
-        children: []
-      })
-      const errors = check(program)
-      assert.strictEqual(errors.length, 1)
-    })
-
-    // TODO: Adapt this test when alias imports are supported
-    it('should reject imports with alias', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] }),
-            alias: 'myalias'
           })
         ],
         children: []

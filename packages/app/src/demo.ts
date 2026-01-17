@@ -4,7 +4,7 @@ export const demoCode = `
 // Import some functions from the standard library.
 use "instruments" as *  // sample
 use "patterns" as *     // loop
-use "effects" as *      // delay, reverb, ...
+use "effects" as fx
 
 sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master"
 
@@ -86,8 +86,8 @@ mixer {
     pan: -0.25
     gain: 3 db
 
-    effect delay(time: 0.5 beats, feedback: 0.6)
-    effect reverb(decay: 1s, mix: 0.3)
+    effect fx.delay(time: 0.5 beats, feedback: 0.6)
+    effect fx.reverb(decay: 1s, mix: 0.3)
   }
 }
 `.trimStart()
