@@ -166,7 +166,11 @@ function generateSection (context: Context, section: ast.SectionStatement): Sect
     }
   })
 
-  return { name, length: length.data, routings }
+  return {
+    name,
+    length: clamped(length.data, 0, Number.POSITIVE_INFINITY),
+    routings
+  }
 }
 
 function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {

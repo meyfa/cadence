@@ -228,6 +228,9 @@ const TimelineSection: FunctionComponent<{
   beatWidth: number
 }> = ({ section, beatsPerBar, beatWidth }) => {
   const sectionWidth = section.length.value * beatWidth
+  const borderWidth = sectionWidth >= 2 ? 1 : 0
+  const maxPaddingX = Math.max(0, (sectionWidth - borderWidth * 2) / 2)
+  const paddingX = Math.min(8, maxPaddingX)
 
   const lengthString = useMemo(() => {
     return formatBeatDuration(section.length, beatsPerBar)
@@ -236,11 +239,15 @@ const TimelineSection: FunctionComponent<{
   return (
     <div
       className={clsx(
-        'px-2 py-1 text-sm leading-tight text-nowrap overflow-hidden text-ellipsis select-none',
-        'rounded-md bg-surface-200 border border-frame-200 text-content-200'
+        'py-1 text-sm leading-tight text-nowrap overflow-clip text-ellipsis select-none rounded-md',
+        'bg-surface-200 border-frame-200 text-content-200'
       )}
       style={{
         width: sectionWidth,
+        paddingLeft: paddingX,
+        paddingRight: paddingX,
+        borderStyle: borderWidth > 0 ? 'solid' : 'none',
+        borderWidth,
         transition: `width ${TIMELINE_TRANSITION_DURATION} ${TIMELINE_TRANSITION_EASING}`
       }}
     >

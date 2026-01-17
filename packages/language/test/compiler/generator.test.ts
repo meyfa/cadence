@@ -199,4 +199,25 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.track.sections[0].name, 'foo')
     assert.deepStrictEqual(result.mixer.buses[0].name, 'foo')
   })
+
+  it('should clamp negative section lengths to 0', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          sections: [
+            ast.make('SectionStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              length: ast.make('Number', RANGE, { value: -4, unit: 'bars' }),
+              properties: [],
+              routings: []
+            })
+          ]
+        })
+      ]
+    })
+    const result = generate(program, OPTIONS)
+    assert.deepStrictEqual(result.track.sections[0].length, makeNumeric('beats', 0))
+  })
 })
