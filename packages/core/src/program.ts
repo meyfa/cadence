@@ -118,7 +118,13 @@ export interface Bus {
   readonly effects: readonly Effect[]
 }
 
-export type Effect = GainEffect | PanEffect | DelayEffect | ReverbEffect
+export type Effect =
+  GainEffect |
+  PanEffect |
+  LowpassEffect |
+  HighpassEffect |
+  DelayEffect |
+  ReverbEffect
 
 export interface GainEffect {
   readonly type: 'gain'
@@ -128,6 +134,16 @@ export interface GainEffect {
 export interface PanEffect {
   readonly type: 'pan'
   readonly pan: Numeric<undefined>
+}
+
+export interface LowpassEffect {
+  readonly type: 'lowpass'
+  readonly frequency: Numeric<'hz'>
+}
+
+export interface HighpassEffect {
+  readonly type: 'highpass'
+  readonly frequency: Numeric<'hz'>
 }
 
 export interface DelayEffect {

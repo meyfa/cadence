@@ -1,68 +1,52 @@
+import type { Effect } from '@core/program.js'
+import type { PropertySchema } from '../schema.js'
 import { EffectType, FunctionType, ModuleType, NumberType, type Value } from '../types.js'
 
-const gain = FunctionType.of({
-  arguments: [
-    { name: 'gain', type: NumberType.with('db'), required: true }
-  ],
+// Factory
 
-  returnType: EffectType,
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+const createEffectConstructor = <T extends Effect>(type: T['type'], schema: PropertySchema) => {
+  return FunctionType.of({
+    arguments: schema,
 
-  invoke: (context, { gain }) => {
-    return EffectType.of({
-      type: 'gain',
-      gain
-    })
-  }
-})
+    returnType: EffectType,
 
-const pan = FunctionType.of({
-  arguments: [
-    { name: 'pan', type: NumberType.with(undefined), required: true }
-  ],
+    invoke: (context, args) => {
+      return EffectType.of({
+        type,
+        ...args
+      } as T)
+    }
+  })
+}
 
-  returnType: EffectType,
+// Effects
 
-  invoke: (context, { pan }) => {
-    return EffectType.of({
-      type: 'pan',
-      pan
-    })
-  }
-})
+const gain = createEffectConstructor('gain', [
+  { name: 'gain', type: NumberType.with('db'), required: true }
+])
 
-const delay = FunctionType.of({
-  arguments: [
-    { name: 'time', type: NumberType.with('beats'), required: true },
-    { name: 'feedback', type: NumberType.with(undefined), required: true }
-  ],
+const pan = createEffectConstructor('pan', [
+  { name: 'pan', type: NumberType.with(undefined), required: true }
+])
 
-  returnType: EffectType,
+const lowpass = createEffectConstructor('lowpass', [
+  { name: 'frequency', type: NumberType.with('hz'), required: true }
+])
 
-  invoke: (context, { time, feedback }) => {
-    return EffectType.of({
-      type: 'delay',
-      time,
-      feedback
-    })
-  }
-})
+const highpass = createEffectConstructor('highpass', [
+  { name: 'frequency', type: NumberType.with('hz'), required: true }
+])
 
-const reverb = FunctionType.of({
-  arguments: [
-    { name: 'decay', type: NumberType.with('s'), required: true },
-    { name: 'mix', type: NumberType.with(undefined), required: true }
-  ],
+const delay = createEffectConstructor('delay', [
+  { name: 'time', type: NumberType.with('beats'), required: true },
+  { name: 'feedback', type: NumberType.with(undefined), required: true }
+])
 
-  returnType: EffectType,
-
-  invoke: (context, args) => {
-    return EffectType.of({
-      type: 'reverb',
-      decay: args.decay,
-      mix: args.mix
-    })
-  }
-})
+const reverb = createEffectConstructor('reverb', [
+  { name: 'decay', type: NumberType.with('s'), required: true },
+  { name: 'mix', type: NumberType.with(undefined), required: true }
+])
 
 export const effectsModule = ModuleType.of({
   name: 'effects',
@@ -70,6 +54,8 @@ export const effectsModule = ModuleType.of({
   exports: new Map<string, Value>([
     ['gain', gain],
     ['pan', pan],
+    ['lowpass', lowpass],
+    ['highpass', highpass],
     ['delay', delay],
     ['reverb', reverb]
   ])
