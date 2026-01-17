@@ -51,6 +51,40 @@ describe('compiler/modules/effects.ts', () => {
     })
   })
 
+  describe('lowpass', () => {
+    const lowpass = effects.exports.get('lowpass')
+    assert.ok(lowpass != null && FunctionType.is(lowpass))
+
+    it('should create lowpass effect', () => {
+      const context = createFunctionContext()
+      const result = lowpass.data.invoke(context, {
+        frequency: makeNumeric('hz', 1000)
+      })
+
+      assert.deepStrictEqual(result.data, {
+        type: 'lowpass',
+        frequency: makeNumeric('hz', 1000)
+      })
+    })
+  })
+
+  describe('highpass', () => {
+    const highpass = effects.exports.get('highpass')
+    assert.ok(highpass != null && FunctionType.is(highpass))
+
+    it('should create highpass effect', () => {
+      const context = createFunctionContext()
+      const result = highpass.data.invoke(context, {
+        frequency: makeNumeric('hz', 200)
+      })
+
+      assert.deepStrictEqual(result.data, {
+        type: 'highpass',
+        frequency: makeNumeric('hz', 200)
+      })
+    })
+  })
+
   describe('delay', () => {
     const delay = effects.exports.get('delay')
     assert.ok(delay != null && FunctionType.is(delay))

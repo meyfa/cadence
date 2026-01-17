@@ -1,7 +1,9 @@
 import type { Effect, Program } from '@core/program.js'
-import { FeedbackDelay, Gain, Panner, Reverb, type ToneAudioNode } from 'tone'
-import { beatsToSeconds } from './time.js'
+import { BiquadFilter, FeedbackDelay, Gain, Panner, Reverb, type ToneAudioNode } from 'tone'
 import type { EffectInstance } from './instances.js'
+import { beatsToSeconds } from './time.js'
+
+const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
 
 export function createEffect (program: Program, effect: Effect): EffectInstance {
   switch (effect.type) {
@@ -12,6 +14,24 @@ export function createEffect (program: Program, effect: Effect): EffectInstance 
 
     case 'pan': {
       const node = new Panner(Math.max(-1, Math.min(1, effect.pan.value)))
+      return createEffectInstance(node)
+    }
+
+    case 'lowpass': {
+      const node = new BiquadFilter({
+        type: 'lowpass',
+        frequency: effect.frequency.value,
+        Q: DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE
+      })
+      return createEffectInstance(node)
+    }
+
+    case 'highpass': {
+      const node = new BiquadFilter({
+        type: 'highpass',
+        frequency: effect.frequency.value,
+        Q: DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE
+      })
       return createEffectInstance(node)
     }
 
