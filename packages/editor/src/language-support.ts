@@ -26,8 +26,7 @@ const parserWithMetadata = parser.configure({
 
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
-      MemberAccess: t.propertyName,
-      Callee: t.function(t.name)
+      MemberAccess: t.propertyName
     }),
 
     foldNodeProp.add({

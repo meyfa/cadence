@@ -86,12 +86,22 @@ step {
   (word | "-") ("(" argumentList? ")")? (":" primary)?
 }
 
+argumentList {
+  (Property | expression)
+  ("," (Property | expression))*
+}
+
 primary {
   "(" expression ")" | Number | String | Pattern | VariableName
 }
 
+accessOrCall {
+  primary
+  ("." MemberAccess { word } | "(" argumentList? ")")*
+}
+
 expression {
-  primary | UnaryExpression | BinaryExpression | PropertyAccess | Call
+  accessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
@@ -103,17 +113,6 @@ BinaryExpression {
   (expression !plus "-" expression) |
   (expression !multiply "*" expression) |
   (expression !multiply "/" expression)
-}
-
-PropertyAccess {
-  primary
-  "."
-  MemberAccess { word }
-}
-
-Call {
-  Callee { primary }
-  "(" argumentList? ")"
 }
 
 Property {
@@ -131,11 +130,6 @@ Assignment {
   VariableDefinition
   "="
   expression
-}
-
-argumentList {
-  (Property | expression)
-  ("," (Property | expression))*
 }
 
 Routing {
