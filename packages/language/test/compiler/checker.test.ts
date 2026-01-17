@@ -76,14 +76,19 @@ describe('compiler/checker.ts', () => {
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
-                properties: [],
+                properties: [
+                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                ],
                 routings: []
               }),
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'main' }),
-                length: ast.make('Number', RANGE, { value: 8, unit: 'bars' }),
-                properties: [],
+                properties: [
+                  ast.make('Property', RANGE, {
+                    key: ast.make('Identifier', RANGE, { name: 'length' }),
+                    value: ast.make('Number', RANGE, { value: 8, unit: 'bars' })
+                  })
+                ],
                 routings: []
               })
             ]
@@ -140,8 +145,9 @@ describe('compiler/checker.ts', () => {
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'foo' }),
-                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
-                properties: [],
+                properties: [
+                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                ],
                 routings: []
               })
             ]
@@ -312,6 +318,30 @@ describe('compiler/checker.ts', () => {
       ])
     })
 
+    it('should reject duplicate properties', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [],
+        children: [
+          ast.make('TrackStatement', RANGE, {
+            properties: [
+              ast.make('Property', RANGE, {
+                key: ast.make('Identifier', RANGE, { name: 'tempo' }),
+                value: ast.make('Number', RANGE, { value: 120, unit: 'bpm' })
+              }),
+              ast.make('Property', RANGE, {
+                key: ast.make('Identifier', RANGE, { name: 'tempo' }),
+                value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
+              })
+            ],
+            sections: []
+          })
+        ]
+      })
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Duplicate property named "tempo"', RANGE)
+      ])
+    })
+
     it('should reject duplicate section blocks within a track', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
@@ -321,14 +351,16 @@ describe('compiler/checker.ts', () => {
             sections: [
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
-                properties: [],
+                properties: [
+                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                ],
                 routings: []
               }),
               ast.make('SectionStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                length: ast.make('Number', RANGE, { value: 8, unit: 'bars' }),
-                properties: [],
+                properties: [
+                  ast.make('Number', RANGE, { value: 8, unit: 'bars' })
+                ],
                 routings: []
               })
             ]

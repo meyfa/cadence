@@ -10,7 +10,11 @@ export const trackSchema = definePropertySchema([
 ])
 
 export const sectionSchema = definePropertySchema([
-  // no properties defined yet
+  {
+    name: 'length',
+    type: NumberType.with('beats'),
+    required: true
+  }
 ])
 
 export const mixerSchema = definePropertySchema([

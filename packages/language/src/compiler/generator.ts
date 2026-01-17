@@ -1,7 +1,7 @@
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
 import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Pattern, type Program, type Section, type Step, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
-import { busSchema, stepSchema, trackSchema } from './common.js'
+import { busSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
@@ -156,7 +156,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
     trackContext.resolutions.set(section.name, SectionType.of(section))
   }
 
-  const properties = resolveProperties(trackContext, track.properties, trackSchema)
+  const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
     ? clamped(properties.tempo, options.tempo.minimum, options.tempo.maximum)
@@ -167,7 +167,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
 function generateSection (context: Context, section: ast.SectionStatement): Section {
   const name = section.name.name
-  const length = NumberType.with('beats').cast(resolve(context, section.length))
+  const properties = resolveArgumentList(context, section.properties, sectionSchema)
 
   const routings = section.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))
@@ -188,7 +188,7 @@ function generateSection (context: Context, section: ast.SectionStatement): Sect
 
   return {
     name,
-    length: clamped(length.data, 0, Number.POSITIVE_INFINITY),
+    length: clamped(properties.length, 0, Number.POSITIVE_INFINITY),
     routings
   }
 }
@@ -233,7 +233,7 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
 function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   const name = bus.name.name
-  const properties = resolveProperties(context, bus.properties, busSchema)
+  const properties = resolveArgumentList(context, bus.properties, busSchema)
 
   const effects = bus.effects.map((effect) => {
     return EffectType.cast(resolve(context, effect.expression)).data
@@ -289,7 +289,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'Call': {
       const func = FunctionType.cast(resolve(context, expression.callee))
-      const args = resolveArguments(context, expression.arguments, func.data.arguments)
+      const args = resolveArgumentList(context, expression.arguments, func.data.arguments)
       return func.data.invoke(context.top, args)
     }
   }
@@ -350,7 +350,7 @@ function generateStep (context: Context, expression: ast.Step): Step {
     ? NumberType.with(undefined).cast(resolve(context, expression.length)).data
     : undefined
 
-  const parameters = resolveArguments(context, expression.parameters, stepSchema)
+  const parameters = resolveArgumentList(context, expression.parameters, stepSchema)
 
   if (length == null) {
     return { value, ...parameters }
@@ -463,16 +463,7 @@ function resolvePropertyAccess (context: Context, object: Value, expression: ast
   assert(false)
 }
 
-function resolveProperties<S extends PropertySchema> (context: Context, properties: readonly ast.Property[], schema: S): InferSchema<S> {
-  const allowed = new Set(schema.map((s) => s.name))
-  const values = properties
-    .filter((p) => allowed.has(p.key.name))
-    .map(({ key, value }) => [key.name, resolve(context, value).data])
-
-  return Object.fromEntries(values) as InferSchema<S>
-}
-
-function resolveArguments<S extends PropertySchema> (context: Context, args: ReadonlyArray<ast.Expression | ast.Property>, schema: S): InferSchema<S> {
+function resolveArgumentList<S extends PropertySchema> (context: Context, args: ast.ArgumentList, schema: S): InferSchema<S> {
   const entries: Array<[string, Value['data']]> = []
 
   // positionals

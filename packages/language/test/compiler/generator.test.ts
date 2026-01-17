@@ -198,8 +198,9 @@ describe('compiler/generator.ts', () => {
           sections: [
             ast.make('SectionStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              length: ast.make('Number', RANGE, { value: 4, unit: 'bars' }),
-              properties: [],
+              properties: [
+                ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+              ],
               routings: []
             })
           ]
@@ -231,8 +232,9 @@ describe('compiler/generator.ts', () => {
           sections: [
             ast.make('SectionStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              length: ast.make('Number', RANGE, { value: -4, unit: 'bars' }),
-              properties: [],
+              properties: [
+                ast.make('Number', RANGE, { value: -4, unit: 'bars' })
+              ],
               routings: []
             })
           ]
