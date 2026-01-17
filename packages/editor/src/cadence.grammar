@@ -147,31 +147,33 @@ Routing {
 
 TrackStatement {
   kw<"track">
+  ("(" argumentList? ")")?
   TrackBlock[group=Block] {
-    "{" (Property | SectionStatement)* "}"
+    "{" (SectionStatement)* "}"
   }
 }
 
 SectionStatement {
   kw<"section"> VariableDefinition
-  kw<"for"> expression
+  ("(" argumentList? ")")?
   SectionBlock[group=Block] {
-    "{" (Property | Routing)* "}"
+    "{" (Routing)* "}"
   }
 }
 
 MixerStatement {
   kw<"mixer">
+  ("(" argumentList? ")")?
   MixerBlock[group=Block] {
-    "{" (Property | Routing | BusStatement)* "}"
+    "{" (Routing | BusStatement)* "}"
   }
 }
 
 BusStatement {
-  kw<"bus">
-  VariableDefinition
+  kw<"bus"> VariableDefinition
+  ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (Property | EffectStatement)* "}"
+    "{" (EffectStatement)* "}"
   }
 }
 

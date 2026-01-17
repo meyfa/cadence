@@ -211,13 +211,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   p.option(
     combine3(
       literal('('),
-      p.sepBy(
-        p.eitherOr(
-          p.recursive(() => property_),
-          p.recursive(() => expression_)
-        ),
-        literal(',')
-      ),
+      p.recursive(() => argumentList_),
       expectLiteral(')')
     ),
     undefined
@@ -255,6 +249,10 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
     }
 
     const [, parameters, _rp] = callTail
+
+    if (parameters.length === 0) {
+      throw new ParseError('Step parameters cannot be empty', combineSourceRanges(_rp, _rp))
+    }
 
     if (length == null) {
       return [
@@ -353,13 +351,7 @@ const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
       ),
       combine3(
         literal('('),
-        p.sepBy(
-          p.eitherOr(
-            p.recursive(() => property_),
-            p.recursive(() => optionalExpression_)
-          ),
-          literal(',')
-        ),
+        p.recursive(() => argumentList_),
         expectLiteral(')')
       )
     )
@@ -455,6 +447,14 @@ const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
   }
 )
 
+const argumentList_: p.Parser<Token, unknown, ast.ArgumentList> = p.sepBy(
+  p.eitherOr(
+    property_,
+    optionalExpression_
+  ),
+  literal(',')
+)
+
 const useStatement_: p.Parser<Token, unknown, ast.UseStatement> = p.ab(
   combine2(
     keyword('use'),
@@ -519,40 +519,51 @@ const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
 
 const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
   combine2(keyword('section'), identifier_),
-  combine2(keyword('for'), expression_),
+  p.option(
+    combine3(
+      literal('('),
+      argumentList_,
+      expectLiteral(')')
+    ),
+    undefined
+  ),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, routingChain_)),
+    p.many(routingChain_),
     expectLiteral('}')
   ),
-  ([_section, name], [_for, length], [_lp, children, _rp]) => {
-    const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
+  ([_section, name], callChain, [_lp, children, _rp]) => {
+    const args = callChain == null ? [] : callChain[1]
 
     return ast.make('SectionStatement', combineSourceRanges(_section, _rp), {
       name,
-      properties: [
-        ast.make('Property', length.range, {
-          key: ast.make('Identifier', length.range, { name: 'length' }),
-          value: length
-        }),
-        ...flatChildren.filter((c) => c.type === 'Property')
-      ],
-      routings: flatChildren.filter((c) => c.type === 'Routing')
+      properties: args,
+      routings: children.flat()
     })
   }
 )
 
-const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.ab(
+const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
   keyword('track'),
+  p.option(
+    combine3(
+      literal('('),
+      argumentList_,
+      expectLiteral(')')
+    ),
+    undefined
+  ),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, sectionStatement_)),
+    p.many(sectionStatement_),
     expectLiteral('}')
   ),
-  (_track, [_lp, children, _rp]) => {
+  (_track, callChain, [_lp, children, _rp]) => {
+    const args = callChain == null ? [] : callChain[1]
+
     return ast.make('TrackStatement', combineSourceRanges(_track, _rp), {
-      properties: children.filter((c) => c.type === 'Property'),
-      sections: children.filter((c) => c.type === 'SectionStatement')
+      properties: args,
+      sections: children
     })
   }
 )
@@ -568,34 +579,52 @@ const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.ab(
 )
 
 const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
-  keyword('bus'),
-  identifier_,
+  combine2(keyword('bus'), identifier_),
+  p.option(
+    combine3(
+      literal('('),
+      argumentList_,
+      expectLiteral(')')
+    ),
+    undefined
+  ),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, effectStatement_)),
+    p.many(effectStatement_),
     expectLiteral('}')
   ),
-  (_bus, name, [_lp, children, _rp]) => {
+  ([_bus, name], callChain, [_lp, children, _rp]) => {
+    const args = callChain == null ? [] : callChain[1]
+
     return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
       name,
-      properties: children.filter((c) => c.type === 'Property'),
-      effects: children.filter((c) => c.type === 'EffectStatement')
+      properties: args,
+      effects: children
     })
   }
 )
 
-const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.ab(
+const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   keyword('mixer'),
+  p.option(
+    combine3(
+      literal('('),
+      argumentList_,
+      expectLiteral(')')
+    ),
+    undefined
+  ),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(property_, p.eitherOr(routingChain_, busStatement_))),
+    p.many(p.eitherOr(routingChain_, busStatement_)),
     expectLiteral('}')
   ),
-  (_mixer, [_lp, children, _rp]) => {
+  (_mixer, callChain, [_lp, children, _rp]) => {
+    const args = callChain == null ? [] : callChain[1]
     const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
 
     return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
-      properties: flatChildren.filter((c) => c.type === 'Property'),
+      properties: args,
       routings: flatChildren.filter((c) => c.type === 'Routing'),
       buses: flatChildren.filter((c) => c.type === 'BusStatement')
     })
