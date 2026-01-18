@@ -273,8 +273,14 @@ describe('compiler/generator.ts', () => {
     const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result.mixer.routings, [
       {
+        implicit: false,
         destination: { type: 'Bus', id: 0 },
         source: { type: 'Bus', id: 1 }
+      },
+      {
+        implicit: true,
+        destination: { type: 'Output' },
+        source: { type: 'Bus', id: 0 }
       }
     ])
   })
