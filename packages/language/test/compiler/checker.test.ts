@@ -343,6 +343,7 @@ describe('compiler/checker.ts', () => {
         ]
       })
       assert.deepStrictEqual(check(program), [
+        new CompileError('Multiple track definitions', RANGE),
         new CompileError('Multiple track definitions', RANGE)
       ])
     })
@@ -417,6 +418,7 @@ describe('compiler/checker.ts', () => {
       ]
     })
     assert.deepStrictEqual(check(program), [
+      new CompileError('Multiple mixer definitions', RANGE),
       new CompileError('Multiple mixer definitions', RANGE)
     ])
   })
