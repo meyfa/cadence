@@ -10,6 +10,6 @@ export function beatsToSeconds (
 export function calculateTotalLength (program: Program): Numeric<'beats'> {
   return makeNumeric(
     'beats',
-    program.track.sections.reduce((total, section) => total + section.length.value, 0)
+    program.track.parts.reduce((total, part) => total + part.length.value, 0)
   )
 }

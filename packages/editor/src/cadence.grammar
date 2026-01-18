@@ -143,14 +143,14 @@ TrackStatement {
   kw<"track">
   ("(" argumentList? ")")?
   TrackBlock[group=Block] {
-    "{" (SectionStatement)* "}"
+    "{" (PartStatement)* "}"
   }
 }
 
-SectionStatement {
-  kw<"section"> VariableDefinition
+PartStatement {
+  kw<"part"> VariableDefinition
   ("(" argumentList? ")")?
-  SectionBlock[group=Block] {
+  PartBlock[group=Block] {
     "{" (Routing)* "}"
   }
 }

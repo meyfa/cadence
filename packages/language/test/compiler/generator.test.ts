@@ -28,7 +28,7 @@ describe('compiler/generator.ts', () => {
       instruments: new Map(),
       track: {
         tempo: makeNumeric('bpm', 120),
-        sections: []
+        parts: []
       },
       mixer: {
         buses: [],
@@ -48,7 +48,7 @@ describe('compiler/generator.ts', () => {
               value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
             })
           ],
-          sections: []
+          parts: []
         })
       ]
     })
@@ -67,7 +67,7 @@ describe('compiler/generator.ts', () => {
               value: ast.make('Number', RANGE, { value: 400, unit: 'bpm' })
             })
           ],
-          sections: []
+          parts: []
         })
       ]
     })
@@ -100,7 +100,7 @@ describe('compiler/generator.ts', () => {
               value: ast.make('Identifier', RANGE, { name: 'bar' })
             })
           ],
-          sections: []
+          parts: []
         })
       ]
     })
@@ -128,7 +128,7 @@ describe('compiler/generator.ts', () => {
               value: ast.make('Identifier', RANGE, { name: 'mygain' })
             })
           ],
-          sections: []
+          parts: []
         })
       ]
     })
@@ -177,7 +177,7 @@ describe('compiler/generator.ts', () => {
               value: ast.make('Identifier', RANGE, { name: 'gain' })
             })
           ],
-          sections: []
+          parts: []
         })
       ]
     })
@@ -185,7 +185,7 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 140))
   })
 
-  it('should allow sections and buses to shadow top-level variables', () => {
+  it('should allow parts and buses to shadow top-level variables', () => {
     const program = ast.make('Program', RANGE, {
       imports: [],
       children: [
@@ -195,8 +195,8 @@ describe('compiler/generator.ts', () => {
         }),
         ast.make('TrackStatement', RANGE, {
           properties: [],
-          sections: [
-            ast.make('SectionStatement', RANGE, {
+          parts: [
+            ast.make('PartStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
               properties: [
                 ast.make('Number', RANGE, { value: 4, unit: 'bars' })
@@ -219,18 +219,18 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.sections[0].name, 'foo')
+    assert.deepStrictEqual(result.track.parts[0].name, 'foo')
     assert.deepStrictEqual(result.mixer.buses[0].name, 'foo')
   })
 
-  it('should clamp negative section lengths to 0', () => {
+  it('should clamp negative part lengths to 0', () => {
     const program = ast.make('Program', RANGE, {
       imports: [],
       children: [
         ast.make('TrackStatement', RANGE, {
           properties: [],
-          sections: [
-            ast.make('SectionStatement', RANGE, {
+          parts: [
+            ast.make('PartStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'intro' }),
               properties: [
                 ast.make('Number', RANGE, { value: -4, unit: 'bars' })
@@ -242,7 +242,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.sections[0].length, makeNumeric('beats', 0))
+    assert.deepStrictEqual(result.track.parts[0].length, makeNumeric('beats', 0))
   })
 
   it('should support buses as sources in mixer', () => {

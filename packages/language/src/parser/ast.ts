@@ -117,11 +117,11 @@ export type ArgumentList = ReadonlyArray<Expression | Property>
 export interface TrackStatement extends ASTNode {
   readonly type: 'TrackStatement'
   readonly properties: ArgumentList
-  readonly sections: readonly SectionStatement[]
+  readonly parts: readonly PartStatement[]
 }
 
-export interface SectionStatement extends ASTNode {
-  readonly type: 'SectionStatement'
+export interface PartStatement extends ASTNode {
+  readonly type: 'PartStatement'
   readonly name: Identifier
   readonly properties: ArgumentList
   readonly routings: readonly Routing[]
@@ -190,7 +190,7 @@ export interface NodeByType {
   Routing: Routing
 
   TrackStatement: TrackStatement
-  SectionStatement: SectionStatement
+  PartStatement: PartStatement
   MixerStatement: MixerStatement
   BusStatement: BusStatement
   EffectStatement: EffectStatement

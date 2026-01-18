@@ -52,9 +52,9 @@ function createNoteEventMap (program: Program): NoteEventMap {
 
   let offsetBeats = 0
 
-  for (const section of program.track.sections) {
-    for (const routing of section.routings) {
-      const patternEvents = renderPatternEvents(routing.source.value, section.length)
+  for (const part of program.track.parts) {
+    for (const routing of part.routings) {
+      const patternEvents = renderPatternEvents(routing.source.value, part.length)
         .map((event): [number, NoteEvent] => {
           return [(offsetBeats + event.time.value) * timePerBeat, event]
         })
@@ -67,7 +67,7 @@ function createNoteEventMap (program: Program): NoteEventMap {
       }
     }
 
-    offsetBeats += section.length.value
+    offsetBeats += part.length.value
   }
 
   return map

@@ -2,7 +2,7 @@ export const keywords = Object.freeze([
   'use',
   'as',
   'track',
-  'section',
+  'part',
   'for',
   'mixer',
   'bus',

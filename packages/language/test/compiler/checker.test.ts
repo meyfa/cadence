@@ -1,9 +1,9 @@
+import { CompileError } from '@language/compiler/error.js'
 import { getEmptySourceRange } from '@language/range.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'
 import * as ast from '../../src/parser/ast.js'
-import { CompileError } from '@language/compiler/error.js'
 
 describe('compiler/checker.ts', () => {
   const RANGE = getEmptySourceRange()
@@ -67,21 +67,21 @@ describe('compiler/checker.ts', () => {
       assert.deepStrictEqual(check(program), [])
     })
 
-    it('should accept a program with one track and unique sections', () => {
+    it('should accept a program with one track and unique parts', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
-            sections: [
-              ast.make('SectionStatement', RANGE, {
+            parts: [
+              ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
                 ],
                 routings: []
               }),
-              ast.make('SectionStatement', RANGE, {
+              ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'main' }),
                 properties: [
                   ast.make('Property', RANGE, {
@@ -132,7 +132,7 @@ describe('compiler/checker.ts', () => {
       assert.deepStrictEqual(check(program), [])
     })
 
-    it('should allow sections and buses to shadow top-level variables', () => {
+    it('should allow parts and buses to shadow top-level variables', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
         children: [
@@ -142,8 +142,8 @@ describe('compiler/checker.ts', () => {
           }),
           ast.make('TrackStatement', RANGE, {
             properties: [],
-            sections: [
-              ast.make('SectionStatement', RANGE, {
+            parts: [
+              ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'foo' }),
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
@@ -334,11 +334,11 @@ describe('compiler/checker.ts', () => {
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
-            sections: []
+            parts: []
           }),
           ast.make('TrackStatement', RANGE, {
             properties: [],
-            sections: []
+            parts: []
           })
         ]
       })
@@ -362,7 +362,7 @@ describe('compiler/checker.ts', () => {
                 value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
               })
             ],
-            sections: []
+            parts: []
           })
         ]
       })
@@ -371,21 +371,21 @@ describe('compiler/checker.ts', () => {
       ])
     })
 
-    it('should reject duplicate section blocks within a track', () => {
+    it('should reject duplicate part blocks within a track', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
         children: [
           ast.make('TrackStatement', RANGE, {
             properties: [],
-            sections: [
-              ast.make('SectionStatement', RANGE, {
+            parts: [
+              ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
                 ],
                 routings: []
               }),
-              ast.make('SectionStatement', RANGE, {
+              ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
                   ast.make('Number', RANGE, { value: 8, unit: 'bars' })
@@ -397,7 +397,7 @@ describe('compiler/checker.ts', () => {
         ]
       })
       assert.deepStrictEqual(check(program), [
-        new CompileError('Duplicate section named "intro"', RANGE)
+        new CompileError('Duplicate part named "intro"', RANGE)
       ])
     })
   })

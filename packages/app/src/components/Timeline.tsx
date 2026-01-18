@@ -1,5 +1,5 @@
 import { calculateTotalLength } from '@core/audio/time.js'
-import { makeNumeric, type Numeric, type Program, type Section } from '@core/program.js'
+import { makeNumeric, type Numeric, type Part, type Program } from '@core/program.js'
 import type { BeatRange } from '@core/types.js'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
@@ -58,10 +58,10 @@ export const Timeline: FunctionComponent<{
         />
 
         <div className='flex w-fit mt-2'>
-          {program.track.sections.map((section, index) => (
-            <TimelineSection
+          {program.track.parts.map((part, index) => (
+            <TimelinePart
               key={index}
-              section={section}
+              part={part}
               beatsPerBar={program.beatsPerBar}
               beatWidth={beatWidth}
             />
@@ -223,22 +223,22 @@ const TimeRuler: FunctionComponent<{
   )
 }
 
-const TimelineSection: FunctionComponent<{
-  section: Section
+const TimelinePart: FunctionComponent<{
+  part: Part
   beatsPerBar: number
   beatWidth: number
-}> = ({ section, beatsPerBar, beatWidth }) => {
-  const sectionWidth = section.length.value * beatWidth
-  const borderWidth = sectionWidth >= 2 ? 1 : 0
-  const maxPaddingX = Math.max(0, (sectionWidth - borderWidth * 2) / 2)
+}> = ({ part, beatsPerBar, beatWidth }) => {
+  const partWidth = part.length.value * beatWidth
+  const borderWidth = partWidth >= 2 ? 1 : 0
+  const maxPaddingX = Math.max(0, (partWidth - borderWidth * 2) / 2)
   const paddingX = Math.min(8, maxPaddingX)
 
   const [lengthShort, lengthLong] = useMemo(() => {
     return [
-      formatBeatDuration(section.length, beatsPerBar),
-      formatBeatDurationAsWords(section.length, beatsPerBar)
+      formatBeatDuration(part.length, beatsPerBar),
+      formatBeatDurationAsWords(part.length, beatsPerBar)
     ]
-  }, [section, beatsPerBar])
+  }, [part, beatsPerBar])
 
   // must be reactive, so no ref
   const [container, setContainer] = useState<HTMLElement | null>(null)
@@ -257,7 +257,7 @@ const TimelineSection: FunctionComponent<{
           'hocus:outline-2 hocus:outline-accent-200 hocus:bg-surface-300 hocus:border-frame-300 hocus:text-content-300'
         )}
         style={{
-          width: sectionWidth,
+          width: partWidth,
           paddingLeft: paddingX,
           paddingRight: paddingX,
           borderStyle: borderWidth > 0 ? 'solid' : 'none',
@@ -267,7 +267,7 @@ const TimelineSection: FunctionComponent<{
         ref={setContainer}
         onClick={openPopover}
       >
-        {section.name}
+        {part.name}
 
         <div className='text-content-100'>
           {lengthShort}
@@ -276,7 +276,7 @@ const TimelineSection: FunctionComponent<{
 
       {popoverOpen && (
         <Popover anchor={container} onClose={closePopover}>
-          <div className='font-bold'>{`section.${section.name}`}</div>
+          <div className='font-bold'>{`part.${part.name}`}</div>
           <div>length: {lengthLong}</div>
         </Popover>
       )}

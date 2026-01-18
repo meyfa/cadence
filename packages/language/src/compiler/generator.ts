@@ -1,12 +1,12 @@
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
-import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Pattern, type Program, type Section, type Step, type Track, type Unit } from '@core/program.js'
+import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
-import { busSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
+import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
-import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PatternType, SectionType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
-import { toNumberValue } from './units.js'
 import { getStandardModule } from './modules.js'
+import type { InferSchema, PropertySchema } from './schema.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PartType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -37,7 +37,7 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
     ? generateTrack(context, tracks[0])
     : {
         tempo: makeNumeric('bpm', options.tempo.default),
-        sections: []
+        parts: []
       }
 
   const mixer = mixers.length > 0
@@ -150,10 +150,10 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
   const trackContext = createLocalScope(context)
 
-  const sections = track.sections.map((section) => generateSection(trackContext, section))
-  for (const section of sections) {
-    assert(!trackContext.resolutions.has(section.name))
-    trackContext.resolutions.set(section.name, SectionType.of(section))
+  const parts = track.parts.map((part) => generatePart(trackContext, part))
+  for (const part of parts) {
+    assert(!trackContext.resolutions.has(part.name))
+    trackContext.resolutions.set(part.name, PartType.of(part))
   }
 
   const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
@@ -162,14 +162,14 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
     ? clamped(properties.tempo, options.tempo.minimum, options.tempo.maximum)
     : makeNumeric('bpm', options.tempo.default)
 
-  return { tempo, sections }
+  return { tempo, parts }
 }
 
-function generateSection (context: Context, section: ast.SectionStatement): Section {
-  const name = section.name.name
-  const properties = resolveArgumentList(context, section.properties, sectionSchema)
+function generatePart (context: Context, part: ast.PartStatement): Part {
+  const name = part.name.name
+  const properties = resolveArgumentList(context, part.properties, partSchema)
 
-  const routings = section.routings.map((routing): InstrumentRouting => {
+  const routings = part.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))
     const instrument = InstrumentType.cast(resolve(context, routing.destination))
 

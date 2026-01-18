@@ -1,7 +1,7 @@
-import type { Bus, Effect, Instrument, Numeric, Pattern, Section, Unit } from '@core/program.js'
+import type { Bus, Effect, Instrument, Numeric, Part, Pattern, Unit } from '@core/program.js'
 import type { FunctionDefinition } from './functions.js'
-import type { PropertySchema } from './schema.js'
 import type { ModuleDefinition } from './modules.js'
+import type { PropertySchema } from './schema.js'
 
 export interface AnyValue<D = unknown> {
   readonly type: Type
@@ -67,7 +67,7 @@ export type Value = |
   StringValue |
   PatternValue |
   InstrumentValue |
-  SectionValue |
+  PartValue |
   EffectValue |
   BusValue |
   GroupValue
@@ -78,7 +78,7 @@ export type NumberValue<U extends Unit = Unit> = AnyValue<Numeric<U>>
 export type StringValue = AnyValue<string>
 export type PatternValue = AnyValue<Pattern>
 export type InstrumentValue = AnyValue<Instrument>
-export type SectionValue = AnyValue<Section>
+export type PartValue = AnyValue<Part>
 export type EffectValue = AnyValue<Effect>
 export type BusValue = AnyValue<Bus>
 export type GroupValue = AnyValue<ReadonlyArray<InstrumentValue | BusValue>>
@@ -158,7 +158,7 @@ export const NumberType = {
 export const StringType = makeType<'string', {}, StringValue>('string')
 export const PatternType = makeType<'pattern', {}, PatternValue>('pattern')
 export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instrument')
-export const SectionType = makeType<'section', {}, SectionValue>('section')
+export const PartType = makeType<'part', {}, PartValue>('part')
 export const EffectType = makeType<'effect', {}, EffectValue>('effect')
 export const BusType = makeType<'bus', {}, BusValue>('bus')
 export const GroupType = makeType<'group', {}, GroupValue>('group')
