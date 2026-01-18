@@ -486,33 +486,13 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
-const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
+const routing_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
   identifier_,
   literal('<<'),
-  p.eitherOr(p.recursive(() => routingChain_), expression_),
-  (left, _arrow, right) => {
-    // type guard
-    const isRouting = (node: ast.Expression | readonly ast.Routing[]): node is readonly ast.Routing[] => {
-      return Array.isArray(node)
-    }
-
-    if (isRouting(right)) {
-      // Given a statement like `a << b << c`, right will be the routing chain `b << c`.
-      // We need to create a routing from `a` to `b`, prepended to the rest of the chain.
-      return [
-        ast.make('Routing', combineSourceRanges(left, right[0]), {
-          destination: left,
-          source: right[0].destination
-        }),
-        ...right
-      ]
-    }
-
+  expression_,
+  (destination, _arrow, source) => {
     return [
-      ast.make('Routing', combineSourceRanges(left, right), {
-        destination: left,
-        source: right
-      })
+      ast.make('Routing', combineSourceRanges(destination, source), { destination, source })
     ]
   }
 )
@@ -532,7 +512,7 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(routingChain_),
+    p.many(routing_),
     expectLiteral('}')
   ),
   ([_part, name], callChain, [_lp, children, _rp]) => {

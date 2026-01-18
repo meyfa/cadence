@@ -27,13 +27,6 @@ export function check (program: ast.Program): readonly CompileError[] {
     ...checkMixers(context, mixers)
   ]
 
-  // Deduplicate errors
-  for (let i = errors.length - 1; i > 0; --i) {
-    if (errors[i].equals(errors[i - 1])) {
-      errors.pop()
-    }
-  }
-
   return errors
 }
 
