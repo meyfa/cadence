@@ -82,10 +82,10 @@ export interface Instrument {
 
 export interface Track {
   readonly tempo: Numeric<'bpm'>
-  readonly sections: readonly Section[]
+  readonly parts: readonly Part[]
 }
 
-export interface Section {
+export interface Part {
   readonly name: string
   readonly length: Numeric<'beats'>
   readonly routings: readonly InstrumentRouting[]

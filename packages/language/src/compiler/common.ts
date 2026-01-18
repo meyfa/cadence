@@ -9,7 +9,7 @@ export const trackSchema = definePropertySchema([
   }
 ])
 
-export const sectionSchema = definePropertySchema([
+export const partSchema = definePropertySchema([
   {
     name: 'length',
     type: NumberType.with('beats'),

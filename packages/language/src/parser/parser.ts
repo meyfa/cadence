@@ -517,8 +517,8 @@ const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
   }
 )
 
-const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
-  combine2(keyword('section'), identifier_),
+const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
+  combine2(keyword('part'), identifier_),
   p.option(
     combine3(
       literal('('),
@@ -532,10 +532,10 @@ const sectionStatement_: p.Parser<Token, unknown, ast.SectionStatement> = p.abc(
     p.many(routingChain_),
     expectLiteral('}')
   ),
-  ([_section, name], callChain, [_lp, children, _rp]) => {
+  ([_part, name], callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
 
-    return ast.make('SectionStatement', combineSourceRanges(_section, _rp), {
+    return ast.make('PartStatement', combineSourceRanges(_part, _rp), {
       name,
       properties: args,
       routings: children.flat()
@@ -555,7 +555,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(sectionStatement_),
+    p.many(partStatement_),
     expectLiteral('}')
   ),
   (_track, callChain, [_lp, children, _rp]) => {
@@ -563,7 +563,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
 
     return ast.make('TrackStatement', combineSourceRanges(_track, _rp), {
       properties: args,
-      sections: children
+      parts: children
     })
   }
 )

@@ -1,10 +1,10 @@
 import * as ast from '../parser/ast.js'
 import type { SourceRange } from '../range.js'
-import { busSchema, mixerSchema, sectionSchema, stepSchema, trackSchema } from './common.js'
+import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PatternType, SectionType, StringType, type ModuleValue, type Type } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
 import { toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
@@ -193,21 +193,21 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
 
   const errors: CompileError[] = []
 
-  const seenSections = new Set<string>()
+  const seenParts = new Set<string>()
 
-  for (const section of track.sections) {
-    if (seenSections.has(section.name.name)) {
-      errors.push(new CompileError(`Duplicate section named "${section.name.name}"`, section.range))
-    } else if (trackContext.resolutions.has(section.name.name)) {
-      errors.push(new CompileError(`Section name "${section.name.name}" conflicts with existing identifier`, section.name.range))
+  for (const part of track.parts) {
+    if (seenParts.has(part.name.name)) {
+      errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
+    } else if (trackContext.resolutions.has(part.name.name)) {
+      errors.push(new CompileError(`Part name "${part.name.name}" conflicts with existing identifier`, part.name.range))
     }
 
-    seenSections.add(section.name.name)
+    seenParts.add(part.name.name)
 
     // Reserve the name in the local scope
-    trackContext.resolutions.set(section.name.name, SectionType)
+    trackContext.resolutions.set(part.name.name, PartType)
 
-    errors.push(...checkSection(trackContext, section))
+    errors.push(...checkPart(trackContext, part))
   }
 
   const propertiesCheck = checkArgumentList(trackContext, track.properties, trackSchema, track.range, 'property')
@@ -216,13 +216,13 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
   return errors
 }
 
-function checkSection (context: Context, section: ast.SectionStatement): readonly CompileError[] {
+function checkPart (context: Context, part: ast.PartStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(context, section.properties, sectionSchema, section.range, 'property')
+  const propertiesCheck = checkArgumentList(context, part.properties, partSchema, part.range, 'property')
   errors.push(...propertiesCheck.errors)
 
-  for (const routing of section.routings) {
+  for (const routing of part.routings) {
     errors.push(...checkInstrumentRouting(context, routing))
   }
 

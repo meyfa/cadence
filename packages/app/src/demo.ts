@@ -31,16 +31,16 @@ arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 clap_pattern = [x:8]
 
 track (128 bpm) {
-  // Sections play in sequence. Patterns will trigger notes for their
-  // defined length or the length of the section, whichever is shorter.
+  // Parts play in sequence. Patterns will trigger notes for their
+  // defined length or the length of the part, whichever is shorter.
 
-  section intro (4 bars) {
+  part intro (4 bars) {
     kick  << kick_pattern
     snare << snare_pattern
     synth << arp_intro
   }
 
-  section main (8 bars) {
+  part main (8 bars) {
     kick  << kick_pattern
     snare << snare_pattern
     hat   << loop([--x-] / 4)
@@ -49,7 +49,7 @@ track (128 bpm) {
     clap  << loop(clap_pattern)
   }
 
-  section outro (4 bars) {
+  part outro (4 bars) {
     snare << snare_pattern
     tom   << loop([---- -x-- ---- ---x] / 4)
     synth << loop(arp_main)
