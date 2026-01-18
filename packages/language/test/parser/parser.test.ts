@@ -755,4 +755,34 @@ describe('parser/parser.ts', () => {
       }
     })
   })
+
+  it('should reject unnamed parts', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'track' },
+      { name: '{' },
+      { name: 'word', text: 'part' },
+      { name: '(' },
+      { name: 'number', text: '4' },
+      { name: 'word', text: 'bars' },
+      { name: ')' },
+      { name: '{' },
+      { name: '}' },
+      { name: '}' }
+    ]))
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.message, 'Unexpected "("; expected part name')
+  })
+
+  it('should reject unnamed buses', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'mixer' },
+      { name: '{' },
+      { name: 'word', text: 'bus' },
+      { name: '{' },
+      { name: '}' },
+      { name: '}' }
+    ]))
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.message, 'Unexpected "{"; expected bus name')
+  })
 })

@@ -518,7 +518,10 @@ const routingChain_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
 )
 
 const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
-  combine2(keyword('part'), identifier_),
+  combine2(
+    keyword('part'),
+    expect(identifier_, 'part name')
+  ),
   p.option(
     combine3(
       literal('('),
@@ -554,7 +557,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
     undefined
   ),
   combine3(
-    literal('{'),
+    expectLiteral('{'),
     p.many(partStatement_),
     expectLiteral('}')
   ),
@@ -579,7 +582,10 @@ const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.ab(
 )
 
 const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
-  combine2(keyword('bus'), identifier_),
+  combine2(
+    keyword('bus'),
+    expect(identifier_, 'bus name')
+  ),
   p.option(
     combine3(
       literal('('),
@@ -589,7 +595,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
     undefined
   ),
   combine3(
-    literal('{'),
+    expectLiteral('{'),
     p.many(p.eitherOr(identifier_, effectStatement_)),
     expectLiteral('}')
   ),
@@ -616,7 +622,7 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
     undefined
   ),
   combine3(
-    literal('{'),
+    expectLiteral('{'),
     p.many(busStatement_),
     expectLiteral('}')
   ),
