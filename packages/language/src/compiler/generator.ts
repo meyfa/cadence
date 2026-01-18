@@ -197,6 +197,7 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
   const mixerContext = createLocalScope(context)
 
   const buses = mixer.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId))
+
   for (const bus of buses) {
     assert(!mixerContext.resolutions.has(bus.name))
     mixerContext.resolutions.set(bus.name, BusType.of(bus))
@@ -206,6 +207,33 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
   for (const bus of mixer.buses) {
     routings.push(...generateBusRoutings(mixerContext, bus, buses))
+  }
+
+  // Implicit output routings for unrouted buses and instruments
+  const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
+  const unroutedInstruments = new Set<InstrumentId>(context.top.instruments.keys())
+
+  for (const routing of routings) {
+    switch (routing.source.type) {
+      case 'Bus':
+        unroutedBuses.delete(routing.source.id)
+        break
+      case 'Instrument':
+        unroutedInstruments.delete(routing.source.id)
+        break
+    }
+  }
+
+  const createImplicitRouting = (source: MixerRouting['source']) => {
+    routings.push({ implicit: true, source, destination: { type: 'Output' } })
+  }
+
+  for (const busId of unroutedBuses) {
+    createImplicitRouting({ type: 'Bus', id: busId })
+  }
+
+  for (const instrumentId of unroutedInstruments) {
+    createImplicitRouting({ type: 'Instrument', id: instrumentId })
   }
 
   return { buses, routings }
@@ -229,6 +257,7 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
     const source = resolve(mixerContext, identifier)
 
     const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
+      implicit: false,
       source: src.type === 'instrument'
         ? { type: 'Instrument', id: src.id as InstrumentId }
         : { type: 'Bus', id: src.id as BusId },

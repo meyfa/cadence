@@ -159,6 +159,8 @@ export interface ReverbEffect {
 }
 
 export interface MixerRouting {
+  readonly implicit: boolean
+
   readonly source: {
     readonly type: 'Instrument'
     readonly id: InstrumentId
@@ -168,6 +170,8 @@ export interface MixerRouting {
   }
 
   readonly destination: {
+    readonly type: 'Output'
+  } | {
     readonly type: 'Bus'
     readonly id: BusId
   }

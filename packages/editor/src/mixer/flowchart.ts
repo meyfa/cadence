@@ -17,9 +17,7 @@ type MixerNodeData = {
   readonly object: Instrument
 }
 
-interface MixerEdgeData {
-  readonly explicit: boolean
-}
+interface MixerEdgeData {}
 
 function getObjectsOfType (program: Program, type: MixerObjectType): Iterable<[MixerObjectId, MixerObject]> {
   switch (type) {
@@ -90,37 +88,20 @@ function createEdges (program: Program, options: MixerFlowchartOptions, nodes: N
 
   const edges: MixerFlowEdge[] = []
 
-  const insertEdge = (edge: Pick<MixerFlowEdge, 'from' | 'to' | 'data'>): void => {
-    const id = `${edges.length}-${edge.from}-${edge.to}` as FlowEdgeId
-    const style = edge.data.explicit ? explicitEdgeStyle : implicitEdgeStyle
-    const highlightStyle = options.highlightEdgeStyle
-    edges.push({ ...edge, id, style, highlightStyle })
-  }
-
-  const routedObjects = Object.fromEntries(
-    mixerObjectTypes.map((type) => [type, new Set()])
-  ) as Record<MixerObjectType, Set<MixerObjectId>>
-
   for (const routing of program.mixer.routings) {
     const sourceType = routing.source.type
     const from = nodes.byObject[sourceType].get(routing.source.id)?.id
 
     const destinationType = routing.destination.type
-    const to = nodes.byObject[destinationType].get(routing.destination.id)?.id
-
-    routedObjects[sourceType].add(routing.source.id)
+    const to = destinationType === 'Output'
+      ? nodes.output.id
+      : nodes.byObject[destinationType].get(routing.destination.id)?.id
 
     if (from != null && to != null) {
-      insertEdge({ from, to, data: { explicit: true } })
-    }
-  }
-
-  // Unconnected nodes are connected to output
-  for (const type of mixerObjectTypes) {
-    for (const [objectId, node] of nodes.byObject[type]) {
-      if (!routedObjects[type].has(objectId)) {
-        insertEdge({ from: node.id, to: nodes.output.id, data: { explicit: false } })
-      }
+      const id = `${edges.length}-${from}-${to}` as FlowEdgeId
+      const style = routing.implicit ? implicitEdgeStyle : explicitEdgeStyle
+      const highlightStyle = options.highlightEdgeStyle
+      edges.push({ id, from, to, data: {}, style, highlightStyle })
     }
   }
 
