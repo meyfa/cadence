@@ -159,7 +159,7 @@ MixerStatement {
   kw<"mixer">
   ("(" argumentList? ")")?
   MixerBlock[group=Block] {
-    "{" (Routing | BusStatement)* "}"
+    "{" (BusStatement)* "}"
   }
 }
 
@@ -167,7 +167,7 @@ BusStatement {
   kw<"bus"> VariableDefinition
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (EffectStatement)* "}"
+    "{" (VariableName | EffectStatement)* "}"
   }
 }
 

@@ -130,7 +130,6 @@ export interface SectionStatement extends ASTNode {
 export interface MixerStatement extends ASTNode {
   readonly type: 'MixerStatement'
   readonly properties: ArgumentList
-  readonly routings: readonly Routing[]
   readonly buses: readonly BusStatement[]
 }
 
@@ -138,6 +137,7 @@ export interface BusStatement extends ASTNode {
   readonly type: 'BusStatement'
   readonly name: Identifier
   readonly properties: ArgumentList
+  readonly sources: readonly Identifier[]
   readonly effects: readonly EffectStatement[]
 }
 

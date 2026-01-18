@@ -680,4 +680,79 @@ describe('parser/parser.ts', () => {
       }
     })
   })
+
+  it('should parse mixer buses', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'mixer' },
+      { name: '{' },
+      { name: 'word', text: 'bus' },
+      { name: 'word', text: 'mybus' },
+      { name: '(' },
+      { name: 'word', text: 'gain' },
+      { name: ':' },
+      { name: 'number', text: '-3' },
+      { name: 'word', text: 'db' },
+      { name: ')' },
+      { name: '{' },
+      { name: 'word', text: 'kick' },
+      { name: 'word', text: 'snare' },
+      { name: 'word', text: 'hihat' },
+      { name: 'word', text: 'effect' },
+      { name: 'word', text: 'fx' },
+      { name: '.' },
+      { name: 'word', text: 'pan' },
+      { name: '(' },
+      { name: 'number', text: '0.5' },
+      { name: ')' },
+      { name: '}' },
+      { name: '}' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'MixerStatement',
+            properties: [],
+            buses: [
+              {
+                type: 'BusStatement',
+                name: { type: 'Identifier', name: 'mybus' },
+                properties: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gain' },
+                    value: { type: 'Number', value: -3, unit: 'db' }
+                  }
+                ],
+                sources: [
+                  { type: 'Identifier', name: 'kick' },
+                  { type: 'Identifier', name: 'snare' },
+                  { type: 'Identifier', name: 'hihat' }
+                ],
+                effects: [
+                  {
+                    type: 'EffectStatement',
+                    expression: {
+                      type: 'Call',
+                      callee: {
+                        type: 'PropertyAccess',
+                        object: { type: 'Identifier', name: 'fx' },
+                        property: { type: 'Identifier', name: 'pan' }
+                      },
+                      arguments: [
+                        { type: 'Number', value: 0.5, unit: undefined }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    })
+  })
 })

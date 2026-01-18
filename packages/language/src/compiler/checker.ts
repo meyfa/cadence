@@ -27,8 +27,7 @@ export function check (program: ast.Program): readonly CompileError[] {
     ...checkMixers(context, mixers)
   ]
 
-  // Certain AST parser design decisions may result in the same error being reported multiple times.
-  // For example: Routing "c << b << a" may be interpreted as two separate routings, both causing an unknown identifier error for "b".
+  // Deduplicate errors
   for (let i = errors.length - 1; i > 0; --i) {
     if (errors[i].equals(errors[i - 1])) {
       errors.pop()
@@ -267,8 +266,12 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 
   const errors: CompileError[] = []
 
+  const propertiesCheck = checkArgumentList(mixerContext, mixer.properties, mixerSchema, mixer.range, 'property')
+  errors.push(...propertiesCheck.errors)
+
   const seenBuses = new Set<string>()
 
+  // Build up the list of buses first
   for (const bus of mixer.buses) {
     if (seenBuses.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
@@ -278,18 +281,12 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
 
     seenBuses.add(bus.name.name)
 
-    // Reserve the name in the local scope
     mixerContext.resolutions.set(bus.name.name, BusType)
-
-    errors.push(...checkBus(mixerContext, bus))
   }
 
-  const propertiesCheck = checkArgumentList(mixerContext, mixer.properties, mixerSchema, mixer.range, 'property')
-  errors.push(...propertiesCheck.errors)
-
-  // Process routings last so that all buses are known
-  for (const routing of mixer.routings) {
-    errors.push(...checkBusRouting(mixerContext, routing))
+  // Now that all buses are known, we can check the routings
+  for (const bus of mixer.buses) {
+    errors.push(...checkBus(mixerContext, bus))
   }
 
   return errors
@@ -301,6 +298,18 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
   const propertiesCheck = checkArgumentList(context, bus.properties, busSchema, bus.range, 'property')
   errors.push(...propertiesCheck.errors)
 
+  // Sources
+  for (const source of bus.sources) {
+    const sourceCheck = checkExpression(context, source)
+    errors.push(...sourceCheck.errors)
+
+    if (sourceCheck.result != null) {
+      const options = [InstrumentType, BusType, GroupType] as const
+      errors.push(...checkType(options, sourceCheck.result, source.range))
+    }
+  }
+
+  // Effects
   for (const effect of bus.effects) {
     const effectCheck = checkExpression(context, effect.expression)
     errors.push(...effectCheck.errors)
@@ -308,26 +317,6 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     if (effectCheck.result != null) {
       errors.push(...checkType([EffectType], effectCheck.result, effect.expression.range))
     }
-  }
-
-  return errors
-}
-
-function checkBusRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  const destination = resolve(context, routing.destination.name)
-  if (destination == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
-  } else {
-    errors.push(...checkType([BusType], destination, routing.destination.range))
-  }
-
-  const sourceCheck = checkExpression(context, routing.source)
-  errors.push(...sourceCheck.errors)
-  if (sourceCheck.result != null) {
-    const options = [InstrumentType, BusType, GroupType] as const
-    errors.push(...checkType(options, sourceCheck.result, routing.source.range))
   }
 
   return errors

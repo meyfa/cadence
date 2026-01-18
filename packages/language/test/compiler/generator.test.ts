@@ -207,11 +207,11 @@ describe('compiler/generator.ts', () => {
         }),
         ast.make('MixerStatement', RANGE, {
           properties: [],
-          routings: [],
           buses: [
             ast.make('BusStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
               properties: [],
+              sources: [],
               effects: []
             })
           ]
@@ -243,5 +243,39 @@ describe('compiler/generator.ts', () => {
     })
     const result = generate(program, OPTIONS)
     assert.deepStrictEqual(result.track.sections[0].length, makeNumeric('beats', 0))
+  })
+
+  it('should support buses as sources in mixer', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('MixerStatement', RANGE, {
+          properties: [],
+          buses: [
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus2' })
+              ],
+              effects: []
+            }),
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+              properties: [],
+              sources: [],
+              effects: []
+            })
+          ]
+        })
+      ]
+    })
+    const result = generate(program, OPTIONS)
+    assert.deepStrictEqual(result.mixer.routings, [
+      {
+        destination: { type: 'Bus', id: 0 },
+        source: { type: 'Bus', id: 1 }
+      }
+    ])
   })
 })

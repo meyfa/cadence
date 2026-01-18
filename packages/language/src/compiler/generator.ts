@@ -202,9 +202,31 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
     mixerContext.resolutions.set(bus.name, BusType.of(bus))
   }
 
-  const routings = mixer.routings.flatMap((routing): MixerRouting[] => {
-    const source = resolve(mixerContext, routing.source)
-    const destination = nonNull(buses.find((b) => b.name === routing.destination.name))
+  const routings: MixerRouting[] = []
+
+  for (const bus of mixer.buses) {
+    routings.push(...generateBusRoutings(mixerContext, bus, buses))
+  }
+
+  return { buses, routings }
+}
+
+function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
+  const name = bus.name.name
+  const properties = resolveArgumentList(context, bus.properties, busSchema)
+
+  const effects = bus.effects.map((effect) => {
+    return EffectType.cast(resolve(context, effect.expression)).data
+  })
+
+  return { id, name, ...properties, effects }
+}
+
+function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): MixerRouting[] {
+  const destination = nonNull(buses.find((b) => b.name === bus.name.name))
+
+  return bus.sources.flatMap((identifier) => {
+    const source = resolve(mixerContext, identifier)
 
     const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
       source: src.type === 'instrument'
@@ -227,19 +249,6 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
     assert(false)
   })
-
-  return { buses, routings }
-}
-
-function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
-  const name = bus.name.name
-  const properties = resolveArgumentList(context, bus.properties, busSchema)
-
-  const effects = bus.effects.map((effect) => {
-    return EffectType.cast(resolve(context, effect.expression)).data
-  })
-
-  return { id, name, ...properties, effects }
 }
 
 /**
