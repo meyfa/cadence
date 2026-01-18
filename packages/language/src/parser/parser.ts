@@ -590,7 +590,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(effectStatement_),
+    p.many(p.eitherOr(identifier_, effectStatement_)),
     expectLiteral('}')
   ),
   ([_bus, name], callChain, [_lp, children, _rp]) => {
@@ -599,7 +599,8 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
     return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
       name,
       properties: args,
-      effects: children
+      sources: children.filter((c) => c.type === 'Identifier'),
+      effects: children.filter((c) => c.type === 'EffectStatement')
     })
   }
 )
@@ -616,17 +617,15 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(p.eitherOr(routingChain_, busStatement_)),
+    p.many(busStatement_),
     expectLiteral('}')
   ),
   (_mixer, callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
-    const flatChildren = children.flatMap((c) => Array.isArray(c) ? c : [c])
 
     return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
       properties: args,
-      routings: flatChildren.filter((c) => c.type === 'Routing'),
-      buses: flatChildren.filter((c) => c.type === 'BusStatement')
+      buses: children
     })
   }
 )

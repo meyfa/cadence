@@ -154,11 +154,11 @@ describe('compiler/checker.ts', () => {
           }),
           ast.make('MixerStatement', RANGE, {
             properties: [],
-            routings: [],
             buses: [
               ast.make('BusStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'foo' }),
                 properties: [],
+                sources: [],
                 effects: []
               })
             ]
@@ -202,6 +202,35 @@ describe('compiler/checker.ts', () => {
                 ast.make('Step', RANGE, { value: 'E4', parameters: [] })
               ]
             })
+          })
+        ]
+      })
+      assert.deepStrictEqual(check(program), [])
+    })
+
+    it('should allow buses as sources in mixer', () => {
+      // Should be possible even in reverse order
+      const program = ast.make('Program', RANGE, {
+        imports: [],
+        children: [
+          ast.make('MixerStatement', RANGE, {
+            properties: [],
+            buses: [
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+                properties: [],
+                sources: [
+                  ast.make('Identifier', RANGE, { name: 'bus2' })
+                ],
+                effects: []
+              }),
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+                properties: [],
+                sources: [],
+                effects: []
+              })
+            ]
           })
         ]
       })
@@ -379,12 +408,10 @@ describe('compiler/checker.ts', () => {
       children: [
         ast.make('MixerStatement', RANGE, {
           properties: [],
-          routings: [],
           buses: []
         }),
         ast.make('MixerStatement', RANGE, {
           properties: [],
-          routings: [],
           buses: []
         })
       ]
@@ -400,16 +427,17 @@ describe('compiler/checker.ts', () => {
       children: [
         ast.make('MixerStatement', RANGE, {
           properties: [],
-          routings: [],
           buses: [
             ast.make('BusStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
               properties: [],
+              sources: [],
               effects: []
             }),
             ast.make('BusStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
               properties: [],
+              sources: [],
               effects: []
             })
           ]

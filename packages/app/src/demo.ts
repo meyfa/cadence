@@ -59,22 +59,22 @@ track (128 bpm) {
 
 mixer {
   // Mixer buses are used to modify groups of instruments.
-
   // Buses can receive signals from instruments, but also other buses.
-  // Anything not routed to a bus (such as 'out' here) goes to the main output.
 
-  out << drums << kick + snare + hat + tom
-  out << synths << synth
-  out << clap_delay << clap
+  bus drums (gain: -1.5 db) {
+    kick snare hat tom
+  }
 
-  bus out {}
-  bus drums (gain: -1.5 db) {}
-  bus synths (gain: -10 db) {}
+  bus synths (gain: -10 db) {
+    synth
+  }
 
   // A bus can have zero or more effects, which are applied in order.
   // input -> effects... -> pan -> gain -> output
 
   bus clap_delay (gain: 3 db, pan: -0.25) {
+    clap
+
     effect fx.delay(time: 0.5 beats, feedback: 0.6)
     effect fx.reverb(decay: 1s, mix: 0.3)
   }
