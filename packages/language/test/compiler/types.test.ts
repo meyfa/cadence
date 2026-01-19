@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { makeNumeric } from '@core/program.js'
+import { makeNumeric, type ParameterId } from '@core/program.js'
 import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -50,6 +50,14 @@ describe('compiler/types.ts', () => {
 
       const numberWithUnit = NumberType.with('s')
       expectTypeEquals<NumberValue<'s'>, ValueFor<typeof numberWithUnit>>()
+    })
+
+    it('should honor parameter generics', () => {
+      const parameterWithoutUnit = ParameterType.with(undefined)
+      expectTypeEquals<ParameterValue<undefined>, ValueFor<typeof parameterWithoutUnit>>()
+
+      const parameterWithUnit = ParameterType.with('db')
+      expectTypeEquals<ParameterValue<'db'>, ValueFor<typeof parameterWithUnit>>()
     })
   })
 
@@ -162,9 +170,13 @@ describe('compiler/types.ts', () => {
     })
 
     it('should identify parameter values correctly', () => {
-      const paramValue = ParameterType.of({ initial: makeNumeric('db', -6) })
+      const paramValue = ParameterType.of({
+        id: 42 as ParameterId,
+        initial: makeNumeric('db', -6)
+      })
       assert.strictEqual(ParameterType.is(paramValue), true)
       assert.strictEqual(ParameterType.with('db').is(paramValue), true)
+      assert.strictEqual(ParameterType.with(undefined).is(paramValue), false)
       assert.strictEqual(ParameterType.with('s').is(paramValue), false)
     })
   })
@@ -219,7 +231,10 @@ describe('compiler/types.ts', () => {
     })
 
     it('should cast parameter values correctly', () => {
-      const paramValue: Value = ParameterType.of({ initial: makeNumeric('db', -6) })
+      const paramValue: Value = ParameterType.of({
+        id: 42 as ParameterId,
+        initial: makeNumeric('db', -3)
+      })
 
       const castedParam = ParameterType.cast(paramValue)
       expectTypeEquals<ParameterValue, typeof castedParam>()
@@ -307,8 +322,8 @@ describe('compiler/types.ts', () => {
         const func = FunctionType.of(generics)
         expectTypeEquals<FunctionValue<typeof generics['arguments'], typeof generics['returnType']>, typeof func>()
 
-        const funcType = func.type
-        assert.deepStrictEqual(funcType.generics, {
+        const type = func.type
+        assert.deepStrictEqual(type.generics, {
           schema: generics.arguments,
           returnType: generics.returnType
         })
@@ -322,9 +337,9 @@ describe('compiler/types.ts', () => {
           returnType: StringType
         }
 
-        const funcType = FunctionType.with(generics)
-        assert.strictEqual(funcType.name, 'function')
-        assert.deepStrictEqual(funcType.generics, generics)
+        const type = FunctionType.with(generics)
+        assert.strictEqual(type.name, 'function')
+        assert.deepStrictEqual(type.generics, generics)
       })
 
       it('should have correct format', () => {
@@ -336,8 +351,8 @@ describe('compiler/types.ts', () => {
           returnType: PatternType
         }
 
-        const funcType = FunctionType.with(generics)
-        assert.strictEqual(funcType.format(), 'function')
+        const type = FunctionType.with(generics)
+        assert.strictEqual(type.format(), 'function')
       })
     })
 
@@ -348,8 +363,8 @@ describe('compiler/types.ts', () => {
           returnType: StringType
         }
 
-        const funcType = FunctionType.with(generics)
-        assert.deepStrictEqual(FunctionType.detail(funcType), generics)
+        const type = FunctionType.with(generics)
+        assert.deepStrictEqual(FunctionType.detail(type), generics)
       })
     })
   })
@@ -376,34 +391,34 @@ describe('compiler/types.ts', () => {
 
     describe('with()', () => {
       it('should set correct name and generics', () => {
-        const funcType = NumberType.with(undefined)
-        assert.strictEqual(funcType.name, 'number')
-        assert.deepStrictEqual(funcType.generics, { unit: undefined })
+        const type = NumberType.with(undefined)
+        assert.strictEqual(type.name, 'number')
+        assert.deepStrictEqual(type.generics, { unit: undefined })
 
-        const funcType2 = NumberType.with('s')
-        assert.strictEqual(funcType2.name, 'number')
-        assert.deepStrictEqual(funcType2.generics, { unit: 's' })
+        const type2 = NumberType.with('s')
+        assert.strictEqual(type2.name, 'number')
+        assert.deepStrictEqual(type2.generics, { unit: 's' })
       })
 
       it('should have correct format', () => {
-        const funcType = NumberType.with(undefined)
-        assert.strictEqual(funcType.format(), 'number')
+        const type = NumberType.with(undefined)
+        assert.strictEqual(type.format(), 'number')
 
-        const funcType2 = NumberType.with('s')
-        assert.strictEqual(funcType2.format(), 'number(s)')
+        const type2 = NumberType.with('s')
+        assert.strictEqual(type2.format(), 'number(s)')
 
-        const funcType3 = NumberType.with('beats')
-        assert.strictEqual(funcType3.format(), 'number(beats)')
+        const type3 = NumberType.with('beats')
+        assert.strictEqual(type3.format(), 'number(beats)')
       })
     })
 
     describe('detail()', () => {
       it('should return generics', () => {
-        const funcType = NumberType.with(undefined)
-        assert.deepStrictEqual(NumberType.detail(funcType), { unit: undefined })
+        const type = NumberType.with(undefined)
+        assert.deepStrictEqual(NumberType.detail(type), { unit: undefined })
 
-        const funcType2 = NumberType.with('s')
-        assert.deepStrictEqual(NumberType.detail(funcType2), { unit: 's' })
+        const type2 = NumberType.with('s')
+        assert.deepStrictEqual(NumberType.detail(type2), { unit: 's' })
       })
     })
   })
@@ -433,33 +448,53 @@ describe('compiler/types.ts', () => {
 
     describe('of()', () => {
       it('should narrow type correctly', () => {
-        const param1 = ParameterType.of({ initial: makeNumeric('db', -6) })
-        expectTypeEquals<ParameterValue<'db'>, typeof param1>()
+        const param1 = ParameterType.of({
+          id: 1 as ParameterId,
+          initial: makeNumeric(undefined, 0)
+        })
+        expectTypeEquals<ParameterValue<undefined>, typeof param1>()
 
-        assert.deepStrictEqual(param1.type.generics, { unit: 'db' })
+        const param2 = ParameterType.of({
+          id: 2 as ParameterId,
+          initial: makeNumeric('db', -6)
+        })
+        expectTypeEquals<ParameterValue<'db'>, typeof param2>()
+
+        assert.deepStrictEqual(param1.type.generics, { unit: undefined })
+        assert.deepStrictEqual(param2.type.generics, { unit: 'db' })
       })
     })
 
     describe('with()', () => {
       it('should set correct name and generics', () => {
-        const funcType = ParameterType.with('db')
-        assert.strictEqual(funcType.name, 'parameter')
-        assert.deepStrictEqual(funcType.generics, { unit: 'db' })
+        const type = ParameterType.with(undefined)
+        assert.strictEqual(type.name, 'parameter')
+        assert.deepStrictEqual(type.generics, { unit: undefined })
+
+        const type2 = ParameterType.with('db')
+        assert.strictEqual(type2.name, 'parameter')
+        assert.deepStrictEqual(type2.generics, { unit: 'db' })
       })
 
       it('should have correct format', () => {
-        const funcType = ParameterType.with('db')
-        assert.strictEqual(funcType.format(), 'parameter(db)')
+        const type = ParameterType.with(undefined)
+        assert.strictEqual(type.format(), 'parameter')
 
-        const funcType2 = ParameterType.with('s')
-        assert.strictEqual(funcType2.format(), 'parameter(s)')
+        const type2 = ParameterType.with('db')
+        assert.strictEqual(type2.format(), 'parameter(db)')
+
+        const type3 = ParameterType.with('s')
+        assert.strictEqual(type3.format(), 'parameter(s)')
       })
     })
 
     describe('detail()', () => {
       it('should return generics', () => {
-        const funcType = ParameterType.with('db')
-        assert.deepStrictEqual(ParameterType.detail(funcType), { unit: 'db' })
+        const type = ParameterType.with(undefined)
+        assert.deepStrictEqual(ParameterType.detail(type), { unit: undefined })
+
+        const type2 = ParameterType.with('db')
+        assert.deepStrictEqual(ParameterType.detail(type2), { unit: 'db' })
       })
     })
   })

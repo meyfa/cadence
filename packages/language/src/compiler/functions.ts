@@ -1,4 +1,4 @@
-import { type Instrument, type InstrumentId } from '@core/program.js'
+import { type Automation, type Instrument, type InstrumentId, type ParameterId } from '@core/program.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { type Type, type Value } from './types.js'
 
@@ -12,4 +12,5 @@ export type FunctionHandler<S extends PropertySchema> = (context: FunctionContex
 
 export interface FunctionContext {
   readonly instruments: Map<InstrumentId, Instrument>
+  readonly automations: Map<ParameterId, Automation>
 }
