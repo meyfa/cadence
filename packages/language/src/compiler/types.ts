@@ -103,8 +103,19 @@ export type GroupValue = AnyValue<ReadonlyArray<InstrumentValue | BusValue>>
 
 export type ValueFor<T extends Type> = ReturnType<T['of']>
 
+function getModulePropertyType (this: Type, name: string): Type | undefined {
+  return ModuleType.detail(this).definition?.exports.get(name)?.type
+}
+
+function getModulePropertyValue (this: Type, value: ModuleValue, name: string): AnyValue | undefined {
+  return value.data.exports.get(name)
+}
+
 export const ModuleType = {
-  ...makeType<'module', {}, ModuleValue>('module'),
+  ...makeType<'module', {}, ModuleValue>('module', undefined, {
+    propertyType: getModulePropertyType,
+    propertyValue: getModulePropertyValue
+  }),
 
   // override for better inference
   of: (data: ModuleDefinition): ModuleValue => ({
@@ -120,7 +131,10 @@ export const ModuleType = {
 
       equals (other: Type): other is Type<'module', Readonly<{ definition: ModuleDefinition }>, ModuleValue> {
         return other.name === 'module' && ModuleType.detail(other).definition === generics.definition
-      }
+      },
+
+      propertyType: getModulePropertyType,
+      propertyValue: getModulePropertyValue
     })
   },
 

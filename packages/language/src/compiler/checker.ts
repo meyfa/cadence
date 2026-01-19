@@ -539,23 +539,15 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
 }
 
 function checkPropertyAccess (object: Type, property: ast.Identifier, range: SourceRange): Checked<Type> {
-  if (ModuleType.equals(object)) {
-    const { definition } = ModuleType.detail(object)
-    if (definition == null) {
-      return { errors: [new CompileError(`Module is missing type information`, property.range)] }
-    }
-
-    const propertyType = definition.exports.get(property.name)?.type
-    if (propertyType != null) {
-      return { errors: [], result: propertyType }
-    }
-
-    return { errors: [new CompileError(`Module "${definition.name}" has no export named "${property.name}"`, property.range)] }
-  }
-
   const propertyType = object.propertyType(property.name)
   if (propertyType != null) {
     return { errors: [], result: propertyType }
+  }
+
+  // Improve error messages for modules
+  if (ModuleType.equals(object)) {
+    const moduleName = ModuleType.detail(object).definition?.name ?? '<unknown>'
+    return { errors: [new CompileError(`Module "${moduleName}" has no export named "${property.name}"`, property.range)] }
   }
 
   return { errors: [new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range)] }

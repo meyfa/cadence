@@ -290,6 +290,29 @@ describe('compiler/checker.ts', () => {
       ])
     })
 
+    it('should reject unknown module export access', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['instruments'] }),
+            alias: 'inst'
+          })
+        ],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
+            value: ast.make('PropertyAccess', RANGE, {
+              object: ast.make('Identifier', RANGE, { name: 'inst' }),
+              property: ast.make('Identifier', RANGE, { name: 'foobar' })
+            })
+          })
+        ]
+      })
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Module "instruments" has no export named "foobar"', RANGE)
+      ])
+    })
+
     it('should reject variable usage before declaration', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],
