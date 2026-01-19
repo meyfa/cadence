@@ -22,7 +22,7 @@ function createInstrument (instrument: Instrument): InstrumentInstance {
     urls: {
       [instrument.rootNote ?? DEFAULT_ROOT_NOTE]: instrument.sampleUrl
     },
-    volume: instrument.gain?.value,
+    volume: instrument.gain.initial.value,
     // declick
     attack: 0.005,
     release: 0.005

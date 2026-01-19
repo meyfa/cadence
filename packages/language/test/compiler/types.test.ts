@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import { makeNumeric } from '@core/program.js'
 import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { BusType, BusValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
+import { BusType, BusValue, EffectType, type EffectValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, type PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 
 describe('compiler/types.ts', () => {
@@ -22,7 +23,10 @@ describe('compiler/types.ts', () => {
       expectTypeEquals<NumberValue, ValueFor<typeof NumberType>>()
       expectTypeEquals<StringValue, ValueFor<typeof StringType>>()
       expectTypeEquals<PatternValue, ValueFor<typeof PatternType>>()
+      expectTypeEquals<ParameterValue, ValueFor<typeof ParameterType>>()
       expectTypeEquals<InstrumentValue, ValueFor<typeof InstrumentType>>()
+      expectTypeEquals<PartValue, ValueFor<typeof PartType>>()
+      expectTypeEquals<EffectValue, ValueFor<typeof EffectType>>()
       expectTypeEquals<BusValue, ValueFor<typeof BusType>>()
       expectTypeEquals<GroupValue, ValueFor<typeof GroupType>>()
     })
@@ -112,6 +116,14 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(numType1.equals(numType2), false)
       assert.strictEqual(numType2.equals(numType3), false)
     })
+
+    it('should compare parameter types based on unit', () => {
+      const paramType1 = ParameterType.with('db')
+      const paramType2 = ParameterType.with('db')
+      const paramType3 = ParameterType.with('s')
+      assert.strictEqual(paramType1.equals(paramType2), true)
+      assert.strictEqual(paramType1.equals(paramType3), false)
+    })
   })
 
   describe('Type::is()', () => {
@@ -147,6 +159,13 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(NumberType.with('s').is(numValue), true)
       assert.strictEqual(NumberType.with(undefined).is(numValue), false)
       assert.strictEqual(NumberType.with('hz').is(numValue), false)
+    })
+
+    it('should identify parameter values correctly', () => {
+      const paramValue = ParameterType.of({ initial: makeNumeric('db', -6) })
+      assert.strictEqual(ParameterType.is(paramValue), true)
+      assert.strictEqual(ParameterType.with('db').is(paramValue), true)
+      assert.strictEqual(ParameterType.with('s').is(paramValue), false)
     })
   })
 
@@ -197,6 +216,18 @@ describe('compiler/types.ts', () => {
       const castedNumWithGenerics = NumberType.with('s').cast(numValue)
       expectTypeEquals<NumberValue<'s'>, typeof castedNumWithGenerics>()
       assert.strictEqual(castedNumWithGenerics, numValue)
+    })
+
+    it('should cast parameter values correctly', () => {
+      const paramValue: Value = ParameterType.of({ initial: makeNumeric('db', -6) })
+
+      const castedParam = ParameterType.cast(paramValue)
+      expectTypeEquals<ParameterValue, typeof castedParam>()
+      assert.strictEqual(castedParam, paramValue)
+
+      const castedParamWithGenerics = ParameterType.with('db').cast(paramValue)
+      expectTypeEquals<ParameterValue<'db'>, typeof castedParamWithGenerics>()
+      assert.strictEqual(castedParamWithGenerics, paramValue)
     })
   })
 
@@ -393,11 +424,67 @@ describe('compiler/types.ts', () => {
     })
   })
 
+  describe('ParameterType', () => {
+    it('should have correct name, generics, format', () => {
+      assert.strictEqual(ParameterType.name, 'parameter')
+      assert.strictEqual(ParameterType.generics, undefined)
+      assert.strictEqual(ParameterType.format(), 'parameter')
+    })
+
+    describe('of()', () => {
+      it('should narrow type correctly', () => {
+        const param1 = ParameterType.of({ initial: makeNumeric('db', -6) })
+        expectTypeEquals<ParameterValue<'db'>, typeof param1>()
+
+        assert.deepStrictEqual(param1.type.generics, { unit: 'db' })
+      })
+    })
+
+    describe('with()', () => {
+      it('should set correct name and generics', () => {
+        const funcType = ParameterType.with('db')
+        assert.strictEqual(funcType.name, 'parameter')
+        assert.deepStrictEqual(funcType.generics, { unit: 'db' })
+      })
+
+      it('should have correct format', () => {
+        const funcType = ParameterType.with('db')
+        assert.strictEqual(funcType.format(), 'parameter(db)')
+
+        const funcType2 = ParameterType.with('s')
+        assert.strictEqual(funcType2.format(), 'parameter(s)')
+      })
+    })
+
+    describe('detail()', () => {
+      it('should return generics', () => {
+        const funcType = ParameterType.with('db')
+        assert.deepStrictEqual(ParameterType.detail(funcType), { unit: 'db' })
+      })
+    })
+  })
+
   describe('InstrumentType', () => {
     it('should have correct name, generics, format', () => {
       assert.strictEqual(InstrumentType.name, 'instrument')
       assert.strictEqual(InstrumentType.generics, undefined)
       assert.strictEqual(InstrumentType.format(), 'instrument')
+    })
+  })
+
+  describe('PartType', () => {
+    it('should have correct name, generics, format', () => {
+      assert.strictEqual(PartType.name, 'part')
+      assert.strictEqual(PartType.generics, undefined)
+      assert.strictEqual(PartType.format(), 'part')
+    })
+  })
+
+  describe('EffectType', () => {
+    it('should have correct name, generics, format', () => {
+      assert.strictEqual(EffectType.name, 'effect')
+      assert.strictEqual(EffectType.generics, undefined)
+      assert.strictEqual(EffectType.format(), 'effect')
     })
   })
 

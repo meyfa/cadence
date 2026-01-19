@@ -1,5 +1,7 @@
-import { type InstrumentId, isPitch } from '@core/program.js'
+import { type InstrumentId, isPitch, makeNumeric } from '@core/program.js'
 import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type Value } from '../types.js'
+
+const UNITY_GAIN = makeNumeric('db', 0)
 
 const sample = FunctionType.of({
   arguments: [
@@ -17,7 +19,9 @@ const sample = FunctionType.of({
     const instrument = InstrumentType.of({
       id: (currentMaxId + 1) as InstrumentId,
       sampleUrl: url,
-      gain,
+      gain: {
+        initial: gain ?? UNITY_GAIN
+      },
       // eslint-disable-next-line camelcase
       rootNote: isPitch(root_note) ? root_note : undefined,
       length

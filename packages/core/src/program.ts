@@ -70,12 +70,16 @@ type Id<Tag extends string> = number & { __tag: Tag }
 
 // Domain types
 
+export interface Parameter<U extends Unit> {
+  readonly initial: Numeric<U>
+}
+
 export type InstrumentId = Id<'Instrument'>
 
 export interface Instrument {
   readonly id: InstrumentId
   readonly sampleUrl: string
-  readonly gain?: Numeric<'db'>
+  readonly gain: Parameter<'db'>
   readonly rootNote?: Pitch
   readonly length?: Numeric<'s'>
 }
