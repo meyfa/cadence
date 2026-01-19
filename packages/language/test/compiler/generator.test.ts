@@ -285,4 +285,51 @@ describe('compiler/generator.ts', () => {
       }
     ])
   })
+
+  describe('instruments.sample', () => {
+    it('should allocate instrument and parameter IDs correctly', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['instruments'] })
+          })
+        ],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'inst1' }),
+            value: ast.make('Call', RANGE, {
+              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+              arguments: [
+                ast.make('Property', RANGE, {
+                  key: ast.make('Identifier', RANGE, { name: 'url' }),
+                  value: ast.make('String', RANGE, { parts: ['sample1.wav'] })
+                })
+              ]
+            })
+          }),
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'inst2' }),
+            value: ast.make('Call', RANGE, {
+              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+              arguments: [
+                ast.make('Property', RANGE, {
+                  key: ast.make('Identifier', RANGE, { name: 'url' }),
+                  value: ast.make('String', RANGE, { parts: ['sample2.wav'] })
+                })
+              ]
+            })
+          })
+        ]
+      })
+      const result = generate(program, OPTIONS)
+      assert.deepStrictEqual(result.instruments.size, 2)
+      assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'sample1.wav')
+      assert.deepStrictEqual(result.instruments.get(2 as any)?.sampleUrl, 'sample2.wav')
+      assert.deepStrictEqual(result.automations.size, 2)
+      assert.deepStrictEqual(result.instruments.get(1 as any)?.gain.id, 1 as any)
+      assert.deepStrictEqual(result.instruments.get(2 as any)?.gain.id, 2 as any)
+      assert.deepStrictEqual(result.automations.get(1 as any)?.parameterId, 1 as any)
+      assert.deepStrictEqual(result.automations.get(2 as any)?.parameterId, 2 as any)
+    })
+  })
 })
