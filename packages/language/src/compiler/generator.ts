@@ -503,6 +503,11 @@ function resolvePropertyAccess (context: Context, object: Value, expression: ast
     }
   }
 
+  const value = object.type.propertyValue(object, expression.property.name)
+  if (value != null) {
+    return value as Value
+  }
+
   assert(false)
 }
 

@@ -18,6 +18,9 @@ export interface Type<T extends string = string, Generics extends object = objec
   of (data: V['data']): V
   is (value: AnyValue): value is V
   cast (value: AnyValue): V
+
+  propertyType(this: Type, name: string): Type | undefined
+  propertyValue(value: V, name: string): AnyValue | undefined
 }
 
 // Helpers
@@ -30,9 +33,19 @@ function defaultEquals<T extends string, G extends object, V extends AnyValue> (
   return other.name === this.name
 }
 
+function defaultPropertyType (this: Type, _name: string): Type | undefined {
+  return undefined
+}
+
+function defaultPropertyValue (this: Type, _value: AnyValue, _name: string): AnyValue | undefined {
+  return undefined
+}
+
 function makeType<const T extends string, const G extends object, V extends AnyValue> (name: T, generics?: G, overrides?: {
   format?: (this: Type<T, G, V>) => string
   equals?: (this: Type<T, G, V>, other: Type) => other is Type<T, G, V>
+  propertyType?: (this: Type<T, G, V>, name: string) => Type | undefined
+  propertyValue?: (this: Type<T, G, V>, value: V, name: string) => AnyValue | undefined
 }): Type<T, G, V> {
   return {
     name,
@@ -54,7 +67,10 @@ function makeType<const T extends string, const G extends object, V extends AnyV
         throw new TypeError(`Cannot cast value of type ${value.type.format()} to type ${this.format()}`)
       }
       return value
-    }
+    },
+
+    propertyType: overrides?.propertyType ?? defaultPropertyType,
+    propertyValue: overrides?.propertyValue ?? defaultPropertyValue
   }
 }
 
@@ -186,7 +202,26 @@ export const ParameterType = {
   }
 }
 
-export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instrument')
+export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instrument', undefined, {
+  propertyType (name: string): Type | undefined {
+    switch (name) {
+      case 'gain':
+        return ParameterType.with('db')
+      default:
+        return undefined
+    }
+  },
+
+  propertyValue (value, name: string): AnyValue | undefined {
+    switch (name) {
+      case 'gain':
+        return ParameterType.of(value.data.gain)
+      default:
+        return undefined
+    }
+  }
+})
+
 export const PartType = makeType<'part', {}, PartValue>('part')
 export const EffectType = makeType<'effect', {}, EffectValue>('effect')
 export const BusType = makeType<'bus', {}, BusValue>('bus')

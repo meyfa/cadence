@@ -553,7 +553,12 @@ function checkPropertyAccess (object: Type, property: ast.Identifier, range: Sou
     return { errors: [new CompileError(`Module "${definition.name}" has no export named "${property.name}"`, property.range)] }
   }
 
-  return { errors: [new CompileError(`Cannot access properties of type ${object.format()}`, property.range)] }
+  const propertyType = object.propertyType(property.name)
+  if (propertyType != null) {
+    return { errors: [], result: propertyType }
+  }
+
+  return { errors: [new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range)] }
 }
 
 function checkArgumentList (
