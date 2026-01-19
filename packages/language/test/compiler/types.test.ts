@@ -299,6 +299,36 @@ describe('compiler/types.ts', () => {
         assert.deepStrictEqual(ModuleType.detail(moduleType), generics)
       })
     })
+
+    describe('propertyType()', () => {
+      it('should return export types', () => {
+        const moduleType = ModuleType.with({ definition: testModuleDefinition })
+
+        const fooType = moduleType.propertyType('foo')
+        assert.strictEqual(fooType?.format(), 'number(s)')
+
+        const barType = moduleType.propertyType('bar')
+        assert.strictEqual(barType?.format(), 'string')
+
+        const bazType = moduleType.propertyType('baz')
+        assert.strictEqual(bazType, undefined)
+      })
+    })
+
+    describe('propertyValue()', () => {
+      it('should return export values', () => {
+        const moduleValue = ModuleType.of(testModuleDefinition)
+
+        const fooValue = ModuleType.propertyValue(moduleValue, 'foo')
+        assert.deepStrictEqual(fooValue?.data, NumberType.with('s').of({ unit: 's', value: 10 }).data)
+
+        const barValue = ModuleType.propertyValue(moduleValue, 'bar')
+        assert.deepStrictEqual(barValue?.data, StringType.of('hello').data)
+
+        const bazValue = ModuleType.propertyValue(moduleValue, 'baz')
+        assert.strictEqual(bazValue, undefined)
+      })
+    })
   })
 
   describe('FunctionType', () => {
@@ -506,26 +536,30 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(InstrumentType.format(), 'instrument')
     })
 
-    it('should return property types', () => {
-      const gainType = InstrumentType.propertyType('gain')
-      assert.strictEqual(gainType?.name, 'parameter')
-      assert.deepStrictEqual(gainType.generics, { unit: 'db' })
+    describe('propertyType()', () => {
+      it('should return property types', () => {
+        const gainType = InstrumentType.propertyType('gain')
+        assert.strictEqual(gainType?.name, 'parameter')
+        assert.deepStrictEqual(gainType.generics, { unit: 'db' })
+      })
     })
 
-    it('should return property values', () => {
-      const instrumentValue = InstrumentType.of({
-        id: 1 as any,
-        sampleUrl: 'sample.wav',
-        gain: {
-          id: 2 as ParameterId,
-          initial: makeNumeric('db', -3)
-        },
-        rootNote: undefined,
-        length: undefined
-      })
+    describe('propertyValue()', () => {
+      it('should return property values', () => {
+        const instrumentValue = InstrumentType.of({
+          id: 1 as any,
+          sampleUrl: 'sample.wav',
+          gain: {
+            id: 2 as ParameterId,
+            initial: makeNumeric('db', -3)
+          },
+          rootNote: undefined,
+          length: undefined
+        })
 
-      const gainValue = InstrumentType.propertyValue(instrumentValue, 'gain')
-      assert.deepStrictEqual(gainValue?.data, instrumentValue.data.gain)
+        const gainValue = InstrumentType.propertyValue(instrumentValue, 'gain')
+        assert.deepStrictEqual(gainValue?.data, instrumentValue.data.gain)
+      })
     })
   })
 

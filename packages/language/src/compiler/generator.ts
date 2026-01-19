@@ -5,7 +5,7 @@ import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PartType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PartType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
 import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -327,7 +327,7 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'PropertyAccess': {
       const object = resolve(context, expression.object)
-      return resolvePropertyAccess(context, object, expression)
+      return nonNull(object.type.propertyValue(object, expression.property.name)) as Value
     }
 
     case 'Call': {
@@ -490,22 +490,6 @@ function computeDivide (left: Value, right: Value): Value {
 
   if (PatternType.is(left) && NumberType.is(right)) {
     return PatternType.of(multiplyPattern(left.data, 1.0 / right.data.value))
-  }
-
-  assert(false)
-}
-
-function resolvePropertyAccess (context: Context, object: Value, expression: ast.PropertyAccess): Value {
-  if (ModuleType.is(object)) {
-    const property = object.data.exports.get(expression.property.name)
-    if (property != null) {
-      return property
-    }
-  }
-
-  const value = object.type.propertyValue(object, expression.property.name)
-  if (value != null) {
-    return value as Value
   }
 
   assert(false)
