@@ -505,6 +505,28 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(InstrumentType.generics, undefined)
       assert.strictEqual(InstrumentType.format(), 'instrument')
     })
+
+    it('should return property types', () => {
+      const gainType = InstrumentType.propertyType('gain')
+      assert.strictEqual(gainType?.name, 'parameter')
+      assert.deepStrictEqual(gainType.generics, { unit: 'db' })
+    })
+
+    it('should return property values', () => {
+      const instrumentValue = InstrumentType.of({
+        id: 1 as any,
+        sampleUrl: 'sample.wav',
+        gain: {
+          id: 2 as ParameterId,
+          initial: makeNumeric('db', -3)
+        },
+        rootNote: undefined,
+        length: undefined
+      })
+
+      const gainValue = InstrumentType.propertyValue(instrumentValue, 'gain')
+      assert.deepStrictEqual(gainValue?.data, instrumentValue.data.gain)
+    })
   })
 
   describe('PartType', () => {
