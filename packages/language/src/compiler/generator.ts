@@ -48,7 +48,7 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
     beatsPerBar: options.beatsPerBar,
 
     instruments: top.instruments,
-    automations: new Map(),
+    automations: top.automations,
 
     track,
     mixer
