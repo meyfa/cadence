@@ -7,7 +7,8 @@ import { FunctionType } from '../../../src/compiler/types.js'
 
 function createFunctionContext (): FunctionContext {
   return {
-    instruments: new Map()
+    instruments: new Map(),
+    automations: new Map()
   }
 }
 
@@ -32,6 +33,7 @@ describe('compiler/modules/instruments.ts', () => {
         id: 1,
         sampleUrl: 'https://example.com/kick.wav',
         gain: {
+          id: 1,
           initial: makeNumeric('db', -3)
         },
         rootNote: 'C4',
@@ -55,6 +57,7 @@ describe('compiler/modules/instruments.ts', () => {
         id: 1,
         sampleUrl: 'https://example.com/snare.wav',
         gain: {
+          id: 1,
           initial: makeNumeric('db', 0)
         },
         rootNote: undefined,

@@ -164,12 +164,12 @@ export const ParameterType = {
   ...makeType<'parameter', {}, ParameterValue>('parameter'),
 
   // override for better inference
-  of: <const U extends Unit>(data: Parameter<U>): ParameterValue<U> => ({
+  of: <const U extends Unit> (data: Parameter<U>): ParameterValue<U> => ({
     type: ParameterType.with(data.initial.unit),
     data
   }),
 
-  with: <const U extends Unit>(unit: U) => {
+  with: <const U extends Unit> (unit: U) => {
     return makeType<'parameter', { readonly unit: U }, ParameterValue<U>>('parameter', { unit }, {
       format () {
         return this.generics?.unit == null ? 'parameter' : `parameter(${this.generics.unit})`

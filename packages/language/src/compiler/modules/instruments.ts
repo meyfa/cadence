@@ -1,7 +1,32 @@
-import { type InstrumentId, isPitch, makeNumeric } from '@core/program.js'
-import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type Value } from '../types.js'
+import { type Instrument, type InstrumentId, isPitch, makeNumeric, type Numeric, type Parameter, type ParameterId, type Unit } from '@core/program.js'
+import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type InstrumentValue, type Value } from '../types.js'
+import type { FunctionContext } from '../functions.js'
 
 const UNITY_GAIN = makeNumeric('db', 0)
+
+function allocateInstrument (context: FunctionContext, data: Omit<Instrument, 'id'>): InstrumentValue {
+  const currentMaxId = Math.max(0, ...Array.from(context.instruments.keys()))
+  const id = (currentMaxId + 1) as InstrumentId
+
+  const instrument = InstrumentType.of({ ...data, id })
+  context.instruments.set(instrument.data.id, instrument.data)
+
+  return instrument
+}
+
+function allocateParameter<U extends Unit> (context: FunctionContext, initial: Numeric<U>): Parameter<U> {
+  const currentMaxId = Math.max(0, ...Array.from(context.automations.keys()))
+  const id = (currentMaxId + 1) as ParameterId
+
+  const parameter: Parameter<U> = { id, initial }
+
+  context.automations.set(parameter.id, {
+    parameterId: parameter.id,
+    segments: []
+  })
+
+  return parameter
+}
 
 const sample = FunctionType.of({
   arguments: [
@@ -15,21 +40,15 @@ const sample = FunctionType.of({
 
   // eslint-disable-next-line camelcase
   invoke: (context, { url, gain, root_note, length }) => {
-    const currentMaxId = Math.max(0, ...Array.from(context.instruments.keys()))
-    const instrument = InstrumentType.of({
-      id: (currentMaxId + 1) as InstrumentId,
+    const gainParameter = allocateParameter(context, gain ?? UNITY_GAIN)
+
+    return allocateInstrument(context, {
       sampleUrl: url,
-      gain: {
-        initial: gain ?? UNITY_GAIN
-      },
+      gain: gainParameter,
       // eslint-disable-next-line camelcase
       rootNote: isPitch(root_note) ? root_note : undefined,
       length
     })
-
-    context.instruments.set(instrument.data.id, instrument.data)
-
-    return instrument
   }
 })
 

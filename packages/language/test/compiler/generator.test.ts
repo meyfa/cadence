@@ -26,6 +26,7 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result, {
       beatsPerBar: 4,
       instruments: new Map(),
+      automations: new Map(),
       track: {
         tempo: makeNumeric('bpm', 120),
         parts: []

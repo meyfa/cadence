@@ -8,15 +8,8 @@ import { EffectType, FunctionType, ModuleType, NumberType, type Value } from '..
 const createEffectConstructor = <T extends Effect>(type: T['type'], schema: PropertySchema) => {
   return FunctionType.of({
     arguments: schema,
-
     returnType: EffectType,
-
-    invoke: (context, args) => {
-      return EffectType.of({
-        type,
-        ...args
-      } as T)
-    }
+    invoke: (context, args) => EffectType.of({ ...args, type } as T)
   })
 }
 

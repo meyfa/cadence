@@ -7,7 +7,8 @@ import { FunctionType } from '../../../src/compiler/types.js'
 
 function createFunctionContext (): FunctionContext {
   return {
-    instruments: new Map()
+    instruments: new Map(),
+    automations: new Map()
   }
 }
 

@@ -70,8 +70,20 @@ type Id<Tag extends string> = number & { __tag: Tag }
 
 // Domain types
 
+export type ParameterId = Id<'Parameter'>
+
 export interface Parameter<U extends Unit> {
+  readonly id: ParameterId
   readonly initial: Numeric<U>
+}
+
+export interface Automation {
+  readonly parameterId: ParameterId
+  readonly segments: readonly AutomationSegment[]
+}
+
+export interface AutomationSegment {
+  readonly duration: Numeric<'beats'>
 }
 
 export type InstrumentId = Id<'Instrument'>
@@ -187,6 +199,8 @@ export interface Program {
   readonly beatsPerBar: number
 
   readonly instruments: ReadonlyMap<InstrumentId, Instrument>
+  readonly automations: ReadonlyMap<ParameterId, Automation>
+
   readonly track: Track
   readonly mixer: Mixer
 }

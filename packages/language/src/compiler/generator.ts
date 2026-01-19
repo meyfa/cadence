@@ -1,5 +1,5 @@
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
-import { makeNumeric, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core/program.js'
+import { makeNumeric, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type ParameterId, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { CompileError } from './error.js'
@@ -46,7 +46,10 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
 
   return {
     beatsPerBar: options.beatsPerBar,
+
     instruments: top.instruments,
+    automations: new Map(),
+
     track,
     mixer
   }
@@ -62,6 +65,7 @@ interface Context {
 interface TopLevelContext extends Context {
   readonly options: GenerateOptions
   readonly instruments: Map<InstrumentId, Instrument>
+  readonly automations: Map<ParameterId, Automation>
 }
 
 interface MutableContext extends Context {
@@ -75,6 +79,7 @@ function createGlobalScope (options: GenerateOptions, initialResolutions: Readon
     },
     options,
     instruments: new Map(),
+    automations: new Map(),
     resolutions: new Map(initialResolutions)
   }
 
