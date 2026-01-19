@@ -31,7 +31,9 @@ describe('compiler/modules/instruments.ts', () => {
       assert.deepStrictEqual(result.data, {
         id: 1,
         sampleUrl: 'https://example.com/kick.wav',
-        gain: makeNumeric('db', -3),
+        gain: {
+          initial: makeNumeric('db', -3)
+        },
         rootNote: 'C4',
         length: makeNumeric('s', 1.5)
       })
@@ -52,7 +54,9 @@ describe('compiler/modules/instruments.ts', () => {
       assert.deepStrictEqual(result.data, {
         id: 1,
         sampleUrl: 'https://example.com/snare.wav',
-        gain: undefined,
+        gain: {
+          initial: makeNumeric('db', 0)
+        },
         rootNote: undefined,
         length: undefined
       })

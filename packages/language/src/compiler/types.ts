@@ -1,4 +1,4 @@
-import type { Bus, Effect, Instrument, Numeric, Part, Pattern, Unit } from '@core/program.js'
+import type { Bus, Effect, Instrument, Numeric, Parameter, Part, Pattern, Unit } from '@core/program.js'
 import type { FunctionDefinition } from './functions.js'
 import type { ModuleDefinition } from './modules.js'
 import type { PropertySchema } from './schema.js'
@@ -66,6 +66,7 @@ export type Value = |
   NumberValue |
   StringValue |
   PatternValue |
+  ParameterValue |
   InstrumentValue |
   PartValue |
   EffectValue |
@@ -77,6 +78,7 @@ export type FunctionValue<S extends PropertySchema = PropertySchema, R extends T
 export type NumberValue<U extends Unit = Unit> = AnyValue<Numeric<U>>
 export type StringValue = AnyValue<string>
 export type PatternValue = AnyValue<Pattern>
+export type ParameterValue<U extends Unit = Unit> = AnyValue<Parameter<U>>
 export type InstrumentValue = AnyValue<Instrument>
 export type PartValue = AnyValue<Part>
 export type EffectValue = AnyValue<Effect>
@@ -157,6 +159,33 @@ export const NumberType = {
 
 export const StringType = makeType<'string', {}, StringValue>('string')
 export const PatternType = makeType<'pattern', {}, PatternValue>('pattern')
+
+export const ParameterType = {
+  ...makeType<'parameter', {}, ParameterValue>('parameter'),
+
+  // override for better inference
+  of: <const U extends Unit>(data: Parameter<U>): ParameterValue<U> => ({
+    type: ParameterType.with(data.initial.unit),
+    data
+  }),
+
+  with: <const U extends Unit>(unit: U) => {
+    return makeType<'parameter', { readonly unit: U }, ParameterValue<U>>('parameter', { unit }, {
+      format () {
+        return this.generics?.unit == null ? 'parameter' : `parameter(${this.generics.unit})`
+      },
+
+      equals (other: Type): other is Type<'parameter', { readonly unit: U }, ParameterValue<U>> {
+        return other.name === 'parameter' && ParameterType.detail(other).unit === unit
+      }
+    })
+  },
+
+  detail: (type: Type): Readonly<{ unit: Unit | undefined }> => {
+    return type.generics as Readonly<{ unit: Unit | undefined }>
+  }
+}
+
 export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instrument')
 export const PartType = makeType<'part', {}, PartValue>('part')
 export const EffectType = makeType<'effect', {}, EffectValue>('effect')
