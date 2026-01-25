@@ -1,4 +1,4 @@
-import { createAudioEngine } from '@core/audio/engine.js'
+import { createAudioEngine } from '@webaudio/engine.js'
 import { makeNumeric } from '@core/program.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'

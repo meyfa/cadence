@@ -1,8 +1,8 @@
+import { MutableObservable, type Observable } from '@core/observable.js'
+import { makeNumeric, type Numeric, type Program } from '@core/program.js'
+import type { BeatRange } from '@core/types.js'
 import { getDestination } from 'tone'
-import { MutableObservable, type Observable } from '../observable.js'
-import { makeNumeric, type Numeric, type Program } from '../program.js'
 import { createAudioSession, type AudioSession } from './session.js'
-import type { BeatRange } from '../types.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>

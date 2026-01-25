@@ -1,4 +1,4 @@
-import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '../program.js'
+import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '@core/program.js'
 import { createEffect } from './effects.js'
 import type { BusInstance, EffectInstance } from './instances.js'
 

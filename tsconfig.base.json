@@ -2,6 +2,7 @@
   "compilerOptions": {
     "paths": {
       "@core/*": ["./packages/core/src/*"],
+      "@webaudio/*": ["./packages/webaudio/src/*"],
       "@language/*": ["./packages/language/src/*"],
       "@editor/*": ["./packages/editor/src/*"],
       "@flowchart/*": ["./packages/flowchart/src/*"]

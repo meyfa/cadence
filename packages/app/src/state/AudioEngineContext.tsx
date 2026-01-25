@@ -1,4 +1,4 @@
-import type { AudioEngine } from '@core/audio/engine.js'
+import type { AudioEngine } from '@webaudio/engine.js'
 import { createContext } from 'react'
 import { useSafeContext } from '../hooks/context.js'
 

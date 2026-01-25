@@ -99,9 +99,20 @@ export default defineConfig([
       'import/no-restricted-paths': [
         'error',
         {
+          // TODO Use an allow list approach instead of deny list to make this more maintainable
           zones: [
             {
               target: './packages/core',
+              from: [
+                './packages/webaudio',
+                './packages/language',
+                './packages/editor',
+                './packages/flowchart',
+                './packages/app'
+              ]
+            },
+            {
+              target: './packages/webaudio',
               from: [
                 './packages/language',
                 './packages/editor',
@@ -112,6 +123,7 @@ export default defineConfig([
             {
               target: './packages/language',
               from: [
+                './packages/webaudio',
                 './packages/editor',
                 './packages/flowchart',
                 './packages/app'
@@ -121,6 +133,7 @@ export default defineConfig([
               target: './packages/flowchart',
               from: [
                 './packages/core',
+                './packages/webaudio',
                 './packages/language',
                 './packages/editor',
                 './packages/app'
@@ -129,6 +142,7 @@ export default defineConfig([
             {
               target: './packages/editor',
               from: [
+                './packages/webaudio',
                 './packages/app'
               ]
             }

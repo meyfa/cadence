@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@meyfa/cadence-webaudio",
+  "version": "0.0.0",
+  "author": "Fabian Meyer",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "test": "tsx --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "tone": "15.1.22"
+  }
+}
