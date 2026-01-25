@@ -1,6 +1,7 @@
 import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '@core/program.js'
 import { createEffect } from './effects.js'
-import type { BusInstance, EffectInstance } from './instances.js'
+import { connect, type BusInstance, type EffectInstance } from './instances.js'
+import { getContext } from 'tone'
 
 const UNITY_GAIN = makeNumeric('db', 0)
 
@@ -15,8 +16,13 @@ function createBus (program: Program, bus: Bus): BusInstance {
   const promises: Array<Promise<void>> = []
 
   const appendEffect = (effect: Effect) => {
-    const instance = createEffect(program, effect)
-    effects.at(-1)?.output.connect(instance.input)
+    const instance = createEffect(getContext().rawContext, program, effect)
+
+    const last = effects.at(-1)
+    if (last != null) {
+      connect(last, instance)
+    }
+
     effects.push(instance)
     promises.push(instance.loaded)
   }

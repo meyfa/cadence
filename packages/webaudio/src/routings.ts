@@ -1,6 +1,6 @@
 import type { BusId, InstrumentId, MixerRouting, Program } from '@core/program.js'
 import { getDestination } from 'tone'
-import type { BusInstance, InputMixin, InstrumentInstance, OutputMixin } from './instances.js'
+import { connect, type BusInstance, type InputMixin, type InstrumentInstance, type OutputMixin } from './instances.js'
 
 const mainOutput: InputMixin = {
   input: getDestination()
@@ -33,7 +33,7 @@ export function setupRoutings (
     const source = findSource(routing.source)
     const destination = findDestination(routing.destination)
     if (source != null && destination != null) {
-      source.output.connect(destination.input)
+      connect(source, destination)
     }
   }
 }
