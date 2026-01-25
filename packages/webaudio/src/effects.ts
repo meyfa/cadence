@@ -1,7 +1,7 @@
 import type { Effect, Program } from '@core/program.js'
+import { beatsToSeconds } from '@core/time.js'
 import { BiquadFilter, FeedbackDelay, Gain, Panner, Reverb, type ToneAudioNode } from 'tone'
 import type { EffectInstance } from './instances.js'
-import { beatsToSeconds } from './time.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
 

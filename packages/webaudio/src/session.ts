@@ -1,12 +1,12 @@
+import { MutableObservable, type Observable } from '@core/observable.js'
+import { makeNumeric, type Numeric, type Program } from '@core/program.js'
+import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
+import type { BeatRange } from '@core/types.js'
 import { getTransport } from 'tone'
-import { MutableObservable, type Observable } from '../observable.js'
-import { makeNumeric, type Numeric, type Program } from '../program.js'
-import type { BeatRange } from '../types.js'
 import { createBuses } from './buses.js'
 import { createInstruments } from './instruments.js'
 import { createParts } from './parts.js'
 import { setupRoutings } from './routings.js'
-import { beatsToSeconds, calculateTotalLength } from './time.js'
 
 const ErrorMessages = Object.freeze({
   LoadTimeout: 'Timeout while loading assets; some audio may be missing.',

@@ -13,6 +13,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@core': path.resolve(import.meta.dirname, '../core/src'),
+      '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src'),
       '@language': path.resolve(import.meta.dirname, '../language/src'),
       '@editor': path.resolve(import.meta.dirname, '../editor/src'),
       '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src')

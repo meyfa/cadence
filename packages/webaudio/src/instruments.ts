@@ -1,6 +1,6 @@
+import type { Instrument, InstrumentId, Program } from '@core/program.js'
 import { createDeferred } from '@core/utilities/deferred.js'
 import { Sampler } from 'tone'
-import type { Instrument, InstrumentId, Program } from '../program.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { InstrumentInstance } from './instances.js'
 

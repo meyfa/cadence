@@ -1,9 +1,9 @@
 import { renderPatternEvents } from '@core/pattern.js'
+import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
+import { beatsToSeconds } from '@core/time.js'
 import { Part } from 'tone'
-import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '../program.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { InstrumentInstance, PartInstance } from './instances.js'
-import { beatsToSeconds } from './time.js'
 
 export function createParts (
   program: Program,

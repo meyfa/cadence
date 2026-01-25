@@ -1,4 +1,4 @@
-import type { AudioEngine } from '@core/audio/engine.js'
+import type { AudioEngine } from '@webaudio/engine.js'
 import type { Program } from '@core/program.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import { activateTabOfType } from './hooks/layout.js'

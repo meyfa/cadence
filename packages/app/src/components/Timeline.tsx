@@ -1,5 +1,5 @@
-import { calculateTotalLength } from '@core/audio/time.js'
 import { makeNumeric, type Numeric, type Part, type Program } from '@core/program.js'
+import { calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
