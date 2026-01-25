@@ -125,6 +125,7 @@ export interface PartStatement extends ASTNode {
   readonly name: Identifier
   readonly properties: ArgumentList
   readonly routings: readonly Routing[]
+  readonly automations: readonly AutomateStatement[]
 }
 
 export interface MixerStatement extends ASTNode {
@@ -144,6 +145,18 @@ export interface BusStatement extends ASTNode {
 export interface EffectStatement extends ASTNode {
   readonly type: 'EffectStatement'
   readonly expression: Expression
+}
+
+export interface AutomateStatement extends ASTNode {
+  readonly type: 'AutomateStatement'
+  readonly target: Expression
+  readonly curve: Curve
+}
+
+export interface Curve extends ASTNode {
+  readonly type: 'Curve'
+  readonly curveType: string
+  readonly parameters: readonly Expression[]
 }
 
 // Root Type
@@ -194,6 +207,8 @@ export interface NodeByType {
   MixerStatement: MixerStatement
   BusStatement: BusStatement
   EffectStatement: EffectStatement
+  AutomateStatement: AutomateStatement
+  Curve: Curve
 
   Program: Program
 }

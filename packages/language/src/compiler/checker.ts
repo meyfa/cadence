@@ -1,10 +1,12 @@
+import type { Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import type { SourceRange } from '../range.js'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
+import { curveParameterCounts } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
 import { toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
@@ -219,6 +221,10 @@ function checkPart (context: Context, part: ast.PartStatement): readonly Compile
     errors.push(...checkInstrumentRouting(context, routing))
   }
 
+  for (const automation of part.automations) {
+    errors.push(...checkAutomation(context, automation))
+  }
+
   return errors
 }
 
@@ -239,6 +245,74 @@ function checkInstrumentRouting (context: Context, routing: ast.Routing): readon
   }
 
   return errors
+}
+
+function checkAutomation (context: Context, automation: ast.AutomateStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const targetCheck = checkExpression(context, automation.target)
+  errors.push(...targetCheck.errors)
+  if (targetCheck.result != null) {
+    errors.push(...checkType([ParameterType], targetCheck.result, automation.target.range))
+  }
+
+  const curveCheck = checkCurve(context, automation.curve)
+  errors.push(...curveCheck.errors)
+
+  if (targetCheck.result != null && curveCheck.result != null) {
+    const { unit } = ParameterType.detail(targetCheck.result)
+    errors.push(...checkType([CurveType.with(unit)], curveCheck.result, automation.curve.range))
+  }
+
+  // TODO Remove once automations are fully supported
+  errors.push(new CompileError('Automations are not yet supported', automation.range))
+
+  return errors
+}
+
+function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
+  const expectedParameters = curveParameterCounts.get(curve.curveType)
+  if (expectedParameters == null) {
+    return { errors: [new CompileError(`Unknown curve type "${curve.curveType}"`, curve.range)] }
+  }
+
+  if (curve.parameters.length !== expectedParameters) {
+    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'parameter' : 'parameters'} for ${curve.curveType} curve, got ${curve.parameters.length}`
+    return { errors: [new CompileError(message, curve.range)] }
+  }
+
+  const errors: CompileError[] = []
+  const units: Array<Unit | undefined> = []
+
+  for (const point of curve.parameters) {
+    const pointCheck = checkExpression(context, point)
+    errors.push(...pointCheck.errors)
+
+    if (pointCheck.result != null) {
+      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
+      errors.push(...typeErrors)
+
+      const generics = typeErrors.length === 0
+        ? NumberType.detail(pointCheck.result)
+        : undefined
+
+      units.push(generics?.unit)
+    }
+  }
+
+  if (errors.length > 0) {
+    return { errors }
+  }
+
+  const firstUnit = units[0]
+  const result = CurveType.with(firstUnit)
+
+  const expected = NumberType.with(firstUnit)
+  for (let i = 1; i < units.length; ++i) {
+    errors.push(...checkType([expected], NumberType.with(units[i]), curve.parameters[i].range))
+  }
+
+  return { errors, result: errors.length > 0 ? undefined : result }
 }
 
 function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
