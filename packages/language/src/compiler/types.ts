@@ -2,6 +2,7 @@ import type { Bus, Effect, Instrument, Numeric, Parameter, Part, Pattern, Unit }
 import type { FunctionDefinition } from './functions.js'
 import type { ModuleDefinition } from './modules.js'
 import type { PropertySchema } from './schema.js'
+import type { Curve } from './curves.js'
 
 export interface AnyValue<D = unknown> {
   readonly type: Type
@@ -83,6 +84,7 @@ export type Value = |
   StringValue |
   PatternValue |
   ParameterValue |
+  CurveValue |
   InstrumentValue |
   PartValue |
   EffectValue |
@@ -95,6 +97,7 @@ export type NumberValue<U extends Unit = Unit> = AnyValue<Numeric<U>>
 export type StringValue = AnyValue<string>
 export type PatternValue = AnyValue<Pattern>
 export type ParameterValue<U extends Unit = Unit> = AnyValue<Parameter<U>>
+export type CurveValue<U extends Unit = Unit> = AnyValue<Curve<U>>
 export type InstrumentValue = AnyValue<Instrument>
 export type PartValue = AnyValue<Part>
 export type EffectValue = AnyValue<Effect>
@@ -207,6 +210,32 @@ export const ParameterType = {
 
       equals (other: Type): other is Type<'parameter', { readonly unit: U }, ParameterValue<U>> {
         return other.name === 'parameter' && ParameterType.detail(other).unit === unit
+      }
+    })
+  },
+
+  detail: (type: Type): Readonly<{ unit: Unit | undefined }> => {
+    return type.generics as Readonly<{ unit: Unit | undefined }>
+  }
+}
+
+export const CurveType = {
+  ...makeType<'curve', {}, CurveValue>('curve'),
+
+  // override for better inference
+  of: <const U extends Unit> (data: Curve<U>): CurveValue<U> => ({
+    type: CurveType.with(data.unit),
+    data
+  }),
+
+  with: <const U extends Unit> (unit: U) => {
+    return makeType<'curve', { readonly unit: U }, CurveValue<U>>('curve', { unit }, {
+      format () {
+        return this.generics?.unit == null ? 'curve' : `curve(${this.generics.unit})`
+      },
+
+      equals (other: Type): other is Type<'curve', { readonly unit: U }, CurveValue<U>> {
+        return other.name === 'curve' && CurveType.detail(other).unit === unit
       }
     })
   },

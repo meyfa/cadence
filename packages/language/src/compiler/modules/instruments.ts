@@ -18,14 +18,12 @@ function allocateParameter<U extends Unit> (context: FunctionContext, initial: N
   const currentMaxId = Math.max(0, ...Array.from(context.automations.keys()))
   const id = (currentMaxId + 1) as ParameterId
 
-  const parameter: Parameter<U> = { id, initial }
-
-  context.automations.set(parameter.id, {
-    parameterId: parameter.id,
-    segments: []
+  context.automations.set(id, {
+    parameterId: id,
+    points: []
   })
 
-  return parameter
+  return { id, initial }
 }
 
 const sample = FunctionType.of({
