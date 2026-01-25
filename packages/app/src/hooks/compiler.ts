@@ -21,6 +21,7 @@ function createSafeFunction<TArgs extends unknown[], TValue, TError extends Unwr
     try {
       return fn(...args)
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Unexpected error in compile hook:', err)
 
       if (err instanceof RangeError || err instanceof CompoundError) {

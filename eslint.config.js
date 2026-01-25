@@ -42,6 +42,8 @@ export default defineConfig([
       // @ts-expect-error eslint-plugin-react-hooks is improperly typed
       ...fixupConfigRules(pluginReactHooks.configs.recommended).rules,
 
+      'no-console': ['error'],
+
       'react/no-typos': ['error'],
       'react/style-prop-object': ['warn'],
       'react/jsx-pascal-case': ['warn', {
