@@ -4,7 +4,7 @@ import { makeNumeric, type ParameterId } from '@core/program.js'
 import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { BusType, BusValue, EffectType, type EffectValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, type PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
+import { BusType, BusValue, CurveType, type CurveValue, EffectType, type EffectValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 
 describe('compiler/types.ts', () => {
@@ -29,6 +29,7 @@ describe('compiler/types.ts', () => {
       expectTypeEquals<EffectValue, ValueFor<typeof EffectType>>()
       expectTypeEquals<BusValue, ValueFor<typeof BusType>>()
       expectTypeEquals<GroupValue, ValueFor<typeof GroupType>>()
+      expectTypeEquals<CurveValue, ValueFor<typeof CurveType>>()
     })
 
     it('should honor module generics', () => {
@@ -59,6 +60,14 @@ describe('compiler/types.ts', () => {
       const parameterWithUnit = ParameterType.with('db')
       expectTypeEquals<ParameterValue<'db'>, ValueFor<typeof parameterWithUnit>>()
     })
+
+    it('should honor curve generics', () => {
+      const curveWithoutUnit = CurveType.with(undefined)
+      expectTypeEquals<CurveValue<undefined>, ValueFor<typeof curveWithoutUnit>>()
+
+      const curveWithUnit = CurveType.with('db')
+      expectTypeEquals<CurveValue<'db'>, ValueFor<typeof curveWithUnit>>()
+    })
   })
 
   describe('Type::equals()', () => {
@@ -74,10 +83,10 @@ describe('compiler/types.ts', () => {
     })
 
     it('should compare module types based on definition', () => {
-      const moduleType1 = ModuleType.with({ definition: testModuleDefinition })
-      const moduleType2 = ModuleType.with({ definition: testModuleDefinition })
+      const type1 = ModuleType.with({ definition: testModuleDefinition })
+      const type2 = ModuleType.with({ definition: testModuleDefinition })
 
-      assert.strictEqual(moduleType1.equals(moduleType2), true)
+      assert.strictEqual(type1.equals(type2), true)
 
       const differentModuleDefinition: ModuleDefinition = {
         name: 'differentModule',
@@ -88,16 +97,16 @@ describe('compiler/types.ts', () => {
 
       const moduleType3 = ModuleType.with({ definition: differentModuleDefinition })
 
-      assert.strictEqual(moduleType1.equals(moduleType3), false)
+      assert.strictEqual(type1.equals(moduleType3), false)
     })
 
     it('should compare all function types equal', () => {
-      const funcType1 = FunctionType.with({
+      const type1 = FunctionType.with({
         schema: [{ name: 'arg1', type: NumberType, required: true }],
         returnType: StringType
       })
 
-      const funcType2 = FunctionType.with({
+      const type2 = FunctionType.with({
         schema: [
           { name: 'arg1', type: NumberType, required: true },
           { name: 'arg2', type: StringType, required: false }
@@ -105,32 +114,40 @@ describe('compiler/types.ts', () => {
         returnType: PatternType
       })
 
-      assert.strictEqual(funcType1.equals(funcType2), true)
+      assert.strictEqual(type1.equals(type2), true)
     })
 
     it('should compare number types with same generics equal', () => {
-      const numType1 = NumberType.with(undefined)
-      const numType2 = NumberType.with(undefined)
-      const numType3 = NumberType.with('s')
-      const numType4 = NumberType.with('s')
-      assert.strictEqual(numType1.equals(numType2), true)
-      assert.strictEqual(numType3.equals(numType4), true)
+      const type1 = NumberType.with(undefined)
+      const type2 = NumberType.with(undefined)
+      const type3 = NumberType.with('s')
+      const type4 = NumberType.with('s')
+      assert.strictEqual(type1.equals(type2), true)
+      assert.strictEqual(type3.equals(type4), true)
     })
 
     it('should compare number types with different generics unequal', () => {
-      const numType1 = NumberType.with(undefined)
-      const numType2 = NumberType.with('s')
-      const numType3 = NumberType.with('hz')
-      assert.strictEqual(numType1.equals(numType2), false)
-      assert.strictEqual(numType2.equals(numType3), false)
+      const type1 = NumberType.with(undefined)
+      const type2 = NumberType.with('s')
+      const type3 = NumberType.with('hz')
+      assert.strictEqual(type1.equals(type2), false)
+      assert.strictEqual(type2.equals(type3), false)
     })
 
     it('should compare parameter types based on unit', () => {
-      const paramType1 = ParameterType.with('db')
-      const paramType2 = ParameterType.with('db')
-      const paramType3 = ParameterType.with('s')
-      assert.strictEqual(paramType1.equals(paramType2), true)
-      assert.strictEqual(paramType1.equals(paramType3), false)
+      const type1 = ParameterType.with('db')
+      const type2 = ParameterType.with('db')
+      const type3 = ParameterType.with('s')
+      assert.strictEqual(type1.equals(type2), true)
+      assert.strictEqual(type1.equals(type3), false)
+    })
+
+    it('should compare curve types based on unit', () => {
+      const type1 = CurveType.with('db')
+      const type2 = CurveType.with('db')
+      const type3 = CurveType.with('hz')
+      assert.strictEqual(type1.equals(type2), true)
+      assert.strictEqual(type1.equals(type3), false)
     })
   })
 
@@ -150,7 +167,7 @@ describe('compiler/types.ts', () => {
     })
 
     it('should identify function values correctly', () => {
-      const funcValue = FunctionType.of({
+      const value = FunctionType.of({
         arguments: [
           { name: 'arg1', type: NumberType, required: true }
         ],
@@ -158,26 +175,39 @@ describe('compiler/types.ts', () => {
         invoke: () => StringType.of('')
       })
 
-      assert.strictEqual(FunctionType.is(funcValue), true)
+      assert.strictEqual(FunctionType.is(value), true)
     })
 
     it('should identify number values correctly', () => {
-      const numValue = NumberType.of({ unit: 's', value: 10 })
-      assert.strictEqual(NumberType.is(numValue), true)
-      assert.strictEqual(NumberType.with('s').is(numValue), true)
-      assert.strictEqual(NumberType.with(undefined).is(numValue), false)
-      assert.strictEqual(NumberType.with('hz').is(numValue), false)
+      const value = NumberType.of({ unit: 's', value: 10 })
+      assert.strictEqual(NumberType.is(value), true)
+      assert.strictEqual(NumberType.with('s').is(value), true)
+      assert.strictEqual(NumberType.with(undefined).is(value), false)
+      assert.strictEqual(NumberType.with('hz').is(value), false)
     })
 
     it('should identify parameter values correctly', () => {
-      const paramValue = ParameterType.of({
+      const value = ParameterType.of({
         id: 42 as ParameterId,
         initial: makeNumeric('db', -6)
       })
-      assert.strictEqual(ParameterType.is(paramValue), true)
-      assert.strictEqual(ParameterType.with('db').is(paramValue), true)
-      assert.strictEqual(ParameterType.with(undefined).is(paramValue), false)
-      assert.strictEqual(ParameterType.with('s').is(paramValue), false)
+      assert.strictEqual(ParameterType.is(value), true)
+      assert.strictEqual(ParameterType.with('db').is(value), true)
+      assert.strictEqual(ParameterType.with(undefined).is(value), false)
+      assert.strictEqual(ParameterType.with('s').is(value), false)
+    })
+
+    it('should identify curve values correctly', () => {
+      const value = CurveType.of({
+        type: 'linear',
+        unit: 'db',
+        start: makeNumeric('db', -6),
+        end: makeNumeric('db', 0)
+      })
+      assert.strictEqual(CurveType.is(value), true)
+      assert.strictEqual(CurveType.with('db').is(value), true)
+      assert.strictEqual(CurveType.with(undefined).is(value), false)
+      assert.strictEqual(CurveType.with('hz').is(value), false)
     })
   })
 
@@ -199,50 +229,50 @@ describe('compiler/types.ts', () => {
     })
 
     it('should cast module values correctly', () => {
-      const moduleValue: Value = ModuleType.of(testModuleDefinition)
+      const value: Value = ModuleType.of(testModuleDefinition)
 
-      const castedModule = ModuleType.cast(moduleValue)
-      expectTypeEquals<ModuleValue, typeof castedModule>()
-      assert.strictEqual(castedModule, moduleValue)
+      const casted = ModuleType.cast(value)
+      expectTypeEquals<ModuleValue, typeof casted>()
+      assert.strictEqual(casted, value)
     })
 
     it('should cast function values correctly', () => {
-      const funcValue: Value = FunctionType.of({
+      const value: Value = FunctionType.of({
         arguments: [],
         returnType: StringType,
         invoke: () => StringType.of('')
       })
 
-      const castedFunc = FunctionType.cast(funcValue)
-      expectTypeEquals<FunctionValue, typeof castedFunc>()
-      assert.strictEqual(castedFunc, funcValue)
+      const casted = FunctionType.cast(value)
+      expectTypeEquals<FunctionValue, typeof casted>()
+      assert.strictEqual(casted, value)
     })
 
     it('should cast number values correctly', () => {
-      const numValue: Value = NumberType.of({ unit: 's', value: 10 })
+      const value: Value = NumberType.of({ unit: 's', value: 10 })
 
-      const castedNum = NumberType.cast(numValue)
-      expectTypeEquals<NumberValue, typeof castedNum>()
-      assert.strictEqual(castedNum, numValue)
+      const casted = NumberType.cast(value)
+      expectTypeEquals<NumberValue, typeof casted>()
+      assert.strictEqual(casted, value)
 
-      const castedNumWithGenerics = NumberType.with('s').cast(numValue)
-      expectTypeEquals<NumberValue<'s'>, typeof castedNumWithGenerics>()
-      assert.strictEqual(castedNumWithGenerics, numValue)
+      const castedWithGenerics = NumberType.with('s').cast(value)
+      expectTypeEquals<NumberValue<'s'>, typeof castedWithGenerics>()
+      assert.strictEqual(castedWithGenerics, value)
     })
 
     it('should cast parameter values correctly', () => {
-      const paramValue: Value = ParameterType.of({
+      const value: Value = ParameterType.of({
         id: 42 as ParameterId,
         initial: makeNumeric('db', -3)
       })
 
-      const castedParam = ParameterType.cast(paramValue)
-      expectTypeEquals<ParameterValue, typeof castedParam>()
-      assert.strictEqual(castedParam, paramValue)
+      const casted = ParameterType.cast(value)
+      expectTypeEquals<ParameterValue, typeof casted>()
+      assert.strictEqual(casted, value)
 
-      const castedParamWithGenerics = ParameterType.with('db').cast(paramValue)
-      expectTypeEquals<ParameterValue<'db'>, typeof castedParamWithGenerics>()
-      assert.strictEqual(castedParamWithGenerics, paramValue)
+      const castedWithGenerics = ParameterType.with('db').cast(value)
+      expectTypeEquals<ParameterValue<'db'>, typeof castedWithGenerics>()
+      assert.strictEqual(castedWithGenerics, value)
     })
   })
 
@@ -592,6 +622,69 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(GroupType.name, 'group')
       assert.strictEqual(GroupType.generics, undefined)
       assert.strictEqual(GroupType.format(), 'group')
+    })
+  })
+
+  describe('CurveType', () => {
+    it('should have correct name, generics, format', () => {
+      assert.strictEqual(CurveType.name, 'curve')
+      assert.strictEqual(CurveType.generics, undefined)
+      assert.strictEqual(CurveType.format(), 'curve')
+    })
+
+    describe('of()', () => {
+      it('should narrow type correctly', () => {
+        const curve1 = CurveType.of({
+          type: 'linear',
+          unit: undefined,
+          start: makeNumeric(undefined, 0),
+          end: makeNumeric(undefined, 1)
+        })
+        expectTypeEquals<CurveValue<undefined>, typeof curve1>()
+
+        const curve2 = CurveType.of({
+          type: 'hold',
+          unit: 'db',
+          value: makeNumeric('db', -6)
+        })
+        expectTypeEquals<CurveValue<'db'>, typeof curve2>()
+
+        assert.deepStrictEqual(curve1.type.generics, { unit: undefined })
+        assert.deepStrictEqual(curve2.type.generics, { unit: 'db' })
+      })
+    })
+
+    describe('with()', () => {
+      it('should set correct name and generics', () => {
+        const type = CurveType.with(undefined)
+        assert.strictEqual(type.name, 'curve')
+        assert.deepStrictEqual(type.generics, { unit: undefined })
+
+        const type2 = CurveType.with('db')
+        assert.strictEqual(type2.name, 'curve')
+        assert.deepStrictEqual(type2.generics, { unit: 'db' })
+      })
+
+      it('should have correct format', () => {
+        const type = CurveType.with(undefined)
+        assert.strictEqual(type.format(), 'curve')
+
+        const type2 = CurveType.with('db')
+        assert.strictEqual(type2.format(), 'curve(db)')
+
+        const type3 = CurveType.with('hz')
+        assert.strictEqual(type3.format(), 'curve(hz)')
+      })
+    })
+
+    describe('detail()', () => {
+      it('should return generics', () => {
+        const type = CurveType.with(undefined)
+        assert.deepStrictEqual(CurveType.detail(type), { unit: undefined })
+
+        const type2 = CurveType.with('db')
+        assert.deepStrictEqual(CurveType.detail(type2), { unit: 'db' })
+      })
     })
   })
 })

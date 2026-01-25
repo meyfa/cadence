@@ -77,13 +77,19 @@ export interface Parameter<U extends Unit> {
   readonly initial: Numeric<U>
 }
 
-export interface Automation {
+export interface Automation<U extends Unit = Unit> {
   readonly parameterId: ParameterId
-  readonly segments: readonly AutomationSegment[]
+  readonly points: ReadonlyArray<AutomationPoint<U>>
 }
 
-export interface AutomationSegment {
-  readonly duration: Numeric<'beats'>
+export interface AutomationPoint<U extends Unit = Unit> {
+  readonly time: Numeric<'beats'>
+  readonly value: Numeric<U>
+
+  /**
+   * The curve from the previous point, or from the initial value, to this point.
+   */
+  readonly curve: 'linear' | 'step'
 }
 
 export type InstrumentId = Id<'Instrument'>
