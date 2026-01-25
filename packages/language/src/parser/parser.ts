@@ -486,14 +486,51 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
-const routing_: p.Parser<Token, unknown, readonly ast.Routing[]> = p.abc(
+const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   identifier_,
   literal('<<'),
   expression_,
   (destination, _arrow, source) => {
-    return [
-      ast.make('Routing', combineSourceRanges(destination, source), { destination, source })
-    ]
+    return ast.make('Routing', combineSourceRanges(destination, source), { destination, source })
+  }
+)
+
+const curve_: p.Parser<Token, unknown, ast.Curve> = p.ab(
+  p.token((t) => t.name === 'word' ? t : undefined),
+  p.option(
+    combine3(
+      literal('('),
+      p.sepBy(
+        optionalExpression_,
+        literal(',')
+      ),
+      expectLiteral(')')
+    ),
+    undefined
+  ),
+  (curveTypeToken, callTail) => {
+    const curveType = curveTypeToken.text
+    const parameters = callTail == null ? [] : callTail[1]
+
+    const range = callTail == null
+      ? getSourceRange(curveTypeToken)
+      : combineSourceRanges(curveTypeToken, callTail[2])
+
+    return ast.make('Curve', range, { curveType, parameters })
+  }
+)
+
+const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab(
+  combine2(
+    keyword('automate'),
+    expression_
+  ),
+  combine2(
+    expect(keyword('as'), 'keyword "as"'),
+    curve_
+  ),
+  ([_automate, target], [_as, curve]) => {
+    return ast.make('AutomateStatement', combineSourceRanges(_automate, curve), { target, curve })
   }
 )
 
@@ -512,7 +549,9 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(routing_),
+    p.many(
+      p.eitherOr(routing_, automateStatement_)
+    ),
     expectLiteral('}')
   ),
   ([_part, name], callChain, [_lp, children, _rp]) => {
@@ -521,7 +560,8 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
     return ast.make('PartStatement', combineSourceRanges(_part, _rp), {
       name,
       properties: args,
-      routings: children.flat()
+      routings: children.filter((c) => c.type === 'Routing'),
+      automations: children.filter((c) => c.type === 'AutomateStatement')
     })
   }
 )

@@ -202,7 +202,8 @@ describe('compiler/generator.ts', () => {
               properties: [
                 ast.make('Number', RANGE, { value: 4, unit: 'bars' })
               ],
-              routings: []
+              routings: [],
+              automations: []
             })
           ]
         }),
@@ -236,7 +237,8 @@ describe('compiler/generator.ts', () => {
               properties: [
                 ast.make('Number', RANGE, { value: -4, unit: 'bars' })
               ],
-              routings: []
+              routings: [],
+              automations: []
             })
           ]
         })

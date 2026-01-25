@@ -2,10 +2,11 @@ import { concatPatterns, createParallelPattern, createSerialPattern, mergePatter
 import { makeNumeric, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type ParameterId, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
+import { createCurve, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, PartType, PatternType, StringType, type BusValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType, type BusValue, type CurveValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
 import { toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -155,10 +156,17 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
   const trackContext = createLocalScope(context)
 
-  const parts = track.parts.map((part) => generatePart(trackContext, part))
-  for (const part of parts) {
+  const parts: Part[] = []
+
+  let currentTime = makeNumeric('beats', 0)
+  for (const partStatement of track.parts) {
+    const part = generatePart(trackContext, partStatement, currentTime)
+    parts.push(part)
+
     assert(!trackContext.resolutions.has(part.name))
     trackContext.resolutions.set(part.name, PartType.of(part))
+
+    currentTime = makeNumeric('beats', currentTime.value + part.length.value)
   }
 
   const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
@@ -170,9 +178,12 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
   return { tempo, parts }
 }
 
-function generatePart (context: Context, part: ast.PartStatement): Part {
+function generatePart (context: Context, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
   const name = part.name.name
   const properties = resolveArgumentList(context, part.properties, partSchema)
+
+  const length = clamped(properties.length, 0, Number.POSITIVE_INFINITY)
+  const endTime = makeNumeric('beats', startTime.value + length.value)
 
   const routings = part.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))
@@ -191,11 +202,34 @@ function generatePart (context: Context, part: ast.PartStatement): Part {
     }
   })
 
-  return {
-    name,
-    length: clamped(properties.length, 0, Number.POSITIVE_INFINITY),
-    routings
+  for (const automation of part.automations) {
+    const target = ParameterType.cast(resolve(context, automation.target))
+    const curve = generateCurve(context, automation.curve)
+
+    const rendered = renderCurvePoints(curve.data, startTime, endTime)
+    const existing = context.top.automations.get(target.data.id)
+
+    const points = existing == null
+      ? rendered
+      : [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
+
+    context.top.automations.set(target.data.id, {
+      parameterId: target.data.id,
+      points
+    })
   }
+
+  return { name, length, routings }
+}
+
+function generateCurve (context: Context, curve: ast.Curve): CurveValue {
+  const parameters = curve.parameters.map((point) => {
+    return NumberType.cast(resolve(context, point)).data
+  })
+
+  return CurveType.of(
+    nonNull(createCurve(curve.curveType, parameters))
+  )
 }
 
 function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {

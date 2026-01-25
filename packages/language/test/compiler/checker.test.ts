@@ -79,7 +79,8 @@ describe('compiler/checker.ts', () => {
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
                 ],
-                routings: []
+                routings: [],
+                automations: []
               }),
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'main' }),
@@ -89,7 +90,8 @@ describe('compiler/checker.ts', () => {
                     value: ast.make('Number', RANGE, { value: 8, unit: 'bars' })
                   })
                 ],
-                routings: []
+                routings: [],
+                automations: []
               })
             ]
           })
@@ -148,7 +150,8 @@ describe('compiler/checker.ts', () => {
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
                 ],
-                routings: []
+                routings: [],
+                automations: []
               })
             ]
           }),
@@ -407,14 +410,16 @@ describe('compiler/checker.ts', () => {
                 properties: [
                   ast.make('Number', RANGE, { value: 4, unit: 'bars' })
                 ],
-                routings: []
+                routings: [],
+                automations: []
               }),
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
                   ast.make('Number', RANGE, { value: 8, unit: 'bars' })
                 ],
-                routings: []
+                routings: [],
+                automations: []
               })
             ]
           })
