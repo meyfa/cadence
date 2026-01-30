@@ -44,9 +44,9 @@
   "dependencies": {
     "@codemirror/commands": "6.10.1",
     "@codemirror/language": "6.12.1",
-    "@codemirror/lint": "6.9.2",
-    "@codemirror/state": "6.5.3",
-    "@codemirror/view": "6.39.9",
+    "@codemirror/lint": "6.9.3",
+    "@codemirror/state": "6.5.4",
+    "@codemirror/view": "6.39.12",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@headlessui/react": "2.2.9",
