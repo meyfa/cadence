@@ -1,6 +1,6 @@
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
-import { dbToGain, type ToneAudioNode } from 'tone'
+import { dbToGain } from 'tone'
 import { connect, type EffectInstance } from './instances.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
@@ -71,16 +71,13 @@ export function createEffect (ctx: BaseAudioContext, program: Program, effect: E
   }
 }
 
-function createEffectInstance (node: ToneAudioNode | AudioNode, loaded = Promise.resolve()): EffectInstance {
+function createEffectInstance (node: AudioNode, loaded = Promise.resolve()): EffectInstance {
   return {
     input: node,
     output: node,
     loaded,
     dispose: () => {
       node.disconnect()
-      if ('dispose' in node) {
-        node.dispose()
-      }
     }
   }
 }

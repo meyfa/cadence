@@ -1,3 +1,4 @@
+import type { Pitch } from '@core/program.js'
 import type { InputNode, ToneAudioNode } from 'tone'
 
 export interface BaseMixin {
@@ -13,8 +14,8 @@ export interface OutputMixin {
   readonly output: ToneAudioNode | AudioNode
 }
 
-export type TriggerAttack = (note: string | number, time?: number, velocity?: number) => void
-export type TriggerRelease = (note: string | number, time?: number) => void
+export type TriggerAttack = (note: Pitch | number, time?: number, velocity?: number) => void
+export type TriggerRelease = (note: Pitch | number, time?: number) => void
 
 export interface InstrumentInstance extends BaseMixin, OutputMixin {
   readonly triggerAttack: TriggerAttack
