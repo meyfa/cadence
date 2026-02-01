@@ -322,7 +322,7 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
  * Render a pattern to up to a specific time. Longer patterns will be truncated,
  * while shorter patterns will stay as-is (no additional events are produced).
  */
-export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): NoteEvent[] {
+export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): readonly NoteEvent[] {
   if (!isPositiveFiniteNumber(end.value)) {
     return []
   }

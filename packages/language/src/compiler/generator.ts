@@ -289,7 +289,7 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   return { id, name, ...properties, effects }
 }
 
-function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): MixerRouting[] {
+function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
   const destination = nonNull(buses.find((b) => b.name === bus.name.name))
 
   return bus.sources.flatMap((identifier) => {

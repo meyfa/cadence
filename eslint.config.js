@@ -104,6 +104,16 @@ export default defineConfig([
           // TODO Use an allow list approach instead of deny list to make this more maintainable
           zones: [
             {
+              target: './packages/collections',
+              from: [
+                './packages/webaudio',
+                './packages/language',
+                './packages/editor',
+                './packages/flowchart',
+                './packages/app'
+              ]
+            },
+            {
               target: './packages/core',
               from: [
                 './packages/webaudio',

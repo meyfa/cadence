@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
+      "@collections/*": ["./packages/collections/src/*"],
       "@core/*": ["./packages/core/src/*"],
       "@webaudio/*": ["./packages/webaudio/src/*"],
       "@language/*": ["./packages/language/src/*"],
