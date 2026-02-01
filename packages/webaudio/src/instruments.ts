@@ -1,7 +1,7 @@
 import { createMultimap } from '@collections/multimap.js'
 import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
-import { dbToGain } from 'tone'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
+import { dbToGain } from './conversion.js'
 import type { InstrumentInstance, TriggerAttack, TriggerRelease } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
 

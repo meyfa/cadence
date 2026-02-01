@@ -1,6 +1,6 @@
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
-import { dbToGain } from 'tone'
+import { dbToGain } from './conversion.js'
 import { connect, type EffectInstance } from './instances.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
