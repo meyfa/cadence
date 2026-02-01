@@ -2,18 +2,22 @@ import { MutableObservable, type Observable } from '@core/observable.js'
 import { makeNumeric, type Numeric, type Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
-import { getTransport } from 'tone'
 import { createBuses } from './buses.js'
+import { dbToGain } from './conversion.js'
 import { createInstruments } from './instruments.js'
-import { createParts } from './parts.js'
+import { scheduleNoteEvents } from './parts.js'
 import { setupRoutings } from './routings.js'
+import { createTransport } from './transport.js'
 
 const ErrorMessages = Object.freeze({
   LoadTimeout: 'Timeout while loading assets; some audio may be missing.',
   Unknown: 'An unknown error occurred during audio playback.'
 })
 
-const LOAD_TIMEOUT_MS = 3000
+/**
+ * Number of seconds to wait for assets to load before starting playback anyway.
+ */
+const LOAD_TIMEOUT = 3.0
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
@@ -23,32 +27,38 @@ export interface AudioSession {
   readonly dispose: () => void
 }
 
-export function createAudioSession (program: Program, range: BeatRange): AudioSession {
-  const transport = getTransport()
-  const ctx = transport.context.rawContext
-
-  // This must be done before any objects are created that may refer to the transport
-  resetTransport(transport)
-  transport.bpm.value = program.track.tempo.value
-
+export function createAudioSession (
+  program: Program,
+  range: BeatRange,
+  outputGain: Observable<Numeric<'db'>>
+): AudioSession {
   const endPosition = range.end ?? calculateTotalLength(program)
   const startTime = beatsToSeconds(range.start, program.track.tempo)
   const endTime = beatsToSeconds(endPosition, program.track.tempo)
 
-  // If true, nothing should be played at all, because the start is after the end
+  // Whether nothing should be played at all because the start is after the end
   const endImmediately = endPosition.value <= 0 || range.start.value >= endPosition.value
 
-  const buses = createBuses(ctx, program)
-  const instruments = createInstruments(ctx, program)
-  const parts = createParts(program, instruments)
+  const transport = createTransport()
+  transport.output.gain.value = dbToGain(outputGain.get().value)
+
+  const unsubscribeOutputGain = outputGain.subscribe(({ value }) => {
+    const gain = transport.output.gain
+    const currentTime = transport.ctx.currentTime
+    gain.setValueAtTime(gain.value, currentTime)
+    gain.linearRampToValueAtTime(dbToGain(value), currentTime + 0.05)
+  })
+
+  const buses = createBuses(transport, program)
+  const instruments = createInstruments(transport, program)
 
   const instances = [
     ...buses.values(),
-    ...instruments.values(),
-    ...parts.values()
+    ...instruments.values()
   ]
 
-  setupRoutings(program, instruments, buses)
+  setupRoutings(transport, program, instruments, buses)
+  scheduleNoteEvents(program, instruments)
 
   let disposed = false
 
@@ -74,13 +84,22 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
       return
     }
 
-    parts.forEach((part) => part.start(0))
-    transport.scheduleOnce(() => ended.set(true), endTime.value)
-    transport.start('+0.05', startTime.value)
+    transport.start(startTime.value).then(() => {
+      if (disposed) {
+        return
+      }
+
+      setTimeout(() => {
+        if (!disposed) {
+          ended.set(true)
+        }
+      }, (endTime.value - startTime.value) * 1000)
+    }).catch(appendError)
 
     progressInterval = setInterval(() => {
-      if (!disposed && transport.state === 'started') {
-        position.set(makeNumeric('beats', transport.seconds * program.track.tempo.value / 60))
+      if (!disposed) {
+        const seconds = Math.max(startTime.value, transport.now())
+        position.set(makeNumeric('beats', seconds * program.track.tempo.value / 60))
       }
     }, 16)
   }
@@ -97,7 +116,7 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
     ).then(() => 'loaded')
 
     const timeout = new Promise<RaceResult>((resolve) => {
-      setTimeout(resolve, LOAD_TIMEOUT_MS, 'timeout')
+      setTimeout(resolve, LOAD_TIMEOUT * 1000, 'timeout')
     })
 
     Promise.race([loaded, timeout])
@@ -122,7 +141,8 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
       item.dispose()
     }
 
-    resetTransport(transport)
+    unsubscribeOutputGain()
+    transport.dispose().catch(appendError)
 
     if (progressInterval) {
       clearInterval(progressInterval)
@@ -133,10 +153,4 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
   }
 
   return { ended, position, errors, start, dispose }
-}
-
-function resetTransport (transport: ReturnType<typeof getTransport>): void {
-  transport.stop()
-  transport.cancel()
-  transport.position = 0
 }

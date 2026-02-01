@@ -2,17 +2,14 @@ import { createMultimap, type ReadonlyMultimap } from '@collections/multimap.js'
 import { renderPatternEvents } from '@core/pattern.js'
 import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
-import { Part } from 'tone'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
-import type { InstrumentInstance, PartInstance } from './instances.js'
+import type { InstrumentInstance } from './instances.js'
 
-export function createParts (
+export function scheduleNoteEvents (
   program: Program,
   instruments: ReadonlyMap<InstrumentId, InstrumentInstance>
-): readonly PartInstance[] {
+): void {
   const noteEvents = createNoteEventMap(program)
-
-  const result: PartInstance[] = []
 
   for (const [instrumentId, values] of noteEvents.entries()) {
     const instrument = program.instruments.get(instrumentId)
@@ -22,43 +19,45 @@ export function createParts (
       continue
     }
 
-    const callback = createInstrumentCallback(program, instrument, instance)
-    const part = new Part(callback, Array.from(values))
+    const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
+    const defaultNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
 
-    result.push({
-      loaded: Promise.resolve(),
+    for (const { time, event } of values) {
+      const note = event.pitch ?? defaultNote
+      const duration = getNoteDuration(instrument, event, timePerBeat)
+      const velocity = 1.0
 
-      dispose: () => {
-        part.stop().dispose()
-      },
-
-      start: (time) => {
-        part.start(time)
+      if (duration == null) {
+        instance.triggerNote({ note, time, velocity })
+        continue
       }
-    })
-  }
 
-  return result
+      if (duration > 0 && Number.isFinite(duration)) {
+        instance.triggerNote({ note, time, velocity, duration })
+      }
+    }
+  }
 }
 
-type NoteEventMap = ReadonlyMultimap<InstrumentId, readonly [number, NoteEvent]>
-type InstrumentCallback = (time: number, event: NoteEvent) => void
+interface NoteEventEntry {
+  readonly time: number
+  readonly event: NoteEvent
+}
+
+type NoteEventMap = ReadonlyMultimap<InstrumentId, NoteEventEntry>
 
 const BEAT = makeNumeric('beats', 1)
 
 function createNoteEventMap (program: Program): NoteEventMap {
+  const map = createMultimap<InstrumentId, NoteEventEntry>()
+
   const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
-
-  const map = createMultimap<InstrumentId, [number, NoteEvent]>()
-
   let offsetBeats = 0
 
   for (const part of program.track.parts) {
     for (const routing of part.routings) {
       const patternEvents = renderPatternEvents(routing.source.value, part.length)
-        .map((event): [number, NoteEvent] => {
-          return [(offsetBeats + event.time.value) * timePerBeat, event]
-        })
+        .map((event) => ({ event, time: (offsetBeats + event.time.value) * timePerBeat }))
 
       map.add(routing.destination.id, ...patternEvents)
     }
@@ -67,30 +66,6 @@ function createNoteEventMap (program: Program): NoteEventMap {
   }
 
   return map
-}
-
-function createInstrumentCallback (
-  program: Program,
-  instrument: Instrument,
-  instance: InstrumentInstance
-): InstrumentCallback {
-  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
-  const defaultNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
-
-  return (time: number, event: NoteEvent) => {
-    const note = event.pitch ?? defaultNote
-    const duration = getNoteDuration(instrument, event, timePerBeat)
-
-    if (duration == null) {
-      instance.triggerAttack(note, time)
-      return
-    }
-
-    if (duration > 0 && Number.isFinite(duration)) {
-      instance.triggerAttack(note, time)
-      instance.triggerRelease(note, time + duration)
-    }
-  }
 }
 
 function getNoteDuration (instrument: Instrument, event: NoteEvent, timePerBeat: number): number | undefined {
