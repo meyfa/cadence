@@ -1,10 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import { lezer } from '@lezer/generator/rollup'
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import assert from 'node:assert'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { defineConfig } from 'vite'
 
-export default defineConfig({
+const config = defineConfig({
   plugins: [
     react(),
     tailwindcss(),
@@ -24,3 +26,19 @@ export default defineConfig({
     outDir: 'dist'
   }
 })
+
+export default config
+
+// Ensure that the above aliases are in sync with tsconfig.base.json
+const tsconfigPath = path.resolve(import.meta.dirname, '../../tsconfig.base.json')
+const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf-8'))
+const tsconfigPaths = Object.keys(tsconfig.compilerOptions.paths).map((key) => {
+  return key.replace('/*', '')
+})
+const viteAliases = Object.keys(config.resolve?.alias ?? {})
+
+assert.deepStrictEqual(
+  viteAliases.sort(),
+  tsconfigPaths.sort(),
+  'The path aliases in vite.config.ts are out of sync with tsconfig.base.json'
+)

@@ -1,8 +1,75 @@
-import { defineConfig } from 'eslint/config'
+import { fixupConfigRules, fixupPluginRules } from '@eslint/compat'
 import eslintConfig from '@meyfa/eslint-config'
 import pluginReact from 'eslint-plugin-react'
 import pluginReactHooks from 'eslint-plugin-react-hooks'
-import { fixupConfigRules, fixupPluginRules } from '@eslint/compat'
+import { defineConfig } from 'eslint/config'
+import assert from 'node:assert'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const packages = [
+  {
+    name: 'collections',
+    dependencies: []
+  },
+  {
+    name: 'flowchart',
+    dependencies: [
+      'collections'
+    ]
+  },
+  {
+    name: 'core',
+    dependencies: []
+  },
+  {
+    name: 'webaudio',
+    dependencies: [
+      'collections',
+      'core'
+    ]
+  },
+  {
+    name: 'language',
+    dependencies: [
+      'collections',
+      'core'
+    ]
+  },
+  {
+    name: 'editor',
+    dependencies: [
+      'collections',
+      'flowchart',
+      'core',
+      'language'
+    ]
+  },
+  {
+    name: 'app',
+    dependencies: [
+      'collections',
+      'flowchart',
+      'core',
+      'language',
+      'editor',
+      'webaudio'
+    ],
+    anonymous: true // not exposed via "@app"
+  }
+]
+
+// Ensure that the above list is synced with the TSConfig
+const tsconfigPath = path.resolve(import.meta.dirname, './tsconfig.base.json')
+const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf-8'))
+const tsconfigPackages = Object.keys(tsconfig.compilerOptions.paths).map((key) => {
+  return key.replace('/*', '').replace(/^@/, '')
+})
+assert.deepStrictEqual(
+  tsconfigPackages.sort(),
+  packages.filter((pkg) => pkg.anonymous !== true).map((pkg) => pkg.name).sort(),
+  'The package list in eslint.config.js is out of sync with tsconfig.base.json'
+)
 
 export default defineConfig([
   ...eslintConfig,
@@ -101,64 +168,17 @@ export default defineConfig([
       'import/no-restricted-paths': [
         'error',
         {
-          // TODO Use an allow list approach instead of deny list to make this more maintainable
-          zones: [
-            {
-              target: './packages/collections',
-              from: [
-                './packages/webaudio',
-                './packages/language',
-                './packages/editor',
-                './packages/flowchart',
-                './packages/app'
-              ]
-            },
-            {
-              target: './packages/core',
-              from: [
-                './packages/webaudio',
-                './packages/language',
-                './packages/editor',
-                './packages/flowchart',
-                './packages/app'
-              ]
-            },
-            {
-              target: './packages/webaudio',
-              from: [
-                './packages/language',
-                './packages/editor',
-                './packages/flowchart',
-                './packages/app'
-              ]
-            },
-            {
-              target: './packages/language',
-              from: [
-                './packages/webaudio',
-                './packages/editor',
-                './packages/flowchart',
-                './packages/app'
-              ]
-            },
-            {
-              target: './packages/flowchart',
-              from: [
-                './packages/core',
-                './packages/webaudio',
-                './packages/language',
-                './packages/editor',
-                './packages/app'
-              ]
-            },
-            {
-              target: './packages/editor',
-              from: [
-                './packages/webaudio',
-                './packages/app'
-              ]
+          basePath: import.meta.dirname,
+          zones: packages.map((pkg) => {
+            const blocklist = packages.filter((item) => {
+              return item.name !== pkg.name && !pkg.dependencies.includes(item.name)
+            })
+
+            return {
+              target: `./packages/${pkg.name}`,
+              from: blocklist.map((blocked) => `./packages/${blocked.name}`)
             }
-          ]
+          })
         }
       ]
     }
