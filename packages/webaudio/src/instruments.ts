@@ -1,53 +1,130 @@
-import type { Instrument, InstrumentId, Program } from '@core/program.js'
-import { createDeferred } from '@core/utilities/deferred.js'
-import { Sampler } from 'tone'
+import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
+import { dbToGain } from 'tone'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
-import type { InstrumentInstance } from './instances.js'
+import type { InstrumentInstance, TriggerAttack, TriggerRelease } from './instances.js'
+import { convertPitchToMidi } from './midi.js'
+import { Multimap } from './utilities/multimap.js'
 
-export function createInstruments (program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
+export function createInstruments (ctx: BaseAudioContext, program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
   return new Map(
     [...program.instruments.values()].map((instrument) => [
       instrument.id,
-      createInstrument(instrument)
+      createInstrument(ctx, instrument)
     ])
   )
 }
 
-function createInstrument (instrument: Instrument): InstrumentInstance {
-  const deferred = createDeferred()
+interface ActiveSource {
+  readonly sourceNode: AudioBufferSourceNode
+  readonly gainNode: GainNode
+  disposed: boolean
+}
 
-  const node = new Sampler({
-    onload: () => deferred.resolve(),
-    onerror: (error) => deferred.reject(error),
-    urls: {
-      [instrument.rootNote ?? DEFAULT_ROOT_NOTE]: instrument.sampleUrl
-    },
-    volume: instrument.gain.initial.value,
-    // declick
+function disposeActiveSource (source: ActiveSource): void {
+  if (!source.disposed) {
+    source.disposed = true
+    source.sourceNode.stop()
+    source.sourceNode.disconnect()
+    source.gainNode.disconnect()
+  }
+}
+
+function createInstrument (ctx: BaseAudioContext, instrument: Instrument): InstrumentInstance {
+  // declick
+  const envelope = {
     attack: 0.005,
     release: 0.005
+  }
+
+  const rootNoteMidi = convertPitchToMidi(instrument.rootNote ?? DEFAULT_ROOT_NOTE)
+  const sourcesByMidi = new Multimap<number, ActiveSource>()
+
+  const output = ctx.createGain()
+  output.gain.value = dbToGain(instrument.gain.initial.value)
+
+  let sampleBuffer: AudioBuffer | undefined
+  const loaded = loadSampleBuffer(ctx, instrument.sampleUrl).then((buffer) => {
+    sampleBuffer = buffer
   })
 
-  return {
-    output: node,
-
-    loaded: deferred.promise.then(() => undefined),
-
-    dispose: () => {
-      node.releaseAll().dispose()
-    },
-
-    triggerAttack: (...args) => {
-      // prevent an exception by checking if loaded
-      if (node.loaded) {
-        node.triggerAttack(...args)
-      }
-    },
-
-    triggerRelease: (...args) => {
-      if (node.loaded) {
-        node.triggerRelease(...args)
-      }
+  const dispose = () => {
+    output.disconnect()
+    for (const source of sourcesByMidi.values()) {
+      disposeActiveSource(source)
     }
   }
+
+  const triggerAttack: TriggerAttack = (note, time, velocity) => {
+    if (sampleBuffer == null) {
+      return
+    }
+
+    const midi = asMidi(note)
+    const startTime = time ?? ctx.currentTime
+    const volume = Math.max(0, Math.min(1, velocity ?? 1))
+
+    const sourceNode = ctx.createBufferSource()
+    const gainNode = ctx.createGain()
+
+    const source: ActiveSource = { sourceNode, gainNode, disposed: false }
+    sourcesByMidi.insert(midi, source)
+
+    sourceNode.addEventListener('ended', () => {
+      if (!source.disposed) {
+        sourcesByMidi.remove(midi, source)
+        disposeActiveSource(source)
+      }
+    }, { once: true })
+
+    sourceNode.buffer = sampleBuffer
+    sourceNode.playbackRate.value = Math.pow(2, (midi - rootNoteMidi) / 12)
+
+    gainNode.gain.setValueAtTime(0, startTime)
+    gainNode.gain.linearRampToValueAtTime(volume, startTime + envelope.attack)
+
+    sourceNode.connect(gainNode).connect(output)
+    sourceNode.start(startTime)
+  }
+
+  const triggerRelease: TriggerRelease = (note, time) => {
+    const sources = sourcesByMidi.get(asMidi(note))
+    if (sources == null) {
+      return
+    }
+
+    for (const { sourceNode, gainNode } of sources) {
+      const releaseStartTime = time ?? ctx.currentTime
+      const releaseEndTime = releaseStartTime + envelope.release
+
+      // TODO: get actual value at time
+      const currentGain = gainNode.gain.value
+      gainNode.gain.setValueAtTime(currentGain, releaseStartTime)
+      gainNode.gain.linearRampToValueAtTime(0, releaseEndTime)
+
+      sourceNode.stop(releaseEndTime)
+    }
+  }
+
+  return {
+    output,
+    loaded,
+    dispose,
+    triggerAttack,
+    triggerRelease
+  }
+}
+
+function asMidi (note: Pitch | number): number {
+  return typeof note === 'number' ? note : convertPitchToMidi(note)
+}
+
+async function loadSampleBuffer (ctx: BaseAudioContext, url: string | URL): Promise<AudioBuffer> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to load sample: ${response.status} ${response.statusText}`)
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+
+  return await ctx.decodeAudioData(arrayBuffer)
 }

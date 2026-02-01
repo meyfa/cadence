@@ -1,22 +1,21 @@
 import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '@core/program.js'
 import { createEffect } from './effects.js'
 import { connect, type BusInstance, type EffectInstance } from './instances.js'
-import { getContext } from 'tone'
 
 const UNITY_GAIN = makeNumeric('db', 0)
 
-export function createBuses (program: Program): ReadonlyMap<BusId, BusInstance> {
+export function createBuses (ctx: BaseAudioContext, program: Program): ReadonlyMap<BusId, BusInstance> {
   return new Map(
-    program.mixer.buses.map((bus) => [bus.id, createBus(program, bus)])
+    program.mixer.buses.map((bus) => [bus.id, createBus(ctx, program, bus)])
   )
 }
 
-function createBus (program: Program, bus: Bus): BusInstance {
+function createBus (ctx: BaseAudioContext, program: Program, bus: Bus): BusInstance {
   const effects: EffectInstance[] = []
   const promises: Array<Promise<void>> = []
 
   const appendEffect = (effect: Effect) => {
-    const instance = createEffect(getContext().rawContext, program, effect)
+    const instance = createEffect(ctx, program, effect)
 
     const last = effects.at(-1)
     if (last != null) {

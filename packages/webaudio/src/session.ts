@@ -25,6 +25,7 @@ export interface AudioSession {
 
 export function createAudioSession (program: Program, range: BeatRange): AudioSession {
   const transport = getTransport()
+  const ctx = transport.context.rawContext
 
   // This must be done before any objects are created that may refer to the transport
   resetTransport(transport)
@@ -37,8 +38,8 @@ export function createAudioSession (program: Program, range: BeatRange): AudioSe
   // If true, nothing should be played at all, because the start is after the end
   const endImmediately = endPosition.value <= 0 || range.start.value >= endPosition.value
 
-  const buses = createBuses(program)
-  const instruments = createInstruments(program)
+  const buses = createBuses(ctx, program)
+  const instruments = createInstruments(ctx, program)
   const parts = createParts(program, instruments)
 
   const instances = [
