@@ -170,14 +170,15 @@ export interface HighpassEffect {
 
 export interface DelayEffect {
   readonly type: 'delay'
+  readonly mix: Numeric<undefined>
   readonly time: Numeric<'beats'>
   readonly feedback: Numeric<undefined>
 }
 
 export interface ReverbEffect {
   readonly type: 'reverb'
-  readonly decay: Numeric<'s'>
   readonly mix: Numeric<undefined>
+  readonly decay: Numeric<'s'>
 }
 
 export interface MixerRouting {

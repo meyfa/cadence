@@ -77,8 +77,8 @@ mixer {
   bus clap_delay (gain: 3 db, pan: -0.25) {
     clap
 
-    effect fx.delay(time: 0.5 beats, feedback: 0.6)
-    effect fx.reverb(decay: 1s, mix: 0.3)
+    effect fx.delay(mix: 0.75, time: 0.5 beats, feedback: 0.6)
+    effect fx.reverb(mix: 0.3, decay: 1s)
   }
 }
 `.trimStart()
