@@ -1,7 +1,6 @@
 import { MutableObservable, type Observable } from '@core/observable.js'
 import { makeNumeric, type Numeric, type Program } from '@core/program.js'
 import type { BeatRange } from '@core/types.js'
-import { getDestination } from 'tone'
 import { createAudioSession, type AudioSession } from './session.js'
 
 export interface AudioEngineOptions {
@@ -23,10 +22,6 @@ export interface AudioEngine {
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const outputGain = new MutableObservable(options.outputGain)
 
-  outputGain.subscribe(({ value }) => {
-    getDestination().volume.rampTo(value, 0.05)
-  })
-
   const playing = new MutableObservable(false)
   const range = new MutableObservable({ start: makeNumeric('beats', 0) })
   const position = new MutableObservable(range.get().start)
@@ -42,7 +37,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
 
     const subscriptions: Array<() => void> = []
 
-    const thisSession = session = createAudioSession(program, range.get())
+    const thisSession = session = createAudioSession(program, range.get(), outputGain)
 
     const stopThisSession = stopSession = () => {
       thisSession.dispose()

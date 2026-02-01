@@ -1,16 +1,17 @@
 import type { BusId, InstrumentId, MixerRouting, Program } from '@core/program.js'
-import { getDestination } from 'tone'
-import { connect, type BusInstance, type InputMixin, type InstrumentInstance, type OutputMixin } from './instances.js'
-
-const mainOutput: InputMixin = {
-  input: getDestination()
-}
+import type { BusInstance, InputMixin, InstrumentInstance, OutputMixin } from './instances.js'
+import type { Transport } from './transport.js'
 
 export function setupRoutings (
+  transport: Transport,
   program: Program,
   instruments: ReadonlyMap<InstrumentId, InstrumentInstance>,
   buses: ReadonlyMap<BusId, BusInstance>
 ): void {
+  const mainOutput: InputMixin = {
+    input: transport.output
+  }
+
   const findSource = (item: MixerRouting['source']): OutputMixin | undefined => {
     switch (item.type) {
       case 'Bus':
@@ -33,7 +34,7 @@ export function setupRoutings (
     const source = findSource(routing.source)
     const destination = findDestination(routing.destination)
     if (source != null && destination != null) {
-      connect(source, destination)
+      source.output.connect(destination.input)
     }
   }
 }

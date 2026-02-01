@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { dbToGain } from 'tone'
+import { dbToGain } from '../src/conversion.js'
 
 describe('conversion.ts', () => {
   describe('dbToGain', () => {

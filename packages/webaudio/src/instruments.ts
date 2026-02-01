@@ -2,14 +2,15 @@ import { createMultimap } from '@collections/multimap.js'
 import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import { dbToGain } from './conversion.js'
-import type { InstrumentInstance, TriggerAttack, TriggerRelease } from './instances.js'
+import type { InstrumentInstance, NoteOptions } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
+import type { Transport } from './transport.js'
 
-export function createInstruments (ctx: BaseAudioContext, program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
+export function createInstruments (transport: Transport, program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
   return new Map(
     [...program.instruments.values()].map((instrument) => [
       instrument.id,
-      createInstrument(ctx, instrument)
+      createInstrument(transport, instrument)
     ])
   )
 }
@@ -17,6 +18,7 @@ export function createInstruments (ctx: BaseAudioContext, program: Program): Rea
 interface ActiveSource {
   readonly sourceNode: AudioBufferSourceNode
   readonly gainNode: GainNode
+  readonly targetGain: number
   disposed: boolean
 }
 
@@ -29,7 +31,9 @@ function disposeActiveSource (source: ActiveSource): void {
   }
 }
 
-function createInstrument (ctx: BaseAudioContext, instrument: Instrument): InstrumentInstance {
+function createInstrument (transport: Transport, instrument: Instrument): InstrumentInstance {
+  const { ctx } = transport
+
   // declick
   const envelope = {
     attack: 0.005,
@@ -56,19 +60,23 @@ function createInstrument (ctx: BaseAudioContext, instrument: Instrument): Instr
     }
   }
 
-  const triggerAttack: TriggerAttack = (note, time, velocity) => {
-    if (sampleBuffer == null) {
+  const triggerNote = (options: NoteOptions) => transport.schedule(options.time, (time) => {
+    if (sampleBuffer == null || time < 0) {
       return
     }
 
-    const midi = asMidi(note)
-    const startTime = time ?? ctx.currentTime
-    const volume = Math.max(0, Math.min(1, velocity ?? 1))
+    const midi = asMidi(options.note)
+    const targetGain = Math.max(0, Math.min(1, options.velocity))
 
     const sourceNode = ctx.createBufferSource()
     const gainNode = ctx.createGain()
 
-    const source: ActiveSource = { sourceNode, gainNode, disposed: false }
+    const source: ActiveSource = {
+      sourceNode,
+      gainNode,
+      targetGain,
+      disposed: false
+    }
     sourcesByMidi.add(midi, source)
 
     sourceNode.addEventListener('ended', () => {
@@ -81,38 +89,28 @@ function createInstrument (ctx: BaseAudioContext, instrument: Instrument): Instr
     sourceNode.buffer = sampleBuffer
     sourceNode.playbackRate.value = Math.pow(2, (midi - rootNoteMidi) / 12)
 
-    gainNode.gain.setValueAtTime(0, startTime)
-    gainNode.gain.linearRampToValueAtTime(volume, startTime + envelope.attack)
+    gainNode.gain.setValueAtTime(0, time)
+    gainNode.gain.linearRampToValueAtTime(targetGain, time + envelope.attack)
 
     sourceNode.connect(gainNode).connect(output)
-    sourceNode.start(startTime)
-  }
+    sourceNode.start(time)
 
-  const triggerRelease: TriggerRelease = (note, time) => {
-    const sources = sourcesByMidi.get(asMidi(note))
-    if (sources == null) {
-      return
-    }
-
-    for (const { sourceNode, gainNode } of sources) {
-      const releaseStartTime = time ?? ctx.currentTime
+    if (options.duration != null) {
+      const releaseStartTime = time + options.duration
       const releaseEndTime = releaseStartTime + envelope.release
 
-      // TODO: get actual value at time
-      const currentGain = gainNode.gain.value
-      gainNode.gain.setValueAtTime(currentGain, releaseStartTime)
+      gainNode.gain.setValueAtTime(targetGain, releaseStartTime)
       gainNode.gain.linearRampToValueAtTime(0, releaseEndTime)
 
       sourceNode.stop(releaseEndTime)
     }
-  }
+  })
 
   return {
     output,
     loaded,
     dispose,
-    triggerAttack,
-    triggerRelease
+    triggerNote
   }
 }
 

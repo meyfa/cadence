@@ -1,11 +1,14 @@
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import { dbToGain } from './conversion.js'
-import { connect, type EffectInstance } from './instances.js'
+import type { EffectInstance } from './instances.js'
+import type { Transport } from './transport.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
 
-export function createEffect (ctx: BaseAudioContext, program: Program, effect: Effect): EffectInstance {
+export function createEffect (transport: Transport, program: Program, effect: Effect): EffectInstance {
+  const { ctx } = transport
+
   switch (effect.type) {
     case 'gain': {
       const node = ctx.createGain()
@@ -120,7 +123,7 @@ function createDryWetMix (ctx: BaseAudioContext, mix: number, effect: EffectInst
   wetGain.gain.value = Math.max(0, Math.min(1, mix * 2))
 
   input.connect(dryGain).connect(output)
-  connect({ output: input }, effect)
+  input.connect(effect.input)
   effect.output.connect(wetGain).connect(output)
 
   return {
