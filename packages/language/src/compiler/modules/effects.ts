@@ -32,13 +32,14 @@ const highpass = createEffectConstructor('highpass', [
 ])
 
 const delay = createEffectConstructor('delay', [
+  { name: 'mix', type: NumberType.with(undefined), required: true },
   { name: 'time', type: NumberType.with('beats'), required: true },
   { name: 'feedback', type: NumberType.with(undefined), required: true }
 ])
 
 const reverb = createEffectConstructor('reverb', [
-  { name: 'decay', type: NumberType.with('s'), required: true },
-  { name: 'mix', type: NumberType.with(undefined), required: true }
+  { name: 'mix', type: NumberType.with(undefined), required: true },
+  { name: 'decay', type: NumberType.with('s'), required: true }
 ])
 
 export const effectsModule = ModuleType.of({

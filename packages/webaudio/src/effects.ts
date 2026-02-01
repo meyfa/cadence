@@ -40,8 +40,9 @@ export function createEffect (transport: Transport, program: Program, effect: Ef
     }
 
     case 'delay': {
-      // TODO: This is currently 100% wet, meaning the initial sound is not heard.
-      //      A dry/wet mix would be better.
+      if (effect.mix.value <= 0) {
+        return createEffectInstance(ctx.createGain())
+      }
 
       const node = ctx.createDelay()
       node.delayTime.value = beatsToSeconds(effect.time, program.track.tempo).value
@@ -53,11 +54,12 @@ export function createEffect (transport: Transport, program: Program, effect: Ef
         feedbackGain.connect(node)
       }
 
-      return createEffectInstance(node)
+      const instance = createEffectInstance(node)
+
+      return createDryWetMix(ctx, effect.mix.value, instance)
     }
 
     case 'reverb': {
-      // Optimization for 0% wet mix
       if (effect.mix.value <= 0) {
         return createEffectInstance(ctx.createGain())
       }
