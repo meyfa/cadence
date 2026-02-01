@@ -1,7 +1,7 @@
 import { createMultimap } from '@collections/multimap.js'
 import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
+import { automate } from './automation.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
-import { dbToGain } from './conversion.js'
 import type { InstrumentInstance, NoteOptions } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
 import type { Transport } from './transport.js'
@@ -10,7 +10,7 @@ export function createInstruments (transport: Transport, program: Program): Read
   return new Map(
     [...program.instruments.values()].map((instrument) => [
       instrument.id,
-      createInstrument(transport, instrument)
+      createInstrument(transport, program, instrument)
     ])
   )
 }
@@ -31,7 +31,7 @@ function disposeActiveSource (source: ActiveSource): void {
   }
 }
 
-function createInstrument (transport: Transport, instrument: Instrument): InstrumentInstance {
+function createInstrument (transport: Transport, program: Program, instrument: Instrument): InstrumentInstance {
   const { ctx } = transport
 
   // declick
@@ -44,7 +44,8 @@ function createInstrument (transport: Transport, instrument: Instrument): Instru
   const sourcesByMidi = createMultimap<number, ActiveSource>()
 
   const output = ctx.createGain()
-  output.gain.value = dbToGain(instrument.gain.initial.value)
+
+  automate(transport, output.gain, 'gain', program, instrument.gain)
 
   let sampleBuffer: AudioBuffer | undefined
   const loaded = loadSampleBuffer(ctx, instrument.sampleUrl).then((buffer) => {
