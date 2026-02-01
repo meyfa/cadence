@@ -1,4 +1,5 @@
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
+import { mulberry32, xmur3 } from '@core/random.js'
 import { beatsToSeconds } from '@core/time.js'
 import { dbToGain } from './conversion.js'
 import type { EffectInstance } from './instances.js'
@@ -180,18 +181,20 @@ const noiseCache: Array<Float32Array<ArrayBuffer>> = []
 
 function createNoiseBuffer (ctx: BaseAudioContext, channels: number): AudioBuffer {
   while (noiseCache.length < channels) {
-    const data = new Float32Array(noiseSamples)
+    const channel = noiseCache.length
+    const seed = xmur3(`cadence webaudio noise channel ${channel}`)()
+    const rng = mulberry32(seed)
 
-    // fill with white noise
+    // generate white noise
+    const data = new Float32Array(noiseSamples)
     for (let i = 0; i < noiseSamples; ++i) {
-      data[i] = Math.random() * 2 - 1
+      data[i] = rng() * 2 - 1
     }
 
     noiseCache.push(data)
   }
 
   const buffer = ctx.createBuffer(channels, noiseSamples, ctx.sampleRate)
-
   for (let channel = 0; channel < channels; ++channel) {
     buffer.copyToChannel(noiseCache[channel], channel)
   }
