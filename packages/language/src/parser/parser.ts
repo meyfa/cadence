@@ -167,7 +167,7 @@ const string_: p.Parser<Token, unknown, ast.String> = p.abc(
   }
 )
 
-function splitStepsFromWordToken (text: string, tokenRange: SourceRange): ast.Step[] {
+function splitStepsFromWordToken (text: string, tokenRange: SourceRange): readonly ast.Step[] {
   const steps: ast.Step[] = []
   let offset = 0
 

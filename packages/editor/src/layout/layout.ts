@@ -1,6 +1,6 @@
+import { insertAt, move, removeAt } from '@collections/arrays.js'
 import { randomId } from '@editor/utilities/id.js'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, Tab, TabId } from '../state/layout.js'
-import { arrayInsert, arrayMove, arrayRemove } from '../utilities/arrays.js'
 
 export function findPane (layout: DockLayout, predicate: (pane: PaneNode) => boolean): PaneNode | undefined {
   const findInNode = (node: LayoutNode): PaneNode | undefined => {
@@ -117,7 +117,7 @@ export function removeTabFromPane (layout: DockLayout, tabId: TabId): DockLayout
       pane.id,
       {
         ...pane,
-        tabs: arrayRemove(pane.tabs, tabIndex)
+        tabs: removeAt(pane.tabs, tabIndex)
       }
     ]
   ]))
@@ -160,14 +160,14 @@ export function moveTabIntoPane (layout: DockLayout, tabId: TabId, targetNodeId:
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex)
+        tabs: removeAt(sourcePane.tabs, tabIndex)
       }
     ],
     [
       targetPane.id,
       {
         ...targetPane,
-        tabs: arrayInsert(targetPane.tabs, insertPosition, tab),
+        tabs: insertAt(targetPane.tabs, insertPosition, tab),
         activeTabId: tabId
       }
     ]
@@ -191,7 +191,7 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
         sourcePane.id,
         {
           ...sourcePane,
-          tabs: arrayMove([...sourcePane.tabs], tabIndex, beforeTabIndex),
+          tabs: move([...sourcePane.tabs], tabIndex, beforeTabIndex),
           activeTabId: tabId
         }
       ]
@@ -203,14 +203,14 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex)
+        tabs: removeAt(sourcePane.tabs, tabIndex)
       }
     ],
     [
       targetPane.id,
       {
         ...targetPane,
-        tabs: arrayInsert(targetPane.tabs, beforeTabIndex, sourcePane.tabs[tabIndex]),
+        tabs: insertAt(targetPane.tabs, beforeTabIndex, sourcePane.tabs[tabIndex]),
         activeTabId: tabId
       }
     ]
@@ -236,7 +236,7 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
       sourcePane.id,
       {
         ...sourcePane,
-        tabs: arrayRemove(sourcePane.tabs, tabIndex)
+        tabs: removeAt(sourcePane.tabs, tabIndex)
       }
     ]
   ]), { normalize: false })

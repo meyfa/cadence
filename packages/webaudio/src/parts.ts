@@ -1,3 +1,4 @@
+import { createMultimap, type ReadonlyMultimap } from '@collections/multimap.js'
 import { renderPatternEvents } from '@core/pattern.js'
 import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
@@ -22,7 +23,7 @@ export function createParts (
     }
 
     const callback = createInstrumentCallback(program, instrument, instance)
-    const part = new Part(callback, values)
+    const part = new Part(callback, Array.from(values))
 
     result.push({
       loaded: Promise.resolve(),
@@ -40,7 +41,7 @@ export function createParts (
   return result
 }
 
-type NoteEventMap = ReadonlyMap<InstrumentId, Array<readonly [number, NoteEvent]>>
+type NoteEventMap = ReadonlyMultimap<InstrumentId, readonly [number, NoteEvent]>
 type InstrumentCallback = (time: number, event: NoteEvent) => void
 
 const BEAT = makeNumeric('beats', 1)
@@ -48,7 +49,7 @@ const BEAT = makeNumeric('beats', 1)
 function createNoteEventMap (program: Program): NoteEventMap {
   const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
 
-  const map = new Map<InstrumentId, Array<[number, NoteEvent]>>()
+  const map = createMultimap<InstrumentId, [number, NoteEvent]>()
 
   let offsetBeats = 0
 
@@ -59,12 +60,7 @@ function createNoteEventMap (program: Program): NoteEventMap {
           return [(offsetBeats + event.time.value) * timePerBeat, event]
         })
 
-      const events = map.get(routing.destination.id)
-      if (events == null) {
-        map.set(routing.destination.id, patternEvents)
-      } else {
-        events.push(...patternEvents)
-      }
+      map.add(routing.destination.id, ...patternEvents)
     }
 
     offsetBeats += part.length.value

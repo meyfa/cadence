@@ -1,4 +1,5 @@
 import type { FlowEdge, FlowNode, FlowNodeId } from '../types.js'
+import { createMultimap, type ReadonlyMultimap } from '@collections/multimap.js'
 
 export interface LayoutOptions {
   readonly nodeSpacingX: number
@@ -25,8 +26,8 @@ export interface LayoutEdge<TData = unknown> {
 }
 
 export interface Connections<TData> {
-  readonly incoming: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
-  readonly outgoing: ReadonlyMap<FlowNodeId, ReadonlyArray<FlowEdge<TData>>>
+  readonly incoming: ReadonlyMultimap<FlowNodeId, FlowEdge<TData>>
+  readonly outgoing: ReadonlyMultimap<FlowNodeId, FlowEdge<TData>>
 }
 
 export function computeLayout<TNodeData = unknown, TEdgeData = unknown> (
@@ -49,17 +50,12 @@ function computeNodeConnections<TNodeData, TEdgeData> (
   nodes: ReadonlyArray<FlowNode<TNodeData>>,
   edges: ReadonlyArray<FlowEdge<TEdgeData>>
 ): Connections<TEdgeData> {
-  const incoming = new Map<FlowNodeId, Array<FlowEdge<TEdgeData>>>()
-  const outgoing = new Map<FlowNodeId, Array<FlowEdge<TEdgeData>>>()
-
-  for (const node of nodes) {
-    incoming.set(node.id, [])
-    outgoing.set(node.id, [])
-  }
+  const incoming = createMultimap<FlowNodeId, FlowEdge<TEdgeData>>()
+  const outgoing = createMultimap<FlowNodeId, FlowEdge<TEdgeData>>()
 
   for (const edge of edges) {
-    incoming.get(edge.to)?.push(edge)
-    outgoing.get(edge.from)?.push(edge)
+    incoming.add(edge.to, edge)
+    outgoing.add(edge.from, edge)
   }
 
   return { incoming, outgoing }
@@ -85,12 +81,18 @@ function computeNodeDistances<TEdgeData> (
       }
 
       const destinations = outgoing.get(nodeId)
-      if (destinations == null || destinations.length === 0) {
+      if (destinations == null || destinations.size === 0) {
         distances.set(nodeId, 0)
         return 0
       }
 
-      const maxPrevDistance = Math.max(...destinations.map((edge) => computeDistance(edge.to)))
+      const maxPrevDistance = (() => {
+        let max = 0
+        for (const edge of destinations) {
+          max = Math.max(max, computeDistance(edge.to))
+        }
+        return max
+      })()
 
       const computedDistance = maxPrevDistance + 1
       distances.set(nodeId, computedDistance)
@@ -113,7 +115,7 @@ type Column<TNodeData> = ReadonlyArray<FlowNode<TNodeData>>
 function computeColumns<TNodeData> (
   nodes: ReadonlyArray<FlowNode<TNodeData>>,
   distances: ReadonlyMap<FlowNodeId, number>
-): Array<Column<TNodeData>> {
+): ReadonlyArray<Column<TNodeData>> {
   const columns: Array<Array<FlowNode<TNodeData>>> = []
 
   for (const node of nodes) {

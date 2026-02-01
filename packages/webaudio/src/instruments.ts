@@ -1,9 +1,9 @@
+import { createMultimap } from '@collections/multimap.js'
 import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
 import { dbToGain } from 'tone'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { InstrumentInstance, TriggerAttack, TriggerRelease } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
-import { Multimap } from './utilities/multimap.js'
 
 export function createInstruments (ctx: BaseAudioContext, program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
   return new Map(
@@ -37,7 +37,7 @@ function createInstrument (ctx: BaseAudioContext, instrument: Instrument): Instr
   }
 
   const rootNoteMidi = convertPitchToMidi(instrument.rootNote ?? DEFAULT_ROOT_NOTE)
-  const sourcesByMidi = new Multimap<number, ActiveSource>()
+  const sourcesByMidi = createMultimap<number, ActiveSource>()
 
   const output = ctx.createGain()
   output.gain.value = dbToGain(instrument.gain.initial.value)
@@ -49,8 +49,10 @@ function createInstrument (ctx: BaseAudioContext, instrument: Instrument): Instr
 
   const dispose = () => {
     output.disconnect()
-    for (const source of sourcesByMidi.values()) {
-      disposeActiveSource(source)
+    for (const sources of sourcesByMidi.values()) {
+      for (const source of sources) {
+        disposeActiveSource(source)
+      }
     }
   }
 
@@ -67,11 +69,11 @@ function createInstrument (ctx: BaseAudioContext, instrument: Instrument): Instr
     const gainNode = ctx.createGain()
 
     const source: ActiveSource = { sourceNode, gainNode, disposed: false }
-    sourcesByMidi.insert(midi, source)
+    sourcesByMidi.add(midi, source)
 
     sourceNode.addEventListener('ended', () => {
       if (!source.disposed) {
-        sourcesByMidi.remove(midi, source)
+        sourcesByMidi.delete(midi, source)
         disposeActiveSource(source)
       }
     }, { once: true })

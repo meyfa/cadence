@@ -83,7 +83,7 @@ function createNodes (program: Program, options: MixerFlowchartOptions): Nodes {
   return { all, output, byObject }
 }
 
-function createEdges (program: Program, options: MixerFlowchartOptions, nodes: Nodes): MixerFlowEdge[] {
+function createEdges (program: Program, options: MixerFlowchartOptions, nodes: Nodes): readonly MixerFlowEdge[] {
   const { explicitEdgeStyle, implicitEdgeStyle } = options
 
   const edges: MixerFlowEdge[] = []
