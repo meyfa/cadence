@@ -53,7 +53,7 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: N
 
     case 'linear':
       return [
-        { time: timeStart, value: curve.start, curve: 'linear' },
+        { time: timeStart, value: curve.start, curve: 'step' },
         { time: timeEnd, value: curve.end, curve: 'linear' }
       ]
   }

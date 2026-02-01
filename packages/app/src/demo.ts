@@ -30,7 +30,7 @@ arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 // Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
 
-track (128 bpm) {
+track (120 bpm) {
   // Parts play in sequence. Patterns will trigger notes for their
   // defined length or the length of the part, whichever is shorter.
 
@@ -38,6 +38,8 @@ track (128 bpm) {
     kick  << kick_pattern
     snare << snare_pattern
     synth << arp_intro
+
+    automate synth.gain as linear(-60 db, 0 db)
   }
 
   part main (8 bars) {

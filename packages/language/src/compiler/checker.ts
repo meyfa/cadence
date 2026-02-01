@@ -264,9 +264,6 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
     errors.push(...checkType([CurveType.with(unit)], curveCheck.result, automation.curve.range))
   }
 
-  // TODO Remove once automations are fully supported
-  errors.push(new CompileError('Automations are not yet supported', automation.range))
-
   return errors
 }
 
