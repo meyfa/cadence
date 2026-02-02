@@ -1,10 +1,16 @@
 import { MutableObservable, type Observable } from '@core/observable.js'
 import { makeNumeric, type Numeric, type Program } from '@core/program.js'
 import type { BeatRange } from '@core/types.js'
+import { createAudioFetcher } from './assets/fetcher.js'
 import { createAudioSession, type AudioSession } from './session.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
+
+  readonly cacheLimits: {
+    readonly arrayBuffer: number
+    readonly audioBuffer: number
+  }
 }
 
 export interface AudioEngine {
@@ -21,6 +27,9 @@ export interface AudioEngine {
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const outputGain = new MutableObservable(options.outputGain)
+  const fetcher = createAudioFetcher({
+    cacheLimits: options.cacheLimits
+  })
 
   const playing = new MutableObservable(false)
   const range = new MutableObservable({ start: makeNumeric('beats', 0) })
@@ -37,7 +46,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
 
     const subscriptions: Array<() => void> = []
 
-    const thisSession = session = createAudioSession(program, range.get(), outputGain)
+    const thisSession = session = createAudioSession(program, range.get(), outputGain, fetcher)
 
     const stopThisSession = stopSession = () => {
       thisSession.dispose()
