@@ -1,16 +1,21 @@
 import { createMultimap } from '@collections/multimap.js'
 import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
+import type { AudioFetcher } from './assets/fetcher.js'
 import { automate } from './automation.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { InstrumentInstance, NoteOptions } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
 import type { Transport } from './transport.js'
 
-export function createInstruments (transport: Transport, program: Program): ReadonlyMap<InstrumentId, InstrumentInstance> {
+export function createInstruments (
+  transport: Transport,
+  program: Program,
+  fetcher: AudioFetcher
+): ReadonlyMap<InstrumentId, InstrumentInstance> {
   return new Map(
     [...program.instruments.values()].map((instrument) => [
       instrument.id,
-      createInstrument(transport, program, instrument)
+      createInstrument(transport, program, instrument, fetcher)
     ])
   )
 }
@@ -31,7 +36,12 @@ function disposeActiveSource (source: ActiveSource): void {
   }
 }
 
-function createInstrument (transport: Transport, program: Program, instrument: Instrument): InstrumentInstance {
+function createInstrument (
+  transport: Transport,
+  program: Program,
+  instrument: Instrument,
+  fetcher: AudioFetcher
+): InstrumentInstance {
   const { ctx } = transport
 
   // declick
@@ -48,7 +58,7 @@ function createInstrument (transport: Transport, program: Program, instrument: I
   automate(transport, output.gain, 'gain', program, instrument.gain)
 
   let sampleBuffer: AudioBuffer | undefined
-  const loaded = loadSampleBuffer(ctx, instrument.sampleUrl).then((buffer) => {
+  const loaded = fetcher.fetch(ctx, instrument.sampleUrl).then((buffer) => {
     sampleBuffer = buffer
   })
 
@@ -117,15 +127,4 @@ function createInstrument (transport: Transport, program: Program, instrument: I
 
 function asMidi (note: Pitch | number): number {
   return typeof note === 'number' ? note : convertPitchToMidi(note)
-}
-
-async function loadSampleBuffer (ctx: BaseAudioContext, url: string | URL): Promise<AudioBuffer> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Failed to load sample: ${response.status} ${response.statusText}`)
-  }
-
-  const arrayBuffer = await response.arrayBuffer()
-
-  return await ctx.decodeAudioData(arrayBuffer)
 }

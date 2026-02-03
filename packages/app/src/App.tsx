@@ -1,8 +1,8 @@
-import { createAudioEngine } from '@webaudio/engine.js'
 import { makeNumeric } from '@core/program.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
 import { type CompileOptions } from '@language/compiler/compiler.js'
+import { createAudioEngine, type AudioEngineOptions } from '@webaudio/engine.js'
 import { FunctionComponent, useEffect, useLayoutEffect, useState } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
 import { Footer } from './components/Footer.js'
@@ -29,6 +29,26 @@ const compileOptions: CompileOptions = {
   }
 }
 
+const lowMemoryDevice = 'deviceMemory' in navigator
+  ? (navigator as any).deviceMemory <= 2
+  : undefined
+
+const likelyMobile = 'userAgentData' in navigator && 'mobile' in (navigator as any).userAgentData
+  ? (navigator as any).userAgentData.mobile === true
+  : matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height) <= 768
+
+const audioEngineOptions = {
+  cacheLimits: lowMemoryDevice === true || likelyMobile
+    ? {
+        arrayBuffer: 60 * 1024 * 1024, // compressed: 60 MB
+        audioBuffer: 30 * 1024 * 1024 // decompressed: 30 MB
+      }
+    : {
+        arrayBuffer: 200 * 1024 * 1024, // compressed: 200 MB
+        audioBuffer: 100 * 1024 * 1024 // decompressed: 100 MB
+      }
+} satisfies Partial<AudioEngineOptions>
+
 const defaultState: CadenceEditorState = {
   settings: {
     theme: 'dark',
@@ -51,6 +71,7 @@ const initialState: CadenceEditorState = {
 }
 
 const engine = createAudioEngine({
+  ...audioEngineOptions,
   outputGain: initialState.settings.outputGain
 })
 

@@ -8,6 +8,7 @@ import { createInstruments } from './instruments.js'
 import { scheduleNoteEvents } from './parts.js'
 import { setupRoutings } from './routings.js'
 import { createTransport } from './transport.js'
+import type { AudioFetcher } from './assets/fetcher.js'
 
 const ErrorMessages = Object.freeze({
   LoadTimeout: 'Timeout while loading assets; some audio may be missing.',
@@ -30,7 +31,8 @@ export interface AudioSession {
 export function createAudioSession (
   program: Program,
   range: BeatRange,
-  outputGain: Observable<Numeric<'db'>>
+  outputGain: Observable<Numeric<'db'>>,
+  fetcher: AudioFetcher
 ): AudioSession {
   const endPosition = range.end ?? calculateTotalLength(program)
   const startTime = beatsToSeconds(range.start, program.track.tempo)
@@ -50,7 +52,7 @@ export function createAudioSession (
   })
 
   const buses = createBuses(transport, program)
-  const instruments = createInstruments(transport, program)
+  const instruments = createInstruments(transport, program, fetcher)
 
   const instances = [
     ...buses.values(),
