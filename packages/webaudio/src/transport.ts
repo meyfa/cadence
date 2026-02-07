@@ -1,3 +1,5 @@
+import { createScheduler } from './scheduler.js'
+
 export interface Transport {
   readonly ctx: BaseAudioContext
   readonly output: GainNode
@@ -10,10 +12,8 @@ export interface Transport {
   readonly schedule: (time: number, callback: (time: number) => void) => void
 }
 
-interface ScheduledEvent {
-  readonly time: number
-  readonly callback: (time: number) => void
-}
+const TICK_INTERVAL = 0.025
+const SCHEDULE_AHEAD_TIME = 0.05
 
 export function createTransport (): Transport {
   const ctx = new AudioContext()
@@ -29,7 +29,11 @@ export function createTransport (): Transport {
   let offsetTime = ctx.currentTime
   let started = false
 
-  const scheduled: ScheduledEvent[] = []
+  const scheduler = createScheduler({
+    now: () => ctx.currentTime,
+    tickInterval: TICK_INTERVAL,
+    scheduleAheadTime: SCHEDULE_AHEAD_TIME
+  })
 
   return {
     ctx,
@@ -47,27 +51,17 @@ export function createTransport (): Transport {
       await ctx.resume()
       offsetTime = ctx.currentTime - position
 
-      scheduled.sort((a, b) => a.time - b.time)
-
-      for (const event of scheduled) {
-        event.callback(event.time + offsetTime)
-      }
-
-      scheduled.splice(0, scheduled.length)
+      scheduler.start(offsetTime)
     },
 
     dispose: async () => {
+      scheduler.stop()
       output.disconnect()
       await ctx.close()
     },
 
     schedule: (time, callback) => {
-      if (started) {
-        callback(time + offsetTime)
-        return
-      }
-
-      scheduled.push({ time, callback })
+      scheduler.schedule(time, callback)
     }
   }
 }
