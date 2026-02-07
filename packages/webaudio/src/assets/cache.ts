@@ -6,6 +6,7 @@ export interface AssetCacheOptions<T> {
 export interface AssetCache<T> {
   readonly get: (key: string) => T | undefined
   readonly set: (key: string, value: T) => void
+  readonly delete: (key: string) => void
 }
 
 interface CacheEntry<T> {
@@ -59,6 +60,8 @@ export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<
 
       cache.set(key, { value, size })
       totalSize += size
-    }
+    },
+
+    delete: deleteKey
   }
 }
