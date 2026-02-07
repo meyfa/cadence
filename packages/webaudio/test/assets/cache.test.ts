@@ -82,4 +82,27 @@ describe('assets/cache.ts', () => {
     assert.strictEqual(cache.get('b'), 5)
     assert.strictEqual(cache.get('c'), 5)
   })
+
+  it('deletes keys', () => {
+    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    cache.set('a', 10)
+    cache.set('b', 5)
+
+    cache.delete('a')
+    assert.strictEqual(cache.get('a'), undefined)
+    assert.strictEqual(cache.get('b'), 5)
+  })
+
+  it('frees space when deleting keys', () => {
+    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    cache.set('a', 15)
+    cache.set('b', 5)
+
+    cache.delete('a')
+    cache.set('c', 15) // Should fit now that 'a' is deleted
+
+    assert.strictEqual(cache.get('a'), undefined)
+    assert.strictEqual(cache.get('b'), 5)
+    assert.strictEqual(cache.get('c'), 15)
+  })
 })

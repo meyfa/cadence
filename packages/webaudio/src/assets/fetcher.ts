@@ -73,7 +73,12 @@ export async function fetchAudioBuffer (
 
   const cached = caches?.audioBufferCache?.get(key)
   if (cached != null) {
-    return cached
+    if (cached.sampleRate == ctx.sampleRate) {
+      return cached
+    }
+
+    // sample rate has changed
+    caches?.audioBufferCache?.delete(key)
   }
 
   const arrayBuffer = await fetchArrayBuffer(url, caches?.arrayBufferCache)
