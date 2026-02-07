@@ -76,6 +76,10 @@ function createInstrument (
       return
     }
 
+    if (options.duration != null && options.duration <= 0) {
+      return
+    }
+
     const midi = asMidi(options.note)
     const targetGain = Math.max(0, Math.min(1, options.velocity))
 
