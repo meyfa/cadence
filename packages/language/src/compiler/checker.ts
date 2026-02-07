@@ -6,7 +6,7 @@ import { curveParameterCounts } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
@@ -368,7 +368,7 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     errors.push(...sourceCheck.errors)
 
     if (sourceCheck.result != null) {
-      const options = [InstrumentType, BusType, GroupType] as const
+      const options = [InstrumentType, BusType] as const
       errors.push(...checkType(options, sourceCheck.result, source.range))
     }
   }
@@ -553,11 +553,6 @@ function checkPlus (left: Type, right: Type, range: SourceRange): Checked<Type> 
 
   if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
     return { errors: [], result: left }
-  }
-
-  const isSummable = (type: Type) => InstrumentType.equals(type) || BusType.equals(type) || GroupType.equals(type)
-  if (isSummable(left) && isSummable(right)) {
-    return { errors: [], result: GroupType }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "+": ${left.format()} and ${right.format()}`, range)] }

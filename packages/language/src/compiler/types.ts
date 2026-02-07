@@ -1,8 +1,8 @@
 import type { Bus, Effect, Instrument, Numeric, Parameter, Part, Pattern, Unit } from '@core/program.js'
+import type { Curve } from './curves.js'
 import type { FunctionDefinition } from './functions.js'
 import type { ModuleDefinition } from './modules.js'
 import type { PropertySchema } from './schema.js'
-import type { Curve } from './curves.js'
 
 export interface AnyValue<D = unknown> {
   readonly type: Type
@@ -88,8 +88,7 @@ export type Value = |
   InstrumentValue |
   PartValue |
   EffectValue |
-  BusValue |
-  GroupValue
+  BusValue
 
 export type ModuleValue = AnyValue<ModuleDefinition>
 export type FunctionValue<S extends PropertySchema = PropertySchema, R extends Type = Type> = AnyValue<FunctionDefinition<S, R>>
@@ -102,7 +101,6 @@ export type InstrumentValue = AnyValue<Instrument>
 export type PartValue = AnyValue<Part>
 export type EffectValue = AnyValue<Effect>
 export type BusValue = AnyValue<Bus>
-export type GroupValue = AnyValue<ReadonlyArray<InstrumentValue | BusValue>>
 
 export type ValueFor<T extends Type> = ReturnType<T['of']>
 
@@ -268,4 +266,3 @@ export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instr
 export const PartType = makeType<'part', {}, PartValue>('part')
 export const EffectType = makeType<'effect', {}, EffectValue>('effect')
 export const BusType = makeType<'bus', {}, BusValue>('bus')
-export const GroupType = makeType<'group', {}, GroupValue>('group')
