@@ -45,10 +45,6 @@ kw<term> { @specialize[@name={term}]<word, term> }
   (UseStatement | Assignment | TrackStatement | MixerStatement)*
 }
 
-unit {
-  @extend<word, "bpm" | "bars" | "beats" | "s" | "ms" | "hz" | "db">
-}
-
 interpolationExpression {
   "{"
   expression
@@ -58,7 +54,7 @@ interpolationExpression {
 VariableDefinition { word }
 VariableName { word }
 
-Number { number unit? }
+Number { number }
 
 @skip {} {
   String {

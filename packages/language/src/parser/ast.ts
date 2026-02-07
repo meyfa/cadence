@@ -8,9 +8,6 @@ export interface ASTNode {
 
 // Basic Types
 
-export const units = ['bpm', 'bars', 'beats', 's', 'ms', 'hz', 'db'] as const
-export type Unit = typeof units[number]
-
 export interface Identifier extends ASTNode {
   readonly type: 'Identifier'
   readonly name: string
@@ -19,7 +16,6 @@ export interface Identifier extends ASTNode {
 export interface Number extends ASTNode {
   readonly type: 'Number'
   readonly value: number
-  readonly unit?: Unit
 }
 
 export interface String extends ASTNode {

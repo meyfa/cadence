@@ -7,7 +7,7 @@ import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
 import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
-import { toBaseUnit } from './units.js'
+import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
   const importResult = checkImports(program.imports)
@@ -389,7 +389,7 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
 function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
     case 'Number':
-      return { errors: [], result: NumberType.with(toBaseUnit(expression.unit)) }
+      return { errors: [], result: NumberType.with(undefined) }
 
     case 'String': {
       const errors: CompileError[] = []
@@ -610,6 +610,19 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
 }
 
 function checkPropertyAccess (object: Type, property: ast.Identifier, range: SourceRange): Checked<Type> {
+  if (NumberType.equals(object)) {
+    if (!isSyntaxUnit(property.name)) {
+      return { errors: [new CompileError(`Unknown unit "${property.name}"`, property.range)] }
+    }
+
+    const existingUnit = NumberType.detail(object).unit
+    if (existingUnit != null) {
+      return { errors: [new CompileError(`Cannot apply unit "${property.name}" to number with existing unit "${existingUnit}"`, property.range)] }
+    }
+
+    return { errors: [], result: NumberType.with(toBaseUnit(property.name)) }
+  }
+
   const propertyType = object.propertyType(property.name)
   if (propertyType != null) {
     return { errors: [], result: propertyType }

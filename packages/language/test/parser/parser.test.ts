@@ -130,7 +130,64 @@ describe('parser/parser.ts', () => {
           {
             type: 'Assignment',
             key: { type: 'Identifier', name: 'foo' },
-            value: { type: 'Number', value: 42, unit: undefined }
+            value: { type: 'Number', value: 42 }
+          }
+        ]
+      }
+    })
+  })
+
+  it('should parse unit suffixes', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'offset' },
+      { name: '=' },
+      { name: '-' },
+      { name: 'number', text: '1.5' },
+      { name: '.' },
+      { name: 'word', text: 'ms' },
+      { name: 'word', text: 'gain' },
+      { name: '=' },
+      { name: '(' },
+      { name: '-' },
+      { name: 'number', text: '6' },
+      { name: '+' },
+      { name: 'number', text: '3' },
+      { name: ')' },
+      { name: '.' },
+      { name: 'word', text: 'db' }
+    ]))
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'offset' },
+            value: {
+              type: 'UnaryExpression',
+              operator: '-',
+              argument: {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 1.5 },
+                property: { type: 'Identifier', name: 'ms' }
+              }
+            }
+          },
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'gain' },
+            value: {
+              type: 'PropertyAccess',
+              object: {
+                type: 'BinaryExpression',
+                operator: '+',
+                left: { type: 'Number', value: -6 },
+                right: { type: 'Number', value: 3 }
+              },
+              property: { type: 'Identifier', name: 'db' }
+            }
           }
         ]
       }
@@ -204,7 +261,7 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'D4',
-                  length: { type: 'Number', value: 0.5, unit: undefined },
+                  length: { type: 'Number', value: 0.5 },
                   parameters: []
                 },
                 { type: 'Step', value: '-', parameters: [] },
@@ -273,7 +330,7 @@ describe('parser/parser.ts', () => {
                   type: 'Step',
                   value: 'C4',
                   parameters: [
-                    { type: 'Number', value: 2.0, unit: undefined }
+                    { type: 'Number', value: 2.0 }
                   ]
                 },
                 { type: 'Step', value: '-', parameters: [] }
@@ -315,9 +372,9 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'C4',
-                  length: { type: 'Number', value: 1.5, unit: undefined },
+                  length: { type: 'Number', value: 1.5 },
                   parameters: [
-                    { type: 'Number', value: 2.0, unit: undefined }
+                    { type: 'Number', value: 2.0 }
                   ]
                 },
                 { type: 'Step', value: '-', parameters: [] }
@@ -361,16 +418,12 @@ describe('parser/parser.ts', () => {
                 {
                   type: 'Step',
                   value: 'C4',
-                  length: {
-                    type: 'Number',
-                    value: 1.5,
-                    unit: undefined
-                  },
+                  length: { type: 'Number', value: 1.5 },
                   parameters: [
                     {
                       type: 'Property',
                       key: { type: 'Identifier', name: 'gate' },
-                      value: { type: 'Number', value: 2.0, unit: undefined }
+                      value: { type: 'Number', value: 2.0 }
                     }
                   ]
                 },
@@ -419,13 +472,13 @@ describe('parser/parser.ts', () => {
                     {
                       type: 'Step',
                       value: 'C4',
-                      length: { type: 'Number', value: 0.75, unit: undefined },
+                      length: { type: 'Number', value: 0.75 },
                       parameters: []
                     },
                     {
                       type: 'Step',
                       value: '-',
-                      length: { type: 'Number', value: 0.25, unit: undefined },
+                      length: { type: 'Number', value: 0.25 },
                       parameters: []
                     }
                   ]
@@ -488,7 +541,7 @@ describe('parser/parser.ts', () => {
                   type: 'BinaryExpression',
                   operator: '*',
                   left: { type: 'Identifier', name: 'some_pattern' },
-                  right: { type: 'Number', value: 2, unit: undefined }
+                  right: { type: 'Number', value: 2 }
                 }
               ]
             }
@@ -691,6 +744,7 @@ describe('parser/parser.ts', () => {
       { name: 'word', text: 'gain' },
       { name: ':' },
       { name: 'number', text: '-3' },
+      { name: '.' },
       { name: 'word', text: 'db' },
       { name: ')' },
       { name: '{' },
@@ -724,7 +778,11 @@ describe('parser/parser.ts', () => {
                   {
                     type: 'Property',
                     key: { type: 'Identifier', name: 'gain' },
-                    value: { type: 'Number', value: -3, unit: 'db' }
+                    value: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: -3 },
+                      property: { type: 'Identifier', name: 'db' }
+                    }
                   }
                 ],
                 sources: [
@@ -743,7 +801,7 @@ describe('parser/parser.ts', () => {
                         property: { type: 'Identifier', name: 'pan' }
                       },
                       arguments: [
-                        { type: 'Number', value: 0.5, unit: undefined }
+                        { type: 'Number', value: 0.5 }
                       ]
                     }
                   }

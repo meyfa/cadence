@@ -75,24 +75,11 @@ const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
     : undefined
 })
 
-const plainNumber_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
+const number_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
   return t.name === 'number'
     ? ast.make('Number', getSourceRange(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
-
-const number_: p.Parser<Token, unknown, ast.Number> = p.ab(
-  plainNumber_,
-  p.option(
-    p.satisfy((t) => t.name === 'word' && ast.units.includes(t.text as ast.Unit)),
-    undefined
-  ),
-  (num, unitToken) => {
-    const range = unitToken == null ? num.range : combineSourceRanges(num, unitToken)
-    const unit = unitToken == null ? undefined : unitToken.text as ast.Unit
-    return ast.make('Number', range, { value: num.value, unit })
-  }
-)
 
 const stringContent_: p.Parser<Token, unknown, string> = p.token((t) => {
   return t.name === 'stringContent' ? t.text : undefined
@@ -389,8 +376,7 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
       // If it's a numeric literal, fold the unary operator directly
       if (expr.type === 'Number') {
         return ast.make('Number', combineSourceRanges(op, expr), {
-          value: op.text === '+' ? expr.value : -expr.value,
-          unit: expr.unit
+          value: op.text === '+' ? expr.value : -expr.value
         })
       }
 

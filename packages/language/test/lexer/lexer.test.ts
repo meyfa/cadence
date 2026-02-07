@@ -66,6 +66,23 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex number literals with unit attachments', () => {
+    const result = lex('120.bpm 1.5.s 0.5s')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'number', text: '120' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'bpm' },
+        { name: 'number', text: '1.5' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 's' },
+        { name: 'number', text: '0.5' },
+        { name: 'word', text: 's' }
+      ]
+    })
+  })
+
   it('should lex string literals', () => {
     const result = lex('"hello world" "" "string with escaped \\"quotes\\", \\\\ backslashes, and \\{braces}"')
     assert.deepStrictEqual(stripTokenMeta(result), {

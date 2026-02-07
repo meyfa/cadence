@@ -7,7 +7,7 @@ import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType, type BusValue, type CurveValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
-import { toNumberValue } from './units.js'
+import { isSyntaxUnit, toNumberValue } from './units.js'
 
 export interface GenerateOptions {
   readonly beatsPerBar: number
@@ -326,7 +326,7 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
 function resolve (context: Context, expression: ast.Expression): Value {
   switch (expression.type) {
     case 'Number':
-      return toNumberValue(context.top.options, expression)
+      return toNumberValue(context.top.options, undefined, expression.value)
 
     case 'String':
       return generateString(context, expression.parts)
@@ -361,7 +361,14 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'PropertyAccess': {
       const object = resolve(context, expression.object)
-      return nonNull(object.type.propertyValue(object, expression.property.name)) as Value
+      const property = expression.property.name
+
+      if (NumberType.is(object)) {
+        assert(isSyntaxUnit(property))
+        return toNumberValue(context.top.options, property, object.data.value)
+      }
+
+      return nonNull(object.type.propertyValue(object, property)) as Value
     }
 
     case 'Call': {
