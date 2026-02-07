@@ -6,7 +6,7 @@ import { createCurve, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, CurveType, EffectType, FunctionType, GroupType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType, type BusValue, type CurveValue, type GroupValue, type InstrumentValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType, type CurveValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -292,7 +292,7 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
 function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
   const destination = nonNull(buses.find((b) => b.name === bus.name.name))
 
-  return bus.sources.flatMap((identifier) => {
+  return bus.sources.map((identifier) => {
     const source = resolve(mixerContext, identifier)
 
     const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
@@ -304,15 +304,11 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
     })
 
     if (InstrumentType.is(source)) {
-      return [toRouting({ type: InstrumentType.name, id: source.data.id })]
+      return toRouting({ type: InstrumentType.name, id: source.data.id })
     }
 
     if (BusType.is(source)) {
-      return [toRouting({ type: BusType.name, id: source.data.id })]
-    }
-
-    if (GroupType.is(source)) {
-      return source.data.map((part) => toRouting({ type: part.type.name, id: part.data.id }))
+      return toRouting({ type: BusType.name, id: source.data.id })
     }
 
     assert(false)
@@ -485,14 +481,6 @@ function computePlus (left: Value, right: Value): Value {
 
   if (NumberType.is(left) && NumberType.is(right)) {
     return NumberType.of({ unit: left.data.unit, value: left.data.value + right.data.value })
-  }
-
-  type Summable = InstrumentValue | BusValue | GroupValue
-  const isSummable = (value: Value) => InstrumentType.is(value) || BusType.is(value) || GroupType.is(value)
-  const getSumComponents = (value: Summable) => GroupType.is(value) ? value.data : [value]
-
-  if (isSummable(left) && isSummable(right)) {
-    return GroupType.of([...getSumComponents(left), ...getSumComponents(right)])
   }
 
   assert(false)

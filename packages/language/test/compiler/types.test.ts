@@ -4,7 +4,7 @@ import { makeNumeric, type ParameterId } from '@core/program.js'
 import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { BusType, BusValue, CurveType, type CurveValue, EffectType, type EffectValue, FunctionType, type FunctionValue, GroupType, type GroupValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
+import { BusType, BusValue, CurveType, type CurveValue, EffectType, type EffectValue, FunctionType, type FunctionValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 
 describe('compiler/types.ts', () => {
@@ -28,7 +28,6 @@ describe('compiler/types.ts', () => {
       expectTypeEquals<PartValue, ValueFor<typeof PartType>>()
       expectTypeEquals<EffectValue, ValueFor<typeof EffectType>>()
       expectTypeEquals<BusValue, ValueFor<typeof BusType>>()
-      expectTypeEquals<GroupValue, ValueFor<typeof GroupType>>()
       expectTypeEquals<CurveValue, ValueFor<typeof CurveType>>()
     })
 
@@ -614,14 +613,6 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(BusType.name, 'bus')
       assert.strictEqual(BusType.generics, undefined)
       assert.strictEqual(BusType.format(), 'bus')
-    })
-  })
-
-  describe('GroupType', () => {
-    it('should have correct name, generics, format', () => {
-      assert.strictEqual(GroupType.name, 'group')
-      assert.strictEqual(GroupType.generics, undefined)
-      assert.strictEqual(GroupType.format(), 'group')
     })
   })
 
