@@ -46,7 +46,10 @@ describe('compiler/generator.ts', () => {
           properties: [
             ast.make('Property', RANGE, {
               key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
+              value: ast.make('PropertyAccess', RANGE, {
+                object: ast.make('Number', RANGE, { value: 140 }),
+                property: ast.make('Identifier', RANGE, { name: 'bpm' })
+              })
             })
           ],
           parts: []
@@ -65,7 +68,10 @@ describe('compiler/generator.ts', () => {
           properties: [
             ast.make('Property', RANGE, {
               key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('Number', RANGE, { value: 400, unit: 'bpm' })
+              value: ast.make('PropertyAccess', RANGE, {
+                object: ast.make('Number', RANGE, { value: 400 }),
+                property: ast.make('Identifier', RANGE, { name: 'bpm' })
+              })
             })
           ],
           parts: []
@@ -83,7 +89,10 @@ describe('compiler/generator.ts', () => {
         // foo = 90 bpm
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'foo' }),
-          value: ast.make('Number', RANGE, { value: 90, unit: 'bpm' })
+          value: ast.make('PropertyAccess', RANGE, {
+            object: ast.make('Number', RANGE, { value: 90 }),
+            property: ast.make('Identifier', RANGE, { name: 'bpm' })
+          })
         }),
         // bar = foo * 2
         ast.make('Assignment', RANGE, {
@@ -91,7 +100,7 @@ describe('compiler/generator.ts', () => {
           value: ast.make('BinaryExpression', RANGE, {
             operator: '*',
             left: ast.make('Identifier', RANGE, { name: 'foo' }),
-            right: ast.make('Number', RANGE, { value: 2, unit: undefined })
+            right: ast.make('Number', RANGE, { value: 2 })
           })
         }),
         ast.make('TrackStatement', RANGE, {
@@ -169,7 +178,10 @@ describe('compiler/generator.ts', () => {
         // gain = 140 bpm
         ast.make('Assignment', RANGE, {
           key: ast.make('Identifier', RANGE, { name: 'gain' }),
-          value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
+          value: ast.make('PropertyAccess', RANGE, {
+            object: ast.make('Number', RANGE, { value: 140 }),
+            property: ast.make('Identifier', RANGE, { name: 'bpm' })
+          })
         }),
         ast.make('TrackStatement', RANGE, {
           properties: [
@@ -200,7 +212,10 @@ describe('compiler/generator.ts', () => {
             ast.make('PartStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'foo' }),
               properties: [
-                ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 4 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
               ],
               routings: [],
               automations: []
@@ -235,7 +250,13 @@ describe('compiler/generator.ts', () => {
             ast.make('PartStatement', RANGE, {
               name: ast.make('Identifier', RANGE, { name: 'intro' }),
               properties: [
-                ast.make('Number', RANGE, { value: -4, unit: 'bars' })
+                ast.make('UnaryExpression', RANGE, {
+                  operator: '-',
+                  argument: ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 4 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
+                })
               ],
               routings: [],
               automations: []

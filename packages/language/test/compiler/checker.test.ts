@@ -77,7 +77,10 @@ describe('compiler/checker.ts', () => {
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
-                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                  ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 4 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
                 ],
                 routings: [],
                 automations: []
@@ -87,7 +90,10 @@ describe('compiler/checker.ts', () => {
                 properties: [
                   ast.make('Property', RANGE, {
                     key: ast.make('Identifier', RANGE, { name: 'length' }),
-                    value: ast.make('Number', RANGE, { value: 8, unit: 'bars' })
+                    value: ast.make('PropertyAccess', RANGE, {
+                      object: ast.make('Number', RANGE, { value: 8 }),
+                      property: ast.make('Identifier', RANGE, { name: 'bars' })
+                    })
                   })
                 ],
                 routings: [],
@@ -127,7 +133,10 @@ describe('compiler/checker.ts', () => {
         children: [
           ast.make('Assignment', RANGE, {
             key: ast.make('Identifier', RANGE, { name: 'gain' }),
-            value: ast.make('Number', RANGE, { value: 3, unit: 'db' })
+            value: ast.make('PropertyAccess', RANGE, {
+              object: ast.make('Number', RANGE, { value: 3 }),
+              property: ast.make('Identifier', RANGE, { name: 'db' })
+            })
           })
         ]
       })
@@ -148,7 +157,10 @@ describe('compiler/checker.ts', () => {
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'foo' }),
                 properties: [
-                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                  ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 4 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
                 ],
                 routings: [],
                 automations: []
@@ -382,11 +394,17 @@ describe('compiler/checker.ts', () => {
             properties: [
               ast.make('Property', RANGE, {
                 key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-                value: ast.make('Number', RANGE, { value: 120, unit: 'bpm' })
+                value: ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 120 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bpm' })
+                })
               }),
               ast.make('Property', RANGE, {
                 key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-                value: ast.make('Number', RANGE, { value: 140, unit: 'bpm' })
+                value: ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 120 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bpm' })
+                })
               })
             ],
             parts: []
@@ -408,7 +426,10 @@ describe('compiler/checker.ts', () => {
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
-                  ast.make('Number', RANGE, { value: 4, unit: 'bars' })
+                  ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 4 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
                 ],
                 routings: [],
                 automations: []
@@ -416,7 +437,10 @@ describe('compiler/checker.ts', () => {
               ast.make('PartStatement', RANGE, {
                 name: ast.make('Identifier', RANGE, { name: 'intro' }),
                 properties: [
-                  ast.make('Number', RANGE, { value: 8, unit: 'bars' })
+                  ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 8 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
                 ],
                 routings: [],
                 automations: []
@@ -489,7 +513,7 @@ describe('compiler/checker.ts', () => {
             mode: 'serial',
             children: [
               ast.make('Step', RANGE, { value: 'C4', parameters: [] }),
-              ast.make('Number', RANGE, { unit: undefined, value: 42 }),
+              ast.make('Number', RANGE, { value: 42 }),
               ast.make('Step', RANGE, { value: 'E4', parameters: [] })
             ]
           })
