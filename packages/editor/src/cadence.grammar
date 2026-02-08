@@ -34,7 +34,18 @@
 
 @detectDelim
 
-kw<term> { @specialize[@name={term}]<word, term> }
+kw<term> { @specialize[@name=keyword]<word, term> }
+unit<term> { @specialize[@name=unit]<word, term> }
+
+Unit {
+  unit<"bpm"> |
+  unit<"bars"> |
+  unit<"beats"> |
+  unit<"s"> |
+  unit<"ms"> |
+  unit<"hz"> |
+  unit<"db">
+}
 
 @precedence {
   multiply @left,
@@ -93,7 +104,11 @@ primary {
 
 accessOrCall {
   primary
-  ("." MemberAccess { word } | "(" argumentList? ")")*
+  (
+    "." Unit |
+    "." MemberAccess { word } |
+    "(" argumentList? ")"
+  )*
 }
 
 expression {
