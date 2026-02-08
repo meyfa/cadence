@@ -99,15 +99,20 @@ argumentList {
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | VariableName
+  "(" expression ")" | Number | String | Pattern | Call | VariableName
+}
+
+Call {
+  Callee { word }
+  "(" argumentList? ")"
 }
 
 accessOrCall {
   primary
   (
     "." Unit |
-    "." MemberAccess { word } |
-    "(" argumentList? ")"
+    "." Call |
+    "." MemberAccess { word }
   )*
 }
 

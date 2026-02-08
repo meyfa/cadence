@@ -14,21 +14,24 @@ import { EditorView } from '@codemirror/view'
 import { tags as t } from '@lezer/highlight'
 
 const darkColors = {
-  chalky: '#e5c07b',
-  coral: '#e06c75',
-  cyan: '#56b6c2',
-  ivory: '#abb2bf',
-  stone: '#7d8799',
-  malibu: '#61afef',
-  sage: '#98c379',
-  whiskey: '#d19a66',
-  violet: '#c678dd',
+  comment: '#7d8799',
+  keyword: '#ca78e0',
+  operator: '#c2b9c8',
+
+  variableName: '#f67386',
+  propertyName: '#d79a53',
+  functionName: '#cdb17b',
+
+  number: '#68aff6',
+  string: '#a0c27a',
+  pattern: '#a0c27a',
 
   invalid: '#ffffff',
   background: '#1d1f20',
   foreground: '#abb2bf',
   panelBackground: '#21252b',
   foldPlaceholder: '#ddd',
+  gutters: '#7d8799',
   selection: '#3e4451',
   highlightBackground: '#2c313a',
   activeLineBackground: '#6688ee0b',
@@ -41,21 +44,24 @@ const darkColors = {
 const lightColors = {
   ...darkColors,
 
-  chalky: '#a38200',
-  coral: '#c0413a',
-  cyan: '#007ac1',
-  ivory: '#383a62',
-  stone: '#6a717e',
-  malibu: '#0066ff',
-  sage: '#30911f',
-  whiskey: '#276f86',
-  violet: '#a62694',
+  comment: '#6a717e',
+  keyword: '#8400a1',
+  operator: '#20245f',
+
+  variableName: '#981706',
+  propertyName: '#824002',
+  functionName: '#9a6b08',
+
+  number: '#0954de',
+  string: '#0a7d10',
+  pattern: '#0a7d10',
 
   invalid: '#000000',
   background: '#ffffff',
   foreground: '#383a42',
   panelBackground: '#e7e8ea',
   foldPlaceholder: '#555',
+  gutters: '#6a717e',
   selection: '#b8d4f6',
   highlightBackground: '#cccfd4',
   activeLineBackground: '#2031640b',
@@ -118,7 +124,7 @@ const cadenceEditorTheme = (dark: boolean) => {
 
     '.cm-gutters': {
       backgroundColor: colors.background,
-      color: colors.stone,
+      color: colors.gutters,
       border: 'none'
     },
 
@@ -159,70 +165,40 @@ const cadenceThemeHighlightStyle = (dark: boolean) => {
 
   return HighlightStyle.define([
     {
-      tag: t.keyword,
-      color: colors.violet
-    },
-    {
-      tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-      color: colors.coral
-    },
-    {
-      tag: [t.function(t.variableName), t.labelName],
-      color: colors.malibu
-    },
-    {
-      tag: [t.color, t.constant(t.name), t.standard(t.name)],
-      color: colors.whiskey
-    },
-    {
-      tag: [t.definition(t.name), t.separator],
-      color: colors.ivory
-    },
-    {
-      tag: [t.typeName, t.className, t.number, t.changed, t.annotation, t.modifier, t.self, t.namespace],
-      color: colors.chalky
-    },
-    {
-      tag: [t.operator, t.operatorKeyword, t.url, t.escape, t.regexp, t.special(t.string)],
-      color: colors.cyan
-    },
-    {
       tag: [t.meta, t.comment],
-      color: colors.stone
+      color: colors.comment
     },
     {
-      tag: t.strong,
-      fontWeight: 'bold'
+      tag: t.keyword,
+      color: colors.keyword
     },
     {
-      tag: t.emphasis,
-      fontStyle: 'italic'
+      tag: [t.operator, t.operatorKeyword],
+      color: colors.operator
     },
     {
-      tag: t.strikethrough,
-      textDecoration: 'line-through'
+      tag: t.variableName,
+      color: colors.variableName
     },
     {
-      tag: t.link,
-      color: colors.stone,
-      textDecoration: 'underline'
+      tag: t.propertyName,
+      color: colors.propertyName
     },
     {
-      tag: t.heading,
-      fontWeight: 'bold',
-      color: colors.coral
+      tag: [t.function(t.name)],
+      color: colors.functionName
     },
     {
-      tag: [t.atom, t.bool, t.special(t.variableName)],
-      color: colors.whiskey
+      tag: [t.number],
+      color: colors.number
     },
     {
-      tag: [t.processingInstruction, t.string, t.inserted],
-      color: colors.sage
+      tag: [t.string],
+      color: colors.string
     },
     {
-      tag: t.invalid,
-      color: colors.invalid
+      tag: [t.special(t.string)],
+      color: colors.pattern
     }
   ])
 }
