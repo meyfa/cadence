@@ -1,5 +1,4 @@
 import { foldInside, foldNodeProp, LanguageSupport, LRLanguage } from '@codemirror/language'
-import { keywords } from '@language/constants.js'
 import { styleTags, tags as t } from '@lezer/highlight'
 import { parser } from './cadence.grammar'
 
@@ -12,6 +11,9 @@ const parserWithMetadata = parser.configure({
       String: t.string,
       Pattern: t.string,
 
+      keyword: t.keyword,
+      unit: t.number,
+
       '{ }': t.brace,
       '( )': t.paren,
       ',': t.separator,
@@ -21,8 +23,6 @@ const parserWithMetadata = parser.configure({
       '<<': t.operator,
 
       '+ - "*" "/"': t.arithmeticOperator,
-
-      [keywords.join(' ')]: t.keyword,
 
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
