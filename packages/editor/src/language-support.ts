@@ -9,7 +9,7 @@ const parserWithMetadata = parser.configure({
 
       Number: t.number,
       String: t.string,
-      Pattern: t.string,
+      Pattern: t.special(t.string),
 
       keyword: t.keyword,
       unit: t.number,
@@ -26,7 +26,11 @@ const parserWithMetadata = parser.configure({
 
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
-      MemberAccess: t.propertyName
+
+      PropertyName: t.definition(t.propertyName),
+      MemberAccess: t.propertyName,
+
+      Callee: t.function(t.name)
     }),
 
     foldNodeProp.add({
