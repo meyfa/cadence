@@ -14,6 +14,9 @@ const parserWithMetadata = parser.configure({
       keyword: t.keyword,
       unit: t.number,
 
+      UseAlias: t.definition(t.variableName),
+      'UseAlias "*"': t.keyword,
+
       '{ }': t.brace,
       '( )': t.paren,
       ',': t.separator,
