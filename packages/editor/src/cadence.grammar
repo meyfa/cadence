@@ -139,7 +139,7 @@ Property {
 
 UseStatement {
   kw<"use"> String
-  kw<"as"> (word | "*")
+  kw<"as"> UseAlias { word | "*" }
 }
 
 Assignment {
