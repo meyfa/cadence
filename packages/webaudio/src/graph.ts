@@ -1,4 +1,4 @@
-import type { Numeric, Program } from '@core/program.js'
+import type { Program } from '@core/program.js'
 import type { AudioFetcher } from './assets/fetcher.js'
 import { createBuses } from './buses.js'
 import type { BaseMixin } from './instances.js'
@@ -6,11 +6,6 @@ import { createInstruments } from './instruments.js'
 import { scheduleNoteEvents } from './parts.js'
 import { setupRoutings } from './routings.js'
 import type { Transport } from './transport.js'
-
-export const ErrorMessages = Object.freeze({
-  LoadTimeout: 'Timeout while loading assets.',
-  Unknown: 'An unknown error occurred during audio rendering.'
-})
 
 export interface AudioGraph {
   /**
@@ -26,8 +21,7 @@ export interface AudioGraph {
 export function createAudioGraph (
   transport: Transport,
   program: Program,
-  fetcher: AudioFetcher,
-  timeout: Numeric<'s'>
+  fetcher: AudioFetcher
 ): AudioGraph {
   const buses = createBuses(transport, program)
   const instruments = createInstruments(transport, program, fetcher)
@@ -40,19 +34,9 @@ export function createAudioGraph (
   setupRoutings(transport, program, instruments, buses)
   scheduleNoteEvents(program, instruments)
 
-  let timeoutId: ReturnType<typeof setTimeout> | undefined
-  const timeoutPromise = new Promise((resolve, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error(ErrorMessages.LoadTimeout))
-    }, timeout.value * 1000)
-  })
-
-  const loaded = Promise.race([
-    timeoutPromise,
-    Promise.all(instances.map(async (item) => await item.loaded))
-  ])
-    .then(() => undefined)
-    .finally(() => clearTimeout(timeoutId))
+  const loaded = Promise.all(
+    instances.map(async (item) => await item.loaded)
+  ).then(() => undefined)
 
   let disposed = false
 
@@ -69,7 +53,6 @@ export function createAudioGraph (
       }
 
       disposed = true
-      clearTimeout(timeoutId)
       for (const item of instances) {
         item.dispose()
       }

@@ -1,6 +1,8 @@
+import type { Numeric } from '@core/program.js'
 import { createAssetCache, type AssetCache } from './cache.js'
 
 export interface AudioFetcherOptions {
+  readonly timeout: Numeric<'s'>
   readonly cacheLimits: {
     readonly arrayBuffer: number
     readonly audioBuffer: number
@@ -31,16 +33,27 @@ export function createAudioFetcher (options: AudioFetcherOptions): AudioFetcher 
 
   return {
     fetch: async (ctx: BaseAudioContext, url: string | URL) => {
-      return fetchAudioBuffer(ctx, url, {
-        arrayBufferCache,
-        audioBufferCache
-      })
+      const signal = AbortSignal.timeout(options.timeout.value * 1000)
+
+      try {
+        return await fetchAudioBuffer(ctx, url, signal, {
+          arrayBufferCache,
+          audioBufferCache
+        })
+      } catch (err: unknown) {
+        if (err instanceof DOMException && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+          throw new Error(`Load timed out: ${url.toString()}`)
+        }
+
+        throw err instanceof Error ? err : new Error(`Load failed: ${url.toString()}`)
+      }
     }
   }
 }
 
 export async function fetchArrayBuffer (
   url: string | URL,
+  signal?: AbortSignal,
   cache?: AssetCache<ArrayBuffer>
 ): Promise<ArrayBuffer> {
   const key = url.toString()
@@ -50,7 +63,7 @@ export async function fetchArrayBuffer (
     return cached
   }
 
-  const response = await fetch(url)
+  const response = await fetch(url, { signal })
   if (!response.ok) {
     throw new Error(`Failed to load asset: ${response.status} ${response.statusText}`)
   }
@@ -64,6 +77,7 @@ export async function fetchArrayBuffer (
 export async function fetchAudioBuffer (
   ctx: BaseAudioContext,
   url: string | URL,
+  signal?: AbortSignal,
   caches?: {
     readonly arrayBufferCache?: AssetCache<ArrayBuffer>
     readonly audioBufferCache?: AssetCache<AudioBuffer>
@@ -81,7 +95,7 @@ export async function fetchAudioBuffer (
     caches?.audioBufferCache?.delete(key)
   }
 
-  const arrayBuffer = await fetchArrayBuffer(url, caches?.arrayBufferCache)
+  const arrayBuffer = await fetchArrayBuffer(url, signal, caches?.arrayBufferCache)
 
   // The spec suggests that the ArrayBuffer should become "detached" during decoding.
   // If we cache the ArrayBuffer, decode from a copy to keep the cached value intact.

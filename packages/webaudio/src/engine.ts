@@ -6,6 +6,7 @@ import { createAudioSession, type AudioSession } from './session.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
+  readonly assetLoadTimeout: Numeric<'s'>
 
   readonly cacheLimits: {
     readonly arrayBuffer: number
@@ -28,6 +29,7 @@ export interface AudioEngine {
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const outputGain = new MutableObservable(options.outputGain)
   const fetcher = createAudioFetcher({
+    timeout: options.assetLoadTimeout,
     cacheLimits: options.cacheLimits
   })
 

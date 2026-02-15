@@ -1,7 +1,7 @@
 import type { Numeric, Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { createAudioFetcher } from './assets/fetcher.js'
-import { createAudioGraph, ErrorMessages } from './graph.js'
+import { createAudioGraph } from './graph.js'
 import { createOfflineTransport } from './transport.js'
 
 export interface AudioRendererOptions {
@@ -25,6 +25,7 @@ export interface AudioRenderer {
 
 export function createAudioRenderer (options: AudioRendererOptions): AudioRenderer {
   const fetcher = createAudioFetcher({
+    timeout: options.assetLoadTimeout,
     cacheLimits: options.cacheLimits
   })
 
@@ -36,7 +37,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         duration: beatsToSeconds(calculateTotalLength(program), program.track.tempo)
       })
 
-      const graph = createAudioGraph(transport, program, fetcher, options.assetLoadTimeout)
+      const graph = createAudioGraph(transport, program, fetcher)
 
       let audioBuffer: AudioBuffer | undefined
 
@@ -45,7 +46,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         audioBuffer = await transport.render()
       } catch (err: unknown) {
         return {
-          errors: [err instanceof Error ? err : new Error(ErrorMessages.Unknown)]
+          errors: [err instanceof Error ? err : new Error('Unknown error during rendering.')]
         }
       } finally {
         graph.dispose()

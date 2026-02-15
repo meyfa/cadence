@@ -4,13 +4,8 @@ import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import type { AudioFetcher } from './assets/fetcher.js'
 import { dbToGain } from './conversion.js'
-import { createAudioGraph, ErrorMessages } from './graph.js'
+import { createAudioGraph } from './graph.js'
 import { createOnlineTransport } from './transport.js'
-
-/**
- * Number of seconds to wait for assets to load before aborting.
- */
-const LOAD_TIMEOUT = makeNumeric('s', 5)
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
@@ -47,7 +42,7 @@ export function createAudioSession (
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
-  const graph = createAudioGraph(transport, program, fetcher, LOAD_TIMEOUT)
+  const graph = createAudioGraph(transport, program, fetcher)
 
   // Timers set via setTimeout and setInterval share an ID pool
   // https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-cleartimeout-dev
@@ -84,8 +79,9 @@ export function createAudioSession (
         }
       }, 16))
     }).catch((err: unknown) => {
-      const error = err instanceof Error ? err : new Error(ErrorMessages.Unknown)
+      const error = err instanceof Error ? err : new Error('Unknown error during playback.')
       errors.set([...errors.get(), error])
+      dispose()
     })
   }
 
@@ -102,6 +98,7 @@ export function createAudioSession (
     graph.dispose()
     transport.dispose()
 
+    ended.set(true)
     position.set(endPosition)
   }
 
