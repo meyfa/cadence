@@ -1,6 +1,6 @@
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { Button } from '../Button.js'
+import { BaseDialog } from './BaseDialog.js'
 
 export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{
   open: boolean
@@ -11,29 +11,22 @@ export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{
   cancelText?: string
 }>> = ({ open, onConfirm, onCancel, title, children, confirmText, cancelText }) => {
   return (
-    <Dialog open={open} onClose={(value) => value ? onConfirm() : onCancel()} className='relative z-50'>
-      <DialogBackdrop className='fixed inset-0 bg-dialog-backdrop' />
-
-      <div className='fixed inset-0 flex w-screen items-center justify-center p-4'>
-        <DialogPanel className='max-w-lg rounded-md bg-surface-100 border border-frame-100 shadow-lg overflow-clip'>
-          <DialogTitle className='text-lg leading-none p-4 bg-surface-200 border-b border-frame-100'>
-            {title}
-          </DialogTitle>
-
-          <div className='p-4'>
-            {children}
-          </div>
-
-          <div className='flex gap-2 justify-end p-4'>
-            <Button onClick={() => onConfirm()}>
-              {confirmText ?? 'Okay'}
-            </Button>
-            <Button onClick={() => onCancel()}>
-              {cancelText ?? 'Cancel'}
-            </Button>
-          </div>
-        </DialogPanel>
-      </div>
-    </Dialog>
+    <BaseDialog
+      open={open}
+      onClose={(value) => value ? onConfirm() : onCancel()}
+      title={title}
+      actions={(
+        <>
+          <Button onClick={() => onConfirm()}>
+            {confirmText ?? 'Okay'}
+          </Button>
+          <Button onClick={() => onCancel()}>
+            {cancelText ?? 'Cancel'}
+          </Button>
+        </>
+      )}
+    >
+      {children}
+    </BaseDialog>
   )
 }
