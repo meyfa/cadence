@@ -1,0 +1,15 @@
+.indeterminate-progress-bar-animate {
+  animation: indeterminate-progress-bar 1.5s linear infinite;
+}
+
+@keyframes indeterminate-progress-bar {
+  0% {
+    left: 0;
+    transform: translateX(-100%);
+  }
+
+  100% {
+    left: 100%;
+    transform: translateX(0);
+  }
+}

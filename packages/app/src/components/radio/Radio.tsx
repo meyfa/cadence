@@ -12,7 +12,7 @@ export const Radio: FunctionComponent<PropsWithChildren<{
       className={clsx(
         'group flex items-center gap-3 px-3 py-1 rounded-sm select-none not-data-disabled:cursor-pointer',
         'bg-surface-200 data-checked:bg-surface-300 not-data-disabled:hocus:bg-surface-300',
-        'border border-frame-200 data-checked:border-frame-300 not-data-disabled:hocus:border-frame-300',
+        'border border-frame-100 not-data-disabled:border-frame-200 data-checked:border-frame-300 not-data-disabled:hocus:border-frame-300',
         'text-content-100 not-data-disabled:text-content-200 data-checked:text-content-300 not-data-disabled:hocus:text-content-300'
       )}
       disabled={disabled}
