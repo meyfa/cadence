@@ -67,10 +67,12 @@ export const ExportDialog: FunctionComponent<{
 }> = ({ open, onClose }) => {
   const { program } = useCompilationState()
 
-  const mountedRef = useRef(true)
+  // Track the current async operation to avoid setting state after the
+  // component has been unmounted or a new export was started.
+  const tokenRef = useRef(0)
   useEffect(() => {
     return () => {
-      mountedRef.current = false
+      ++tokenRef.current
     }
   }, [])
 
@@ -88,6 +90,7 @@ export const ExportDialog: FunctionComponent<{
   // reset when closing
   useEffect(() => {
     if (!open) {
+      ++tokenRef.current
       setFormat('float32')
       setExporting(false)
       setErrors([])
@@ -99,12 +102,14 @@ export const ExportDialog: FunctionComponent<{
       return
     }
 
+    const token = ++tokenRef.current
+
     setExporting(true)
 
     void (async () => {
       try {
         const renderErrors = await renderAndSave(program, WAV, { format })
-        if (!mountedRef.current) {
+        if (tokenRef.current !== token) {
           return
         }
 
@@ -115,14 +120,14 @@ export const ExportDialog: FunctionComponent<{
 
         onClose()
       } catch (err: unknown) {
-        if (!mountedRef.current) {
+        if (tokenRef.current !== token) {
           return
         }
 
         const error = err instanceof Error ? err : new Error('Unknown error during export')
         setErrors((prev) => [...prev, error])
       } finally {
-        if (mountedRef.current) {
+        if (tokenRef.current === token) {
           setExporting(false)
         }
       }
