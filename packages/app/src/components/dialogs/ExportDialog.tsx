@@ -12,15 +12,10 @@ import { RadioGroup } from '../radio/RadioGroup.js'
 import { BaseDialog } from './BaseDialog.js'
 import './ExportDialog.css'
 
-const EXPORT_CHANNELS = 2 // stereo
-const EXPORT_SAMPLE_RATE = 48_000
-
-const ASSET_LOAD_TIMEOUT = makeNumeric('s', 30)
-
 const renderer = createAudioRenderer({
-  channels: EXPORT_CHANNELS,
-  sampleRate: EXPORT_SAMPLE_RATE,
-  assetLoadTimeout: ASSET_LOAD_TIMEOUT,
+  channels: 2, // stereo
+  sampleRate: 48_000,
+  assetLoadTimeout: makeNumeric('s', 30),
   cacheLimits: {
     arrayBuffer: 0,
     audioBuffer: 0
@@ -39,8 +34,7 @@ const WAV: ExportFileType<WAVEncodingOptions> = {
   extension: 'wav',
   mimeType: 'audio/wav',
   label: 'WAV',
-
-  encode: (audio, options) => encodeWAV(audio, { format: options.format })
+  encode: encodeWAV
 }
 
 function getDefaultFileName (type: ExportFileType): string {
@@ -53,7 +47,7 @@ async function renderAndSave<TEncodingOptions> (
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
   const { audioBuffer, errors } = await renderer.render(program)
-  if (audioBuffer == null) {
+  if (audioBuffer == null || errors.length > 0) {
     return errors
   }
 

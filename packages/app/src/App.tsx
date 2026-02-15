@@ -39,6 +39,7 @@ const likelyMobile = 'userAgentData' in navigator && 'mobile' in (navigator as a
   : matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height) <= 768
 
 const audioEngineOptions = {
+  assetLoadTimeout: makeNumeric('s', 5),
   cacheLimits: lowMemoryDevice === true || likelyMobile
     ? {
         arrayBuffer: 60 * 1024 * 1024, // compressed: 60 MB
