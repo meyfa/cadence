@@ -1,11 +1,13 @@
-import type { AudioEngine } from '@webaudio/engine.js'
-import type { Program } from '@core/program.js'
+import { type Program } from '@core/program.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import type { AudioEngine } from '@webaudio/engine.js'
+import { ExportDialog } from './components/dialogs/ExportDialog.js'
 import { activateTabOfType } from './hooks/layout.js'
 import { usePrevious } from './hooks/previous.js'
 import { TabTypes } from './panes/render-tab.js'
 import { useAudioEngine } from './state/AudioEngineContext.js'
 import { useCompilationState } from './state/CompilationContext.js'
+import { useDialog } from './state/DialogContext.js'
 import { useEditor, type EditorDispatch, type EditorState } from './state/EditorContext.js'
 import { useLayout, type LayoutDispatch } from './state/LayoutContext.js'
 import { defaultLayout } from './state/default-layout.js'
@@ -28,6 +30,7 @@ export interface CommandContext {
   }
   readonly lastProgram: Program | undefined
   readonly showCommandPalette: () => void
+  readonly showDialog: (component: any, props?: Record<string, unknown>) => () => void
 }
 
 export function useCommandContext (handlers: {
@@ -38,6 +41,8 @@ export function useCommandContext (handlers: {
   const audioEngine = useAudioEngine()
 
   const [editor, editorDispatch] = useEditor()
+
+  const { showDialog } = useDialog()
 
   const { program: currentProgram } = useCompilationState()
   const lastProgram = usePrevious(currentProgram)
@@ -50,7 +55,8 @@ export function useCommandContext (handlers: {
       dispatch: editorDispatch
     },
     lastProgram,
-    showCommandPalette: handlers.showCommandPalette
+    showCommandPalette: handlers.showCommandPalette,
+    showDialog
   }
 }
 
@@ -66,6 +72,7 @@ export const CommandId = Object.freeze({
   PlaybackToggle: 'playback.toggle',
   FileOpen: 'file.open',
   FileSave: 'file.save',
+  FileExport: 'file.export',
   ViewEditor: 'view.editor',
   ViewMixer: 'view.mixer',
   ViewSettings: 'view.settings',
@@ -133,6 +140,17 @@ export const commands: readonly Command[] = Object.freeze([
         filename: DEFAULT_FILENAME,
         content: editor.state.code
       })
+    }
+  },
+
+  {
+    id: CommandId.FileExport,
+    label: 'File: Export',
+    keyboardShortcuts: [
+      'Ctrl+E'
+    ],
+    action: ({ showDialog }) => {
+      showDialog(ExportDialog)
     }
   },
 

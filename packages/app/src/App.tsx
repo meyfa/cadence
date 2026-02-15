@@ -13,6 +13,7 @@ import { useObservable } from './hooks/observable.js'
 import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
 import { defaultLayout } from './state/default-layout.js'
+import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider, useEditor } from './state/EditorContext.js'
 import { LayoutProvider, useLayout } from './state/LayoutContext.js'
 import { applyThemeSetting, useThemeSetting } from './theme.js'
@@ -83,27 +84,29 @@ export const App: FunctionComponent = () => {
       <EditorProvider>
         <CompilationProvider compileOptions={compileOptions}>
           <LayoutProvider>
-            <StorageSync
-              onExternalChange={() => setHasExternalChange(true)}
-              disablePersistence={hasExternalChange}
-            />
+            <DialogProvider>
+              <StorageSync
+                onExternalChange={() => setHasExternalChange(true)}
+                disablePersistence={hasExternalChange}
+              />
 
-            <ConfirmationDialog
-              open={hasExternalChange}
-              title='External changes detected'
-              onConfirm={() => window.location.reload()}
-              onCancel={() => setHasExternalChange(false)}
-              confirmText='Reload'
-              cancelText='Ignore'
-            >
-              The editor state has changed in another tab or window. Reload to apply the changes?
-            </ConfirmationDialog>
+              <ConfirmationDialog
+                open={hasExternalChange}
+                title='External changes detected'
+                onConfirm={() => window.location.reload()}
+                onCancel={() => setHasExternalChange(false)}
+                confirmText='Reload'
+                cancelText='Ignore'
+              >
+                The editor state has changed in another tab or window. Reload to apply the changes?
+              </ConfirmationDialog>
 
-            <div className='flex flex-col h-dvh'>
-              <Header />
-              <Main />
-              <Footer />
-            </div>
+              <div className='flex flex-col h-dvh'>
+                <Header />
+                <Main />
+                <Footer />
+              </div>
+            </DialogProvider>
           </LayoutProvider>
         </CompilationProvider>
       </EditorProvider>

@@ -1,9 +1,10 @@
-export function saveTextFile (options: {
+interface SaveOptions<T> {
   readonly filename: string
-  readonly content: string
-}): void {
-  const blob = new Blob([options.content], { type: 'text/plain' })
-  const url = URL.createObjectURL(blob)
+  readonly content: T
+}
+
+export function saveFile (options: SaveOptions<Blob>): void {
+  const url = URL.createObjectURL(options.content)
 
   const a = document.createElement('a')
   a.href = url
@@ -13,6 +14,13 @@ export function saveTextFile (options: {
   document.body.removeChild(a)
 
   URL.revokeObjectURL(url)
+}
+
+export function saveTextFile (options: SaveOptions<string>): void {
+  saveFile({
+    ...options,
+    content: new Blob([options.content], { type: 'text/plain' })
+  })
 }
 
 export async function openTextFile (options: {
