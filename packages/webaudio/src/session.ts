@@ -21,6 +21,8 @@ export function createAudioSession (
   outputGain: Observable<Numeric<'db'>>,
   fetcher: AudioFetcher
 ): AudioSession {
+  const cleanupHooks: Array<() => void> = []
+
   const endPosition = range.end ?? calculateTotalLength(program)
   const startTime = beatsToSeconds(range.start, program.track.tempo)
   const endTime = beatsToSeconds(endPosition, program.track.tempo)
@@ -29,24 +31,23 @@ export function createAudioSession (
   const endImmediately = endPosition.value <= 0 || range.start.value >= endPosition.value
 
   const transport = createOnlineTransport()
+  cleanupHooks.push(() => transport.dispose())
+
   transport.output.gain.value = dbToGain(outputGain.get().value)
 
-  const unsubscribeOutputGain = outputGain.subscribe(({ value }) => {
+  cleanupHooks.push(outputGain.subscribe(({ value }) => {
     const gain = transport.output.gain
     const currentTime = transport.ctx.currentTime
     gain.setValueAtTime(gain.value, currentTime)
     gain.linearRampToValueAtTime(dbToGain(value), currentTime + 0.05)
-  })
+  }))
 
   const ended = new MutableObservable(false)
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
   const graph = createAudioGraph(transport, program, fetcher)
-
-  // Timers set via setTimeout and setInterval share an ID pool
-  // https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-cleartimeout-dev
-  const timers: Array<ReturnType<typeof setTimeout>> = []
+  cleanupHooks.push(() => graph.dispose())
 
   const start = () => {
     graph.loaded.then(() => {
@@ -66,18 +67,21 @@ export function createAudioSession (
         return
       }
 
-      timers.push(setTimeout(() => {
+      const endTimeout = setTimeout(() => {
         if (!graph.disposed) {
           ended.set(true)
         }
-      }, (endTime.value - startTime.value) * 1000))
+      }, (endTime.value - startTime.value) * 1000)
 
-      timers.push(setInterval(() => {
+      cleanupHooks.push(() => clearTimeout(endTimeout))
+
+      // Track position based on render-thread time updates.
+      cleanupHooks.push(transport.time.subscribe((time) => {
         if (!graph.disposed) {
-          const seconds = Math.max(startTime.value, transport.now())
-          position.set(makeNumeric('beats', seconds * program.track.tempo.value / 60))
+          const clamped = Math.max(startTime.value, time.value)
+          position.set(makeNumeric('beats', clamped * program.track.tempo.value / 60))
         }
-      }, 16))
+      }))
     }).catch((err: unknown) => {
       const error = err instanceof Error ? err : new Error('Unknown error during playback.')
       errors.set([...errors.get(), error])
@@ -90,13 +94,9 @@ export function createAudioSession (
       return
     }
 
-    for (const timer of timers) {
-      clearTimeout(timer)
-    }
-
-    unsubscribeOutputGain()
-    graph.dispose()
-    transport.dispose()
+    cleanupHooks.reverse()
+    cleanupHooks.forEach((hook) => hook())
+    cleanupHooks.splice(0, cleanupHooks.length)
 
     ended.set(true)
     position.set(endPosition)

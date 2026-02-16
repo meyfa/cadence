@@ -12,6 +12,8 @@ export interface AudioRendererOptions {
     readonly arrayBuffer: number
     readonly audioBuffer: number
   }
+
+  readonly onProgress?: (progress: number) => void
 }
 
 export interface AudioRenderResult {
@@ -31,13 +33,28 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
 
   return {
     render: async (program) => {
+      const cleanupHooks: Array<() => void> = []
+
+      const duration = beatsToSeconds(calculateTotalLength(program), program.track.tempo)
+      const safeDuration = Math.max(0.001, duration.value)
+
       const transport = createOfflineTransport({
         channels: options.channels,
         sampleRate: options.sampleRate,
-        duration: beatsToSeconds(calculateTotalLength(program), program.track.tempo)
+        duration
       })
 
       const graph = createAudioGraph(transport, program, fetcher)
+      cleanupHooks.push(() => graph.dispose())
+
+      if (options.onProgress != null) {
+        cleanupHooks.push(transport.time.subscribe((time) => {
+          if (time == null) {
+            return
+          }
+          options.onProgress?.(Math.max(0, Math.min(1, time.value / safeDuration)))
+        }))
+      }
 
       let audioBuffer: AudioBuffer | undefined
 
@@ -49,7 +66,9 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
           errors: [err instanceof Error ? err : new Error('Unknown error during rendering.')]
         }
       } finally {
-        graph.dispose()
+        cleanupHooks.reverse()
+        cleanupHooks.forEach((hook) => hook())
+        cleanupHooks.splice(0, cleanupHooks.length)
       }
 
       return { errors: [], audioBuffer }
