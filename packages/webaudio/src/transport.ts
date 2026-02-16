@@ -32,6 +32,10 @@ export interface OfflineTransport extends Transport {
 const TICK_INTERVAL = 0.025
 const SCHEDULE_AHEAD_TIME = 0.05
 
+// Assuming faster than real-time rendering, so less frequent updates should be sufficient for offline
+const TIME_UPDATE_INTERVAL_ONLINE = makeNumeric('s', 0.050)
+const TIME_UPDATE_INTERVAL_OFFLINE = makeNumeric('s', 0.100)
+
 export function createOnlineTransport (): OnlineTransport {
   const cleanupHooks: Array<() => void> = []
 
@@ -73,7 +77,7 @@ export function createOnlineTransport (): OnlineTransport {
 
     const tracker = await (async () => {
       const options = {
-        updateInterval: makeNumeric('s', TICK_INTERVAL),
+        updateInterval: TIME_UPDATE_INTERVAL_ONLINE,
         offsetTime: makeNumeric('s', offsetTime)
       }
 
@@ -128,7 +132,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
 
     try {
       const tracker = await createWorkletTimeTracker(ctx, output, {
-        updateInterval: makeNumeric('s', TICK_INTERVAL),
+        updateInterval: TIME_UPDATE_INTERVAL_OFFLINE,
         offsetTime: makeNumeric('s', 0)
       })
 

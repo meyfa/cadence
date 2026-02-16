@@ -2,25 +2,14 @@ import { makeNumeric, type Program } from '@core/program.js'
 import type { AudioBufferLike } from '@webaudio/encoding/common.js'
 import { encodeWAV, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
 import { createAudioRenderer } from '@webaudio/renderer.js'
-import clsx from 'clsx'
 import { useCallback, useEffect, useRef, useState, type FunctionComponent } from 'react'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { saveFile } from '../../utilities/files.js'
 import { Button } from '../Button.js'
+import { ProgressBar } from '../progress-bar/ProgressBar.js'
 import { Radio } from '../radio/Radio.js'
 import { RadioGroup } from '../radio/RadioGroup.js'
 import { BaseDialog } from './BaseDialog.js'
-import './ExportDialog.css'
-
-const renderer = createAudioRenderer({
-  channels: 2, // stereo
-  sampleRate: 48_000,
-  assetLoadTimeout: makeNumeric('s', 30),
-  cacheLimits: {
-    arrayBuffer: 0,
-    audioBuffer: 0
-  }
-})
 
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
@@ -43,9 +32,21 @@ function getDefaultFileName (type: ExportFileType): string {
 
 async function renderAndSave<TEncodingOptions> (
   program: Program,
+  onProgress: (progress: number) => void,
   type: ExportFileType<TEncodingOptions>,
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
+  const renderer = createAudioRenderer({
+    channels: 2, // stereo
+    sampleRate: 48_000,
+    assetLoadTimeout: makeNumeric('s', 30),
+    cacheLimits: {
+      arrayBuffer: 0,
+      audioBuffer: 0
+    },
+    onProgress
+  })
+
   const { audioBuffer, errors } = await renderer.render(program)
   if (audioBuffer == null || errors.length > 0) {
     return errors
@@ -77,6 +78,7 @@ export const ExportDialog: FunctionComponent<{
   }, [])
 
   const [exporting, setExporting] = useState(false)
+  const [progress, setProgress] = useState<number | undefined>(undefined)
   const [errors, setErrors] = useState<readonly Error[]>([])
 
   const [format, setFormat] = useState<WAVFormat>('float32')
@@ -93,6 +95,7 @@ export const ExportDialog: FunctionComponent<{
       ++tokenRef.current
       setFormat('float32')
       setExporting(false)
+      setProgress(undefined)
       setErrors([])
     }
   }, [open])
@@ -105,10 +108,18 @@ export const ExportDialog: FunctionComponent<{
     const token = ++tokenRef.current
 
     setExporting(true)
+    setProgress(undefined)
+    setErrors([])
+
+    const onProgress = (progress: number) => {
+      if (tokenRef.current === token) {
+        setProgress(progress)
+      }
+    }
 
     void (async () => {
       try {
-        const renderErrors = await renderAndSave(program, WAV, { format })
+        const renderErrors = await renderAndSave(program, onProgress, WAV, { format })
         if (tokenRef.current !== token) {
           return
         }
@@ -180,22 +191,7 @@ export const ExportDialog: FunctionComponent<{
         </RadioGroup>
       </div>
 
-      <IndeterminateProgressBar active={exporting} />
+      <ProgressBar disabled={!exporting} progress={progress} />
     </BaseDialog>
-  )
-}
-
-const IndeterminateProgressBar: FunctionComponent<{ active: boolean }> = ({ active }) => {
-  return (
-    <div
-      className='h-2 bg-surface-300 rounded-xs overflow-hidden relative'
-    >
-      <div
-        className={clsx(
-          'h-full bg-accent-100 rounded-xs w-1/3 absolute left-0 top-0 bottom-0',
-          active ? 'indeterminate-progress-bar-animate' : 'opacity-0'
-        )}
-      />
-    </div>
   )
 }
