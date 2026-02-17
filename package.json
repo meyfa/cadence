@@ -24,7 +24,7 @@
     "url": "https://github.com/meyfa/cadence/issues"
   },
   "devDependencies": {
-    "@eslint/compat": "1.4.0",
+    "@eslint/compat": "2.0.2",
     "@lezer/generator": "1.8.0",
     "@meyfa/eslint-config": "9.0.0",
     "@tailwindcss/vite": "4.1.15",
