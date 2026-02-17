@@ -1,30 +1,49 @@
 import { makeNumeric, type Program } from '@core/program.js'
+import { Field, Label } from '@headlessui/react'
 import type { AudioBufferLike } from '@webaudio/encoding/common.js'
 import { encodeWAV, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
 import { createAudioRenderer } from '@webaudio/renderer.js'
-import { useCallback, useEffect, useRef, useState, type FunctionComponent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { saveFile } from '../../utilities/files.js'
 import { Button } from '../Button.js'
+import { Dropdown, type Option } from '../dropdown/Dropdown.js'
 import { ProgressBar } from '../progress-bar/ProgressBar.js'
-import { Radio } from '../radio/Radio.js'
-import { RadioGroup } from '../radio/RadioGroup.js'
 import { BaseDialog } from './BaseDialog.js'
+
+const ASSET_LOAD_TIMEOUT = makeNumeric('s', 30)
+
+type FileType = 'wav'
+type SampleRate = '44100' | '48000' | '96000'
 
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
   readonly mimeType: string
-  readonly label: string
-
   readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
 }
 
 const WAV: ExportFileType<WAVEncodingOptions> = {
   extension: 'wav',
   mimeType: 'audio/wav',
-  label: 'WAV',
   encode: encodeWAV
 }
+
+const FILE_TYPE_OPTIONS: readonly Option[] = [
+  { label: 'WAV', value: 'wav' }
+]
+
+const WAV_FORMAT_OPTIONS: readonly Option[] = [
+  { label: 'Float 32-bit', value: 'float32' },
+  { label: 'PCM 16-bit', value: 'pcm16' },
+  { label: 'PCM 24-bit', value: 'pcm24' },
+  { label: 'PCM 32-bit', value: 'pcm32' }
+]
+
+const SAMPLE_RATE_OPTIONS: readonly Option[] = [
+  { label: '44.1 kHz', value: '44100' },
+  { label: '48 kHz', value: '48000' },
+  { label: '96 kHz', value: '96000' }
+]
 
 function getDefaultFileName (type: ExportFileType): string {
   return `track.${type.extension}`
@@ -32,14 +51,15 @@ function getDefaultFileName (type: ExportFileType): string {
 
 async function renderAndSave<TEncodingOptions> (
   program: Program,
+  sampleRate: number,
   onProgress: (progress: number) => void,
   type: ExportFileType<TEncodingOptions>,
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
   const renderer = createAudioRenderer({
-    channels: 2, // stereo
-    sampleRate: 48_000,
-    assetLoadTimeout: makeNumeric('s', 30),
+    channels: 2,
+    sampleRate,
+    assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
       arrayBuffer: 0,
       audioBuffer: 0
@@ -81,7 +101,9 @@ export const ExportDialog: FunctionComponent<{
   const [progress, setProgress] = useState<number | undefined>(undefined)
   const [errors, setErrors] = useState<readonly Error[]>([])
 
-  const [format, setFormat] = useState<WAVFormat>('float32')
+  const [type, setType] = useState<FileType>(FILE_TYPE_OPTIONS[0].value as FileType)
+  const [format, setFormat] = useState<WAVFormat>(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+  const [sampleRate, setSampleRate] = useState<SampleRate>(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
 
   const onDialogClose = useCallback(() => {
     if (!exporting) {
@@ -89,15 +111,19 @@ export const ExportDialog: FunctionComponent<{
     }
   }, [onClose, exporting])
 
-  // reset when closing
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       ++tokenRef.current
-      setFormat('float32')
-      setExporting(false)
-      setProgress(undefined)
-      setErrors([])
+      return
     }
+
+    setType(FILE_TYPE_OPTIONS[0].value as FileType)
+    setFormat(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+    setSampleRate(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
+
+    setExporting(false)
+    setProgress(undefined)
+    setErrors([])
   }, [open])
 
   const onExport = useCallback(() => {
@@ -119,7 +145,9 @@ export const ExportDialog: FunctionComponent<{
 
     void (async () => {
       try {
-        const renderErrors = await renderAndSave(program, onProgress, WAV, { format })
+        const rate = Number.parseInt(sampleRate, 10)
+
+        const renderErrors = await renderAndSave(program, rate, onProgress, WAV, { format })
         if (tokenRef.current !== token) {
           return
         }
@@ -143,7 +171,7 @@ export const ExportDialog: FunctionComponent<{
         }
       }
     })()
-  }, [program, format, onClose])
+  }, [program, format, sampleRate, onClose])
 
   return (
     <BaseDialog
@@ -178,20 +206,50 @@ export const ExportDialog: FunctionComponent<{
         </div>
       )}
 
-      <div className='mb-4'>
-        Format: {WAV.label}
-      </div>
+      <ExportField label='File type'>
+        <Dropdown
+          options={FILE_TYPE_OPTIONS}
+          value={type}
+          onChange={(value) => setType(value as FileType)}
+          disabled={exporting}
+        />
+      </ExportField>
 
-      <div className='mb-4'>
-        <RadioGroup value={format} onChange={(value: string) => setFormat(value as WAVFormat)}>
-          <Radio disabled={exporting} value='float32'>32-bit float</Radio>
-          <Radio disabled={exporting} value='pcm16'>PCM 16-bit</Radio>
-          <Radio disabled={exporting} value='pcm24'>PCM 24-bit</Radio>
-          <Radio disabled={exporting} value='pcm32'>PCM 32-bit</Radio>
-        </RadioGroup>
-      </div>
+      {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+      {type === 'wav' && (
+        <ExportField label='WAV format'>
+          <Dropdown
+            options={WAV_FORMAT_OPTIONS}
+            value={format}
+            onChange={(value) => setFormat(value as WAVFormat)}
+            disabled={exporting}
+          />
+        </ExportField>
+      )}
+
+      <ExportField label='Sample rate'>
+        <Dropdown
+          options={SAMPLE_RATE_OPTIONS}
+          value={sampleRate}
+          onChange={(value) => setSampleRate(value as SampleRate)}
+          disabled={exporting}
+        />
+      </ExportField>
 
       <ProgressBar disabled={!exporting} progress={progress} />
     </BaseDialog>
+  )
+}
+
+const ExportField: FunctionComponent<PropsWithChildren<{
+  label: string
+}>> = ({ label, children }) => {
+  return (
+    <Field className='mb-4'>
+      <Label className='mb-1 block text-sm font-medium text-content-100'>
+        {label}
+      </Label>
+      {children}
+    </Field>
   )
 }
