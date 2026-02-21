@@ -4,24 +4,29 @@ export function pluralize (count: number, singular: string, plural = singular.at
   return `${count} ${count === 1 ? singular : plural}`
 }
 
-export function formatDuration (seconds: number): string {
-  const sign = seconds < 0 ? '-' : ''
+export function formatDuration (duration: Numeric<'s'>): string {
+  const sign = duration.value < 0 ? '-' : ''
 
-  const totalSeconds = Math.round(Math.abs(seconds))
+  const millis = Math.round(Math.abs(duration.value) * 1000)
 
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const secs = totalSeconds % 60
+  const hours = Math.floor(millis / (60 * 60 * 1000))
+  const minutes = Math.floor((millis % (60 * 60 * 1000)) / (60 * 1000))
+  const seconds = Math.floor((millis % (60 * 1000)) / 1000)
+  const milliseconds = String(millis % 1000).padStart(3, '0')
+
+  const parts: string[] = []
 
   if (hours > 0) {
-    return `${sign}${hours}h${String(minutes).padStart(2, '0')}m${String(secs).padStart(2, '0')}s`
+    parts.push(`${hours}h`)
   }
 
-  if (minutes > 0) {
-    return `${sign}${minutes}m${String(secs).padStart(2, '0')}s`
+  if (minutes > 0 || hours > 0) {
+    parts.push(`${minutes}m`)
   }
 
-  return `${sign}${secs}s`
+  parts.push(`${seconds}.${milliseconds}s`)
+
+  return sign + parts.join(' ')
 }
 
 interface BeatDurationParts {
@@ -66,4 +71,21 @@ export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerB
   }
 
   return `${sign < 0 ? '-' : ''}${parts.join(' ')}`
+}
+
+export function formatBytes (bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+
+  const units = ['kiB', 'MiB', 'GiB', 'TiB']
+  let unitIndex = -1
+  let value = bytes
+
+  do {
+    value /= 1024
+    ++unitIndex
+  } while (value >= 1024 && unitIndex < units.length - 1)
+
+  return `${value.toFixed(2)} ${units[unitIndex]}`
 }
