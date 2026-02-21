@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { encodeWAV } from '../../src/encoding/wav.js'
-import type { AudioBufferLike } from '../../src/encoding/common.js'
+import type { AudioBufferLike, AudioDescription } from '../../src/encoding/common.js'
+import { encodeWAV, estimateWAVSize } from '../../src/encoding/wav.js'
 
 class MockAudioBuffer implements AudioBufferLike {
   readonly sampleRate: number
@@ -22,6 +22,18 @@ class MockAudioBuffer implements AudioBufferLike {
 }
 
 describe('encoding/wav.ts', () => {
+  it('estimates file size correctly', () => {
+    const stereo10s: AudioDescription = {
+      numberOfChannels: 2,
+      length: 441_000 // 10 seconds at 44.1kHz
+    }
+
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm16' }), 44 + 441_000 * 2 * 2)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm24' }), 44 + 441_000 * 2 * 3)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm32' }), 44 + 441_000 * 2 * 4)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'float32' }), 44 + 441_000 * 2 * 4)
+  })
+
   it('encodes pcm16 correctly', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
     const audio = new MockAudioBuffer(44_100, [samples])

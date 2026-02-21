@@ -1,4 +1,4 @@
-import type { AudioBufferLike } from './common.js'
+import type { AudioBufferLike, AudioDescription } from './common.js'
 
 type PCMSampleBits = 16 | 24 | 32
 type FloatSampleBits = 32
@@ -16,6 +16,23 @@ const Constants = Object.freeze({
   BlockIdData: 'data'
 })
 
+/**
+ * Estimate the size of a WAV file (in bytes) given information about the audio data and encoding options.
+ */
+export function estimateWAVSize (audio: AudioDescription, options: WAVEncodingOptions): number {
+  const bitsPerSample = getBitsPerSample(options.format)
+  const blockAlign = audio.numberOfChannels * bitsPerSample / 8
+  const dataSize = audio.length * blockAlign
+
+  // headers size (RIFF chunk + fmt subchunk + data subchunk)
+  const headersSize = 44
+
+  return headersSize + dataSize
+}
+
+/**
+ * Encode an audio buffer as a WAV file.
+ */
 export function encodeWAV (audio: AudioBufferLike, options: WAVEncodingOptions): ArrayBuffer {
   const numChannels = audio.numberOfChannels
   const sampleRate = audio.sampleRate

@@ -1,17 +1,20 @@
 import { makeNumeric, type Program } from '@core/program.js'
+import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { Field, Label } from '@headlessui/react'
-import type { AudioBufferLike } from '@webaudio/encoding/common.js'
-import { encodeWAV, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
+import type { AudioBufferLike, AudioDescription } from '@webaudio/encoding/common.js'
+import { encodeWAV, estimateWAVSize, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
 import { createAudioRenderer } from '@webaudio/renderer.js'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { saveFile } from '../../utilities/files.js'
+import { formatBytes, formatDuration } from '../../utilities/strings.js'
 import { Button } from '../Button.js'
 import { Dropdown, type Option } from '../dropdown/Dropdown.js'
 import { ProgressBar } from '../progress-bar/ProgressBar.js'
 import { BaseDialog } from './BaseDialog.js'
 
 const ASSET_LOAD_TIMEOUT = makeNumeric('s', 30)
+const RENDER_CHANNELS = 2 // stereo
 
 type FileType = 'wav'
 type SampleRate = '44100' | '48000' | '96000'
@@ -19,12 +22,14 @@ type SampleRate = '44100' | '48000' | '96000'
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
   readonly mimeType: string
+  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => number
   readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
 }
 
 const WAV: ExportFileType<WAVEncodingOptions> = {
   extension: 'wav',
   mimeType: 'audio/wav',
+  estimateSize: estimateWAVSize,
   encode: encodeWAV
 }
 
@@ -57,7 +62,7 @@ async function renderAndSave<TEncodingOptions> (
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
   const renderer = createAudioRenderer({
-    channels: 2,
+    channels: RENDER_CHANNELS,
     sampleRate,
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
@@ -173,6 +178,32 @@ export const ExportDialog: FunctionComponent<{
     })()
   }, [program, format, sampleRate, onClose])
 
+  const trackDuration = useMemo(() => {
+    if (program == null) {
+      return undefined
+    }
+
+    const lengthInBeats = calculateTotalLength(program)
+    return beatsToSeconds(lengthInBeats, program.track.tempo)
+  }, [program])
+
+  const estimatedSize = useMemo(() => {
+    if (trackDuration == null) {
+      return undefined
+    }
+
+    const description: AudioDescription = {
+      length: Math.ceil(trackDuration.value * Number.parseInt(sampleRate, 10)),
+      numberOfChannels: RENDER_CHANNELS
+    }
+
+    switch (type) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      case 'wav':
+        return WAV.estimateSize(description, { format })
+    }
+  }, [trackDuration, type, format, sampleRate])
+
   return (
     <BaseDialog
       open={open}
@@ -235,6 +266,20 @@ export const ExportDialog: FunctionComponent<{
           disabled={exporting}
         />
       </ExportField>
+
+      <div className='flex flex-col mb-4'>
+        {trackDuration != null && (
+          <div>
+            Duration: {formatDuration(trackDuration)}
+          </div>
+        )}
+
+        {estimatedSize != null && (
+          <div>
+            File size: {formatBytes(estimatedSize)} (estimated)
+          </div>
+        )}
+      </div>
 
       <ProgressBar disabled={!exporting} progress={progress} />
     </BaseDialog>
