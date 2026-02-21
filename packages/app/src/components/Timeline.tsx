@@ -21,6 +21,12 @@ const TIMELINE_TRANSITION_EASING = 'ease'
 // Otherwise, selection works at bar granularity.
 const SELECTION_PIXELS_PER_NOTCH = 10
 
+// When zoomed far out, minor ticks (non-bar) become noisy and expensive.
+const MINOR_TICKS_MIN_BEAT_WIDTH = 10
+
+// When zoomed far out, bar labels are reduced to every N bars (stride).
+const SPARSE_BAR_LABELS_STRIDE_BARS = 4
+
 export const Timeline: FunctionComponent<{
   program: Program
   selection: BeatRange
@@ -108,15 +114,31 @@ const TimeRuler: FunctionComponent<{
 }> = ({ beatsPerBar, trackLength, beatWidth, selection, onSelect }) => {
   const totalBeats = Math.ceil(trackLength.value)
 
-  const marks = useMemo<readonly number[]>(() => {
-    const result: number[] = []
+  const { majorTickPath, minorTickPath, barLabelBeats } = useMemo(() => {
+    const isZoomedFarOut = beatWidth < MINOR_TICKS_MIN_BEAT_WIDTH
+    const majorStrideBeats = beatsPerBar * (isZoomedFarOut ? SPARSE_BAR_LABELS_STRIDE_BARS : 1)
+    const minorStrideBeats = isZoomedFarOut ? beatsPerBar : 1
 
-    for (let beat = 0; beat < totalBeats; ++beat) {
-      result.push(beat % beatsPerBar)
+    const majorTicks: string[] = []
+    const minorTicks: string[] = []
+    const labels: number[] = []
+
+    for (let beat = 0; beat <= totalBeats; beat += minorStrideBeats) {
+      const x = beat * beatWidth
+      if (beat % majorStrideBeats === 0) {
+        majorTicks.push(`M${x} 0 V16`)
+        labels.push(beat)
+      } else {
+        minorTicks.push(`M${x} 0 V4`)
+      }
     }
 
-    return result
-  }, [beatsPerBar, totalBeats])
+    return {
+      majorTickPath: majorTicks.join(' '),
+      minorTickPath: minorTicks.join(' '),
+      barLabelBeats: labels
+    }
+  }, [beatsPerBar, totalBeats, beatWidth])
 
   const timelineRef = useRef<HTMLDivElement>(null)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -190,7 +212,7 @@ const TimeRuler: FunctionComponent<{
       ref={timelineRef}
       onMouseDown={onMouseDown}
     >
-      {selection.end != null && (
+      {trackLength.value > 0 && selection.end != null && (
         <div
           className='absolute top-0 h-[calc(100%+0.5rem)] bg-accent-100 opacity-40 pointer-events-none -z-10'
           style={{
@@ -200,25 +222,31 @@ const TimeRuler: FunctionComponent<{
         />
       )}
 
-      {marks.map((mark, index) => (
-        <div
-          key={index}
-          className={clsx(
-            'border-l border-l-current',
-            mark === 0 ? 'h-4' : 'h-1'
-          )}
-          style={{
-            width: beatWidth,
-            transition: `width ${TIMELINE_TRANSITION_DURATION} ${TIMELINE_TRANSITION_EASING}`
-          }}
-        >
-          {mark === 0 && (
-            <div className='mt-0.5 ml-1'>
-              {index / beatsPerBar}
-            </div>
-          )}
-        </div>
-      ))}
+      <svg
+        className='block'
+        width={totalBeats * beatWidth}
+        height={16}
+        style={{
+          width: totalBeats * beatWidth,
+          height: 16,
+          transition: `width ${TIMELINE_TRANSITION_DURATION} ${TIMELINE_TRANSITION_EASING}`
+        }}
+      >
+        <path d={minorTickPath} stroke='currentColor' strokeWidth={1} />
+        <path d={majorTickPath} stroke='currentColor' strokeWidth={1} />
+
+        {barLabelBeats.map((beat) => (
+          <text
+            key={beat}
+            x={beat * beatWidth + 4}
+            y={12}
+            fill='currentColor'
+            style={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}
+          >
+            {beat / beatsPerBar}
+          </text>
+        ))}
+      </svg>
     </div>
   )
 }
