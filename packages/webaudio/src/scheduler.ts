@@ -124,20 +124,27 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
 }
 
 function insertSorted (array: ScheduledEvent[], event: ScheduledEvent): void {
+  // Fast path: append if the event is after all existing events.
   const last = array.at(-1)
   if (last == null || last.time <= event.time) {
     array.push(event)
     return
   }
 
-  for (let i = 0; i < array.length; ++i) {
-    if (array[i].time > event.time) {
-      array.splice(i, 0, event)
-      return
+  // Find the first index whose time is > event.time (upper bound).
+  let low = 0
+  let high = array.length
+
+  while (low < high) {
+    const mid = (low + high) >>> 1
+    if (array[mid].time <= event.time) {
+      low = mid + 1
+    } else {
+      high = mid
     }
   }
 
-  array.push(event)
+  array.splice(low, 0, event)
 }
 
 function flushBefore (array: ScheduledEvent[], threshold: number, offsetTime: number): void {
