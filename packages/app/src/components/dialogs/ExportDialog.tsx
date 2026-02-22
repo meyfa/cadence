@@ -3,6 +3,7 @@ import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { Field, Label } from '@headlessui/react'
 import type { AudioBufferLike, AudioDescription } from '@webaudio/encoding/common.js'
 import { encodeWAV, estimateWAVSize, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
+import { encodeAIFF, estimateAIFFSize, AIFFFormat, type AIFFEncodingOptions } from '@webaudio/encoding/aiff.js'
 import { createAudioRenderer } from '@webaudio/renderer.js'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompilationState } from '../../state/CompilationContext.js'
@@ -16,7 +17,7 @@ import { BaseDialog } from './BaseDialog.js'
 const ASSET_LOAD_TIMEOUT = makeNumeric('s', 30)
 const RENDER_CHANNELS = 2 // stereo
 
-type FileType = 'wav'
+type FileType = 'wav' | 'aiff'
 type SampleRate = '44100' | '48000' | '96000'
 
 interface ExportFileType<TEncodingOptions = never> {
@@ -33,11 +34,26 @@ const WAV: ExportFileType<WAVEncodingOptions> = {
   encode: encodeWAV
 }
 
+const AIFF: ExportFileType<AIFFEncodingOptions> = {
+  extension: 'aiff',
+  mimeType: 'audio/aiff',
+  estimateSize: estimateAIFFSize,
+  encode: encodeAIFF
+}
+
 const FILE_TYPE_OPTIONS: readonly Option[] = [
-  { label: 'WAV', value: 'wav' }
+  { label: 'WAV', value: 'wav' },
+  { label: 'AIFF', value: 'aiff' }
 ]
 
 const WAV_FORMAT_OPTIONS: readonly Option[] = [
+  { label: 'Float 32-bit', value: 'float32' },
+  { label: 'PCM 16-bit', value: 'pcm16' },
+  { label: 'PCM 24-bit', value: 'pcm24' },
+  { label: 'PCM 32-bit', value: 'pcm32' }
+]
+
+const AIFF_FORMAT_OPTIONS: readonly Option[] = [
   { label: 'Float 32-bit', value: 'float32' },
   { label: 'PCM 16-bit', value: 'pcm16' },
   { label: 'PCM 24-bit', value: 'pcm24' },
@@ -107,7 +123,8 @@ export const ExportDialog: FunctionComponent<{
   const [errors, setErrors] = useState<readonly Error[]>([])
 
   const [type, setType] = useState<FileType>(FILE_TYPE_OPTIONS[0].value as FileType)
-  const [format, setFormat] = useState<WAVFormat>(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+  const [wavFormat, setWavFormat] = useState<WAVFormat>(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+  const [aiffFormat, setAiffFormat] = useState<AIFFFormat>(AIFF_FORMAT_OPTIONS[0].value as AIFFFormat)
   const [sampleRate, setSampleRate] = useState<SampleRate>(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
 
   const onDialogClose = useCallback(() => {
@@ -123,7 +140,8 @@ export const ExportDialog: FunctionComponent<{
     }
 
     setType(FILE_TYPE_OPTIONS[0].value as FileType)
-    setFormat(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+    setWavFormat(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
+    setAiffFormat(AIFF_FORMAT_OPTIONS[0].value as AIFFFormat)
     setSampleRate(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
 
     setExporting(false)
@@ -135,6 +153,9 @@ export const ExportDialog: FunctionComponent<{
     if (program == null) {
       return
     }
+
+    const exportType = type === 'wav' ? WAV : AIFF
+    const format = type === 'wav' ? wavFormat : aiffFormat
 
     const token = ++tokenRef.current
 
@@ -152,7 +173,7 @@ export const ExportDialog: FunctionComponent<{
       try {
         const rate = Number.parseInt(sampleRate, 10)
 
-        const renderErrors = await renderAndSave(program, rate, onProgress, WAV, { format })
+        const renderErrors = await renderAndSave(program, rate, onProgress, exportType, { format })
         if (tokenRef.current !== token) {
           return
         }
@@ -176,7 +197,7 @@ export const ExportDialog: FunctionComponent<{
         }
       }
     })()
-  }, [program, format, sampleRate, onClose])
+  }, [program, type, wavFormat, aiffFormat, sampleRate, onClose])
 
   const trackDuration = useMemo(() => {
     if (program == null) {
@@ -192,17 +213,16 @@ export const ExportDialog: FunctionComponent<{
       return undefined
     }
 
+    const exportType = type === 'wav' ? WAV : AIFF
+    const format = type === 'wav' ? wavFormat : aiffFormat
+
     const description: AudioDescription = {
       length: Math.ceil(trackDuration.value * Number.parseInt(sampleRate, 10)),
       numberOfChannels: RENDER_CHANNELS
     }
 
-    switch (type) {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      case 'wav':
-        return WAV.estimateSize(description, { format })
-    }
-  }, [trackDuration, type, format, sampleRate])
+    return exportType.estimateSize(description, { format })
+  }, [trackDuration, type, wavFormat, aiffFormat, sampleRate])
 
   return (
     <BaseDialog
@@ -246,13 +266,23 @@ export const ExportDialog: FunctionComponent<{
         />
       </ExportField>
 
-      {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
       {type === 'wav' && (
         <ExportField label='WAV format'>
           <Dropdown
             options={WAV_FORMAT_OPTIONS}
-            value={format}
-            onChange={(value) => setFormat(value as WAVFormat)}
+            value={wavFormat}
+            onChange={(value) => setWavFormat(value as WAVFormat)}
+            disabled={exporting}
+          />
+        </ExportField>
+      )}
+
+      {type === 'aiff' && (
+        <ExportField label='AIFF format'>
+          <Dropdown
+            options={AIFF_FORMAT_OPTIONS}
+            value={aiffFormat}
+            onChange={(value) => setAiffFormat(value as AIFFFormat)}
             disabled={exporting}
           />
         </ExportField>
