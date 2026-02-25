@@ -42,11 +42,11 @@
     "vite": "7.1.11"
   },
   "dependencies": {
-    "@codemirror/commands": "6.10.1",
-    "@codemirror/language": "6.12.1",
-    "@codemirror/lint": "6.9.3",
+    "@codemirror/commands": "6.10.2",
+    "@codemirror/language": "6.12.2",
+    "@codemirror/lint": "6.9.4",
     "@codemirror/state": "6.5.4",
-    "@codemirror/view": "6.39.12",
+    "@codemirror/view": "6.39.15",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@headlessui/react": "2.2.9",
