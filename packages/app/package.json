@@ -16,6 +16,6 @@
     "@dnd-kit/utilities": "3.2.2",
     "@floating-ui/react-dom": "2.1.6",
     "react-error-boundary": "6.1.0",
-    "react-resizable-panels": "4.4.1"
+    "react-resizable-panels": "4.7.0"
   }
 }
