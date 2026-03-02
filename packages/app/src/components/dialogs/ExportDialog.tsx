@@ -1,9 +1,10 @@
-import { makeNumeric, type Program } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
+import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { Field, Label } from '@headlessui/react'
+import { AIFFFormat, encodeAIFF, estimateAIFFSize, type AIFFEncodingOptions } from '@webaudio/encoding/aiff.js'
 import type { AudioBufferLike, AudioDescription } from '@webaudio/encoding/common.js'
 import { encodeWAV, estimateWAVSize, WAVFormat, type WAVEncodingOptions } from '@webaudio/encoding/wav.js'
-import { encodeAIFF, estimateAIFFSize, AIFFFormat, type AIFFEncodingOptions } from '@webaudio/encoding/aiff.js'
 import { createAudioRenderer } from '@webaudio/renderer.js'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompilationState } from '../../state/CompilationContext.js'
@@ -14,7 +15,7 @@ import { Dropdown, type Option } from '../dropdown/Dropdown.js'
 import { ProgressBar } from '../progress-bar/ProgressBar.js'
 import { BaseDialog } from './BaseDialog.js'
 
-const ASSET_LOAD_TIMEOUT = makeNumeric('s', 30)
+const ASSET_LOAD_TIMEOUT = numeric('s', 30)
 const RENDER_CHANNELS = 2 // stereo
 
 type FileType = 'wav' | 'aiff'

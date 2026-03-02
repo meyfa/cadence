@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/program.js'
+import type { Numeric } from '@core/numeric.js'
 import { VolumeDownOutlined, VolumeOffOutlined, VolumeUpOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 

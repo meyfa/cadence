@@ -1,5 +1,5 @@
 import { MutableObservable, type Observable } from '@core/observable.js'
-import { makeNumeric, type Numeric } from '@core/program.js'
+import { numeric, type Numeric } from '@core/numeric.js'
 import { createScheduler } from './scheduler.js'
 import { createIntervalTimeTracker } from './time/interval.js'
 import { createWorkletTimeTracker } from './time/worklet.js'
@@ -33,8 +33,8 @@ const TICK_INTERVAL = 0.025
 const SCHEDULE_AHEAD_TIME = 0.05
 
 // Assuming faster than real-time rendering, so less frequent updates should be sufficient for offline
-const TIME_UPDATE_INTERVAL_ONLINE = makeNumeric('s', 0.050)
-const TIME_UPDATE_INTERVAL_OFFLINE = makeNumeric('s', 0.100)
+const TIME_UPDATE_INTERVAL_ONLINE = numeric('s', 0.050)
+const TIME_UPDATE_INTERVAL_OFFLINE = numeric('s', 0.100)
 
 export function createOnlineTransport (): OnlineTransport {
   const cleanupHooks: Array<() => void> = []
@@ -54,7 +54,7 @@ export function createOnlineTransport (): OnlineTransport {
   let offsetTime = ctx.currentTime
   let started = false
 
-  const time = new MutableObservable(makeNumeric('s', 0))
+  const time = new MutableObservable(numeric('s', 0))
 
   const scheduler = createScheduler({
     now: () => ctx.currentTime,
@@ -78,7 +78,7 @@ export function createOnlineTransport (): OnlineTransport {
     const tracker = await (async () => {
       const options = {
         updateInterval: TIME_UPDATE_INTERVAL_ONLINE,
-        offsetTime: makeNumeric('s', offsetTime)
+        offsetTime: numeric('s', offsetTime)
       }
 
       try {
@@ -133,7 +133,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
     try {
       const tracker = await createWorkletTimeTracker(ctx, output, {
         updateInterval: TIME_UPDATE_INTERVAL_OFFLINE,
-        offsetTime: makeNumeric('s', 0)
+        offsetTime: numeric('s', 0)
       })
 
       cleanupHooks.push(() => tracker.dispose())

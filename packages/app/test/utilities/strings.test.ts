@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import { formatBytes, formatDuration } from '../../src/utilities/strings.js'
 import assert from 'node:assert'
-import { makeNumeric } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
 
 describe('utilities/strings.ts', () => {
   describe('formatDuration', () => {
@@ -24,7 +24,7 @@ describe('utilities/strings.ts', () => {
       ]
 
       for (const { input, expected } of testCases) {
-        const result = formatDuration(makeNumeric('s', input))
+        const result = formatDuration(numeric('s', input))
         assert.strictEqual(result, expected, `Expected formatDuration(${input}) to return "${expected}", got "${result}"`)
       }
     })

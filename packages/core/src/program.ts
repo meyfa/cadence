@@ -1,13 +1,4 @@
-export type Unit = undefined | 'bpm' | 'beats' | 's' | 'hz' | 'db'
-
-export interface Numeric<U extends Unit> {
-  readonly unit: U
-  readonly value: number
-}
-
-export function makeNumeric<U extends Unit> (unit: U, value: number): Numeric<U> {
-  return { unit, value }
-}
+import type { Numeric, Unit } from './numeric.js'
 
 export type Note = `${'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'}${'' | '#' | 'b'}`
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10

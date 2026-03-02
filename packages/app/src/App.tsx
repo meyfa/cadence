@@ -1,7 +1,7 @@
-import { makeNumeric } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
 import { parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor/state/state.js'
 import { BrowserLocalStorage } from '@editor/storage.js'
-import { type CompileOptions } from '@language/compiler/compiler.js'
+import type { CompileOptions } from '@language/compiler/compiler.js'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio/engine.js'
 import { FunctionComponent, useEffect, useLayoutEffect, useState } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
@@ -39,7 +39,7 @@ const likelyMobile = 'userAgentData' in navigator && 'mobile' in (navigator as a
   : matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height) <= 768
 
 const audioEngineOptions = {
-  assetLoadTimeout: makeNumeric('s', 5),
+  assetLoadTimeout: numeric('s', 5),
   cacheLimits: lowMemoryDevice === true || likelyMobile
     ? {
         arrayBuffer: 60 * 1024 * 1024, // compressed: 60 MB
@@ -54,7 +54,7 @@ const audioEngineOptions = {
 const defaultState: CadenceEditorState = {
   settings: {
     theme: 'dark',
-    outputGain: makeNumeric('db', -12)
+    outputGain: numeric('db', -12)
   },
   layout: defaultLayout,
   code: demoCode

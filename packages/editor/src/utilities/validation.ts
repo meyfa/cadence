@@ -1,4 +1,4 @@
-import type { Unit } from '@core/program.js'
+import type { Unit } from '@core/numeric.js'
 import { literal, number, object, string, type Struct, type StructError } from 'superstruct'
 
 export type StructValidation<T> = [StructError, undefined] | [undefined, T]

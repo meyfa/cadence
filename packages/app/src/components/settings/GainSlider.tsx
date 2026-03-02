@@ -1,4 +1,4 @@
-import { makeNumeric, type Numeric } from '@core/program.js'
+import { numeric, type Numeric } from '@core/numeric.js'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../Slider.js'
 import { GainIcon } from './GainIcon.js'
@@ -18,7 +18,7 @@ export const GainSlider: FunctionComponent<{
       min={-60}
       max={0}
       value={gain.value}
-      onChange={(value) => onChange(makeNumeric('db', value))}
+      onChange={(value) => onChange(numeric('db', value))}
       step={1}
       icon={<GainIcon gain={gain} />}
       collapsible={collapsible}

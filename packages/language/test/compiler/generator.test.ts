@@ -1,4 +1,5 @@
-import { makeNumeric, type Program } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
+import type { Program } from '@core/program.js'
 import { getEmptySourceRange } from '@language/range.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -28,7 +29,7 @@ describe('compiler/generator.ts', () => {
       instruments: new Map(),
       automations: new Map(),
       track: {
-        tempo: makeNumeric('bpm', 120),
+        tempo: numeric('bpm', 120),
         parts: []
       },
       mixer: {
@@ -57,7 +58,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 140))
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 140))
   })
 
   it('should clamp track tempo to maximum', () => {
@@ -79,7 +80,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 300))
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 300))
   })
 
   it('should support tempo from a variable', () => {
@@ -115,7 +116,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 180))
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 180))
   })
 
   it('should support imported names', () => {
@@ -195,7 +196,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.tempo, makeNumeric('bpm', 140))
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 140))
   })
 
   it('should allow parts and buses to shadow top-level variables', () => {
@@ -266,7 +267,7 @@ describe('compiler/generator.ts', () => {
       ]
     })
     const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.parts[0].length, makeNumeric('beats', 0))
+    assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 0))
   })
 
   it('should support buses as sources in mixer', () => {

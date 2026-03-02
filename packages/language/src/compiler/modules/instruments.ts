@@ -1,8 +1,9 @@
-import { type Instrument, type InstrumentId, isPitch, makeNumeric, type Numeric, type Parameter, type ParameterId, type Unit } from '@core/program.js'
-import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type InstrumentValue, type Value } from '../types.js'
+import { numeric, type Numeric, type Unit } from '@core/numeric.js'
+import { isPitch, type Instrument, type InstrumentId, type Parameter, type ParameterId } from '@core/program.js'
 import type { FunctionContext } from '../functions.js'
+import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type InstrumentValue, type Value } from '../types.js'
 
-const UNITY_GAIN = makeNumeric('db', 0)
+const UNITY_GAIN = numeric('db', 0)
 
 function allocateInstrument (context: FunctionContext, data: Omit<Instrument, 'id'>): InstrumentValue {
   const currentMaxId = Math.max(0, ...Array.from(context.instruments.keys()))

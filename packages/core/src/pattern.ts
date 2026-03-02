@@ -1,6 +1,7 @@
-import { makeNumeric, type NoteEvent, type Numeric, type Pattern, type Step } from './program.js'
+import { type Numeric, numeric } from './numeric.js'
+import type { NoteEvent, Pattern, Step } from './program.js'
 
-const zeroBeats = makeNumeric('beats', 0)
+const zeroBeats = numeric('beats', 0)
 
 const emptyPattern: Pattern = {
   length: zeroBeats,
@@ -22,7 +23,7 @@ function getSumOfLengths (patterns: readonly Pattern[]): Pattern['length'] {
     sum += pattern.length.value
   }
 
-  return makeNumeric('beats', sum)
+  return numeric('beats', sum)
 }
 
 function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
@@ -35,7 +36,7 @@ function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
     max = Math.max(max, pattern.length.value)
   }
 
-  return makeNumeric('beats', max)
+  return numeric('beats', max)
 }
 
 function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLength = 1.0): void {
@@ -43,10 +44,10 @@ function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLen
     return
   }
 
-  const time = makeNumeric('beats', offset)
+  const time = numeric('beats', offset)
 
   const stepGate = baseLength * (step.gate?.value ?? step.length?.value ?? 1)
-  const gate = makeNumeric('beats', stepGate)
+  const gate = numeric('beats', stepGate)
 
   events.push(step.value === 'x' ? { time, gate } : { time, gate, pitch: step.value })
 }
@@ -77,7 +78,7 @@ export function createSerialPattern (steps: readonly Step[], subdivision: number
   }
 
   return {
-    length: makeNumeric('beats', offset),
+    length: numeric('beats', offset),
     evaluate: () => events
   }
 }
@@ -105,7 +106,7 @@ export function createParallelPattern (steps: readonly Step[]): Pattern {
   }
 
   return {
-    length: makeNumeric('beats', maxLength),
+    length: numeric('beats', maxLength),
     evaluate: () => events
   }
 }
@@ -145,7 +146,7 @@ export function concatPatterns (patterns: readonly Pattern[]): Pattern {
         for (const event of pattern.evaluate()) {
           yield {
             ...event,
-            time: makeNumeric('beats', event.time.value + offset)
+            time: numeric('beats', event.time.value + offset)
           }
         }
       }
@@ -234,7 +235,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
             hasEvents = true
             yield {
               ...event,
-              time: makeNumeric('beats', event.time.value + offset)
+              time: numeric('beats', event.time.value + offset)
             }
           }
 
@@ -265,7 +266,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
           hasEvents = true
           yield {
             ...event,
-            time: makeNumeric('beats', event.time.value + offset)
+            time: numeric('beats', event.time.value + offset)
           }
         }
 
@@ -302,15 +303,15 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
 
   return {
     // infinite pattern remains infinite, otherwise scale length
-    length: pattern.length != null ? makeNumeric('beats', pattern.length.value * times) : undefined,
+    length: pattern.length != null ? numeric('beats', pattern.length.value * times) : undefined,
 
     evaluate: function* () {
       for (const event of pattern.evaluate()) {
         yield {
           ...event,
-          time: makeNumeric('beats', event.time.value * times),
+          time: numeric('beats', event.time.value * times),
           gate: event.gate != null
-            ? makeNumeric('beats', event.gate.value * times)
+            ? numeric('beats', event.gate.value * times)
             : undefined
         }
       }

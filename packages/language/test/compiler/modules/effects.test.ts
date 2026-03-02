@@ -1,5 +1,5 @@
-import { makeNumeric } from '@core/program.js'
-import { type FunctionContext } from '@language/compiler/functions.js'
+import { numeric } from '@core/numeric.js'
+import type { FunctionContext } from '@language/compiler/functions.js'
 import { effectsModule } from '@language/compiler/modules/effects.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -14,7 +14,7 @@ function createFunctionContext (): FunctionContext {
 
 describe('compiler/modules/effects.ts', () => {
   // helper to create Numeric<'beats'>
-  const beats = (value: number) => makeNumeric('beats', value)
+  const beats = (value: number) => numeric('beats', value)
 
   const effects = effectsModule.data
 
@@ -25,12 +25,12 @@ describe('compiler/modules/effects.ts', () => {
     it('should create gain effect', () => {
       const context = createFunctionContext()
       const result = gain.data.invoke(context, {
-        gain: makeNumeric('db', -6)
+        gain: numeric('db', -6)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'gain',
-        gain: makeNumeric('db', -6)
+        gain: numeric('db', -6)
       })
     })
   })
@@ -42,12 +42,12 @@ describe('compiler/modules/effects.ts', () => {
     it('should create pan effect', () => {
       const context = createFunctionContext()
       const result = pan.data.invoke(context, {
-        pan: makeNumeric(undefined, 0.5)
+        pan: numeric(undefined, 0.5)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'pan',
-        pan: makeNumeric(undefined, 0.5)
+        pan: numeric(undefined, 0.5)
       })
     })
   })
@@ -59,12 +59,12 @@ describe('compiler/modules/effects.ts', () => {
     it('should create lowpass effect', () => {
       const context = createFunctionContext()
       const result = lowpass.data.invoke(context, {
-        frequency: makeNumeric('hz', 1000)
+        frequency: numeric('hz', 1000)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'lowpass',
-        frequency: makeNumeric('hz', 1000)
+        frequency: numeric('hz', 1000)
       })
     })
   })
@@ -76,12 +76,12 @@ describe('compiler/modules/effects.ts', () => {
     it('should create highpass effect', () => {
       const context = createFunctionContext()
       const result = highpass.data.invoke(context, {
-        frequency: makeNumeric('hz', 200)
+        frequency: numeric('hz', 200)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'highpass',
-        frequency: makeNumeric('hz', 200)
+        frequency: numeric('hz', 200)
       })
     })
   })
@@ -94,13 +94,13 @@ describe('compiler/modules/effects.ts', () => {
       const context = createFunctionContext()
       const result = delay.data.invoke(context, {
         time: beats(0.5),
-        feedback: makeNumeric(undefined, 0.3)
+        feedback: numeric(undefined, 0.3)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'delay',
         time: beats(0.5),
-        feedback: makeNumeric(undefined, 0.3)
+        feedback: numeric(undefined, 0.3)
       })
     })
   })
@@ -112,14 +112,14 @@ describe('compiler/modules/effects.ts', () => {
     it('should create reverb effect', () => {
       const context = createFunctionContext()
       const result = reverb.data.invoke(context, {
-        decay: makeNumeric('s', 2.0),
-        mix: makeNumeric(undefined, 0.4)
+        decay: numeric('s', 2.0),
+        mix: numeric(undefined, 0.4)
       })
 
       assert.deepStrictEqual(result.data, {
         type: 'reverb',
-        decay: makeNumeric('s', 2.0),
-        mix: makeNumeric(undefined, 0.4)
+        decay: numeric('s', 2.0),
+        mix: numeric(undefined, 0.4)
       })
     })
   })

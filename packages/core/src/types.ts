@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/program.js'
+import type { Numeric } from './numeric.js'
 
 export interface BeatRange {
   readonly start: Numeric<'beats'>
