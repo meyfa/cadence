@@ -1,5 +1,6 @@
+import { numeric, type Numeric } from '@core/numeric.js'
 import { MutableObservable, type Observable } from '@core/observable.js'
-import { makeNumeric, type Numeric, type Program } from '@core/program.js'
+import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import type { AudioFetcher } from './assets/fetcher.js'
@@ -79,7 +80,7 @@ export function createAudioSession (
       cleanupHooks.push(transport.time.subscribe((time) => {
         if (!graph.disposed) {
           const clamped = Math.max(startTime.value, time.value)
-          position.set(makeNumeric('beats', clamped * program.track.tempo.value / 60))
+          position.set(numeric('beats', clamped * program.track.tempo.value / 60))
         }
       }))
     }).catch((err: unknown) => {

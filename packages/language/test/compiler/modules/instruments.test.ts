@@ -1,5 +1,5 @@
-import { makeNumeric } from '@core/program.js'
-import { type FunctionContext } from '@language/compiler/functions.js'
+import { numeric } from '@core/numeric.js'
+import type { FunctionContext } from '@language/compiler/functions.js'
 import { instrumentsModule } from '@language/compiler/modules/instruments.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -24,9 +24,9 @@ describe('compiler/modules/instruments.ts', () => {
 
       const result = sample.data.invoke(context, {
         url: 'https://example.com/kick.wav',
-        gain: makeNumeric('db', -3),
+        gain: numeric('db', -3),
         root_note: 'C4',
-        length: makeNumeric('s', 1.5)
+        length: numeric('s', 1.5)
       })
 
       assert.deepStrictEqual(result.data, {
@@ -34,10 +34,10 @@ describe('compiler/modules/instruments.ts', () => {
         sampleUrl: 'https://example.com/kick.wav',
         gain: {
           id: 1,
-          initial: makeNumeric('db', -3)
+          initial: numeric('db', -3)
         },
         rootNote: 'C4',
-        length: makeNumeric('s', 1.5)
+        length: numeric('s', 1.5)
       })
 
       assert.strictEqual(context.instruments.size, 1)
@@ -58,7 +58,7 @@ describe('compiler/modules/instruments.ts', () => {
         sampleUrl: 'https://example.com/snare.wav',
         gain: {
           id: 1,
-          initial: makeNumeric('db', 0)
+          initial: numeric('db', 0)
         },
         rootNote: undefined,
         length: undefined

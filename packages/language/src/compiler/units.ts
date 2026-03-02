@@ -1,4 +1,4 @@
-import type { Unit } from '@core/program.js'
+import type { Unit } from '@core/numeric.js'
 import { NumberType, type NumberValue } from './types.js'
 
 interface Constants {

@@ -1,5 +1,5 @@
 import type { Observable } from '@core/observable.js'
-import type { Numeric } from '@core/program.js'
+import type { Numeric } from '@core/numeric.js'
 
 export interface TimeTrackerOptions {
   readonly updateInterval: Numeric<'s'>

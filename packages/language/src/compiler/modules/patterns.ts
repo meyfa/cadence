@@ -1,5 +1,5 @@
 import { createSerialPattern, loopPattern } from '@core/pattern.js'
-import { makeNumeric } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
 import { FunctionType, ModuleType, NumberType, PatternType, Value } from '../types.js'
 
 const loop = FunctionType.of({
@@ -25,7 +25,7 @@ const loop = FunctionType.of({
       return PatternType.of(loopPattern(pattern))
     }
 
-    const duration = makeNumeric('beats', pattern.length.value * factor)
+    const duration = numeric('beats', pattern.length.value * factor)
 
     return PatternType.of(loopPattern(pattern, duration))
   }

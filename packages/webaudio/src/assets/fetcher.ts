@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/program.js'
+import type { Numeric } from '@core/numeric.js'
 import { createAssetCache, type AssetCache } from './cache.js'
 
 export interface AudioFetcherOptions {

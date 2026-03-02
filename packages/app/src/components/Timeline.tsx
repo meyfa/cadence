@@ -1,4 +1,5 @@
-import { makeNumeric, type Numeric, type Part, type Program } from '@core/program.js'
+import { numeric, type Numeric } from '@core/numeric.js'
+import type { Part, Program } from '@core/program.js'
 import { calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import clsx from 'clsx'
@@ -160,7 +161,7 @@ const TimeRuler: FunctionComponent<{
     const snappedIndex = Math.round(positionInBeats / granularityBeats) * granularityBeats
     const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength.value))
 
-    return makeNumeric('beats', clampedIndex)
+    return numeric('beats', clampedIndex)
   }, [beatsPerBar, beatWidth, trackLength])
 
   const updateSelection = useCallback((event: MouseEvent | React.MouseEvent) => {

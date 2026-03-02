@@ -1,4 +1,5 @@
-import type { Numeric, Program } from '@core/program.js'
+import type { Numeric } from '@core/numeric.js'
+import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { createAudioFetcher } from './assets/fetcher.js'
 import { createAudioGraph } from './graph.js'

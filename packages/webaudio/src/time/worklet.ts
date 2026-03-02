@@ -1,5 +1,5 @@
 import { MutableObservable } from '@core/observable.js'
-import { makeNumeric } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 const PROCESSOR_NAME = 'cadence-time-tracker'
@@ -12,7 +12,7 @@ export async function createWorkletTimeTracker (
 ): Promise<TimeTracker> {
   const { updateInterval, offsetTime } = options
 
-  const time = new MutableObservable(makeNumeric('s', 0))
+  const time = new MutableObservable(numeric('s', 0))
 
   await ensureModuleLoaded(ctx)
 
@@ -34,7 +34,7 @@ export async function createWorkletTimeTracker (
 
     if (event.data.type === 'time') {
       const { currentTime } = event.data as unknown as { currentTime: number }
-      time.set(makeNumeric('s', currentTime - offsetTime.value))
+      time.set(numeric('s', currentTime - offsetTime.value))
     }
   }
 

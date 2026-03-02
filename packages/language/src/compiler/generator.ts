@@ -1,5 +1,6 @@
+import { numeric, type Numeric, type Unit } from '@core/numeric.js'
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
-import { makeNumeric, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type ParameterId, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core/program.js'
+import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRouting, Mixer, MixerRouting, ParameterId, Part, Pattern, Program, Step, Track } from '@core/program.js'
 import * as ast from '../parser/ast.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { createCurve, renderCurvePoints } from './curves.js'
@@ -37,7 +38,7 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
   const track = tracks.length > 0
     ? generateTrack(context, tracks[0])
     : {
-        tempo: makeNumeric('bpm', options.tempo.default),
+        tempo: numeric('bpm', options.tempo.default),
         parts: []
       }
 
@@ -108,7 +109,7 @@ function nonNull<T> (value: T | null | undefined): NonNullable<T> {
 
 function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: number): Numeric<U> {
   return value.value < minimum || value.value > maximum
-    ? makeNumeric(value.unit, Math.min(Math.max(value.value, minimum), maximum))
+    ? numeric(value.unit, Math.min(Math.max(value.value, minimum), maximum))
     : value
 }
 
@@ -158,7 +159,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 
   const parts: Part[] = []
 
-  let currentTime = makeNumeric('beats', 0)
+  let currentTime = numeric('beats', 0)
   for (const partStatement of track.parts) {
     const part = generatePart(trackContext, partStatement, currentTime)
     parts.push(part)
@@ -166,14 +167,14 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
     assert(!trackContext.resolutions.has(part.name))
     trackContext.resolutions.set(part.name, PartType.of(part))
 
-    currentTime = makeNumeric('beats', currentTime.value + part.length.value)
+    currentTime = numeric('beats', currentTime.value + part.length.value)
   }
 
   const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
     ? clamped(properties.tempo, options.tempo.minimum, options.tempo.maximum)
-    : makeNumeric('bpm', options.tempo.default)
+    : numeric('bpm', options.tempo.default)
 
   return { tempo, parts }
 }
@@ -183,7 +184,7 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   const properties = resolveArgumentList(context, part.properties, partSchema)
 
   const length = clamped(properties.length, 0, Number.POSITIVE_INFINITY)
-  const endTime = makeNumeric('beats', startTime.value + length.value)
+  const endTime = numeric('beats', startTime.value + length.value)
 
   const routings = part.routings.map((routing): InstrumentRouting => {
     const source = PatternType.cast(resolve(context, routing.source))

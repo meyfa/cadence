@@ -1,6 +1,6 @@
 import { createSerialPattern, renderPatternEvents } from '@core/pattern.js'
-import { makeNumeric } from '@core/program.js'
-import { type FunctionContext } from '@language/compiler/functions.js'
+import { numeric } from '@core/numeric.js'
+import type { FunctionContext } from '@language/compiler/functions.js'
 import { patternsModule } from '@language/compiler/modules/patterns.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -15,7 +15,7 @@ function createFunctionContext (): FunctionContext {
 
 describe('compiler/modules/patterns.ts', () => {
   // helper to create Numeric<'beats'>
-  const beats = (value: number) => makeNumeric('beats', value)
+  const beats = (value: number) => numeric('beats', value)
 
   const patterns = patternsModule.data
 
@@ -89,7 +89,7 @@ describe('compiler/modules/patterns.ts', () => {
 
       const result = loop.data.invoke(context, {
         pattern,
-        times: makeNumeric(undefined, 3)
+        times: numeric(undefined, 3)
       })
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length, beats(1.5 * 3))
@@ -116,7 +116,7 @@ describe('compiler/modules/patterns.ts', () => {
 
       const result = loop.data.invoke(context, {
         pattern,
-        times: makeNumeric(undefined, 0)
+        times: numeric(undefined, 0)
       })
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length?.value, 0)
@@ -135,7 +135,7 @@ describe('compiler/modules/patterns.ts', () => {
 
       const result = loop.data.invoke(context, {
         pattern,
-        times: makeNumeric(undefined, -2)
+        times: numeric(undefined, -2)
       })
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length?.value, 0)
@@ -154,7 +154,7 @@ describe('compiler/modules/patterns.ts', () => {
 
       const result = loop.data.invoke(context, {
         pattern,
-        times: makeNumeric(undefined, 0.5)
+        times: numeric(undefined, 0.5)
       })
       const resultPattern = PatternType.cast(result)
       assert.deepStrictEqual(resultPattern.data.length, beats(1.5 * 0.5))

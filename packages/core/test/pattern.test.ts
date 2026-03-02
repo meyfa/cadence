@@ -1,11 +1,11 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { numeric } from '../src/numeric.js'
 import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../src/pattern.js'
-import { makeNumeric } from '../src/program.js'
 
 describe('pattern.ts', () => {
   // helper to create Numeric<'beats'>
-  const beats = (value: number) => makeNumeric('beats', value)
+  const beats = (value: number) => numeric('beats', value)
 
   describe('createSerialPattern()', () => {
     it('should create a finite pattern with the correct length and events', () => {
@@ -42,9 +42,9 @@ describe('pattern.ts', () => {
 
     it('should handle steps with custom lengths', () => {
       const pattern = createSerialPattern([
-        { value: 'x', length: makeNumeric(undefined, 2) },
+        { value: 'x', length: numeric(undefined, 2) },
         { value: '-' },
-        { value: 'x', length: makeNumeric(undefined, 0.5) }
+        { value: 'x', length: numeric(undefined, 0.5) }
       ], 1)
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -55,8 +55,8 @@ describe('pattern.ts', () => {
 
     it('should skip steps with non-positive lengths', () => {
       const pattern = createSerialPattern([
-        { value: 'C1', length: makeNumeric(undefined, 0) },
-        { value: 'C2', length: makeNumeric(undefined, -1) },
+        { value: 'C1', length: numeric(undefined, 0) },
+        { value: 'C2', length: numeric(undefined, -1) },
         { value: 'C3' }
       ], 1)
       assert.strictEqual(pattern.length?.value, 1)
@@ -67,9 +67,9 @@ describe('pattern.ts', () => {
 
     it('should handle steps with custom gates', () => {
       const pattern = createSerialPattern([
-        { value: 'x', gate: makeNumeric(undefined, 0.5) },
+        { value: 'x', gate: numeric(undefined, 0.5) },
         { value: '-' },
-        { value: 'x', gate: makeNumeric(undefined, 0.25) }
+        { value: 'x', gate: numeric(undefined, 0.25) }
       ], 1)
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -80,9 +80,9 @@ describe('pattern.ts', () => {
 
     it('should handle steps with both custom lengths and gates', () => {
       const pattern = createSerialPattern([
-        { value: 'x', length: makeNumeric(undefined, 2), gate: makeNumeric(undefined, 1.5) },
+        { value: 'x', length: numeric(undefined, 2), gate: numeric(undefined, 1.5) },
         { value: '-' },
-        { value: 'x', length: makeNumeric(undefined, 0.5), gate: makeNumeric(undefined, 0.1) }
+        { value: 'x', length: numeric(undefined, 0.5), gate: numeric(undefined, 0.1) }
       ], 1)
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -114,9 +114,9 @@ describe('pattern.ts', () => {
 
     it('should use the maximum step length as the pattern length', () => {
       const pattern = createParallelPattern([
-        { value: 'x', length: makeNumeric(undefined, 2) },
+        { value: 'x', length: numeric(undefined, 2) },
         { value: '-' },
-        { value: 'x', length: makeNumeric(undefined, 0.5) }
+        { value: 'x', length: numeric(undefined, 0.5) }
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -127,9 +127,9 @@ describe('pattern.ts', () => {
 
     it('should handle steps with custom gates', () => {
       const pattern = createParallelPattern([
-        { value: 'x', gate: makeNumeric(undefined, 0.5) },
+        { value: 'x', gate: numeric(undefined, 0.5) },
         { value: '-' },
-        { value: 'x', gate: makeNumeric(undefined, 0.25) }
+        { value: 'x', gate: numeric(undefined, 0.25) }
       ])
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -140,9 +140,9 @@ describe('pattern.ts', () => {
 
     it('should handle steps with both custom lengths and gates', () => {
       const pattern = createParallelPattern([
-        { value: 'x', length: makeNumeric(undefined, 2), gate: makeNumeric(undefined, 1.5) },
+        { value: 'x', length: numeric(undefined, 2), gate: numeric(undefined, 1.5) },
         { value: '-' },
-        { value: 'x', length: makeNumeric(undefined, 0.5), gate: makeNumeric(undefined, 0.1) }
+        { value: 'x', length: numeric(undefined, 0.5), gate: numeric(undefined, 0.1) }
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [

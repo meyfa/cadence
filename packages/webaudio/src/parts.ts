@@ -1,10 +1,11 @@
+import { numeric } from '@core/numeric.js'
 import { renderPatternEvents } from '@core/pattern.js'
-import { makeNumeric, type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
+import { type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { InstrumentInstance } from './instances.js'
 
-const BEAT = makeNumeric('beats', 1)
+const BEAT = numeric('beats', 1)
 
 export function scheduleNoteEvents (
   program: Program,

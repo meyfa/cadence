@@ -1,4 +1,4 @@
-import type { Unit } from '@core/program.js'
+import type { Unit } from '@core/numeric.js'
 import * as ast from '../parser/ast.js'
 import type { SourceRange } from '../range.js'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'

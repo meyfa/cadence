@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { makeNumeric, type ParameterId } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
+import type { ParameterId } from '@core/program.js'
 import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -188,7 +189,7 @@ describe('compiler/types.ts', () => {
     it('should identify parameter values correctly', () => {
       const value = ParameterType.of({
         id: 42 as ParameterId,
-        initial: makeNumeric('db', -6)
+        initial: numeric('db', -6)
       })
       assert.strictEqual(ParameterType.is(value), true)
       assert.strictEqual(ParameterType.with('db').is(value), true)
@@ -200,8 +201,8 @@ describe('compiler/types.ts', () => {
       const value = CurveType.of({
         type: 'linear',
         unit: 'db',
-        start: makeNumeric('db', -6),
-        end: makeNumeric('db', 0)
+        start: numeric('db', -6),
+        end: numeric('db', 0)
       })
       assert.strictEqual(CurveType.is(value), true)
       assert.strictEqual(CurveType.with('db').is(value), true)
@@ -262,7 +263,7 @@ describe('compiler/types.ts', () => {
     it('should cast parameter values correctly', () => {
       const value: Value = ParameterType.of({
         id: 42 as ParameterId,
-        initial: makeNumeric('db', -3)
+        initial: numeric('db', -3)
       })
 
       const casted = ParameterType.cast(value)
@@ -509,13 +510,13 @@ describe('compiler/types.ts', () => {
       it('should narrow type correctly', () => {
         const param1 = ParameterType.of({
           id: 1 as ParameterId,
-          initial: makeNumeric(undefined, 0)
+          initial: numeric(undefined, 0)
         })
         expectTypeEquals<ParameterValue<undefined>, typeof param1>()
 
         const param2 = ParameterType.of({
           id: 2 as ParameterId,
-          initial: makeNumeric('db', -6)
+          initial: numeric('db', -6)
         })
         expectTypeEquals<ParameterValue<'db'>, typeof param2>()
 
@@ -580,7 +581,7 @@ describe('compiler/types.ts', () => {
           sampleUrl: 'sample.wav',
           gain: {
             id: 2 as ParameterId,
-            initial: makeNumeric('db', -3)
+            initial: numeric('db', -3)
           },
           rootNote: undefined,
           length: undefined
@@ -628,15 +629,15 @@ describe('compiler/types.ts', () => {
         const curve1 = CurveType.of({
           type: 'linear',
           unit: undefined,
-          start: makeNumeric(undefined, 0),
-          end: makeNumeric(undefined, 1)
+          start: numeric(undefined, 0),
+          end: numeric(undefined, 1)
         })
         expectTypeEquals<CurveValue<undefined>, typeof curve1>()
 
         const curve2 = CurveType.of({
           type: 'hold',
           unit: 'db',
-          value: makeNumeric('db', -6)
+          value: numeric('db', -6)
         })
         expectTypeEquals<CurveValue<'db'>, typeof curve2>()
 

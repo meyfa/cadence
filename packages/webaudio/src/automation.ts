@@ -1,4 +1,5 @@
-import type { Numeric, Parameter, Program, Unit } from '@core/program.js'
+import type { Numeric, Unit } from '@core/numeric.js'
+import type { Parameter, Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import { dbToGain } from './conversion.js'
 import type { Transport } from './transport.js'

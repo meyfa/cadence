@@ -1,9 +1,10 @@
-import { makeNumeric, type Bus, type BusId, type Effect, type Program } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
+import type { Bus, BusId, Effect, Program } from '@core/program.js'
 import { createEffect } from './effects.js'
 import type { BusInstance, EffectInstance } from './instances.js'
 import type { Transport } from './transport.js'
 
-const UNITY_GAIN = makeNumeric('db', 0)
+const UNITY_GAIN = numeric('db', 0)
 
 export function createBuses (transport: Transport, program: Program): ReadonlyMap<BusId, BusInstance> {
   return new Map(
