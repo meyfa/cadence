@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import type { AudioDescription } from '../../src/encoding/common.js'
 import { MockAudioBuffer } from '../../src/encoding/mock-audio-buffer.js'
 import { encodeWAV, estimateWAVSize } from '../../src/encoding/wav.js'
+import { numeric } from '../../../core/src/numeric.js'
 
 describe('encoding/wav.ts', () => {
   it('estimates file size correctly', () => {
@@ -11,10 +12,10 @@ describe('encoding/wav.ts', () => {
       length: 441_000 // 10 seconds at 44.1kHz
     }
 
-    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm16' }), 44 + 441_000 * 2 * 2)
-    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm24' }), 44 + 441_000 * 2 * 3)
-    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm32' }), 44 + 441_000 * 2 * 4)
-    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'float32' }), 44 + 441_000 * 2 * 4)
+    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm16' }), numeric('bytes', 44 + 441_000 * 2 * 2))
+    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm24' }), numeric('bytes', 44 + 441_000 * 2 * 3))
+    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm32' }), numeric('bytes', 44 + 441_000 * 2 * 4))
+    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'float32' }), numeric('bytes', 44 + 441_000 * 2 * 4))
   })
 
   it('encodes pcm16 correctly', () => {
