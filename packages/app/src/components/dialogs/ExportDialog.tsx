@@ -83,8 +83,8 @@ async function renderAndSave<TEncodingOptions> (
     sampleRate,
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
-      arrayBuffer: 0,
-      audioBuffer: 0
+      arrayBuffer: numeric('bytes', 0),
+      audioBuffer: numeric('bytes', 0)
     },
     onProgress
   })

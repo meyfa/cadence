@@ -109,7 +109,7 @@ function nonNull<T> (value: T | null | undefined): NonNullable<T> {
 
 function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: number): Numeric<U> {
   return value.value < minimum || value.value > maximum
-    ? numeric(value.unit, Math.min(Math.max(value.value, minimum), maximum))
+    ? { unit: value.unit, value: Math.min(Math.max(value.value, minimum), maximum) }
     : value
 }
 

@@ -1,5 +1,7 @@
+import type { Numeric } from '@core/numeric.js'
+
 export interface AssetCacheOptions<T> {
-  readonly maxSize: number
+  readonly maxSize: Numeric<'bytes'>
   readonly getSize: (value: T) => number
 }
 
@@ -27,7 +29,7 @@ export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<
   }
 
   const evictIfNeeded = (requiredSize: number): void => {
-    while (totalSize + requiredSize > options.maxSize) {
+    while (totalSize + requiredSize > options.maxSize.value) {
       const oldestKey = cache.keys().next().value
       if (oldestKey == null) {
         break
@@ -52,7 +54,7 @@ export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<
       deleteKey(key)
 
       const size = options.getSize(value)
-      if (size > options.maxSize) {
+      if (size > options.maxSize.value) {
         return // too large to store
       }
 
