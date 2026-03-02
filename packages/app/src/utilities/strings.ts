@@ -73,14 +73,15 @@ export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerB
   return `${sign < 0 ? '-' : ''}${parts.join(' ')}`
 }
 
-export function formatBytes (bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`
+export function formatBytes (bytes: Numeric<'bytes'>): string {
+  let { value } = bytes
+
+  if (value < 1024) {
+    return `${value} B`
   }
 
   const units = ['kiB', 'MiB', 'GiB', 'TiB']
   let unitIndex = -1
-  let value = bytes
 
   do {
     value /= 1024

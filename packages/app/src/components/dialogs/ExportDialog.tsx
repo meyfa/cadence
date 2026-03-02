@@ -1,4 +1,4 @@
-import { numeric } from '@core/numeric.js'
+import { numeric, type Numeric } from '@core/numeric.js'
 import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { Field, Label } from '@headlessui/react'
@@ -24,7 +24,7 @@ type SampleRate = '44100' | '48000' | '96000'
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
   readonly mimeType: string
-  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => number
+  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => Numeric<'bytes'>
   readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
 }
 

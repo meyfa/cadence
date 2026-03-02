@@ -1,3 +1,4 @@
+import { numeric, type Numeric } from '@core/numeric.js'
 import type { AudioBufferLike, AudioDescription } from './common.js'
 import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE, type FloatSampleBits, type PCMFormat, type PCMSampleBits } from './pcm-io.js'
 
@@ -19,7 +20,7 @@ const toPCMFormat = (format: WAVFormat): PCMFormat => `${format}le`
 /**
  * Estimate the size of a WAV file (in bytes) given information about the audio data and encoding options.
  */
-export function estimateWAVSize (audio: AudioDescription, options: WAVEncodingOptions): number {
+export function estimateWAVSize (audio: AudioDescription, options: WAVEncodingOptions): Numeric<'bytes'> {
   const bitsPerSample = getBitsPerSample(toPCMFormat(options.format))
   const blockAlign = audio.numberOfChannels * bitsPerSample / 8
   const dataSize = audio.length * blockAlign
@@ -27,7 +28,7 @@ export function estimateWAVSize (audio: AudioDescription, options: WAVEncodingOp
   // headers size (RIFF chunk + fmt subchunk + data subchunk)
   const headersSize = 44
 
-  return headersSize + dataSize
+  return numeric('bytes', headersSize + dataSize)
 }
 
 /**

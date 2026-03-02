@@ -53,7 +53,7 @@ describe('utilities/strings.ts', () => {
       ]
 
       for (const { input, expected } of testCases) {
-        const result = formatBytes(input)
+        const result = formatBytes(numeric('bytes', input))
         assert.strictEqual(result, expected, `Expected formatBytes(${input}) to return "${expected}", got "${result}"`)
       }
     })
