@@ -42,12 +42,12 @@ const audioEngineOptions = {
   assetLoadTimeout: numeric('s', 5),
   cacheLimits: lowMemoryDevice === true || likelyMobile
     ? {
-        arrayBuffer: 60 * 1024 * 1024, // compressed: 60 MB
-        audioBuffer: 30 * 1024 * 1024 // decompressed: 30 MB
+        arrayBuffer: numeric('bytes', 60 * 1024 * 1024), // compressed: 60 MB
+        audioBuffer: numeric('bytes', 30 * 1024 * 1024) // decompressed: 30 MB
       }
     : {
-        arrayBuffer: 200 * 1024 * 1024, // compressed: 200 MB
-        audioBuffer: 100 * 1024 * 1024 // decompressed: 100 MB
+        arrayBuffer: numeric('bytes', 200 * 1024 * 1024), // compressed: 200 MB
+        audioBuffer: numeric('bytes', 100 * 1024 * 1024) // decompressed: 100 MB
       }
 } satisfies Partial<AudioEngineOptions>
 

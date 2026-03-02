@@ -1,15 +1,22 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAssetCache } from '../../src/assets/cache.js'
+import { numeric } from '../../../core/src/numeric.js'
 
 describe('assets/cache.ts', () => {
   it('returns nothing for missing keys', () => {
-    const cache = createAssetCache<number>({ maxSize: 100, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 100),
+      getSize: (v) => v
+    })
     assert.strictEqual(cache.get('missing'), undefined)
   })
 
   it('stores and retrieves values', () => {
-    const cache = createAssetCache<number>({ maxSize: 100, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 100),
+      getSize: (v) => v
+    })
     cache.set('a', 10)
     cache.set('b', 20)
     assert.strictEqual(cache.get('a'), 10)
@@ -17,7 +24,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('evicts least recently used items when exceeding max size', () => {
-    const cache = createAssetCache<number>({ maxSize: 30, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 30),
+      getSize: (v) => v
+    })
     cache.set('a', 10)
     cache.set('b', 15)
     cache.set('c', 10) // This should evict 'a' (total size would be 35)
@@ -37,7 +47,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('does not store items larger than max size', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
     cache.set('a', 25) // Too large to store
     assert.strictEqual(cache.get('a'), undefined)
 
@@ -46,7 +59,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('deletes existing value when updated with an oversize item', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
     cache.set('a', 10)
     assert.strictEqual(cache.get('a'), 10)
 
@@ -55,7 +71,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('replaces existing values without double-counting size', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
 
     cache.set('a', 10)
     cache.set('b', 10)
@@ -69,7 +88,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('frees space for new entries when existing entries are shrunk', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
 
     cache.set('a', 15)
     cache.set('b', 5)
@@ -84,7 +106,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('deletes keys', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
     cache.set('a', 10)
     cache.set('b', 5)
 
@@ -94,7 +119,10 @@ describe('assets/cache.ts', () => {
   })
 
   it('frees space when deleting keys', () => {
-    const cache = createAssetCache<number>({ maxSize: 20, getSize: (v) => v })
+    const cache = createAssetCache<number>({
+      maxSize: numeric('bytes', 20),
+      getSize: (v) => v
+    })
     cache.set('a', 15)
     cache.set('b', 5)
 

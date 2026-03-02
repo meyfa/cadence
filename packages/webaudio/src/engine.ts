@@ -2,17 +2,13 @@ import { numeric, type Numeric } from '@core/numeric.js'
 import { MutableObservable, type Observable } from '@core/observable.js'
 import type { Program } from '@core/program.js'
 import type { BeatRange } from '@core/types.js'
-import { createAudioFetcher } from './assets/fetcher.js'
+import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
 import { createAudioSession, type AudioSession } from './session.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
   readonly assetLoadTimeout: Numeric<'s'>
-
-  readonly cacheLimits: {
-    readonly arrayBuffer: number
-    readonly audioBuffer: number
-  }
+  readonly cacheLimits: CacheLimits
 }
 
 export interface AudioEngine {

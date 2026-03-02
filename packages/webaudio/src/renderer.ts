@@ -1,7 +1,7 @@
 import type { Numeric } from '@core/numeric.js'
 import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
-import { createAudioFetcher } from './assets/fetcher.js'
+import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
 import { createAudioGraph } from './graph.js'
 import { createOfflineTransport } from './transport.js'
 
@@ -9,11 +9,7 @@ export interface AudioRendererOptions {
   readonly channels: number
   readonly sampleRate: number
   readonly assetLoadTimeout: Numeric<'s'>
-  readonly cacheLimits: {
-    readonly arrayBuffer: number
-    readonly audioBuffer: number
-  }
-
+  readonly cacheLimits: CacheLimits
   readonly onProgress?: (progress: number) => void
 }
 

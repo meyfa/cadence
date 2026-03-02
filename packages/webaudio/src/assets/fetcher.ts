@@ -1,12 +1,14 @@
 import type { Numeric } from '@core/numeric.js'
 import { createAssetCache, type AssetCache } from './cache.js'
 
+export interface CacheLimits {
+  readonly arrayBuffer: Numeric<'bytes'>
+  readonly audioBuffer: Numeric<'bytes'>
+}
+
 export interface AudioFetcherOptions {
   readonly timeout: Numeric<'s'>
-  readonly cacheLimits: {
-    readonly arrayBuffer: number
-    readonly audioBuffer: number
-  }
+  readonly cacheLimits: CacheLimits
 }
 
 export interface AudioFetcher {
@@ -17,14 +19,14 @@ export function createAudioFetcher (options: AudioFetcherOptions): AudioFetcher 
   // This uses two levels of caching as the decoded audio is typically much larger
   // than the raw data fetched from the network.
 
-  const arrayBufferCache = options.cacheLimits.arrayBuffer > 0
+  const arrayBufferCache = options.cacheLimits.arrayBuffer.value > 0
     ? createAssetCache<ArrayBuffer>({
         maxSize: options.cacheLimits.arrayBuffer,
         getSize: (value) => value.byteLength
       })
     : undefined
 
-  const audioBufferCache = options.cacheLimits.audioBuffer > 0
+  const audioBufferCache = options.cacheLimits.audioBuffer.value > 0
     ? createAssetCache<AudioBuffer>({
         maxSize: options.cacheLimits.audioBuffer,
         getSize: (value) => value.length * value.numberOfChannels * 4 // 32-bit float
