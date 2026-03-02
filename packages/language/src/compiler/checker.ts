@@ -353,6 +353,8 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     errors.push(...checkBus(mixerContext, bus))
   }
 
+  errors.push(...checkCyclicRoutings(mixer.buses))
+
   return errors
 }
 
@@ -381,6 +383,111 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     if (effectCheck.result != null) {
       errors.push(...checkType([EffectType], effectCheck.result, effect.expression.range))
     }
+  }
+
+  return errors
+}
+
+function checkCyclicRoutings (buses: readonly ast.BusStatement[]): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const busByName = new Map<string, ast.BusStatement>(
+    buses.map((bus) => [bus.name.name, bus])
+  )
+
+  const busIndex = new Map<string, number>(
+    buses.map((bus, index) => [bus.name.name, index])
+  )
+
+  const graph = new Map<string, readonly string[]>(
+    buses.map((bus) => [
+      bus.name.name,
+      bus.sources.map((s) => s.name).filter((name) => busByName.has(name))
+    ])
+  )
+
+  type VisitState = 'unvisited' | 'visiting' | 'visited'
+
+  const state = new Map<string, VisitState>()
+  const path: string[] = []
+  const pathIndex = new Map<string, number>()
+
+  const renderCycle = (members: readonly string[]) => {
+    return members.length === 0 ? '' : [...members, members[0]].join(' -> ')
+  }
+
+  // Keyed by member set
+  const cycles = new Map<string, { readonly members: readonly string[] }>()
+
+  const visit = (node: string): void => {
+    const nodeState = state.get(node) ?? 'unvisited'
+    if (nodeState === 'visited') {
+      return
+    }
+    if (nodeState === 'visiting') {
+      // Already on stack; caller will record the cycle
+      return
+    }
+
+    state.set(node, 'visiting')
+    pathIndex.set(node, path.length)
+    path.push(node)
+
+    for (const neighbor of graph.get(node) ?? []) {
+      const neighborState = state.get(neighbor) ?? 'unvisited'
+
+      if (neighborState === 'visiting') {
+        const startIndex = pathIndex.get(neighbor)
+        if (startIndex != null) {
+          const members = path.slice(startIndex)
+          const key = [...members]
+            .sort((a, b) => (busIndex.get(a) ?? 0) - (busIndex.get(b) ?? 0))
+            .join('\0')
+
+          if (!cycles.has(key)) {
+            cycles.set(key, { members })
+          }
+        }
+        continue
+      }
+
+      if (neighborState === 'unvisited') {
+        visit(neighbor)
+      }
+    }
+
+    path.pop()
+    pathIndex.delete(node)
+    state.set(node, 'visited')
+  }
+
+  for (const node of graph.keys()) {
+    if ((state.get(node) ?? 'unvisited') === 'unvisited') {
+      visit(node)
+    }
+  }
+
+  const sortedCycles = [...cycles.values()].sort((a, b) => {
+    const aMin = Math.min(...a.members.map((m) => busIndex.get(m) ?? Number.POSITIVE_INFINITY))
+    const bMin = Math.min(...b.members.map((m) => busIndex.get(m) ?? Number.POSITIVE_INFINITY))
+    return aMin - bMin
+  })
+
+  for (const { members } of sortedCycles) {
+    const message = renderCycle(members)
+
+    let bestMember: string | undefined
+    let bestIndex = Number.POSITIVE_INFINITY
+    for (const member of members) {
+      const index = busIndex.get(member) ?? Number.POSITIVE_INFINITY
+      if (index < bestIndex) {
+        bestIndex = index
+        bestMember = member
+      }
+    }
+
+    const range = bestMember == null ? undefined : busByName.get(bestMember)?.name.range
+    errors.push(new CompileError(`Cyclic routing: ${message}`, range))
   }
 
   return errors

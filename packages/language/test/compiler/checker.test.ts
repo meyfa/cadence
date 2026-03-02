@@ -503,6 +503,88 @@ describe('compiler/checker.ts', () => {
     ])
   })
 
+  it('should reject cyclic mixer routings', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('MixerStatement', RANGE, {
+          properties: [],
+          buses: [
+            // bus1 -> bus3 -> bus2 -> bus1
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus3' })
+              ],
+              effects: []
+            }),
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus1' })
+              ],
+              effects: []
+            }),
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus3' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus2' })
+              ],
+              effects: []
+            })
+          ]
+        })
+      ]
+    })
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Cyclic routing: bus1 -> bus3 -> bus2 -> bus1', RANGE)
+    ])
+  })
+
+  it('should only report buses that are part of a cycle', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('MixerStatement', RANGE, {
+          properties: [],
+          buses: [
+            // first -> bus1 <-> bus2 (first is NOT part of the cycle)
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'first' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus1' })
+              ],
+              effects: []
+            }),
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus2' })
+              ],
+              effects: []
+            }),
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+              properties: [],
+              sources: [
+                ast.make('Identifier', RANGE, { name: 'bus1' })
+              ],
+              effects: []
+            })
+          ]
+        })
+      ]
+    })
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Cyclic routing: bus1 -> bus2 -> bus1', RANGE)
+    ])
+  })
+
   it('should reject patterns with interpolation of the wrong type', () => {
     const program = ast.make('Program', RANGE, {
       imports: [],
