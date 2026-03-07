@@ -71,6 +71,13 @@ assert.deepStrictEqual(
   'The package list in eslint.config.js is out of sync with tsconfig.base.json'
 )
 
+/**
+ * Workaround for improperly typed eslint-plugin-react-hooks.
+ *
+ * @type {import('@eslint/core').Plugin}
+ */
+const reactHooksPlugin = /** @type {any} */ (fixupPluginRules(/** @type {any} */ (pluginReactHooks)))
+
 export default defineConfig([
   ...eslintConfig,
   pluginReact.configs.flat.recommended,
@@ -90,7 +97,7 @@ export default defineConfig([
   },
   {
     plugins: {
-      'react-hooks': fixupPluginRules(pluginReactHooks)
+      'react-hooks': reactHooksPlugin
     },
 
     settings: {
