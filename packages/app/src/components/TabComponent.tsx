@@ -6,6 +6,12 @@ import { isTabCloseable, renderTabNotificationCount, renderTabTitle, type TabRen
 
 const MOUSE_BUTTON_MIDDLE = 1
 
+const isMacOS = (
+  'userAgentData' in navigator
+    ? ((navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? '')
+    : navigator.userAgent
+).toLowerCase().includes('mac')
+
 export const TabComponent: FunctionComponent<{
   tab: Tab
   context: TabRendererContext
@@ -58,7 +64,24 @@ export const TabComponent: FunctionComponent<{
     }
   }, [disabled, closeable, onClose, tab])
 
-  // Mirror the selected tab appearance; ensure it's outside hit-testing
+  const closeButton = closeable && onClose != null
+    ? (
+        <button
+          type='button'
+          className={clsx(
+            'p-0.5 rounded text-content-50 cursor-default',
+            isMacOS ? '-ml-2' : '-mr-2',
+            selected ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
+            'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
+          )}
+          onClick={onCloseClick}
+          aria-label={`Close ${title} tab`}
+        >
+          <Close className='text-base!' />
+        </button>
+      )
+    : null
+
   return (
     <div
       className={clsx(
@@ -71,6 +94,8 @@ export const TabComponent: FunctionComponent<{
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
     >
+      {isMacOS && closeButton}
+
       {title}
 
       {notificationCount > 0 && (
@@ -79,20 +104,7 @@ export const TabComponent: FunctionComponent<{
         </div>
       )}
 
-      {closeable && onClose != null && (
-        <button
-          type='button'
-          className={clsx(
-            'p-0.5 -mr-2 rounded text-content-50 cursor-default',
-            selected ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
-            'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
-          )}
-          onClick={onCloseClick}
-          aria-label={`Close ${title} tab`}
-        >
-          <Close className='text-base!' />
-        </button>
-      )}
+      {!isMacOS && closeButton}
     </div>
   )
 }
