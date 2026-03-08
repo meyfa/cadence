@@ -10,5 +10,6 @@
 !**/vite.config.ts
 
 !packages/*/src
+!packages/*/public
 
 !packages/*/index.html

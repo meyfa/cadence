@@ -7,6 +7,7 @@ import { useCompilationState } from '../state/CompilationContext.js'
 import { Button } from './Button.js'
 import { CommandPalette } from './CommandPalette.js'
 import { GainSlider } from './settings/GainSlider.js'
+import { Logo } from './logo/Logo.js'
 
 export const Header: FunctionComponent = () => {
   const { program } = useCompilationState()
@@ -26,10 +27,10 @@ export const Header: FunctionComponent = () => {
   }, [engine, playing, lastProgram])
 
   return (
-    <header className='grid grid-cols-3 items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
+    <header className='grid grid-cols-2 md:grid-cols-3 items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
       <div className='flex items-center gap-1 h-full'>
-        <div className='text-lg font-semibold mr-1'>
-          Cadence
+        <div className='mr-1 shrink-0'>
+          <Logo />
         </div>
 
         <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
@@ -50,9 +51,7 @@ export const Header: FunctionComponent = () => {
       </div>
 
       <div className='flex justify-center'>
-        <div className='w-full min-w-32 max-w-lg'>
-          <CommandPalette />
-        </div>
+        <CommandPalette />
       </div>
 
       <div />
