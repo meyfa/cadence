@@ -1,9 +1,11 @@
-import { convertCodeToKey, hasModifierKey, isFunctionKey, parseKeyboardShortcut, serializeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { CommandId, commands, findCommandForKeyboardShortcut, getCommandById, useCommandContext, type Command } from '../commands.js'
-import { useGlobalKeydown } from '../hooks/input.js'
+import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
+import { commands, findCommandForKeyboardShortcut, getCommandById, useCommandContext, type Command } from '../../commands/commands.js'
+import { CommandId } from '../../commands/ids.js'
+import { useGlobalKeydown } from '../../hooks/input.js'
+import { ShortcutKeys } from './ShortcutKeys.js'
 
 export const CommandPalette: FunctionComponent = () => {
   const paletteRef = useRef<HTMLDivElement>(null)
@@ -109,7 +111,7 @@ export const CommandPalette: FunctionComponent = () => {
 
         {shortcut != null && (
           <div className='ml-auto hidden md:block'>
-            <KeyboardShortcut shortcut={shortcut} />
+            <ShortcutKeys shortcut={shortcut} />
           </div>
         )}
       </button>
@@ -121,7 +123,7 @@ export const CommandPalette: FunctionComponent = () => {
       <div
         ref={paletteRef}
         tabIndex={-1}
-        className='pointer-events-auto bg-surface-200 border border-frame-200 rounded p-2 w-full max-w-2xl shadow-lg shadow-dialog-backdrop'
+        className='pointer-events-auto bg-surface-200 border border-frame-200 rounded p-1 w-full max-w-2xl shadow-lg shadow-dialog-backdrop'
         onBlur={handleBlur}
         role='dialog'
         aria-label='Command palette'
@@ -140,7 +142,7 @@ export const CommandPalette: FunctionComponent = () => {
           onKeyDown={handleInputKeydown}
         />
 
-        <div className='max-h-64 overflow-auto mt-2'>
+        <div className='max-h-64 overflow-auto mt-1' tabIndex={-1}>
           {searchResults.length === 0 && (
             <div className='p-2 leading-none text-content-100'>
               No commands found.
@@ -175,29 +177,8 @@ const SearchResult: FunctionComponent<{
         {command.label}
       </div>
       {shortcut != null && (
-        <KeyboardShortcut shortcut={shortcut} />
+        <ShortcutKeys shortcut={shortcut} />
       )}
     </button>
-  )
-}
-
-const KeyboardShortcut: FunctionComponent<{
-  shortcut: KeyboardShortcut
-}> = ({ shortcut }) => {
-  const parts = parseKeyboardShortcut(shortcut)
-
-  return (
-    <div className='flex items-center gap-0.5 text-sm'>
-      {parts.map((part, index) => (
-        <Fragment key={part}>
-          <span className='inline-block border border-frame-200 rounded px-1 py-0.5 leading-none bg-surface-200 text-content-100 font-mono'>
-            {part}
-          </span>
-          {index < parts.length - 1 && (
-            <span className='text-content-100'>+</span>
-          )}
-        </Fragment>
-      ))}
-    </div>
   )
 }
