@@ -5,9 +5,10 @@ import { usePrevious } from '../hooks/previous.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { Button } from './Button.js'
-import { CommandPalette } from './CommandPalette.js'
+import { CommandPalette } from './commands/CommandPalette.js'
 import { GainSlider } from './settings/GainSlider.js'
 import { Logo } from './logo/Logo.js'
+import { MainMenu } from './commands/MainMenu.js'
 
 export const Header: FunctionComponent = () => {
   const { program } = useCompilationState()
@@ -33,6 +34,8 @@ export const Header: FunctionComponent = () => {
           <Logo />
         </div>
 
+        <MainMenu />
+
         <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
           {playing ? <StopOutlined /> : <PlayArrowOutlined />}
         </Button>
@@ -54,7 +57,7 @@ export const Header: FunctionComponent = () => {
         <CommandPalette />
       </div>
 
-      <div />
+      <div className='hidden md:block' />
     </header>
   )
 }

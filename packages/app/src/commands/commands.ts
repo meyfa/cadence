@@ -1,18 +1,19 @@
 import { type Program } from '@core/program.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import type { AudioEngine } from '@webaudio/engine.js'
-import { ExportDialog } from './components/dialogs/ExportDialog.js'
-import { activateTabOfType } from './hooks/layout.js'
-import { usePrevious } from './hooks/previous.js'
-import { TabTypes } from './panes/render-tab.js'
-import { useAudioEngine } from './state/AudioEngineContext.js'
-import { useCompilationState } from './state/CompilationContext.js'
-import { useDialog } from './state/DialogContext.js'
-import { useEditor, type EditorDispatch, type EditorState } from './state/EditorContext.js'
-import { useLayout, type LayoutDispatch } from './state/LayoutContext.js'
-import { defaultLayout } from './state/default-layout.js'
-import { applyThemeSetting } from './theme.js'
-import { openTextFile, saveTextFile } from './utilities/files.js'
+import { ExportDialog } from '../components/dialogs/ExportDialog.js'
+import { activateTabOfType } from '../hooks/layout.js'
+import { usePrevious } from '../hooks/previous.js'
+import { TabTypes } from '../panes/render-tab.js'
+import { useAudioEngine } from '../state/AudioEngineContext.js'
+import { useCompilationState } from '../state/CompilationContext.js'
+import { useDialog } from '../state/DialogContext.js'
+import { useEditor, type EditorDispatch, type EditorState } from '../state/EditorContext.js'
+import { useLayout, type LayoutDispatch } from '../state/LayoutContext.js'
+import { defaultLayout } from '../state/default-layout.js'
+import { applyThemeSetting } from '../theme.js'
+import { openTextFile, saveTextFile } from '../utilities/files.js'
+import { CommandId } from './ids.js'
 
 export interface Command {
   readonly id: string
@@ -67,23 +68,6 @@ export function getCommandById (id: string): Command | undefined {
 export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Command | undefined {
   return keyboardShortcuts.get(shortcut)
 }
-
-export const CommandId = Object.freeze({
-  PlaybackToggle: 'playback.toggle',
-  FileOpen: 'file.open',
-  FileSave: 'file.save',
-  FileExport: 'file.export',
-  ViewEditor: 'view.editor',
-  ViewMixer: 'view.mixer',
-  ViewSettings: 'view.settings',
-  ViewProblems: 'view.problems',
-  ViewTimeline: 'view.timeline',
-  ThemeDark: 'theme.dark',
-  ThemeLight: 'theme.light',
-  ThemeSystem: 'theme.system',
-  LayoutReset: 'layout.reset',
-  CommandsShowAll: 'commands.show-all'
-} as const)
 
 const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
