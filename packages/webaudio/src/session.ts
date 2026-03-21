@@ -1,11 +1,13 @@
 import { dbToGain } from '@audiograph/constants.js'
+import type { AudioGraph } from '@audiograph/graph.js'
+import type { Node } from '@audiograph/nodes.js'
 import { numeric, type Numeric } from '@core/numeric.js'
 import { MutableObservable, type Observable } from '@core/observable.js'
 import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import type { AudioFetcher } from './assets/fetcher.js'
-import { createAudioGraph } from './graph.js'
+import { createWebAudioGraph } from './graph/graph.js'
 import { createOnlineTransport } from './transport.js'
 
 export interface AudioSession {
@@ -18,6 +20,7 @@ export interface AudioSession {
 
 export function createAudioSession (
   program: Program,
+  graph: AudioGraph<Node>,
   range: BeatRange,
   outputGain: Observable<Numeric<'db'>>,
   fetcher: AudioFetcher
@@ -47,12 +50,12 @@ export function createAudioSession (
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
-  const graph = createAudioGraph(program, transport, fetcher)
-  cleanupHooks.push(() => graph.dispose())
+  const webAudioGraph = createWebAudioGraph(program, graph, transport, fetcher)
+  cleanupHooks.push(() => webAudioGraph.dispose())
 
   const start = () => {
-    graph.loaded.then(() => {
-      if (graph.disposed) {
+    webAudioGraph.loaded.then(() => {
+      if (webAudioGraph.disposed) {
         return
       }
 
@@ -64,12 +67,12 @@ export function createAudioSession (
 
       return transport.start(startTime.value)
     }).then(() => {
-      if (graph.disposed) {
+      if (webAudioGraph.disposed) {
         return
       }
 
       const endTimeout = setTimeout(() => {
-        if (!graph.disposed) {
+        if (!webAudioGraph.disposed) {
           ended.set(true)
         }
       }, (endTime.value - startTime.value) * 1000)
@@ -78,7 +81,7 @@ export function createAudioSession (
 
       // Track position based on render-thread time updates.
       cleanupHooks.push(transport.time.subscribe((time) => {
-        if (!graph.disposed) {
+        if (!webAudioGraph.disposed) {
           const clamped = Math.max(startTime.value, time.value)
           position.set(numeric('beats', clamped * program.track.tempo.value / 60))
         }
@@ -91,7 +94,7 @@ export function createAudioSession (
   }
 
   const dispose = () => {
-    if (graph.disposed) {
+    if (webAudioGraph.disposed) {
       return
     }
 

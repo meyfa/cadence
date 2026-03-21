@@ -1,3 +1,4 @@
+import { createAudioGraph } from '@audiograph/lowering.js'
 import { type Program } from '@core/program.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor/keyboard-shortcuts.js'
 import type { AudioEngine } from '@webaudio/engine.js'
@@ -84,7 +85,8 @@ export const commands: readonly Command[] = Object.freeze([
       if (audioEngine.playing.get()) {
         audioEngine.stop()
       } else if (lastProgram != null) {
-        audioEngine.play(lastProgram)
+        const graph = createAudioGraph(lastProgram)
+        audioEngine.play(lastProgram, graph)
       }
     }
   },
