@@ -56,8 +56,6 @@
     "@mui/material": "7.3.9",
     "clsx": "2.1.1",
     "codemirror": "6.0.2",
-    "leac": "0.7.0",
-    "peberminta": "0.10.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   }

@@ -1,5 +1,11 @@
-import type { Token } from 'leac'
 import * as ast from './ast.js'
+
+interface Token {
+  readonly offset: number
+  readonly len: number
+  readonly line: number
+  readonly column: number
+}
 
 export interface SourceRange {
   readonly offset: number
