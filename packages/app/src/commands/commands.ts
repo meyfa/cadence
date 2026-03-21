@@ -85,8 +85,7 @@ export const commands: readonly Command[] = Object.freeze([
       if (audioEngine.playing.get()) {
         audioEngine.stop()
       } else if (lastProgram != null) {
-        const graph = createAudioGraph(lastProgram)
-        audioEngine.play(lastProgram, graph)
+        audioEngine.play(createAudioGraph(lastProgram))
       }
     }
   },

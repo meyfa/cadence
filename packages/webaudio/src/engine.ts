@@ -2,7 +2,6 @@ import type { AudioGraph } from '@audiograph/graph.js'
 import type { Node } from '@audiograph/nodes.js'
 import { numeric, type Numeric } from '@core/numeric.js'
 import { MutableObservable, type Observable } from '@core/observable.js'
-import type { Program } from '@core/program.js'
 import type { BeatRange } from '@core/types.js'
 import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
 import { createAudioSession, type AudioSession } from './session.js'
@@ -17,7 +16,7 @@ export interface AudioEngine {
   readonly outputGain: MutableObservable<Numeric<'db'>>
 
   readonly playing: Observable<boolean>
-  readonly play: (program: Program, graph: AudioGraph<Node>) => void
+  readonly play: (graph: AudioGraph<Node>) => void
   readonly stop: () => void
 
   readonly range: MutableObservable<BeatRange>
@@ -40,14 +39,14 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   let session: AudioSession | undefined
   let stopSession: (() => void) | undefined
 
-  const play: AudioEngine['play'] = (program, graph) => {
+  const play: AudioEngine['play'] = (graph) => {
     if (session != null) {
       return
     }
 
     const subscriptions: Array<() => void> = []
 
-    const thisSession = session = createAudioSession(program, graph, range.get(), outputGain, fetcher)
+    const thisSession = session = createAudioSession(graph, range.get(), outputGain, fetcher)
 
     const stopThisSession = stopSession = () => {
       thisSession.dispose()

@@ -1,9 +1,10 @@
+import type { AudioGraph } from '@audiograph/graph.js'
 import { createAudioGraph } from '@audiograph/lowering.js'
+import type { Node } from '@audiograph/nodes.js'
 import { AIFFFormat, encodeAIFF, estimateAIFFSize, type AIFFEncodingOptions } from '@codecs/aiff.js'
 import type { AudioBufferLike, AudioDescription } from '@codecs/common.js'
 import { encodeWAV, estimateWAVSize, WAVFormat, type WAVEncodingOptions } from '@codecs/wav.js'
 import { numeric, type Numeric } from '@core/numeric.js'
-import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { Field, Label } from '@headlessui/react'
 import { createAudioRenderer } from '@webaudio/renderer.js'
@@ -73,14 +74,12 @@ function getDefaultFileName (type: ExportFileType): string {
 }
 
 async function renderAndSave<TEncodingOptions> (
-  program: Program,
+  graph: AudioGraph<Node>,
   sampleRate: number,
   onProgress: (progress: number) => void,
   type: ExportFileType<TEncodingOptions>,
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
-  const graph = createAudioGraph(program)
-
   const renderer = createAudioRenderer({
     channels: RENDER_CHANNELS,
     sampleRate,
@@ -92,7 +91,7 @@ async function renderAndSave<TEncodingOptions> (
     onProgress
   })
 
-  const { audioBuffer, errors } = await renderer.render(program, graph)
+  const { audioBuffer, errors } = await renderer.render(graph)
   if (audioBuffer == null || errors.length > 0) {
     return errors
   }
@@ -177,7 +176,8 @@ export const ExportDialog: FunctionComponent<{
       try {
         const rate = Number.parseInt(sampleRate, 10)
 
-        const renderErrors = await renderAndSave(program, rate, onProgress, exportType, { format })
+        const graph = createAudioGraph(program)
+        const renderErrors = await renderAndSave(graph, rate, onProgress, exportType, { format })
         if (tokenRef.current !== token) {
           return
         }

@@ -24,8 +24,7 @@ export const Header: FunctionComponent = () => {
     if (playing) {
       engine.stop()
     } else if (lastProgram != null) {
-      const graph = createAudioGraph(lastProgram)
-      engine.play(lastProgram, graph)
+      engine.play(createAudioGraph(lastProgram))
     }
   }, [engine, playing, lastProgram])
 

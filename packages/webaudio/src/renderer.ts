@@ -1,8 +1,7 @@
 import type { AudioGraph } from '@audiograph/graph.js'
 import type { Node } from '@audiograph/nodes.js'
 import type { Numeric } from '@core/numeric.js'
-import type { Program } from '@core/program.js'
-import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
+import { beatsToSeconds } from '@core/time.js'
 import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
 import { createWebAudioGraph } from './graph/graph.js'
 import { createOfflineTransport } from './transport.js'
@@ -21,7 +20,7 @@ export interface AudioRenderResult {
 }
 
 export interface AudioRenderer {
-  readonly render: (program: Program, graph: AudioGraph<Node>) => Promise<AudioRenderResult>
+  readonly render: (graph: AudioGraph<Node>) => Promise<AudioRenderResult>
 }
 
 export function createAudioRenderer (options: AudioRendererOptions): AudioRenderer {
@@ -31,10 +30,10 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
   })
 
   return {
-    render: async (program, graph) => {
+    render: async (graph) => {
       const cleanupHooks: Array<() => void> = []
 
-      const duration = beatsToSeconds(calculateTotalLength(program), program.track.tempo)
+      const duration = beatsToSeconds(graph.length, graph.tempo)
       const safeDuration = Math.max(0.001, duration.value)
 
       const transport = createOfflineTransport({
@@ -43,7 +42,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         duration
       })
 
-      const webAudioGraph = createWebAudioGraph(program, graph, transport, fetcher)
+      const webAudioGraph = createWebAudioGraph(graph, transport, fetcher)
       cleanupHooks.push(() => webAudioGraph.dispose())
 
       if (options.onProgress != null) {
