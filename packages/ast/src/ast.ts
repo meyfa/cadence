@@ -1,5 +1,5 @@
 import type { StepValue } from '@core/program.js'
-import type { SourceRange } from '../range.js'
+import type { SourceRange } from './range.js'
 
 export interface ASTNode {
   readonly type: string

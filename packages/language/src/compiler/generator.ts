@@ -1,7 +1,7 @@
+import * as ast from '@ast/ast.js'
 import { numeric, type Numeric, type Unit } from '@core/numeric.js'
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core/pattern.js'
 import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRouting, Mixer, MixerRouting, ParameterId, Part, Pattern, Program, Step, Track } from '@core/program.js'
-import * as ast from '../parser/ast.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { createCurve, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'

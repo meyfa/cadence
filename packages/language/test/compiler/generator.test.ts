@@ -1,10 +1,10 @@
+import * as ast from '@ast/ast.js'
+import { getEmptySourceRange } from '@ast/range.js'
 import { numeric } from '@core/numeric.js'
 import type { Program } from '@core/program.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { generate } from '../../src/compiler/generator.js'
-import * as ast from '../../src/parser/ast.js'
-import { getEmptySourceRange } from '../../src/range.js'
 
 describe('compiler/generator.ts', () => {
   const RANGE = getEmptySourceRange()

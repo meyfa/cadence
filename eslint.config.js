@@ -23,6 +23,12 @@ const packages = [
     dependencies: []
   },
   {
+    name: 'ast',
+    dependencies: [
+      'core'
+    ]
+  },
+  {
     name: 'webaudio',
     dependencies: [
       'collections',
@@ -33,7 +39,8 @@ const packages = [
     name: 'language',
     dependencies: [
       'collections',
-      'core'
+      'core',
+      'ast'
     ]
   },
   {
@@ -42,6 +49,7 @@ const packages = [
       'collections',
       'flowchart',
       'core',
+      'ast',
       'language'
     ]
   },

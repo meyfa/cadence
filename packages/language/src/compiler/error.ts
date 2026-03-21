@@ -1,5 +1,5 @@
+import { areSourceRangesEqual, type SourceRange } from '@ast/range.js'
 import { RangeError } from '../error.js'
-import { areSourceRangesEqual, type SourceRange } from '../range.js'
 
 export class CompileError extends RangeError {
   constructor (message: string, range?: SourceRange) {

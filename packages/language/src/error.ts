@@ -1,4 +1,4 @@
-import type { SourceRange } from './range.js'
+import type { SourceRange } from '@ast/range.js'
 
 export function truncateString (str: string, maxLength: number): string {
   if (str.length <= maxLength) {

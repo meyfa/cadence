@@ -1,5 +1,5 @@
+import type { SourceRange } from '@ast/range.js'
 import { RangeError } from '../error.js'
-import type { SourceRange } from '../range.js'
 
 export class LexError extends RangeError {
   constructor (message: string, range?: SourceRange) {
