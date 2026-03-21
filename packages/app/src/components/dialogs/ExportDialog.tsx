@@ -1,3 +1,4 @@
+import { createAudioGraph } from '@audiograph/lowering.js'
 import { AIFFFormat, encodeAIFF, estimateAIFFSize, type AIFFEncodingOptions } from '@codecs/aiff.js'
 import type { AudioBufferLike, AudioDescription } from '@codecs/common.js'
 import { encodeWAV, estimateWAVSize, WAVFormat, type WAVEncodingOptions } from '@codecs/wav.js'
@@ -78,6 +79,8 @@ async function renderAndSave<TEncodingOptions> (
   type: ExportFileType<TEncodingOptions>,
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
+  const graph = createAudioGraph(program)
+
   const renderer = createAudioRenderer({
     channels: RENDER_CHANNELS,
     sampleRate,
@@ -89,7 +92,7 @@ async function renderAndSave<TEncodingOptions> (
     onProgress
   })
 
-  const { audioBuffer, errors } = await renderer.render(program)
+  const { audioBuffer, errors } = await renderer.render(program, graph)
   if (audioBuffer == null || errors.length > 0) {
     return errors
   }

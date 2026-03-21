@@ -1,3 +1,4 @@
+import { createAudioGraph } from '@audiograph/lowering.js'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import { FunctionComponent, useCallback } from 'react'
 import { useObservable } from '../hooks/observable.js'
@@ -6,9 +7,9 @@ import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { Button } from './Button.js'
 import { CommandPalette } from './commands/CommandPalette.js'
-import { GainSlider } from './settings/GainSlider.js'
-import { Logo } from './logo/Logo.js'
 import { MainMenu } from './commands/MainMenu.js'
+import { Logo } from './logo/Logo.js'
+import { GainSlider } from './settings/GainSlider.js'
 
 export const Header: FunctionComponent = () => {
   const { program } = useCompilationState()
@@ -23,7 +24,8 @@ export const Header: FunctionComponent = () => {
     if (playing) {
       engine.stop()
     } else if (lastProgram != null) {
-      engine.play(lastProgram)
+      const graph = createAudioGraph(lastProgram)
+      engine.play(lastProgram, graph)
     }
   }, [engine, playing, lastProgram])
 

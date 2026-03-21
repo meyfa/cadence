@@ -1,33 +1,20 @@
-import { dbToGain } from '@audiograph/constants.js'
-import type { Numeric, Unit } from '@core/numeric.js'
-import type { Parameter, Program } from '@core/program.js'
-import { beatsToSeconds } from '@core/time.js'
+import type { Curve, TimeVariant } from '@audiograph/automation.js'
+import type { Unit } from '@core/numeric.js'
 import type { Transport } from './transport.js'
 
-export type ParameterType = 'gain' | 'frequency'
+export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: TimeVariant<U>): void {
+  param.value = source.initial.value
 
-export function automate<U extends Unit> (
-  transport: Transport,
-  param: AudioParam,
-  type: ParameterType,
-  program: Program,
-  parameter: Parameter<U>
-): void {
-  const initialValue = toParamValue(type, parameter.initial)
-  param.value = initialValue
-
-  const automation = program.automations.get(parameter.id)
-  if (automation == null || automation.points.length === 0) {
+  const points = source.points
+  if (points.length === 0) {
     return
   }
 
   transport.schedule(0, (time) => {
-    param.setValueAtTime(initialValue, 0)
+    param.setValueAtTime(source.initial.value, 0)
 
     // Precompute point times
-    const pointTimes = automation.points.map((point) => {
-      return time + beatsToSeconds(point.time, program.track.tempo).value
-    })
+    const pointTimes = points.map((point) => time + point.time.value)
 
     let pointIndex = 0
 
@@ -41,39 +28,31 @@ export function automate<U extends Unit> (
     }
 
     let previousTime = 0
-    let previousValue = initialValue
+    let previousValue = source.initial.value
 
     // If the next point is precisely at time 0, set the value immediately
     if (pointTimes[pointIndex] === 0) {
-      const point = automation.points[pointIndex]
-      previousValue = toParamValue(type, point.value)
+      const point = points[pointIndex]
+      previousValue = point.value.value
       param.setValueAtTime(previousValue, pointTimes[pointIndex])
       ++pointIndex
     }
 
     // If it is still in the past, we need to find the value at time 0
     if (pointTimes[pointIndex] < 0) {
-      if (pointIndex + 1 >= automation.points.length) {
+      if (pointIndex + 1 >= points.length) {
         // Not enough points
         return
       }
 
-      const point = automation.points[pointIndex]
+      const point = points[pointIndex]
       const pointTime = pointTimes[pointIndex]
 
-      const nextPoint = automation.points[pointIndex + 1]
+      const nextPoint = points[pointIndex + 1]
       const nextPointTime = pointTimes[pointIndex + 1]
 
       const t = (0 - pointTime) / (nextPointTime - pointTime)
-
-      const startValue = toParamValue(type, point.value)
-      const endValue = toParamValue(type, nextPoint.value)
-      const value = evaluateCurve(
-        transformCurve(type, nextPoint.curve),
-        t,
-        startValue,
-        endValue
-      )
+      const value = evaluateCurve(nextPoint.curve, t, point.value.value, nextPoint.value.value)
 
       param.setValueAtTime(value, 0)
       previousValue = value
@@ -82,60 +61,22 @@ export function automate<U extends Unit> (
     }
 
     // Schedule remaining points (guaranteed to be in the future)
-    for (let i = pointIndex; i < automation.points.length; ++i) {
+    for (let i = pointIndex; i < points.length; ++i) {
       const pointTime = pointTimes[i]
-
-      const point = automation.points[i]
-      const curve = transformCurve(type, point.curve)
-      const pointValue = toParamValue(type, point.value)
+      const { value: { value }, curve } = points[i]
 
       scheduleToPoint(transport, param, {
         curve,
         time: pointTime,
-        value: pointValue,
+        value,
         previousTime,
         previousValue
       })
 
       previousTime = pointTime
-      previousValue = pointValue
+      previousValue = value
     }
   })
-}
-
-function toParamValue (type: ParameterType, { value }: Numeric<Unit>): number {
-  switch (type) {
-    case 'gain':
-      return dbToGain(value)
-
-    case 'frequency':
-      return value
-  }
-}
-
-type Curve = 'step' | 'linear' | 'exponential'
-
-function transformCurve (type: ParameterType, curve: Curve): Curve {
-  switch (type) {
-    case 'gain':
-      return transformDbToGainCurve(curve)
-
-    case 'frequency':
-      return curve
-  }
-}
-
-function transformDbToGainCurve (curve: Curve): Curve {
-  switch (curve) {
-    case 'step':
-      return 'step'
-
-    case 'linear':
-      return 'exponential'
-
-    case 'exponential':
-      throw new Error()
-  }
 }
 
 function evaluateCurve (curve: Curve, t: number, startValue: number, endValue: number): number {

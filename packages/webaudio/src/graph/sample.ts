@@ -1,13 +1,12 @@
-import { DEFAULT_ROOT_NOTE } from '@audiograph/constants.js'
+import type { SampleNode } from '@audiograph/nodes.js'
 import { createMultimap } from '@collections/multimap.js'
-import type { Instrument, Pitch, Program } from '@core/program.js'
+import type { Pitch } from '@core/program.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
-import { automate } from '../automation.js'
 import { convertPitchToMidi } from '../midi.js'
 import type { Transport } from '../transport.js'
 import type { Instance, NoteOptions } from './types.js'
 
-export function createSampleInstrument (program: Program, instrument: Instrument, transport: Transport, fetcher: AudioFetcher): Instance {
+export function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Instance {
   const { ctx } = transport
 
   // declick
@@ -16,15 +15,13 @@ export function createSampleInstrument (program: Program, instrument: Instrument
     release: 0.005
   }
 
-  const rootNoteMidi = convertPitchToMidi(instrument.rootNote ?? DEFAULT_ROOT_NOTE)
+  const rootNoteMidi = convertPitchToMidi(node.rootNote)
   const sourcesByMidi = createMultimap<number, ActiveSource>()
 
   const output = ctx.createGain()
 
-  automate(transport, output.gain, 'gain', program, instrument.gain)
-
   let sampleBuffer: AudioBuffer | undefined
-  const loaded = fetcher.fetch(ctx, instrument.sampleUrl).then((buffer) => {
+  const loaded = fetcher.fetch(ctx, node.sampleUrl).then((buffer) => {
     sampleBuffer = buffer
   })
 

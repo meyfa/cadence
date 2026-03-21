@@ -1,8 +1,10 @@
+import type { AudioGraph } from '@audiograph/graph.js'
+import type { Node } from '@audiograph/nodes.js'
 import type { Numeric } from '@core/numeric.js'
 import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
-import { createAudioGraph } from './graph.js'
+import { createWebAudioGraph } from './graph/graph.js'
 import { createOfflineTransport } from './transport.js'
 
 export interface AudioRendererOptions {
@@ -19,7 +21,7 @@ export interface AudioRenderResult {
 }
 
 export interface AudioRenderer {
-  readonly render: (program: Program) => Promise<AudioRenderResult>
+  readonly render: (program: Program, graph: AudioGraph<Node>) => Promise<AudioRenderResult>
 }
 
 export function createAudioRenderer (options: AudioRendererOptions): AudioRenderer {
@@ -29,7 +31,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
   })
 
   return {
-    render: async (program) => {
+    render: async (program, graph) => {
       const cleanupHooks: Array<() => void> = []
 
       const duration = beatsToSeconds(calculateTotalLength(program), program.track.tempo)
@@ -41,8 +43,8 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         duration
       })
 
-      const graph = createAudioGraph(program, transport, fetcher)
-      cleanupHooks.push(() => graph.dispose())
+      const webAudioGraph = createWebAudioGraph(program, graph, transport, fetcher)
+      cleanupHooks.push(() => webAudioGraph.dispose())
 
       if (options.onProgress != null) {
         cleanupHooks.push(transport.time.subscribe((time) => {
@@ -56,7 +58,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
       let audioBuffer: AudioBuffer | undefined
 
       try {
-        await graph.loaded
+        await webAudioGraph.loaded
         audioBuffer = await transport.render()
       } catch (err: unknown) {
         return {

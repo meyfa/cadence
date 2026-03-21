@@ -1,21 +1,26 @@
 import { DEFAULT_ROOT_NOTE } from '@audiograph/constants.js'
+import type { AudioGraph, NodeId } from '@audiograph/graph.js'
+import type { Node } from '@audiograph/nodes.js'
 import { numeric } from '@core/numeric.js'
 import { renderPatternEvents } from '@core/pattern.js'
-import { type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
+import { type Instrument, type NoteEvent, type Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
-import type { Instance } from './nodes/types.js'
+import type { Instance } from './types.js'
 
-const BEAT = numeric('beats', 1)
-
-export function scheduleNoteEvents (program: Program, instruments: ReadonlyMap<InstrumentId, Instance>): void {
-  const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
+export function scheduleNoteEvents (
+  program: Program,
+  graph: AudioGraph<Node>,
+  instruments: Map<NodeId, Instance>
+): void {
+  const timePerBeat = beatsToSeconds(numeric('beats', 1), program.track.tempo).value
 
   let offsetBeats = 0
 
   for (const part of program.track.parts) {
     for (const routing of part.routings) {
       const instrument = program.instruments.get(routing.destination.id)
-      const instance = instruments.get(routing.destination.id)
+      const nodeId = graph.instruments.get(routing.destination.id)
+      const instance = nodeId != null ? instruments.get(nodeId) : undefined
 
       if (instrument == null || instance?.triggerNote == null) {
         continue
