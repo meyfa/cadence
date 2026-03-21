@@ -23,6 +23,12 @@ const packages = [
     dependencies: []
   },
   {
+    name: 'audiograph',
+    dependencies: [
+      'core'
+    ]
+  },
+  {
     name: 'ast',
     dependencies: [
       'core'
@@ -38,7 +44,8 @@ const packages = [
     name: 'webaudio',
     dependencies: [
       'collections',
-      'core'
+      'core',
+      'audiograph'
     ]
   },
   {
@@ -65,6 +72,7 @@ const packages = [
       'collections',
       'flowchart',
       'core',
+      'audiograph',
       'codecs',
       'webaudio',
       'language',

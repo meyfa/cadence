@@ -16,6 +16,7 @@ const config = defineConfig({
     alias: {
       '@collections': path.resolve(import.meta.dirname, '../collections/src'),
       '@core': path.resolve(import.meta.dirname, '../core/src'),
+      '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src'),
       '@ast': path.resolve(import.meta.dirname, '../ast/src'),
       '@codecs': path.resolve(import.meta.dirname, '../codecs/src'),
       '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src'),

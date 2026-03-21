@@ -61,7 +61,7 @@ type Id<Tag extends string> = number & { __tag: Tag }
 
 // Domain types
 
-export type ParameterId = Id<'Parameter'>
+export type ParameterId = Id<'core.Parameter'>
 
 export interface Parameter<U extends Unit> {
   readonly id: ParameterId
@@ -83,7 +83,7 @@ export interface AutomationPoint<U extends Unit = Unit> {
   readonly curve: 'linear' | 'step'
 }
 
-export type InstrumentId = Id<'Instrument'>
+export type InstrumentId = Id<'core.Instrument'>
 
 export interface Instrument {
   readonly id: InstrumentId
@@ -121,7 +121,7 @@ export interface Mixer {
   readonly routings: readonly MixerRouting[]
 }
 
-export type BusId = Id<'Bus'>
+export type BusId = Id<'core.Bus'>
 
 export interface Bus {
   readonly id: BusId
