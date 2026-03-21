@@ -4,8 +4,10 @@ import { beatsToSeconds } from '@core/time.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { AnyNode, AudioGraph, NodeId } from './graph.js'
-import type { GainNode, IdentityNode, Node, SampleNode } from './nodes.js'
+import { HighpassNode, LowpassNode, PanNode, ReverbNode, type DelayNode, type GainNode, type IdentityNode, type Node, type SampleNode } from './nodes.js'
 import { timeVariant, type TimeVariant } from './timevariant.js'
+
+type Builder = AudioGraphBuilder<Node>
 
 export function createAudioGraph (program: Program): AudioGraph<Node> {
   const builder = createAudioGraphBuilder<Node>()
@@ -90,7 +92,7 @@ function mapGain ({ value }: Numeric<'db'>): Numeric<undefined> {
   return numeric(undefined, dbToGain(value))
 }
 
-function createBus (program: Program, bus: Bus, builder: AudioGraphBuilder): SubGraph {
+function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
   const effectSubgraphs: SubGraph[] = []
 
   const appendEffect = (effect: Effect) => {
@@ -129,7 +131,7 @@ function createBus (program: Program, bus: Bus, builder: AudioGraphBuilder): Sub
   }
 }
 
-function createInstrument (program: Program, instrument: Instrument, builder: AudioGraphBuilder): SubGraph {
+function createInstrument (program: Program, instrument: Instrument, builder: Builder): SubGraph {
   const rootNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
 
   const source = builder.addNode<SampleNode>('sample', {
@@ -151,7 +153,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Au
   }
 }
 
-function createEffect (program: Program, effect: Effect, builder: AudioGraphBuilder): SubGraph {
+function createEffect (program: Program, effect: Effect, builder: Builder): SubGraph {
   switch (effect.type) {
     case 'gain': {
       return toSubGraph(builder.addNode<GainNode>('gain', {
@@ -161,33 +163,28 @@ function createEffect (program: Program, effect: Effect, builder: AudioGraphBuil
     }
 
     case 'pan': {
-      return toSubGraph(builder.addNode('pan', {
+      return toSubGraph(builder.addNode<PanNode>('pan', {
         // TODO time variant
-        pan: Math.max(-1, Math.min(1, effect.pan.value))
+        pan: numeric(undefined, Math.max(-1, Math.min(1, effect.pan.value)))
       }))
     }
 
     case 'lowpass': {
-      return toSubGraph(builder.addNode('lowpass', {
+      return toSubGraph(builder.addNode<LowpassNode>('lowpass', {
         // TODO time variant
         frequency: effect.frequency
       }))
     }
 
     case 'highpass': {
-      return toSubGraph(builder.addNode('highpass', {
+      return toSubGraph(builder.addNode<HighpassNode>('highpass', {
         // TODO time variant
         frequency: effect.frequency
       }))
     }
 
     case 'delay': {
-      const mix = Math.max(0, Math.min(1, effect.mix.value))
-      if (mix <= 0) {
-        return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
-      }
-
-      const delayNode = builder.addNode('delay', {
+      const delayNode = builder.addNode<DelayNode>('delay', {
         // TODO time variant
         time: beatsToSeconds(effect.time, program.track.tempo)
       })
@@ -204,20 +201,7 @@ function createEffect (program: Program, effect: Effect, builder: AudioGraphBuil
         builder.addEdge(feedbackGain.id, delayNode.id)
       }
 
-      const dry = builder.addNode<GainNode>('gain', {
-        gain: timeVariant(numeric(undefined, 1 - mix), [])
-      })
-
-      const wet = builder.addNode<GainNode>('gain', {
-        gain: timeVariant(numeric(undefined, mix), [])
-      })
-
-      builder.addEdge(delayNode.id, wet.id)
-
-      return {
-        inputs: [dry.id, delayNode.id],
-        outputs: [dry.id, wet.id]
-      }
+      return createDryWetMix(delayNode, effect.mix.value, builder)
     }
 
     case 'reverb': {
@@ -226,25 +210,42 @@ function createEffect (program: Program, effect: Effect, builder: AudioGraphBuil
         return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
       }
 
-      const reverb = builder.addNode('reverb', {
+      const reverb = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
         decay: effect.decay
       })
 
-      const dry = builder.addNode<GainNode>('gain', {
-        gain: timeVariant(numeric(undefined, 1 - mix), [])
-      })
-
-      const wet = builder.addNode<GainNode>('gain', {
-        gain: timeVariant(numeric(undefined, mix), [])
-      })
-
-      builder.addEdge(reverb.id, wet.id)
-
-      return {
-        inputs: [dry.id, reverb.id],
-        outputs: [dry.id, wet.id]
-      }
+      return createDryWetMix(reverb, mix, builder)
     }
+  }
+}
+
+function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph {
+  if (mix <= 0) {
+    return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
+  }
+
+  if (mix >= 1) {
+    return toSubGraph(effect)
+  }
+
+  // dry: 0.0...0.5 -> 100%,   0.75: 50%,         1.0:   0%
+  // wet:       0.0 ->   0%,   0.25: 50%,   0.5...1.0: 100%
+
+  const dry = Math.max(0, Math.min(1, (1 - mix) * 2))
+  const dryNode = builder.addNode<GainNode>('gain', {
+    gain: timeVariant(numeric(undefined, dry), [])
+  })
+
+  const wet = Math.max(0, Math.min(1, mix * 2))
+  const wetNode = builder.addNode<GainNode>('gain', {
+    gain: timeVariant(numeric(undefined, wet), [])
+  })
+
+  builder.addEdge(effect.id, wetNode.id)
+
+  return {
+    inputs: [dryNode.id, effect.id],
+    outputs: [dryNode.id, wetNode.id]
   }
 }
