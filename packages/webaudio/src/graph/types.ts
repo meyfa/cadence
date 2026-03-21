@@ -1,4 +1,4 @@
-import type { Pitch } from '@core/program.js'
+import type { NoteOptions } from '@audiograph/graph.js'
 
 export interface Instance {
   readonly loaded: Promise<void>
@@ -8,11 +8,4 @@ export interface Instance {
   readonly output?: AudioNode
 
   readonly triggerNote?: (options: NoteOptions) => void
-}
-
-export interface NoteOptions {
-  readonly note: Pitch | number
-  readonly time: number
-  readonly velocity: number
-  readonly duration?: number
 }

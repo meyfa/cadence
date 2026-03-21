@@ -1,12 +1,8 @@
 import { NodeId, type AudioGraph } from '@audiograph/graph.js'
 import type { Node } from '@audiograph/nodes.js'
-import type { Program } from '@core/program.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
-import { createEffectInstance } from './effect.js'
-import { createIdentityInstance } from './identity.js'
-import { scheduleNoteEvents } from './parts.js'
-import { createSampleInstance } from './sample.js'
+import { createNodeInstance } from './factory.js'
 import type { Instance } from './types.js'
 
 export interface WebAudioGraph {
@@ -20,14 +16,11 @@ export interface WebAudioGraph {
   readonly disposed: boolean
 }
 
-export function createWebAudioGraph (program: Program, graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): WebAudioGraph {
-  const instances = new Map<NodeId, Instance>()
-  for (const node of graph.nodes.values()) {
-    instances.set(node.id, createNodeInstance(node, transport, fetcher))
-  }
+export function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): WebAudioGraph {
+  const instances = createInstances(graph, transport, fetcher)
 
-  setupRoutings(graph, instances, transport)
-  scheduleNoteEvents(program, graph, instances)
+  setupRoutings(graph, instances, transport.output)
+  scheduleNoteEvents(graph, instances)
 
   const loaded = Promise.all(
     Array.from(instances.values(), async (item) => await item.loaded)
@@ -51,25 +44,17 @@ export function createWebAudioGraph (program: Program, graph: AudioGraph<Node>, 
   }
 }
 
-function createNodeInstance (node: Node, transport: Transport, fetcher: AudioFetcher): Instance {
-  switch (node.type) {
-    case 'identity':
-      return createIdentityInstance(node, transport)
+function createInstances (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): Map<NodeId, Instance> {
+  const instances = new Map<NodeId, Instance>()
 
-    case 'gain':
-    case 'pan':
-    case 'lowpass':
-    case 'highpass':
-    case 'delay':
-    case 'reverb':
-      return createEffectInstance(node, transport)
-
-    case 'sample':
-      return createSampleInstance(node, transport, fetcher)
+  for (const node of graph.nodes.values()) {
+    instances.set(node.id, createNodeInstance(node, transport, fetcher))
   }
+
+  return instances
 }
 
-function setupRoutings (graph: AudioGraph<Node>, instances: Map<NodeId, Instance>, transport: Transport): void {
+function setupRoutings (graph: AudioGraph<Node>, instances: Map<NodeId, Instance>, output: AudioNode): void {
   for (const edge of graph.edges) {
     const from = instances.get(edge.from)
     const to = instances.get(edge.to)
@@ -81,7 +66,16 @@ function setupRoutings (graph: AudioGraph<Node>, instances: Map<NodeId, Instance
   for (const outputId of graph.outputIds) {
     const from = instances.get(outputId)
     if (from?.output != null) {
-      from.output.connect(transport.output)
+      from.output.connect(output)
+    }
+  }
+}
+
+function scheduleNoteEvents (graph: AudioGraph<Node>, instances: Map<NodeId, Instance>): void {
+  for (const [nodeId, options] of graph.noteEvents) {
+    const instance = instances.get(nodeId)
+    for (const event of options) {
+      instance?.triggerNote?.(event)
     }
   }
 }

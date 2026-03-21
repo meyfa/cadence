@@ -1,5 +1,5 @@
 import { numeric } from '@core/numeric.js'
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, ParameterId, Program, Track } from '@core/program.js'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, ParameterId, Program, Track } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -7,6 +7,7 @@ import { dbToGain } from '../src/constants.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
+import { createSerialPattern } from '@core/pattern.js'
 
 function compareIds (a: Node, b: Node): number {
   return a.id - b.id
@@ -38,7 +39,7 @@ describe('lowering.ts', () => {
     const outputNode = graph.nodes.get(graph.outputIds[0])
     assert.strictEqual(outputNode?.type, 'identity')
 
-    assert.strictEqual(graph.instruments.size, 0)
+    assert.strictEqual(graph.noteEvents.size, 0)
   })
 
   it('should lower a program with one instrument and one bus', () => {
@@ -141,10 +142,7 @@ describe('lowering.ts', () => {
     ])
 
     assert.deepStrictEqual(graph.outputIds, [1 as NodeId])
-
-    assert.deepStrictEqual([...graph.instruments.entries()], [
-      [instrumentId, 3 as NodeId]
-    ])
+    assert.deepStrictEqual(graph.noteEvents.size, 0)
   })
 
   it('should automate instrument gain', () => {
@@ -233,6 +231,87 @@ describe('lowering.ts', () => {
         ]
       }
     } satisfies GainNode)
+  })
+
+  it('should produce note events for an instrument', () => {
+    const instrumentId = 100 as InstrumentId
+
+    const program: Program = {
+      beatsPerBar: 4,
+
+      instruments: new Map([
+        [
+          instrumentId,
+          {
+            id: instrumentId,
+            sampleUrl: 'foo.wav',
+            gain: {
+              id: 200 as ParameterId,
+              initial: numeric('db', -6)
+            }
+          } satisfies Instrument
+        ]
+      ]),
+
+      automations: new Map(),
+
+      track: {
+        tempo: numeric('bpm', 120),
+        parts: [
+          {
+            name: 'Part 1',
+            length: numeric('beats', 4),
+            routings: [
+              {
+                source: {
+                  type: 'Pattern',
+                  value: createSerialPattern([{ value: 'C4' }, { value: 'E4' }], 1)
+                },
+                destination: {
+                  type: 'Instrument',
+                  id: instrumentId
+                }
+              } satisfies InstrumentRouting
+            ]
+          },
+          {
+            name: 'Part 1',
+            length: numeric('beats', 4),
+            routings: [
+              {
+                source: {
+                  type: 'Pattern',
+                  value: createSerialPattern([{ value: 'G4' }, { value: 'B4' }], 1)
+                },
+                destination: {
+                  type: 'Instrument',
+                  id: instrumentId
+                }
+              } satisfies InstrumentRouting
+            ]
+          }
+        ]
+      },
+
+      mixer: {
+        buses: [],
+        routings: []
+      }
+    }
+
+    const graph = createAudioGraph(program)
+
+    assert.deepStrictEqual([...graph.noteEvents.entries()], [
+      [
+        2 as NodeId,
+        [
+          { time: 0, pitch: 'C4', velocity: 1.0, duration: 0.5 },
+          { time: 0.5, pitch: 'E4', velocity: 1.0, duration: 0.5 },
+          { time: 2, pitch: 'G4', velocity: 1.0, duration: 0.5 },
+          { time: 2.5, pitch: 'B4', velocity: 1.0, duration: 0.5 }
+        ]
+      ]
+    ])
   })
 
   describe('effects', () => {

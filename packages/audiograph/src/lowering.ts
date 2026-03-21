@@ -1,56 +1,43 @@
 import { numeric } from '@core/numeric.js'
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program } from '@core/program.js'
-import { beatsToSeconds } from '@core/time.js'
+import { renderPatternEvents } from '@core/pattern.js'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core/program.js'
+import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
-import type { AnyNode, AudioGraph, NodeId } from './graph.js'
-import { HighpassNode, LowpassNode, PanNode, ReverbNode, type DelayNode, type GainNode, type IdentityNode, type Node, type SampleNode } from './nodes.js'
+import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
+import type { DelayNode, GainNode, HighpassNode, IdentityNode, LowpassNode, Node, PanNode, ReverbNode, SampleNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
 export function createAudioGraph (program: Program): AudioGraph<Node> {
-  const builder = createAudioGraphBuilder<Node>()
+  const builder = createAudioGraphBuilder<Node>({
+    tempo: program.track.tempo,
+    length: calculateTotalLength(program)
+  })
 
   const output = builder.addNode<IdentityNode>('identity', {})
   builder.setOutput(output.id)
 
   const busSubgraphs = new Map<BusId, SubGraph>()
   const instrumentSubgraphs = new Map<InstrumentId, SubGraph>()
+  const instruments = new Map<InstrumentId, NodeId>()
 
   for (const bus of program.mixer.buses) {
     busSubgraphs.set(bus.id, createBus(program, bus, builder))
   }
 
   for (const instrument of program.instruments.values()) {
-    instrumentSubgraphs.set(instrument.id, createInstrument(program, instrument, builder))
-  }
-
-  const findSource = (item: MixerRouting['source']): SubGraph | undefined => {
-    switch (item.type) {
-      case 'Bus':
-        return busSubgraphs.get(item.id)
-      case 'Instrument':
-        return instrumentSubgraphs.get(item.id)
+    const result = createInstrument(program, instrument, builder)
+    instrumentSubgraphs.set(instrument.id, result)
+    if (result.instrument != null) {
+      instruments.set(instrument.id, result.instrument)
     }
   }
 
-  const findDestination = (item: MixerRouting['destination']): SubGraph | undefined => {
-    switch (item.type) {
-      case 'Output':
-        return { inputs: [output.id], outputs: [output.id] }
-      case 'Bus':
-        return busSubgraphs.get(item.id)
-    }
-  }
+  createRoutings(program, busSubgraphs, instrumentSubgraphs, output.id, builder)
 
-  for (const routing of program.mixer.routings) {
-    const source = findSource(routing.source)
-    const destination = findDestination(routing.destination)
-    if (source != null && destination != null) {
-      builder.addEdges(source.outputs, destination.inputs)
-    }
-  }
+  createNoteEvents(program.track, instruments, builder)
 
   return builder.graph()
 }
@@ -58,6 +45,7 @@ export function createAudioGraph (program: Program): AudioGraph<Node> {
 interface SubGraph {
   readonly inputs: readonly NodeId[]
   readonly outputs: readonly NodeId[]
+  readonly instrument?: NodeId
 }
 
 function toSubGraph (node: AnyNode): SubGraph {
@@ -114,7 +102,6 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     rootNote,
     length: instrument.length
   })
-  builder.setInstrument(instrument.id, source.id)
 
   const gain = builder.addNode<GainNode>('gain', {
     gain: toTimeVariant(instrument.gain, program, gainTransform)
@@ -124,7 +111,8 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
 
   return {
     inputs: [source.id],
-    outputs: [gain.id]
+    outputs: [gain.id],
+    instrument: source.id
   }
 }
 
@@ -222,5 +210,66 @@ function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph
   return {
     inputs: [dryNode.id, effect.id],
     outputs: [dryNode.id, wetNode.id]
+  }
+}
+
+function createRoutings (
+  program: Program,
+  busSubgraphs: ReadonlyMap<BusId, SubGraph>,
+  instrumentSubgraphs: ReadonlyMap<InstrumentId, SubGraph>,
+  outputId: NodeId,
+  builder: Builder
+): void {
+  const findSource = (item: MixerRouting['source']): SubGraph | undefined => {
+    switch (item.type) {
+      case 'Bus':
+        return busSubgraphs.get(item.id)
+      case 'Instrument':
+        return instrumentSubgraphs.get(item.id)
+    }
+  }
+
+  const findDestination = (item: MixerRouting['destination']): SubGraph | undefined => {
+    switch (item.type) {
+      case 'Output':
+        return { inputs: [outputId], outputs: [outputId] }
+      case 'Bus':
+        return busSubgraphs.get(item.id)
+    }
+  }
+
+  for (const routing of program.mixer.routings) {
+    const source = findSource(routing.source)
+    const destination = findDestination(routing.destination)
+    if (source != null && destination != null) {
+      builder.addEdges(source.outputs, destination.inputs)
+    }
+  }
+}
+
+function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, NodeId>, builder: Builder): void {
+  const timePerBeat = beatsToSeconds(numeric('beats', 1), track.tempo).value
+
+  let offsetBeats = 0
+
+  for (const part of track.parts) {
+    for (const routing of part.routings) {
+      const nodeId = instruments.get(routing.destination.id)
+      if (nodeId == null) {
+        continue
+      }
+
+      const events: readonly NoteOptions[] = renderPatternEvents(routing.source.value, part.length).map((event) => ({
+        time: (offsetBeats + event.time.value) * timePerBeat,
+        pitch: event.pitch,
+        // TODO custom velocity
+        velocity: 1.0,
+        duration: event.gate != null ? event.gate.value * timePerBeat : undefined
+      }))
+
+      builder.addNoteEvents(nodeId, events)
+    }
+
+    offsetBeats += part.length.value
   }
 }

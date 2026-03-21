@@ -1,11 +1,23 @@
-import { describe, it } from 'node:test'
+import { numeric } from '@core/numeric.js'
 import assert from 'node:assert'
+import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'
-import type { InstrumentId } from '@core/program.js'
 
 describe('builder.ts', () => {
+  const tempo = numeric('bpm', 120)
+  const length = numeric('beats', 16)
+
+  it('should maintain tempo and length', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const graph = builder.graph()
+
+    assert.strictEqual(graph.tempo, tempo)
+    assert.strictEqual(graph.length, length)
+  })
+
   it('should assign unique IDs to nodes', () => {
-    const builder = createAudioGraphBuilder()
+    const builder = createAudioGraphBuilder({ tempo, length })
 
     const node1 = builder.addNode('sample', { url: 'foo.wav' })
     const node2 = builder.addNode('sample', { url: 'bar.wav' })
@@ -17,7 +29,7 @@ describe('builder.ts', () => {
   })
 
   it('should build a graph correctly', () => {
-    const builder = createAudioGraphBuilder()
+    const builder = createAudioGraphBuilder({ tempo, length })
 
     const node1 = builder.addNode('sample', { url: 'foo.wav' })
     const node2 = builder.addNode('gain', { gain: 0.5 })
@@ -26,8 +38,6 @@ describe('builder.ts', () => {
     builder.addEdge(node1.id, node2.id)
     builder.addEdge(node2.id, node3.id)
 
-    builder.setOutput(node3.id)
-
     const graph = builder.graph()
 
     assert.strictEqual(graph.nodes.size, 3)
@@ -35,26 +45,22 @@ describe('builder.ts', () => {
       { from: node1.id, to: node2.id },
       { from: node2.id, to: node3.id }
     ])
-    assert.deepStrictEqual(graph.outputIds, [node3.id])
+    assert.deepStrictEqual(graph.outputIds, [])
   })
 
-  it('should set outputs and instruments correctly', () => {
-    const builder = createAudioGraphBuilder()
+  it('should set outputs', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
 
     const node1 = builder.addNode('sample', { url: 'foo.wav' })
-    const node2 = builder.addNode('gain', { gain: 0.5 })
-
+    builder.addNode('gain', { gain: 0.5 })
     builder.setOutput(node1.id)
-    builder.setInstrument(42 as InstrumentId, node2.id)
 
     const graph = builder.graph()
-
     assert.deepStrictEqual(graph.outputIds, [node1.id])
-    assert.strictEqual(graph.instruments.get(42 as InstrumentId), node2.id)
   })
 
   it('should add multiple edges correctly', () => {
-    const builder = createAudioGraphBuilder()
+    const builder = createAudioGraphBuilder({ tempo, length })
 
     const node1 = builder.addNode('sample', { url: 'foo.wav' })
     const node2 = builder.addNode('gain', { gain: 0.5 })

@@ -1,10 +1,11 @@
+import type { NoteOptions } from '@audiograph/graph.js'
 import type { SampleNode } from '@audiograph/nodes.js'
 import { createMultimap } from '@collections/multimap.js'
 import type { Pitch } from '@core/program.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import { convertPitchToMidi } from '../midi.js'
 import type { Transport } from '../transport.js'
-import type { Instance, NoteOptions } from './types.js'
+import type { Instance } from './types.js'
 
 export function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Instance {
   const { ctx } = transport
@@ -39,11 +40,19 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
       return
     }
 
-    if (options.duration != null && options.duration <= 0) {
+    const duration = (() => {
+      if (options.duration == null || node.length == null) {
+        return options.duration ?? node.length?.value
+      }
+
+      return Math.min(options.duration, node.length.value)
+    })()
+
+    if (duration != null && duration <= 0) {
       return
     }
 
-    const midi = asMidi(options.note)
+    const midi = options.pitch != null ? asMidi(options.pitch) : rootNoteMidi
     const targetGain = Math.max(0, Math.min(1, options.velocity))
 
     const sourceNode = ctx.createBufferSource()
@@ -73,8 +82,8 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
     sourceNode.connect(gainNode).connect(output)
     sourceNode.start(time)
 
-    if (options.duration != null) {
-      const releaseStartTime = time + options.duration
+    if (duration != null) {
+      const releaseStartTime = time + duration
       const releaseEndTime = releaseStartTime + envelope.release
 
       gainNode.gain.setValueAtTime(targetGain, releaseStartTime)

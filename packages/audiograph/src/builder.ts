@@ -1,5 +1,5 @@
-import type { InstrumentId } from '@core/program.js'
-import type { AudioGraph, Edge, AnyNode, NodeId } from './graph.js'
+import type { Numeric } from '@core/numeric.js'
+import type { AnyNode, AudioGraph, Edge, NodeId, NoteOptions } from './graph.js'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => T
@@ -8,16 +8,20 @@ export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly addEdges: (from: readonly NodeId[], to: readonly NodeId[]) => void
 
   readonly setOutput: (nodeId: NodeId) => void
-  readonly setInstrument: (instrumentId: InstrumentId, nodeId: NodeId) => void
+
+  readonly addNoteEvents: (nodeId: NodeId, events: readonly NoteOptions[]) => void
 
   readonly graph: () => AudioGraph<TNode>
 }
 
-export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (): AudioGraphBuilder<TNode> {
+export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: {
+  readonly tempo: Numeric<'bpm'>
+  readonly length: Numeric<'beats'>
+}): AudioGraphBuilder<TNode> {
   const nodes = new Map<NodeId, TNode>()
   const edges: Edge[] = []
   const outputIds: NodeId[] = []
-  const instruments = new Map<InstrumentId, NodeId>()
+  const noteEvents = new Map<NodeId, readonly NoteOptions[]>()
 
   let nextId = 1 as NodeId
 
@@ -44,15 +48,23 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (): Aud
     outputIds.push(nodeId)
   }
 
-  const setInstrument: AudioGraphBuilder<TNode>['setInstrument'] = (instrumentId, nodeId) => {
-    instruments.set(instrumentId, nodeId)
+  const addNoteEvents: AudioGraphBuilder<TNode>['addNoteEvents'] = (nodeId, events) => {
+    const existing = noteEvents.get(nodeId)
+    if (existing == null) {
+      noteEvents.set(nodeId, events)
+      return
+    }
+
+    noteEvents.set(nodeId, [...existing, ...events])
   }
 
   const graph: AudioGraphBuilder<TNode>['graph'] = () => ({
     nodes,
     edges,
     outputIds,
-    instruments
+    tempo: meta.tempo,
+    length: meta.length,
+    noteEvents
   })
 
   return {
@@ -60,7 +72,7 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (): Aud
     addEdge,
     addEdges,
     setOutput,
-    setInstrument,
+    addNoteEvents,
     graph
   }
 }
