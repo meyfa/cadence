@@ -1,11 +1,11 @@
-import { numeric, type Numeric, type Unit } from '@core/numeric.js'
-import type { Automation, Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Parameter, Program } from '@core/program.js'
+import { numeric } from '@core/numeric.js'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
+import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { AnyNode, AudioGraph, NodeId } from './graph.js'
 import { HighpassNode, LowpassNode, PanNode, ReverbNode, type DelayNode, type GainNode, type IdentityNode, type Node, type SampleNode } from './nodes.js'
-import { timeVariant, type TimeVariant } from './timevariant.js'
 
 type Builder = AudioGraphBuilder<Node>
 
@@ -67,31 +67,6 @@ function toSubGraph (node: AnyNode): SubGraph {
   }
 }
 
-function toTimeVariant<FromUnit extends Unit, ToUnit extends Unit> (
-  parameter: Parameter<FromUnit>,
-  program: Program,
-  mapFn: (value: Numeric<FromUnit>) => Numeric<ToUnit>
-): TimeVariant<ToUnit> {
-  const initial = mapFn(parameter.initial)
-
-  const automation = program.automations.get(parameter.id)
-  if (automation == null) {
-    return timeVariant<ToUnit>(initial, [])
-  }
-
-  const points = (automation as Automation<FromUnit>).points.map((point) => ({
-    time: beatsToSeconds(point.time, program.track.tempo),
-    value: mapFn(point.value),
-    curve: point.curve
-  }))
-
-  return timeVariant<ToUnit>(initial, points)
-}
-
-function mapGain ({ value }: Numeric<'db'>): Numeric<undefined> {
-  return numeric(undefined, dbToGain(value))
-}
-
 function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
   const effectSubgraphs: SubGraph[] = []
 
@@ -142,7 +117,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   builder.setInstrument(instrument.id, source.id)
 
   const gain = builder.addNode<GainNode>('gain', {
-    gain: toTimeVariant(instrument.gain, program, mapGain)
+    gain: toTimeVariant(instrument.gain, program, gainTransform)
   })
 
   builder.addEdge(source.id, gain.id)
@@ -158,7 +133,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     case 'gain': {
       return toSubGraph(builder.addNode<GainNode>('gain', {
         // TODO time variant
-        gain: timeVariant(mapGain(effect.gain), [])
+        gain: timeVariant(numeric(undefined, dbToGain(effect.gain.value)), [])
       }))
     }
 
