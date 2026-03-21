@@ -1,23 +1,17 @@
 import { numeric } from '@core/numeric.js'
-import type { Bus, BusId, Effect, Program } from '@core/program.js'
-import { createEffect } from './effects.js'
-import type { Instance } from './instances.js'
-import type { Transport } from './transport.js'
+import type { Bus, Effect, Program } from '@core/program.js'
+import type { Transport } from '../transport.js'
+import { createEffect } from './effect.js'
+import type { Instance } from './types.js'
 
 const UNITY_GAIN = numeric('db', 0)
 
-export function createBuses (transport: Transport, program: Program): ReadonlyMap<BusId, Instance> {
-  return new Map(
-    program.mixer.buses.map((bus) => [bus.id, createBus(transport, program, bus)])
-  )
-}
-
-function createBus (transport: Transport, program: Program, bus: Bus): Instance {
+export function createBus (program: Program, bus: Bus, transport: Transport): Instance {
   const effects: Instance[] = []
   const promises: Array<Promise<void>> = []
 
   const appendEffect = (effect: Effect) => {
-    const instance = createEffect(transport, program, effect)
+    const instance = createEffect(program, effect, transport)
 
     const last = effects.at(-1)
     if (last != null && instance.input != null) {

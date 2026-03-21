@@ -41,7 +41,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         duration
       })
 
-      const graph = createAudioGraph(transport, program, fetcher)
+      const graph = createAudioGraph(program, transport, fetcher)
       cleanupHooks.push(() => graph.dispose())
 
       if (options.onProgress != null) {
