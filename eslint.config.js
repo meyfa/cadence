@@ -87,6 +87,23 @@ assert.deepStrictEqual(
 )
 
 /**
+ * @type {import('eslint').Linter.Config}
+ */
+const crossPackageRelativeImportRestrictions = {
+  files: ['**/*.{js,mjs,cjs,jsx,ts,tsx}'],
+  rules: {
+    'no-restricted-imports': ['error', {
+      patterns: packages
+        .filter((pkg) => pkg.anonymous !== true)
+        .map((pkg) => ({
+          group: [`**/${pkg.name}/src`, `**/${pkg.name}/src/**`],
+          message: `Use @${pkg.name} imports instead of relative paths into the ${pkg.name} package.`
+        }))
+    }]
+  }
+}
+
+/**
  * @type {import('eslint').Linter.Config[]}
  */
 const selfImportRestrictions = packages
@@ -95,10 +112,22 @@ const selfImportRestrictions = packages
     files: [`packages/${pkg.name}/**`],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [{
-          group: [`@${pkg.name}`, `@${pkg.name}/*`],
-          message: `Use relative imports instead of @${pkg.name} within the ${pkg.name} package.`
-        }]
+        patterns: [
+          {
+            group: [`@${pkg.name}`, `@${pkg.name}/*`],
+            message: `Use relative imports instead of @${pkg.name} within the ${pkg.name} package.`
+          },
+          {
+            group: [`**/${pkg.name}/src`, `**/${pkg.name}/src/**`],
+            message: `Use direct relative imports instead of paths that route through ${pkg.name}/src.`
+          },
+          ...packages
+            .filter((otherPkg) => otherPkg.anonymous !== true && otherPkg.name !== pkg.name)
+            .map((otherPkg) => ({
+              group: [`**/${otherPkg.name}/src`, `**/${otherPkg.name}/src/**`],
+              message: `Use @${otherPkg.name} imports instead of relative paths into the ${otherPkg.name} package.`
+            }))
+        ]
       }]
     }
   }))
@@ -222,6 +251,9 @@ export default defineConfig([
       ]
     }
   },
+
+  // monorepo: Prevent relative imports into package source directories; use @alias imports instead.
+  crossPackageRelativeImportRestrictions,
 
   // monorepo: Prevent packages from importing themselves via their @ alias (use relative imports instead)
   ...selfImportRestrictions

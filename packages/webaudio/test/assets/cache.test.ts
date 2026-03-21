@@ -1,7 +1,7 @@
+import { numeric } from '@core/numeric.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAssetCache } from '../../src/assets/cache.js'
-import { numeric } from '../../../core/src/numeric.js'
 
 describe('assets/cache.ts', () => {
   it('returns nothing for missing keys', () => {
