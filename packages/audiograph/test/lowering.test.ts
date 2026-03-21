@@ -32,6 +32,8 @@ describe('lowering.ts', () => {
 
     const outputNode = graph.nodes.get(graph.outputIds[0])
     assert.strictEqual(outputNode?.type, 'identity')
+
+    assert.strictEqual(graph.instruments.size, 0)
   })
 
   it('should lower a program with one instrument and one bus', () => {
@@ -138,5 +140,9 @@ describe('lowering.ts', () => {
     ])
 
     assert.deepStrictEqual(graph.outputIds, [1 as NodeId])
+
+    assert.deepStrictEqual([...graph.instruments.entries()], [
+      [instrumentId, 3 as NodeId]
+    ])
   })
 })

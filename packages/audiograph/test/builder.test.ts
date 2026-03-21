@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import { createAudioGraphBuilder } from '../src/builder.js'
+import type { InstrumentId } from '@core/program.js'
 
 describe('builder.ts', () => {
   it('should assign unique IDs to nodes', () => {
@@ -25,7 +26,7 @@ describe('builder.ts', () => {
     builder.addEdge(node1.id, node2.id)
     builder.addEdge(node2.id, node3.id)
 
-    builder.addOutput(node3.id)
+    builder.setOutput(node3.id)
 
     const graph = builder.graph()
 
@@ -35,6 +36,21 @@ describe('builder.ts', () => {
       { from: node2.id, to: node3.id }
     ])
     assert.deepStrictEqual(graph.outputIds, [node3.id])
+  })
+
+  it('should set outputs and instruments correctly', () => {
+    const builder = createAudioGraphBuilder()
+
+    const node1 = builder.addNode('sample', { url: 'foo.wav' })
+    const node2 = builder.addNode('gain', { gain: 0.5 })
+
+    builder.setOutput(node1.id)
+    builder.setInstrument(42 as InstrumentId, node2.id)
+
+    const graph = builder.graph()
+
+    assert.deepStrictEqual(graph.outputIds, [node1.id])
+    assert.strictEqual(graph.instruments.get(42 as InstrumentId), node2.id)
   })
 
   it('should add multiple edges correctly', () => {

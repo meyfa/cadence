@@ -1,3 +1,5 @@
+import type { InstrumentId } from '@core/program.js'
+
 type Id<Tag extends string> = number & { __tag: Tag }
 
 export type NodeId = Id<'audiograph.Node'>
@@ -16,4 +18,5 @@ export interface AudioGraph {
   readonly nodes: ReadonlyMap<NodeId, Node>
   readonly edges: readonly Edge[]
   readonly outputIds: readonly NodeId[]
+  readonly instruments: ReadonlyMap<InstrumentId, NodeId>
 }
