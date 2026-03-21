@@ -1,17 +1,14 @@
-import type { DelayNode, GainNode, HighpassNode, LowpassNode, PanNode, ReverbNode } from '@audiograph/nodes.js'
+import type { BiquadNode, DelayNode, GainNode, PanNode, ReverbNode } from '@audiograph/nodes.js'
 import type { Numeric } from '@core/numeric.js'
 import { mulberry32, xmur3 } from '@core/random.js'
 import { automate } from '../automation.js'
 import type { Transport } from '../transport.js'
 import type { Instance } from './types.js'
 
-const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
-
 export type EffectNode =
   GainNode |
   PanNode |
-  LowpassNode |
-  HighpassNode |
+  BiquadNode |
   DelayNode |
   ReverbNode
 
@@ -32,19 +29,11 @@ export function createEffectInstance (node: EffectNode, transport: Transport): I
       return toInstance(audioNode)
     }
 
-    case 'lowpass': {
+    case 'biquad': {
       const audioNode = ctx.createBiquadFilter()
-      audioNode.type = 'lowpass'
+      audioNode.type = node.filterType
       audioNode.frequency.value = node.frequency.value
-      audioNode.Q.value = DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE
-      return toInstance(audioNode)
-    }
-
-    case 'highpass': {
-      const audioNode = ctx.createBiquadFilter()
-      audioNode.type = 'highpass'
-      audioNode.frequency.value = node.frequency.value
-      audioNode.Q.value = DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE
+      audioNode.Q.value = -node.rolloffPerOctave.value
       return toInstance(audioNode)
     }
 
