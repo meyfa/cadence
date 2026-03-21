@@ -15,11 +15,9 @@
         "files.trimTrailingWhitespace": true,
         "eslint.format.enable": true,
         "editor.tabSize": 2,
-        "javascript.preferences.importModuleSpecifierEnding": "js",
-        "typescript.preferences.importModuleSpecifierEnding": "js",
-        "typescript.preferences.preferTypeOnlyAutoImports": true,
-        "javascript.preferences.quoteStyle": "single",
-        "typescript.preferences.quoteStyle": "single"
+        "js/ts.preferences.importModuleSpecifierEnding": "js",
+        "js/ts.preferences.preferTypeOnlyAutoImports": true,
+        "js/ts.preferences.quoteStyle": "single"
       }
     }
   }
