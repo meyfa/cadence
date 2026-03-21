@@ -3,12 +3,12 @@ import type { Automation, Bus, BusId, Effect, Instrument, InstrumentId, MixerRou
 import { beatsToSeconds } from '@core/time.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
-import type { AudioGraph, Node, NodeId } from './graph.js'
-import { SampleNode, type GainNode, type IdentityNode } from './nodes.js'
+import type { AnyNode, AudioGraph, NodeId } from './graph.js'
+import type { GainNode, IdentityNode, Node, SampleNode } from './nodes.js'
 import { timeVariant, type TimeVariant } from './timevariant.js'
 
-export function createAudioGraph (program: Program): AudioGraph {
-  const builder = createAudioGraphBuilder()
+export function createAudioGraph (program: Program): AudioGraph<Node> {
+  const builder = createAudioGraphBuilder<Node>()
 
   const output = builder.addNode<IdentityNode>('identity', {})
   builder.setOutput(output.id)
@@ -58,7 +58,7 @@ interface SubGraph {
   readonly outputs: readonly NodeId[]
 }
 
-function toSubGraph (node: Node): SubGraph {
+function toSubGraph (node: AnyNode): SubGraph {
   return {
     inputs: [node.id],
     outputs: [node.id]
