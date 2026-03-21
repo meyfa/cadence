@@ -1,24 +1,22 @@
+import type { Node } from '@audiograph/nodes.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
-import { createEffectInstance } from './effect.js'
-import { createIdentityInstance } from './identity.js'
+import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance } from './effect.js'
 import { createSampleInstance } from './sample.js'
-import type { Instance } from './types.js'
-import type { Node } from '@audiograph/nodes.js'
+import type { Instance } from './instance.js'
+
+const factories = Object.freeze({
+  identity: createIdentityInstance,
+
+  gain: createGainInstance,
+  pan: createPanInstance,
+  biquad: createBiquadInstance,
+  delay: createDelayInstance,
+  reverb: createReverbInstance,
+
+  sample: createSampleInstance
+})
 
 export function createNodeInstance (node: Node, transport: Transport, fetcher: AudioFetcher): Instance {
-  switch (node.type) {
-    case 'identity':
-      return createIdentityInstance(node, transport)
-
-    case 'gain':
-    case 'pan':
-    case 'biquad':
-    case 'delay':
-    case 'reverb':
-      return createEffectInstance(node, transport)
-
-    case 'sample':
-      return createSampleInstance(node, transport, fetcher)
-  }
+  return factories[node.type](node as any, transport, fetcher)
 }
