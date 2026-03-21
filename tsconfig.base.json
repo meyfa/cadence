@@ -3,6 +3,7 @@
     "paths": {
       "@collections/*": ["./packages/collections/src/*"],
       "@core/*": ["./packages/core/src/*"],
+      "@audiograph/*": ["./packages/audiograph/src/*"],
       "@ast/*": ["./packages/ast/src/*"],
       "@codecs/*": ["./packages/codecs/src/*"],
       "@webaudio/*": ["./packages/webaudio/src/*"],

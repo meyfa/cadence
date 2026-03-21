@@ -1,7 +1,7 @@
+import { dbToGain } from '@audiograph/constants.js'
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { mulberry32, xmur3 } from '@core/random.js'
 import { beatsToSeconds } from '@core/time.js'
-import { dbToGain } from '../constants.js'
 import type { Transport } from '../transport.js'
 import type { Instance } from './types.js'
 
