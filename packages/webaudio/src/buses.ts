@@ -1,27 +1,27 @@
 import { numeric } from '@core/numeric.js'
 import type { Bus, BusId, Effect, Program } from '@core/program.js'
 import { createEffect } from './effects.js'
-import type { BusInstance, EffectInstance } from './instances.js'
+import type { Instance } from './instances.js'
 import type { Transport } from './transport.js'
 
 const UNITY_GAIN = numeric('db', 0)
 
-export function createBuses (transport: Transport, program: Program): ReadonlyMap<BusId, BusInstance> {
+export function createBuses (transport: Transport, program: Program): ReadonlyMap<BusId, Instance> {
   return new Map(
     program.mixer.buses.map((bus) => [bus.id, createBus(transport, program, bus)])
   )
 }
 
-function createBus (transport: Transport, program: Program, bus: Bus): BusInstance {
-  const effects: EffectInstance[] = []
+function createBus (transport: Transport, program: Program, bus: Bus): Instance {
+  const effects: Instance[] = []
   const promises: Array<Promise<void>> = []
 
   const appendEffect = (effect: Effect) => {
     const instance = createEffect(transport, program, effect)
 
     const last = effects.at(-1)
-    if (last != null) {
-      last.output.connect(instance.input)
+    if (last != null && instance.input != null) {
+      last.output?.connect(instance.input)
     }
 
     effects.push(instance)
@@ -49,9 +49,9 @@ function createBus (transport: Transport, program: Program, bus: Bus): BusInstan
   }
 
   return {
-    input: first.input,
-    output: last.output,
     loaded: Promise.all(promises).then(() => undefined),
-    dispose: () => effects.forEach((item) => item.dispose())
+    dispose: () => effects.forEach((item) => item.dispose()),
+    input: first.input,
+    output: last.output
   }
 }

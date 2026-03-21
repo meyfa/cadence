@@ -3,7 +3,7 @@ import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
 import type { AudioFetcher } from './assets/fetcher.js'
 import { automate } from './automation.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
-import type { InstrumentInstance, NoteOptions } from './instances.js'
+import type { Instance, NoteOptions } from './instances.js'
 import { convertPitchToMidi } from './midi.js'
 import type { Transport } from './transport.js'
 
@@ -11,7 +11,7 @@ export function createInstruments (
   transport: Transport,
   program: Program,
   fetcher: AudioFetcher
-): ReadonlyMap<InstrumentId, InstrumentInstance> {
+): ReadonlyMap<InstrumentId, Instance> {
   return new Map(
     [...program.instruments.values()].map((instrument) => [
       instrument.id,
@@ -41,7 +41,7 @@ function createInstrument (
   program: Program,
   instrument: Instrument,
   fetcher: AudioFetcher
-): InstrumentInstance {
+): Instance {
   const { ctx } = transport
 
   // declick
@@ -122,9 +122,9 @@ function createInstrument (
   })
 
   return {
-    output,
     loaded,
     dispose,
+    output,
     triggerNote
   }
 }
