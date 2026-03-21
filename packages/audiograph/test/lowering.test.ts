@@ -1,11 +1,16 @@
 import { numeric } from '@core/numeric.js'
-import type { Bus, BusId, Instrument, InstrumentId, MixerRouting, ParameterId, Program, Track } from '@core/program.js'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, ParameterId, Program, Track } from '@core/program.js'
+import { beatsToSeconds } from '@core/time.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { dbToGain } from '../src/constants.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { GainNode, IdentityNode, Node, SampleNode } from '../src/nodes.js'
+import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
+
+function compareIds (a: Node, b: Node): number {
+  return a.id - b.id
+}
 
 describe('lowering.ts', () => {
   it('should lower empty program correctly', () => {
@@ -103,19 +108,15 @@ describe('lowering.ts', () => {
 
     const graph = createAudioGraph(program)
 
-    function compareIds (a: Node, b: Node): number {
-      return b.id - a.id
-    }
-
     assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
       {
-        id: 4 as NodeId,
-        type: 'gain',
-        gain: {
-          initial: numeric(undefined, dbToGain(-6)),
-          points: []
-        }
-      } satisfies GainNode,
+        id: 1 as NodeId,
+        type: 'identity'
+      } satisfies IdentityNode,
+      {
+        id: 2 as NodeId,
+        type: 'identity'
+      } satisfies IdentityNode,
       {
         id: 3 as NodeId,
         length: undefined,
@@ -124,13 +125,13 @@ describe('lowering.ts', () => {
         rootNote: 'C5'
       } satisfies SampleNode,
       {
-        id: 2 as NodeId,
-        type: 'identity'
-      } satisfies IdentityNode,
-      {
-        id: 1 as NodeId,
-        type: 'identity'
-      } satisfies IdentityNode
+        id: 4 as NodeId,
+        type: 'gain',
+        gain: {
+          initial: numeric(undefined, dbToGain(-6)),
+          points: []
+        }
+      } satisfies GainNode
     ])
 
     assert.deepStrictEqual(graph.edges, [
@@ -144,5 +145,203 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual([...graph.instruments.entries()], [
       [instrumentId, 3 as NodeId]
     ])
+  })
+
+  describe('effects', () => {
+    function createProgramWithEffect (effect: Effect): Program {
+      return {
+        beatsPerBar: 4,
+        instruments: new Map(),
+        automations: new Map(),
+        track: {
+          tempo: numeric('bpm', 120),
+          parts: []
+        },
+        mixer: {
+          buses: [
+            {
+              id: 100 as BusId,
+              name: 'Bus 1',
+              effects: [effect]
+            }
+          ],
+          routings: [
+            {
+              implicit: false,
+              source: {
+                type: 'Bus',
+                id: 100 as BusId
+              },
+              destination: {
+                type: 'Output'
+              }
+            }
+          ]
+        }
+      }
+    }
+
+    it('should handle gain', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'gain',
+        gain: numeric('db', -3)
+      }))
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'gain',
+        gain: {
+          initial: numeric(undefined, dbToGain(-3)),
+          points: []
+        }
+      } satisfies GainNode)
+    })
+
+    it('should handle pan', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'pan',
+        pan: numeric(undefined, 0.5)
+      }))
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'pan',
+        pan: numeric(undefined, 0.5)
+      })
+    })
+
+    it('should handle lowpass', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'lowpass',
+        frequency: numeric('hz', 1000)
+      }))
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'lowpass',
+        frequency: numeric('hz', 1000)
+      })
+    })
+
+    it('should handle highpass', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'highpass',
+        frequency: numeric('hz', 500)
+      }))
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'highpass',
+        frequency: numeric('hz', 500)
+      })
+    })
+
+    it('should handle delay', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'delay',
+        mix: numeric(undefined, 0.25),
+        time: numeric('beats', 0.5),
+        feedback: numeric(undefined, 0.4)
+      }))
+
+      assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        // output node
+        {
+          id: 1 as NodeId,
+          type: 'identity'
+        } satisfies IdentityNode,
+        // delay node
+        {
+          id: 2 as NodeId,
+          type: 'delay',
+          time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+        } satisfies DelayNode,
+        // feedback gain node
+        {
+          id: 3 as NodeId,
+          type: 'gain',
+          gain: {
+            initial: numeric(undefined, 0.4),
+            points: []
+          }
+        } satisfies GainNode,
+        // dry gain node
+        {
+          id: 4 as NodeId,
+          type: 'gain',
+          gain: {
+            initial: numeric(undefined, 1.0),
+            points: []
+          }
+        } satisfies GainNode,
+        // wet gain node
+        {
+          id: 5 as NodeId,
+          type: 'gain',
+          gain: {
+            initial: numeric(undefined, 0.5),
+            points: []
+          }
+        } satisfies GainNode
+      ])
+
+      assert.deepStrictEqual(graph.edges, [
+        // delay to feedback
+        { from: 2 as NodeId, to: 3 as NodeId },
+        // feedback to delay
+        { from: 3 as NodeId, to: 2 as NodeId },
+        // delay to wet
+        { from: 2 as NodeId, to: 5 as NodeId },
+        // input to dry
+        { from: 4 as NodeId, to: 1 as NodeId },
+        // wet to output
+        { from: 5 as NodeId, to: 1 as NodeId }
+      ])
+    })
+
+    it('should handle reverb', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'reverb',
+        mix: numeric(undefined, 0.75),
+        decay: numeric('s', 2)
+      }))
+
+      assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        // output node
+        {
+          id: 1 as NodeId,
+          type: 'identity'
+        } satisfies IdentityNode,
+        // reverb node
+        {
+          id: 2 as NodeId,
+          type: 'reverb',
+          decay: numeric('s', 2)
+        } satisfies ReverbNode,
+        // dry gain node
+        {
+          id: 3 as NodeId,
+          type: 'gain',
+          gain: {
+            initial: numeric(undefined, 0.5),
+            points: []
+          }
+        } satisfies GainNode,
+        // wet gain node
+        {
+          id: 4 as NodeId,
+          type: 'gain',
+          gain: {
+            initial: numeric(undefined, 1.0),
+            points: []
+          }
+        } satisfies GainNode
+      ])
+
+      assert.deepStrictEqual(graph.edges, [
+        // reverb to wet
+        { from: 2 as NodeId, to: 4 as NodeId },
+        // dry to output
+        { from: 3 as NodeId, to: 1 as NodeId },
+        // wet to output
+        { from: 4 as NodeId, to: 1 as NodeId }
+      ])
+    })
   })
 })
