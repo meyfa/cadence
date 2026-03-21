@@ -1,7 +1,7 @@
 import type { Numeric } from '@core/numeric.js'
 import type { Pitch } from '@core/program.js'
+import type { TimeVariant } from './automation.js'
 import type { AnyNode } from './graph.js'
-import type { TimeVariant } from './timevariant.js'
 
 export interface NodeTypeMap {
   readonly identity: IdentityNode

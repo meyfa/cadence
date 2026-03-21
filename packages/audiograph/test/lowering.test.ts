@@ -147,6 +147,94 @@ describe('lowering.ts', () => {
     ])
   })
 
+  it('should automate instrument gain', () => {
+    const instrumentId = 100 as InstrumentId
+    const instrumentGainId = 200 as ParameterId
+
+    const program: Program = {
+      beatsPerBar: 4,
+
+      instruments: new Map([
+        [
+          instrumentId,
+          {
+            id: instrumentId,
+            sampleUrl: 'foo.wav',
+            gain: {
+              id: instrumentGainId,
+              initial: numeric('db', -6)
+            }
+          } satisfies Instrument
+        ]
+      ]),
+
+      automations: new Map([
+        [
+          instrumentGainId,
+          {
+            parameterId: instrumentGainId,
+            type: 'gain',
+            points: [
+              {
+                time: numeric('beats', 1),
+                value: numeric('db', -3),
+                curve: 'linear'
+              },
+              {
+                time: numeric('beats', 2),
+                value: numeric('db', -12),
+                curve: 'step'
+              }
+            ]
+          }
+        ]
+      ]),
+
+      track: {
+        tempo: numeric('bpm', 120),
+        parts: []
+      } satisfies Track,
+
+      mixer: {
+        buses: [],
+        routings: [
+          {
+            implicit: true,
+            source: {
+              type: 'Instrument',
+              id: instrumentId
+            },
+            destination: {
+              type: 'Output'
+            }
+          } satisfies MixerRouting
+        ]
+      }
+    }
+
+    const graph = createAudioGraph(program)
+
+    assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
+      id: 3 as NodeId,
+      type: 'gain',
+      gain: {
+        initial: numeric(undefined, dbToGain(-6)),
+        points: [
+          {
+            time: numeric('s', 0.5),
+            value: numeric(undefined, dbToGain(-3)),
+            curve: 'exponential'
+          },
+          {
+            time: numeric('s', 1),
+            value: numeric(undefined, dbToGain(-12)),
+            curve: 'step'
+          }
+        ]
+      }
+    } satisfies GainNode)
+  })
+
   describe('effects', () => {
     function createProgramWithEffect (effect: Effect): Program {
       return {
