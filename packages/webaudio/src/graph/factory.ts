@@ -13,8 +13,7 @@ export function createNodeInstance (node: Node, transport: Transport, fetcher: A
 
     case 'gain':
     case 'pan':
-    case 'lowpass':
-    case 'highpass':
+    case 'biquad':
     case 'delay':
     case 'reverb':
       return createEffectInstance(node, transport)

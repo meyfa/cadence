@@ -7,7 +7,7 @@ import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
-import type { DelayNode, GainNode, HighpassNode, IdentityNode, LowpassNode, Node, PanNode, ReverbNode, SampleNode } from './nodes.js'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, Node, PanNode, ReverbNode, SampleNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
@@ -136,16 +136,22 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'lowpass': {
-      return toSubGraph(builder.addNode<LowpassNode>('lowpass', {
+      return toSubGraph(builder.addNode<BiquadNode>('biquad', {
+        filterType: 'lowpass',
         // TODO time variant
-        frequency: effect.frequency
+        frequency: effect.frequency,
+        // TODO configurable rolloff
+        rolloffPerOctave: numeric('db', 12)
       }))
     }
 
     case 'highpass': {
-      return toSubGraph(builder.addNode<HighpassNode>('highpass', {
+      return toSubGraph(builder.addNode<BiquadNode>('biquad', {
+        filterType: 'highpass',
         // TODO time variant
-        frequency: effect.frequency
+        frequency: effect.frequency,
+        // TODO configurable rolloff
+        rolloffPerOctave: numeric('db', 12)
       }))
     }
 

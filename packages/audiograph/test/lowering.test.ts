@@ -361,7 +361,7 @@ describe('lowering.ts', () => {
           initial: numeric(undefined, dbToGain(-3)),
           points: []
         }
-      } satisfies GainNode)
+      })
     })
 
     it('should handle pan', () => {
@@ -383,8 +383,10 @@ describe('lowering.ts', () => {
       }))
       assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
         id: 2 as NodeId,
-        type: 'lowpass',
-        frequency: numeric('hz', 1000)
+        type: 'biquad',
+        filterType: 'lowpass',
+        frequency: numeric('hz', 1000),
+        rolloffPerOctave: numeric('db', 12)
       })
     })
 
@@ -395,8 +397,10 @@ describe('lowering.ts', () => {
       }))
       assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
         id: 2 as NodeId,
-        type: 'highpass',
-        frequency: numeric('hz', 500)
+        type: 'biquad',
+        filterType: 'highpass',
+        frequency: numeric('hz', 500),
+        rolloffPerOctave: numeric('db', 12)
       })
     })
 
