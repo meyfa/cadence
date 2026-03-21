@@ -1,56 +1,47 @@
-import type { BiquadNode, DelayNode, GainNode, PanNode, ReverbNode } from '@audiograph/nodes.js'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode } from '@audiograph/nodes.js'
 import type { Numeric } from '@core/numeric.js'
 import { mulberry32, xmur3 } from '@core/random.js'
 import { automate } from '../automation.js'
 import type { Transport } from '../transport.js'
-import type { Instance } from './types.js'
+import type { Instance } from './instance.js'
 
-export type EffectNode =
-  GainNode |
-  PanNode |
-  BiquadNode |
-  DelayNode |
-  ReverbNode
+export function createIdentityInstance (node: IdentityNode, transport: Transport): Instance {
+  return toInstance(transport.ctx.createGain())
+}
 
-export function createEffectInstance (node: EffectNode, transport: Transport): Instance {
-  const { ctx } = transport
+export function createGainInstance (node: GainNode, transport: Transport): Instance {
+  const audioNode = transport.ctx.createGain()
+  automate(transport, audioNode.gain, node.gain)
+  return toInstance(audioNode)
+}
 
-  switch (node.type) {
-    case 'gain': {
-      const audioNode = ctx.createGain()
-      automate(transport, audioNode.gain, node.gain)
-      return toInstance(audioNode)
-    }
+export function createPanInstance (node: PanNode, transport: Transport): Instance {
+  // equal power panning
+  const audioNode = transport.ctx.createStereoPanner()
+  audioNode.pan.value = node.pan.value
+  return toInstance(audioNode)
+}
 
-    case 'pan': {
-      // equal power panning
-      const audioNode = ctx.createStereoPanner()
-      audioNode.pan.value = node.pan.value
-      return toInstance(audioNode)
-    }
+export function createBiquadInstance (node: BiquadNode, transport: Transport): Instance {
+  const audioNode = transport.ctx.createBiquadFilter()
+  audioNode.type = node.filterType
+  audioNode.frequency.value = node.frequency.value
+  audioNode.Q.value = -node.rolloffPerOctave.value
+  return toInstance(audioNode)
+}
 
-    case 'biquad': {
-      const audioNode = ctx.createBiquadFilter()
-      audioNode.type = node.filterType
-      audioNode.frequency.value = node.frequency.value
-      audioNode.Q.value = -node.rolloffPerOctave.value
-      return toInstance(audioNode)
-    }
+export function createDelayInstance (node: DelayNode, transport: Transport): Instance {
+  const audioNode = transport.ctx.createDelay()
+  audioNode.delayTime.value = node.time.value
+  return toInstance(audioNode)
+}
 
-    case 'delay': {
-      const audioNode = ctx.createDelay()
-      audioNode.delayTime.value = node.time.value
-      return toInstance(audioNode)
-    }
-
-    case 'reverb': {
-      const audioNode = ctx.createConvolver()
-      const promise = generateReverbImpulseResponse(ctx, node.decay).then((buffer) => {
-        audioNode.buffer = buffer
-      })
-      return toInstance(audioNode, promise)
-    }
-  }
+export function createReverbInstance (node: ReverbNode, transport: Transport): Instance {
+  const audioNode = transport.ctx.createConvolver()
+  const promise = generateReverbImpulseResponse(transport.ctx, node.decay).then((buffer) => {
+    audioNode.buffer = buffer
+  })
+  return toInstance(audioNode, promise)
 }
 
 function toInstance (node: AudioNode, loaded = Promise.resolve()): Instance {

@@ -4,7 +4,7 @@ import { createMultimap } from '@collections/multimap.js'
 import type { MidiNote } from '@core/midi.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
-import type { Instance } from './types.js'
+import type { Instance } from './instance.js'
 
 export function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Instance {
   const { ctx } = transport

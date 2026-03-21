@@ -3,7 +3,7 @@ import type { Node } from '@audiograph/nodes.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
 import { createNodeInstance } from './factory.js'
-import type { Instance } from './types.js'
+import type { Instance } from './instance.js'
 
 export interface WebAudioGraph {
   /**
