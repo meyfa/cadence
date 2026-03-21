@@ -1,7 +1,7 @@
 import { isStepValue } from '@core/program.js'
-import { isKeyword, type Keyword } from '@language/constants.js'
 import { Token } from 'leac'
 import * as p from 'peberminta'
+import { isKeyword, type Keyword } from '../constants.js'
 import { truncateString, type Result } from '../error.js'
 import { combineSourceRanges, getSourceRange, type SourceRange } from '../range.js'
 import * as ast from './ast.js'

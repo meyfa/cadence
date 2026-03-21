@@ -1,5 +1,5 @@
-import type { Program } from '@core/program.js'
 import { type Numeric, numeric } from './numeric.js'
+import type { Program } from './program.js'
 
 export function beatsToSeconds (
   beats: Numeric<'beats'>,

@@ -1,9 +1,9 @@
-import { createSerialPattern, renderPatternEvents } from '@core/pattern.js'
 import { numeric } from '@core/numeric.js'
-import type { FunctionContext } from '@language/compiler/functions.js'
-import { patternsModule } from '@language/compiler/modules/patterns.js'
+import { createSerialPattern, renderPatternEvents } from '@core/pattern.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { FunctionContext } from '../../../src/compiler/functions.js'
+import { patternsModule } from '../../../src/compiler/modules/patterns.js'
 import { FunctionType, PatternType } from '../../../src/compiler/types.js'
 
 function createFunctionContext (): FunctionContext {
