@@ -11,7 +11,7 @@ export function createAudioGraph (program: Program): AudioGraph {
   const builder = createAudioGraphBuilder()
 
   const output = builder.addNode<IdentityNode>('identity', {})
-  builder.addOutput(output.id)
+  builder.setOutput(output.id)
 
   const busSubgraphs = new Map<BusId, SubGraph>()
   const instrumentSubgraphs = new Map<InstrumentId, SubGraph>()
@@ -137,6 +137,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Au
     rootNote,
     length: instrument.length
   })
+  builder.setInstrument(instrument.id, source.id)
 
   const gain = builder.addNode<GainNode>('gain', {
     gain: toTimeVariant(instrument.gain, program, mapGain)

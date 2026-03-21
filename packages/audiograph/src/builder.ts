@@ -1,3 +1,4 @@
+import type { InstrumentId } from '@core/program.js'
 import type { AudioGraph, Edge, Node, NodeId } from './graph.js'
 
 export interface AudioGraphBuilder {
@@ -6,7 +7,8 @@ export interface AudioGraphBuilder {
   readonly addEdge: (from: NodeId, to: NodeId) => void
   readonly addEdges: (from: readonly NodeId[], to: readonly NodeId[]) => void
 
-  readonly addOutput: (nodeId: NodeId) => void
+  readonly setOutput: (nodeId: NodeId) => void
+  readonly setInstrument: (instrumentId: InstrumentId, nodeId: NodeId) => void
 
   readonly graph: () => AudioGraph
 }
@@ -15,6 +17,7 @@ export function createAudioGraphBuilder (): AudioGraphBuilder {
   const nodes = new Map<NodeId, Node>()
   const edges: Edge[] = []
   const outputIds: NodeId[] = []
+  const instruments = new Map<InstrumentId, NodeId>()
 
   let nextId = 1 as NodeId
 
@@ -37,21 +40,27 @@ export function createAudioGraphBuilder (): AudioGraphBuilder {
     }
   }
 
-  const addOutput: AudioGraphBuilder['addOutput'] = (nodeId) => {
+  const setOutput: AudioGraphBuilder['setOutput'] = (nodeId) => {
     outputIds.push(nodeId)
+  }
+
+  const setInstrument: AudioGraphBuilder['setInstrument'] = (instrumentId, nodeId) => {
+    instruments.set(instrumentId, nodeId)
   }
 
   const graph: AudioGraphBuilder['graph'] = () => ({
     nodes,
     edges,
-    outputIds
+    outputIds,
+    instruments
   })
 
   return {
     addNode,
     addEdge,
     addEdges,
-    addOutput,
+    setOutput,
+    setInstrument,
     graph
   }
 }
