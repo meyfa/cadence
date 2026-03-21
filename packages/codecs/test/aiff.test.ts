@@ -1,11 +1,11 @@
+import { numeric } from '@core/numeric.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { encodeAIFF, estimateAIFFSize } from '../../src/encoding/aiff.js'
-import type { AudioDescription } from '../../src/encoding/common.js'
-import { MockAudioBuffer } from '../../src/encoding/mock-audio-buffer.js'
-import { numeric } from '../../../core/src/numeric.js'
+import { encodeAIFF, estimateAIFFSize } from '../src/aiff.js'
+import type { AudioDescription } from '../src/common.js'
+import { MockAudioBuffer } from '../src/mock-audio-buffer.js'
 
-describe('encoding/aiff.ts', () => {
+describe('aiff.ts', () => {
   it('estimates file size correctly', () => {
     const stereo10s: AudioDescription = {
       numberOfChannels: 2,
