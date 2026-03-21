@@ -1,13 +1,13 @@
 import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { mulberry32, xmur3 } from '@core/random.js'
 import { beatsToSeconds } from '@core/time.js'
-import { dbToGain } from './conversion.js'
-import type { Instance } from './instances.js'
-import type { Transport } from './transport.js'
+import { dbToGain } from '../constants.js'
+import type { Transport } from '../transport.js'
+import type { Instance } from './types.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
 
-export function createEffect (transport: Transport, program: Program, effect: Effect): Instance {
+export function createEffect (program: Program, effect: Effect, transport: Transport): Instance {
   const { ctx } = transport
 
   switch (effect.type) {

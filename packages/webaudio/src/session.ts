@@ -4,7 +4,7 @@ import type { Program } from '@core/program.js'
 import { beatsToSeconds, calculateTotalLength } from '@core/time.js'
 import type { BeatRange } from '@core/types.js'
 import type { AudioFetcher } from './assets/fetcher.js'
-import { dbToGain } from './conversion.js'
+import { dbToGain } from './constants.js'
 import { createAudioGraph } from './graph.js'
 import { createOnlineTransport } from './transport.js'
 
@@ -47,7 +47,7 @@ export function createAudioSession (
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
-  const graph = createAudioGraph(transport, program, fetcher)
+  const graph = createAudioGraph(program, transport, fetcher)
   cleanupHooks.push(() => graph.dispose())
 
   const start = () => {

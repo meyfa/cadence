@@ -1,7 +1,7 @@
 import type { Numeric, Unit } from '@core/numeric.js'
 import type { Parameter, Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
-import { dbToGain } from './conversion.js'
+import { dbToGain } from './constants.js'
 import type { Transport } from './transport.js'
 
 export type ParameterType = 'gain' | 'frequency'

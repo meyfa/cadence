@@ -1,47 +1,13 @@
 import { createMultimap } from '@collections/multimap.js'
-import type { Instrument, InstrumentId, Pitch, Program } from '@core/program.js'
-import type { AudioFetcher } from './assets/fetcher.js'
-import { automate } from './automation.js'
-import { DEFAULT_ROOT_NOTE } from './constants.js'
-import type { Instance, NoteOptions } from './instances.js'
-import { convertPitchToMidi } from './midi.js'
-import type { Transport } from './transport.js'
+import type { Instrument, Pitch, Program } from '@core/program.js'
+import type { AudioFetcher } from '../assets/fetcher.js'
+import { automate } from '../automation.js'
+import { DEFAULT_ROOT_NOTE } from '../constants.js'
+import { convertPitchToMidi } from '../midi.js'
+import type { Transport } from '../transport.js'
+import type { Instance, NoteOptions } from './types.js'
 
-export function createInstruments (
-  transport: Transport,
-  program: Program,
-  fetcher: AudioFetcher
-): ReadonlyMap<InstrumentId, Instance> {
-  return new Map(
-    [...program.instruments.values()].map((instrument) => [
-      instrument.id,
-      createInstrument(transport, program, instrument, fetcher)
-    ])
-  )
-}
-
-interface ActiveSource {
-  readonly sourceNode: AudioBufferSourceNode
-  readonly gainNode: GainNode
-  readonly targetGain: number
-  disposed: boolean
-}
-
-function disposeActiveSource (source: ActiveSource): void {
-  if (!source.disposed) {
-    source.disposed = true
-    source.sourceNode.stop()
-    source.sourceNode.disconnect()
-    source.gainNode.disconnect()
-  }
-}
-
-function createInstrument (
-  transport: Transport,
-  program: Program,
-  instrument: Instrument,
-  fetcher: AudioFetcher
-): Instance {
+export function createSampleInstrument (program: Program, instrument: Instrument, transport: Transport, fetcher: AudioFetcher): Instance {
   const { ctx } = transport
 
   // declick
@@ -126,6 +92,22 @@ function createInstrument (
     dispose,
     output,
     triggerNote
+  }
+}
+
+interface ActiveSource {
+  readonly sourceNode: AudioBufferSourceNode
+  readonly gainNode: GainNode
+  readonly targetGain: number
+  disposed: boolean
+}
+
+function disposeActiveSource (source: ActiveSource): void {
+  if (!source.disposed) {
+    source.disposed = true
+    source.sourceNode.stop()
+    source.sourceNode.disconnect()
+    source.gainNode.disconnect()
   }
 }
 

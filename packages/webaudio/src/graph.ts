@@ -1,8 +1,8 @@
-import type { Program } from '@core/program.js'
+import type { BusId, InstrumentId, Program } from '@core/program.js'
 import type { AudioFetcher } from './assets/fetcher.js'
-import { createBuses } from './buses.js'
-import type { Instance } from './instances.js'
-import { createInstruments } from './instruments.js'
+import { createBus } from './nodes/bus.js'
+import { createSampleInstrument } from './nodes/sample.js'
+import type { Instance } from './nodes/types.js'
 import { scheduleNoteEvents } from './parts.js'
 import { setupRoutings } from './routings.js'
 import type { Transport } from './transport.js'
@@ -18,13 +18,9 @@ export interface AudioGraph {
   readonly disposed: boolean
 }
 
-export function createAudioGraph (
-  transport: Transport,
-  program: Program,
-  fetcher: AudioFetcher
-): AudioGraph {
-  const buses = createBuses(transport, program)
-  const instruments = createInstruments(transport, program, fetcher)
+export function createAudioGraph (program: Program, transport: Transport, fetcher: AudioFetcher): AudioGraph {
+  const buses = createBuses(program, transport)
+  const instruments = createInstruments(program, transport, fetcher)
 
   const instances: Instance[] = [
     ...buses.values(),
@@ -58,4 +54,22 @@ export function createAudioGraph (
       }
     }
   }
+}
+
+function createBuses (program: Program, transport: Transport): ReadonlyMap<BusId, Instance> {
+  return new Map(
+    program.mixer.buses.map((bus) => [
+      bus.id,
+      createBus(program, bus, transport)
+    ])
+  )
+}
+
+function createInstruments (program: Program, transport: Transport, fetcher: AudioFetcher): ReadonlyMap<InstrumentId, Instance> {
+  return new Map(
+    [...program.instruments.values()].map((instrument) => [
+      instrument.id,
+      createSampleInstrument(program, instrument, transport, fetcher)
+    ])
+  )
 }
