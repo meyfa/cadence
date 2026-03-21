@@ -1,4 +1,6 @@
+import type { MidiNote } from '@core/midi.js'
 import { numeric } from '@core/numeric.js'
+import { createSerialPattern } from '@core/pattern.js'
 import type { Bus, BusId, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, ParameterId, Program, Track } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import assert from 'node:assert'
@@ -7,7 +9,6 @@ import { dbToGain } from '../src/constants.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
-import { createSerialPattern } from '@core/pattern.js'
 
 function compareIds (a: Node, b: Node): number {
   return a.id - b.id
@@ -123,7 +124,7 @@ describe('lowering.ts', () => {
         length: undefined,
         type: 'sample',
         sampleUrl: 'foo.wav',
-        rootNote: 'C5'
+        rootNote: 72 as MidiNote // C5
       } satisfies SampleNode,
       {
         id: 4 as NodeId,
@@ -305,10 +306,10 @@ describe('lowering.ts', () => {
       [
         2 as NodeId,
         [
-          { time: 0, pitch: 'C4', velocity: 1.0, duration: 0.5 },
-          { time: 0.5, pitch: 'E4', velocity: 1.0, duration: 0.5 },
-          { time: 2, pitch: 'G4', velocity: 1.0, duration: 0.5 },
-          { time: 2.5, pitch: 'B4', velocity: 1.0, duration: 0.5 }
+          { time: 0, pitch: 60, velocity: 1.0, duration: 0.5 },
+          { time: 0.5, pitch: 64, velocity: 1.0, duration: 0.5 },
+          { time: 2, pitch: 67, velocity: 1.0, duration: 0.5 },
+          { time: 2.5, pitch: 71, velocity: 1.0, duration: 0.5 }
         ]
       ]
     ])

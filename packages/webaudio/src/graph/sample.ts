@@ -1,9 +1,8 @@
 import type { NoteOptions } from '@audiograph/graph.js'
 import type { SampleNode } from '@audiograph/nodes.js'
 import { createMultimap } from '@collections/multimap.js'
-import type { Pitch } from '@core/program.js'
+import type { MidiNote } from '@core/midi.js'
 import type { AudioFetcher } from '../assets/fetcher.js'
-import { convertPitchToMidi } from '../midi.js'
 import type { Transport } from '../transport.js'
 import type { Instance } from './types.js'
 
@@ -16,8 +15,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
     release: 0.005
   }
 
-  const rootNoteMidi = convertPitchToMidi(node.rootNote)
-  const sourcesByMidi = createMultimap<number, ActiveSource>()
+  const sourcesByMidi = createMultimap<MidiNote, ActiveSource>()
 
   const output = ctx.createGain()
 
@@ -52,7 +50,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
       return
     }
 
-    const midi = options.pitch != null ? asMidi(options.pitch) : rootNoteMidi
+    const midi = options.pitch ?? node.rootNote
     const targetGain = Math.max(0, Math.min(1, options.velocity))
 
     const sourceNode = ctx.createBufferSource()
@@ -74,7 +72,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
     }, { once: true })
 
     sourceNode.buffer = sampleBuffer
-    sourceNode.playbackRate.value = Math.pow(2, (midi - rootNoteMidi) / 12)
+    sourceNode.playbackRate.value = Math.pow(2, (midi - node.rootNote) / 12)
 
     gainNode.gain.setValueAtTime(0, time)
     gainNode.gain.linearRampToValueAtTime(targetGain, time + envelope.attack)
@@ -115,8 +113,4 @@ function disposeActiveSource (source: ActiveSource): void {
     source.sourceNode.disconnect()
     source.gainNode.disconnect()
   }
-}
-
-function asMidi (note: Pitch | number): number {
-  return typeof note === 'number' ? note : convertPitchToMidi(note)
 }

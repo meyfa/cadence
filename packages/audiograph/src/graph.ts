@@ -1,5 +1,5 @@
+import type { MidiNote } from '@core/midi.js'
 import type { Numeric } from '@core/numeric.js'
-import type { Pitch } from '@core/program.js'
 
 type Id<Tag extends string> = number & { __tag: Tag }
 
@@ -17,7 +17,7 @@ export interface Edge {
 
 export interface NoteOptions {
   readonly time: number
-  readonly pitch?: Pitch | number
+  readonly pitch?: MidiNote
   readonly velocity: number
   readonly duration?: number
 }
