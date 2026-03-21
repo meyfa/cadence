@@ -1,43 +1,56 @@
 import type { Numeric } from '@core/numeric.js'
 import type { Pitch } from '@core/program.js'
-import type { Node } from './graph.js'
+import type { AnyNode } from './graph.js'
 import type { TimeVariant } from './timevariant.js'
 
-export interface IdentityNode extends Node {
+export interface NodeTypeMap {
+  readonly identity: IdentityNode
+  readonly gain: GainNode
+  readonly pan: PanNode
+  readonly lowpass: LowpassNode
+  readonly highpass: HighpassNode
+  readonly delay: DelayNode
+  readonly reverb: ReverbNode
+  readonly sample: SampleNode
+}
+
+export type Node = NodeTypeMap[keyof NodeTypeMap]
+
+export interface IdentityNode extends AnyNode {
   readonly type: 'identity'
 }
 
-export interface GainNode extends Node {
+export interface GainNode extends AnyNode {
   readonly type: 'gain'
   readonly gain: TimeVariant<undefined>
 }
 
-export interface PanNode extends Node {
+export interface PanNode extends AnyNode {
   readonly type: 'pan'
   readonly pan: Numeric<undefined>
 }
 
-export interface LowpassNode extends Node {
+export interface LowpassNode extends AnyNode {
   readonly type: 'lowpass'
   readonly frequency: Numeric<'hz'>
 }
 
-export interface HighpassNode extends Node {
+export interface HighpassNode extends AnyNode {
   readonly type: 'highpass'
   readonly frequency: Numeric<'hz'>
 }
 
-export interface DelayNode extends Node {
+export interface DelayNode extends AnyNode {
   readonly type: 'delay'
   readonly time: Numeric<'s'>
 }
 
-export interface ReverbNode extends Node {
+export interface ReverbNode extends AnyNode {
   readonly type: 'reverb'
   readonly decay: Numeric<'s'>
 }
 
-export interface SampleNode extends Node {
+export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly sampleUrl: string
   readonly rootNote: Pitch

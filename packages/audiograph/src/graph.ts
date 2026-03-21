@@ -4,7 +4,7 @@ type Id<Tag extends string> = number & { __tag: Tag }
 
 export type NodeId = Id<'audiograph.Node'>
 
-export interface Node {
+export interface AnyNode {
   readonly id: NodeId
   readonly type: string
 }
@@ -14,8 +14,8 @@ export interface Edge {
   readonly to: NodeId
 }
 
-export interface AudioGraph {
-  readonly nodes: ReadonlyMap<NodeId, Node>
+export interface AudioGraph<TNode = AnyNode> {
+  readonly nodes: ReadonlyMap<NodeId, TNode>
   readonly edges: readonly Edge[]
   readonly outputIds: readonly NodeId[]
   readonly instruments: ReadonlyMap<InstrumentId, NodeId>

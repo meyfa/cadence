@@ -3,9 +3,9 @@ import type { Bus, BusId, Instrument, InstrumentId, MixerRouting, ParameterId, P
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { dbToGain } from '../src/constants.js'
-import type { Node, NodeId } from '../src/graph.js'
+import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { GainNode, IdentityNode, SampleNode } from '../src/nodes.js'
+import type { GainNode, IdentityNode, Node, SampleNode } from '../src/nodes.js'
 
 describe('lowering.ts', () => {
   it('should lower empty program correctly', () => {
