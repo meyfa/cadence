@@ -3,13 +3,13 @@ import { renderPatternEvents } from '@core/pattern.js'
 import { type Instrument, type InstrumentId, type NoteEvent, type Program } from '@core/program.js'
 import { beatsToSeconds } from '@core/time.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
-import type { InstrumentInstance } from './instances.js'
+import type { Instance } from './instances.js'
 
 const BEAT = numeric('beats', 1)
 
 export function scheduleNoteEvents (
   program: Program,
-  instruments: ReadonlyMap<InstrumentId, InstrumentInstance>
+  instruments: ReadonlyMap<InstrumentId, Instance>
 ): void {
   const timePerBeat = beatsToSeconds(BEAT, program.track.tempo).value
 
@@ -20,7 +20,7 @@ export function scheduleNoteEvents (
       const instrument = program.instruments.get(routing.destination.id)
       const instance = instruments.get(routing.destination.id)
 
-      if (instrument == null || instance == null) {
+      if (instrument == null || instance?.triggerNote == null) {
         continue
       }
 

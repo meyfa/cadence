@@ -2,12 +2,12 @@ import type { Effect, Program, ReverbEffect } from '@core/program.js'
 import { mulberry32, xmur3 } from '@core/random.js'
 import { beatsToSeconds } from '@core/time.js'
 import { dbToGain } from './conversion.js'
-import type { EffectInstance } from './instances.js'
+import type { Instance } from './instances.js'
 import type { Transport } from './transport.js'
 
 const DEFAULT_FILTER_ROLLOFF_DB_PER_OCTAVE = -12.0
 
-export function createEffect (transport: Transport, program: Program, effect: Effect): EffectInstance {
+export function createEffect (transport: Transport, program: Program, effect: Effect): Instance {
   const { ctx } = transport
 
   switch (effect.type) {
@@ -77,7 +77,7 @@ export function createEffect (transport: Transport, program: Program, effect: Ef
   }
 }
 
-function createEffectInstance (node: AudioNode, loaded = Promise.resolve()): EffectInstance {
+function createEffectInstance (node: AudioNode, loaded = Promise.resolve()): Instance {
   return {
     input: node,
     output: node,
@@ -88,8 +88,8 @@ function createEffectInstance (node: AudioNode, loaded = Promise.resolve()): Eff
   }
 }
 
-function bypass (effect: EffectInstance): EffectInstance {
-  const node = effect.input.context.createGain()
+function bypass (ctx: BaseAudioContext, effect: Instance): Instance {
+  const node = ctx.createGain()
 
   return {
     ...effect,
@@ -104,9 +104,9 @@ function bypass (effect: EffectInstance): EffectInstance {
   }
 }
 
-function createDryWetMix (ctx: BaseAudioContext, mix: number, effect: EffectInstance): EffectInstance {
+function createDryWetMix (ctx: BaseAudioContext, mix: number, effect: Instance): Instance {
   if (mix <= 0) {
-    return bypass(effect)
+    return bypass(ctx, effect)
   }
 
   if (mix >= 1) {
@@ -126,8 +126,10 @@ function createDryWetMix (ctx: BaseAudioContext, mix: number, effect: EffectInst
   wetGain.gain.value = Math.max(0, Math.min(1, mix * 2))
 
   input.connect(dryGain).connect(output)
-  input.connect(effect.input)
-  effect.output.connect(wetGain).connect(output)
+  if (effect.input != null) {
+    input.connect(effect.input)
+  }
+  effect.output?.connect(wetGain).connect(output)
 
   return {
     ...effect,

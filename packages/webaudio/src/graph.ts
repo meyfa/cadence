@@ -1,7 +1,7 @@
 import type { Program } from '@core/program.js'
 import type { AudioFetcher } from './assets/fetcher.js'
 import { createBuses } from './buses.js'
-import type { BaseMixin } from './instances.js'
+import type { Instance } from './instances.js'
 import { createInstruments } from './instruments.js'
 import { scheduleNoteEvents } from './parts.js'
 import { setupRoutings } from './routings.js'
@@ -26,7 +26,7 @@ export function createAudioGraph (
   const buses = createBuses(transport, program)
   const instruments = createInstruments(transport, program, fetcher)
 
-  const instances: BaseMixin[] = [
+  const instances: Instance[] = [
     ...buses.values(),
     ...instruments.values()
   ]

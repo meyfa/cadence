@@ -1,18 +1,21 @@
 import type { BusId, InstrumentId, MixerRouting, Program } from '@core/program.js'
-import type { BusInstance, InputMixin, InstrumentInstance, OutputMixin } from './instances.js'
+import type { Instance } from './instances.js'
 import type { Transport } from './transport.js'
 
 export function setupRoutings (
   transport: Transport,
   program: Program,
-  instruments: ReadonlyMap<InstrumentId, InstrumentInstance>,
-  buses: ReadonlyMap<BusId, BusInstance>
+  instruments: ReadonlyMap<InstrumentId, Instance>,
+  buses: ReadonlyMap<BusId, Instance>
 ): void {
-  const mainOutput: InputMixin = {
-    input: transport.output
+  const mainOutput: Instance = {
+    loaded: Promise.resolve(),
+    dispose: () => {},
+    input: transport.output,
+    triggerNote: () => {}
   }
 
-  const findSource = (item: MixerRouting['source']): OutputMixin | undefined => {
+  const findSource = (item: MixerRouting['source']): Instance | undefined => {
     switch (item.type) {
       case 'Bus':
         return buses.get(item.id)
@@ -21,7 +24,7 @@ export function setupRoutings (
     }
   }
 
-  const findDestination = (item: MixerRouting['destination']): InputMixin | undefined => {
+  const findDestination = (item: MixerRouting['destination']): Instance | undefined => {
     switch (item.type) {
       case 'Output':
         return mainOutput
@@ -33,7 +36,7 @@ export function setupRoutings (
   for (const routing of program.mixer.routings) {
     const source = findSource(routing.source)
     const destination = findDestination(routing.destination)
-    if (source != null && destination != null) {
+    if (source?.output != null && destination?.input != null) {
       source.output.connect(destination.input)
     }
   }
