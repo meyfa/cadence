@@ -1,5 +1,5 @@
+import type { MidiNote } from '@core/midi.js'
 import type { Numeric } from '@core/numeric.js'
-import type { Pitch } from '@core/program.js'
 import type { TimeVariant } from './automation.js'
 import type { AnyNode } from './graph.js'
 
@@ -53,6 +53,6 @@ export interface ReverbNode extends AnyNode {
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly sampleUrl: string
-  readonly rootNote: Pitch
+  readonly rootNote: MidiNote
   readonly length?: Numeric<'s'>
 }

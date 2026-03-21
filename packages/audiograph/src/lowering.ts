@@ -1,3 +1,4 @@
+import { convertPitchToMidi } from '@core/midi.js'
 import { numeric } from '@core/numeric.js'
 import { renderPatternEvents } from '@core/pattern.js'
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core/program.js'
@@ -95,7 +96,9 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
 }
 
 function createInstrument (program: Program, instrument: Instrument, builder: Builder): SubGraph {
-  const rootNote = instrument.rootNote ?? DEFAULT_ROOT_NOTE
+  const rootNote = instrument.rootNote != null
+    ? convertPitchToMidi(instrument.rootNote)
+    : DEFAULT_ROOT_NOTE
 
   const source = builder.addNode<SampleNode>('sample', {
     sampleUrl: instrument.sampleUrl,
@@ -261,7 +264,7 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
 
       const events: readonly NoteOptions[] = renderPatternEvents(routing.source.value, part.length).map((event) => ({
         time: (offsetBeats + event.time.value) * timePerBeat,
-        pitch: event.pitch,
+        pitch: event.pitch != null ? convertPitchToMidi(event.pitch) : undefined,
         // TODO custom velocity
         velocity: 1.0,
         duration: event.gate != null ? event.gate.value * timePerBeat : undefined

@@ -1,6 +1,8 @@
-import type { Pitch } from '@core/program.js'
+import type { Pitch } from './program.js'
 
-const pitchToMidi = new Map<Pitch, number>()
+export type MidiNote = number & { __tag: 'MidiNote' }
+
+const pitchToMidi = new Map<Pitch, MidiNote>()
 
 for (let octave = 0; octave <= 10; ++octave) {
   for (const note of ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const) {
@@ -30,13 +32,13 @@ for (let octave = 0; octave <= 10; ++octave) {
       // Standard MIDI note numbers use C-1 = 0, hence the +1 octave offset.
       const midi = (octave + 1) * 12 + semitoneOffset + accidentalOffset
       if (midi >= 0 && midi <= 127) {
-        pitchToMidi.set(pitch, midi)
+        pitchToMidi.set(pitch, midi as MidiNote)
       }
     }
   }
 }
 
-export function convertPitchToMidi (pitch: Pitch): number {
+export function convertPitchToMidi (pitch: Pitch): MidiNote {
   const midi = pitchToMidi.get(pitch)
   if (midi === undefined) {
     throw new Error(`Invalid pitch: ${pitch}`)
