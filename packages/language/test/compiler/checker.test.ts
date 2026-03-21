@@ -1,9 +1,9 @@
+import * as ast from '@ast/ast.js'
+import { getEmptySourceRange } from '@ast/range.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'
 import { CompileError } from '../../src/compiler/error.js'
-import * as ast from '../../src/parser/ast.js'
-import { getEmptySourceRange } from '../../src/range.js'
 
 describe('compiler/checker.ts', () => {
   const RANGE = getEmptySourceRange()

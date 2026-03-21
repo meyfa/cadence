@@ -1,9 +1,9 @@
+import type { SourceRange } from '@ast/range.js'
 import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
-import type { SourceRange } from '@language/range.js'
-import { parse } from '@language/parser/parser.js'
 import { check } from '@language/compiler/compiler.js'
 import { lex } from '@language/lexer/lexer.js'
+import { parse } from '@language/parser/parser.js'
 
 function convertError (message: string, range: SourceRange | undefined): Diagnostic {
   return {

@@ -1,5 +1,5 @@
 import type { Token } from 'leac'
-import * as ast from './parser/ast.js'
+import * as ast from './ast.js'
 
 export interface SourceRange {
   readonly offset: number
