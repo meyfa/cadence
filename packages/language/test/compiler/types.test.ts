@@ -2,9 +2,9 @@
 
 import { numeric } from '@core/numeric.js'
 import type { ParameterId } from '@core/program.js'
-import type { ModuleDefinition } from '@language/compiler/modules.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { ModuleDefinition } from '../../src/compiler/modules.js'
 import { BusType, BusValue, CurveType, type CurveValue, EffectType, type EffectValue, FunctionType, type FunctionValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 

@@ -1,8 +1,8 @@
 import { numeric } from '@core/numeric.js'
-import type { FunctionContext } from '@language/compiler/functions.js'
-import { effectsModule } from '@language/compiler/modules/effects.js'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { FunctionContext } from '../../../src/compiler/functions.js'
+import { effectsModule } from '../../../src/compiler/modules/effects.js'
 import { FunctionType } from '../../../src/compiler/types.js'
 
 function createFunctionContext (): FunctionContext {

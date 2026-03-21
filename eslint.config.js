@@ -72,6 +72,23 @@ assert.deepStrictEqual(
 )
 
 /**
+ * @type {import('eslint').Linter.Config[]}
+ */
+const selfImportRestrictions = packages
+  .filter((pkg) => pkg.anonymous !== true)
+  .map((pkg) => ({
+    files: [`packages/${pkg.name}/**`],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: [`@${pkg.name}`, `@${pkg.name}/*`],
+          message: `Use relative imports instead of @${pkg.name} within the ${pkg.name} package.`
+        }]
+      }]
+    }
+  }))
+
+/**
  * Workaround for improperly typed eslint-plugin-react-hooks.
  *
  * @type {import('@eslint/core').Plugin}
@@ -189,5 +206,8 @@ export default defineConfig([
         }
       ]
     }
-  }
+  },
+
+  // monorepo: Prevent packages from importing themselves via their @ alias (use relative imports instead)
+  ...selfImportRestrictions
 ])

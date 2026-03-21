@@ -1,8 +1,8 @@
-import { parseJSON, serializeJSON } from '@editor/utilities/json.js'
 import { optional, string, type, type Struct } from 'superstruct'
+import { parseJSON, serializeJSON } from '../utilities/json.js'
+import type { StructValidation } from '../utilities/validation.js'
 import { dockLayoutSchema, type DockLayout } from './layout.js'
 import { partialSettingsSchema, type Settings } from './settings.js'
-import type { StructValidation } from '@editor/utilities/validation.js'
 
 // Types
 

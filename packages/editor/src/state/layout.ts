@@ -1,5 +1,5 @@
-import { brandedString, readonly, type StructValidation } from '@editor/utilities/validation.js'
 import { array, enums, lazy, literal, number, optional, record, string, type, union, unknown, type Struct } from 'superstruct'
+import { brandedString, readonly, type StructValidation } from '../utilities/validation.js'
 
 // Types
 
