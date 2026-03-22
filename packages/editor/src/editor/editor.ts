@@ -3,6 +3,7 @@ import { Compartment, EditorState, type Extension, type SelectionRange, type Tex
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { cadenceDarkTheme, cadenceLightTheme } from './theme.js'
+import { indentUnit } from '@codemirror/language'
 
 export type EditorTheme = 'dark' | 'light'
 
@@ -14,8 +15,12 @@ export interface EditorLocation {
 export interface CadenceEditorOptions {
   readonly document: string
 
+  /**
+   * The string used for indentation, for example '  ' (two spaces).
+   */
+  readonly indent: string
+
   readonly theme: EditorTheme
-  readonly tabSize: number
 
   /**
    * Extensions such as language support or linting.
@@ -28,13 +33,16 @@ export interface CadenceEditorOptions {
 
 export interface CadenceEditorHandle {
   readonly view: EditorView
+
   readonly setDocument: (value: string) => void
+  readonly setIndent: (indent: string) => void
   readonly setTheme: (theme: EditorTheme) => void
+
   readonly destroy: () => void
 }
 
 export function createCadenceEditor (parent: HTMLElement, options: CadenceEditorOptions): CadenceEditorHandle {
-  const { tabSize, extensions } = options
+  const { indent, extensions } = options
 
   const updateListener = EditorView.updateListener.of(({ state, docChanged, selectionSet }) => {
     if (docChanged) {
@@ -46,6 +54,7 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
     }
   })
 
+  const indentUnitConfig = new Compartment()
   const themeConfig = new Compartment()
 
   const state = EditorState.create({
@@ -53,7 +62,7 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
     extensions: [
       basicSetup,
 
-      EditorState.tabSize.of(tabSize),
+      indentUnitConfig.of(indentUnit.of(indent)),
 
       keymap.of([
         indentWithTab,
@@ -94,6 +103,12 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
           changes: { from: 0, to: view.state.doc.length, insert: value }
         })
       }
+    },
+
+    setIndent: (value: string) => {
+      view.dispatch({
+        effects: indentUnitConfig.reconfigure(indentUnit.of(value))
+      })
     },
 
     setTheme: (theme: EditorTheme) => {
