@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useState, type FunctionComponent, type ReactElement } from 'react'
-import { computeLayout, type LayoutEdge } from './internal/layout.js'
-import { getMarkerKey, getMarkerPath } from './internal/markers.js'
-import { getEdgeStyle } from './internal/style.js'
-import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeComponent, type FlowNodeId, type Marker } from './types.js'
+import { useLayoutEffect, useMemo, useState, type ReactElement } from 'react'
+import { computeLayout } from '../layout.js'
+import { getMarkerKey, getMarkerPath } from '../markers.js'
+import { getEdgeStyle } from '../style.js'
+import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeComponent, type FlowNodeId, type Marker } from '../types.js'
+import { FlowchartEdge } from './FlowchartEdge.js'
 
 const LAYOUT_OPTIONS = Object.freeze({
   nodeSpacingX: 80,
@@ -165,28 +166,5 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
         }
       </svg>
     </div>
-  )
-}
-
-const FlowchartEdge: FunctionComponent<{
-  edge: LayoutEdge
-  style: FlowEdgeStyle
-}> = ({ edge, style }) => {
-  const markerEnd = style.markerEnd != null
-    ? `url(#${CSS.escape(getMarkerKey({ marker: style.markerEnd, stroke: style.stroke }))})`
-    : undefined
-
-  return (
-    <path
-      key={edge.edge.id}
-      d={edge.path}
-      style={{
-        stroke: style.stroke,
-        strokeWidth: style.strokeWidth,
-        strokeDasharray: style.strokeDasharray,
-        fill: 'none'
-      }}
-      markerEnd={markerEnd}
-    />
   )
 }
