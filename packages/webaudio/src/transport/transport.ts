@@ -1,7 +1,7 @@
 import { MutableObservable, numeric, type Numeric, type Observable } from '@utility'
+import { createIntervalTimeTracker } from '../time-tracker/interval.js'
+import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
 import { createScheduler } from './scheduler.js'
-import { createIntervalTimeTracker } from './time/interval.js'
-import { createWorkletTimeTracker } from './time/worklet.js'
 
 export interface OfflineTransportOptions {
   readonly duration: Numeric<'s'>

@@ -1,9 +1,9 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { beatsToSeconds } from '@core'
 import type { Numeric } from '@utility'
-import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
-import { createWebAudioGraph } from './graph/graph.js'
-import { createOfflineTransport } from './transport.js'
+import { createAudioFetcher, type CacheLimits } from '../assets/fetcher.js'
+import { createWebAudioGraph } from '../graph/graph.js'
+import { createOfflineTransport } from '../transport/transport.js'
 
 export interface AudioRendererOptions {
   readonly channels: number

@@ -1,6 +1,6 @@
 import type { AudioGraph, Node, NodeId } from '@audiograph'
 import type { AudioFetcher } from '../assets/fetcher.js'
-import type { Transport } from '../transport.js'
+import type { Transport } from '../transport/transport.js'
 import { createNodeInstance } from './factory.js'
 import type { Instance } from './instance.js'
 

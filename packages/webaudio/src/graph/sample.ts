@@ -2,7 +2,7 @@ import type { NoteOptions, SampleNode } from '@audiograph'
 import type { MidiNote } from '@core'
 import { createMultimap } from '@utility'
 import type { AudioFetcher } from '../assets/fetcher.js'
-import type { Transport } from '../transport.js'
+import type { Transport } from '../transport/transport.js'
 import type { Instance } from './instance.js'
 
 export function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Instance {

@@ -1,8 +1,8 @@
 import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode } from '@audiograph'
 import type { Numeric } from '@utility'
 import { mulberry32, xmur3 } from '@utility'
-import { automate } from '../automation.js'
-import type { Transport } from '../transport.js'
+import { automate } from './automation.js'
+import type { Transport } from '../transport/transport.js'
 import type { Instance } from './instance.js'
 
 export function createIdentityInstance (node: IdentityNode, transport: Transport): Instance {
