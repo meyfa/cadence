@@ -21,6 +21,7 @@ const config = defineConfig({
       '@codecs': path.resolve(import.meta.dirname, '../codecs/src/index.ts'),
       '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src/index.ts'),
       '@language': path.resolve(import.meta.dirname, '../language/src/index.ts'),
+      '@language-support': path.resolve(import.meta.dirname, '../language-support/src/index.ts'),
       '@editor': path.resolve(import.meta.dirname, '../editor/src/index.ts'),
       '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src/index.ts')
     }

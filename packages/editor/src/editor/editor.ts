@@ -1,10 +1,7 @@
 import { indentWithTab } from '@codemirror/commands'
-import { linter } from '@codemirror/lint'
-import { Compartment, EditorState, type SelectionRange, type Text } from '@codemirror/state'
+import { Compartment, EditorState, type Extension, type SelectionRange, type Text } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
-import { cadenceLanguageSupport } from './language-support.js'
-import { cadenceLinter } from './linter.js'
 import { cadenceDarkTheme, cadenceLightTheme } from './theme.js'
 
 export type EditorTheme = 'dark' | 'light'
@@ -18,9 +15,12 @@ export interface CadenceEditorOptions {
   readonly document: string
 
   readonly theme: EditorTheme
-
   readonly tabSize: number
-  readonly lintDelay: number
+
+  /**
+   * Extensions such as language support or linting.
+   */
+  readonly extensions?: readonly Extension[]
 
   readonly onChange: (value: string) => void
   readonly onLocationChange?: (location: EditorLocation | undefined) => void
@@ -34,7 +34,7 @@ export interface CadenceEditorHandle {
 }
 
 export function createCadenceEditor (parent: HTMLElement, options: CadenceEditorOptions): CadenceEditorHandle {
-  const { tabSize, lintDelay } = options
+  const { tabSize, extensions } = options
 
   const updateListener = EditorView.updateListener.of(({ state, docChanged, selectionSet }) => {
     if (docChanged) {
@@ -71,8 +71,7 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
         }
       }),
 
-      cadenceLanguageSupport(),
-      linter(cadenceLinter, { delay: lintDelay }),
+      ...(extensions ?? []),
 
       updateListener
     ]

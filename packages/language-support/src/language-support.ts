@@ -42,7 +42,7 @@ const parserWithMetadata = parser.configure({
   ]
 })
 
-export const cadenceLanguage = LRLanguage.define({
+const cadenceLanguage = LRLanguage.define({
   parser: parserWithMetadata,
   languageData: {
     commentTokens: {
