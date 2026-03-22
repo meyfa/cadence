@@ -1,4 +1,4 @@
-import type { FlowEdgeStyle } from '../types.js'
+import type { FlowEdgeStyle } from './types.js'
 
 const DEFAULT_EDGE_STYLE = Object.freeze({
   stroke: '#000',
