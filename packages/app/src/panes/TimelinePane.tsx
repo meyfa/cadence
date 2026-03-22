@@ -1,6 +1,6 @@
 import type { BeatRange } from '@core'
 import { useCallback, type FunctionComponent } from 'react'
-import { Timeline } from '../components/Timeline.js'
+import { Timeline } from '../components/timeline/Timeline.js'
 import { useObservable } from '../hooks/observable.js'
 import { usePrevious } from '../hooks/previous.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'

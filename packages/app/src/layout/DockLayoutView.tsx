@@ -4,11 +4,11 @@ import type { DockLayout, Tab, TabId } from '@editor'
 import { findPaneById, findPaneByTabId, moveTabBetweenPanes, moveTabIntoPane, moveTabToSplit } from '@editor'
 import clsx from 'clsx'
 import { useCallback, useState, type FunctionComponent } from 'react'
-import { TabComponent } from '../components/TabComponent.js'
 import { useTabRendererContext } from '../panes/render-tab.js'
 import { useLayoutNodeDispatch, type LayoutDispatch } from '../state/LayoutContext.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
 import { renderNode } from './render-node.js'
+import { TabComponent } from './TabComponent.js'
 
 const snapOverlayTopLeftToCursor: Modifier = ({
   activatorEvent,

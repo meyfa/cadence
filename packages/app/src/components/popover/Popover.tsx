@@ -1,7 +1,7 @@
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
 import { useRef, type FunctionComponent, type PropsWithChildren } from 'react'
 import { createPortal } from 'react-dom'
-import { useGlobalKeydown, useGlobalMouseUp } from '../hooks/input.js'
+import { useGlobalKeydown, useGlobalMouseUp } from '../../hooks/input.js'
 
 export const Popover: FunctionComponent<PropsWithChildren<{
   anchor?: HTMLElement | null

@@ -9,7 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { saveFile } from '../../utilities/files.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
-import { Button } from '../Button.js'
+import { Button } from '../button/Button.js'
 import { Dropdown, type Option } from '../dropdown/Dropdown.js'
 import { ProgressBar } from '../progress-bar/ProgressBar.js'
 import { BaseDialog } from './BaseDialog.js'

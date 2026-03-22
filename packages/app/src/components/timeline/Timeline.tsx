@@ -2,9 +2,9 @@ import { calculateTotalLength, type BeatRange, type Part, type Program } from '@
 import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { useGlobalMouseMove, useGlobalMouseUp } from '../hooks/input.js'
-import { formatBeatDuration, formatBeatDurationAsWords } from '../utilities/strings.js'
-import { Popover } from './Popover.js'
+import { useGlobalMouseMove, useGlobalMouseUp } from '../../hooks/input.js'
+import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/strings.js'
+import { Popover } from '../popover/Popover.js'
 
 const TIMELINE_ZOOM_MIN = 4
 const TIMELINE_ZOOM_MAX = 64
