@@ -1,7 +1,8 @@
 import type { Extension } from '@codemirror/state'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
-import { createCadenceEditor, type CadenceEditorHandle, type EditorLocation, type EditorTheme } from './editor.js'
 import { useMutableCallback } from '../hooks/mutable-callback.js'
+import { createCadenceEditor, type CadenceEditorHandle } from './handle.js'
+import type { EditorLocation, EditorTheme } from './types.js'
 
 export const Editor: FunctionComponent<{
   document: string
