@@ -1,11 +1,11 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createScheduler } from '../src/scheduler.js'
+import { createScheduler } from '../../src/transport/scheduler.js'
 
 type SetInterval = typeof globalThis.setInterval
 type ClearInterval = typeof globalThis.clearInterval
 
-describe('scheduler.ts', () => {
+describe('transport/scheduler.ts', () => {
   it('runs callbacks shortly before their target time', () => {
     let nowSeconds = 10
 

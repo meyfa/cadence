@@ -2,9 +2,9 @@ import type { AudioGraph, Node } from '@audiograph'
 import { dbToGain } from '@audiograph'
 import { type BeatRange, beatsToSeconds } from '@core'
 import { MutableObservable, numeric, type Numeric, type Observable } from '@utility'
-import type { AudioFetcher } from './assets/fetcher.js'
-import { createWebAudioGraph } from './graph/graph.js'
-import { createOnlineTransport } from './transport.js'
+import type { AudioFetcher } from '../assets/fetcher.js'
+import { createWebAudioGraph } from '../graph/graph.js'
+import { createOnlineTransport } from '../transport/transport.js'
 
 export interface AudioSession {
   readonly ended: Observable<boolean>

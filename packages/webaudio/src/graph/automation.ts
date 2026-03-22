@@ -1,6 +1,6 @@
 import type { Curve, TimeVariant } from '@audiograph'
 import type { Unit } from '@utility'
-import type { Transport } from './transport.js'
+import type { Transport } from '../transport/transport.js'
 
 export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: TimeVariant<U>): void {
   param.value = source.initial.value
