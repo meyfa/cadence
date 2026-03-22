@@ -21,6 +21,7 @@
     "target": "ES2022",
     "moduleResolution": "bundler",
     "isolatedModules": true,
+    "erasableSyntaxOnly": true,
     "strict": true,
     "esModuleInterop": true,
     "declaration": false,
