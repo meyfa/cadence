@@ -1,6 +1,6 @@
 import type { NoteOptions, SampleNode } from '@audiograph'
-import { createMultimap } from '@collections'
 import type { MidiNote } from '@core'
+import { createMultimap } from '@utility'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
 import type { Instance } from './instance.js'

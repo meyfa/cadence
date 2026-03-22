@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@collections": ["./packages/collections/src/index.ts"],
+      "@utility": ["./packages/utility/src/index.ts"],
       "@core": ["./packages/core/src/index.ts"],
       "@audiograph": ["./packages/audiograph/src/index.ts"],
       "@ast": ["./packages/ast/src/index.ts"],

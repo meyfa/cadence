@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createMultimap } from '../src/multimap.js'
+import { createMultimap } from '../../src/collections/multimap.js'
 
-describe('multimap.ts', () => {
+describe('collections/multimap.ts', () => {
   it('should add and retrieve values', () => {
     const multimap = createMultimap<string, number>()
     multimap.add('a', 1)
