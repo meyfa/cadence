@@ -2,8 +2,8 @@ export * from './keyboard-shortcuts.js'
 
 export * from './storage.js'
 
-export type { EditorTheme, EditorLocation } from './editor/editor.js'
-export { Editor } from './editor/component.js'
+export type { EditorTheme, EditorLocation } from './editor/types.js'
+export { Editor } from './editor/Editor.js'
 
 export * from './layout/layout.js'
 

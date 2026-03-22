@@ -1,15 +1,15 @@
 import type { LayoutNode } from '@editor'
-import type { ReactNode } from 'react'
+import type { FunctionComponent } from 'react'
 import type { TabRendererContext } from '../panes/render-tab.js'
 import type { LayoutNodeDispatch } from '../state/LayoutContext.js'
 import { PaneNodeView } from './PaneNodeView.js'
 import { SplitNodeView } from './SplitNodeView.js'
 
-export function renderNode (
-  node: LayoutNode | undefined,
-  tabRendererContext: TabRendererContext,
+export const LayoutNodeView: FunctionComponent<{
+  node: LayoutNode | undefined
+  tabRendererContext: TabRendererContext
   dispatch?: LayoutNodeDispatch
-): ReactNode {
+}> = ({ node, tabRendererContext, dispatch }) => {
   if (node == null) {
     return (
       <div className='w-full h-full flex items-center justify-center text-surface-300 text-4xl font-semibold select-none overflow-clip'>

@@ -6,8 +6,8 @@ import clsx from 'clsx'
 import { useCallback, useState, type FunctionComponent } from 'react'
 import { useTabRendererContext } from '../panes/render-tab.js'
 import { useLayoutNodeDispatch, type LayoutDispatch } from '../state/LayoutContext.js'
+import { LayoutNodeView } from './LayoutNodeView.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
-import { renderNode } from './render-node.js'
 import { TabComponent } from './TabComponent.js'
 
 const snapOverlayTopLeftToCursor: Modifier = ({
@@ -120,7 +120,11 @@ export const DockLayoutView: FunctionComponent<{
       onDragEnd={onDragEnd}
     >
       <div className={clsx('flex flex-col', className)}>
-        {renderNode(layout.main, tabRendererContext, draggedTab != null ? undefined : mainDispatch)}
+        <LayoutNodeView
+          node={layout.main}
+          tabRendererContext={tabRendererContext}
+          dispatch={draggedTab != null ? undefined : mainDispatch}
+        />
       </div>
 
       {draggedTab != null && (
@@ -129,7 +133,7 @@ export const DockLayoutView: FunctionComponent<{
           modifiers={[snapOverlayTopLeftToCursor]}
           className='pointer-events-none opacity-60 shadow-sm'
         >
-          <TabComponent tab={draggedTab} context={tabRendererContext} disabled={true} selected={true} />
+          <TabComponent tab={draggedTab} context={tabRendererContext} disabled selected />
         </DragOverlay>
       )}
     </DndContext>

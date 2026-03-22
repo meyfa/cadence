@@ -1,16 +1,10 @@
 import { indentWithTab } from '@codemirror/commands'
+import { indentUnit } from '@codemirror/language'
 import { Compartment, EditorState, type Extension, type SelectionRange, type Text } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { cadenceDarkTheme, cadenceLightTheme } from './theme.js'
-import { indentUnit } from '@codemirror/language'
-
-export type EditorTheme = 'dark' | 'light'
-
-export interface EditorLocation {
-  readonly line: number
-  readonly column: number
-}
+import type { EditorLocation, EditorTheme } from './types.js'
 
 export interface CadenceEditorOptions {
   readonly document: string

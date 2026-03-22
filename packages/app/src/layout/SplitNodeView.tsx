@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, typ
 import { Group, Panel, Separator, useGroupRef, type Layout } from 'react-resizable-panels'
 import type { TabRendererContext } from '../panes/render-tab.js'
 import { useChildNodeDispatch, type LayoutNodeDispatch } from '../state/LayoutContext.js'
-import { renderNode } from './render-node.js'
+import { LayoutNodeView } from './LayoutNodeView.js'
 
 // The interval during which layout changes are considered part of the same change stack.
 const CHANGE_STACK_WINDOW_MS = 50
@@ -90,7 +90,11 @@ const SplitNodeChildView: FunctionComponent<{
 
   return (
     <Panel id={child.id} minSize='5rem'>
-      {renderNode(child, tabRendererContext, childDispatch)}
+      <LayoutNodeView
+        node={child}
+        tabRendererContext={tabRendererContext}
+        dispatch={childDispatch}
+      />
     </Panel>
   )
 }
