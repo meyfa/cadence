@@ -1,6 +1,5 @@
-import { insertAt, move, removeAt } from '@utility'
+import { insertAt, move, removeAt, randomId } from '@utility'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, Tab, TabId } from '../state/layout.js'
-import { randomId } from '../utilities/id.js'
 
 export function findPane (layout: DockLayout, predicate: (pane: PaneNode) => boolean): PaneNode | undefined {
   const findInNode = (node: LayoutNode): PaneNode | undefined => {

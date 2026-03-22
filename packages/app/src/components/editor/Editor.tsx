@@ -1,7 +1,7 @@
 import { linter } from '@codemirror/lint'
-import { numeric } from '@core'
 import { createCadenceEditor, type CadenceEditorHandle, type EditorLocation } from '@editor'
 import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
+import { numeric } from '@utility'
 import clsx from 'clsx'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useMutableCallback } from '../../hooks/callback.js'

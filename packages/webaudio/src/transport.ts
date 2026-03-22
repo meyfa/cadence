@@ -1,4 +1,4 @@
-import { MutableObservable, numeric, type Numeric, type Observable } from '@core'
+import { MutableObservable, numeric, type Numeric, type Observable } from '@utility'
 import { createScheduler } from './scheduler.js'
 import { createIntervalTimeTracker } from './time/interval.js'
 import { createWorkletTimeTracker } from './time/worklet.js'

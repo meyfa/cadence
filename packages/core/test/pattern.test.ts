@@ -1,6 +1,6 @@
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { numeric } from '../src/numeric.js'
 import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../src/pattern.js'
 
 describe('pattern.ts', () => {

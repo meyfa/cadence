@@ -1,4 +1,5 @@
-import { beatsToSeconds, numeric, type AutomationPoint, type Numeric, type Parameter, type Program, type Unit } from '@core'
+import { beatsToSeconds, type AutomationPoint, type Parameter, type Program } from '@core'
+import { numeric, type Numeric, type Unit } from '@utility'
 import { dbToGain } from './constants.js'
 
 export type Curve = 'step' | 'linear' | 'exponential'

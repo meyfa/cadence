@@ -1,4 +1,4 @@
-import { numeric, type Numeric } from '@core'
+import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../Slider.js'

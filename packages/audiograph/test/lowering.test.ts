@@ -1,5 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Program, Track } from '@core'
-import { beatsToSeconds, createSerialPattern, numeric } from '@core'
+import { beatsToSeconds, createSerialPattern } from '@core'
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { dbToGain } from '../src/constants.js'

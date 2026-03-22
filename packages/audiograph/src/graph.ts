@@ -1,4 +1,5 @@
-import type { MidiNote, Numeric } from '@core'
+import type { MidiNote } from '@core'
+import type { Numeric } from '@utility'
 
 type Id<Tag extends string> = number & { __tag: Tag }
 

@@ -1,4 +1,5 @@
-import type { Bus, Effect, Instrument, Numeric, Parameter, Part, Pattern, Unit } from '@core'
+import type { Bus, Effect, Instrument, Parameter, Part, Pattern } from '@core'
+import type { Numeric, Unit } from '@utility'
 import type { Curve } from './curves.js'
 import type { FunctionDefinition } from './functions.js'
 import type { ModuleDefinition } from './modules.js'

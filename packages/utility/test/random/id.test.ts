@@ -1,8 +1,8 @@
-import { describe, it } from 'node:test'
-import { randomId } from '../../src/utilities/id.js'
 import assert from 'node:assert'
+import { describe, it } from 'node:test'
+import { randomId } from '../../src/random/id.js'
 
-describe('utilities/id.ts', () => {
+describe('random/id.ts', () => {
   describe('randomId', () => {
     it('should generate unique IDs', () => {
       const ids = new Set<string>()

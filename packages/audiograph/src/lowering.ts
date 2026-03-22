@@ -1,5 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core'
-import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, numeric, renderPatternEvents } from '@core'
+import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents } from '@core'
+import { numeric } from '@utility'
 import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'

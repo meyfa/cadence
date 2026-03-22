@@ -1,8 +1,4 @@
 export * from './midi.js'
-export * from './numeric.js'
-export * from './observable.js'
 export * from './pattern.js'
 export * from './program.js'
-export * from './random.js'
 export * from './time.js'
-export type * from './types.js'

@@ -1,4 +1,4 @@
-import { MutableObservable, numeric } from '@core'
+import { MutableObservable, numeric } from '@utility'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 export function createIntervalTimeTracker (ctx: BaseAudioContext, options: TimeTrackerOptions): TimeTracker {

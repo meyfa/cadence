@@ -1,4 +1,5 @@
-import type { AutomationPoint, Numeric, Unit } from '@core'
+import type { AutomationPoint } from '@core'
+import type { Numeric, Unit } from '@utility'
 
 export type Curve<U extends Unit> = HoldCurve<U> | LinearCurve<U>
 

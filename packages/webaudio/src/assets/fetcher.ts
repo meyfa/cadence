@@ -1,4 +1,4 @@
-import type { Numeric } from '@core'
+import type { Numeric } from '@utility'
 import { createAssetCache, type AssetCache } from './cache.js'
 
 export interface CacheLimits {

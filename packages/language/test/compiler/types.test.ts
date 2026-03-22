@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import type { ParameterId } from '@core'
-import { numeric } from '@core'
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { ModuleDefinition } from '../../src/compiler/modules.js'
