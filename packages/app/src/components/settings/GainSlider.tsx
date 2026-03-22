@@ -1,8 +1,8 @@
-import { numeric, type Numeric } from '@core/numeric.js'
+import { numeric, type Numeric } from '@core'
+import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../Slider.js'
 import { GainIcon } from './GainIcon.js'
-import clsx from 'clsx'
 
 export const GainSlider: FunctionComponent<{
   gain: Numeric<'db'>

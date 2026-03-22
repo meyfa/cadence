@@ -1,4 +1,4 @@
-import { createAudioGraph } from '@audiograph/lowering.js'
+import { createAudioGraph } from '@audiograph'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import { FunctionComponent, useCallback } from 'react'
 import { useObservable } from '../hooks/observable.js'

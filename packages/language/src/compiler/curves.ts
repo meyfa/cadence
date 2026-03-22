@@ -1,5 +1,4 @@
-import type { Numeric, Unit } from '@core/numeric.js'
-import type { AutomationPoint } from '@core/program.js'
+import type { AutomationPoint, Numeric, Unit } from '@core'
 
 export type Curve<U extends Unit> = HoldCurve<U> | LinearCurve<U>
 

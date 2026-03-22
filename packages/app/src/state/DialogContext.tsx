@@ -1,4 +1,4 @@
-import { randomId } from '@editor/utilities/id.js'
+import { randomId } from '@editor'
 import { createContext, useCallback, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useSafeContext } from '../hooks/context.js'
 

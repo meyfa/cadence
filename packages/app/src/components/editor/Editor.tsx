@@ -1,4 +1,4 @@
-import { createCadenceEditor, EditorLocation, type CadenceEditorHandle } from '@editor/editor.js'
+import { createCadenceEditor, EditorLocation, type CadenceEditorHandle } from '@editor'
 import clsx from 'clsx'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useMutableCallback } from '../../hooks/callback.js'

@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/numeric.js'
+import type { Numeric } from '@core'
 
 export interface AssetCacheOptions<T> {
   readonly maxSize: Numeric<'bytes'>

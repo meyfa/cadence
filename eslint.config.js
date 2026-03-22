@@ -86,7 +86,7 @@ const packages = [
 const tsconfigPath = path.resolve(import.meta.dirname, './tsconfig.base.json')
 const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf-8'))
 const tsconfigPackages = Object.keys(tsconfig.compilerOptions.paths).map((key) => {
-  return key.replace('/*', '').replace(/^@/, '')
+  return key.replace(/^@/, '')
 })
 assert.deepStrictEqual(
   tsconfigPackages.sort(),

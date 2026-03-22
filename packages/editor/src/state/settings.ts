@@ -1,4 +1,4 @@
-import type { Numeric } from '@core/numeric.js'
+import type { Numeric } from '@core'
 import { enums, optional, type, type Struct } from 'superstruct'
 import { numeric, type StructValidation } from '../utilities/validation.js'
 

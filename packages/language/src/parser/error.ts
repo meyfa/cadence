@@ -1,4 +1,4 @@
-import type { SourceRange } from '@ast/range.js'
+import type { SourceRange } from '@ast'
 import { RangeError } from '../error.js'
 
 export class ParseError extends RangeError {

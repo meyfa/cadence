@@ -1,4 +1,4 @@
-import type { NoteOptions } from '@audiograph/graph.js'
+import type { NoteOptions } from '@audiograph'
 
 export interface Instance {
   readonly loaded: Promise<void>

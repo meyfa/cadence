@@ -1,5 +1,5 @@
-import * as ast from '@ast/ast.js'
-import type { Program } from '@core/program.js'
+import { ast } from '@ast'
+import type { Program } from '@core'
 import { CompoundError, type Result } from '../error.js'
 import { check as checkerCheck } from './checker.js'
 import type { CompileError } from './error.js'

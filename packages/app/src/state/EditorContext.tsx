@@ -1,4 +1,4 @@
-import type { EditorLocation } from '@editor/editor.js'
+import type { EditorLocation } from '@editor'
 import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 import { useSafeContext } from '../hooks/context.js'
 

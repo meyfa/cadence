@@ -1,8 +1,8 @@
+import { RangeError } from '@language'
 import { useMemo } from 'react'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { useObservable } from './observable.js'
-import { RangeError } from '@language/error.js'
 
 export interface Problem {
   readonly error: RangeError | Error

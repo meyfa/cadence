@@ -1,7 +1,7 @@
+import { numeric } from '@core'
+import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { formatBytes, formatDuration } from '../../src/utilities/strings.js'
-import assert from 'node:assert'
-import { numeric } from '@core/numeric.js'
 
 describe('utilities/strings.ts', () => {
   describe('formatDuration', () => {

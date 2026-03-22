@@ -1,4 +1,4 @@
-import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut } from '@editor/keyboard-shortcuts.js'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut } from '@editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'

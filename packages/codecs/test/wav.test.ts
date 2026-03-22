@@ -1,4 +1,4 @@
-import { numeric } from '@core/numeric.js'
+import { numeric } from '@core'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { AudioDescription } from '../src/common.js'

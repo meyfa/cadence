@@ -1,6 +1,5 @@
-import * as ast from '@ast/ast.js'
-import type { SourceRange } from '@ast/range.js'
-import type { Unit } from '@core/numeric.js'
+import { ast, type SourceRange } from '@ast'
+import type { Unit } from '@core'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { curveParameterCounts } from './curves.js'
 import { CompileError } from './error.js'

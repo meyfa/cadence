@@ -1,8 +1,5 @@
-import type { AudioGraph } from '@audiograph/graph.js'
-import type { Node } from '@audiograph/nodes.js'
-import { numeric, type Numeric } from '@core/numeric.js'
-import { MutableObservable, type Observable } from '@core/observable.js'
-import type { BeatRange } from '@core/types.js'
+import type { AudioGraph, Node } from '@audiograph'
+import { MutableObservable, numeric, type BeatRange, type Numeric, type Observable } from '@core'
 import { createAudioFetcher, type CacheLimits } from './assets/fetcher.js'
 import { createAudioSession, type AudioSession } from './session.js'
 

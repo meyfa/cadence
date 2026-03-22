@@ -1,4 +1,4 @@
-import { convertPitchToMidi } from '@core/midi.js'
+import { convertPitchToMidi } from '@core'
 
 export const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 

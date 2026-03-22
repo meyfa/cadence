@@ -1,8 +1,6 @@
-import type { Program } from '@core/program.js'
-import { compile, type CompileOptions } from '@language/compiler/compiler.js'
-import { CompoundError, RangeError, Result } from '@language/error.js'
-import { lex } from '@language/lexer/lexer.js'
-import { parse } from '@language/parser/parser.js'
+import type { Program } from '@core'
+import { compile, type CompileOptions } from '@language'
+import { CompoundError, RangeError, Result, lex, parse } from '@language'
 import { useMemo } from 'react'
 
 type UnwrappableError = RangeError | CompoundError<RangeError>

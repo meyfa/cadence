@@ -1,5 +1,4 @@
-import { numeric } from '@core/numeric.js'
-import { createSerialPattern, renderPatternEvents } from '@core/pattern.js'
+import { createSerialPattern, numeric, renderPatternEvents } from '@core'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { FunctionContext } from '../../../src/compiler/functions.js'

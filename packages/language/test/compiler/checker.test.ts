@@ -1,5 +1,4 @@
-import * as ast from '@ast/ast.js'
-import { getEmptySourceRange } from '@ast/range.js'
+import { ast, getEmptySourceRange } from '@ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'

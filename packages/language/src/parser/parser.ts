@@ -1,6 +1,5 @@
-import * as ast from '@ast/ast.js'
-import { combineSourceRanges, getSourceRange, type SourceRange } from '@ast/range.js'
-import { isStepValue } from '@core/program.js'
+import { ast, combineSourceRanges, getSourceRange, type SourceRange } from '@ast'
+import { isStepValue } from '@core'
 import { Token } from 'leac'
 import * as p from 'peberminta'
 import { isKeyword, type Keyword } from '../constants.js'
