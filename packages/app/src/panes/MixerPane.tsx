@@ -1,10 +1,10 @@
 import type { Bus, Instrument } from '@core'
-import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '@editor'
 import { Flowchart } from '@flowchart'
 import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Popover } from '../components/Popover.js'
 import { usePrevious } from '../hooks/previous.js'
+import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '../mixer/flowchart.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { pluralize } from '../utilities/strings.js'
 

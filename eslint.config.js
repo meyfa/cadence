@@ -9,11 +9,37 @@ import path from 'node:path'
 
 const packages = [
   {
-    name: 'utility',
-    dependencies: []
+    name: 'app',
+    dependencies: [
+      'ast',
+      'audiograph',
+      'codecs',
+      'core',
+      'editor',
+      'flowchart',
+      'language',
+      'language-support',
+      'utility',
+      'webaudio'
+    ],
+    anonymous: true // not exposed via "@app"
   },
   {
-    name: 'flowchart',
+    name: 'ast',
+    dependencies: [
+      'core',
+      'utility'
+    ]
+  },
+  {
+    name: 'audiograph',
+    dependencies: [
+      'core',
+      'utility'
+    ]
+  },
+  {
+    name: 'codecs',
     dependencies: [
       'utility'
     ]
@@ -25,73 +51,45 @@ const packages = [
     ]
   },
   {
-    name: 'audiograph',
+    name: 'editor',
     dependencies: [
-      'utility',
-      'core'
+      'utility'
     ]
   },
   {
-    name: 'ast',
+    name: 'flowchart',
     dependencies: [
-      'utility',
-      'core'
-    ]
-  },
-  {
-    name: 'codecs',
-    dependencies: [
-      'utility',
-      'core'
-    ]
-  },
-  {
-    name: 'webaudio',
-    dependencies: [
-      'utility',
-      'core',
-      'audiograph'
+      'utility'
     ]
   },
   {
     name: 'language',
     dependencies: [
-      'utility',
+      'ast',
       'core',
-      'ast'
+      'utility'
     ]
   },
   {
     name: 'language-support',
     dependencies: [
-      'utility',
-      'core',
       'ast',
-      'language'
-    ]
-  },
-  {
-    name: 'editor',
-    dependencies: [
-      'utility',
-      'flowchart',
-      'core'
-    ]
-  },
-  {
-    name: 'app',
-    dependencies: [
-      'utility',
-      'flowchart',
       'core',
-      'audiograph',
-      'codecs',
-      'webaudio',
       'language',
-      'language-support',
-      'editor'
-    ],
-    anonymous: true // not exposed via "@app"
+      'utility'
+    ]
+  },
+  {
+    name: 'utility',
+    dependencies: []
+  },
+  {
+    name: 'webaudio',
+    dependencies: [
+      'audiograph',
+      'core',
+      'utility'
+    ]
   }
 ]
 
