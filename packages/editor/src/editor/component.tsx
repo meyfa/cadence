@@ -1,23 +1,17 @@
-import { linter } from '@codemirror/lint'
-import { createCadenceEditor, type CadenceEditorHandle, type EditorLocation } from '@editor'
-import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
-import { numeric } from '@utility'
-import clsx from 'clsx'
+import type { Extension } from '@codemirror/state'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
-import { useMutableCallback } from '../../hooks/callback.js'
-import { useEffectiveTheme } from '../../theme.js'
-
-const TAB_SIZE = 2
-const LINT_DELAY = numeric('s', 0.25)
+import { createCadenceEditor, type CadenceEditorHandle, type EditorLocation, type EditorTheme } from './editor.js'
+import { useMutableCallback } from '../hooks/mutable-callback.js'
 
 export const Editor: FunctionComponent<{
-  className?: string
   document: string
+  indent: string
+  theme: EditorTheme
+  extensions?: readonly Extension[]
+  className?: string
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
-}> = ({ className, document, ...props }) => {
-  const theme = useEffectiveTheme()
-
+}> = ({ document, indent, theme, extensions, className, ...props }) => {
   const handleRef = useRef<CadenceEditorHandle>(null)
   const onChange = useMutableCallback(props.onChange)
   const onLocationChange = useMutableCallback(props.onLocationChange)
@@ -33,11 +27,8 @@ export const Editor: FunctionComponent<{
     handleRef.current = createCadenceEditor(container, {
       document,
       theme,
-      tabSize: TAB_SIZE,
-      extensions: [
-        cadenceLanguageSupport(),
-        linter(cadenceLinter, { delay: LINT_DELAY.value * 1000 })
-      ],
+      indent,
+      extensions,
       onChange: (...args) => onChange.current(...args),
       onLocationChange: (...args) => onLocationChange.current?.(...args)
     })
@@ -45,9 +36,10 @@ export const Editor: FunctionComponent<{
 
   // Update editor if props change
   useEffect(() => handleRef.current?.setDocument(document), [document])
+  useEffect(() => handleRef.current?.setIndent(indent), [indent])
   useEffect(() => handleRef.current?.setTheme(theme), [theme])
 
   return (
-    <div ref={initialize} className={clsx('overflow-hidden relative', className)} />
+    <div ref={initialize} className={className} />
   )
 }
