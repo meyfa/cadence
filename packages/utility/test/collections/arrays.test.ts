@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { insertAt, move, removeAt } from '../src/arrays.js'
+import { insertAt, move, removeAt } from '../../src/collections/arrays.js'
 
-describe('arrays.ts', () => {
+describe('collections/arrays.ts', () => {
   describe('move', () => {
     it('should move an item from one index to another', () => {
       const array = [1, 2, 3, 4, 5]

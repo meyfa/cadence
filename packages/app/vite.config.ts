@@ -14,7 +14,7 @@ const config = defineConfig({
   ],
   resolve: {
     alias: {
-      '@collections': path.resolve(import.meta.dirname, '../collections/src/index.ts'),
+      '@utility': path.resolve(import.meta.dirname, '../utility/src/index.ts'),
       '@core': path.resolve(import.meta.dirname, '../core/src/index.ts'),
       '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src/index.ts'),
       '@ast': path.resolve(import.meta.dirname, '../ast/src/index.ts'),

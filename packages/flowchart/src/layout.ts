@@ -1,4 +1,4 @@
-import { createMultimap, type ReadonlyMultimap } from '@collections'
+import { createMultimap, type ReadonlyMultimap } from '@utility'
 import type { FlowEdge, FlowNode, FlowNodeId } from './types.js'
 
 export interface LayoutOptions {

@@ -9,13 +9,13 @@ import path from 'node:path'
 
 const packages = [
   {
-    name: 'collections',
+    name: 'utility',
     dependencies: []
   },
   {
     name: 'flowchart',
     dependencies: [
-      'collections'
+      'utility'
     ]
   },
   {
@@ -43,7 +43,7 @@ const packages = [
   {
     name: 'webaudio',
     dependencies: [
-      'collections',
+      'utility',
       'core',
       'audiograph'
     ]
@@ -51,7 +51,7 @@ const packages = [
   {
     name: 'language',
     dependencies: [
-      'collections',
+      'utility',
       'core',
       'ast'
     ]
@@ -67,7 +67,7 @@ const packages = [
   {
     name: 'editor',
     dependencies: [
-      'collections',
+      'utility',
       'flowchart',
       'core'
     ]
@@ -75,7 +75,7 @@ const packages = [
   {
     name: 'app',
     dependencies: [
-      'collections',
+      'utility',
       'flowchart',
       'core',
       'audiograph',
