@@ -1,6 +1,6 @@
 /**
  * The content in this file was adapted from the One Dark theme for CodeMirror 6.
- * It has modified for use in this project.
+ * It has been modified for use in this project.
  *
  * Original source:
  * https://github.com/codemirror/theme-one-dark
@@ -24,7 +24,7 @@ const darkColors = {
 
   number: '#68aff6',
   string: '#a0c27a',
-  pattern: '#a0c27a',
+  specialString: '#a0c27a',
 
   invalid: '#ffffff',
   background: '#1d1f20',
@@ -54,7 +54,7 @@ const lightColors = {
 
   number: '#0954de',
   string: '#0a7d10',
-  pattern: '#0a7d10',
+  specialString: '#0a7d10',
 
   invalid: '#000000',
   background: '#ffffff',
@@ -198,7 +198,7 @@ const cadenceThemeHighlightStyle = (dark: boolean) => {
     },
     {
       tag: [t.special(t.string)],
-      color: colors.pattern
+      color: colors.specialString
     }
   ])
 }

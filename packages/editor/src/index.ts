@@ -1,7 +1,8 @@
-export * from './editor.js'
 export * from './keyboard-shortcuts.js'
 
 export * from './storage.js'
+
+export * from './editor/editor.js'
 
 export * from './layout/layout.js'
 

@@ -57,13 +57,19 @@ const packages = [
     ]
   },
   {
+    name: 'language-support',
+    dependencies: [
+      'core',
+      'ast',
+      'language'
+    ]
+  },
+  {
     name: 'editor',
     dependencies: [
       'collections',
       'flowchart',
-      'core',
-      'ast',
-      'language'
+      'core'
     ]
   },
   {
@@ -76,6 +82,7 @@ const packages = [
       'codecs',
       'webaudio',
       'language',
+      'language-support',
       'editor'
     ],
     anonymous: true // not exposed via "@app"

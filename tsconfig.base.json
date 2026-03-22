@@ -8,6 +8,7 @@
       "@codecs": ["./packages/codecs/src/index.ts"],
       "@webaudio": ["./packages/webaudio/src/index.ts"],
       "@language": ["./packages/language/src/index.ts"],
+      "@language-support": ["./packages/language-support/src/index.ts"],
       "@editor": ["./packages/editor/src/index.ts"],
       "@flowchart": ["./packages/flowchart/src/index.ts"]
     },

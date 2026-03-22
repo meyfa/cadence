@@ -1,11 +1,14 @@
-import { createCadenceEditor, EditorLocation, type CadenceEditorHandle } from '@editor'
+import { linter } from '@codemirror/lint'
+import { numeric } from '@core'
+import { createCadenceEditor, type CadenceEditorHandle, type EditorLocation } from '@editor'
+import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import clsx from 'clsx'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useMutableCallback } from '../../hooks/callback.js'
 import { useEffectiveTheme } from '../../theme.js'
 
 const TAB_SIZE = 2
-const LINT_DELAY = 250
+const LINT_DELAY = numeric('s', 0.25)
 
 export const Editor: FunctionComponent<{
   className?: string
@@ -31,7 +34,10 @@ export const Editor: FunctionComponent<{
       document,
       theme,
       tabSize: TAB_SIZE,
-      lintDelay: LINT_DELAY,
+      extensions: [
+        cadenceLanguageSupport(),
+        linter(cadenceLinter, { delay: LINT_DELAY.value * 1000 })
+      ],
       onChange: (...args) => onChange.current(...args),
       onLocationChange: (...args) => onLocationChange.current?.(...args)
     })
