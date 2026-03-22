@@ -14,16 +14,16 @@ const config = defineConfig({
   ],
   resolve: {
     alias: {
-      '@utility': path.resolve(import.meta.dirname, '../utility/src/index.ts'),
-      '@core': path.resolve(import.meta.dirname, '../core/src/index.ts'),
-      '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src/index.ts'),
       '@ast': path.resolve(import.meta.dirname, '../ast/src/index.ts'),
+      '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src/index.ts'),
       '@codecs': path.resolve(import.meta.dirname, '../codecs/src/index.ts'),
-      '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src/index.ts'),
+      '@core': path.resolve(import.meta.dirname, '../core/src/index.ts'),
+      '@editor': path.resolve(import.meta.dirname, '../editor/src/index.ts'),
+      '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src/index.ts'),
       '@language': path.resolve(import.meta.dirname, '../language/src/index.ts'),
       '@language-support': path.resolve(import.meta.dirname, '../language-support/src/index.ts'),
-      '@editor': path.resolve(import.meta.dirname, '../editor/src/index.ts'),
-      '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src/index.ts')
+      '@utility': path.resolve(import.meta.dirname, '../utility/src/index.ts'),
+      '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src/index.ts')
     }
   },
   build: {
