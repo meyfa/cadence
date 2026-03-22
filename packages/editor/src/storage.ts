@@ -11,11 +11,15 @@ export interface Storage<TSave, TLoad = TSave> {
 }
 
 export class BrowserLocalStorage<TSave, TLoad = TSave> implements Storage<TSave, TLoad> {
-  constructor (
-    private readonly key: string,
-    private readonly serialize: SerializeFn<TSave>,
-    private readonly parse: ParseFn<TLoad>
-  ) {}
+  private readonly key: string
+  private readonly serialize: SerializeFn<TSave>
+  private readonly parse: ParseFn<TLoad>
+
+  constructor (key: string, serialize: SerializeFn<TSave>, parse: ParseFn<TLoad>) {
+    this.key = key
+    this.serialize = serialize
+    this.parse = parse
+  }
 
   save (document: TSave): void {
     const data = this.serialize(document)
