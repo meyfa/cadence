@@ -1,7 +1,7 @@
 import { Adjust } from '@mui/icons-material'
 import clsx from 'clsx'
 import React, { FunctionComponent, PropsWithChildren, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useGlobalKeydown, useGlobalMouseUp } from '../hooks/input.js'
+import { useGlobalKeydown, useGlobalMouseUp } from '../../hooks/input.js'
 import './Slider.css'
 
 export const Slider: FunctionComponent<PropsWithChildren<{

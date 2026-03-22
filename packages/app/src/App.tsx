@@ -4,11 +4,12 @@ import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
 import { FunctionComponent, useEffect, useLayoutEffect, useState } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
-import { Footer } from './components/Footer.js'
-import { Header } from './components/Header.js'
-import { Main } from './components/Main.js'
+import { Footer } from './components/footer/Footer.js'
+import { Header } from './components/header/Header.js'
 import { demoCode } from './demo.js'
 import { useObservable } from './hooks/observable.js'
+import { DockLayoutView } from './layout/DockLayoutView.js'
+import { PanelErrorBoundary } from './layout/PanelErrorBoundary.js'
 import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
 import { defaultLayout } from './state/default-layout.js'
@@ -176,4 +177,18 @@ const StorageSync: FunctionComponent<{
   }, [disablePersistence, theme, outputGain, layout, code])
 
   return null
+}
+
+const Main: FunctionComponent = () => {
+  const [layout, layoutDispatch] = useLayout()
+
+  return (
+    <PanelErrorBoundary>
+      <DockLayoutView
+        layout={layout}
+        dispatch={layoutDispatch}
+        className='flex-1 min-h-0 min-w-0'
+      />
+    </PanelErrorBoundary>
+  )
 }

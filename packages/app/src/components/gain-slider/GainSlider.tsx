@@ -1,7 +1,7 @@
 import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
-import { Slider } from '../Slider.js'
+import { Slider } from '../slider/Slider.js'
 import { GainIcon } from './GainIcon.js'
 
 export const GainSlider: FunctionComponent<{

@@ -5,10 +5,10 @@ import { removeTabFromPane } from '@editor'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
 import { useCallback, type FunctionComponent, type PropsWithChildren } from 'react'
-import { PanelErrorBoundary } from '../components/PanelErrorBoundary.js'
-import { TabComponent } from '../components/TabComponent.js'
+import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 import { renderTabContent, type TabRendererContext } from '../panes/render-tab.js'
 import { useLayout, type LayoutNodeDispatch } from '../state/LayoutContext.js'
+import { TabComponent } from './TabComponent.js'
 
 const paneNodeDropZones = ['north', 'south', 'east', 'west', 'center'] as const
 type PaneNodeDropZone = typeof paneNodeDropZones[number]

@@ -1,5 +1,5 @@
 import type { FunctionComponent, PropsWithChildren } from 'react'
-import { Button } from '../Button.js'
+import { Button } from '../button/Button.js'
 import { BaseDialog } from './BaseDialog.js'
 
 export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{

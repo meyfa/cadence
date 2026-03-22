@@ -1,6 +1,6 @@
 import type { FunctionComponent, PropsWithChildren } from 'react'
-import { Button } from './Button.js'
 import { ErrorBoundary } from 'react-error-boundary'
+import { Button } from '../components/button/Button.js'
 
 export const PanelErrorBoundary: FunctionComponent<PropsWithChildren> = ({ children }) => {
   return (
