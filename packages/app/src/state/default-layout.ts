@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNodeId, TabId } from '@editor/state/layout.js'
+import type { DockLayout, LayoutNodeId, TabId } from '@editor'
 import { TabTypes } from '../panes/render-tab.js'
 
 export const defaultLayout: DockLayout = {

@@ -1,4 +1,4 @@
-import type { EditorLocation } from '@editor/editor.js'
+import type { EditorLocation } from '@editor'
 import { useCallback, type FunctionComponent } from 'react'
 import { Editor } from '../components/editor/Editor.js'
 import { useEditor } from '../state/EditorContext.js'

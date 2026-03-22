@@ -1,4 +1,4 @@
-import { type Automation, type Instrument, type InstrumentId, type ParameterId } from '@core/program.js'
+import { type Automation, type Instrument, type InstrumentId, type ParameterId } from '@core'
 import type { InferSchema, PropertySchema } from './schema.js'
 import { type Type, type Value } from './types.js'
 

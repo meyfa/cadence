@@ -1,5 +1,5 @@
+import { createMultimap, type ReadonlyMultimap } from '@collections'
 import type { FlowEdge, FlowNode, FlowNodeId } from '../types.js'
-import { createMultimap, type ReadonlyMultimap } from '@collections/multimap.js'
 
 export interface LayoutOptions {
   readonly nodeSpacingX: number

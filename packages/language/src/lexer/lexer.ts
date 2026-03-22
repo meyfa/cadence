@@ -1,4 +1,4 @@
-import type { SourceRange } from '@ast/range.js'
+import type { SourceRange } from '@ast'
 import { createLexer, type Lexer, type Options, type Rules, type Token } from 'leac'
 import { truncateString, type Result } from '../error.js'
 import { LexError } from './error.js'

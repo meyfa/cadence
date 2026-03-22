@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "paths": {
-      "@collections/*": ["./packages/collections/src/*"],
-      "@core/*": ["./packages/core/src/*"],
-      "@audiograph/*": ["./packages/audiograph/src/*"],
-      "@ast/*": ["./packages/ast/src/*"],
-      "@codecs/*": ["./packages/codecs/src/*"],
-      "@webaudio/*": ["./packages/webaudio/src/*"],
-      "@language/*": ["./packages/language/src/*"],
-      "@editor/*": ["./packages/editor/src/*"],
-      "@flowchart/*": ["./packages/flowchart/src/*"]
+      "@collections": ["./packages/collections/src/index.ts"],
+      "@core": ["./packages/core/src/index.ts"],
+      "@audiograph": ["./packages/audiograph/src/index.ts"],
+      "@ast": ["./packages/ast/src/index.ts"],
+      "@codecs": ["./packages/codecs/src/index.ts"],
+      "@webaudio": ["./packages/webaudio/src/index.ts"],
+      "@language": ["./packages/language/src/index.ts"],
+      "@editor": ["./packages/editor/src/index.ts"],
+      "@flowchart": ["./packages/flowchart/src/index.ts"]
     },
     "lib": [
       "ES2022",

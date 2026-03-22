@@ -1,5 +1,5 @@
+import type { Observable } from '@core'
 import { useEffect, useState } from 'react'
-import type { Observable } from '@core/observable.js'
 
 export function useObservable<T> (observable: Observable<T>): T {
   const [value, setValue] = useState(observable.get())

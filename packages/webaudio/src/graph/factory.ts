@@ -1,4 +1,4 @@
-import type { Node } from '@audiograph/nodes.js'
+import type { Node } from '@audiograph'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport.js'
 import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance } from './effect.js'

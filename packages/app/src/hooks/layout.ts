@@ -1,4 +1,4 @@
-import { activateTabInPane, createTab, findTabByComponentType } from '@editor/layout/layout.js'
+import { activateTabInPane, createTab, findTabByComponentType } from '@editor'
 import { useCallback } from 'react'
 import { useLayout, type LayoutDispatch } from '../state/LayoutContext.js'
 

@@ -1,6 +1,4 @@
-import { numeric, type Numeric, type Unit } from '@core/numeric.js'
-import type { AutomationPoint, Parameter, Program } from '@core/program.js'
-import { beatsToSeconds } from '@core/time.js'
+import { beatsToSeconds, numeric, type AutomationPoint, type Numeric, type Parameter, type Program, type Unit } from '@core'
 import { dbToGain } from './constants.js'
 
 export type Curve = 'step' | 'linear' | 'exponential'

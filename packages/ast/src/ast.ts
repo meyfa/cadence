@@ -1,4 +1,4 @@
-import type { StepValue } from '@core/program.js'
+import type { StepValue } from '@core'
 import type { SourceRange } from './range.js'
 
 export interface ASTNode {

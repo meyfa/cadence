@@ -1,7 +1,4 @@
-import { numeric, type Numeric } from '@core/numeric.js'
-import type { Part, Program } from '@core/program.js'
-import { calculateTotalLength } from '@core/time.js'
-import type { BeatRange } from '@core/types.js'
+import { calculateTotalLength, numeric, type BeatRange, type Numeric, type Part, type Program } from '@core'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { useGlobalMouseMove, useGlobalMouseUp } from '../hooks/input.js'

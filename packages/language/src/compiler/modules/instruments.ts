@@ -1,5 +1,4 @@
-import { numeric, type Numeric, type Unit } from '@core/numeric.js'
-import { isPitch, type Instrument, type InstrumentId, type Parameter, type ParameterId } from '@core/program.js'
+import { isPitch, numeric, type Instrument, type InstrumentId, type Numeric, type Parameter, type ParameterId, type Unit } from '@core'
 import type { FunctionContext } from '../functions.js'
 import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type InstrumentValue, type Value } from '../types.js'
 

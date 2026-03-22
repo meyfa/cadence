@@ -1,4 +1,4 @@
-import type { SerializedComponent } from '@editor/state/layout.js'
+import type { SerializedComponent } from '@editor'
 import type { ReactNode } from 'react'
 import { useProblems, type Problem } from '../hooks/problems.js'
 import { EditorPane } from './EditorPane.js'

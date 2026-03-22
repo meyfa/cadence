@@ -1,4 +1,4 @@
-import { DockLayout, type LayoutNode } from '@editor/state/layout.js'
+import { DockLayout, type LayoutNode } from '@editor'
 import { createContext, useCallback, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 import { useSafeContext } from '../hooks/context.js'
 

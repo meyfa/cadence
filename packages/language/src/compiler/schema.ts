@@ -1,5 +1,5 @@
-import type { SourceRange } from '@ast/range.js'
-import { type AnyValue, type Type, type ValueFor } from './types.js'
+import type { SourceRange } from '@ast'
+import type { AnyValue, Type, ValueFor } from './types.js'
 
 export type Properties = readonly Property[]
 

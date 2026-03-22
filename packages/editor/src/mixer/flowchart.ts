@@ -1,5 +1,5 @@
-import type { Bus, BusId, Instrument, InstrumentId, Program } from '@core/program.js'
-import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeId } from '@flowchart/index.js'
+import type { Bus, BusId, Instrument, InstrumentId, Program } from '@core'
+import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeId } from '@flowchart'
 
 const mixerObjectTypes = ['Bus', 'Instrument'] as const
 type MixerObjectType = typeof mixerObjectTypes[number]

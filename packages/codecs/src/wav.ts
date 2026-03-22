@@ -1,4 +1,4 @@
-import { numeric, type Numeric } from '@core/numeric.js'
+import { numeric, type Numeric } from '@core'
 import type { AudioBufferLike, AudioDescription } from './common.js'
 import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE, type FloatSampleBits, type PCMFormat, type PCMSampleBits } from './pcm-io.js'
 

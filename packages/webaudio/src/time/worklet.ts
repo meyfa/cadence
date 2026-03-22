@@ -1,5 +1,4 @@
-import { MutableObservable } from '@core/observable.js'
-import { numeric } from '@core/numeric.js'
+import { MutableObservable, numeric } from '@core'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 const PROCESSOR_NAME = 'cadence-time-tracker'

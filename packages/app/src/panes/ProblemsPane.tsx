@@ -1,4 +1,4 @@
-import { RangeError } from '@language/error.js'
+import { RangeError } from '@language'
 import clsx from 'clsx'
 import { type FunctionComponent } from 'react'
 import { useProblems, type Problem } from '../hooks/problems.js'

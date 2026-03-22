@@ -14,15 +14,15 @@ const config = defineConfig({
   ],
   resolve: {
     alias: {
-      '@collections': path.resolve(import.meta.dirname, '../collections/src'),
-      '@core': path.resolve(import.meta.dirname, '../core/src'),
-      '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src'),
-      '@ast': path.resolve(import.meta.dirname, '../ast/src'),
-      '@codecs': path.resolve(import.meta.dirname, '../codecs/src'),
-      '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src'),
-      '@language': path.resolve(import.meta.dirname, '../language/src'),
-      '@editor': path.resolve(import.meta.dirname, '../editor/src'),
-      '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src')
+      '@collections': path.resolve(import.meta.dirname, '../collections/src/index.ts'),
+      '@core': path.resolve(import.meta.dirname, '../core/src/index.ts'),
+      '@audiograph': path.resolve(import.meta.dirname, '../audiograph/src/index.ts'),
+      '@ast': path.resolve(import.meta.dirname, '../ast/src/index.ts'),
+      '@codecs': path.resolve(import.meta.dirname, '../codecs/src/index.ts'),
+      '@webaudio': path.resolve(import.meta.dirname, '../webaudio/src/index.ts'),
+      '@language': path.resolve(import.meta.dirname, '../language/src/index.ts'),
+      '@editor': path.resolve(import.meta.dirname, '../editor/src/index.ts'),
+      '@flowchart': path.resolve(import.meta.dirname, '../flowchart/src/index.ts')
     }
   },
   build: {
@@ -35,9 +35,7 @@ export default config
 // Ensure that the above aliases are in sync with tsconfig.base.json
 const tsconfigPath = path.resolve(import.meta.dirname, '../../tsconfig.base.json')
 const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf-8'))
-const tsconfigPaths = Object.keys(tsconfig.compilerOptions.paths).map((key) => {
-  return key.replace('/*', '')
-})
+const tsconfigPaths = Object.keys(tsconfig.compilerOptions.paths)
 const viteAliases = Object.keys(config.resolve?.alias ?? {})
 
 assert.deepStrictEqual(

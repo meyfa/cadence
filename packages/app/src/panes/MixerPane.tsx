@@ -1,12 +1,12 @@
-import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '@editor/mixer/flowchart.js'
-import { Flowchart } from '@flowchart/index.js'
+import type { Bus, Instrument } from '@core'
+import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '@editor'
+import { Flowchart } from '@flowchart'
 import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Popover } from '../components/Popover.js'
 import { usePrevious } from '../hooks/previous.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { pluralize } from '../utilities/strings.js'
-import type { Bus, Instrument } from '@core/program.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   nodeSize: {

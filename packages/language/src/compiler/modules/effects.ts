@@ -1,4 +1,4 @@
-import type { Effect } from '@core/program.js'
+import type { Effect } from '@core'
 import type { PropertySchema } from '../schema.js'
 import { EffectType, FunctionType, ModuleType, NumberType, type Value } from '../types.js'
 

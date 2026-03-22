@@ -1,4 +1,4 @@
-import { insertAt, move, removeAt } from '@collections/arrays.js'
+import { insertAt, move, removeAt } from '@collections'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, Tab, TabId } from '../state/layout.js'
 import { randomId } from '../utilities/id.js'
 

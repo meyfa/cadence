@@ -1,10 +1,8 @@
-import { compile } from '@language/compiler/compiler.js'
-import { lex } from '@language/lexer/lexer.js'
-import { parse } from '@language/parser/parser.js'
+import type { Result } from '@language'
+import { compile, lex, parse } from '@language'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { demoCode } from '../src/demo.js'
-import type { Result } from '@language/error.js'
 
 function getResultError<TValue, TError> (result: Result<TValue, TError>): TError | undefined {
   if (result.complete) {

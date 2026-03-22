@@ -1,4 +1,4 @@
-import type { Tab } from '@editor/state/layout.js'
+import type { Tab } from '@editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import React, { useCallback, type FunctionComponent } from 'react'
