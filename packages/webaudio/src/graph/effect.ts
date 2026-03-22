@@ -1,6 +1,6 @@
 import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode } from '@audiograph'
-import type { Numeric } from '@core'
-import { mulberry32, xmur3 } from '@core'
+import type { Numeric } from '@utility'
+import { mulberry32, xmur3 } from '@utility'
 import { automate } from '../automation.js'
 import type { Transport } from '../transport.js'
 import type { Instance } from './instance.js'

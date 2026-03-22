@@ -1,4 +1,4 @@
-import type { Observable } from '@core'
+import type { Observable } from '@utility'
 import { useEffect, useState } from 'react'
 
 export function useObservable<T> (observable: Observable<T>): T {

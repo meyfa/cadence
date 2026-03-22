@@ -1,6 +1,6 @@
-import { numeric } from '@core'
 import { BrowserLocalStorage, parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor'
 import type { CompileOptions } from '@language'
+import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
 import { FunctionComponent, useEffect, useLayoutEffect, useState } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'

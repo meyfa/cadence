@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { MutableObservable } from '../src/observable.js'
+import { MutableObservable } from '../../src/observable/observable.js'
 
-describe('observable.ts', () => {
+describe('observable/observable.ts', () => {
   describe('MutableObservable', () => {
     it('should provide the current value via get()', () => {
       const obs = new MutableObservable(42)

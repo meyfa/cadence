@@ -1,4 +1,5 @@
-import type { MidiNote, Numeric } from '@core'
+import type { MidiNote } from '@core'
+import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
 import type { AnyNode } from './graph.js'
 

@@ -20,23 +20,28 @@ const packages = [
   },
   {
     name: 'core',
-    dependencies: []
+    dependencies: [
+      'utility'
+    ]
   },
   {
     name: 'audiograph',
     dependencies: [
+      'utility',
       'core'
     ]
   },
   {
     name: 'ast',
     dependencies: [
+      'utility',
       'core'
     ]
   },
   {
     name: 'codecs',
     dependencies: [
+      'utility',
       'core'
     ]
   },
@@ -59,6 +64,7 @@ const packages = [
   {
     name: 'language-support',
     dependencies: [
+      'utility',
       'core',
       'ast',
       'language'

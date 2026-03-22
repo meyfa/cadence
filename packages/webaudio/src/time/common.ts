@@ -1,4 +1,4 @@
-import type { Numeric, Observable } from '@core'
+import type { Numeric, Observable } from '@utility'
 
 export interface TimeTrackerOptions {
   readonly updateInterval: Numeric<'s'>

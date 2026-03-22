@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { mulberry32, xmur3 } from '../src/random.js'
+import { mulberry32, xmur3 } from '../../src/random/random.js'
 
-describe('random.ts', () => {
+describe('random/random.ts', () => {
   describe('mulberry32', () => {
     it('generates a consistent sequence of numbers for a given seed', () => {
       const rng1 = mulberry32(12345)

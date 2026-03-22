@@ -1,6 +1,6 @@
 import { ast, getEmptySourceRange } from '@ast'
 import type { Program } from '@core'
-import { numeric } from '@core'
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { generate } from '../../src/compiler/generator.js'

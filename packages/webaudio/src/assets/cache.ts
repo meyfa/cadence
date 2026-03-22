@@ -1,4 +1,4 @@
-import type { Numeric } from '@core'
+import type { Numeric } from '@utility'
 
 export interface AssetCacheOptions<T> {
   readonly maxSize: Numeric<'bytes'>

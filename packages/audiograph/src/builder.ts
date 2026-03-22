@@ -1,4 +1,4 @@
-import type { Numeric } from '@core'
+import type { Numeric } from '@utility'
 import type { AnyNode, AudioGraph, Edge, NodeId, NoteOptions } from './graph.js'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {

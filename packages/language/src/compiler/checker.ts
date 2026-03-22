@@ -1,5 +1,5 @@
 import { ast, type SourceRange } from '@ast'
-import type { Unit } from '@core'
+import type { Unit } from '@utility'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { curveParameterCounts } from './curves.js'
 import { CompileError } from './error.js'

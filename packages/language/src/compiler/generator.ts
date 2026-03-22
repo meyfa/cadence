@@ -1,5 +1,6 @@
 import { ast } from '@ast'
-import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern, numeric, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type Numeric, type ParameterId, type Part, type Pattern, type Program, type Step, type Track, type Unit } from '@core'
+import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type ParameterId, type Part, type Pattern, type Program, type Step, type Track } from '@core'
+import { numeric, type Numeric, type Unit } from '@utility'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { createCurve, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'

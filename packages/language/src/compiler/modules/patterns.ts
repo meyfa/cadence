@@ -1,4 +1,5 @@
-import { createSerialPattern, loopPattern, numeric } from '@core'
+import { createSerialPattern, loopPattern } from '@core'
+import { numeric } from '@utility'
 import { FunctionType, ModuleType, NumberType, PatternType, Value } from '../types.js'
 
 const loop = FunctionType.of({

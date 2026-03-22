@@ -1,4 +1,4 @@
-import { numeric } from '@core'
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { encodeAIFF, estimateAIFFSize } from '../src/aiff.js'

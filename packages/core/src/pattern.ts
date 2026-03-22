@@ -1,4 +1,4 @@
-import { type Numeric, numeric } from './numeric.js'
+import { type Numeric, numeric } from '@utility'
 import type { NoteEvent, Pattern, Step } from './program.js'
 
 const zeroBeats = numeric('beats', 0)
