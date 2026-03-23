@@ -1,3 +1,5 @@
+import { insertSorted } from '@utility'
+
 export interface SchedulerOptions {
   /**
    * Time source for the scheduler (e.g. AudioContext.currentTime).
@@ -51,6 +53,8 @@ interface ScheduledEvent {
   readonly callback: (time: number) => void
 }
 
+const compareByTime = (a: ScheduledEvent, b: ScheduledEvent): number => a.time - b.time
+
 export function createScheduler (options: SchedulerOptions): Scheduler {
   const { now, tickInterval, scheduleAheadTime } = options
 
@@ -72,7 +76,7 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
     }
 
     if (!sorted) {
-      scheduled.sort((a, b) => a.time - b.time)
+      scheduled.sort(compareByTime)
       sorted = true
     }
 
@@ -111,7 +115,7 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
     if (!sorted) {
       scheduled.push(event)
     } else {
-      insertSorted(scheduled, event)
+      insertSorted(scheduled, event, compareByTime)
     }
 
     // If the event is near, try scheduling it without waiting for the next tick.
@@ -121,30 +125,6 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
   }
 
   return { start, stop, schedule, flush }
-}
-
-function insertSorted (array: ScheduledEvent[], event: ScheduledEvent): void {
-  // Fast path: append if the event is after all existing events.
-  const last = array.at(-1)
-  if (last == null || last.time <= event.time) {
-    array.push(event)
-    return
-  }
-
-  // Find the first index whose time is > event.time (upper bound).
-  let low = 0
-  let high = array.length
-
-  while (low < high) {
-    const mid = (low + high) >>> 1
-    if (array[mid].time <= event.time) {
-      low = mid + 1
-    } else {
-      high = mid
-    }
-  }
-
-  array.splice(low, 0, event)
 }
 
 function flushBefore (array: ScheduledEvent[], threshold: number, offsetTime: number): void {
