@@ -48,9 +48,11 @@ export function createAudioSession (
   const webAudioGraph = createWebAudioGraph(graph, transport, fetcher)
   cleanupHooks.push(() => webAudioGraph.dispose())
 
+  let disposed = false
+
   const start = () => {
     webAudioGraph.loaded.then(() => {
-      if (webAudioGraph.disposed) {
+      if (disposed) {
         return
       }
 
@@ -62,12 +64,12 @@ export function createAudioSession (
 
       return transport.start(startTime.value)
     }).then(() => {
-      if (webAudioGraph.disposed) {
+      if (disposed) {
         return
       }
 
       const endTimeout = setTimeout(() => {
-        if (!webAudioGraph.disposed) {
+        if (!disposed) {
           ended.set(true)
         }
       }, (endTime.value - startTime.value) * 1000)
@@ -76,7 +78,7 @@ export function createAudioSession (
 
       // Track position based on render-thread time updates.
       cleanupHooks.push(transport.time.subscribe((time) => {
-        if (!webAudioGraph.disposed) {
+        if (!disposed) {
           const clamped = Math.max(startTime.value, time.value)
           position.set(numeric('beats', clamped * graph.tempo.value / 60))
         }
@@ -89,9 +91,11 @@ export function createAudioSession (
   }
 
   const dispose = () => {
-    if (webAudioGraph.disposed) {
+    if (disposed) {
       return
     }
+
+    disposed = true
 
     cleanupHooks.reverse()
     cleanupHooks.forEach((hook) => hook())
