@@ -1,6 +1,6 @@
 import type { AudioGraph, Node } from '@audiograph'
 import type { BeatRange } from '@core'
-import { MutableObservable, numeric, type Numeric, type Observable } from '@utility'
+import { DisposeStack, MutableObservable, numeric, type Numeric, type Observable } from '@utility'
 import { createAudioFetcher, type CacheLimits } from '../assets/fetcher.js'
 import { createAudioSession, type AudioSession } from './session.js'
 
@@ -42,16 +42,13 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
       return
     }
 
-    const subscriptions: Array<() => void> = []
+    const disposeStack = new DisposeStack()
 
     const thisSession = session = createAudioSession(graph, range.get(), outputGain, fetcher)
+    disposeStack.pushDisposable(thisSession)
 
     const stopThisSession = stopSession = () => {
-      thisSession.dispose()
-
-      for (const unsubscribe of subscriptions) {
-        unsubscribe()
-      }
+      disposeStack.dispose()
 
       if (session === thisSession) {
         session = undefined
@@ -63,15 +60,15 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
       }
     }
 
-    subscriptions.push(thisSession.errors.subscribe((value) => {
+    disposeStack.push(thisSession.errors.subscribe((value) => {
       errors.set(value)
     }))
 
-    subscriptions.push(thisSession.position.subscribe((value) => {
+    disposeStack.push(thisSession.position.subscribe((value) => {
       position.set(value)
     }))
 
-    subscriptions.push(thisSession.ended.subscribe((ended) => {
+    disposeStack.push(thisSession.ended.subscribe((ended) => {
       if (ended) {
         stopThisSession()
       }

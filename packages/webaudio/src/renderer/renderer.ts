@@ -1,6 +1,6 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { beatsToSeconds } from '@core'
-import type { Numeric } from '@utility'
+import { DisposeStack, type Numeric } from '@utility'
 import { createAudioFetcher, type CacheLimits } from '../assets/fetcher.js'
 import { createWebAudioGraph } from '../graph/graph.js'
 import { createOfflineTransport } from '../transport/transport.js'
@@ -30,7 +30,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
 
   return {
     render: async (graph) => {
-      const cleanupHooks: Array<() => void> = []
+      const disposeStack = new DisposeStack()
 
       const duration = beatsToSeconds(graph.length, graph.tempo)
       const safeDuration = Math.max(0.001, duration.value)
@@ -42,10 +42,10 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
       })
 
       const webAudioGraph = createWebAudioGraph(graph, transport, fetcher)
-      cleanupHooks.push(() => webAudioGraph.dispose())
+      disposeStack.pushDisposable(webAudioGraph)
 
       if (options.onProgress != null) {
-        cleanupHooks.push(transport.time.subscribe((time) => {
+        disposeStack.push(transport.time.subscribe((time) => {
           if (time == null) {
             return
           }
@@ -63,9 +63,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
           errors: [err instanceof Error ? err : new Error('Unknown error during rendering.')]
         }
       } finally {
-        cleanupHooks.reverse()
-        cleanupHooks.forEach((hook) => hook())
-        cleanupHooks.splice(0, cleanupHooks.length)
+        disposeStack.dispose()
       }
 
       return { errors: [], audioBuffer }
