@@ -1,4 +1,4 @@
-import { insertSorted } from '@utility'
+import { insertSorted, type Numeric } from '@utility'
 
 export interface SchedulerOptions {
   /**
@@ -7,14 +7,14 @@ export interface SchedulerOptions {
   readonly now: () => number
 
   /**
-   * Scheduler tick frequency (in seconds).
+   * Scheduler tick frequency.
    */
-  readonly tickInterval: number
+  readonly tickInterval: Numeric<'s'>
 
   /**
-   * How far ahead (in seconds, transport time) callbacks may run.
+   * How far ahead (from transport time) callbacks may run.
    */
-  readonly scheduleAheadTime: number
+  readonly scheduleAheadTime: Numeric<'s'>
 
   readonly timers?: {
     readonly setInterval: typeof globalThis.setInterval
@@ -80,7 +80,7 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
       sorted = true
     }
 
-    flushBefore(scheduled, now() - offsetTime + scheduleAheadTime, offsetTime)
+    flushBefore(scheduled, now() - offsetTime + scheduleAheadTime.value, offsetTime)
   }
 
   const start = (newOffsetTime: number) => {
@@ -92,7 +92,7 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
     offsetTime = newOffsetTime
 
     flush()
-    interval = timers.setInterval(flush, tickInterval * 1000)
+    interval = timers.setInterval(flush, tickInterval.value * 1000)
   }
 
   const stop = () => {
@@ -119,7 +119,7 @@ export function createScheduler (options: SchedulerOptions): Scheduler {
     }
 
     // If the event is near, try scheduling it without waiting for the next tick.
-    if (time <= now() - offsetTime + scheduleAheadTime) {
+    if (time <= now() - offsetTime + scheduleAheadTime.value) {
       flush()
     }
   }

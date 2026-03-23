@@ -1,4 +1,5 @@
 import type { LayoutNode, SplitNode, SplitOrientation } from '@editor'
+import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, type FunctionComponent } from 'react'
 import { Group, Panel, Separator, useGroupRef, type Layout } from 'react-resizable-panels'
@@ -7,7 +8,7 @@ import { useChildNodeDispatch, type LayoutNodeDispatch } from '../state/LayoutCo
 import { LayoutNodeView } from './LayoutNodeView.js'
 
 // The interval during which layout changes are considered part of the same change stack.
-const CHANGE_STACK_WINDOW_MS = 50
+const CHANGE_STACK_WINDOW = numeric('s', 0.05)
 
 type LayoutChangeOrigin = 'library' | 'self'
 
@@ -21,7 +22,7 @@ export const SplitNodeView: FunctionComponent<{
   const groupRef = useGroupRef()
 
   // Keep track of what started the chain of events to avoid feedback loops
-  const pushChangeOrigin = useChangeOrigin<LayoutChangeOrigin>(CHANGE_STACK_WINDOW_MS)
+  const pushChangeOrigin = useChangeOrigin<LayoutChangeOrigin>(CHANGE_STACK_WINDOW)
 
   const layout = useMemo(() => {
     return Object.fromEntries(children.map((child, index) => [child.id, (sizes.at(index) ?? 1) * 100]))
@@ -150,7 +151,7 @@ type PushOrigin<T> = (origin: T) => boolean
  * Otherwise, it returns false.
  * Any call to the function resets the time window.
  */
-function useChangeOrigin<T extends string> (windowMs: number): PushOrigin<T> {
+function useChangeOrigin<T extends string> (windowDuration: Numeric<'s'>): PushOrigin<T> {
   const originRef = useRef<T | undefined>(undefined)
   const pendingResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -173,7 +174,7 @@ function useChangeOrigin<T extends string> (windowMs: number): PushOrigin<T> {
       pendingResetRef.current = setTimeout(() => {
         originRef.current = undefined
         pendingResetRef.current = undefined
-      }, windowMs)
+      }, windowDuration.value * 1000)
     }
 
     scheduleReset()
@@ -184,5 +185,5 @@ function useChangeOrigin<T extends string> (windowMs: number): PushOrigin<T> {
 
     originRef.current = origin
     return true
-  }, [windowMs])
+  }, [windowDuration])
 }
