@@ -1,4 +1,4 @@
-import { MutableObservable, numeric, type Numeric, type Observable } from '@utility'
+import { DisposeStack, MutableObservable, numeric, type Numeric, type Observable } from '@utility'
 import { createIntervalTimeTracker } from '../time-tracker/interval.js'
 import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
 import { createScheduler } from './scheduler.js'
@@ -36,10 +36,10 @@ const TIME_UPDATE_INTERVAL_ONLINE = numeric('s', 0.050)
 const TIME_UPDATE_INTERVAL_OFFLINE = numeric('s', 0.100)
 
 export function createOnlineTransport (): OnlineTransport {
-  const cleanupHooks: Array<() => void> = []
+  const disposeStack = new DisposeStack()
 
   const ctx = new AudioContext()
-  cleanupHooks.push(() => void ctx.close())
+  disposeStack.push(() => void ctx.close())
 
   // Ensure consistent suspended state on creation
   if (ctx.state !== 'suspended') {
@@ -48,7 +48,7 @@ export function createOnlineTransport (): OnlineTransport {
 
   const output = ctx.createGain()
   output.connect(ctx.destination)
-  cleanupHooks.push(() => output.disconnect())
+  disposeStack.push(() => output.disconnect())
 
   let offsetTime = ctx.currentTime
   let started = false
@@ -60,7 +60,7 @@ export function createOnlineTransport (): OnlineTransport {
     tickInterval: TICK_INTERVAL,
     scheduleAheadTime: SCHEDULE_AHEAD_TIME
   })
-  cleanupHooks.push(() => scheduler.stop())
+  disposeStack.push(() => scheduler.stop())
 
   const start = async (position: number) => {
     if (started) {
@@ -87,14 +87,12 @@ export function createOnlineTransport (): OnlineTransport {
       }
     })()
 
-    cleanupHooks.push(() => tracker.dispose())
-    cleanupHooks.push(tracker.time.subscribe((value) => time.set(value)))
+    disposeStack.pushDisposable(tracker)
+    disposeStack.push(tracker.time.subscribe((value) => time.set(value)))
   }
 
   const dispose = () => {
-    cleanupHooks.reverse()
-    cleanupHooks.forEach((hook) => hook())
-    cleanupHooks.splice(0, cleanupHooks.length)
+    disposeStack.dispose()
   }
 
   const schedule: Transport['schedule'] = (time, callback) => {
@@ -105,7 +103,7 @@ export function createOnlineTransport (): OnlineTransport {
 }
 
 export function createOfflineTransport (options: OfflineTransportOptions): OfflineTransport {
-  const cleanupHooks: Array<() => void> = []
+  const disposeStack = new DisposeStack()
 
   const ctx = new OfflineAudioContext({
     numberOfChannels: options.channels,
@@ -135,17 +133,15 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
         offsetTime: numeric('s', 0)
       })
 
-      cleanupHooks.push(() => tracker.dispose())
-      cleanupHooks.push(tracker.time.subscribe((value) => time.set(value)))
+      disposeStack.pushDisposable(tracker)
+      disposeStack.push(tracker.time.subscribe((value) => time.set(value)))
     } catch {
       // ignore (no timer-based fallback possible for offline context)
     }
 
     const buffer = await ctx.startRendering()
 
-    cleanupHooks.reverse()
-    cleanupHooks.forEach((hook) => hook())
-    cleanupHooks.splice(0, cleanupHooks.length)
+    disposeStack.dispose()
 
     return buffer
   }
