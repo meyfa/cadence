@@ -1,4 +1,5 @@
 import type { ThemeSetting } from '@editor'
+import { numeric } from '@utility'
 import { useEffect, useState } from 'react'
 
 const DARK_THEME = 'dark'
@@ -10,7 +11,7 @@ const SYSTEM_THEME = 'system'
 export const themes = Object.freeze([DARK_THEME, LIGHT_THEME] as const)
 export type Theme = typeof themes[number]
 
-const THEME_TRANSITION_DURATION_MS = 200
+const THEME_TRANSITION_DURATION = numeric('s', 0.2)
 
 const prefersLightColorScheme = window.matchMedia('(prefers-color-scheme: light)')
 prefersLightColorScheme.addEventListener('change', () => updateEffectiveTheme())
@@ -126,7 +127,7 @@ function updateEffectiveTheme (): void {
       requestAnimationFrame(() => {
         document.documentElement.classList.remove('theme-transition')
       })
-    }, THEME_TRANSITION_DURATION_MS)
+    }, THEME_TRANSITION_DURATION.value * 1000)
   }
 
   document.documentElement.classList.toggle(LIGHT_THEME, theme === LIGHT_THEME)

@@ -1,3 +1,4 @@
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createScheduler } from '../../src/transport/scheduler.js'
@@ -13,8 +14,8 @@ describe('transport/scheduler.ts', () => {
 
     const scheduler = createScheduler({
       now: () => nowSeconds,
-      tickInterval: 0.01,
-      scheduleAheadTime: 0.05,
+      tickInterval: numeric('s', 0.01),
+      scheduleAheadTime: numeric('s', 0.05),
 
       timers: {
         setInterval: ((handler: unknown) => {
@@ -59,8 +60,8 @@ describe('transport/scheduler.ts', () => {
 
     const scheduler = createScheduler({
       now: () => nowSeconds,
-      tickInterval: 0.01,
-      scheduleAheadTime: 0.05,
+      tickInterval: numeric('s', 0.01),
+      scheduleAheadTime: numeric('s', 0.05),
 
       timers: {
         setInterval: (() => 1) as unknown as SetInterval,
@@ -89,8 +90,8 @@ describe('transport/scheduler.ts', () => {
 
     const scheduler = createScheduler({
       now: () => nowSeconds,
-      tickInterval: 0.01,
-      scheduleAheadTime: 0.05,
+      tickInterval: numeric('s', 0.01),
+      scheduleAheadTime: numeric('s', 0.05),
 
       timers: {
         setInterval: ((handler: unknown) => {

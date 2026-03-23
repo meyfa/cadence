@@ -1,6 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import { type Program } from '@core'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '@editor'
+import { numeric } from '@utility'
 import type { AudioEngine } from '@webaudio'
 import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { activateTabOfType } from '../hooks/layout.js'
@@ -72,7 +73,7 @@ export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Com
 
 const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
-const FILE_OPEN_TIMEOUT_MS = 5000
+const FILE_OPEN_TIMEOUT = numeric('s', 5)
 
 export const commands: readonly Command[] = Object.freeze([
   {
@@ -99,7 +100,7 @@ export const commands: readonly Command[] = Object.freeze([
     action: ({ editor }) => {
       openTextFile({
         accept: FILE_ACCEPT,
-        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT_MS)
+        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT.value * 1000)
       }).then((content) => {
         if (content != null) {
           editor.dispatch((state) => ({

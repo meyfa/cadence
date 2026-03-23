@@ -62,7 +62,7 @@ export function createAudioSession (
         return
       }
 
-      return transport.start(startTime.value)
+      return transport.start(startTime)
     }).then(() => {
       if (disposed) {
         return

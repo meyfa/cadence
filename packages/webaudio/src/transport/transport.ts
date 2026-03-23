@@ -17,7 +17,7 @@ export interface Transport {
 }
 
 export interface OnlineTransport extends Transport {
-  readonly start: (position: number) => Promise<void>
+  readonly start: (position: Numeric<'s'>) => Promise<void>
   readonly time: Observable<Numeric<'s'>>
 
   readonly dispose: () => void
@@ -28,8 +28,8 @@ export interface OfflineTransport extends Transport {
   readonly time: Observable<Numeric<'s'> | undefined>
 }
 
-const TICK_INTERVAL = 0.025
-const SCHEDULE_AHEAD_TIME = 0.05
+const TICK_INTERVAL = numeric('s', 0.025)
+const SCHEDULE_AHEAD_TIME = numeric('s', 0.05)
 
 // Assuming faster than real-time rendering, so less frequent updates should be sufficient for offline
 const TIME_UPDATE_INTERVAL_ONLINE = numeric('s', 0.050)
@@ -62,7 +62,7 @@ export function createOnlineTransport (): OnlineTransport {
   })
   disposeStack.push(() => scheduler.stop())
 
-  const start = async (position: number) => {
+  const start = async (position: Numeric<'s'>) => {
     if (started) {
       return
     }
@@ -70,7 +70,7 @@ export function createOnlineTransport (): OnlineTransport {
     started = true
 
     await ctx.resume()
-    offsetTime = ctx.currentTime - position
+    offsetTime = ctx.currentTime - position.value
 
     scheduler.start(offsetTime)
 
