@@ -57,3 +57,38 @@ export function removeAt<T> (array: readonly T[], index: number): readonly T[] {
     ...array.slice(index + 1)
   ]
 }
+
+type Comparator<T> = (a: T, b: T) => number
+
+/**
+ * Inserts an item into an array in sorted order according to the provided comparator.
+ * The array is mutated in-place.
+ *
+ * @param array The array to insert into (must already be sorted according to the comparator).
+ * @param item The item to insert.
+ * @param comparator A function (a, b) that returns a negative number if a < b, zero if a == b, or a positive number if a > b.
+ * @returns The array with the item inserted.
+ */
+export function insertSorted<T> (array: T[], item: T, comparator: Comparator<T>): void {
+  // Fast path: append if the item is after all existing items.
+  const last = array.at(-1)
+  if (last == null || comparator(last, item) <= 0) {
+    array.push(item)
+    return
+  }
+
+  // Find the first index whose item is > the new item, to insert before it.
+  let low = 0
+  let high = array.length
+
+  while (low < high) {
+    const mid = (low + high) >>> 1
+    if (comparator(array[mid], item) <= 0) {
+      low = mid + 1
+    } else {
+      high = mid
+    }
+  }
+
+  array.splice(low, 0, item)
+}
