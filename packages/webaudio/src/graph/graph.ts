@@ -12,34 +12,18 @@ export interface WebAudioGraph {
   readonly loaded: Promise<void>
 
   readonly dispose: () => void
-  readonly disposed: boolean
 }
 
 export function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): WebAudioGraph {
   const instances = createInstances(graph, transport, fetcher)
+  const promises = Array.from(instances.values(), (item) => item.loaded)
 
   setupRoutings(graph, instances, transport.output)
   scheduleNoteEvents(graph, instances)
 
-  const loaded = Promise.all(
-    Array.from(instances.values(), async (item) => await item.loaded)
-  ).then(() => undefined)
-
-  let disposed = false
-
   return {
-    loaded,
-
-    get disposed () {
-      return disposed
-    },
-
-    dispose: () => {
-      disposed = true
-      for (const item of instances.values()) {
-        item.dispose()
-      }
-    }
+    loaded: Promise.all(promises).then(() => undefined),
+    dispose: () => instances.forEach((instance) => instance.dispose())
   }
 }
 
