@@ -1,3 +1,5 @@
+import type { Brand } from '@utility'
+
 export type SplitOrientation = 'horizontal' | 'vertical'
 
 export interface SerializedComponent {
@@ -5,8 +7,8 @@ export interface SerializedComponent {
   readonly props?: Record<string, unknown>
 }
 
-export type TabId = string & { __brand: 'TabId' }
-export type LayoutNodeId = string & { __brand: 'LayoutNodeId' }
+export type TabId = Brand<string, 'editor.TabId'>
+export type LayoutNodeId = Brand<string, 'editor.LayoutNodeId'>
 
 export interface Tab {
   readonly id: TabId

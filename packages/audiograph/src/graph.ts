@@ -1,9 +1,7 @@
 import type { MidiNote } from '@core'
-import type { Numeric } from '@utility'
+import type { Brand, Numeric } from '@utility'
 
-type Id<Tag extends string> = number & { __tag: Tag }
-
-export type NodeId = Id<'audiograph.Node'>
+export type NodeId = Brand<number, 'audiograph.NodeId'>
 
 export interface AnyNode {
   readonly id: NodeId

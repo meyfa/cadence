@@ -1,4 +1,4 @@
-import type { Numeric, Unit } from '@utility'
+import type { Brand, Numeric, Unit } from '@utility'
 
 export type Note = `${'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'}${'' | '#' | 'b'}`
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
@@ -57,11 +57,9 @@ export function isStepValue (value: unknown): value is StepValue {
   return value === '-' || value === 'x' || isPitch(value)
 }
 
-type Id<Tag extends string> = number & { __tag: Tag }
-
 // Domain types
 
-export type ParameterId = Id<'core.Parameter'>
+export type ParameterId = Brand<number, 'core.ParameterId'>
 
 export interface Parameter<U extends Unit> {
   readonly id: ParameterId
@@ -83,7 +81,7 @@ export interface AutomationPoint<U extends Unit = Unit> {
   readonly curve: 'linear' | 'step'
 }
 
-export type InstrumentId = Id<'core.Instrument'>
+export type InstrumentId = Brand<number, 'core.InstrumentId'>
 
 export interface Instrument {
   readonly id: InstrumentId
@@ -121,7 +119,7 @@ export interface Mixer {
   readonly routings: readonly MixerRouting[]
 }
 
-export type BusId = Id<'core.Bus'>
+export type BusId = Brand<number, 'core.BusId'>
 
 export interface Bus {
   readonly id: BusId
