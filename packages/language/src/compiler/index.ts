@@ -1,6 +1,7 @@
 import { ast } from '@ast'
 import type { Program } from '@core'
-import { CompoundError, type Result } from '../error.js'
+import { CompoundError } from '../result/errors.js'
+import type { Result } from '../result/result.js'
 import { check as checkerCheck } from './checker.js'
 import type { CompileError } from './error.js'
 import { generate, type GenerateOptions } from './generator.js'

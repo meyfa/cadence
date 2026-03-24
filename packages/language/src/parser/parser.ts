@@ -2,8 +2,9 @@ import { ast, combineSourceRanges, getSourceRange, type SourceRange } from '@ast
 import { isStepValue } from '@core'
 import { Token } from 'leac'
 import * as p from 'peberminta'
-import { isKeyword, type Keyword } from '../constants.js'
-import { truncateString, type Result } from '../error.js'
+import { truncateString } from '../result/errors.js'
+import type { Result } from '../result/result.js'
+import { isKeyword, type Keyword } from './constants.js'
 import { ParseError } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16

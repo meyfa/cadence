@@ -1,6 +1,3 @@
-export * from './keyboard-shortcuts.js'
-export * from './storage.js'
-
 // editor
 export type * from './editor/types.js'
 export * from './editor/components/Editor.js'
@@ -8,6 +5,9 @@ export * from './editor/components/Editor.js'
 // hooks
 export * from './hooks/activate-tab-of-type.js'
 export * from './hooks/safe-context.js'
+
+// input
+export * from './input/keyboard-shortcuts.js'
 
 // layout
 export type * from './layout/types.js'
@@ -21,3 +21,4 @@ export type { TabContentProps } from './layout/components/TabContent.js'
 export * from './state/layout.js'
 export * from './state/settings.js'
 export * from './state/state.js'
+export * from './state/storage.js'

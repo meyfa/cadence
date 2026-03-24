@@ -1,5 +1,5 @@
-export * from './error.js'
-export * from './constants.js'
+export * from './result/errors.js'
+export type * from './result/result.js'
 
 export * from './lexer/lexer.js'
 export * from './lexer/error.js'
