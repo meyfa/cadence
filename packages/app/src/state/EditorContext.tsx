@@ -1,6 +1,6 @@
 import type { EditorLocation } from '@editor'
+import { useSafeContext } from '@editor'
 import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
-import { useSafeContext } from '../hooks/context.js'
 
 export interface EditorState {
   readonly code: string

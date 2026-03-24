@@ -1,5 +1,6 @@
-import type { SerializedComponent } from '@editor'
-import type { ReactNode } from 'react'
+import type { SerializedComponent, Tab, TabContentProps, TabTitleProps } from '@editor'
+import type { FunctionComponent, ReactNode } from 'react'
+import { StyledTabTitle } from '../components/tab/StyledTabTitle.js'
 import { useProblems, type Problem } from '../hooks/problems.js'
 import { EditorPane } from './EditorPane.js'
 import { MixerPane } from './MixerPane.js'
@@ -66,38 +67,41 @@ const tabRenderers: ReadonlyMap<TabType, TabRenderer> = (() => new Map<TabType, 
   }]
 ]))()
 
-export function renderTabContent (data: SerializedComponent, context: TabRendererContext): ReactNode {
-  const renderer = tabRenderers.get(data.type as TabType)
-  if (renderer != null) {
-    return renderer.render(data.props, context)
+export function isTabClosable (tab: Tab): boolean {
+  const renderer = tabRenderers.get(tab.component.type as TabType)
+  return renderer?.closable ?? false
+}
+
+export const RenderTabTitle: FunctionComponent<TabTitleProps> = ({ tab, ...props }) => {
+  const context = useTabRendererContext()
+
+  const renderer = tabRenderers.get(tab.component.type as TabType)
+  if (renderer == null) {
+    return (
+      <StyledTabTitle title={tab.component.type} notifications={0} closeable={false} {...props} />
+    )
   }
 
+  const title = renderer.title(tab.component.props, context)
+  const notifications = renderer.notificationCount?.(tab.component.props, context) ?? 0
+  const closeable = renderer.closable ?? false
+
   return (
-    <div className='p-4'>
-      Unknown tab type: {data.type}
-    </div>
+    <StyledTabTitle title={title} notifications={notifications} closeable={closeable} {...props} />
   )
 }
 
-export function renderTabTitle (data: SerializedComponent, context: TabRendererContext): string {
-  const renderer = tabRenderers.get(data.type as TabType)
-  if (renderer != null) {
-    return renderer.title(data.props, context)
+export const RenderTabContent: FunctionComponent<TabContentProps> = ({ tab }) => {
+  const context = useTabRendererContext()
+
+  const renderer = tabRenderers.get(tab.component.type as TabType)
+  if (renderer == null) {
+    return (
+      <div className='p-4'>
+        Unknown tab type: {tab.component.type}
+      </div>
+    )
   }
 
-  return data.type
-}
-
-export function renderTabNotificationCount (data: SerializedComponent, context: TabRendererContext): number {
-  const renderer = tabRenderers.get(data.type as TabType)
-  if (renderer?.notificationCount != null) {
-    return renderer.notificationCount(data.props, context)
-  }
-
-  return 0
-}
-
-export function isTabCloseable (data: SerializedComponent): boolean {
-  const renderer = tabRenderers.get(data.type as TabType)
-  return renderer?.closable ?? false
+  return renderer.render(tab.component.props, context)
 }

@@ -1,12 +1,19 @@
-import type { CadenceEditorState, PartialCadenceEditorState, Storage } from '@editor'
+import type { CadenceEditorState, DockLayoutStyles, PartialCadenceEditorState, Storage } from '@editor'
+import { DockLayoutView, useLayout } from '@editor'
 import { FunctionComponent } from 'react'
 import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
+import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { useStorageSync } from './hooks/storage.js'
-import { DockLayoutView } from './layout/DockLayoutView.js'
-import { PanelErrorBoundary } from './layout/PanelErrorBoundary.js'
-import { useLayout } from './state/LayoutContext.js'
+import { isTabClosable, RenderTabContent, RenderTabTitle } from './panes/render-tab.js'
+
+const dockLayoutStyles: DockLayoutStyles = {
+  highlightColor: 'var(--color-accent-200)',
+  tabListBackgroundColor: 'var(--color-surface-200)',
+  tabListBorderColor: 'var(--color-frame-200)',
+  dropIndicatorColor: 'var(--color-content-300)'
+}
 
 export const App: FunctionComponent<{
   storage: Storage<CadenceEditorState, PartialCadenceEditorState>
@@ -32,13 +39,16 @@ export const App: FunctionComponent<{
       <div className='flex flex-col h-dvh'>
         <Header />
 
-        <PanelErrorBoundary>
-          <DockLayoutView
-            layout={layout}
-            dispatch={layoutDispatch}
-            className='flex-1 min-h-0 min-w-0'
-          />
-        </PanelErrorBoundary>
+        <DockLayoutView
+          TabTitleComponent={RenderTabTitle}
+          TabContentComponent={RenderTabContent}
+          FallbackComponent={PanelErrorFallback}
+          styles={dockLayoutStyles}
+          layout={layout}
+          dispatch={layoutDispatch}
+          onBeforeTabClose={isTabClosable}
+          className='flex-1 min-h-0 min-w-0'
+        />
 
         <Footer />
       </div>

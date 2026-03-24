@@ -1,4 +1,4 @@
-import { BrowserLocalStorage, parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor'
+import { BrowserLocalStorage, LayoutProvider, parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -12,7 +12,6 @@ import { CompilationProvider } from './state/CompilationContext.js'
 import { defaultLayout } from './state/default-layout.js'
 import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
-import { LayoutProvider } from './state/LayoutContext.js'
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,

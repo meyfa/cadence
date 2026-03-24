@@ -1,6 +1,6 @@
-import { DockLayout, type LayoutNode } from '@editor'
 import { createContext, useCallback, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
-import { useSafeContext } from '../hooks/context.js'
+import { useSafeContext } from '../../hooks/safe-context.js'
+import type { DockLayout, LayoutNode } from '../types.js'
 
 const initialLayout: DockLayout = {
   main: undefined

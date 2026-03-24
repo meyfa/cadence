@@ -1,5 +1,5 @@
+import { useActivateTabOfType } from '@editor'
 import { type FunctionComponent, type PropsWithChildren } from 'react'
-import { useActivateTabOfType } from '../../hooks/layout.js'
 import { useProblems } from '../../hooks/problems.js'
 import { TabTypes } from '../../panes/render-tab.js'
 import { useEditor } from '../../state/EditorContext.js'
