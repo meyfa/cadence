@@ -1,3 +1,5 @@
+export type * from './brand/brand.js'
+
 export * from './collections/arrays.js'
 export * from './collections/multimap.js'
 

@@ -1,3 +1,4 @@
+import type { Brand } from '@utility'
 import type { ComponentType } from 'react'
 
 export interface RenderFlowNodeProps<TData = unknown> {
@@ -7,8 +8,8 @@ export interface RenderFlowNodeProps<TData = unknown> {
 
 export type FlowNodeComponent<TData = unknown> = ComponentType<RenderFlowNodeProps<TData>>
 
-export type FlowNodeId = string & { __brand: '@meyfa/cadence-flowchart:node-id' }
-export type FlowEdgeId = string & { __brand: '@meyfa/cadence-flowchart:edge-id' }
+export type FlowNodeId = Brand<string, 'flowchart.FlowNodeId'>
+export type FlowEdgeId = Brand<string, 'flowchart.FlowEdgeId'>
 
 export type Marker = 'arrow'
 

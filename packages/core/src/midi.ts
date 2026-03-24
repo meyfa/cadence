@@ -1,6 +1,7 @@
+import type { Brand } from '@utility'
 import type { Pitch } from './program.js'
 
-export type MidiNote = number & { __tag: 'MidiNote' }
+export type MidiNote = Brand<number, 'core.MidiNote'>
 
 const pitchToMidi = new Map<Pitch, MidiNote>()
 
