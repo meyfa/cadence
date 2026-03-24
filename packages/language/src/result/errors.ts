@@ -1,25 +1,5 @@
 import type { SourceRange } from '@ast'
 
-export function truncateString (str: string, maxLength: number): string {
-  if (str.length <= maxLength) {
-    return str
-  }
-
-  return str.slice(0, maxLength - 1) + '…'
-}
-
-export interface ErrorResult<TError> {
-  readonly complete: false
-  readonly error: TError
-}
-
-export interface SuccessResult<TValue> {
-  readonly complete: true
-  readonly value: TValue
-}
-
-export type Result<TValue, TError> = SuccessResult<TValue> | ErrorResult<TError>
-
 export class CompoundError<TError extends Error> extends Error {
   readonly errors: readonly TError[]
 
@@ -38,4 +18,12 @@ export abstract class RangeError extends Error {
     this.name = 'RangeError'
     this.range = range
   }
+}
+
+export function truncateString (str: string, maxLength: number): string {
+  if (str.length <= maxLength) {
+    return str
+  }
+
+  return str.slice(0, maxLength - 1) + '…'
 }

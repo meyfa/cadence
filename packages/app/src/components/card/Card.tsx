@@ -1,6 +1,6 @@
 import type { FunctionComponent, PropsWithChildren } from 'react'
 
-export const SettingsPanel: FunctionComponent<PropsWithChildren<{
+export const Card: FunctionComponent<PropsWithChildren<{
   title?: string
 }>> = ({ title, children }) => {
   return (

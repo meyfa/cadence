@@ -1,6 +1,6 @@
 import type { Numeric } from '@utility'
 import { enums, optional, type, type Struct } from 'superstruct'
-import { numeric, type StructValidation } from '../utilities/validation.js'
+import { numeric, type StructValidation } from './validation.js'
 
 // Types
 

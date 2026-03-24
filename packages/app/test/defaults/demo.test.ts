@@ -2,7 +2,7 @@ import type { Result } from '@language'
 import { compile, lex, parse } from '@language'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { demoCode } from '../src/demo.js'
+import { demoCode } from '../../src/defaults/demo-code.js'
 
 function getResultError<TValue, TError> (result: Result<TValue, TError>): TError | undefined {
   if (result.complete) {
@@ -11,7 +11,7 @@ function getResultError<TValue, TError> (result: Result<TValue, TError>): TError
   return result.error
 }
 
-describe('demo.ts', () => {
+describe('defaults/demo-code.ts', () => {
   it('should compile without errors', () => {
     const lexResult = lex(demoCode)
     assert.strictEqual(lexResult.complete, true, getResultError(lexResult))

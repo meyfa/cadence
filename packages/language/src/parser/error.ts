@@ -1,5 +1,5 @@
 import type { SourceRange } from '@ast'
-import { RangeError } from '../error.js'
+import { RangeError } from '../result/errors.js'
 
 export class ParseError extends RangeError {
   constructor (message: string, range?: SourceRange) {

@@ -1,11 +1,8 @@
 import { optional, string, type, type Struct } from 'superstruct'
 import type { DockLayout } from '../layout/types.js'
-import { parseJSON, serializeJSON } from '../utilities/json.js'
-import type { StructValidation } from '../utilities/validation.js'
 import { dockLayoutSchema } from './layout.js'
 import { partialSettingsSchema, type Settings } from './settings.js'
-
-// Types
+import type { StructValidation } from './validation.js'
 
 export interface CadenceEditorState {
   readonly settings: Settings
@@ -19,22 +16,6 @@ export interface PartialCadenceEditorState {
   readonly code?: string
 }
 
-// Schema
-
-const partialEditorStateSchema: Struct<PartialCadenceEditorState> = type({
-  settings: optional(partialSettingsSchema),
-  layout: optional(dockLayoutSchema),
-  code: optional(string())
-})
-
-// Validation
-
-function validatePartialEditorState (data: unknown): StructValidation<PartialCadenceEditorState> {
-  return partialEditorStateSchema.validate(data, { coerce: true })
-}
-
-// Public API
-
 export function serializeEditorState (state: CadenceEditorState): string {
   return serializeJSON(state)
 }
@@ -44,4 +25,26 @@ export function parseEditorState (input: string): PartialCadenceEditorState {
   const [, state] = validatePartialEditorState(data)
 
   return state ?? {}
+}
+
+const partialEditorStateSchema: Struct<PartialCadenceEditorState> = type({
+  settings: optional(partialSettingsSchema),
+  layout: optional(dockLayoutSchema),
+  code: optional(string())
+})
+
+function validatePartialEditorState (data: unknown): StructValidation<PartialCadenceEditorState> {
+  return partialEditorStateSchema.validate(data, { coerce: true })
+}
+
+function parseJSON (data: string, fallback: unknown = undefined): unknown {
+  try {
+    return JSON.parse(data)
+  } catch {
+    return fallback
+  }
+}
+
+function serializeJSON (data: unknown): string {
+  return JSON.stringify(data)
 }

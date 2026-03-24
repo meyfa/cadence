@@ -1,6 +1,7 @@
 import type { SourceRange } from '@ast'
 import { createLexer, type Lexer, type Options, type Rules, type Token } from 'leac'
-import { truncateString, type Result } from '../error.js'
+import { truncateString } from '../result/errors.js'
+import type { Result } from '../result/result.js'
 import { LexError } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16
