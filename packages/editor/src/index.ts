@@ -1,12 +1,23 @@
 export * from './keyboard-shortcuts.js'
-
 export * from './storage.js'
 
-export type { EditorTheme, EditorLocation } from './editor/types.js'
-export { Editor } from './editor/Editor.js'
+// editor
+export type * from './editor/types.js'
+export * from './editor/components/Editor.js'
 
-export * from './layout/layout.js'
+// hooks
+export * from './hooks/activate-tab-of-type.js'
+export * from './hooks/safe-context.js'
 
+// layout
+export type * from './layout/types.js'
+export * from './layout/algorithms.js'
+export * from './layout/components/LayoutContext.js'
+export * from './layout/components/DockLayoutView.js'
+export type { TabTitleProps } from './layout/components/TabTitle.js'
+export type { TabContentProps } from './layout/components/TabContent.js'
+
+// state
 export * from './state/layout.js'
 export * from './state/settings.js'
 export * from './state/state.js'

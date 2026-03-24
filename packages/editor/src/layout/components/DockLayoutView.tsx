@@ -1,14 +1,17 @@
 import { DndContext, DragOverlay, MouseSensor, pointerWithin, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent, type Modifier } from '@dnd-kit/core'
 import { getEventCoordinates } from '@dnd-kit/utilities'
-import type { DockLayout, Tab, TabId } from '@editor'
-import { findPaneById, findPaneByTabId, moveTabBetweenPanes, moveTabIntoPane, moveTabToSplit } from '@editor'
-import clsx from 'clsx'
-import { useCallback, useState, type FunctionComponent } from 'react'
-import { useTabRendererContext } from '../panes/render-tab.js'
-import { useLayoutNodeDispatch, type LayoutDispatch } from '../state/LayoutContext.js'
+import { useCallback, useState, type ComponentType, type FunctionComponent } from 'react'
+import type { FallbackProps } from 'react-error-boundary'
+import { findPaneById, findPaneByTabId, moveTabBetweenPanes, moveTabIntoPane, moveTabToSplit } from '../algorithms.js'
+import type { DockLayout, Tab, TabId } from '../types.js'
+import { useLayoutNodeDispatch, type LayoutDispatch } from './LayoutContext.js'
 import { LayoutNodeView } from './LayoutNodeView.js'
+import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
-import { TabComponent } from './TabComponent.js'
+import type { TabTitleProps } from './TabTitle.js'
+import type { TabContentProps } from './TabContent.js'
+
+const DRAGGED_TAB_OPACITY = 0.6
 
 const snapOverlayTopLeftToCursor: Modifier = ({
   activatorEvent,
@@ -34,15 +37,45 @@ const snapOverlayTopLeftToCursor: Modifier = ({
   }
 }
 
-export const DockLayoutView: FunctionComponent<{
-  className?: string
-  layout: DockLayout
-  dispatch: LayoutDispatch
-}> = ({ className, layout, dispatch }) => {
-  const mainDispatch = useLayoutNodeDispatch(dispatch, 'main')
+export interface DockLayoutStyles {
+  readonly highlightColor: string
+  readonly tabListBackgroundColor: string
+  readonly tabListBorderColor: string
+  readonly dropIndicatorColor: string
+}
 
-  // Passed down to not call for every tab pane
-  const tabRendererContext = useTabRendererContext()
+export interface DockLayoutViewProps {
+  readonly TabTitleComponent: ComponentType<TabTitleProps>
+  readonly TabContentComponent: ComponentType<TabContentProps>
+  readonly FallbackComponent: ComponentType<FallbackProps>
+  readonly styles: DockLayoutStyles
+  readonly layout: DockLayout
+  readonly dispatch: LayoutDispatch
+  readonly onBeforeTabClose?: (tab: Tab) => boolean
+  readonly className?: string
+}
+
+export const DockLayoutView: FunctionComponent<DockLayoutViewProps> = (props) => {
+  const { FallbackComponent } = props
+
+  return (
+    <PanelErrorBoundary FallbackComponent={FallbackComponent}>
+      <InternalDockLayoutView {...props} />
+    </PanelErrorBoundary>
+  )
+}
+
+const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
+  TabTitleComponent,
+  TabContentComponent,
+  FallbackComponent,
+  styles,
+  layout,
+  dispatch,
+  onBeforeTabClose,
+  className
+}) => {
+  const mainDispatch = useLayoutNodeDispatch(dispatch, 'main')
 
   const [draggedTab, setDraggedTab] = useState<Tab | undefined>(undefined)
 
@@ -119,21 +152,30 @@ export const DockLayoutView: FunctionComponent<{
       onDragCancel={finalizeDrag}
       onDragEnd={onDragEnd}
     >
-      <div className={clsx('flex flex-col', className)}>
-        <LayoutNodeView
-          node={layout.main}
-          tabRendererContext={tabRendererContext}
-          dispatch={draggedTab != null ? undefined : mainDispatch}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column' }} className={className}>
+        {layout.main == null && (
+          <div style={{ width: '100%', height: '100%' }} />
+        )}
+        {layout.main != null && (
+          <LayoutNodeView
+            TabTitleComponent={TabTitleComponent}
+            TabContentComponent={TabContentComponent}
+            FallbackComponent={FallbackComponent}
+            styles={styles}
+            node={layout.main}
+            dispatch={draggedTab != null ? undefined : mainDispatch}
+            onBeforeTabClose={onBeforeTabClose}
+          />
+        )}
       </div>
 
       {draggedTab != null && (
         <DragOverlay
           dropAnimation={null}
           modifiers={[snapOverlayTopLeftToCursor]}
-          className='pointer-events-none opacity-60 shadow-sm'
+          style={{ pointerEvents: 'none', opacity: DRAGGED_TAB_OPACITY }}
         >
-          <TabComponent tab={draggedTab} context={tabRendererContext} disabled selected />
+          <TabTitleComponent tab={draggedTab} disabled selected />
         </DragOverlay>
       )}
     </DndContext>

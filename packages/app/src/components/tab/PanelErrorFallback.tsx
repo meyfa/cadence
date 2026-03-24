@@ -1,16 +1,7 @@
-import type { FunctionComponent, PropsWithChildren } from 'react'
-import { ErrorBoundary } from 'react-error-boundary'
-import { Button } from '../components/button/Button.js'
+import type { FunctionComponent } from 'react'
+import { Button } from '../button/Button.js'
 
-export const PanelErrorBoundary: FunctionComponent<PropsWithChildren> = ({ children }) => {
-  return (
-    <ErrorBoundary FallbackComponent={PanelErrorFallback}>
-      {children}
-    </ErrorBoundary>
-  )
-}
-
-const PanelErrorFallback: FunctionComponent<{
+export const PanelErrorFallback: FunctionComponent<{
   error: unknown
   resetErrorBoundary: () => void
 }> = ({ error, resetErrorBoundary }) => {

@@ -1,11 +1,11 @@
+import type { CadenceEditorState, PartialCadenceEditorState, Storage } from '@editor'
+import { useLayout } from '@editor'
 import { numeric } from '@utility'
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useEditor } from '../state/EditorContext.js'
-import { useLayout } from '../state/LayoutContext.js'
 import { applyThemeSetting, useThemeSetting } from '../theme.js'
 import { useObservable } from './observable.js'
-import { useAudioEngine } from '../state/AudioEngineContext.js'
-import type { CadenceEditorState, PartialCadenceEditorState, Storage } from '@editor'
 
 const STORAGE_DEBOUNCE = numeric('s', 0.25)
 

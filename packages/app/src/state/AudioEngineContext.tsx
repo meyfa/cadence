@@ -1,6 +1,6 @@
+import { useSafeContext } from '@editor'
 import type { AudioEngine } from '@webaudio'
 import { createContext } from 'react'
-import { useSafeContext } from '../hooks/context.js'
 
 export const AudioEngineContext = createContext<AudioEngine | undefined>(undefined)
 

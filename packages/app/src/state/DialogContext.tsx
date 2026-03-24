@@ -1,6 +1,6 @@
+import { useSafeContext } from '@editor'
 import { randomId } from '@utility'
 import { createContext, useCallback, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useSafeContext } from '../hooks/context.js'
 
 type DialogComponent = FunctionComponent<any>
 

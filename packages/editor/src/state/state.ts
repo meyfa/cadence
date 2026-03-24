@@ -1,7 +1,8 @@
 import { optional, string, type, type Struct } from 'superstruct'
+import type { DockLayout } from '../layout/types.js'
 import { parseJSON, serializeJSON } from '../utilities/json.js'
 import type { StructValidation } from '../utilities/validation.js'
-import { dockLayoutSchema, type DockLayout } from './layout.js'
+import { dockLayoutSchema } from './layout.js'
 import { partialSettingsSchema, type Settings } from './settings.js'
 
 // Types
