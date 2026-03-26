@@ -3,7 +3,7 @@
 ARG BUILDPLATFORM
 
 # build
-FROM --platform=$BUILDPLATFORM node:lts-alpine AS build
+FROM --platform=$BUILDPLATFORM node:24.14.0-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
