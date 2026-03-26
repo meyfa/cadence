@@ -6,7 +6,7 @@ import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { useStorageSync } from './hooks/storage.js'
-import { isTabClosable, RenderTabContent, RenderTabTitle } from './panes/render-tab.js'
+import { isTabClosable, RenderTabContent, RenderTabTitle } from './modules/index.js'
 
 const dockLayoutStyles: DockLayoutStyles = {
   highlightColor: 'var(--color-accent-200)',

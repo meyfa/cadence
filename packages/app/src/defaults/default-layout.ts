@@ -1,5 +1,9 @@
 import type { DockLayout, LayoutNodeId, TabId } from '@editor'
-import { TabTypes } from '../panes/render-tab.js'
+import { editorPanelId } from '../modules/editor/index.js'
+import { mixerPanelId } from '../modules/mixer/index.js'
+import { problemsPanelId } from '../modules/problems/index.js'
+import { settingsPanelId } from '../modules/settings/index.js'
+import { timelinePanelId } from '../modules/timeline/index.js'
 
 export const defaultLayout: DockLayout = {
   main: {
@@ -12,9 +16,9 @@ export const defaultLayout: DockLayout = {
         id: 'main-tabs' as LayoutNodeId,
         type: 'pane',
         tabs: [
-          { id: 'editor' as TabId, component: { type: TabTypes.Editor } },
-          { id: 'mixer' as TabId, component: { type: TabTypes.Mixer } },
-          { id: 'settings' as TabId, component: { type: TabTypes.Settings } }
+          { id: 'editor' as TabId, component: { type: editorPanelId } },
+          { id: 'mixer' as TabId, component: { type: mixerPanelId } },
+          { id: 'settings' as TabId, component: { type: settingsPanelId } }
         ],
         activeTabId: 'editor' as TabId
       },
@@ -22,8 +26,8 @@ export const defaultLayout: DockLayout = {
         id: 'bottom-dock' as LayoutNodeId,
         type: 'pane',
         tabs: [
-          { id: 'problems' as TabId, component: { type: TabTypes.Problems } },
-          { id: 'timeline' as TabId, component: { type: TabTypes.Timeline } }
+          { id: 'problems' as TabId, component: { type: problemsPanelId } },
+          { id: 'timeline' as TabId, component: { type: timelinePanelId } }
         ],
         activeTabId: 'timeline' as TabId
       }

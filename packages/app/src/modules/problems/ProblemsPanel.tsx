@@ -1,9 +1,10 @@
 import { RangeError } from '@language'
 import clsx from 'clsx'
 import { type FunctionComponent } from 'react'
-import { useProblems, type Problem } from '../hooks/problems.js'
+import { useProblems, type Problem } from '../../hooks/problems.js'
+import type { AppModulePanelProps } from '../types.js'
 
-export const ProblemsPane: FunctionComponent = () => {
+export const ProblemsPanel: FunctionComponent<AppModulePanelProps> = () => {
   const problems = useProblems()
 
   return (

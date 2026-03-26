@@ -1,7 +1,8 @@
 import { useActivateTabOfType } from '@editor'
 import { type FunctionComponent, type PropsWithChildren } from 'react'
 import { useProblems } from '../../hooks/problems.js'
-import { TabTypes } from '../../panes/render-tab.js'
+import { editorPanelId } from '../../modules/editor/index.js'
+import { problemsPanelId } from '../../modules/problems/index.js'
 import { useEditor } from '../../state/EditorContext.js'
 import { pluralize } from '../../utilities/strings.js'
 
@@ -15,14 +16,14 @@ export const Footer: FunctionComponent = () => {
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
-      <FooterButton onClick={() => activateTab(TabTypes.Problems)}>
+      <FooterButton onClick={() => activateTab(problemsPanelId)}>
         {problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')}
       </FooterButton>
 
       <div className='flex-1' />
 
       {editorLocation != null && (
-        <FooterButton onClick={() => activateTab(TabTypes.Editor)}>
+        <FooterButton onClick={() => activateTab(editorPanelId)}>
           Ln {editorLocation.line}, Col {editorLocation.column}
         </FooterButton>
       )}

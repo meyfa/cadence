@@ -1,19 +1,20 @@
 import type { ThemeSetting } from '@editor'
 import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
 import { useCallback, useState, type FunctionComponent } from 'react'
-import { Button } from '../components/button/Button.js'
-import { Card } from '../components/card/Card.js'
-import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog.js'
-import { GainSlider } from '../components/gain-slider/GainSlider.js'
-import { Radio } from '../components/radio/Radio.js'
-import { RadioGroup } from '../components/radio/RadioGroup.js'
-import { demoCode } from '../defaults/demo-code.js'
-import { useObservable } from '../hooks/observable.js'
-import { useAudioEngine } from '../state/AudioEngineContext.js'
-import { useEditor } from '../state/EditorContext.js'
-import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../theme.js'
+import { Button } from '../../components/button/Button.js'
+import { Card } from '../../components/card/Card.js'
+import { ConfirmationDialog } from '../../components/dialogs/ConfirmationDialog.js'
+import { GainSlider } from '../../components/gain-slider/GainSlider.js'
+import { Radio } from '../../components/radio/Radio.js'
+import { RadioGroup } from '../../components/radio/RadioGroup.js'
+import { demoCode } from '../../defaults/demo-code.js'
+import { useObservable } from '../../hooks/observable.js'
+import { useAudioEngine } from '../../state/AudioEngineContext.js'
+import { useEditor } from '../../state/EditorContext.js'
+import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
+import type { AppModulePanelProps } from '../types.js'
 
-export const SettingsPane: FunctionComponent = () => {
+export const SettingsPanel: FunctionComponent<AppModulePanelProps> = () => {
   const themeSetting = useThemeSetting()
   const systemTheme = useSystemTheme()
 

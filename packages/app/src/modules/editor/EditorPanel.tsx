@@ -3,8 +3,9 @@ import { Editor, type EditorLocation } from '@editor'
 import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import { numeric } from '@utility'
 import { useCallback, type FunctionComponent } from 'react'
-import { useEditor } from '../state/EditorContext.js'
-import { useEffectiveTheme } from '../theme.js'
+import { useEditor } from '../../state/EditorContext.js'
+import { useEffectiveTheme } from '../../theme.js'
+import type { AppModulePanelProps } from '../types.js'
 
 const indent = '  ' // 2 spaces
 const lintDelay = numeric('s', 0.25)
@@ -14,7 +15,7 @@ const extensions = [
   linter(cadenceLinter, { delay: lintDelay.value * 1000 })
 ]
 
-export const EditorPane: FunctionComponent = () => {
+export const EditorPanel: FunctionComponent<AppModulePanelProps> = () => {
   const [editorState, dispatch] = useEditor()
   const theme = useEffectiveTheme()
 
