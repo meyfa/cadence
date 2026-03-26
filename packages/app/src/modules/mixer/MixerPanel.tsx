@@ -2,11 +2,12 @@ import type { Bus, Instrument } from '@core'
 import { Flowchart } from '@flowchart'
 import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
-import { Popover } from '../components/popover/Popover.js'
-import { usePrevious } from '../hooks/previous.js'
-import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from '../mixer/flowchart.js'
-import { useCompilationState } from '../state/CompilationContext.js'
-import { pluralize } from '../utilities/strings.js'
+import { Popover } from '../../components/popover/Popover.js'
+import { usePrevious } from '../../hooks/previous.js'
+import { useCompilationState } from '../../state/CompilationContext.js'
+import { pluralize } from '../../utilities/strings.js'
+import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from './flowchart.js'
+import type { AppModulePanelProps } from '../types.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   nodeSize: {
@@ -46,7 +47,7 @@ function getNodeLabel ({ data }: MixerFlowNode): string {
   }
 }
 
-export const MixerPane: FunctionComponent = () => {
+export const MixerPanel: FunctionComponent<AppModulePanelProps> = () => {
   const { program: currentProgram } = useCompilationState()
   const program = usePrevious(currentProgram)
 

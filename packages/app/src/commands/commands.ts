@@ -6,7 +6,11 @@ import type { AudioEngine } from '@webaudio'
 import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { defaultLayout } from '../defaults/default-layout.js'
 import { usePrevious } from '../hooks/previous.js'
-import { TabTypes } from '../panes/render-tab.js'
+import { editorPanelId } from '../modules/editor/index.js'
+import { mixerPanelId } from '../modules/mixer/index.js'
+import { problemsPanelId } from '../modules/problems/index.js'
+import { settingsPanelId } from '../modules/settings/index.js'
+import { timelinePanelId } from '../modules/timeline/index.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { useDialog } from '../state/DialogContext.js'
@@ -144,7 +148,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: CommandIds.ViewSettings,
     label: 'Show view: Settings',
     action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, TabTypes.Settings)
+      activateTabOfType(layoutDispatch, settingsPanelId)
     }
   },
 
@@ -152,7 +156,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: CommandIds.ViewEditor,
     label: 'Show view: Editor',
     action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, TabTypes.Editor)
+      activateTabOfType(layoutDispatch, editorPanelId)
     }
   },
 
@@ -160,7 +164,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: CommandIds.ViewMixer,
     label: 'Show view: Mixer',
     action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, TabTypes.Mixer)
+      activateTabOfType(layoutDispatch, mixerPanelId)
     }
   },
 
@@ -168,7 +172,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: CommandIds.ViewProblems,
     label: 'Show view: Problems',
     action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, TabTypes.Problems)
+      activateTabOfType(layoutDispatch, problemsPanelId)
     }
   },
 
@@ -176,7 +180,7 @@ export const commands: readonly Command[] = Object.freeze([
     id: CommandIds.ViewTimeline,
     label: 'Show view: Timeline',
     action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, TabTypes.Timeline)
+      activateTabOfType(layoutDispatch, timelinePanelId)
     }
   },
 
