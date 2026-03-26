@@ -1,16 +1,18 @@
-export const CommandId = Object.freeze({
-  PlaybackToggle: 'playback.toggle',
-  FileOpen: 'file.open',
-  FileSave: 'file.save',
-  FileExport: 'file.export',
-  ViewEditor: 'view.editor',
-  ViewMixer: 'view.mixer',
-  ViewSettings: 'view.settings',
-  ViewProblems: 'view.problems',
-  ViewTimeline: 'view.timeline',
-  ThemeDark: 'theme.dark',
-  ThemeLight: 'theme.light',
-  ThemeSystem: 'theme.system',
-  LayoutReset: 'layout.reset',
-  CommandsShowAll: 'commands.show-all'
+import type { CommandId } from './commands.js'
+
+export const CommandIds = Object.freeze({
+  PlaybackToggle: 'playback.toggle' as CommandId,
+  FileOpen: 'file.open' as CommandId,
+  FileSave: 'file.save' as CommandId,
+  FileExport: 'file.export' as CommandId,
+  ViewEditor: 'view.editor' as CommandId,
+  ViewMixer: 'view.mixer' as CommandId,
+  ViewSettings: 'view.settings' as CommandId,
+  ViewProblems: 'view.problems' as CommandId,
+  ViewTimeline: 'view.timeline' as CommandId,
+  ThemeDark: 'theme.dark' as CommandId,
+  ThemeLight: 'theme.light' as CommandId,
+  ThemeSystem: 'theme.system' as CommandId,
+  LayoutReset: 'layout.reset' as CommandId,
+  CommandsShowAll: 'commands.show-all' as CommandId
 } as const)

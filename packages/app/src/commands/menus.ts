@@ -1,7 +1,9 @@
-import { CommandId } from './ids.js'
+import type { Brand } from '@utility'
+import type { CommandId } from './commands.js'
+import { CommandIds } from './ids.js'
 
 export interface MenuItem {
-  readonly commandId: string
+  readonly commandId: CommandId
   readonly label: string
 }
 
@@ -9,46 +11,48 @@ export interface MenuSection {
   readonly items: readonly MenuItem[]
 }
 
+export type MenuId = Brand<string, 'app.MenuId'>
+
 export interface Menu {
-  readonly id: string
+  readonly id: MenuId
   readonly label: string
   readonly sections: readonly MenuSection[]
 }
 
 export const mainMenu: readonly Menu[] = [
   {
-    id: 'file',
+    id: 'file' as MenuId,
     label: 'File',
     sections: [
       {
         items: [
-          { commandId: CommandId.FileOpen, label: 'Open…' },
-          { commandId: CommandId.FileSave, label: 'Save…' }
+          { commandId: CommandIds.FileOpen, label: 'Open…' },
+          { commandId: CommandIds.FileSave, label: 'Save…' }
         ]
       },
       {
         items: [
-          { commandId: CommandId.FileExport, label: 'Export…' }
+          { commandId: CommandIds.FileExport, label: 'Export…' }
         ]
       }
     ]
   },
   {
-    id: 'view',
+    id: 'view' as MenuId,
     label: 'View',
     sections: [
       {
         items: [
-          { commandId: CommandId.ViewEditor, label: 'Editor' },
-          { commandId: CommandId.ViewMixer, label: 'Mixer' },
-          { commandId: CommandId.ViewSettings, label: 'Settings' },
-          { commandId: CommandId.ViewProblems, label: 'Problems' },
-          { commandId: CommandId.ViewTimeline, label: 'Timeline' }
+          { commandId: CommandIds.ViewEditor, label: 'Editor' },
+          { commandId: CommandIds.ViewMixer, label: 'Mixer' },
+          { commandId: CommandIds.ViewSettings, label: 'Settings' },
+          { commandId: CommandIds.ViewProblems, label: 'Problems' },
+          { commandId: CommandIds.ViewTimeline, label: 'Timeline' }
         ]
       },
       {
         items: [
-          { commandId: CommandId.LayoutReset, label: 'Reset layout' }
+          { commandId: CommandIds.LayoutReset, label: 'Reset layout' }
         ]
       }
     ]
