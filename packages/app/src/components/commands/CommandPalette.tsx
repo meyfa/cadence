@@ -3,7 +3,7 @@ import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { commands, findCommandForKeyboardShortcut, getCommandById, useCommandContext, type Command } from '../../commands/commands.js'
-import { CommandId } from '../../commands/ids.js'
+import { CommandIds } from '../../commands/ids.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
@@ -24,7 +24,7 @@ export const CommandPalette: FunctionComponent = () => {
     setSearch('')
   }, [])
 
-  const showCommand = useMemo(() => getCommandById(CommandId.CommandsShowAll), [])
+  const showCommand = useMemo(() => getCommandById(CommandIds.CommandsShowAll), [])
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {

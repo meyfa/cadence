@@ -1,8 +1,8 @@
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { getCommandById, useCommandContext, type Command } from '../../commands/commands.js'
-import { mainMenu, type MenuSection } from '../../commands/menus.js'
+import { getCommandById, useCommandContext, type Command, type CommandId } from '../../commands/commands.js'
+import { mainMenu, type MenuId, type MenuSection } from '../../commands/menus.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 import clsx from 'clsx'
 
@@ -64,7 +64,7 @@ const MobileMenu: FunctionComponent<{
   close: () => void
   dispatch: DispatchCommand
 }> = ({ open, close, dispatch }) => {
-  const [mobileMenuId, setMobileMenuId] = useState<string | undefined>(undefined)
+  const [mobileMenuId, setMobileMenuId] = useState<MenuId | undefined>(undefined)
 
   // Reset submenu when menu closes
   useLayoutEffect(() => {
@@ -168,7 +168,7 @@ const MainMenuSeparator: FunctionComponent = () => {
 }
 
 const MainMenuItem: FunctionComponent<PropsWithChildren<{
-  commandId: string
+  commandId: CommandId
   dispatch: DispatchCommand
 }>> = ({ children, commandId, dispatch }) => {
   const command = getCommandById(commandId)

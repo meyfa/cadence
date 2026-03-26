@@ -1,7 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import { type Program } from '@core'
 import { activateTabOfType, normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
-import { numeric } from '@utility'
+import { numeric, type Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
 import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { defaultLayout } from '../defaults/default-layout.js'
@@ -13,10 +13,12 @@ import { useDialog } from '../state/DialogContext.js'
 import { useEditor, type EditorDispatch, type EditorState } from '../state/EditorContext.js'
 import { applyThemeSetting } from '../theme.js'
 import { openTextFile, saveTextFile } from '../utilities/files.js'
-import { CommandId } from './ids.js'
+import { CommandIds } from './ids.js'
+
+export type CommandId = Brand<string, 'app.CommandId'>
 
 export interface Command {
-  readonly id: string
+  readonly id: CommandId
   readonly label: string
   readonly keyboardShortcuts?: readonly KeyboardShortcut[]
   readonly action: (context: CommandContext) => void
@@ -61,7 +63,7 @@ export function useCommandContext (handlers: {
   }
 }
 
-export function getCommandById (id: string): Command | undefined {
+export function getCommandById (id: CommandId): Command | undefined {
   return commandsById.get(id)
 }
 
@@ -75,7 +77,7 @@ const FILE_OPEN_TIMEOUT = numeric('s', 5)
 
 export const commands: readonly Command[] = Object.freeze([
   {
-    id: CommandId.PlaybackToggle,
+    id: CommandIds.PlaybackToggle,
     label: 'Playback: Toggle (play/stop)',
     keyboardShortcuts: [
       'Ctrl+Shift+Space'
@@ -90,7 +92,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.FileOpen,
+    id: CommandIds.FileOpen,
     label: 'File: Open',
     keyboardShortcuts: [
       'Ctrl+O'
@@ -114,7 +116,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.FileSave,
+    id: CommandIds.FileSave,
     label: 'File: Save',
     keyboardShortcuts: [
       'Ctrl+S'
@@ -128,7 +130,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.FileExport,
+    id: CommandIds.FileExport,
     label: 'File: Export',
     keyboardShortcuts: [
       'Ctrl+E'
@@ -139,7 +141,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ViewSettings,
+    id: CommandIds.ViewSettings,
     label: 'Show view: Settings',
     action: ({ layoutDispatch }) => {
       activateTabOfType(layoutDispatch, TabTypes.Settings)
@@ -147,7 +149,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ViewEditor,
+    id: CommandIds.ViewEditor,
     label: 'Show view: Editor',
     action: ({ layoutDispatch }) => {
       activateTabOfType(layoutDispatch, TabTypes.Editor)
@@ -155,7 +157,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ViewMixer,
+    id: CommandIds.ViewMixer,
     label: 'Show view: Mixer',
     action: ({ layoutDispatch }) => {
       activateTabOfType(layoutDispatch, TabTypes.Mixer)
@@ -163,7 +165,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ViewProblems,
+    id: CommandIds.ViewProblems,
     label: 'Show view: Problems',
     action: ({ layoutDispatch }) => {
       activateTabOfType(layoutDispatch, TabTypes.Problems)
@@ -171,7 +173,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ViewTimeline,
+    id: CommandIds.ViewTimeline,
     label: 'Show view: Timeline',
     action: ({ layoutDispatch }) => {
       activateTabOfType(layoutDispatch, TabTypes.Timeline)
@@ -179,7 +181,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ThemeDark,
+    id: CommandIds.ThemeDark,
     label: 'Theme: Dark',
     action: () => {
       applyThemeSetting('dark')
@@ -187,7 +189,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ThemeLight,
+    id: CommandIds.ThemeLight,
     label: 'Theme: Light',
     action: () => {
       applyThemeSetting('light')
@@ -195,7 +197,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.ThemeSystem,
+    id: CommandIds.ThemeSystem,
     label: 'Theme: System',
     action: () => {
       applyThemeSetting('system')
@@ -203,7 +205,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.LayoutReset,
+    id: CommandIds.LayoutReset,
     label: 'Layout: Reset to default',
     action: ({ layoutDispatch }) => {
       layoutDispatch(defaultLayout)
@@ -211,7 +213,7 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandId.CommandsShowAll,
+    id: CommandIds.CommandsShowAll,
     label: 'Show all commands',
     keyboardShortcuts: [
       // Ctrl-Shift-P may be reserved by some browsers
@@ -225,8 +227,8 @@ export const commands: readonly Command[] = Object.freeze([
   }
 ] satisfies Command[])
 
-const commandsById = ((): ReadonlyMap<string, Command> => {
-  const map = new Map<string, Command>()
+const commandsById = ((): ReadonlyMap<CommandId, Command> => {
+  const map = new Map<CommandId, Command>()
   for (const command of commands) {
     map.set(command.id, command)
   }
