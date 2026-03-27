@@ -1,9 +1,8 @@
 import type { SerializedComponent } from '@editor'
 import type { Brand } from '@utility'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import type { Command, CommandId } from '../commands/commands.js'
 import type { MenuSectionId } from '../commands/menus.js'
-import type { TabRendererContext } from './index.js'
 
 export type AppModuleId = Brand<string, 'app.AppModuleId'>
 
@@ -19,10 +18,10 @@ export type AppModulePanelId = Brand<string, 'app.AppModulePanelId'>
 
 export interface AppModulePanel {
   readonly id: AppModulePanelId
-  readonly component: ComponentType<AppModulePanelProps>
-  readonly closable: boolean
-  readonly title: (props: SerializedComponent['props'], context: TabRendererContext) => string
-  readonly notificationCount: (props: SerializedComponent['props'], context: TabRendererContext) => number
+  readonly closeable: boolean
+  readonly Panel: AppModuleRender<AppModulePanelProps> | ComponentType<AppModulePanelProps>
+  readonly Title: AppModuleRender<AppModulePanelProps, string>
+  readonly Notifications?: AppModuleRender<AppModulePanelProps, number | null>
 }
 
 export interface AppModulePanelProps {
@@ -44,5 +43,7 @@ type AppModuleInsertPosition = 'start' | 'end'
 export interface AppModuleInsert {
   readonly position: AppModuleInsertPosition
   readonly commandId: CommandId
-  readonly label: (context: TabRendererContext) => string
+  readonly Label: AppModuleRender<{}, string>
 }
+
+export type AppModuleRender<P = {}, T extends ReactNode = ReactNode> = (props: P) => T

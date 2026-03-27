@@ -1,6 +1,8 @@
+import type { Tab } from '@editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import { type FunctionComponent } from 'react'
+import type { AppModulePanelProps, AppModuleRender } from '../../modules/types.js'
 
 const isMacOS = (
   'userAgentData' in navigator
@@ -9,13 +11,14 @@ const isMacOS = (
 ).toLowerCase().includes('mac')
 
 export const StyledTabTitle: FunctionComponent<{
-  title: string
-  notifications: number
+  TitleComponent: AppModuleRender<AppModulePanelProps, string>
+  NotificationsComponent: AppModuleRender<AppModulePanelProps, number | null>
+  tab: Tab
   closeable: boolean
   disabled?: boolean
   selected?: boolean
   onClose?: () => void
-}> = ({ title, notifications, closeable, disabled, selected, onClose }) => {
+}> = ({ TitleComponent, NotificationsComponent, tab, closeable, disabled, selected, onClose }) => {
   const closeButton = closeable && onClose != null
     ? (
         <button
@@ -46,13 +49,11 @@ export const StyledTabTitle: FunctionComponent<{
     >
       {isMacOS && closeButton}
 
-      {title}
+      <TitleComponent panelProps={tab.component.props} />
 
-      {notifications > 0 && (
-        <div className='px-1 py-0.5 text-xs leading-none bg-error-surface text-error-content rounded'>
-          {notifications}
-        </div>
-      )}
+      <div className='px-1 py-0.5 text-xs leading-none bg-error-surface text-error-content rounded empty:hidden'>
+        <NotificationsComponent panelProps={tab.component.props} />
+      </div>
 
       {!isMacOS && closeButton}
     </div>
