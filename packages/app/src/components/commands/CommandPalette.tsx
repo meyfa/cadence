@@ -2,41 +2,56 @@ import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShort
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { commands, findCommandForKeyboardShortcut, getCommandById, showAllCommandsCommandId, type Command } from '../../commands/commands.js'
-import { useCommandDispatcher, useRegisterCommandPaletteOpener } from '../../commands/dispatcher.js'
+import type { Command, CommandId } from '../../commands/commands.js'
+import { useCommandRegistry, useRegisterCommand } from '../../commands/registry.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
-const sortedCommands = [...commands].sort((a, b) => a.label.localeCompare(b.label))
+const createShowCommand = (action: () => void): Command => ({
+  id: 'commands.show-all' as CommandId,
+  label: 'Show all commands',
+  keyboardShortcuts: [
+    // Ctrl-Shift-P may be reserved by some browsers
+    'Ctrl+P',
+    'Ctrl+Shift+P',
+    'F1'
+  ],
+  action
+})
 
 export const CommandPalette: FunctionComponent = () => {
+  const { commands, findByShortcut, dispatchCommand } = useCommandRegistry()
+
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const showCommandPalette = useCallback(() => {
+  const showPalette = useCallback(() => {
     setOpen(true)
     setTimeout(() => searchRef.current?.focus(), 0)
   }, [])
 
-  useRegisterCommandPaletteOpener(showCommandPalette)
-
-  const hideCommandPalette = useCallback(() => {
+  const hidePalette = useCallback(() => {
     setOpen(false)
     setSearch('')
   }, [])
 
-  const showCommand = useMemo(() => getCommandById(showAllCommandsCommandId), [])
+  const showCommand = useMemo<Command>(() => createShowCommand(showPalette), [showPalette])
+  useRegisterCommand(showCommand)
+
+  const sortedCommands = useMemo(() => {
+    return [...commands].sort((a, b) => a.label.localeCompare(b.label))
+  }, [commands])
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
     const next = e.relatedTarget as HTMLElement | null
     if (!next || !paletteRef.current?.contains(next)) {
-      hideCommandPalette()
+      hidePalette()
     }
-  }, [hideCommandPalette])
+  }, [hidePalette])
 
   // Reset search when closing
   useEffect(() => {
@@ -53,15 +68,13 @@ export const CommandPalette: FunctionComponent = () => {
 
     // TODO fuzzy search
     return sortedCommands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
-  }, [search])
-
-  const { dispatchCommand } = useCommandDispatcher()
+  }, [sortedCommands, search])
 
   const dispatchCommandAndClose = useCallback((command: Command) => {
     // Important: close before calling action, in case action needs to open the palette
-    hideCommandPalette()
+    hidePalette()
     dispatchCommand(command)
-  }, [dispatchCommand, hideCommandPalette])
+  }, [dispatchCommand, hidePalette])
 
   const handleInputKeydown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     const hasModifiers = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
@@ -81,7 +94,7 @@ export const CommandPalette: FunctionComponent = () => {
 
     if (open && keyboardShortcut === 'Escape') {
       event.preventDefault()
-      hideCommandPalette()
+      hidePalette()
       return
     }
 
@@ -90,15 +103,15 @@ export const CommandPalette: FunctionComponent = () => {
       return
     }
 
-    const matchedCommand = findCommandForKeyboardShortcut(keyboardShortcut)
+    const matchedCommand = findByShortcut(keyboardShortcut)
     if (matchedCommand != null) {
       event.preventDefault()
       dispatchCommandAndClose(matchedCommand)
     }
-  }, [open, dispatchCommandAndClose, hideCommandPalette])
+  }, [open, dispatchCommandAndClose, hidePalette])
 
   if (!open) {
-    const shortcut = showCommand?.keyboardShortcuts?.at(0)
+    const shortcut = showCommand.keyboardShortcuts?.at(0)
 
     return (
       <button
@@ -108,7 +121,7 @@ export const CommandPalette: FunctionComponent = () => {
           'px-2 h-8 cursor-pointer flex items-center justify-center gap-2 w-full text-sm whitespace-nowrap outline-none overflow-hidden',
           'bg-surface-200 text-content-200 rounded-md border border-frame-200 hocus:bg-surface-300 hocus:text-content-300'
         )}
-        onClick={showCommandPalette}
+        onClick={showPalette}
       >
         <Search />
         Commands…

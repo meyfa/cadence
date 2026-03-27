@@ -2,15 +2,15 @@ import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator }
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { getCommandById, type Command, type CommandId } from '../../commands/commands.js'
-import { useCommandDispatcher } from '../../commands/dispatcher.js'
+import type { Command, CommandId } from '../../commands/commands.js'
 import { appMenus, type MenuId, type MenuSection } from '../../commands/menus.js'
+import { useCommandRegistry } from '../../commands/registry.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
 type DispatchCommand = (command: Command) => void
 
 export const MainMenu: FunctionComponent = () => {
-  const { dispatchCommand } = useCommandDispatcher()
+  const { dispatchCommand } = useCommandRegistry()
 
   return (
     <div className='relative'>
@@ -168,8 +168,9 @@ const MainMenuItem: FunctionComponent<PropsWithChildren<{
   commandId: CommandId
   dispatch: DispatchCommand
 }>> = ({ children, commandId, dispatch }) => {
-  const command = getCommandById(commandId)
+  const { getCommandById } = useCommandRegistry()
 
+  const command = getCommandById(commandId)
   const shortcut = command?.keyboardShortcuts?.at(0)
 
   const onClick = useCallback(() => {

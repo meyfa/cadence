@@ -1,5 +1,5 @@
 import { type FunctionComponent, type PropsWithChildren } from 'react'
-import { useCommandDispatcher } from '../../commands/dispatcher.js'
+import { useCommandRegistry } from '../../commands/registry.js'
 import { modules } from '../../modules/index.js'
 import type { AppModuleInsert } from '../../modules/types.js'
 
@@ -11,7 +11,7 @@ const insertsByPosition: Record<AppModuleInsert['position'], readonly AppModuleI
 }
 
 export const Footer: FunctionComponent = () => {
-  const { dispatchCommandById } = useCommandDispatcher()
+  const { dispatchCommandById } = useCommandRegistry()
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
