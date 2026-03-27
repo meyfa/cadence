@@ -1,11 +1,23 @@
+import { activateTabOfType } from '@editor'
+import type { Command, CommandId } from '../../commands/commands.js'
+import { MenuSectionIds } from '../../commands/ids.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
 
-export const problemsModuleId = 'problems' as AppModuleId
-export const problemsPanelId = `${problemsModuleId}.problems` as AppModulePanelId
+const moduleId = 'problems' as AppModuleId
+export const problemsPanelId = `${moduleId}.problems` as AppModulePanelId
+
+const viewProblems: Command = {
+  id: `${moduleId}.view.problems` as CommandId,
+  label: 'Show view: Problems',
+  action: ({ layoutDispatch }) => {
+    activateTabOfType(layoutDispatch, problemsPanelId)
+  }
+}
 
 export const problemsModule: AppModule = {
-  id: problemsModuleId,
+  id: moduleId,
+
   panels: [
     {
       id: problemsPanelId,
@@ -13,6 +25,18 @@ export const problemsModule: AppModule = {
       closable: true,
       title: () => 'Problems',
       notificationCount: (_props, context) => context.problems.length
+    }
+  ],
+
+  commands: [
+    viewProblems
+  ],
+
+  menuItems: [
+    {
+      menuSectionId: MenuSectionIds.ViewShow,
+      commandId: viewProblems.id,
+      label: 'Problems'
     }
   ]
 }

@@ -9,7 +9,7 @@ import { settingsModule } from './settings/index.js'
 import { timelineModule } from './timeline/index.js'
 import type { AppModule, AppModulePanel, AppModulePanelId } from './types.js'
 
-const modules: readonly AppModule[] = [
+export const modules: readonly AppModule[] = [
   editorModule,
   mixerModule,
   problemsModule,

@@ -1,16 +1,12 @@
 import { createAudioGraph } from '@audiograph'
 import { type Program } from '@core'
-import { activateTabOfType, normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
+import { normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
 import { numeric, type Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
 import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { defaultLayout } from '../defaults/default-layout.js'
 import { usePrevious } from '../hooks/previous.js'
-import { editorPanelId } from '../modules/editor/index.js'
-import { mixerPanelId } from '../modules/mixer/index.js'
-import { problemsPanelId } from '../modules/problems/index.js'
-import { settingsPanelId } from '../modules/settings/index.js'
-import { timelinePanelId } from '../modules/timeline/index.js'
+import { modules } from '../modules/index.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { useDialog } from '../state/DialogContext.js'
@@ -145,46 +141,6 @@ export const commands: readonly Command[] = Object.freeze([
   },
 
   {
-    id: CommandIds.ViewSettings,
-    label: 'Show view: Settings',
-    action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, settingsPanelId)
-    }
-  },
-
-  {
-    id: CommandIds.ViewEditor,
-    label: 'Show view: Editor',
-    action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, editorPanelId)
-    }
-  },
-
-  {
-    id: CommandIds.ViewMixer,
-    label: 'Show view: Mixer',
-    action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, mixerPanelId)
-    }
-  },
-
-  {
-    id: CommandIds.ViewProblems,
-    label: 'Show view: Problems',
-    action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, problemsPanelId)
-    }
-  },
-
-  {
-    id: CommandIds.ViewTimeline,
-    label: 'Show view: Timeline',
-    action: ({ layoutDispatch }) => {
-      activateTabOfType(layoutDispatch, timelinePanelId)
-    }
-  },
-
-  {
     id: CommandIds.ThemeDark,
     label: 'Theme: Dark',
     action: () => {
@@ -228,7 +184,9 @@ export const commands: readonly Command[] = Object.freeze([
     action: ({ showCommandPalette }) => {
       showCommandPalette()
     }
-  }
+  },
+
+  ...modules.flatMap((module) => module.commands ?? [])
 ] satisfies Command[])
 
 const commandsById = ((): ReadonlyMap<CommandId, Command> => {
