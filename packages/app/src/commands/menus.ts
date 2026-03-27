@@ -1,7 +1,7 @@
 import type { Brand } from '@utility'
-import type { CommandId } from './commands.js'
-import { CommandIds, MenuSectionIds } from './ids.js'
 import { modules } from '../modules/index.js'
+import type { CommandId } from './commands.js'
+import { MenuSectionIds } from './ids.js'
 
 export type MenuId = Brand<string, 'app.MenuId'>
 
@@ -37,18 +37,13 @@ export const appMenus: readonly Menu[] = [
     label: 'View',
     sections: [
       defineMenuSection(MenuSectionIds.ViewShow),
-      defineMenuSection(MenuSectionIds.ViewLayout, [
-        { commandId: CommandIds.LayoutReset, label: 'Reset layout' }
-      ])
+      defineMenuSection(MenuSectionIds.ViewLayout)
     ]
   }
 ]
 
-function defineMenuSection (id: MenuSectionId, items: readonly MenuItem[] = []): MenuSection {
-  const moduleItems = modules.flatMap((module) => module.menuItems ?? []).filter((item) => item.menuSectionId === id)
-
-  return {
-    id,
-    items: [...items, ...moduleItems]
-  }
+function defineMenuSection (id: MenuSectionId): MenuSection {
+  const items = modules.flatMap((module) => module.menuItems ?? [])
+    .filter((item) => item.menuSectionId === id)
+  return { id, items }
 }

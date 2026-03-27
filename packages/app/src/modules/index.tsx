@@ -8,14 +8,16 @@ import { problemsModule } from './problems/index.js'
 import { settingsModule } from './settings/index.js'
 import { timelineModule } from './timeline/index.js'
 import type { AppModule, AppModulePanel, AppModulePanelId } from './types.js'
+import { viewModule } from './view/index.js'
 
 export const modules: readonly AppModule[] = [
   editorModule,
+  exportModule,
   mixerModule,
   problemsModule,
   settingsModule,
-  timelineModule,
-  exportModule
+  viewModule,
+  timelineModule
 ]
 
 const modulesByPanelId: ReadonlyMap<AppModulePanelId, readonly [AppModule, AppModulePanel]> = new Map(
