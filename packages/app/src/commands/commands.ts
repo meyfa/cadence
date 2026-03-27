@@ -1,7 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import { type Program } from '@core'
 import { normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
-import { numeric, type Brand } from '@utility'
+import { type Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
 import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { defaultLayout } from '../defaults/default-layout.js'
@@ -12,7 +12,6 @@ import { useCompilationState } from '../state/CompilationContext.js'
 import { useDialog } from '../state/DialogContext.js'
 import { useEditor, type EditorDispatch, type EditorState } from '../state/EditorContext.js'
 import { applyThemeSetting } from '../theme.js'
-import { openTextFile, saveTextFile } from '../utilities/files.js'
 import { CommandIds } from './ids.js'
 
 export type CommandId = Brand<string, 'app.CommandId'>
@@ -71,10 +70,6 @@ export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Com
   return keyboardShortcuts.get(shortcut)
 }
 
-const DEFAULT_FILENAME = 'track.cadence'
-const FILE_ACCEPT = '.cadence,text/plain'
-const FILE_OPEN_TIMEOUT = numeric('s', 5)
-
 export const commands: readonly Command[] = Object.freeze([
   {
     id: CommandIds.PlaybackToggle,
@@ -88,44 +83,6 @@ export const commands: readonly Command[] = Object.freeze([
       } else if (lastProgram != null) {
         audioEngine.play(createAudioGraph(lastProgram))
       }
-    }
-  },
-
-  {
-    id: CommandIds.FileOpen,
-    label: 'File: Open',
-    keyboardShortcuts: [
-      'Ctrl+O'
-    ],
-    action: ({ editor }) => {
-      openTextFile({
-        accept: FILE_ACCEPT,
-        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT.value * 1000)
-      }).then((content) => {
-        if (content != null) {
-          editor.dispatch((state) => ({
-            ...state,
-            code: content,
-            caret: undefined
-          }))
-        }
-      }).catch(() => {
-        // ignore errors
-      })
-    }
-  },
-
-  {
-    id: CommandIds.FileSave,
-    label: 'File: Save',
-    keyboardShortcuts: [
-      'Ctrl+S'
-    ],
-    action: ({ editor }) => {
-      saveTextFile({
-        filename: DEFAULT_FILENAME,
-        content: editor.state.code
-      })
     }
   },
 

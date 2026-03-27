@@ -3,8 +3,6 @@ import type { MenuSectionId } from './menus.js'
 
 export const CommandIds = Object.freeze({
   PlaybackToggle: 'playback.toggle' as CommandId,
-  FileOpen: 'file.open' as CommandId,
-  FileSave: 'file.save' as CommandId,
   FileExport: 'file.export' as CommandId,
   ThemeDark: 'theme.dark' as CommandId,
   ThemeLight: 'theme.light' as CommandId,
