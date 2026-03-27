@@ -21,10 +21,9 @@ export const settingsModule: AppModule = {
   panels: [
     {
       id: settingsPanelId,
-      component: SettingsPanel,
-      closable: true,
-      title: () => 'Settings',
-      notificationCount: () => 0
+      closeable: true,
+      Panel: SettingsPanel,
+      Title: () => 'Settings'
     }
   ],
 

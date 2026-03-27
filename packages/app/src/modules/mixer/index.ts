@@ -21,10 +21,9 @@ export const mixerModule: AppModule = {
   panels: [
     {
       id: mixerPanelId,
-      component: MixerPanel,
-      closable: true,
-      title: () => 'Mixer',
-      notificationCount: () => 0
+      closeable: true,
+      Panel: MixerPanel,
+      Title: () => 'Mixer'
     }
   ],
 

@@ -21,10 +21,9 @@ export const timelineModule: AppModule = {
   panels: [
     {
       id: timelinePanelId,
-      component: TimelinePanel,
-      closable: true,
-      title: () => 'Timeline',
-      notificationCount: () => 0
+      closeable: true,
+      Panel: TimelinePanel,
+      Title: () => 'Timeline'
     }
   ],
 

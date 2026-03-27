@@ -1,8 +1,6 @@
 import type { Tab, TabContentProps, TabTitleProps } from '@editor'
 import type { FunctionComponent } from 'react'
 import { StyledTabTitle } from '../components/tab/StyledTabTitle.js'
-import { useProblems, type Problem } from '../hooks/problems.js'
-import { useEditor, type EditorState } from '../state/EditorContext.js'
 import { editorModule } from './editor/index.js'
 import { exportModule } from './export/index.js'
 import { mixerModule } from './mixer/index.js'
@@ -26,40 +24,22 @@ const modulesByPanelId: ReadonlyMap<AppModulePanelId, readonly [AppModule, AppMo
   )
 )
 
-// State that the tab renderers can access. This is to avoid calling hooks outside of components.
-export interface TabRendererContext {
-  readonly problems: readonly Problem[]
-  readonly editor: EditorState
-}
-
-export function useTabRendererContext (): TabRendererContext {
-  const problems = useProblems()
-  const [editor] = useEditor()
-
-  return { problems, editor }
-}
-
 export function isTabClosable (tab: Tab): boolean {
   const [, panel] = modulesByPanelId.get(tab.component.type as AppModulePanelId) ?? []
-  return panel?.closable ?? false
+  return panel?.closeable ?? false
 }
 
 export const RenderTabTitle: FunctionComponent<TabTitleProps> = ({ tab, ...props }) => {
-  const context = useTabRendererContext()
-
   const [, panel] = modulesByPanelId.get(tab.component.type as AppModulePanelId) ?? []
-  if (panel == null) {
-    return (
-      <StyledTabTitle title={tab.component.type} notifications={0} closeable={false} {...props} />
-    )
-  }
-
-  const title = panel.title(tab.component.props, context)
-  const notifications = panel.notificationCount(tab.component.props, context)
-  const closeable = panel.closable
 
   return (
-    <StyledTabTitle title={title} notifications={notifications} closeable={closeable} {...props} />
+    <StyledTabTitle
+      TitleComponent={panel?.Title ?? EmptyStringComponent}
+      NotificationsComponent={panel?.Notifications ?? NullComponent}
+      tab={tab}
+      closeable={panel?.closeable ?? false}
+      {...props}
+    />
   )
 }
 
@@ -73,7 +53,10 @@ export const RenderTabContent: FunctionComponent<TabContentProps> = ({ tab }) =>
     )
   }
 
-  const Component = panel.component
+  const { Panel } = panel
 
-  return <Component panelProps={tab.component.props} />
+  return <Panel panelProps={tab.component.props} />
 }
+
+const EmptyStringComponent = () => ''
+const NullComponent = () => null

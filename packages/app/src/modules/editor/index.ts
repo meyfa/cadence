@@ -2,6 +2,7 @@ import { activateTabOfType } from '@editor'
 import { numeric } from '@utility'
 import type { Command, CommandId } from '../../commands/commands.js'
 import { MenuSectionIds } from '../../commands/ids.js'
+import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { EditorPanel } from './EditorPanel.js'
@@ -65,10 +66,9 @@ export const editorModule: AppModule = {
   panels: [
     {
       id: editorPanelId,
-      component: EditorPanel,
-      closable: false,
-      title: () => 'Editor',
-      notificationCount: () => 0
+      closeable: false,
+      Panel: EditorPanel,
+      Title: () => 'Editor'
     }
   ],
 
@@ -101,7 +101,8 @@ export const editorModule: AppModule = {
       {
         commandId: viewEditor.id,
         position: 'end',
-        label: ({ editor }) => {
+        Label: () => {
+          const [editor] = useEditor()
           return `Ln ${editor.caret?.line ?? '-'}, Col ${editor.caret?.column ?? '-'}`
         }
       }

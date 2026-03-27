@@ -1,6 +1,7 @@
 import { activateTabOfType } from '@editor'
 import type { Command, CommandId } from '../../commands/commands.js'
 import { MenuSectionIds } from '../../commands/ids.js'
+import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
@@ -22,10 +23,13 @@ export const problemsModule: AppModule = {
   panels: [
     {
       id: problemsPanelId,
-      component: ProblemsPanel,
-      closable: true,
-      title: () => 'Problems',
-      notificationCount: (_props, context) => context.problems.length
+      closeable: true,
+      Panel: ProblemsPanel,
+      Title: () => 'Problems',
+      Notifications: () => {
+        const problems = useProblems()
+        return problems.length > 0 ? problems.length : null
+      }
     }
   ],
 
@@ -46,7 +50,8 @@ export const problemsModule: AppModule = {
       {
         commandId: viewProblems.id,
         position: 'start',
-        label: ({ problems }) => {
+        Label: () => {
+          const problems = useProblems()
           return problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')
         }
       }
