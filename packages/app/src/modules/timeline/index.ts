@@ -1,3 +1,4 @@
+import { createAudioGraph } from '@audiograph'
 import { activateTabOfType } from '@editor'
 import type { Command, CommandId } from '../../commands/commands.js'
 import { MenuSectionIds } from '../../commands/ids.js'
@@ -15,6 +16,21 @@ const viewTimeline: Command = {
   }
 }
 
+const togglePlayback: Command = {
+  id: `${moduleId}.playback.toggle` as CommandId,
+  label: 'Playback: Toggle (play/stop)',
+  keyboardShortcuts: [
+    'Ctrl+Shift+Space'
+  ],
+  action: ({ audioEngine, lastProgram }) => {
+    if (audioEngine.playing.get()) {
+      audioEngine.stop()
+    } else if (lastProgram != null) {
+      audioEngine.play(createAudioGraph(lastProgram))
+    }
+  }
+}
+
 export const timelineModule: AppModule = {
   id: moduleId,
 
@@ -28,7 +44,8 @@ export const timelineModule: AppModule = {
   ],
 
   commands: [
-    viewTimeline
+    viewTimeline,
+    togglePlayback
   ],
 
   menuItems: [

@@ -1,17 +1,13 @@
-import { createAudioGraph } from '@audiograph'
 import { type Program } from '@core'
 import { normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
 import { type Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
-import { defaultLayout } from '../defaults/default-layout.js'
 import { usePrevious } from '../hooks/previous.js'
 import { modules } from '../modules/index.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { useDialog } from '../state/DialogContext.js'
 import { useEditor, type EditorDispatch, type EditorState } from '../state/EditorContext.js'
-import { applyThemeSetting } from '../theme.js'
-import { CommandIds } from './ids.js'
 
 export type CommandId = Brand<string, 'app.CommandId'>
 
@@ -69,56 +65,11 @@ export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Com
   return keyboardShortcuts.get(shortcut)
 }
 
+export const showAllCommandsCommandId = 'commands.show-all' as CommandId
+
 export const commands: readonly Command[] = Object.freeze([
   {
-    id: CommandIds.PlaybackToggle,
-    label: 'Playback: Toggle (play/stop)',
-    keyboardShortcuts: [
-      'Ctrl+Shift+Space'
-    ],
-    action: ({ audioEngine, lastProgram }) => {
-      if (audioEngine.playing.get()) {
-        audioEngine.stop()
-      } else if (lastProgram != null) {
-        audioEngine.play(createAudioGraph(lastProgram))
-      }
-    }
-  },
-
-  {
-    id: CommandIds.ThemeDark,
-    label: 'Theme: Dark',
-    action: () => {
-      applyThemeSetting('dark')
-    }
-  },
-
-  {
-    id: CommandIds.ThemeLight,
-    label: 'Theme: Light',
-    action: () => {
-      applyThemeSetting('light')
-    }
-  },
-
-  {
-    id: CommandIds.ThemeSystem,
-    label: 'Theme: System',
-    action: () => {
-      applyThemeSetting('system')
-    }
-  },
-
-  {
-    id: CommandIds.LayoutReset,
-    label: 'Layout: Reset to default',
-    action: ({ layoutDispatch }) => {
-      layoutDispatch(defaultLayout)
-    }
-  },
-
-  {
-    id: CommandIds.CommandsShowAll,
+    id: showAllCommandsCommandId,
     label: 'Show all commands',
     keyboardShortcuts: [
       // Ctrl-Shift-P may be reserved by some browsers
