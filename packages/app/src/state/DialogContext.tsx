@@ -17,7 +17,7 @@ export interface DialogService {
   readonly closeDialog: (id: string) => void
 }
 
-export const DialogContext = createContext<DialogService | undefined>(undefined)
+const DialogContext = createContext<DialogService | undefined>(undefined)
 
 const DialogHost: FunctionComponent<{
   dialogs: readonly DialogEntry[]

@@ -2,7 +2,8 @@ import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShort
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { commands, findCommandForKeyboardShortcut, getCommandById, useCommandContext, type Command } from '../../commands/commands.js'
+import { commands, findCommandForKeyboardShortcut, getCommandById, type Command } from '../../commands/commands.js'
+import { useCommandDispatcher, useRegisterCommandPaletteOpener } from '../../commands/dispatcher.js'
 import { CommandIds } from '../../commands/ids.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
@@ -20,6 +21,8 @@ export const CommandPalette: FunctionComponent = () => {
     setOpen(true)
     setTimeout(() => searchRef.current?.focus(), 0)
   }, [])
+
+  useRegisterCommandPaletteOpener(showCommandPalette)
 
   const hideCommandPalette = useCallback(() => {
     setOpen(false)
@@ -53,23 +56,23 @@ export const CommandPalette: FunctionComponent = () => {
     return sortedCommands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
   }, [search])
 
-  const commandContext = useCommandContext({ showCommandPalette })
+  const { dispatchCommand } = useCommandDispatcher()
 
-  const dispatchCommand = useCallback((command: Command) => {
+  const dispatchCommandAndClose = useCallback((command: Command) => {
     // Important: close before calling action, in case action needs to open the palette
     hideCommandPalette()
-    command.action(commandContext)
-  }, [commandContext, hideCommandPalette])
+    dispatchCommand(command)
+  }, [dispatchCommand, hideCommandPalette])
 
   const handleInputKeydown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     const hasModifiers = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
     if (event.key === 'Enter' && !hasModifiers) {
       const firstCommand = searchResults.at(0)
       if (firstCommand != null) {
-        dispatchCommand(firstCommand)
+        dispatchCommandAndClose(firstCommand)
       }
     }
-  }, [dispatchCommand, searchResults])
+  }, [dispatchCommandAndClose, searchResults])
 
   useGlobalKeydown((event) => {
     const { code, shiftKey: shift, altKey: alt } = event
@@ -91,9 +94,9 @@ export const CommandPalette: FunctionComponent = () => {
     const matchedCommand = findCommandForKeyboardShortcut(keyboardShortcut)
     if (matchedCommand != null) {
       event.preventDefault()
-      dispatchCommand(matchedCommand)
+      dispatchCommandAndClose(matchedCommand)
     }
-  }, [open, dispatchCommand, hideCommandPalette])
+  }, [open, dispatchCommandAndClose, hideCommandPalette])
 
   if (!open) {
     const shortcut = showCommand?.keyboardShortcuts?.at(0)
@@ -151,7 +154,7 @@ export const CommandPalette: FunctionComponent = () => {
             </div>
           )}
           {searchResults.map((command) => (
-            <SearchResult key={command.id} command={command} dispatchCommand={dispatchCommand} />
+            <SearchResult key={command.id} command={command} dispatchCommand={dispatchCommandAndClose} />
           ))}
         </div>
       </div>
