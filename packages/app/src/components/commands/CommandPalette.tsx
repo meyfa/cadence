@@ -7,6 +7,8 @@ import { CommandIds } from '../../commands/ids.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
+const sortedCommands = [...commands].sort((a, b) => a.label.localeCompare(b.label))
+
 export const CommandPalette: FunctionComponent = () => {
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -44,11 +46,11 @@ export const CommandPalette: FunctionComponent = () => {
   const searchResults = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
     if (normalizedSearch === '') {
-      return commands
+      return sortedCommands
     }
 
     // TODO fuzzy search
-    return commands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
+    return sortedCommands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
   }, [search])
 
   const commandContext = useCommandContext({ showCommandPalette })
