@@ -1,10 +1,10 @@
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
+import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { getCommandById, useCommandContext, type Command, type CommandId } from '../../commands/commands.js'
-import { mainMenu, type MenuId, type MenuSection } from '../../commands/menus.js'
+import { appMenus, type MenuId, type MenuSection } from '../../commands/menus.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
-import clsx from 'clsx'
 
 type DispatchCommand = (command: Command) => void
 
@@ -39,7 +39,7 @@ const DesktopMenu: FunctionComponent<{
 }> = ({ dispatch }) => {
   return (
     <>
-      {mainMenu.map((menu) => (
+      {appMenus.map((menu) => (
         <MenuContainer key={menu.id} as='div' className='relative inline-block text-left'>
           <MenuButton
             className={clsx(
@@ -74,7 +74,7 @@ const MobileMenu: FunctionComponent<{
   }, [open])
 
   const selectedMenu = useMemo(() => {
-    return mobileMenuId != null ? mainMenu.find((menu) => menu.id === mobileMenuId) : undefined
+    return mobileMenuId != null ? appMenus.find((menu) => menu.id === mobileMenuId) : undefined
   }, [mobileMenuId])
 
   const onBack = useCallback(() => {
@@ -103,7 +103,7 @@ const MobileMenu: FunctionComponent<{
       <MainMenuItems>
         {selectedMenu == null && (
           <>
-            {mainMenu.map((menu) => (
+            {appMenus.map((menu) => (
               <MainMenuButton key={menu.id} onClick={() => setMobileMenuId(menu.id)}>
                 <span className='grow'>{menu.label}</span>
                 <ArrowRight className='text-content-100' fontSize='small' />
@@ -133,9 +133,13 @@ const MainMenuSections: FunctionComponent<{
   sections: readonly MenuSection[]
   dispatch: DispatchCommand
 }> = ({ sections, dispatch }) => {
+  const nonEmptySections = useMemo(() => {
+    return sections.filter((section) => section.items.length > 0)
+  }, [sections])
+
   return (
     <>
-      {sections.map((section, sectionIndex) => (
+      {nonEmptySections.map((section, sectionIndex) => (
         <Fragment key={sectionIndex}>
           {sectionIndex > 0 && <MainMenuSeparator />}
 
