@@ -94,5 +94,17 @@ export const editorModule: AppModule = {
       commandId: fileSave.id,
       label: 'Save…'
     }
-  ]
+  ],
+
+  inserts: {
+    footer: [
+      {
+        commandId: viewEditor.id,
+        position: 'end',
+        label: ({ editor }) => {
+          return `Ln ${editor.caret?.line ?? '-'}, Col ${editor.caret?.column ?? '-'}`
+        }
+      }
+    ]
+  }
 }

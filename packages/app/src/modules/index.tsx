@@ -2,6 +2,7 @@ import type { Tab, TabContentProps, TabTitleProps } from '@editor'
 import type { FunctionComponent } from 'react'
 import { StyledTabTitle } from '../components/tab/StyledTabTitle.js'
 import { useProblems, type Problem } from '../hooks/problems.js'
+import { useEditor, type EditorState } from '../state/EditorContext.js'
 import { editorModule } from './editor/index.js'
 import { mixerModule } from './mixer/index.js'
 import { problemsModule } from './problems/index.js'
@@ -26,11 +27,14 @@ const modulesByPanelId: ReadonlyMap<AppModulePanelId, readonly [AppModule, AppMo
 // State that the tab renderers can access. This is to avoid calling hooks outside of components.
 export interface TabRendererContext {
   readonly problems: readonly Problem[]
+  readonly editor: EditorState
 }
 
 export function useTabRendererContext (): TabRendererContext {
   const problems = useProblems()
-  return { problems }
+  const [editor] = useEditor()
+
+  return { problems, editor }
 }
 
 export function isTabClosable (tab: Tab): boolean {

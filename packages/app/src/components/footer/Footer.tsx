@@ -1,32 +1,42 @@
-import { useActivateTabOfType } from '@editor'
-import { type FunctionComponent, type PropsWithChildren } from 'react'
-import { useProblems } from '../../hooks/problems.js'
-import { editorPanelId } from '../../modules/editor/index.js'
-import { problemsPanelId } from '../../modules/problems/index.js'
-import { useEditor } from '../../state/EditorContext.js'
-import { pluralize } from '../../utilities/strings.js'
+import { useCallback, type FunctionComponent, type PropsWithChildren } from 'react'
+import { getCommandById, useCommandContext, type CommandId } from '../../commands/commands.js'
+import { modules, useTabRendererContext } from '../../modules/index.js'
+import type { AppModuleInsert } from '../../modules/types.js'
+
+const allInserts: readonly AppModuleInsert[] = modules.flatMap((module) => module.inserts?.footer ?? [])
+
+const insertsByPosition: Record<AppModuleInsert['position'], readonly AppModuleInsert[]> = {
+  start: allInserts.filter((insert) => insert.position === 'start'),
+  end: allInserts.filter((insert) => insert.position === 'end')
+}
+
+function showCommandPalette (): void {
+  // ignore
+}
 
 export const Footer: FunctionComponent = () => {
-  const activateTab = useActivateTabOfType()
+  const commandContext = useCommandContext({ showCommandPalette })
+  const tabRendererContext = useTabRendererContext()
 
-  const problems = useProblems()
-
-  const [editor] = useEditor()
-  const editorLocation = editor.caret
+  const dispatch = useCallback((commandId: CommandId) => {
+    getCommandById(commandId)?.action(commandContext)
+  }, [commandContext])
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
-      <FooterButton onClick={() => activateTab(problemsPanelId)}>
-        {problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')}
-      </FooterButton>
+      {insertsByPosition.start.map((insert) => (
+        <FooterButton key={insert.commandId} onClick={() => dispatch(insert.commandId)}>
+          {insert.label(tabRendererContext)}
+        </FooterButton>
+      ))}
 
       <div className='flex-1' />
 
-      {editorLocation != null && (
-        <FooterButton onClick={() => activateTab(editorPanelId)}>
-          Ln {editorLocation.line}, Col {editorLocation.column}
+      {insertsByPosition.end.map((insert) => (
+        <FooterButton key={insert.commandId} onClick={() => dispatch(insert.commandId)}>
+          {insert.label(tabRendererContext)}
         </FooterButton>
-      )}
+      ))}
     </footer>
   )
 }
