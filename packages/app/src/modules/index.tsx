@@ -4,6 +4,7 @@ import { StyledTabTitle } from '../components/tab/StyledTabTitle.js'
 import { useProblems, type Problem } from '../hooks/problems.js'
 import { useEditor, type EditorState } from '../state/EditorContext.js'
 import { editorModule } from './editor/index.js'
+import { exportModule } from './export/index.js'
 import { mixerModule } from './mixer/index.js'
 import { problemsModule } from './problems/index.js'
 import { settingsModule } from './settings/index.js'
@@ -15,7 +16,8 @@ export const modules: readonly AppModule[] = [
   mixerModule,
   problemsModule,
   settingsModule,
-  timelineModule
+  timelineModule,
+  exportModule
 ]
 
 const modulesByPanelId: ReadonlyMap<AppModulePanelId, readonly [AppModule, AppModulePanel]> = new Map(

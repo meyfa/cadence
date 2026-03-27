@@ -29,9 +29,7 @@ export const appMenus: readonly Menu[] = [
     label: 'File',
     sections: [
       defineMenuSection(MenuSectionIds.FileSave),
-      defineMenuSection(MenuSectionIds.FileExport, [
-        { commandId: CommandIds.FileExport, label: 'Export…' }
-      ])
+      defineMenuSection(MenuSectionIds.FileExport)
     ]
   },
   {
