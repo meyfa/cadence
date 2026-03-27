@@ -1,6 +1,7 @@
 import { activateTabOfType } from '@editor'
 import type { Command, CommandId } from '../../commands/commands.js'
 import { MenuSectionIds } from '../../commands/ids.js'
+import { pluralize } from '../../utilities/strings.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
 
@@ -38,5 +39,17 @@ export const problemsModule: AppModule = {
       commandId: viewProblems.id,
       label: 'Problems'
     }
-  ]
+  ],
+
+  inserts: {
+    footer: [
+      {
+        commandId: viewProblems.id,
+        position: 'start',
+        label: ({ problems }) => {
+          return problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')
+        }
+      }
+    ]
+  }
 }
