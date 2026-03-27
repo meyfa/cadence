@@ -1,6 +1,6 @@
 import { createContext, useCallback, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
-import type { DockLayout, LayoutNode } from '../types.js'
+import type { DockLayout, LayoutNode, LayoutNodeId } from '../types.js'
 
 const initialLayout: DockLayout = {
   main: undefined
@@ -28,7 +28,7 @@ export function useLayoutNodeDispatch (parent: LayoutDispatch, child: keyof Dock
   }, [parent, child])
 }
 
-export function useChildNodeDispatch (parent: LayoutNodeDispatch | undefined, childId: string): LayoutNodeDispatch | undefined {
+export function useChildNodeDispatch (parent: LayoutNodeDispatch | undefined, childId: LayoutNodeId): LayoutNodeDispatch | undefined {
   return useCallback((action: SetStateAction<LayoutNode>) => {
     parent?.((node) => {
       if (node.type !== 'split') {

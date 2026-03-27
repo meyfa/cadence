@@ -132,12 +132,20 @@ const TabPanelsDroppable: FunctionComponent<PropsWithChildren<{
   )
 }
 
-const dropStyles: Record<PaneNodeDropZone, CSSProperties> = {
-  north: { top: 0, left: 0, right: 0, height: '25%' },
-  south: { bottom: 0, left: 0, right: 0, height: '25%' },
-  east: { top: 0, right: 0, bottom: 0, width: '25%' },
-  west: { top: 0, left: 0, bottom: 0, width: '25%' },
-  center: { top: 0, left: 0, right: 0, bottom: 0 }
+const dropHitAreaStyles: Record<PaneNodeDropZone, CSSProperties> = {
+  north: { inset: 0, bottom: '80%' },
+  south: { inset: 0, top: '80%' },
+  east: { inset: 0, left: '80%' },
+  west: { inset: 0, right: '80%' },
+  center: { inset: 0 }
+}
+
+const dropVisualStyles: Record<PaneNodeDropZone, CSSProperties> = {
+  north: { inset: 0, bottom: '50%' },
+  south: { inset: 0, top: '50%' },
+  east: { inset: 0, left: '50%' },
+  west: { inset: 0, right: '50%' },
+  center: { inset: 0 }
 }
 
 const PaneNodeDropArea: FunctionComponent<{
@@ -150,16 +158,23 @@ const PaneNodeDropArea: FunctionComponent<{
   })
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        position: 'absolute',
-        pointerEvents: 'none',
-        opacity: 0.25,
-        transition: 'background-color 200ms',
-        backgroundColor: isOver ? styles.highlightColor : undefined,
-        ...dropStyles[zone]
-      }}
-    />
+    <div style={{ pointerEvents: isOver ? 'auto' : 'none' }}>
+      <div
+        ref={setNodeRef}
+        style={{
+          position: 'absolute',
+          ...dropHitAreaStyles[zone]
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          opacity: 0.25,
+          transition: 'background-color 200ms',
+          backgroundColor: isOver ? styles.highlightColor : undefined,
+          ...dropVisualStyles[zone]
+        }}
+      />
+    </div>
   )
 }
