@@ -1,5 +1,5 @@
-import { useCallback, type FunctionComponent, type PropsWithChildren } from 'react'
-import { getCommandById, useCommandContext, type CommandId } from '../../commands/commands.js'
+import { type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCommandDispatcher } from '../../commands/dispatcher.js'
 import { modules, useTabRendererContext } from '../../modules/index.js'
 import type { AppModuleInsert } from '../../modules/types.js'
 
@@ -10,22 +10,14 @@ const insertsByPosition: Record<AppModuleInsert['position'], readonly AppModuleI
   end: allInserts.filter((insert) => insert.position === 'end')
 }
 
-function showCommandPalette (): void {
-  // ignore
-}
-
 export const Footer: FunctionComponent = () => {
-  const commandContext = useCommandContext({ showCommandPalette })
+  const { dispatchCommandById } = useCommandDispatcher()
   const tabRendererContext = useTabRendererContext()
-
-  const dispatch = useCallback((commandId: CommandId) => {
-    getCommandById(commandId)?.action(commandContext)
-  }, [commandContext])
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
       {insertsByPosition.start.map((insert) => (
-        <FooterButton key={insert.commandId} onClick={() => dispatch(insert.commandId)}>
+        <FooterButton key={insert.commandId} onClick={() => dispatchCommandById(insert.commandId)}>
           {insert.label(tabRendererContext)}
         </FooterButton>
       ))}
@@ -33,7 +25,7 @@ export const Footer: FunctionComponent = () => {
       <div className='flex-1' />
 
       {insertsByPosition.end.map((insert) => (
-        <FooterButton key={insert.commandId} onClick={() => dispatch(insert.commandId)}>
+        <FooterButton key={insert.commandId} onClick={() => dispatchCommandById(insert.commandId)}>
           {insert.label(tabRendererContext)}
         </FooterButton>
       ))}

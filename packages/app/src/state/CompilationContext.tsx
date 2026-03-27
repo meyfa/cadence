@@ -6,7 +6,7 @@ import { useEditor } from './EditorContext.js'
 
 export type CompilationState = CompileResult
 
-export const CompilationContext = createContext<CompilationState | undefined>(undefined)
+const CompilationContext = createContext<CompilationState | undefined>(undefined)
 
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
   compileOptions: CompileOptions

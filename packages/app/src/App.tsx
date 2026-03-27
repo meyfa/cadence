@@ -1,6 +1,7 @@
 import type { CadenceEditorState, DockLayoutStyles, PartialCadenceEditorState, Storage } from '@editor'
 import { DockLayoutView, useLayout } from '@editor'
 import { FunctionComponent } from 'react'
+import { CommandDispatcherProvider } from './commands/dispatcher.js'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
@@ -24,7 +25,7 @@ export const App: FunctionComponent<{
   const [layout, layoutDispatch] = useLayout()
 
   return (
-    <>
+    <CommandDispatcherProvider>
       <ConfirmationDialog
         open={hasExternalChange}
         title='External changes detected'
@@ -52,6 +53,6 @@ export const App: FunctionComponent<{
 
         <Footer />
       </div>
-    </>
+    </CommandDispatcherProvider>
   )
 }

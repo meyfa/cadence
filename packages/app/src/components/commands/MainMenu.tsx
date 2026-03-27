@@ -2,32 +2,25 @@ import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator }
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { getCommandById, useCommandContext, type Command, type CommandId } from '../../commands/commands.js'
+import { getCommandById, type Command, type CommandId } from '../../commands/commands.js'
+import { useCommandDispatcher } from '../../commands/dispatcher.js'
 import { appMenus, type MenuId, type MenuSection } from '../../commands/menus.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
 type DispatchCommand = (command: Command) => void
 
-function showCommandPalette (): void {
-  // ignore
-}
-
 export const MainMenu: FunctionComponent = () => {
-  const commandContext = useCommandContext({ showCommandPalette })
-
-  const dispatch = useCallback((command: Command) => {
-    command.action(commandContext)
-  }, [commandContext])
+  const { dispatchCommand } = useCommandDispatcher()
 
   return (
     <div className='relative'>
       <div className='hidden md:block'>
-        <DesktopMenu dispatch={dispatch} />
+        <DesktopMenu dispatch={dispatchCommand} />
       </div>
 
       <MenuContainer as='div' className='md:hidden relative'>
         {({ open, close }) => (
-          <MobileMenu open={open} close={close} dispatch={dispatch} />
+          <MobileMenu open={open} close={close} dispatch={dispatchCommand} />
         )}
       </MenuContainer>
     </div>
