@@ -1,9 +1,8 @@
-import { type Program } from '@core'
-import { normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
-import { type Brand } from '@utility'
+import type { Program } from '@core'
+import { useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
+import type { Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
 import { usePrevious } from '../hooks/previous.js'
-import { modules } from '../modules/index.js'
 import { useAudioEngine } from '../state/AudioEngineContext.js'
 import { useCompilationState } from '../state/CompilationContext.js'
 import { useDialog } from '../state/DialogContext.js'
@@ -26,13 +25,10 @@ export interface CommandContext {
     readonly dispatch: EditorDispatch
   }
   readonly lastProgram: Program | undefined
-  readonly showCommandPalette: () => void
   readonly showDialog: (component: any, props?: Record<string, unknown>) => () => void
 }
 
-export function useCommandContext (handlers: {
-  showCommandPalette: () => void
-}): CommandContext {
+export function useCommandContext (): CommandContext {
   const [, layoutDispatch] = useLayout()
 
   const audioEngine = useAudioEngine()
@@ -52,61 +48,6 @@ export function useCommandContext (handlers: {
       dispatch: editorDispatch
     },
     lastProgram,
-    showCommandPalette: handlers.showCommandPalette,
     showDialog
   }
 }
-
-export function getCommandById (id: CommandId): Command | undefined {
-  return commandsById.get(id)
-}
-
-export function findCommandForKeyboardShortcut (shortcut: KeyboardShortcut): Command | undefined {
-  return keyboardShortcuts.get(shortcut)
-}
-
-export const showAllCommandsCommandId = 'commands.show-all' as CommandId
-
-export const commands: readonly Command[] = Object.freeze([
-  {
-    id: showAllCommandsCommandId,
-    label: 'Show all commands',
-    keyboardShortcuts: [
-      // Ctrl-Shift-P may be reserved by some browsers
-      'Ctrl+P',
-      'Ctrl+Shift+P',
-      'F1'
-    ],
-    action: ({ showCommandPalette }) => {
-      showCommandPalette()
-    }
-  },
-
-  ...modules.flatMap((module) => module.commands ?? [])
-] satisfies Command[])
-
-const commandsById = ((): ReadonlyMap<CommandId, Command> => {
-  const map = new Map<CommandId, Command>()
-  for (const command of commands) {
-    map.set(command.id, command)
-  }
-  return map
-})()
-
-const keyboardShortcuts = ((): ReadonlyMap<KeyboardShortcut, Command> => {
-  const map = new Map<KeyboardShortcut, Command>()
-  for (const command of commands) {
-    for (const unnormalizedShortcut of command.keyboardShortcuts ?? []) {
-      const shortcut = normalizeKeyboardShortcut(unnormalizedShortcut)
-
-      const existing = map.get(shortcut)
-      if (existing != null) {
-        // Throwing is okay here since all commands are defined statically
-        throw new Error(`Keyboard shortcut conflict: ${JSON.stringify(shortcut)} is assigned to both ${JSON.stringify(existing.id)} and ${JSON.stringify(command.id)}`)
-      }
-
-      map.set(shortcut, command)
-    }
-  }
-  return map
-})()
