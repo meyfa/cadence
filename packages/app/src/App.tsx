@@ -1,7 +1,7 @@
 import type { CadenceEditorState, DockLayoutStyles, PartialCadenceEditorState, Storage } from '@editor'
 import { DockLayoutView, useLayout } from '@editor'
 import { FunctionComponent } from 'react'
-import { ConfirmationDialog } from './components/dialogs/ConfirmationDialog.js'
+import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'

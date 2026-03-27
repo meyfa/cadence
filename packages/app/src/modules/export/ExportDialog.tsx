@@ -6,13 +6,13 @@ import { Field, Label } from '@headlessui/react'
 import { numeric, type Numeric } from '@utility'
 import { createAudioRenderer } from '@webaudio'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import { Button } from '../../components/button/Button.js'
+import { BaseDialog } from '../../components/dialog/BaseDialog.js'
+import { Dropdown, type Option } from '../../components/dropdown/Dropdown.js'
+import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { saveFile } from '../../utilities/files.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
-import { Button } from '../button/Button.js'
-import { Dropdown, type Option } from '../dropdown/Dropdown.js'
-import { ProgressBar } from '../progress-bar/ProgressBar.js'
-import { BaseDialog } from './BaseDialog.js'
 
 const ASSET_LOAD_TIMEOUT = numeric('s', 30)
 const RENDER_CHANNELS = 2 // stereo

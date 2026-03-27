@@ -3,7 +3,6 @@ import { type Program } from '@core'
 import { normalizeKeyboardShortcut, useLayout, type KeyboardShortcut, type LayoutDispatch } from '@editor'
 import { type Brand } from '@utility'
 import type { AudioEngine } from '@webaudio'
-import { ExportDialog } from '../components/dialogs/ExportDialog.js'
 import { defaultLayout } from '../defaults/default-layout.js'
 import { usePrevious } from '../hooks/previous.js'
 import { modules } from '../modules/index.js'
@@ -83,17 +82,6 @@ export const commands: readonly Command[] = Object.freeze([
       } else if (lastProgram != null) {
         audioEngine.play(createAudioGraph(lastProgram))
       }
-    }
-  },
-
-  {
-    id: CommandIds.FileExport,
-    label: 'File: Export',
-    keyboardShortcuts: [
-      'Ctrl+E'
-    ],
-    action: ({ showDialog }) => {
-      showDialog(ExportDialog)
     }
   },
 
