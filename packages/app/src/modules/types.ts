@@ -2,7 +2,7 @@ import type { SerializedComponent } from '@editor'
 import type { Brand } from '@utility'
 import type { ComponentType, ReactNode } from 'react'
 import type { Command, CommandId } from '../commands/commands.js'
-import type { MenuSectionId } from '../commands/menus.js'
+import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'
 
 export type AppModuleId = Brand<string, 'app.AppModuleId'>
 
@@ -10,7 +10,10 @@ export interface AppModule {
   readonly id: AppModuleId
   readonly panels?: readonly AppModulePanel[]
   readonly commands?: readonly Command[]
-  readonly menuItems?: readonly AppModuleMenuItem[]
+  readonly menu?: {
+    readonly sections?: readonly MenuSectionDefinition[]
+    readonly items?: readonly MenuItemDefinition[]
+  }
   readonly inserts?: {
     readonly header?: readonly HeaderInsert[]
     readonly footer?: readonly FooterInsert[]
@@ -29,12 +32,6 @@ export interface AppModulePanel {
 
 export interface AppModulePanelProps {
   readonly panelProps: SerializedComponent['props']
-}
-
-export interface AppModuleMenuItem {
-  readonly menuSectionId: MenuSectionId
-  readonly commandId: CommandId
-  readonly label: string
 }
 
 export interface HeaderInsert {
