@@ -1,6 +1,6 @@
-import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
-import { activateTabOfType } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import type { FunctionComponent } from 'react'
 import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
@@ -10,16 +10,26 @@ export const problemsPanelId = `${moduleId}.problems` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewProblems: Command<CommandContext> = {
-  id: `${moduleId}.view.problems` as CommandId,
-  label: 'Show view: Problems',
-  action: ({ layoutDispatch }) => {
-    activateTabOfType(layoutDispatch, problemsPanelId)
-  }
+const viewProblemsId = `${moduleId}.view.problems` as CommandId
+
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+
+  useRegisterCommand(() => ({
+    id: viewProblemsId,
+    label: 'Show view: Problems',
+    run: () => {
+      activateTabOfType(layoutDispatch, problemsPanelId)
+    }
+  }), [layoutDispatch])
+
+  return null
 }
 
-export const problemsModule: Module<CommandContext> = {
+export const problemsModule: Module = {
   id: moduleId,
+
+  Commands,
 
   panels: [
     {
@@ -34,15 +44,11 @@ export const problemsModule: Module<CommandContext> = {
     }
   ],
 
-  commands: [
-    viewProblems
-  ],
-
   menu: {
     items: [
       {
         sectionId: viewShowSectionId,
-        commandId: viewProblems.id,
+        commandId: viewProblemsId,
         label: 'Problems'
       }
     ]
@@ -51,7 +57,7 @@ export const problemsModule: Module<CommandContext> = {
   inserts: {
     footer: [
       {
-        commandId: viewProblems.id,
+        commandId: viewProblemsId,
         position: 'start',
         Label: () => {
           const problems = useProblems()

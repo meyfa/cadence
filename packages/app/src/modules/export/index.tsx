@@ -1,5 +1,7 @@
-import type { Module, ModuleId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
+import { useRegisterCommand } from '@editor'
+import type { FunctionComponent } from 'react'
+import { useDialog } from '../../state/DialogContext.js'
 import { ExportDialog } from './ExportDialog.js'
 
 const moduleId = 'export' as ModuleId
@@ -7,23 +9,29 @@ const moduleId = 'export' as ModuleId
 const fileMenuId = 'file' as MenuId
 const fileExportSectionId = 'file.export' as MenuSectionId
 
-const exportAudio: Command<CommandContext> = {
-  id: `${moduleId}.file.export` as CommandId,
-  label: 'File: Export',
-  keyboardShortcuts: [
-    'Ctrl+E'
-  ],
-  action: ({ showDialog }) => {
-    showDialog(ExportDialog)
-  }
+const exportAudioId = `${moduleId}.file.export` as CommandId
+
+const Commands: FunctionComponent = () => {
+  const { showDialog } = useDialog()
+
+  useRegisterCommand(() => ({
+    id: exportAudioId,
+    label: 'File: Export',
+    keyboardShortcuts: [
+      'Ctrl+E'
+    ],
+    run: () => {
+      showDialog(ExportDialog)
+    }
+  }), [showDialog])
+
+  return null
 }
 
-export const exportModule: Module<CommandContext> = {
+export const exportModule: Module = {
   id: moduleId,
 
-  commands: [
-    exportAudio
-  ],
+  Commands,
 
   menu: {
     sections: [
@@ -36,7 +44,7 @@ export const exportModule: Module<CommandContext> = {
     items: [
       {
         sectionId: fileExportSectionId,
-        commandId: exportAudio.id,
+        commandId: exportAudioId,
         label: 'Export…'
       }
     ]

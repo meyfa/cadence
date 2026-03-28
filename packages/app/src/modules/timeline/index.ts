@@ -1,7 +1,11 @@
 import { createAudioGraph } from '@audiograph'
-import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
-import { activateTabOfType } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { Program } from '@core'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import { useEffect, useRef, type FunctionComponent } from 'react'
+import { usePrevious } from '../../hooks/previous.js'
+import { useAudioEngine } from '../../state/AudioEngineContext.js'
+import { useCompilationState } from '../../state/CompilationContext.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
@@ -10,31 +14,54 @@ export const timelinePanelId = `${moduleId}.timeline` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewTimeline: Command<CommandContext> = {
-  id: `${moduleId}.view.timeline` as CommandId,
-  label: 'Show view: Timeline',
-  action: ({ layoutDispatch }) => {
-    activateTabOfType(layoutDispatch, timelinePanelId)
-  }
-}
+const viewTimelineId = `${moduleId}.view.timeline` as CommandId
+const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
 
-const togglePlayback: Command<CommandContext> = {
-  id: `${moduleId}.playback.toggle` as CommandId,
-  label: 'Playback: Toggle (play/stop)',
-  keyboardShortcuts: [
-    'Ctrl+Shift+Space'
-  ],
-  action: ({ audioEngine, lastProgram }) => {
-    if (audioEngine.playing.get()) {
-      audioEngine.stop()
-    } else if (lastProgram != null) {
-      audioEngine.play(createAudioGraph(lastProgram))
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+
+  const audioEngine = useAudioEngine()
+
+  const { program: currentProgram } = useCompilationState()
+  const lastProgram = usePrevious(currentProgram)
+  const lastProgramRef = useRef<Program | undefined>(lastProgram)
+
+  useEffect(() => {
+    lastProgramRef.current = lastProgram
+  }, [lastProgram])
+
+  useRegisterCommand(() => ({
+    id: viewTimelineId,
+    label: 'Show view: Timeline',
+    run: () => {
+      activateTabOfType(layoutDispatch, timelinePanelId)
     }
-  }
+  }), [layoutDispatch])
+
+  useRegisterCommand(() => ({
+    id: togglePlaybackId,
+    label: 'Playback: Toggle (play/stop)',
+    keyboardShortcuts: [
+      'Ctrl+Shift+Space'
+    ],
+    run: () => {
+      const program = lastProgramRef.current
+
+      if (audioEngine.playing.get()) {
+        audioEngine.stop()
+      } else if (program != null) {
+        audioEngine.play(createAudioGraph(program))
+      }
+    }
+  }), [])
+
+  return null
 }
 
-export const timelineModule: Module<CommandContext> = {
+export const timelineModule: Module = {
   id: moduleId,
+
+  Commands,
 
   panels: [
     {
@@ -45,16 +72,11 @@ export const timelineModule: Module<CommandContext> = {
     }
   ],
 
-  commands: [
-    viewTimeline,
-    togglePlayback
-  ],
-
   menu: {
     items: [
       {
         sectionId: viewShowSectionId,
-        commandId: viewTimeline.id,
+        commandId: viewTimelineId,
         label: 'Timeline'
       }
     ]

@@ -1,6 +1,6 @@
 import type { Brand } from '@utility'
 import type { ComponentType, ReactNode } from 'react'
-import type { Command, CommandId } from '../commands/commands.js'
+import type { CommandId } from '../commands/commands.js'
 import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'
 import type { SerializedComponent } from '../layout/types.js'
 
@@ -8,10 +8,10 @@ export type ModuleRenderFn<P = {}, T extends ReactNode = ReactNode> = (props: P)
 
 export type ModuleId = Brand<string, 'app.ModuleId'>
 
-export interface Module<TContext = unknown> {
+export interface Module {
   readonly id: ModuleId
   readonly panels?: readonly Panel[]
-  readonly commands?: ReadonlyArray<Command<TContext>>
+  readonly Commands?: ComponentType
   readonly menu?: {
     readonly sections?: readonly MenuSectionDefinition[]
     readonly items?: readonly MenuItemDefinition[]

@@ -1,10 +1,14 @@
-import type { Module, ModuleId, PanelId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
-import { activateTabOfType } from '@editor'
+import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
-import type { CommandContext } from '../../commands.js'
+import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
+
+const DEFAULT_FILENAME = 'track.cadence'
+const FILE_ACCEPT = '.cadence,text/plain'
+const FILE_OPEN_TIMEOUT = numeric('s', 5)
 
 const moduleId = 'editor' as ModuleId
 export const editorPanelId = `${moduleId}.editor` as PanelId
@@ -13,58 +17,79 @@ const fileMenuId = 'file' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
 const fileSaveSectionId = 'file.save' as MenuSectionId
 
-const DEFAULT_FILENAME = 'track.cadence'
-const FILE_ACCEPT = '.cadence,text/plain'
-const FILE_OPEN_TIMEOUT = numeric('s', 5)
+const viewEditorId = `${moduleId}.view.editor` as CommandId
+const fileOpenId = `${moduleId}.file.open` as CommandId
+const fileSaveId = `${moduleId}.file.save` as CommandId
 
-const viewEditor: Command<CommandContext> = {
-  id: `${moduleId}.view.editor` as CommandId,
-  label: 'Show view: Editor',
-  action: ({ layoutDispatch }) => {
-    activateTabOfType(layoutDispatch, editorPanelId)
-  }
-}
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+  const [editorState, editorDispatch] = useEditor()
 
-const fileOpen: Command<CommandContext> = {
-  id: `${moduleId}.file.open` as CommandId,
-  label: 'File: Open',
-  keyboardShortcuts: [
-    'Ctrl+O'
-  ],
-  action: ({ editor }) => {
-    openTextFile({
-      accept: FILE_ACCEPT,
-      signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT.value * 1000)
-    }).then((content) => {
-      if (content != null) {
-        editor.dispatch((state) => ({
-          ...state,
-          code: content,
-          caret: undefined
-        }))
-      }
-    }).catch(() => {
+  const editorRef = useRef({
+    state: editorState,
+    dispatch: editorDispatch
+  })
+
+  useEffect(() => {
+    editorRef.current = {
+      state: editorState,
+      dispatch: editorDispatch
+    }
+  }, [editorState, editorDispatch])
+
+  useRegisterCommand(() => ({
+    id: viewEditorId,
+    label: 'Show view: Editor',
+    run: () => {
+      activateTabOfType(layoutDispatch, editorPanelId)
+    }
+  }), [layoutDispatch])
+
+  useRegisterCommand(() => ({
+    id: fileOpenId,
+    label: 'File: Open',
+    keyboardShortcuts: [
+      'Ctrl+O'
+    ],
+    run: () => {
+      openTextFile({
+        accept: FILE_ACCEPT,
+        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT.value * 1000)
+      }).then((content) => {
+        if (content != null) {
+          editorRef.current.dispatch((state) => ({
+            ...state,
+            code: content,
+            caret: undefined
+          }))
+        }
+      }).catch(() => {
       // ignore errors
-    })
-  }
+      })
+    }
+  }), [])
+
+  useRegisterCommand(() => ({
+    id: fileSaveId,
+    label: 'File: Save',
+    keyboardShortcuts: [
+      'Ctrl+S'
+    ],
+    run: () => {
+      saveTextFile({
+        filename: DEFAULT_FILENAME,
+        content: editorRef.current.state.code
+      })
+    }
+  }), [])
+
+  return null
 }
 
-const fileSave: Command<CommandContext> = {
-  id: `${moduleId}.file.save` as CommandId,
-  label: 'File: Save',
-  keyboardShortcuts: [
-    'Ctrl+S'
-  ],
-  action: ({ editor }) => {
-    saveTextFile({
-      filename: DEFAULT_FILENAME,
-      content: editor.state.code
-    })
-  }
-}
-
-export const editorModule: Module<CommandContext> = {
+export const editorModule: Module = {
   id: moduleId,
+
+  Commands,
 
   panels: [
     {
@@ -73,12 +98,6 @@ export const editorModule: Module<CommandContext> = {
       Panel: EditorPanel,
       Title: () => 'Editor'
     }
-  ],
-
-  commands: [
-    viewEditor,
-    fileOpen,
-    fileSave
   ],
 
   menu: {
@@ -92,17 +111,17 @@ export const editorModule: Module<CommandContext> = {
     items: [
       {
         sectionId: viewShowSectionId,
-        commandId: viewEditor.id,
+        commandId: viewEditorId,
         label: 'Editor'
       },
       {
         sectionId: fileSaveSectionId,
-        commandId: fileOpen.id,
+        commandId: fileOpenId,
         label: 'Open…'
       },
       {
         sectionId: fileSaveSectionId,
-        commandId: fileSave.id,
+        commandId: fileSaveId,
         label: 'Save…'
       }
     ]
@@ -111,7 +130,7 @@ export const editorModule: Module<CommandContext> = {
   inserts: {
     footer: [
       {
-        commandId: viewEditor.id,
+        commandId: viewEditorId,
         position: 'end',
         Label: () => {
           const [editor] = useEditor()

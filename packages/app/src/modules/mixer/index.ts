@@ -1,6 +1,6 @@
-import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
-import { activateTabOfType } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import type { FunctionComponent } from 'react'
 import { MixerPanel } from './MixerPanel.js'
 
 const moduleId = 'mixer' as ModuleId
@@ -8,16 +8,26 @@ export const mixerPanelId = `${moduleId}.mixer` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewMixer: Command<CommandContext> = {
-  id: `${moduleId}.view.mixer` as CommandId,
-  label: 'Show view: Mixer',
-  action: ({ layoutDispatch }) => {
-    activateTabOfType(layoutDispatch, mixerPanelId)
-  }
+const viewMixerId = `${moduleId}.view.mixer` as CommandId
+
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+
+  useRegisterCommand(() => ({
+    id: viewMixerId,
+    label: 'Show view: Mixer',
+    run: () => {
+      activateTabOfType(layoutDispatch, mixerPanelId)
+    }
+  }), [layoutDispatch])
+
+  return null
 }
 
-export const mixerModule: Module<CommandContext> = {
+export const mixerModule: Module = {
   id: moduleId,
+
+  Commands,
 
   panels: [
     {
@@ -28,15 +38,11 @@ export const mixerModule: Module<CommandContext> = {
     }
   ],
 
-  commands: [
-    viewMixer
-  ],
-
   menu: {
     items: [
       {
         sectionId: viewShowSectionId,
-        commandId: viewMixer.id,
+        commandId: viewMixerId,
         label: 'Mixer'
       }
     ]
