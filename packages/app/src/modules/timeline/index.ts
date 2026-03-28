@@ -3,6 +3,7 @@ import { activateTabOfType } from '@editor'
 import type { Command, CommandId } from '../../commands/commands.js'
 import { MenuSectionIds } from '../../commands/ids.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
+import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
 const moduleId = 'timeline' as AppModuleId
@@ -54,5 +55,14 @@ export const timelineModule: AppModule = {
       commandId: viewTimeline.id,
       label: 'Timeline'
     }
-  ]
+  ],
+
+  inserts: {
+    header: [
+      {
+        position: 'start',
+        Component: PlaybackControls
+      }
+    ]
+  }
 }

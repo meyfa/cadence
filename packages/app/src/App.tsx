@@ -5,6 +5,7 @@ import { CommandRegistryProvider } from './commands/registry.js'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
+import { Logo } from './components/logo/Logo.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { useStorageSync } from './hooks/storage.js'
 import { isTabClosable, RenderTabContent, RenderTabTitle } from './modules/index.js'
@@ -38,7 +39,7 @@ export const App: FunctionComponent<{
       </ConfirmationDialog>
 
       <div className='flex flex-col h-dvh'>
-        <Header />
+        <Header logo={<Logo />} />
 
         <DockLayoutView
           TabTitleComponent={RenderTabTitle}
