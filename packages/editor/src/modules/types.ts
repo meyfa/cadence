@@ -37,7 +37,7 @@ export interface PanelProps {
 }
 
 export interface HeaderInsert {
-  readonly position: 'start' | 'end'
+  readonly position: 'start' | 'middle'
   readonly Component: ComponentType
 }
 

@@ -4,8 +4,8 @@ import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { useTypedCommandDispatch } from '../../commands.js'
+import { ShortcutKeys } from '../../components/commands/ShortcutKeys.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
-import { ShortcutKeys } from './ShortcutKeys.js'
 
 const createShowCommand = (action: () => void): Command => ({
   id: 'commands.show-all' as CommandId,
