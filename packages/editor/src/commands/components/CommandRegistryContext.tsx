@@ -1,7 +1,8 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type DependencyList, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
-import { normalizeKeyboardShortcut, type KeyboardShortcut } from '../../input/keyboard-shortcuts.js'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, normalizeKeyboardShortcut, serializeKeyboardShortcut, type KeyboardShortcut } from '../../input/keyboard-shortcuts.js'
 import type { Command, CommandId, CommandRegistry, UnregisterCommand } from '../commands.js'
+import { useGlobalKeydown } from '../../hooks/global-events.js'
 
 const CommandRegistryContext = createContext<CommandRegistry | undefined>(undefined)
 
@@ -30,6 +31,24 @@ export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ 
     getCommandById,
     getCommandByShortcut
   ])
+
+  useGlobalKeydown((event) => {
+    const { code, shiftKey: shift, altKey: alt } = event
+    const ctrl = event.ctrlKey || event.metaKey
+
+    const keyboardShortcut = serializeKeyboardShortcut({ code, ctrl, shift, alt })
+
+    // Avoid interfering with typing
+    if (!hasModifierKey(keyboardShortcut) && !isFunctionKey(convertCodeToKey(code))) {
+      return
+    }
+
+    const matchedCommand = getCommandByShortcut(keyboardShortcut)
+    if (matchedCommand != null) {
+      event.preventDefault()
+      matchedCommand.run()
+    }
+  }, [open, getCommandByShortcut])
 
   return (
     <CommandRegistryContext value={value}>
