@@ -24,9 +24,9 @@ export const Popover: FunctionComponent<PropsWithChildren<{
     if (element == null || !event.composedPath().includes(element)) {
       onClose()
     }
-  }, [onClose])
+  })
 
-  useGlobalEscapePress(() => onClose(), [onClose])
+  useGlobalEscapePress(onClose)
 
   if (anchor == null) {
     return null

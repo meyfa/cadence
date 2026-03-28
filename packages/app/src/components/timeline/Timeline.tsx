@@ -197,13 +197,13 @@ const TimeRuler: FunctionComponent<{
   useGlobalMouseUp(() => {
     setIsSelecting(false)
     setSelectionStart(undefined)
-  }, [])
+  })
 
   useGlobalMouseMove((event) => {
     if (isSelecting) {
       updateSelection(event)
     }
-  }, [isSelecting, updateSelection])
+  })
 
   return (
     <div

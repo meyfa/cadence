@@ -48,7 +48,7 @@ export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ 
       event.preventDefault()
       matchedCommand.run()
     }
-  }, [open, getCommandByShortcut])
+  })
 
   return (
     <CommandRegistryContext value={value}>

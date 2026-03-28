@@ -1,36 +1,45 @@
-import { useEffect, type DependencyList } from 'react'
+import { useEffect, useRef } from 'react'
 
 function useWindowEvent<K extends keyof WindowEventMap> (
   type: K,
-  handler: (ev: WindowEventMap[K]) => void,
-  deps: DependencyList
+  handler: (ev: WindowEventMap[K]) => void
 ): void {
+  const handlerRef = useRef<typeof handler>(handler)
+
   useEffect(() => {
-    window.addEventListener(type, handler)
-    return () => {
-      window.removeEventListener(type, handler)
+    handlerRef.current = handler
+  }, [handler])
+
+  useEffect(() => {
+    const listener = (event: WindowEventMap[K]) => {
+      handlerRef.current(event)
     }
-  }, deps)
+
+    window.addEventListener(type, listener)
+    return () => {
+      window.removeEventListener(type, listener)
+    }
+  }, [type])
 }
 
-export function useGlobalKeydown (handler: (event: KeyboardEvent) => void, deps: DependencyList): void {
-  useWindowEvent('keydown', handler, deps)
+export function useGlobalKeydown (handler: (event: KeyboardEvent) => void): void {
+  useWindowEvent('keydown', handler)
 }
 
-export function useGlobalMouseMove (handler: (event: MouseEvent) => void, deps: DependencyList): void {
-  useWindowEvent('mousemove', handler, deps)
+export function useGlobalMouseMove (handler: (event: MouseEvent) => void): void {
+  useWindowEvent('mousemove', handler)
 }
 
-export function useGlobalMouseUp (handler: (event: MouseEvent) => void, deps: DependencyList): void {
-  useWindowEvent('mouseup', handler, deps)
+export function useGlobalMouseUp (handler: (event: MouseEvent) => void): void {
+  useWindowEvent('mouseup', handler)
 }
 
-export function useGlobalEscapePress (handler: (event: KeyboardEvent) => void, deps: DependencyList): void {
+export function useGlobalEscapePress (handler: (event: KeyboardEvent) => void): void {
   useGlobalKeydown((event) => {
     const { code, ctrlKey, metaKey, shiftKey, altKey } = event
 
     if (code === 'Escape' && !ctrlKey && !metaKey && !shiftKey && !altKey) {
       handler(event)
     }
-  }, deps)
+  })
 }
