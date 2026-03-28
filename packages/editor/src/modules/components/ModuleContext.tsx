@@ -1,4 +1,4 @@
-import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
+import { createContext, Fragment, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { Module } from '../types.js'
 
@@ -9,10 +9,19 @@ export const ModuleProvider: FunctionComponent<PropsWithChildren<{
 }>> = ({ modules, children }) => {
   return (
     <ModuleContext value={modules}>
-      {modules.map(({ Commands, id }) => Commands != null && <Commands key={id} />)}
       {children}
     </ModuleContext>
   )
+}
+
+export const ModuleHost: FunctionComponent = () => {
+  const modules = useModules()
+
+  return modules.map(({ Commands, id }) => (
+    <Fragment key={id}>
+      {Commands != null && <Commands />}
+    </Fragment>
+  ))
 }
 
 export function useModules (): readonly Module[] {

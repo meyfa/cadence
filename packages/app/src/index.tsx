@@ -1,4 +1,4 @@
-import { BrowserLocalStorage, CommandRegistryProvider, DialogHost, DialogProvider, LayoutProvider, MenuProvider, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
+import { BrowserLocalStorage, CommandRegistryProvider, DialogHost, DialogProvider, LayoutProvider, MenuProvider, ModuleHost, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -110,20 +110,21 @@ root.render(
   <StrictMode>
     <LayoutProvider>
       <DialogProvider>
-        <AudioEngineContext value={engine}>
-          <EditorProvider>
-            <CompilationProvider compileOptions={compileOptions}>
-              <CommandRegistryProvider>
-                <MenuProvider menus={menus}>
-                  <ModuleProvider modules={modules}>
+        <CommandRegistryProvider>
+          <MenuProvider menus={menus}>
+            <ModuleProvider modules={modules}>
+              <AudioEngineContext value={engine}>
+                <EditorProvider>
+                  <CompilationProvider compileOptions={compileOptions}>
                     <App storage={storage} initialState={initialState} />
                     <DialogHost />
-                  </ModuleProvider>
-                </MenuProvider>
-              </CommandRegistryProvider>
-            </CompilationProvider>
-          </EditorProvider>
-        </AudioEngineContext>
+                    <ModuleHost />
+                  </CompilationProvider>
+                </EditorProvider>
+              </AudioEngineContext>
+            </ModuleProvider>
+          </MenuProvider>
+        </CommandRegistryProvider>
       </DialogProvider>
     </LayoutProvider>
   </StrictMode>

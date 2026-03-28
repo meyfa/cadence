@@ -15,15 +15,6 @@ interface DialogServiceInternal extends DialogService {
 
 const DialogContext = createContext<DialogServiceInternal | undefined>(undefined)
 
-export const DialogHost: FunctionComponent = () => {
-  // use internal context
-  const { dialogs, closeDialog } = useSafeContext(DialogContext, 'DialogContext')
-
-  return dialogs.map(({ id, component: Component, props }) => (
-    <Component key={id} {...props} open onClose={() => closeDialog(id)} />
-  ))
-}
-
 export const DialogProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const [dialogs, setDialogs] = useState<readonly DialogEntry[]>([])
 
@@ -51,6 +42,15 @@ export const DialogProvider: FunctionComponent<PropsWithChildren> = ({ children 
       {children}
     </DialogContext>
   )
+}
+
+export const DialogHost: FunctionComponent = () => {
+  // use internal context
+  const { dialogs, closeDialog } = useSafeContext(DialogContext, 'DialogContext')
+
+  return dialogs.map(({ id, component: Component, props }) => (
+    <Component key={id} {...props} open onClose={() => closeDialog(id)} />
+  ))
 }
 
 export function useDialogService (): DialogService {
