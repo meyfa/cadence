@@ -1,11 +1,11 @@
-import { type FunctionComponent, type PropsWithChildren } from 'react'
+import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useCommandRegistry } from '../../commands/registry.js'
 import { modules } from '../../modules/index.js'
-import type { AppModuleInsert } from '../../modules/types.js'
+import type { FooterInsert } from '../../modules/types.js'
 
-const allInserts: readonly AppModuleInsert[] = modules.flatMap((module) => module.inserts?.footer ?? [])
+const allInserts: readonly FooterInsert[] = modules.flatMap((module) => module.inserts?.footer ?? [])
 
-const insertsByPosition: Record<AppModuleInsert['position'], readonly AppModuleInsert[]> = {
+const insertsByPosition: Record<FooterInsert['position'], readonly FooterInsert[]> = {
   start: allInserts.filter((insert) => insert.position === 'start'),
   end: allInserts.filter((insert) => insert.position === 'end')
 }

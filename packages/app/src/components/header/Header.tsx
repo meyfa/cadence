@@ -1,57 +1,33 @@
-import { createAudioGraph } from '@audiograph'
-import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
-import { FunctionComponent, useCallback } from 'react'
-import { useObservable } from '../../hooks/observable.js'
-import { usePrevious } from '../../hooks/previous.js'
-import { useAudioEngine } from '../../state/AudioEngineContext.js'
-import { useCompilationState } from '../../state/CompilationContext.js'
-import { Button } from '../button/Button.js'
+import type { FunctionComponent, ReactNode } from 'react'
+import { modules } from '../../modules/index.js'
+import type { HeaderInsert } from '../../modules/types.js'
 import { CommandPalette } from '../commands/CommandPalette.js'
 import { MainMenu } from '../commands/MainMenu.js'
-import { Logo } from '../logo/Logo.js'
-import { GainSlider } from '../gain-slider/GainSlider.js'
 
-export const Header: FunctionComponent = () => {
-  const { program } = useCompilationState()
-  const lastProgram = usePrevious(program)
+const allInserts: readonly HeaderInsert[] = modules.flatMap((module) => module.inserts?.header ?? [])
 
-  const engine = useAudioEngine()
+const insertsByPosition: Record<HeaderInsert['position'], readonly HeaderInsert[]> = {
+  start: allInserts.filter((insert) => insert.position === 'start'),
+  end: allInserts.filter((insert) => insert.position === 'end')
+}
 
-  const playing = useObservable(engine.playing)
-  const outputGain = useObservable(engine.outputGain)
-
-  const onPlayPause = useCallback(() => {
-    if (playing) {
-      engine.stop()
-    } else if (lastProgram != null) {
-      engine.play(createAudioGraph(lastProgram))
-    }
-  }, [engine, playing, lastProgram])
-
+export const Header: FunctionComponent<{
+  readonly logo?: ReactNode
+}> = ({ logo }) => {
   return (
     <header className='grid grid-cols-2 md:grid-cols-3 items-center px-2 py-1 gap-1 bg-surface-200 border-b border-b-frame-200'>
       <div className='flex items-center gap-1 h-full'>
-        <div className='mr-1 shrink-0'>
-          <Logo />
-        </div>
+        {logo && (
+          <div className='mr-1 shrink-0'>
+            {logo}
+          </div>
+        )}
 
         <MainMenu />
 
-        <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
-          {playing ? <StopOutlined /> : <PlayArrowOutlined />}
-        </Button>
-
-        <div className='relative h-full w-11'>
-          <div className='absolute top-0 left-0 z-20'>
-            <GainSlider
-              orientation='vertical'
-              label='Output gain'
-              gain={outputGain}
-              onChange={(gain) => engine.outputGain.set(gain)}
-              collapsible={true}
-            />
-          </div>
-        </div>
+        {insertsByPosition.start.map(({ Component }, index) => (
+          <Component key={index} />
+        ))}
       </div>
 
       <div className='flex justify-center'>

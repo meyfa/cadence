@@ -11,7 +11,10 @@ export interface AppModule {
   readonly panels?: readonly AppModulePanel[]
   readonly commands?: readonly Command[]
   readonly menuItems?: readonly AppModuleMenuItem[]
-  readonly inserts?: AppModuleInserts
+  readonly inserts?: {
+    readonly header?: readonly HeaderInsert[]
+    readonly footer?: readonly FooterInsert[]
+  }
 }
 
 export type AppModulePanelId = Brand<string, 'app.AppModulePanelId'>
@@ -19,7 +22,7 @@ export type AppModulePanelId = Brand<string, 'app.AppModulePanelId'>
 export interface AppModulePanel {
   readonly id: AppModulePanelId
   readonly closeable: boolean
-  readonly Panel: AppModuleRender<AppModulePanelProps> | ComponentType<AppModulePanelProps>
+  readonly Panel: ComponentType<AppModulePanelProps>
   readonly Title: AppModuleRender<AppModulePanelProps, string>
   readonly Notifications?: AppModuleRender<AppModulePanelProps, number | null>
 }
@@ -34,14 +37,13 @@ export interface AppModuleMenuItem {
   readonly label: string
 }
 
-export interface AppModuleInserts {
-  readonly footer?: readonly AppModuleInsert[]
+export interface HeaderInsert {
+  readonly position: 'start' | 'end'
+  readonly Component: ComponentType
 }
 
-type AppModuleInsertPosition = 'start' | 'end'
-
-export interface AppModuleInsert {
-  readonly position: AppModuleInsertPosition
+export interface FooterInsert {
+  readonly position: 'start' | 'end'
   readonly commandId: CommandId
   readonly Label: AppModuleRender<{}, string>
 }
