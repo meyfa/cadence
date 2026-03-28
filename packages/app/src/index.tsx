@@ -5,6 +5,7 @@ import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
+import type { MenuId } from './commands/menus.js'
 import { CommandRegistryProvider } from './commands/registry.js'
 import { defaultLayout } from './defaults/default-layout.js'
 import { demoCode } from './defaults/demo-code.js'
@@ -20,6 +21,7 @@ import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
 import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
+import { MenuProvider } from './state/MenuContext.js'
 import { ModuleProvider } from './state/ModuleContext.js'
 
 const modules = [
@@ -30,6 +32,17 @@ const modules = [
   settingsModule,
   viewModule,
   timelineModule
+]
+
+const menus = [
+  {
+    id: 'file' as MenuId,
+    label: 'File'
+  },
+  {
+    id: 'view' as MenuId,
+    label: 'View'
+  }
 ]
 
 const compileOptions: CompileOptions = {
@@ -104,9 +117,11 @@ root.render(
           <CompilationProvider compileOptions={compileOptions}>
             <DialogProvider>
               <CommandRegistryProvider>
-                <ModuleProvider modules={modules}>
-                  <App storage={storage} initialState={initialState} />
-                </ModuleProvider>
+                <MenuProvider menus={menus}>
+                  <ModuleProvider modules={modules}>
+                    <App storage={storage} initialState={initialState} />
+                  </ModuleProvider>
+                </MenuProvider>
               </CommandRegistryProvider>
             </DialogProvider>
           </CompilationProvider>
