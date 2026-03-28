@@ -86,7 +86,7 @@ export const CommandPalette: FunctionComponent = () => {
       event.preventDefault()
       hidePalette()
     }
-  }, [open, hidePalette])
+  })
 
   if (!open) {
     const shortcut = showCommand.keyboardShortcuts?.at(0)

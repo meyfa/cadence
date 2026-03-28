@@ -71,13 +71,13 @@ export const Slider: FunctionComponent<PropsWithChildren<{
     if (collapsible === true) {
       setCollapsed(true)
     }
-  }, [collapsible])
+  })
 
   useGlobalEscapePress(() => {
     if (collapsible === true) {
       setCollapsed(true)
     }
-  }, [collapsible])
+  })
 
   if (collapsible === true && collapsed) {
     return (
