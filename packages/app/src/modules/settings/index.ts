@@ -1,6 +1,6 @@
-import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
-import { activateTabOfType } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import type { FunctionComponent } from 'react'
 import { SettingsPanel } from './SettingsPanel.js'
 
 const moduleId = 'settings' as ModuleId
@@ -8,16 +8,26 @@ export const settingsPanelId = `${moduleId}.settings` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewSettings: Command<CommandContext> = {
-  id: `${moduleId}.view.settings` as CommandId,
-  label: 'Show view: Settings',
-  action: ({ layoutDispatch }) => {
-    activateTabOfType(layoutDispatch, settingsPanelId)
-  }
+const viewSettingsId = `${moduleId}.view.settings` as CommandId
+
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+
+  useRegisterCommand(() => ({
+    id: viewSettingsId,
+    label: 'Show view: Settings',
+    run: () => {
+      activateTabOfType(layoutDispatch, settingsPanelId)
+    }
+  }), [layoutDispatch])
+
+  return null
 }
 
-export const settingsModule: Module<CommandContext> = {
+export const settingsModule: Module = {
   id: moduleId,
+
+  Commands,
 
   panels: [
     {
@@ -28,15 +38,11 @@ export const settingsModule: Module<CommandContext> = {
     }
   ],
 
-  commands: [
-    viewSettings
-  ],
-
   menu: {
     items: [
       {
         sectionId: viewShowSectionId,
-        commandId: viewSettings.id,
+        commandId: viewSettingsId,
         label: 'Settings'
       }
     ]

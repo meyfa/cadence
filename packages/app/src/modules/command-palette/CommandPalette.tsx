@@ -3,25 +3,11 @@ import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShort
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { useTypedCommandDispatch } from '../../commands.js'
 import { ShortcutKeys } from '../../components/commands/ShortcutKeys.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 
-const createShowCommand = (action: () => void): Command => ({
-  id: 'commands.show-all' as CommandId,
-  label: 'Show all commands',
-  keyboardShortcuts: [
-    // Ctrl-Shift-P may be reserved by some browsers
-    'Ctrl+P',
-    'Ctrl+Shift+P',
-    'F1'
-  ],
-  action
-})
-
 export const CommandPalette: FunctionComponent = () => {
-  const { commands, findByShortcut } = useCommandRegistry()
-  const { dispatchCommand } = useTypedCommandDispatch()
+  const { commands, getCommandByShortcut } = useCommandRegistry()
 
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -39,8 +25,17 @@ export const CommandPalette: FunctionComponent = () => {
     setSearch('')
   }, [])
 
-  const showCommand = useMemo<Command>(() => createShowCommand(showPalette), [showPalette])
-  useRegisterCommand(showCommand)
+  const showCommand = useRegisterCommand(() => ({
+    id: 'commands.show-all' as CommandId,
+    label: 'Show all commands',
+    keyboardShortcuts: [
+      // Ctrl-Shift-P may be reserved by some browsers
+      'Ctrl+P',
+      'Ctrl+Shift+P',
+      'F1'
+    ],
+    run: showPalette
+  }), [showPalette])
 
   const sortedCommands = useMemo(() => {
     return [...commands].sort((a, b) => a.label.localeCompare(b.label))
@@ -74,8 +69,8 @@ export const CommandPalette: FunctionComponent = () => {
   const dispatchCommandAndClose = useCallback((command: Command) => {
     // Important: close before calling action, in case action needs to open the palette
     hidePalette()
-    dispatchCommand(command)
-  }, [dispatchCommand, hidePalette])
+    command.run()
+  }, [hidePalette])
 
   const handleInputKeydown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     const hasModifiers = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
@@ -104,12 +99,12 @@ export const CommandPalette: FunctionComponent = () => {
       return
     }
 
-    const matchedCommand = findByShortcut(keyboardShortcut)
+    const matchedCommand = getCommandByShortcut(keyboardShortcut)
     if (matchedCommand != null) {
       event.preventDefault()
       dispatchCommandAndClose(matchedCommand)
     }
-  }, [open, dispatchCommandAndClose, hidePalette])
+  }, [open, getCommandByShortcut, dispatchCommandAndClose, hidePalette])
 
   if (!open) {
     const shortcut = showCommand.keyboardShortcuts?.at(0)

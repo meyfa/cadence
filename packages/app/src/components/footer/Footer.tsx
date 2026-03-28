@@ -1,15 +1,15 @@
 import { useModules, type FooterInsert } from '@editor'
+import { useCommandRegistry } from '@editor'
 import { useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useTypedCommandDispatch } from '../../commands.js'
 
 export const Footer: FunctionComponent = () => {
-  const { dispatchCommandById } = useTypedCommandDispatch()
+  const { getCommandById } = useCommandRegistry()
   const inserts = useInsertsByPosition()
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
       {inserts.start.map(({ commandId, Label }) => (
-        <FooterButton key={commandId} onClick={() => dispatchCommandById(commandId)}>
+        <FooterButton key={commandId} onClick={() => getCommandById(commandId)?.run()}>
           <Label />
         </FooterButton>
       ))}
@@ -17,7 +17,7 @@ export const Footer: FunctionComponent = () => {
       <div className='flex-1' />
 
       {inserts.end.map(({ commandId, Label }) => (
-        <FooterButton key={commandId} onClick={() => dispatchCommandById(commandId)}>
+        <FooterButton key={commandId} onClick={() => getCommandById(commandId)?.run()}>
           <Label />
         </FooterButton>
       ))}

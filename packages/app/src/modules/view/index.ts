@@ -1,5 +1,6 @@
-import type { Module, ModuleId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
-import type { CommandContext } from '../../commands.js'
+import type { Command, CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
+import { useLayout, useRegisterCommand } from '@editor'
+import type { FunctionComponent } from 'react'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
 
@@ -9,47 +10,54 @@ const viewMenuId = 'view' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
 const viewLayoutSectionId = 'view.layout' as MenuSectionId
 
-const layoutReset: Command<CommandContext> = {
-  id: `${moduleId}.reset` as CommandId,
-  label: 'Layout: Reset to default',
-  action: ({ layoutDispatch }) => {
-    layoutDispatch(defaultLayout)
-  }
-}
+const layoutResetId = `${moduleId}.reset` as CommandId
 
-const themeDark: Command<CommandContext> = {
+const themeDark: Command = {
   id: `${moduleId}.theme.dark` as CommandId,
   label: 'Theme: Dark',
-  action: () => {
+  run: () => {
     applyThemeSetting('dark')
   }
 }
 
-const themeLight: Command<CommandContext> = {
+const themeLight: Command = {
   id: `${moduleId}.theme.light` as CommandId,
   label: 'Theme: Light',
-  action: () => {
+  run: () => {
     applyThemeSetting('light')
   }
 }
 
-const themeSystem: Command<CommandContext> = {
+const themeSystem: Command = {
   id: `${moduleId}.theme.system` as CommandId,
   label: 'Theme: System',
-  action: () => {
+  run: () => {
     applyThemeSetting('system')
   }
 }
 
-export const viewModule: Module<CommandContext> = {
+const Commands: FunctionComponent = () => {
+  const [, layoutDispatch] = useLayout()
+
+  useRegisterCommand(() => ({
+    id: layoutResetId,
+    label: 'Layout: Reset to default',
+    run: () => {
+      layoutDispatch(defaultLayout)
+    }
+  }), [layoutDispatch])
+
+  useRegisterCommand(themeDark, [])
+  useRegisterCommand(themeLight, [])
+  useRegisterCommand(themeSystem, [])
+
+  return null
+}
+
+export const viewModule: Module = {
   id: moduleId,
 
-  commands: [
-    layoutReset,
-    themeDark,
-    themeLight,
-    themeSystem
-  ],
+  Commands,
 
   menu: {
     sections: [
@@ -66,7 +74,7 @@ export const viewModule: Module<CommandContext> = {
     items: [
       {
         sectionId: viewLayoutSectionId,
-        commandId: layoutReset.id,
+        commandId: layoutResetId,
         label: 'Reset layout'
       }
     ]

@@ -1,26 +1,23 @@
-import type { CommandId, Menu, MenuId, MenuSection } from '@editor'
+import type { Command, CommandId, Menu, MenuId, MenuSection } from '@editor'
 import { useAppMenus, useCommandRegistry } from '@editor'
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useTypedCommandDispatch, type DispatchCommand } from '../../commands.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
 export const MainMenu: FunctionComponent = () => {
   const appMenus = useAppMenus()
 
-  const { dispatchCommand } = useTypedCommandDispatch()
-
   return (
     <div className='relative'>
       <div className='hidden md:block'>
-        <DesktopMenu dispatch={dispatchCommand} menus={appMenus} />
+        <DesktopMenu menus={appMenus} />
       </div>
 
       <MenuContainer as='div' className='md:hidden relative'>
         {({ open, close }) => (
-          <MobileMenu open={open} close={close} dispatch={dispatchCommand} menus={appMenus} />
+          <MobileMenu open={open} close={close} menus={appMenus} />
         )}
       </MenuContainer>
     </div>
@@ -28,9 +25,10 @@ export const MainMenu: FunctionComponent = () => {
 }
 
 const DesktopMenu: FunctionComponent<{
-  dispatch: DispatchCommand
   menus: readonly Menu[]
-}> = ({ dispatch, menus }) => {
+}> = ({ menus }) => {
+  const dispatchCommand = useCallback((command: Command) => command.run(), [])
+
   return (
     <>
       {menus.map((menu) => (
@@ -45,7 +43,7 @@ const DesktopMenu: FunctionComponent<{
             {menu.label}
           </MenuButton>
           <MainMenuItems>
-            <MainMenuSections sections={menu.sections} dispatch={dispatch} />
+            <MainMenuSections sections={menu.sections} dispatch={dispatchCommand} />
           </MainMenuItems>
         </MenuContainer>
       ))}
@@ -56,9 +54,8 @@ const DesktopMenu: FunctionComponent<{
 const MobileMenu: FunctionComponent<{
   open: boolean
   close: () => void
-  dispatch: DispatchCommand
   menus: readonly Menu[]
-}> = ({ open, close, dispatch, menus }) => {
+}> = ({ open, close, menus }) => {
   const [mobileMenuId, setMobileMenuId] = useState<MenuId | undefined>(undefined)
 
   // Reset submenu when menu closes
@@ -72,14 +69,12 @@ const MobileMenu: FunctionComponent<{
     return mobileMenuId != null ? menus.find((menu) => menu.id === mobileMenuId) : undefined
   }, [mobileMenuId, menus])
 
-  const onBack = useCallback(() => {
-    setMobileMenuId(undefined)
-  }, [])
+  const onBack = useCallback(() => setMobileMenuId(undefined), [])
 
-  const dispatchAndClose = useCallback<DispatchCommand>((command) => {
-    dispatch(command)
+  const dispatchAndClose = useCallback((command: Command) => {
+    command.run()
     close()
-  }, [dispatch, close])
+  }, [close])
 
   return (
     <>
@@ -126,7 +121,7 @@ const MobileMenu: FunctionComponent<{
 
 const MainMenuSections: FunctionComponent<{
   sections: readonly MenuSection[]
-  dispatch: DispatchCommand
+  dispatch: (command: Command) => void
 }> = ({ sections, dispatch }) => {
   return (
     <>
@@ -164,21 +159,15 @@ const MainMenuSeparator: FunctionComponent = () => {
 
 const MainMenuItem: FunctionComponent<PropsWithChildren<{
   commandId: CommandId
-  dispatch: DispatchCommand
+  dispatch: (command: Command) => void
 }>> = ({ children, commandId, dispatch }) => {
-  const { getCommandById } = useCommandRegistry()
+  const { getCommandById: getCommandById } = useCommandRegistry()
 
   const command = getCommandById(commandId)
   const shortcut = command?.keyboardShortcuts?.at(0)
 
-  const onClick = useCallback(() => {
-    if (command != null) {
-      dispatch(command)
-    }
-  }, [command, dispatch])
-
   return (
-    <MenuItem as={MainMenuButton} onClick={onClick}>
+    <MenuItem as={MainMenuButton} onClick={() => command != null && dispatch(command)}>
       <div className='grow'>{children}</div>
 
       {shortcut != null && (

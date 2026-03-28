@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState, type DependencyList, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import { normalizeKeyboardShortcut, type KeyboardShortcut } from '../../input/keyboard-shortcuts.js'
 import type { Command, CommandId, CommandRegistry, UnregisterCommand } from '../commands.js'
@@ -13,45 +13,22 @@ export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ 
     return () => setCommands((prev) => prev.filter((item) => item !== command))
   }, [])
 
-  const registerCommands = useCallback((commands: readonly Command[]): UnregisterCommand => {
-    const set = new Set(commands)
-    setCommands((prev) => [...prev, ...set])
-    return () => setCommands((prev) => prev.filter((item) => !set.has(item)))
-  }, [])
-
   const byId = useMemo(() => toMapById(commands), [commands])
   const getCommandById = useCallback((id: CommandId) => byId.get(id), [byId])
 
   const byShortcut = useMemo(() => toMapByShortcut(commands), [commands])
-  const findByShortcut = useCallback((shortcut: KeyboardShortcut) => byShortcut.get(shortcut), [byShortcut])
-
-  const dispatchCommand = useCallback((command: Command, context: unknown) => {
-    command.action(context)
-  }, [])
-
-  const dispatchCommandById = useCallback((id: CommandId, context: unknown) => {
-    const command = getCommandById(id)
-    if (command != null) {
-      dispatchCommand(command, context)
-    }
-  }, [getCommandById, dispatchCommand])
+  const getCommandByShortcut = useCallback((shortcut: KeyboardShortcut) => byShortcut.get(shortcut), [byShortcut])
 
   const value: CommandRegistry = useMemo(() => ({
     commands,
     registerCommand,
-    registerCommands,
     getCommandById,
-    findByShortcut,
-    dispatchCommand,
-    dispatchCommandById
+    getCommandByShortcut
   }), [
     commands,
     registerCommand,
-    registerCommands,
     getCommandById,
-    findByShortcut,
-    dispatchCommand,
-    dispatchCommandById
+    getCommandByShortcut
   ])
 
   return (
@@ -65,12 +42,22 @@ export function useCommandRegistry (): CommandRegistry {
   return useSafeContext(CommandRegistryContext, 'CommandRegistryContext')
 }
 
-export function useRegisterCommand (command: Command): void {
+export function useRegisterCommand (
+  command: Command | (() => Command),
+  deps: DependencyList
+): Command {
   const { registerCommand } = useCommandRegistry()
 
+  const instance = useMemo<Command>(() => {
+    return typeof command === 'function' ? command() : command
+  }, deps)
+
+  // command object is expected to be stable (e.g. memoized)
   useEffect(() => {
-    return registerCommand(command)
-  }, [command, registerCommand])
+    return registerCommand(instance)
+  }, [registerCommand, instance])
+
+  return instance
 }
 
 function toMapById (commands: readonly Command[]): ReadonlyMap<CommandId, Command> {
