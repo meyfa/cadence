@@ -1,7 +1,6 @@
 import { normalizeKeyboardShortcut, useSafeContext, type KeyboardShortcut } from '@editor'
 import { createContext, useCallback, useEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCommandContext, type Command, type CommandId } from './commands.js'
-import { modules } from '../modules/index.js'
 
 type Unregister = () => void
 
@@ -9,6 +8,7 @@ export interface CommandRegistry {
   readonly commands: readonly Command[]
 
   readonly registerCommand: (command: Command) => Unregister
+  readonly registerCommands: (commands: readonly Command[]) => Unregister
 
   readonly getCommandById: (id: CommandId) => Command | undefined
   readonly findByShortcut: (shortcut: KeyboardShortcut) => Command | undefined
@@ -22,14 +22,17 @@ const CommandRegistryContext = createContext<CommandRegistry | undefined>(undefi
 export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const context = useCommandContext()
 
-  // TODO: Move reference to modules out of here
-  const [commands, setCommands] = useState<readonly Command[]>(() => [
-    ...modules.flatMap((module) => module.commands ?? [])
-  ])
+  const [commands, setCommands] = useState<readonly Command[]>([])
 
   const registerCommand = useCallback((command: Command): Unregister => {
     setCommands((prev) => [...prev, command])
     return () => setCommands((prev) => prev.filter((item) => item !== command))
+  }, [])
+
+  const registerCommands = useCallback((commands: readonly Command[]): Unregister => {
+    const set = new Set(commands)
+    setCommands((prev) => [...prev, ...set])
+    return () => setCommands((prev) => prev.filter((item) => !set.has(item)))
   }, [])
 
   const byId = useMemo(() => toMapById(commands), [commands])
@@ -52,11 +55,20 @@ export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ 
   const value: CommandRegistry = useMemo(() => ({
     commands,
     registerCommand,
+    registerCommands,
     getCommandById,
     findByShortcut,
     dispatchCommand,
     dispatchCommandById
-  }), [commands, registerCommand, getCommandById, findByShortcut, dispatchCommand, dispatchCommandById])
+  }), [
+    commands,
+    registerCommand,
+    registerCommands,
+    getCommandById,
+    findByShortcut,
+    dispatchCommand,
+    dispatchCommandById
+  ])
 
   return (
     <CommandRegistryContext value={value}>

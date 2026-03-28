@@ -1,6 +1,6 @@
 import type { Brand } from '@utility'
 import { useMemo } from 'react'
-import { modules } from '../modules/index.js'
+import { useModules } from '../state/ModuleContext.js'
 import type { CommandId } from './commands.js'
 
 export type MenuId = Brand<string, 'app.MenuId'>
@@ -46,13 +46,15 @@ const menuSpecs = [
 ] as const
 
 export function useAppMenus (): readonly Menu[] {
+  const modules = useModules()
+
   const sectionDefinitions = useMemo(() => {
     return modules.flatMap((module) => module.menu?.sections ?? [])
-  }, [])
+  }, [modules])
 
   const itemDefinitions = useMemo(() => {
     return modules.flatMap((module) => module.menu?.items ?? [])
-  }, [])
+  }, [modules])
 
   return useMemo(() => {
     const sectionsById = collectSections(sectionDefinitions)
