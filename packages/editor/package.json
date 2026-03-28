@@ -13,7 +13,7 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "react-error-boundary": "6.1.1",
-    "react-resizable-panels": "4.7.5",
+    "react-resizable-panels": "4.8.0",
     "superstruct": "2.0.2"
   }
 }
