@@ -8,6 +8,7 @@ import { App } from './App.js'
 import { defaultLayout } from './defaults/default-layout.js'
 import { demoCode } from './defaults/demo-code.js'
 import './index.css'
+import { commandPaletteModule } from './modules/command-palette/index.js'
 import { editorModule } from './modules/editor/index.js'
 import { exportModule } from './modules/export/index.js'
 import { mixerModule } from './modules/mixer/index.js'
@@ -21,6 +22,7 @@ import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
 
 const modules = [
+  commandPaletteModule,
   editorModule,
   exportModule,
   mixerModule,

@@ -1,6 +1,5 @@
 import { useModules, type HeaderInsert } from '@editor'
 import { useMemo, type FunctionComponent, type ReactNode } from 'react'
-import { CommandPalette } from '../commands/CommandPalette.js'
 import { MainMenu } from '../commands/MainMenu.js'
 
 export const Header: FunctionComponent<{
@@ -25,7 +24,9 @@ export const Header: FunctionComponent<{
       </div>
 
       <div className='flex justify-center'>
-        <CommandPalette />
+        {inserts.middle.map(({ Component }, index) => (
+          <Component key={index} />
+        ))}
       </div>
 
       <div className='hidden md:block' />
@@ -40,7 +41,7 @@ function useInsertsByPosition (): Record<HeaderInsert['position'], readonly Head
     const allInserts = modules.flatMap((module) => module.inserts?.header ?? [])
     return {
       start: allInserts.filter((insert) => insert.position === 'start'),
-      end: allInserts.filter((insert) => insert.position === 'end')
+      middle: allInserts.filter((insert) => insert.position === 'middle')
     }
   }, [modules])
 }
