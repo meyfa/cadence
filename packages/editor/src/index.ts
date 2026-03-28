@@ -4,6 +4,10 @@ export * from './commands/menus.js'
 export * from './commands/components/CommandRegistryContext.js'
 export * from './commands/components/MenuContext.js'
 
+// dialogs
+export type * from './dialogs/types.js'
+export * from './dialogs/components/DialogContext.js'
+
 // editor
 export type * from './editor/types.js'
 export * from './editor/components/Editor.js'

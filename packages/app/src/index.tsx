@@ -1,4 +1,4 @@
-import { BrowserLocalStorage, CommandRegistryProvider, LayoutProvider, MenuProvider, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
+import { BrowserLocalStorage, CommandRegistryProvider, DialogHost, DialogProvider, LayoutProvider, MenuProvider, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -18,7 +18,6 @@ import { timelineModule } from './modules/timeline/index.js'
 import { viewModule } from './modules/view/index.js'
 import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
-import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
 
 const modules = [
@@ -110,21 +109,22 @@ const root = createRoot(container)
 root.render(
   <StrictMode>
     <LayoutProvider>
-      <AudioEngineContext value={engine}>
-        <EditorProvider>
-          <CompilationProvider compileOptions={compileOptions}>
-            <DialogProvider>
+      <DialogProvider>
+        <AudioEngineContext value={engine}>
+          <EditorProvider>
+            <CompilationProvider compileOptions={compileOptions}>
               <CommandRegistryProvider>
                 <MenuProvider menus={menus}>
                   <ModuleProvider modules={modules}>
                     <App storage={storage} initialState={initialState} />
+                    <DialogHost />
                   </ModuleProvider>
                 </MenuProvider>
               </CommandRegistryProvider>
-            </DialogProvider>
-          </CompilationProvider>
-        </EditorProvider>
-      </AudioEngineContext>
+            </CompilationProvider>
+          </EditorProvider>
+        </AudioEngineContext>
+      </DialogProvider>
     </LayoutProvider>
   </StrictMode>
 )
