@@ -1,7 +1,6 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
-import { useRegisterCommand } from '@editor'
+import { useDialogService, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
-import { useDialog } from '../../state/DialogContext.js'
 import { ExportDialog } from './ExportDialog.js'
 
 const moduleId = 'export' as ModuleId
@@ -12,7 +11,7 @@ const fileExportSectionId = 'file.export' as MenuSectionId
 const exportAudioId = `${moduleId}.file.export` as CommandId
 
 const Commands: FunctionComponent = () => {
-  const { showDialog } = useDialog()
+  const { showDialog } = useDialogService()
 
   useRegisterCommand(() => ({
     id: exportAudioId,
@@ -21,7 +20,7 @@ const Commands: FunctionComponent = () => {
       'Ctrl+E'
     ],
     run: () => {
-      showDialog(ExportDialog)
+      showDialog(ExportDialog, {})
     }
   }), [showDialog])
 
