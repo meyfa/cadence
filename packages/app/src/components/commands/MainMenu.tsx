@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import type { Command, CommandId } from '../../commands/commands.js'
-import { appMenus, type MenuId, type MenuSection } from '../../commands/menus.js'
+import { useAppMenus, type Menu, type MenuId, type MenuSection } from '../../commands/menus.js'
 import { useCommandRegistry } from '../../commands/registry.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
@@ -11,16 +11,17 @@ type DispatchCommand = (command: Command) => void
 
 export const MainMenu: FunctionComponent = () => {
   const { dispatchCommand } = useCommandRegistry()
+  const appMenus = useAppMenus()
 
   return (
     <div className='relative'>
       <div className='hidden md:block'>
-        <DesktopMenu dispatch={dispatchCommand} />
+        <DesktopMenu dispatch={dispatchCommand} menus={appMenus} />
       </div>
 
       <MenuContainer as='div' className='md:hidden relative'>
         {({ open, close }) => (
-          <MobileMenu open={open} close={close} dispatch={dispatchCommand} />
+          <MobileMenu open={open} close={close} dispatch={dispatchCommand} menus={appMenus} />
         )}
       </MenuContainer>
     </div>
@@ -29,10 +30,11 @@ export const MainMenu: FunctionComponent = () => {
 
 const DesktopMenu: FunctionComponent<{
   dispatch: DispatchCommand
-}> = ({ dispatch }) => {
+  menus: readonly Menu[]
+}> = ({ dispatch, menus }) => {
   return (
     <>
-      {appMenus.map((menu) => (
+      {menus.map((menu) => (
         <MenuContainer key={menu.id} as='div' className='relative inline-block text-left'>
           <MenuButton
             className={clsx(
@@ -56,7 +58,8 @@ const MobileMenu: FunctionComponent<{
   open: boolean
   close: () => void
   dispatch: DispatchCommand
-}> = ({ open, close, dispatch }) => {
+  menus: readonly Menu[]
+}> = ({ open, close, dispatch, menus }) => {
   const [mobileMenuId, setMobileMenuId] = useState<MenuId | undefined>(undefined)
 
   // Reset submenu when menu closes
@@ -67,8 +70,8 @@ const MobileMenu: FunctionComponent<{
   }, [open])
 
   const selectedMenu = useMemo(() => {
-    return mobileMenuId != null ? appMenus.find((menu) => menu.id === mobileMenuId) : undefined
-  }, [mobileMenuId])
+    return mobileMenuId != null ? menus.find((menu) => menu.id === mobileMenuId) : undefined
+  }, [mobileMenuId, menus])
 
   const onBack = useCallback(() => {
     setMobileMenuId(undefined)
@@ -96,7 +99,7 @@ const MobileMenu: FunctionComponent<{
       <MainMenuItems>
         {selectedMenu == null && (
           <>
-            {appMenus.map((menu) => (
+            {menus.map((menu) => (
               <MainMenuButton key={menu.id} onClick={() => setMobileMenuId(menu.id)}>
                 <span className='grow'>{menu.label}</span>
                 <ArrowRight className='text-content-100' fontSize='small' />
@@ -126,13 +129,9 @@ const MainMenuSections: FunctionComponent<{
   sections: readonly MenuSection[]
   dispatch: DispatchCommand
 }> = ({ sections, dispatch }) => {
-  const nonEmptySections = useMemo(() => {
-    return sections.filter((section) => section.items.length > 0)
-  }, [sections])
-
   return (
     <>
-      {nonEmptySections.map((section, sectionIndex) => (
+      {sections.map((section, sectionIndex) => (
         <Fragment key={sectionIndex}>
           {sectionIndex > 0 && <MainMenuSeparator />}
 

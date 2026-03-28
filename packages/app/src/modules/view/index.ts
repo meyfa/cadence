@@ -1,10 +1,14 @@
 import type { Command, CommandId } from '../../commands/commands.js'
-import { MenuSectionIds } from '../../commands/ids.js'
+import type { MenuId, MenuSectionId } from '../../commands/menus.js'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
 import type { AppModule, AppModuleId } from '../types.js'
 
 const moduleId = 'view' as AppModuleId
+
+const viewMenuId = 'view' as MenuId
+const viewShowSectionId = 'view.show' as MenuSectionId
+const viewLayoutSectionId = 'view.layout' as MenuSectionId
 
 const layoutReset: Command = {
   id: `${moduleId}.reset` as CommandId,
@@ -48,11 +52,24 @@ export const viewModule: AppModule = {
     themeSystem
   ],
 
-  menuItems: [
-    {
-      menuSectionId: MenuSectionIds.ViewLayout,
-      commandId: layoutReset.id,
-      label: 'Reset layout'
-    }
-  ]
+  menu: {
+    sections: [
+      {
+        id: viewShowSectionId,
+        menuId: viewMenuId
+      },
+      {
+        id: viewLayoutSectionId,
+        menuId: viewMenuId
+      }
+    ],
+
+    items: [
+      {
+        sectionId: viewLayoutSectionId,
+        commandId: layoutReset.id,
+        label: 'Reset layout'
+      }
+    ]
+  }
 }

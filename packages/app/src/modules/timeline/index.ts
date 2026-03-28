@@ -1,13 +1,15 @@
 import { createAudioGraph } from '@audiograph'
 import { activateTabOfType } from '@editor'
 import type { Command, CommandId } from '../../commands/commands.js'
-import { MenuSectionIds } from '../../commands/ids.js'
+import type { MenuSectionId } from '../../commands/menus.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
 const moduleId = 'timeline' as AppModuleId
 export const timelinePanelId = `${moduleId}.timeline` as AppModulePanelId
+
+const viewShowSectionId = 'view.show' as MenuSectionId
 
 const viewTimeline: Command = {
   id: `${moduleId}.view.timeline` as CommandId,
@@ -49,13 +51,15 @@ export const timelineModule: AppModule = {
     togglePlayback
   ],
 
-  menuItems: [
-    {
-      menuSectionId: MenuSectionIds.ViewShow,
-      commandId: viewTimeline.id,
-      label: 'Timeline'
-    }
-  ],
+  menu: {
+    items: [
+      {
+        sectionId: viewShowSectionId,
+        commandId: viewTimeline.id,
+        label: 'Timeline'
+      }
+    ]
+  },
 
   inserts: {
     header: [

@@ -1,7 +1,7 @@
 import { activateTabOfType } from '@editor'
 import { numeric } from '@utility'
 import type { Command, CommandId } from '../../commands/commands.js'
-import { MenuSectionIds } from '../../commands/ids.js'
+import type { MenuId, MenuSectionId } from '../../commands/menus.js'
 import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
@@ -9,6 +9,10 @@ import { EditorPanel } from './EditorPanel.js'
 
 const moduleId = 'editor' as AppModuleId
 export const editorPanelId = `${moduleId}.editor` as AppModulePanelId
+
+const fileMenuId = 'file' as MenuId
+const viewShowSectionId = 'view.show' as MenuSectionId
+const fileSaveSectionId = 'file.save' as MenuSectionId
 
 const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
@@ -78,23 +82,32 @@ export const editorModule: AppModule = {
     fileSave
   ],
 
-  menuItems: [
-    {
-      menuSectionId: MenuSectionIds.ViewShow,
-      commandId: viewEditor.id,
-      label: 'Editor'
-    },
-    {
-      menuSectionId: MenuSectionIds.FileSave,
-      commandId: fileOpen.id,
-      label: 'Open…'
-    },
-    {
-      menuSectionId: MenuSectionIds.FileSave,
-      commandId: fileSave.id,
-      label: 'Save…'
-    }
-  ],
+  menu: {
+    sections: [
+      {
+        id: fileSaveSectionId,
+        menuId: fileMenuId
+      }
+    ],
+
+    items: [
+      {
+        sectionId: viewShowSectionId,
+        commandId: viewEditor.id,
+        label: 'Editor'
+      },
+      {
+        sectionId: fileSaveSectionId,
+        commandId: fileOpen.id,
+        label: 'Open…'
+      },
+      {
+        sectionId: fileSaveSectionId,
+        commandId: fileSave.id,
+        label: 'Save…'
+      }
+    ]
+  },
 
   inserts: {
     footer: [
