@@ -1,35 +1,19 @@
-import { normalizeKeyboardShortcut, useSafeContext, type KeyboardShortcut } from '@editor'
 import { createContext, useCallback, useEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useCommandContext, type Command, type CommandId } from './commands.js'
-
-type Unregister = () => void
-
-export interface CommandRegistry {
-  readonly commands: readonly Command[]
-
-  readonly registerCommand: (command: Command) => Unregister
-  readonly registerCommands: (commands: readonly Command[]) => Unregister
-
-  readonly getCommandById: (id: CommandId) => Command | undefined
-  readonly findByShortcut: (shortcut: KeyboardShortcut) => Command | undefined
-
-  readonly dispatchCommand: (command: Command) => void
-  readonly dispatchCommandById: (id: CommandId) => void
-}
+import { useSafeContext } from '../../hooks/safe-context.js'
+import { normalizeKeyboardShortcut, type KeyboardShortcut } from '../../input/keyboard-shortcuts.js'
+import type { Command, CommandId, CommandRegistry, UnregisterCommand } from '../commands.js'
 
 const CommandRegistryContext = createContext<CommandRegistry | undefined>(undefined)
 
 export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
-  const context = useCommandContext()
-
   const [commands, setCommands] = useState<readonly Command[]>([])
 
-  const registerCommand = useCallback((command: Command): Unregister => {
+  const registerCommand = useCallback((command: Command): UnregisterCommand => {
     setCommands((prev) => [...prev, command])
     return () => setCommands((prev) => prev.filter((item) => item !== command))
   }, [])
 
-  const registerCommands = useCallback((commands: readonly Command[]): Unregister => {
+  const registerCommands = useCallback((commands: readonly Command[]): UnregisterCommand => {
     const set = new Set(commands)
     setCommands((prev) => [...prev, ...set])
     return () => setCommands((prev) => prev.filter((item) => !set.has(item)))
@@ -41,14 +25,14 @@ export const CommandRegistryProvider: FunctionComponent<PropsWithChildren> = ({ 
   const byShortcut = useMemo(() => toMapByShortcut(commands), [commands])
   const findByShortcut = useCallback((shortcut: KeyboardShortcut) => byShortcut.get(shortcut), [byShortcut])
 
-  const dispatchCommand = useCallback((command: Command) => {
+  const dispatchCommand = useCallback((command: Command, context: unknown) => {
     command.action(context)
-  }, [context])
+  }, [])
 
-  const dispatchCommandById = useCallback((id: CommandId) => {
+  const dispatchCommandById = useCallback((id: CommandId, context: unknown) => {
     const command = getCommandById(id)
     if (command != null) {
-      dispatchCommand(command)
+      dispatchCommand(command, context)
     }
   }, [getCommandById, dispatchCommand])
 

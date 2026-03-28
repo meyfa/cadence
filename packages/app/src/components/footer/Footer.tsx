@@ -1,10 +1,10 @@
 import { useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useCommandRegistry } from '../../commands/registry.js'
+import { useTypedCommandDispatch } from '../../commands.js'
 import type { FooterInsert } from '../../modules/types.js'
 import { useModules } from '../../state/ModuleContext.js'
 
 export const Footer: FunctionComponent = () => {
-  const { dispatchCommandById } = useCommandRegistry()
+  const { dispatchCommandById } = useTypedCommandDispatch()
   const inserts = useInsertsByPosition()
 
   return (

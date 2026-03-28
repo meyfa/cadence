@@ -1,9 +1,9 @@
-import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut } from '@editor'
+import type { Command, CommandId } from '@editor'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut, useCommandRegistry, useRegisterCommand } from '@editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import type { Command, CommandId } from '../../commands/commands.js'
-import { useCommandRegistry, useRegisterCommand } from '../../commands/registry.js'
+import { useTypedCommandDispatch } from '../../commands.js'
 import { useGlobalKeydown } from '../../hooks/input.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
@@ -20,7 +20,8 @@ const createShowCommand = (action: () => void): Command => ({
 })
 
 export const CommandPalette: FunctionComponent = () => {
-  const { commands, findByShortcut, dispatchCommand } = useCommandRegistry()
+  const { commands, findByShortcut } = useCommandRegistry()
+  const { dispatchCommand } = useTypedCommandDispatch()
 
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)

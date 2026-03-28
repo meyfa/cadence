@@ -1,7 +1,7 @@
+import type { Command, CommandId, MenuId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
 import { numeric } from '@utility'
-import type { Command, CommandId } from '../../commands/commands.js'
-import type { MenuId, MenuSectionId } from '../../commands/menus.js'
+import type { CommandContext } from '../../commands.js'
 import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
@@ -18,7 +18,7 @@ const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
 const FILE_OPEN_TIMEOUT = numeric('s', 5)
 
-const viewEditor: Command = {
+const viewEditor: Command<CommandContext> = {
   id: `${moduleId}.view.editor` as CommandId,
   label: 'Show view: Editor',
   action: ({ layoutDispatch }) => {
@@ -26,7 +26,7 @@ const viewEditor: Command = {
   }
 }
 
-const fileOpen: Command = {
+const fileOpen: Command<CommandContext> = {
   id: `${moduleId}.file.open` as CommandId,
   label: 'File: Open',
   keyboardShortcuts: [
@@ -50,7 +50,7 @@ const fileOpen: Command = {
   }
 }
 
-const fileSave: Command = {
+const fileSave: Command<CommandContext> = {
   id: `${moduleId}.file.save` as CommandId,
   label: 'File: Save',
   keyboardShortcuts: [

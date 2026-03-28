@@ -1,15 +1,14 @@
-import type { SerializedComponent } from '@editor'
+import type { Command, CommandId, MenuItemDefinition, MenuSectionDefinition, SerializedComponent } from '@editor'
 import type { Brand } from '@utility'
 import type { ComponentType, ReactNode } from 'react'
-import type { Command, CommandId } from '../commands/commands.js'
-import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menu-types.js'
+import type { CommandContext } from '../commands.js'
 
 export type AppModuleId = Brand<string, 'app.AppModuleId'>
 
 export interface AppModule {
   readonly id: AppModuleId
   readonly panels?: readonly AppModulePanel[]
-  readonly commands?: readonly Command[]
+  readonly commands?: ReadonlyArray<Command<CommandContext>>
   readonly menu?: {
     readonly sections?: readonly MenuSectionDefinition[]
     readonly items?: readonly MenuItemDefinition[]

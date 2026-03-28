@@ -1,6 +1,6 @@
+import type { Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
-import type { Command, CommandId } from '../../commands/commands.js'
-import type { MenuSectionId } from '../../commands/menus.js'
+import type { CommandContext } from '../../commands.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { MixerPanel } from './MixerPanel.js'
 
@@ -9,7 +9,7 @@ export const mixerPanelId = `${moduleId}.mixer` as AppModulePanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewMixer: Command = {
+const viewMixer: Command<CommandContext> = {
   id: `${moduleId}.view.mixer` as CommandId,
   label: 'Show view: Mixer',
   action: ({ layoutDispatch }) => {

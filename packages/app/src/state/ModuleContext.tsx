@@ -1,6 +1,5 @@
-import { useSafeContext } from '@editor'
+import { useCommandRegistry, useSafeContext, type Command } from '@editor'
 import { createContext, useEffect, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useCommandRegistry } from '../commands/registry.js'
 import type { AppModule } from '../modules/types.js'
 
 const ModuleContext = createContext<readonly AppModule[] | undefined>([])
@@ -11,7 +10,8 @@ export const ModuleProvider: FunctionComponent<PropsWithChildren<{
   const { registerCommands } = useCommandRegistry()
 
   useEffect(() => {
-    return registerCommands(modules.flatMap((module) => module.commands ?? []))
+    const commands = modules.flatMap((module) => module.commands ?? []) as readonly Command[]
+    return registerCommands(commands)
   }, [modules, registerCommands])
 
   return (
