@@ -9,9 +9,7 @@ export const ProgressBar: FunctionComponent<{
   if (disabled === true || progress == null) {
     return (
       <div className='py-2'>
-        <div
-          className='h-2 bg-surface-300 rounded-xs overflow-hidden relative'
-        >
+        <div className='h-2 bg-surface-300 rounded-xs overflow-hidden relative'>
           <div
             key='indeterminate'
             className={clsx(
@@ -26,9 +24,7 @@ export const ProgressBar: FunctionComponent<{
 
   return (
     <div className='py-2'>
-      <div
-        className='h-2 bg-surface-300 rounded-xs overflow-hidden'
-      >
+      <div className='h-2 bg-surface-300 rounded-xs overflow-hidden'>
         <div
           key='determinate'
           className='h-full bg-accent-100 rounded-xs transition-[width] duration-300 ease-out'

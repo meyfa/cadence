@@ -171,9 +171,7 @@ const SearchResult: FunctionComponent<{
       <div className='grow py-1'>
         {command.label}
       </div>
-      {shortcut != null && (
-        <ShortcutKeys shortcut={shortcut} />
-      )}
+      {shortcut != null && (<ShortcutKeys shortcut={shortcut} />)}
     </button>
   )
 }

@@ -29,26 +29,22 @@ const DesktopMenu: FunctionComponent<{
 }> = ({ menus }) => {
   const dispatchCommand = useCallback((command: Command) => command.run(), [])
 
-  return (
-    <>
-      {menus.map((menu) => (
-        <MenuContainer key={menu.id} as='div' className='relative inline-block text-left'>
-          <MenuButton
-            className={clsx(
-              'px-2 rounded-sm outline-none border border-transparent',
-              'hocus:bg-surface-300 hocus:text-content-300 hocus:border-frame-300',
-              'data-active:bg-surface-300 data-active:border-frame-300'
-            )}
-          >
-            {menu.label}
-          </MenuButton>
-          <MainMenuItems>
-            <MainMenuSections sections={menu.sections} dispatch={dispatchCommand} />
-          </MainMenuItems>
-        </MenuContainer>
-      ))}
-    </>
-  )
+  return menus.map((menu) => (
+    <MenuContainer key={menu.id} as='div' className='relative inline-block text-left'>
+      <MenuButton
+        className={clsx(
+          'px-2 rounded-sm outline-none border border-transparent',
+          'hocus:bg-surface-300 hocus:text-content-300 hocus:border-frame-300',
+          'data-active:bg-surface-300 data-active:border-frame-300'
+        )}
+      >
+        {menu.label}
+      </MenuButton>
+      <MainMenuItems>
+        <MainMenuSections sections={menu.sections} dispatch={dispatchCommand} />
+      </MainMenuItems>
+    </MenuContainer>
+  ))
 }
 
 const MobileMenu: FunctionComponent<{
@@ -92,14 +88,12 @@ const MobileMenu: FunctionComponent<{
 
       <MainMenuItems>
         {selectedMenu == null && (
-          <>
-            {menus.map((menu) => (
-              <MainMenuButton key={menu.id} onClick={() => setMobileMenuId(menu.id)}>
-                <span className='grow'>{menu.label}</span>
-                <ArrowRight className='text-content-100' fontSize='small' />
-              </MainMenuButton>
-            ))}
-          </>
+          menus.map((menu) => (
+            <MainMenuButton key={menu.id} onClick={() => setMobileMenuId(menu.id)}>
+              <span className='grow'>{menu.label}</span>
+              <ArrowRight className='text-content-100' fontSize='small' />
+            </MainMenuButton>
+          ))
         )}
 
         {selectedMenu != null && (
@@ -123,29 +117,22 @@ const MainMenuSections: FunctionComponent<{
   sections: readonly MenuSection[]
   dispatch: (command: Command) => void
 }> = ({ sections, dispatch }) => {
-  return (
-    <>
-      {sections.map((section, sectionIndex) => (
-        <Fragment key={sectionIndex}>
-          {sectionIndex > 0 && <MainMenuSeparator />}
+  return sections.map((section, sectionIndex) => (
+    <Fragment key={sectionIndex}>
+      {sectionIndex > 0 && <MainMenuSeparator />}
 
-          {section.items.map((item) => (
-            <MainMenuItem key={item.commandId} commandId={item.commandId} dispatch={dispatch}>
-              {item.label}
-            </MainMenuItem>
-          ))}
-        </Fragment>
+      {section.items.map((item) => (
+        <MainMenuItem key={item.commandId} commandId={item.commandId} dispatch={dispatch}>
+          {item.label}
+        </MainMenuItem>
       ))}
-    </>
-  )
+    </Fragment>
+  ))
 }
 
 const MainMenuItems: FunctionComponent<PropsWithChildren> = ({ children }) => {
   return (
-    <MenuItems
-      as='div'
-      className='z-50 absolute top-full left-0 w-56 rounded-md p-1 bg-surface-200 border border-frame-200 shadow-lg outline-none'
-    >
+    <MenuItems as='div' className='z-50 absolute top-full left-0 w-56 rounded-md p-1 bg-surface-200 border border-frame-200 shadow-lg outline-none'>
       {children}
     </MenuItems>
   )
@@ -169,10 +156,7 @@ const MainMenuItem: FunctionComponent<PropsWithChildren<{
   return (
     <MenuItem as={MainMenuButton} onClick={() => command != null && dispatch(command)}>
       <div className='grow'>{children}</div>
-
-      {shortcut != null && (
-        <ShortcutKeys shortcut={shortcut} />
-      )}
+      {shortcut != null && (<ShortcutKeys shortcut={shortcut} />)}
     </MenuItem>
   )
 }

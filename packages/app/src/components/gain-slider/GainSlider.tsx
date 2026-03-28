@@ -11,6 +11,8 @@ export const GainSlider: FunctionComponent<{
   orientation?: 'horizontal' | 'vertical'
   collapsible?: boolean
 }> = ({ gain, onChange, label, orientation, collapsible }) => {
+  const vertical = orientation === 'vertical'
+
   return (
     <Slider
       label={label}
@@ -23,14 +25,8 @@ export const GainSlider: FunctionComponent<{
       icon={<GainIcon gain={gain} />}
       collapsible={collapsible}
     >
-      <span
-        className={clsx(
-          'text-right text-nowrap',
-          orientation === 'vertical' ? 'text-sm' : 'w-12'
-        )}
-      >
-        {gain.value.toFixed()}
-        {orientation === 'vertical' ? null : ' dB'}
+      <span className={clsx('text-right text-nowrap', vertical ? 'text-sm' : 'w-12')}>
+        {gain.value.toFixed() + (vertical ? '' : ' dB')}
       </span>
     </Slider>
   )

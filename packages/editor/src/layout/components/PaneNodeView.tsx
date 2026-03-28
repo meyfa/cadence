@@ -41,7 +41,7 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
 }) => {
   const { tabs, activeTabId } = node
 
-  const selectedIndex = tabs.findIndex((tab) => tab.id === activeTabId)
+  const selectedIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTabId))
 
   const onSelectionChange = useCallback((index: number) => {
     const selectedTab = tabs.at(index)
@@ -63,7 +63,7 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
 
   return (
     <TabGroup
-      selectedIndex={selectedIndex >= 0 ? selectedIndex : 0}
+      selectedIndex={selectedIndex}
       onChange={onSelectionChange}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
