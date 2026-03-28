@@ -1,14 +1,13 @@
-import type { Command, CommandId, MenuId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, PanelId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
 import { numeric } from '@utility'
 import type { CommandContext } from '../../commands.js'
 import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
-import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { EditorPanel } from './EditorPanel.js'
 
-const moduleId = 'editor' as AppModuleId
-export const editorPanelId = `${moduleId}.editor` as AppModulePanelId
+const moduleId = 'editor' as ModuleId
+export const editorPanelId = `${moduleId}.editor` as PanelId
 
 const fileMenuId = 'file' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
@@ -64,7 +63,7 @@ const fileSave: Command<CommandContext> = {
   }
 }
 
-export const editorModule: AppModule = {
+export const editorModule: Module<CommandContext> = {
   id: moduleId,
 
   panels: [

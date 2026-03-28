@@ -1,7 +1,6 @@
+import { useModules, type FooterInsert } from '@editor'
 import { useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useTypedCommandDispatch } from '../../commands.js'
-import type { FooterInsert } from '../../modules/types.js'
-import { useModules } from '../../state/ModuleContext.js'
 
 export const Footer: FunctionComponent = () => {
   const { dispatchCommandById } = useTypedCommandDispatch()

@@ -1,4 +1,5 @@
 import type { Bus, Instrument } from '@core'
+import type { PanelProps } from '@editor'
 import { Flowchart } from '@flowchart'
 import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
@@ -7,7 +8,6 @@ import { usePrevious } from '../../hooks/previous.js'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { pluralize } from '../../utilities/strings.js'
 import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from './flowchart.js'
-import type { AppModulePanelProps } from '../types.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   nodeSize: {
@@ -47,7 +47,7 @@ function getNodeLabel ({ data }: MixerFlowNode): string {
   }
 }
 
-export const MixerPanel: FunctionComponent<AppModulePanelProps> = () => {
+export const MixerPanel: FunctionComponent<PanelProps> = () => {
   const { program: currentProgram } = useCompilationState()
   const program = usePrevious(currentProgram)
 

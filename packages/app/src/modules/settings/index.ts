@@ -1,11 +1,10 @@
-import type { Command, CommandId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
 import type { CommandContext } from '../../commands.js'
-import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { SettingsPanel } from './SettingsPanel.js'
 
-const moduleId = 'settings' as AppModuleId
-export const settingsPanelId = `${moduleId}.settings` as AppModulePanelId
+const moduleId = 'settings' as ModuleId
+export const settingsPanelId = `${moduleId}.settings` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
@@ -17,7 +16,7 @@ const viewSettings: Command<CommandContext> = {
   }
 }
 
-export const settingsModule: AppModule = {
+export const settingsModule: Module<CommandContext> = {
   id: moduleId,
 
   panels: [

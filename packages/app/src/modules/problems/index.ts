@@ -1,13 +1,12 @@
-import type { Command, CommandId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
 import type { CommandContext } from '../../commands.js'
 import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
-import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
 
-const moduleId = 'problems' as AppModuleId
-export const problemsPanelId = `${moduleId}.problems` as AppModulePanelId
+const moduleId = 'problems' as ModuleId
+export const problemsPanelId = `${moduleId}.problems` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
@@ -19,7 +18,7 @@ const viewProblems: Command<CommandContext> = {
   }
 }
 
-export const problemsModule: AppModule = {
+export const problemsModule: Module<CommandContext> = {
   id: moduleId,
 
   panels: [

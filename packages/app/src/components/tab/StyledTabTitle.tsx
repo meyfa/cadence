@@ -1,8 +1,7 @@
-import type { Tab } from '@editor'
+import type { ModuleRenderFn, PanelProps, Tab } from '@editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import { type FunctionComponent } from 'react'
-import type { AppModulePanelProps, AppModuleRender } from '../../modules/types.js'
 
 const isMacOS = (
   'userAgentData' in navigator
@@ -11,8 +10,8 @@ const isMacOS = (
 ).toLowerCase().includes('mac')
 
 export const StyledTabTitle: FunctionComponent<{
-  TitleComponent: AppModuleRender<AppModulePanelProps, string>
-  NotificationsComponent: AppModuleRender<AppModulePanelProps, number | null>
+  TitleComponent: ModuleRenderFn<PanelProps, string>
+  NotificationsComponent: ModuleRenderFn<PanelProps, number | null>
   tab: Tab
   closeable: boolean
   disabled?: boolean

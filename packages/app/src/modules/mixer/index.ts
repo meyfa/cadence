@@ -1,11 +1,10 @@
-import type { Command, CommandId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, PanelId, Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
 import type { CommandContext } from '../../commands.js'
-import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { MixerPanel } from './MixerPanel.js'
 
-const moduleId = 'mixer' as AppModuleId
-export const mixerPanelId = `${moduleId}.mixer` as AppModulePanelId
+const moduleId = 'mixer' as ModuleId
+export const mixerPanelId = `${moduleId}.mixer` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
@@ -17,7 +16,7 @@ const viewMixer: Command<CommandContext> = {
   }
 }
 
-export const mixerModule: AppModule = {
+export const mixerModule: Module<CommandContext> = {
   id: moduleId,
 
   panels: [

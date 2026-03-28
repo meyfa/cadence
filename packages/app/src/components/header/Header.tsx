@@ -1,6 +1,5 @@
+import { useModules, type HeaderInsert } from '@editor'
 import { useMemo, type FunctionComponent, type ReactNode } from 'react'
-import type { HeaderInsert } from '../../modules/types.js'
-import { useModules } from '../../state/ModuleContext.js'
 import { CommandPalette } from '../commands/CommandPalette.js'
 import { MainMenu } from '../commands/MainMenu.js'
 

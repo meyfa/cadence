@@ -1,4 +1,4 @@
-import type { ThemeSetting } from '@editor'
+import type { PanelProps, ThemeSetting } from '@editor'
 import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
 import { useCallback, useState, type FunctionComponent } from 'react'
 import { Button } from '../../components/button/Button.js'
@@ -12,9 +12,8 @@ import { useObservable } from '../../hooks/observable.js'
 import { useAudioEngine } from '../../state/AudioEngineContext.js'
 import { useEditor } from '../../state/EditorContext.js'
 import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
-import type { AppModulePanelProps } from '../types.js'
 
-export const SettingsPanel: FunctionComponent<AppModulePanelProps> = () => {
+export const SettingsPanel: FunctionComponent<PanelProps> = () => {
   const themeSetting = useThemeSetting()
   const systemTheme = useSystemTheme()
 

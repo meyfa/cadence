@@ -1,5 +1,6 @@
 import type { Brand } from '@utility'
 import { useMemo } from 'react'
+import { useModules } from '../modules/components/ModuleContext.js'
 import type { CommandId } from './commands.js'
 import { useMenuSpecs } from './components/MenuContext.js'
 
@@ -39,11 +40,17 @@ export interface MenuItemDefinition extends MenuItem {
   readonly label: string
 }
 
-export function useAppMenus (
-  sections: readonly MenuSectionDefinition[],
-  items: readonly MenuItemDefinition[]
-): readonly Menu[] {
+export function useAppMenus (): readonly Menu[] {
   const menuSpecs = useMenuSpecs()
+  const modules = useModules()
+
+  const sections = useMemo(() => {
+    return modules.flatMap((module) => module.menu?.sections ?? [])
+  }, [modules])
+
+  const items = useMemo(() => {
+    return modules.flatMap((module) => module.menu?.items ?? [])
+  }, [modules])
 
   return useMemo(() => {
     const sectionsById = collectSections(sections)

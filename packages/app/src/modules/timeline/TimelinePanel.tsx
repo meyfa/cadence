@@ -1,13 +1,13 @@
 import type { BeatRange } from '@core'
+import type { PanelProps } from '@editor'
 import { useCallback, type FunctionComponent } from 'react'
 import { Timeline } from '../../components/timeline/Timeline.js'
 import { useObservable } from '../../hooks/observable.js'
 import { usePrevious } from '../../hooks/previous.js'
 import { useAudioEngine } from '../../state/AudioEngineContext.js'
 import { useCompilationState } from '../../state/CompilationContext.js'
-import type { AppModulePanelProps } from '../types.js'
 
-export const TimelinePanel: FunctionComponent<AppModulePanelProps> = () => {
+export const TimelinePanel: FunctionComponent<PanelProps> = () => {
   const { program: currentProgram } = useCompilationState()
   const program = usePrevious(currentProgram)
 

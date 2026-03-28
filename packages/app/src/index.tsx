@@ -1,4 +1,4 @@
-import { BrowserLocalStorage, CommandRegistryProvider, LayoutProvider, MenuProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
+import { BrowserLocalStorage, CommandRegistryProvider, LayoutProvider, MenuProvider, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -19,7 +19,6 @@ import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
 import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
-import { ModuleProvider } from './state/ModuleContext.js'
 
 const modules = [
   editorModule,
