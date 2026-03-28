@@ -5,13 +5,32 @@ import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
+import { CommandRegistryProvider } from './commands/registry.js'
 import { defaultLayout } from './defaults/default-layout.js'
 import { demoCode } from './defaults/demo-code.js'
 import './index.css'
+import { editorModule } from './modules/editor/index.js'
+import { exportModule } from './modules/export/index.js'
+import { mixerModule } from './modules/mixer/index.js'
+import { problemsModule } from './modules/problems/index.js'
+import { settingsModule } from './modules/settings/index.js'
+import { timelineModule } from './modules/timeline/index.js'
+import { viewModule } from './modules/view/index.js'
 import { AudioEngineContext } from './state/AudioEngineContext.js'
 import { CompilationProvider } from './state/CompilationContext.js'
 import { DialogProvider } from './state/DialogContext.js'
 import { EditorProvider } from './state/EditorContext.js'
+import { ModuleProvider } from './state/ModuleContext.js'
+
+const modules = [
+  editorModule,
+  exportModule,
+  mixerModule,
+  problemsModule,
+  settingsModule,
+  viewModule,
+  timelineModule
+]
 
 const compileOptions: CompileOptions = {
   beatsPerBar: 4,
@@ -79,16 +98,20 @@ const root = createRoot(container)
 
 root.render(
   <StrictMode>
-    <AudioEngineContext value={engine}>
-      <EditorProvider>
-        <CompilationProvider compileOptions={compileOptions}>
-          <LayoutProvider>
+    <LayoutProvider>
+      <AudioEngineContext value={engine}>
+        <EditorProvider>
+          <CompilationProvider compileOptions={compileOptions}>
             <DialogProvider>
-              <App storage={storage} initialState={initialState} />
+              <CommandRegistryProvider>
+                <ModuleProvider modules={modules}>
+                  <App storage={storage} initialState={initialState} />
+                </ModuleProvider>
+              </CommandRegistryProvider>
             </DialogProvider>
-          </LayoutProvider>
-        </CompilationProvider>
-      </EditorProvider>
-    </AudioEngineContext>
+          </CompilationProvider>
+        </EditorProvider>
+      </AudioEngineContext>
+    </LayoutProvider>
   </StrictMode>
 )

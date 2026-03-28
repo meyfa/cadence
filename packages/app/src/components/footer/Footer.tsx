@@ -1,21 +1,15 @@
-import type { FunctionComponent, PropsWithChildren } from 'react'
+import { useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCommandRegistry } from '../../commands/registry.js'
-import { modules } from '../../modules/index.js'
 import type { FooterInsert } from '../../modules/types.js'
-
-const allInserts: readonly FooterInsert[] = modules.flatMap((module) => module.inserts?.footer ?? [])
-
-const insertsByPosition: Record<FooterInsert['position'], readonly FooterInsert[]> = {
-  start: allInserts.filter((insert) => insert.position === 'start'),
-  end: allInserts.filter((insert) => insert.position === 'end')
-}
+import { useModules } from '../../state/ModuleContext.js'
 
 export const Footer: FunctionComponent = () => {
   const { dispatchCommandById } = useCommandRegistry()
+  const inserts = useInsertsByPosition()
 
   return (
     <footer className='flex h-6 px-2 gap-2 items-center text-sm bg-surface-200 text-content-200 border-t border-t-frame-100 select-none'>
-      {insertsByPosition.start.map(({ commandId, Label }) => (
+      {inserts.start.map(({ commandId, Label }) => (
         <FooterButton key={commandId} onClick={() => dispatchCommandById(commandId)}>
           <Label />
         </FooterButton>
@@ -23,7 +17,7 @@ export const Footer: FunctionComponent = () => {
 
       <div className='flex-1' />
 
-      {insertsByPosition.end.map(({ commandId, Label }) => (
+      {inserts.end.map(({ commandId, Label }) => (
         <FooterButton key={commandId} onClick={() => dispatchCommandById(commandId)}>
           <Label />
         </FooterButton>
@@ -45,4 +39,16 @@ const FooterButton: FunctionComponent<PropsWithChildren<{
       {children}
     </button>
   )
+}
+
+function useInsertsByPosition (): Record<FooterInsert['position'], readonly FooterInsert[]> {
+  const modules = useModules()
+
+  return useMemo(() => {
+    const allInserts = modules.flatMap((module) => module.inserts?.footer ?? [])
+    return {
+      start: allInserts.filter((insert) => insert.position === 'start'),
+      end: allInserts.filter((insert) => insert.position === 'end')
+    }
+  }, [modules])
 }
