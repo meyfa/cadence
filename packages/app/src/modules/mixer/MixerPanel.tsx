@@ -172,9 +172,7 @@ const MixerNode: FunctionComponent<{
 
 const OutputNodeInfo: FunctionComponent = () => {
   return (
-    <>
-      <div>(Output)</div>
-    </>
+    <div>(Output)</div>
   )
 }
 

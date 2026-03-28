@@ -21,14 +21,10 @@ export interface LayoutNodeViewProps<TNode extends LayoutNode = LayoutNode> {
 export const LayoutNodeView: FunctionComponent<LayoutNodeViewProps> = ({ node, ...props }) => {
   // Each component should have a key attribute to reset state when switching nodes
 
-  if (node.type === 'pane') {
-    return (
-      <PaneNodeView key={node.id} {...props} node={node} />
-    )
+  switch (node.type) {
+    case 'pane':
+      return (<PaneNodeView key={node.id} {...props} node={node} />)
+    case 'split':
+      return (<SplitNodeView key={node.id} {...props} node={node} />)
   }
-
-  // node.type === 'split'
-  return (
-    <SplitNodeView key={node.id} {...props} node={node} />
-  )
 }

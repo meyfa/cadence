@@ -29,12 +29,9 @@ export const Dropdown: FunctionComponent<{
       )}
       disabled={disabled}
     >
-      {options.map((option) => (
-        <option
-          key={option.value}
-          value={option.value}
-        >
-          {option.label}
+      {options.map(({ label, value }) => (
+        <option key={value} value={value}>
+          {label}
         </option>
       ))}
     </Select>

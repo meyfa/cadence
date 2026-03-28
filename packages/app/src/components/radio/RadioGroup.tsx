@@ -6,11 +6,7 @@ export const RadioGroup: FunctionComponent<PropsWithChildren<{
   onChange: (value: string) => void
 }>> = ({ value, onChange, children }) => {
   return (
-    <HUIRadioGroup
-      value={value}
-      onChange={onChange}
-      className='flex flex-col gap-2'
-    >
+    <HUIRadioGroup value={value} onChange={onChange} className='flex flex-col gap-2'>
       {children}
     </HUIRadioGroup>
   )

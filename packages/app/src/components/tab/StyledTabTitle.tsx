@@ -18,23 +18,21 @@ export const StyledTabTitle: FunctionComponent<{
   selected?: boolean
   onClose?: () => void
 }> = ({ TitleComponent, NotificationsComponent, tab, closeable, disabled, selected, onClose }) => {
-  const closeButton = closeable && onClose != null
-    ? (
-        <button
-          type='button'
-          className={clsx(
-            'p-0.5 rounded text-content-50 cursor-default',
-            isMacOS ? '-ml-2' : '-mr-2',
-            selected ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
-            'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
-          )}
-          onClick={onClose}
-          aria-label='Close tab'
-        >
-          <Close className='text-base!' />
-        </button>
-      )
-    : null
+  const closeButton = closeable && onClose != null && (
+    <button
+      type='button'
+      className={clsx(
+        'p-0.5 rounded text-content-50 cursor-default',
+        isMacOS ? '-ml-2' : '-mr-2',
+        selected ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
+        'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
+      )}
+      onClick={onClose}
+      aria-label='Close tab'
+    >
+      <Close className='text-base!' />
+    </button>
+  )
 
   return (
     <div
