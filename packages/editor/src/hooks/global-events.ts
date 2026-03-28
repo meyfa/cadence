@@ -24,3 +24,13 @@ export function useGlobalMouseMove (handler: (event: MouseEvent) => void, deps: 
 export function useGlobalMouseUp (handler: (event: MouseEvent) => void, deps: DependencyList): void {
   useWindowEvent('mouseup', handler, deps)
 }
+
+export function useGlobalEscapePress (handler: (event: KeyboardEvent) => void, deps: DependencyList): void {
+  useGlobalKeydown((event) => {
+    const { code, ctrlKey, metaKey, shiftKey, altKey } = event
+
+    if (code === 'Escape' && !ctrlKey && !metaKey && !shiftKey && !altKey) {
+      handler(event)
+    }
+  }, deps)
+}

@@ -1,7 +1,7 @@
+import { useGlobalEscapePress, useGlobalMouseUp } from '@editor'
 import { Adjust } from '@mui/icons-material'
 import clsx from 'clsx'
 import React, { FunctionComponent, PropsWithChildren, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useGlobalKeydown, useGlobalMouseUp } from '../../hooks/input.js'
 import './Slider.css'
 
 export const Slider: FunctionComponent<PropsWithChildren<{
@@ -73,11 +73,11 @@ export const Slider: FunctionComponent<PropsWithChildren<{
     }
   }, [collapsible])
 
-  useGlobalKeydown((event) => {
-    if (event.key === 'Escape' && collapsible === true) {
+  useGlobalEscapePress(() => {
+    if (collapsible === true) {
       setCollapsed(true)
     }
-  }, [collapsible, collapsed])
+  }, [collapsible])
 
   if (collapsible === true && collapsed) {
     return (

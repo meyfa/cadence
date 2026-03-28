@@ -1,8 +1,8 @@
 import { calculateTotalLength, type BeatRange, type Part, type Program } from '@core'
+import { useGlobalMouseMove, useGlobalMouseUp } from '@editor'
 import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { useGlobalMouseMove, useGlobalMouseUp } from '../../hooks/input.js'
 import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/strings.js'
 import { Popover } from '../popover/Popover.js'
 

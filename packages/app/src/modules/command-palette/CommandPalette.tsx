@@ -1,13 +1,12 @@
 import type { Command, CommandId } from '@editor'
-import { convertCodeToKey, hasModifierKey, isFunctionKey, serializeKeyboardShortcut, useCommandRegistry, useRegisterCommand } from '@editor'
+import { useCommandRegistry, useGlobalEscapePress, useRegisterCommand } from '@editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
 import { ShortcutKeys } from '../../components/commands/ShortcutKeys.js'
-import { useGlobalKeydown } from '../../hooks/input.js'
 
 export const CommandPalette: FunctionComponent = () => {
-  const { commands, getCommandByShortcut } = useCommandRegistry()
+  const { commands } = useCommandRegistry()
 
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -82,29 +81,12 @@ export const CommandPalette: FunctionComponent = () => {
     }
   }, [dispatchCommandAndClose, searchResults])
 
-  useGlobalKeydown((event) => {
-    const { code, shiftKey: shift, altKey: alt } = event
-    const ctrl = event.ctrlKey || event.metaKey
-
-    const keyboardShortcut = serializeKeyboardShortcut({ code, ctrl, shift, alt })
-
-    if (open && keyboardShortcut === 'Escape') {
+  useGlobalEscapePress((event) => {
+    if (open) {
       event.preventDefault()
       hidePalette()
-      return
     }
-
-    // Avoid interfering with typing
-    if (!hasModifierKey(keyboardShortcut) && !isFunctionKey(convertCodeToKey(code))) {
-      return
-    }
-
-    const matchedCommand = getCommandByShortcut(keyboardShortcut)
-    if (matchedCommand != null) {
-      event.preventDefault()
-      dispatchCommandAndClose(matchedCommand)
-    }
-  }, [open, getCommandByShortcut, dispatchCommandAndClose, hidePalette])
+  }, [open, hidePalette])
 
   if (!open) {
     const shortcut = showCommand.keyboardShortcuts?.at(0)
