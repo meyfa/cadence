@@ -1,4 +1,4 @@
-import { BrowserLocalStorage, CommandRegistryProvider, DialogHost, DialogProvider, LayoutProvider, MenuProvider, ModuleHost, ModuleProvider, parseEditorState, serializeEditorState, type CadenceEditorState, type MenuId } from '@editor'
+import { BrowserLocalStorage, CommonProvider, DialogHost, ModuleHost, parseEditorState, serializeEditorState, type CadenceEditorState } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -29,17 +29,6 @@ const modules = [
   settingsModule,
   viewModule,
   timelineModule
-]
-
-const menus = [
-  {
-    id: 'file' as MenuId,
-    label: 'File'
-  },
-  {
-    id: 'view' as MenuId,
-    label: 'View'
-  }
 ]
 
 const compileOptions: CompileOptions = {
@@ -108,24 +97,16 @@ const root = createRoot(container)
 
 root.render(
   <StrictMode>
-    <LayoutProvider>
-      <DialogProvider>
-        <CommandRegistryProvider>
-          <MenuProvider menus={menus}>
-            <ModuleProvider modules={modules}>
-              <AudioEngineContext value={engine}>
-                <EditorProvider>
-                  <CompilationProvider compileOptions={compileOptions}>
-                    <App storage={storage} initialState={initialState} />
-                    <DialogHost />
-                    <ModuleHost />
-                  </CompilationProvider>
-                </EditorProvider>
-              </AudioEngineContext>
-            </ModuleProvider>
-          </MenuProvider>
-        </CommandRegistryProvider>
-      </DialogProvider>
-    </LayoutProvider>
+    <CommonProvider modules={modules}>
+      <AudioEngineContext value={engine}>
+        <EditorProvider>
+          <CompilationProvider compileOptions={compileOptions}>
+            <App storage={storage} initialState={initialState} />
+            <DialogHost />
+            <ModuleHost />
+          </CompilationProvider>
+        </EditorProvider>
+      </AudioEngineContext>
+    </CommonProvider>
   </StrictMode>
 )

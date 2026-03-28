@@ -72,9 +72,7 @@ export function useRegisterCommand (
   }, deps)
 
   // command object is expected to be stable (e.g. memoized)
-  useEffect(() => {
-    return registerCommand(instance)
-  }, [registerCommand, instance])
+  useEffect(() => registerCommand(instance), [registerCommand, instance])
 
   return instance
 }

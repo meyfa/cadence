@@ -32,6 +32,9 @@ export type { TabContentProps } from './layout/components/TabContent.js'
 export type * from './modules/types.js'
 export * from './modules/components/ModuleContext.js'
 
+// provider
+export * from './provider/CommonProvider.js'
+
 // state
 export * from './state/layout.js'
 export * from './state/settings.js'
