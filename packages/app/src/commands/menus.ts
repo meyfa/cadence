@@ -1,51 +1,12 @@
-import type { Brand } from '@utility'
 import { useMemo } from 'react'
+import { useMenuSpecs } from '../state/MenuContext.js'
 import { useModules } from '../state/ModuleContext.js'
-import type { CommandId } from './commands.js'
+import type { Menu, MenuId, MenuItem, MenuItemDefinition, MenuSection, MenuSectionDefinition, MenuSectionId } from './menu-types.js'
 
-export type MenuId = Brand<string, 'app.MenuId'>
-
-export interface Menu {
-  readonly id: MenuId
-  readonly label: string
-  readonly sections: readonly MenuSection[]
-}
-
-export type MenuSectionId = Brand<string, 'app.MenuSectionId'>
-
-export interface MenuSection {
-  readonly id: MenuSectionId
-  readonly items: readonly MenuItem[]
-}
-
-export interface MenuItem {
-  readonly commandId: CommandId
-  readonly label: string
-}
-
-export interface MenuSectionDefinition {
-  readonly id: MenuSectionId
-  readonly menuId: MenuId
-}
-
-export interface MenuItemDefinition extends MenuItem {
-  readonly sectionId: MenuSectionId
-  readonly commandId: CommandId
-  readonly label: string
-}
-
-const menuSpecs = [
-  {
-    id: 'file' as MenuId,
-    label: 'File'
-  },
-  {
-    id: 'view' as MenuId,
-    label: 'View'
-  }
-] as const
+export type { Menu, MenuId, MenuItem, MenuItemDefinition, MenuSection, MenuSectionDefinition, MenuSectionId } from './menu-types.js'
 
 export function useAppMenus (): readonly Menu[] {
+  const menuSpecs = useMenuSpecs()
   const modules = useModules()
 
   const sectionDefinitions = useMemo(() => {
@@ -65,7 +26,7 @@ export function useAppMenus (): readonly Menu[] {
       label: menu.label,
       sections: buildMenuSections(menu.id, sectionsById, itemDefinitions)
     })).filter((menu) => menu.sections.length > 0)
-  }, [sectionDefinitions, itemDefinitions])
+  }, [menuSpecs, sectionDefinitions, itemDefinitions])
 }
 
 function collectSections (
