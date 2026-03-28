@@ -1,3 +1,9 @@
+// commands
+export type * from './commands/commands.js'
+export * from './commands/menus.js'
+export * from './commands/components/CommandRegistryContext.js'
+export * from './commands/components/MenuContext.js'
+
 // editor
 export type * from './editor/types.js'
 export * from './editor/components/Editor.js'

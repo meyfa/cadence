@@ -1,6 +1,6 @@
-import { useSafeContext } from '@editor'
 import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
-import type { MenuSpec } from '../commands/menu-types.js'
+import { useSafeContext } from '../../hooks/safe-context.js'
+import type { MenuSpec } from '../menus.js'
 
 const MenuContext = createContext<readonly MenuSpec[] | undefined>([])
 

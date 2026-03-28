@@ -1,5 +1,5 @@
-import type { Command, CommandId } from '../../commands/commands.js'
-import type { MenuId, MenuSectionId } from '../../commands/menus.js'
+import type { Command, CommandId, MenuId, MenuSectionId } from '@editor'
+import type { CommandContext } from '../../commands.js'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
 import type { AppModule, AppModuleId } from '../types.js'
@@ -10,7 +10,7 @@ const viewMenuId = 'view' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
 const viewLayoutSectionId = 'view.layout' as MenuSectionId
 
-const layoutReset: Command = {
+const layoutReset: Command<CommandContext> = {
   id: `${moduleId}.reset` as CommandId,
   label: 'Layout: Reset to default',
   action: ({ layoutDispatch }) => {
@@ -18,7 +18,7 @@ const layoutReset: Command = {
   }
 }
 
-const themeDark: Command = {
+const themeDark: Command<CommandContext> = {
   id: `${moduleId}.theme.dark` as CommandId,
   label: 'Theme: Dark',
   action: () => {
@@ -26,7 +26,7 @@ const themeDark: Command = {
   }
 }
 
-const themeLight: Command = {
+const themeLight: Command<CommandContext> = {
   id: `${moduleId}.theme.light` as CommandId,
   label: 'Theme: Light',
   action: () => {
@@ -34,7 +34,7 @@ const themeLight: Command = {
   }
 }
 
-const themeSystem: Command = {
+const themeSystem: Command<CommandContext> = {
   id: `${moduleId}.theme.system` as CommandId,
   label: 'Theme: System',
   action: () => {

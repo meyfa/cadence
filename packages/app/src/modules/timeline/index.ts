@@ -1,7 +1,7 @@
 import { createAudioGraph } from '@audiograph'
+import type { Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
-import type { Command, CommandId } from '../../commands/commands.js'
-import type { MenuSectionId } from '../../commands/menus.js'
+import type { CommandContext } from '../../commands.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
@@ -11,7 +11,7 @@ export const timelinePanelId = `${moduleId}.timeline` as AppModulePanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewTimeline: Command = {
+const viewTimeline: Command<CommandContext> = {
   id: `${moduleId}.view.timeline` as CommandId,
   label: 'Show view: Timeline',
   action: ({ layoutDispatch }) => {
@@ -19,7 +19,7 @@ const viewTimeline: Command = {
   }
 }
 
-const togglePlayback: Command = {
+const togglePlayback: Command<CommandContext> = {
   id: `${moduleId}.playback.toggle` as CommandId,
   label: 'Playback: Toggle (play/stop)',
   keyboardShortcuts: [

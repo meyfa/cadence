@@ -1,17 +1,27 @@
+import type { CommandId, Menu, MenuId, MenuSection } from '@editor'
+import { useAppMenus, useCommandRegistry } from '@editor'
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
-import type { Command, CommandId } from '../../commands/commands.js'
-import { useAppMenus, type Menu, type MenuId, type MenuSection } from '../../commands/menus.js'
-import { useCommandRegistry } from '../../commands/registry.js'
+import { useTypedCommandDispatch, type DispatchCommand } from '../../commands.js'
+import { useModules } from '../../state/ModuleContext.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
-type DispatchCommand = (command: Command) => void
-
 export const MainMenu: FunctionComponent = () => {
-  const { dispatchCommand } = useCommandRegistry()
-  const appMenus = useAppMenus()
+  const modules = useModules()
+
+  const menuSections = useMemo(() => {
+    return modules.flatMap((module) => module.menu?.sections ?? [])
+  }, [modules])
+
+  const menuItems = useMemo(() => {
+    return modules.flatMap((module) => module.menu?.items ?? [])
+  }, [modules])
+
+  const appMenus = useAppMenus(menuSections, menuItems)
+
+  const { dispatchCommand } = useTypedCommandDispatch()
 
   return (
     <div className='relative'>
@@ -77,7 +87,7 @@ const MobileMenu: FunctionComponent<{
     setMobileMenuId(undefined)
   }, [])
 
-  const dispatchAndClose = useCallback((command: Command) => {
+  const dispatchAndClose = useCallback<DispatchCommand>((command) => {
     dispatch(command)
     close()
   }, [dispatch, close])

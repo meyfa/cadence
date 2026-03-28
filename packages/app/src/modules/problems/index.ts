@@ -1,6 +1,6 @@
+import type { Command, CommandId, MenuSectionId } from '@editor'
 import { activateTabOfType } from '@editor'
-import type { Command, CommandId } from '../../commands/commands.js'
-import type { MenuSectionId } from '../../commands/menus.js'
+import type { CommandContext } from '../../commands.js'
 import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
 import type { AppModule, AppModuleId, AppModulePanelId } from '../types.js'
@@ -11,7 +11,7 @@ export const problemsPanelId = `${moduleId}.problems` as AppModulePanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
-const viewProblems: Command = {
+const viewProblems: Command<CommandContext> = {
   id: `${moduleId}.view.problems` as CommandId,
   label: 'Show view: Problems',
   action: ({ layoutDispatch }) => {

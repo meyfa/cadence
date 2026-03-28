@@ -1,32 +1,60 @@
+import type { Brand } from '@utility'
 import { useMemo } from 'react'
-import { useMenuSpecs } from '../state/MenuContext.js'
-import { useModules } from '../state/ModuleContext.js'
-import type { Menu, MenuId, MenuItem, MenuItemDefinition, MenuSection, MenuSectionDefinition, MenuSectionId } from './menu-types.js'
+import type { CommandId } from './commands.js'
+import { useMenuSpecs } from './components/MenuContext.js'
 
-export type { Menu, MenuId, MenuItem, MenuItemDefinition, MenuSection, MenuSectionDefinition, MenuSectionId } from './menu-types.js'
+export type MenuId = Brand<string, 'editor.MenuId'>
 
-export function useAppMenus (): readonly Menu[] {
+export interface Menu {
+  readonly id: MenuId
+  readonly label: string
+  readonly sections: readonly MenuSection[]
+}
+
+export type MenuSectionId = Brand<string, 'editor.MenuSectionId'>
+
+export interface MenuSection {
+  readonly id: MenuSectionId
+  readonly items: readonly MenuItem[]
+}
+
+export interface MenuItem {
+  readonly commandId: CommandId
+  readonly label: string
+}
+
+export interface MenuSpec {
+  readonly id: MenuId
+  readonly label: string
+}
+
+export interface MenuSectionDefinition {
+  readonly id: MenuSectionId
+  readonly menuId: MenuId
+}
+
+export interface MenuItemDefinition extends MenuItem {
+  readonly sectionId: MenuSectionId
+  readonly commandId: CommandId
+  readonly label: string
+}
+
+export function useAppMenus (
+  sections: readonly MenuSectionDefinition[],
+  items: readonly MenuItemDefinition[]
+): readonly Menu[] {
   const menuSpecs = useMenuSpecs()
-  const modules = useModules()
-
-  const sectionDefinitions = useMemo(() => {
-    return modules.flatMap((module) => module.menu?.sections ?? [])
-  }, [modules])
-
-  const itemDefinitions = useMemo(() => {
-    return modules.flatMap((module) => module.menu?.items ?? [])
-  }, [modules])
 
   return useMemo(() => {
-    const sectionsById = collectSections(sectionDefinitions)
-    assertAllItemsTargetKnownSections(itemDefinitions, sectionsById)
+    const sectionsById = collectSections(sections)
+    assertAllItemsTargetKnownSections(items, sectionsById)
 
     return menuSpecs.map((menu) => ({
       id: menu.id,
       label: menu.label,
-      sections: buildMenuSections(menu.id, sectionsById, itemDefinitions)
+      sections: buildMenuSections(menu.id, sectionsById, items)
     })).filter((menu) => menu.sections.length > 0)
-  }, [menuSpecs, sectionDefinitions, itemDefinitions])
+  }, [menuSpecs, sections, items])
 }
 
 function collectSections (
