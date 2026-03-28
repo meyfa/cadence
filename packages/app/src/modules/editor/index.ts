@@ -1,10 +1,11 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import { activateTabOfType, useDialogService, useLayout, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useEditor } from '../../state/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
+import { LoadDemoDialog } from './LoadDemoDialog.js'
 
 const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
@@ -20,9 +21,11 @@ const fileSaveSectionId = 'file.save' as MenuSectionId
 const viewEditorId = `${moduleId}.view.editor` as CommandId
 const fileOpenId = `${moduleId}.file.open` as CommandId
 const fileSaveId = `${moduleId}.file.save` as CommandId
+const loadDemoId = `${moduleId}.load-demo` as CommandId
 
 const Commands: FunctionComponent = () => {
   const [, layoutDispatch] = useLayout()
+  const { showDialog } = useDialogService()
   const [editorState, editorDispatch] = useEditor()
 
   const editorRef = useRef({
@@ -82,6 +85,14 @@ const Commands: FunctionComponent = () => {
       })
     }
   }), [])
+
+  useRegisterCommand(() => ({
+    id: loadDemoId,
+    label: 'File: Load demo project',
+    run: () => {
+      showDialog(LoadDemoDialog, { editorPanelId })
+    }
+  }), [showDialog])
 
   return null
 }

@@ -1,33 +1,26 @@
-import type { PanelProps, ThemeSetting } from '@editor'
-import { CheckOutlined, GitHub, RestartAltOutlined } from '@mui/icons-material'
-import { useCallback, useState, type FunctionComponent } from 'react'
+import { useCommandRegistry, type CommandId, type PanelProps, type ThemeSetting } from '@editor'
+import { GitHub, RestartAltOutlined } from '@mui/icons-material'
+import type { FunctionComponent } from 'react'
 import { Button } from '../../components/button/Button.js'
 import { Card } from '../../components/card/Card.js'
-import { ConfirmationDialog } from '../../components/dialog/ConfirmationDialog.js'
 import { GainSlider } from '../../components/gain-slider/GainSlider.js'
 import { Radio } from '../../components/radio/Radio.js'
 import { RadioGroup } from '../../components/radio/RadioGroup.js'
-import { demoCode } from '../../defaults/demo-code.js'
 import { useObservable } from '../../hooks/observable.js'
 import { useAudioEngine } from '../../state/AudioEngineContext.js'
-import { useEditor } from '../../state/EditorContext.js'
 import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
 
 export const SettingsPanel: FunctionComponent<PanelProps> = () => {
+  const { getCommandById } = useCommandRegistry()
+
   const themeSetting = useThemeSetting()
   const systemTheme = useSystemTheme()
 
   const engine = useAudioEngine()
   const outputGain = useObservable(engine.outputGain)
 
-  const [, editorDispatch] = useEditor()
-  const [confirmLoadDemo, setConfirmLoadDemo] = useState(false)
-  const [demoLoaded, setDemoLoaded] = useState(false)
-
-  const onClickLoadDemo = useCallback(() => {
-    editorDispatch((state) => ({ ...state, code: demoCode }))
-    setDemoLoaded(true)
-  }, [editorDispatch])
+  // TODO do not hardcode command id
+  const loadDemoCommand = getCommandById('editor.load-demo' as CommandId)
 
   return (
     <div className='h-full overflow-auto p-4 text-content-300'>
@@ -53,35 +46,18 @@ export const SettingsPanel: FunctionComponent<PanelProps> = () => {
           </RadioGroup>
         </Card>
 
-        <Card title='Reset project'>
-          To delete your current project and load the demo project, click the button below.
+        {loadDemoCommand != null && (
+          <Card title='Reset project'>
+            To delete your current project and load the demo project, click the button below.
 
-          <div className='flex items-center gap-4'>
-            <Button onClick={() => setConfirmLoadDemo(true)}>
-              <RestartAltOutlined className='mr-2' />
-              Load demo project
-            </Button>
-
-            {demoLoaded && (
-              <div className='flex items-center gap-1'>
-                <CheckOutlined />
-                Done
-              </div>
-            )}
-          </div>
-
-          <ConfirmationDialog
-            open={confirmLoadDemo}
-            onConfirm={() => {
-              onClickLoadDemo()
-              setConfirmLoadDemo(false)
-            }}
-            onCancel={() => setConfirmLoadDemo(false)}
-            title='Load demo project?'
-          >
-            This will delete your current project. Continue?
-          </ConfirmationDialog>
-        </Card>
+            <div className='flex items-center gap-4'>
+              <Button onClick={() => loadDemoCommand.run()}>
+                <RestartAltOutlined className='mr-2' />
+                Load demo project
+              </Button>
+            </div>
+          </Card>
+        )}
 
         <Card title='About Cadence'>
           <a href='https://github.com/meyfa/cadence' target='_blank' rel='noreferrer' className='outline-none hocus:underline text-content-200 hocus:text-content-300'>
