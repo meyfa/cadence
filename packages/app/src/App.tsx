@@ -1,5 +1,5 @@
-import type { CadenceEditorState, DockLayoutStyles, Module, Panel, PanelId, PartialCadenceEditorState, Storage, Tab, TabContentProps, TabTitleProps } from '@editor'
-import { DockLayoutView, useLayout, useModules } from '@editor'
+import type { CadenceEditorState, DockLayoutStyles, MenuId, MenuSpec, Module, Panel, PanelId, PartialCadenceEditorState, Storage, Tab, TabContentProps, TabTitleProps } from '@editor'
+import { DockLayoutView, useLayout, useModules, useRegisterMenu } from '@editor'
 import { FunctionComponent, useCallback, useMemo } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
@@ -8,6 +8,16 @@ import { Logo } from './components/logo/Logo.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { StyledTabTitle } from './components/tab/StyledTabTitle.js'
 import { useStorageSync } from './hooks/storage.js'
+
+const fileMenu: MenuSpec = {
+  id: 'file' as MenuId,
+  label: 'File'
+}
+
+const viewMenu: MenuSpec = {
+  id: 'view' as MenuId,
+  label: 'View'
+}
 
 const dockLayoutStyles: DockLayoutStyles = {
   highlightColor: 'var(--color-accent-200)',
@@ -24,6 +34,9 @@ export const App: FunctionComponent<{
 
   const [layout, layoutDispatch] = useLayout()
   const onBeforeTabClose = useOnBeforeTabClose()
+
+  useRegisterMenu(fileMenu)
+  useRegisterMenu(viewMenu)
 
   return (
     <>
