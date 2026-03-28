@@ -1,10 +1,9 @@
-import type { Command, CommandId, MenuId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
 import type { CommandContext } from '../../commands.js'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
-import type { AppModule, AppModuleId } from '../types.js'
 
-const moduleId = 'view' as AppModuleId
+const moduleId = 'view' as ModuleId
 
 const viewMenuId = 'view' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
@@ -42,7 +41,7 @@ const themeSystem: Command<CommandContext> = {
   }
 }
 
-export const viewModule: AppModule = {
+export const viewModule: Module<CommandContext> = {
   id: moduleId,
 
   commands: [

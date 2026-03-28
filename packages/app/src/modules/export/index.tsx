@@ -1,9 +1,8 @@
-import type { Command, CommandId, MenuId, MenuSectionId } from '@editor'
+import type { Module, ModuleId, Command, CommandId, MenuId, MenuSectionId } from '@editor'
 import type { CommandContext } from '../../commands.js'
-import type { AppModule, AppModuleId } from '../types.js'
 import { ExportDialog } from './ExportDialog.js'
 
-const moduleId = 'export' as AppModuleId
+const moduleId = 'export' as ModuleId
 
 const fileMenuId = 'file' as MenuId
 const fileExportSectionId = 'file.export' as MenuSectionId
@@ -19,7 +18,7 @@ const exportAudio: Command<CommandContext> = {
   }
 }
 
-export const exportModule: AppModule = {
+export const exportModule: Module<CommandContext> = {
   id: moduleId,
 
   commands: [

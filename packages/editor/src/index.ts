@@ -23,6 +23,10 @@ export * from './layout/components/DockLayoutView.js'
 export type { TabTitleProps } from './layout/components/TabTitle.js'
 export type { TabContentProps } from './layout/components/TabContent.js'
 
+// modules
+export type * from './modules/types.js'
+export * from './modules/components/ModuleContext.js'
+
 // state
 export * from './state/layout.js'
 export * from './state/settings.js'

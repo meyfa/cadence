@@ -5,21 +5,10 @@ import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useTypedCommandDispatch, type DispatchCommand } from '../../commands.js'
-import { useModules } from '../../state/ModuleContext.js'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
 export const MainMenu: FunctionComponent = () => {
-  const modules = useModules()
-
-  const menuSections = useMemo(() => {
-    return modules.flatMap((module) => module.menu?.sections ?? [])
-  }, [modules])
-
-  const menuItems = useMemo(() => {
-    return modules.flatMap((module) => module.menu?.items ?? [])
-  }, [modules])
-
-  const appMenus = useAppMenus(menuSections, menuItems)
+  const appMenus = useAppMenus()
 
   const { dispatchCommand } = useTypedCommandDispatch()
 

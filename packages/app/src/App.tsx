@@ -1,5 +1,5 @@
-import type { CadenceEditorState, DockLayoutStyles, PartialCadenceEditorState, Storage, Tab, TabContentProps, TabTitleProps } from '@editor'
-import { DockLayoutView, useLayout } from '@editor'
+import type { CadenceEditorState, DockLayoutStyles, Module, Panel, PanelId, PartialCadenceEditorState, Storage, Tab, TabContentProps, TabTitleProps } from '@editor'
+import { DockLayoutView, useLayout, useModules } from '@editor'
 import { FunctionComponent, useCallback, useMemo } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
@@ -8,8 +8,6 @@ import { Logo } from './components/logo/Logo.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { StyledTabTitle } from './components/tab/StyledTabTitle.js'
 import { useStorageSync } from './hooks/storage.js'
-import type { AppModule, AppModulePanel, AppModulePanelId } from './modules/types.js'
-import { useModules } from './state/ModuleContext.js'
 
 const dockLayoutStyles: DockLayoutStyles = {
   highlightColor: 'var(--color-accent-200)',
@@ -64,13 +62,13 @@ function useOnBeforeTabClose (): (tab: Tab) => boolean {
   const modules = useModules()
 
   return useCallback((tab: Tab) => {
-    const panel = findPanelById(modules, tab.component.type as AppModulePanelId)
+    const panel = findPanelById(modules, tab.component.type as PanelId)
     return panel?.closeable ?? false
   }, [modules])
 }
 
 const RenderTabTitle: FunctionComponent<TabTitleProps> = ({ tab, ...props }) => {
-  const panel = usePanelById(tab.component.type as AppModulePanelId)
+  const panel = usePanelById(tab.component.type as PanelId)
 
   return (
     <StyledTabTitle
@@ -84,7 +82,7 @@ const RenderTabTitle: FunctionComponent<TabTitleProps> = ({ tab, ...props }) => 
 }
 
 const RenderTabContent: FunctionComponent<TabContentProps> = ({ tab }) => {
-  const panel = usePanelById(tab.component.type as AppModulePanelId)
+  const panel = usePanelById(tab.component.type as PanelId)
 
   if (panel == null) {
     return (
@@ -100,7 +98,7 @@ const RenderTabContent: FunctionComponent<TabContentProps> = ({ tab }) => {
 const EmptyStringComponent = () => ''
 const NullComponent = () => null
 
-function findPanelById (modules: readonly AppModule[], id: AppModulePanelId): AppModulePanel | undefined {
+function findPanelById (modules: readonly Module[], id: PanelId): Panel | undefined {
   for (const module of modules) {
     for (const panel of module.panels ?? []) {
       if (panel.id === id) {
@@ -111,7 +109,7 @@ function findPanelById (modules: readonly AppModule[], id: AppModulePanelId): Ap
   return undefined
 }
 
-function usePanelById (id: AppModulePanelId): AppModulePanel | undefined {
+function usePanelById (id: PanelId): Panel | undefined {
   const modules = useModules()
 
   return useMemo(() => findPanelById(modules, id), [modules, id])
