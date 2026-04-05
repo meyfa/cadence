@@ -84,7 +84,8 @@ export function createTab (layout: DockLayout, component: SerializedComponent): 
 
     return {
       ...layout,
-      main: newPane
+      main: newPane,
+      focusedTabId: tab.id
     }
   }
 
@@ -97,7 +98,7 @@ export function createTab (layout: DockLayout, component: SerializedComponent): 
         activeTabId: tab.id
       }
     ]
-  ]))
+  ]), { focusTabId: tab.id })
 }
 
 export function removeTabFromPane (layout: DockLayout, tabId: TabId): DockLayout {
@@ -136,7 +137,7 @@ export function activateTabInPane (layout: DockLayout, tabId: TabId): DockLayout
         activeTabId: tabId
       }
     ]
-  ]), { normalize: false })
+  ]), { normalize: false, focusTabId: tabId })
 }
 
 export function moveTabIntoPane (layout: DockLayout, tabId: TabId, targetNodeId: LayoutNodeId): DockLayout {
@@ -170,7 +171,7 @@ export function moveTabIntoPane (layout: DockLayout, tabId: TabId, targetNodeId:
         activeTabId: tabId
       }
     ]
-  ]))
+  ]), { focusTabId: tabId })
 }
 
 export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
@@ -194,7 +195,7 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
           activeTabId: tabId
         }
       ]
-    ]))
+    ]), { focusTabId: tabId })
   }
 
   return updateNodesInLayout(layout, new Map([
@@ -213,7 +214,7 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
         activeTabId: tabId
       }
     ]
-  ]))
+  ]), { focusTabId: tabId })
 }
 
 export type SplitPlacement = 'north' | 'south' | 'east' | 'west'
@@ -269,34 +270,51 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
         children: isBefore ? [newPaneNode, siblingNode] : [siblingNode, newPaneNode]
       }
     ]
-  ]))
+  ]), { focusTabId: tab.id })
+}
+
+export function updateFocusedTab (layout: DockLayout, tabId: TabId): DockLayout {
+  return updateNodesInLayout(layout, new Map(), { focusTabId: tabId })
 }
 
 type NodeUpdates = ReadonlyMap<LayoutNodeId, LayoutNode>
 
 interface NodeUpdateOptions {
   readonly normalize?: boolean
+  readonly focusTabId?: TabId
 }
 
 function updateNodesInLayout (layout: DockLayout, updates: NodeUpdates, options?: NodeUpdateOptions): DockLayout {
   const applied = new Set<LayoutNodeId>()
+  const tabIds = new Set<TabId>()
 
   const updateNode = (node: LayoutNode): LayoutNode => {
     const updatedNode = applied.has(node.id) ? node : (updates.get(node.id) ?? node)
     applied.add(node.id)
 
     switch (updatedNode.type) {
-      case 'pane':
+      case 'pane': {
+        for (const tab of updatedNode.tabs) {
+          tabIds.add(tab.id)
+        }
         return updatedNode
-      case 'split':
+      }
+
+      case 'split': {
         return { ...updatedNode, children: updatedNode.children.map(updateNode) }
+      }
     }
   }
 
-  const updatedLayout = {
-    ...layout,
-    main: layout.main != null ? updateNode(layout.main) : undefined
-  }
+  const main = layout.main != null ? updateNode(layout.main) : undefined
+
+  const hasPreviouslyFocusedTab = layout.focusedTabId != null && tabIds.has(layout.focusedTabId)
+  const hasNewFocusedTab = options?.focusTabId != null && tabIds.has(options.focusTabId)
+
+  const focusedTabId = (hasNewFocusedTab ? options.focusTabId : undefined) ??
+    (hasPreviouslyFocusedTab ? layout.focusedTabId : undefined)
+
+  const updatedLayout = { ...layout, main, focusedTabId }
 
   return options?.normalize === false ? updatedLayout : normalizeLayout(updatedLayout)
 }

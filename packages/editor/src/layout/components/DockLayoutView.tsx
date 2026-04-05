@@ -175,7 +175,7 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
           modifiers={[snapOverlayTopLeftToCursor]}
           style={{ pointerEvents: 'none', opacity: DRAGGED_TAB_OPACITY }}
         >
-          <TabTitleComponent tab={draggedTab} disabled selected />
+          <TabTitleComponent tab={draggedTab} state='dragging' />
         </DragOverlay>
       )}
     </DndContext>

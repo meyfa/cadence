@@ -32,7 +32,8 @@ const splitNode: Struct<SplitNode> = type({
 const layoutNode: Struct<LayoutNode> = union([paneNode, splitNode])
 
 export const dockLayoutSchema: Struct<DockLayout> = type({
-  main: optional(layoutNode)
+  main: optional(layoutNode),
+  focusedTabId: optional(brandedString<TabId>())
 })
 
 export function validateDockLayout (data: unknown): StructValidation<DockLayout> {

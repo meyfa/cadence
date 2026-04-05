@@ -7,22 +7,25 @@ const MOUSE_BUTTON_MIDDLE = 1
 
 export interface TabTitleProps {
   readonly tab: Tab
-  readonly disabled?: boolean
-  readonly selected?: boolean
+  readonly state: 'inactive' | 'active' | 'focused' | 'dragging'
   readonly onClose?: () => void
 }
 
 export const TabTitle: FunctionComponent<TabTitleProps & {
   TabTitleComponent: ComponentType<TabTitleProps>
   dropIndicatorColor: string
+  onTabFocus?: () => void
 }> = ({
   TabTitleComponent,
   dropIndicatorColor,
   tab,
-  disabled,
-  onClose
+  state,
+  onClose,
+  onTabFocus
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging, isOver, isSorting } = useSortable({ id: tab.id })
+
+  const disabled = isSorting || state === 'dragging'
 
   const showDropIndicator = isOver && !isDragging
   const dropIndicatorOnRightSide = showDropIndicator && (transform?.x ?? 0) < 0
@@ -62,32 +65,34 @@ export const TabTitle: FunctionComponent<TabTitleProps & {
   }, [disabled, onClose])
 
   return (
-    <HUITab as='div' ref={setNodeRef} {...attributes} {...listeners} style={{ position: 'relative', outline: 'none' }}>
-      {({ selected }) => (
-        <>
-          <div onMouseDown={onMouseDown} onMouseUp={onMouseUp}>
-            <TabTitleComponent
-              tab={tab}
-              disabled={disabled === true || isSorting}
-              selected={selected}
-              onClose={onClose}
-            />
-          </div>
+    <HUITab
+      as='div'
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onFocusCapture={disabled ? undefined : onTabFocus}
+      style={{ position: 'relative', outline: 'none', pointerEvents: disabled ? 'none' : undefined }}
+    >
+      <div onMouseDown={onMouseDown} onMouseUp={onMouseUp}>
+        <TabTitleComponent
+          tab={tab}
+          state={state}
+          onClose={onClose}
+        />
+      </div>
 
-          <div
-            style={{
-              display: showDropIndicator ? 'block' : 'none',
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: dropIndicatorOnRightSide ? undefined : 0,
-              right: dropIndicatorOnRightSide ? 0 : undefined,
-              width: '0.125rem',
-              backgroundColor: dropIndicatorColor
-            }}
-          />
-        </>
-      )}
+      <div
+        style={{
+          display: showDropIndicator ? 'block' : 'none',
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: dropIndicatorOnRightSide ? undefined : 0,
+          right: dropIndicatorOnRightSide ? 0 : undefined,
+          width: '0.125rem',
+          backgroundColor: dropIndicatorColor
+        }}
+      />
     </HUITab>
   )
 }

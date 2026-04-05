@@ -1,7 +1,7 @@
-import type { ModuleRenderFn, PanelProps, Tab } from '@editor'
+import type { ModuleRenderFn, PanelProps, TabTitleProps } from '@editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
-import { type FunctionComponent } from 'react'
+import type { FunctionComponent } from 'react'
 
 const isMacOS = (
   'userAgentData' in navigator
@@ -9,22 +9,23 @@ const isMacOS = (
     : navigator.userAgent
 ).toLowerCase().includes('mac')
 
-export const StyledTabTitle: FunctionComponent<{
+export const StyledTabTitle: FunctionComponent<Pick<TabTitleProps, 'tab' | 'state' | 'onClose'> & {
   TitleComponent: ModuleRenderFn<PanelProps, string>
   NotificationsComponent: ModuleRenderFn<PanelProps, number | null>
-  tab: Tab
   closeable: boolean
-  disabled?: boolean
-  selected?: boolean
-  onClose?: () => void
-}> = ({ TitleComponent, NotificationsComponent, tab, closeable, disabled, selected, onClose }) => {
+}> = ({ tab, state, onClose, TitleComponent, NotificationsComponent, closeable }) => {
+  const dragging = state === 'dragging'
+  const focused = state === 'focused' || dragging
+  const active = state === 'active' || focused
+
   const closeButton = closeable && onClose != null && (
     <button
       type='button'
       className={clsx(
-        'p-0.5 rounded text-content-50 cursor-default',
+        'p-0.5 rounded cursor-default',
         isMacOS ? '-ml-2' : '-mr-2',
-        selected ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
+        active ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
+        focused ? 'text-content-300' : 'text-content-50',
         'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
       )}
       onClick={onClose}
@@ -38,10 +39,11 @@ export const StyledTabTitle: FunctionComponent<{
     <div
       className={clsx(
         'group select-none flex items-center gap-2 px-4 h-7 text-sm font-semibold leading-none border-t-2 border-r border-r-surface-100',
-        disabled ? 'pointer-events-none' : 'cursor-pointer',
-        selected
-          ? 'bg-surface-300 border-t-accent-200 text-content-300'
-          : 'bg-surface-200 border-t-transparent text-content-200 hocus:bg-surface-300 hocus:text-content-300'
+        dragging ? 'pointer-events-none' : 'cursor-pointer',
+        active
+          ? 'bg-surface-300 text-content-300'
+          : 'bg-surface-200 text-content-200 hocus:bg-surface-300 hocus:text-content-300',
+        focused ? 'border-t-accent-200' : 'border-t-transparent'
       )}
     >
       {isMacOS && closeButton}

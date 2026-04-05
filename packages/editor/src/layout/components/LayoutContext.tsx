@@ -13,7 +13,7 @@ function layoutReducer (state: DockLayout, action: SetStateAction<DockLayout>): 
 export type LayoutDispatch = Dispatch<SetStateAction<DockLayout>>
 export type LayoutNodeDispatch = Dispatch<SetStateAction<LayoutNode>>
 
-export function useLayoutNodeDispatch (parent: LayoutDispatch, child: keyof DockLayout): LayoutNodeDispatch {
+export function useLayoutNodeDispatch (parent: LayoutDispatch, child: keyof Pick<DockLayout, 'main'>): LayoutNodeDispatch {
   return useCallback((action: SetStateAction<LayoutNode>) => {
     parent((layout) => {
       if (layout[child] == null) {

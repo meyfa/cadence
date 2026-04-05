@@ -32,5 +32,6 @@ export const defaultLayout: DockLayout = {
         activeTabId: 'timeline' as TabId
       }
     ]
-  }
+  },
+  focusedTabId: 'editor' as TabId
 }
