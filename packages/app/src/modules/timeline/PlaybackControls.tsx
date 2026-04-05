@@ -5,8 +5,8 @@ import { Button } from '../../components/button/Button.js'
 import { GainSlider } from '../../components/gain-slider/GainSlider.js'
 import { useObservable } from '../../hooks/observable.js'
 import { usePrevious } from '../../hooks/previous.js'
-import { useAudioEngine } from '../../state/AudioEngineContext.js'
-import { useCompilationState } from '../../state/CompilationContext.js'
+import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
+import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 
 export const PlaybackControls: FunctionComponent = () => {
   const { program } = useCompilationState()

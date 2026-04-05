@@ -1,9 +1,10 @@
-import type { CadenceEditorState, PartialCadenceEditorState, Storage } from '@editor'
 import { useLayout } from '@editor'
 import { numeric } from '@utility'
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
-import { useAudioEngine } from '../state/AudioEngineContext.js'
-import { useEditor } from '../state/EditorContext.js'
+import { useAudioEngine } from '../components/contexts/AudioEngineContext.js'
+import { useEditor } from '../components/contexts/EditorContext.js'
+import type { CadenceEditorState, PartialCadenceEditorState } from '../state/state.js'
+import type { Storage } from '../state/storage.js'
 import { applyThemeSetting, useThemeSetting } from '../theme.js'
 import { useObservable } from './observable.js'
 

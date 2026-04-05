@@ -3,7 +3,7 @@ import { Editor, type EditorLocation, type PanelProps } from '@editor'
 import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import { numeric } from '@utility'
 import { useCallback, type FunctionComponent } from 'react'
-import { useEditor } from '../../state/EditorContext.js'
+import { useEditor } from '../../components/contexts/EditorContext.js'
 import { useEffectiveTheme } from '../../theme.js'
 
 const indent = '  ' // 2 spaces

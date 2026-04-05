@@ -1,5 +1,5 @@
+import type { DockLayout } from '@editor'
 import { optional, string, type, type Struct } from 'superstruct'
-import type { DockLayout } from '../layout/types.js'
 import { dockLayoutSchema } from './layout.js'
 import { partialSettingsSchema, type Settings } from './settings.js'
 import type { StructValidation } from './validation.js'

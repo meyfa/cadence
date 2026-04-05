@@ -2,7 +2,7 @@ import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from
 import { activateTabOfType, useDialogService, useLayout, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
-import { useEditor } from '../../state/EditorContext.js'
+import { useEditor } from '../../components/contexts/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
 import { LoadDemoDialog } from './LoadDemoDialog.js'

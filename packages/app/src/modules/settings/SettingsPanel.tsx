@@ -1,13 +1,14 @@
-import { useCommandRegistry, type CommandId, type PanelProps, type ThemeSetting } from '@editor'
+import { useCommandRegistry, type CommandId, type PanelProps } from '@editor'
 import { GitHub, RestartAltOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Button } from '../../components/button/Button.js'
 import { Card } from '../../components/card/Card.js'
+import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { GainSlider } from '../../components/gain-slider/GainSlider.js'
 import { Radio } from '../../components/radio/Radio.js'
 import { RadioGroup } from '../../components/radio/RadioGroup.js'
 import { useObservable } from '../../hooks/observable.js'
-import { useAudioEngine } from '../../state/AudioEngineContext.js'
+import type { ThemeSetting } from '../../state/settings.js'
 import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
 
 export const SettingsPanel: FunctionComponent<PanelProps> = () => {

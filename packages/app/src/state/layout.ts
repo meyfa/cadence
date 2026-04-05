@@ -1,5 +1,5 @@
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, SplitOrientation, Tab, TabId } from '@editor'
 import { array, enums, lazy, literal, number, optional, record, string, type, union, unknown, type Struct } from 'superstruct'
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, SplitOrientation, Tab, TabId } from '../layout/types.js'
 import { brandedString, readonly, type StructValidation } from './validation.js'
 
 const splitOrientation: Struct<SplitOrientation> = enums(['horizontal', 'vertical'])

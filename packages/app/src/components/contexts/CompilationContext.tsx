@@ -1,7 +1,7 @@
 import { useSafeContext } from '@editor'
 import type { CompileOptions } from '@language'
 import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useCompiler, type CompileResult } from '../hooks/compiler.js'
+import { useCompiler, type CompileResult } from '../../hooks/compiler.js'
 import { useEditor } from './EditorContext.js'
 
 export type CompilationState = CompileResult

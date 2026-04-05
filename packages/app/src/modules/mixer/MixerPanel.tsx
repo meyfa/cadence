@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Popover } from '../../components/popover/Popover.js'
 import { usePrevious } from '../../hooks/previous.js'
-import { useCompilationState } from '../../state/CompilationContext.js'
+import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { pluralize } from '../../utilities/strings.js'
 import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from './flowchart.js'
 
