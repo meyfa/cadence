@@ -1,7 +1,7 @@
 import { RangeError } from '@language'
 import { useMemo } from 'react'
-import { useAudioEngine } from '../state/AudioEngineContext.js'
-import { useCompilationState } from '../state/CompilationContext.js'
+import { useAudioEngine } from '../components/contexts/AudioEngineContext.js'
+import { useCompilationState } from '../components/contexts/CompilationContext.js'
 import { useObservable } from './observable.js'
 
 export interface Problem {

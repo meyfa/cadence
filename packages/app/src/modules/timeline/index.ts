@@ -4,8 +4,8 @@ import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@edito
 import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { usePrevious } from '../../hooks/previous.js'
-import { useAudioEngine } from '../../state/AudioEngineContext.js'
-import { useCompilationState } from '../../state/CompilationContext.js'
+import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
+import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 

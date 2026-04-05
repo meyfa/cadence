@@ -2,7 +2,7 @@ import { activateTabOfType, useLayout, type DialogComponentProps, type PanelId }
 import { useCallback, type FunctionComponent } from 'react'
 import { ConfirmationDialog } from '../../components/dialog/ConfirmationDialog.js'
 import { demoCode } from '../../defaults/demo-code.js'
-import { useEditor } from '../../state/EditorContext.js'
+import { useEditor } from '../../components/contexts/EditorContext.js'
 
 export const LoadDemoDialog: FunctionComponent<DialogComponentProps & {
   editorPanelId: PanelId

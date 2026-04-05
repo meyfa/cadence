@@ -1,4 +1,4 @@
-import type { ThemeSetting } from '@editor'
+import type { ThemeSetting } from './state/settings.js'
 import { numeric } from '@utility'
 import { useEffect, useState } from 'react'
 

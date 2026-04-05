@@ -1,4 +1,4 @@
-import type { CadenceEditorState, DockLayoutStyles, MenuId, MenuSpec, Module, Panel, PanelId, PartialCadenceEditorState, Storage, Tab, TabContentProps, TabTitleProps } from '@editor'
+import type { DockLayoutStyles, MenuId, MenuSpec, Module, Panel, PanelId, Tab, TabContentProps, TabTitleProps } from '@editor'
 import { DockLayoutView, useLayout, useModules, useRegisterMenu } from '@editor'
 import { FunctionComponent, useCallback, useMemo } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
@@ -8,6 +8,8 @@ import { Logo } from './components/logo/Logo.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { StyledTabTitle } from './components/tab/StyledTabTitle.js'
 import { useStorageSync } from './hooks/storage.js'
+import type { CadenceEditorState, PartialCadenceEditorState } from './state/state.js'
+import type { Storage } from './state/storage.js'
 
 const fileMenu: MenuSpec = {
   id: 'file' as MenuId,
