@@ -6,20 +6,23 @@ import { createWebAudioGraph } from '../graph/graph.js'
 import { createOfflineTransport } from '../transport/transport.js'
 
 export interface AudioRendererOptions {
-  readonly channels: number
-  readonly sampleRate: number
   readonly assetLoadTimeout: Numeric<'s'>
   readonly cacheLimits: CacheLimits
-  readonly onProgress?: (progress: number) => void
-}
-
-export interface AudioRenderResult {
-  readonly errors: readonly Error[]
-  readonly audioBuffer?: AudioBuffer
 }
 
 export interface AudioRenderer {
-  readonly render: (graph: AudioGraph<Node>) => Promise<AudioRenderResult>
+  readonly render: (graph: AudioGraph<Node>, options: RenderOptions) => Promise<RenderResult>
+}
+
+export interface RenderOptions {
+  readonly channels: number
+  readonly sampleRate: number
+  readonly onProgress?: (progress: number) => void
+}
+
+export interface RenderResult {
+  readonly errors: readonly Error[]
+  readonly audioBuffer?: AudioBuffer
 }
 
 export function createAudioRenderer (options: AudioRendererOptions): AudioRenderer {
@@ -29,7 +32,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
   })
 
   return {
-    render: async (graph) => {
+    render: async (graph, options) => {
       const disposeStack = new DisposeStack()
 
       const duration = beatsToSeconds(graph.length, graph.tempo)
