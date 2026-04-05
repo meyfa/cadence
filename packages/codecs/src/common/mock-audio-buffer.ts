@@ -1,4 +1,4 @@
-import type { AudioBufferLike } from './common.js'
+import type { AudioBufferLike } from './types.js'
 
 export class MockAudioBuffer implements AudioBufferLike {
   readonly sampleRate: number

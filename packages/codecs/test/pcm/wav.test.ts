@@ -1,11 +1,11 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { AudioDescription } from '../src/common.js'
-import { MockAudioBuffer } from '../src/mock-audio-buffer.js'
-import { encodeWAV, estimateWAVSize } from '../src/wav.js'
+import { MockAudioBuffer } from '../../src/common/mock-audio-buffer.js'
+import type { AudioDescription } from '../../src/common/types.js'
+import { encodeWAV, estimateWAVSize } from '../../src/pcm/wav.js'
 
-describe('wav.ts', () => {
+describe('pcm/wav.ts', () => {
   it('estimates file size correctly', () => {
     const stereo10s: AudioDescription = {
       numberOfChannels: 2,

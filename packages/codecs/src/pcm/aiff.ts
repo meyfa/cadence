@@ -1,5 +1,5 @@
 import { numeric, type Numeric } from '@utility'
-import type { AudioBufferLike, AudioDescription } from './common.js'
+import type { AudioBufferLike, AudioDescription } from '../common/types.js'
 import { getBitsPerSample, writeAudioData, writeExtended80, writeStringData, writeUint16BE, writeUint32BE, type FloatSampleBits, type PCMFormat, type PCMSampleBits } from './pcm-io.js'
 
 export type AIFFFormat = `pcm${PCMSampleBits}` | `float${FloatSampleBits}`
