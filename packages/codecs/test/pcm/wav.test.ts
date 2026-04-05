@@ -1,7 +1,7 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { MockAudioBuffer } from '../../src/common/mock-audio-buffer.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
 import type { AudioDescription } from '../../src/common/types.js'
 import { encodeWAV, estimateWAVSize } from '../../src/pcm/wav.js'
 
@@ -20,7 +20,7 @@ describe('pcm/wav.ts', () => {
 
   it('encodes pcm16 correctly', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeWAV(audio as any, { format: 'pcm16' })
 
     assert.strictEqual(buf.byteLength, 44 + samples.length * 2)
@@ -53,7 +53,7 @@ describe('pcm/wav.ts', () => {
 
   it('encodes pcm24 correctly', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeWAV(audio as any, { format: 'pcm24' })
 
     assert.strictEqual(buf.byteLength, 44 + samples.length * 3)
@@ -86,7 +86,7 @@ describe('pcm/wav.ts', () => {
 
   it('encodes pcm32 correctly', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeWAV(audio as any, { format: 'pcm32' })
 
     assert.strictEqual(buf.byteLength, 44 + samples.length * 4)
@@ -119,7 +119,7 @@ describe('pcm/wav.ts', () => {
 
   it('encodes float32 correctly', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeWAV(audio as any, { format: 'float32' })
 
     assert.strictEqual(buf.byteLength, 44 + samples.length * 4)
@@ -148,7 +148,7 @@ describe('pcm/wav.ts', () => {
   it('encodes stereo float32 interleaved correctly', () => {
     const left = new Float32Array([1.0, -1.0])
     const right = new Float32Array([0.5, -0.5])
-    const audio = new MockAudioBuffer(44_100, [left, right])
+    const audio = new SimpleAudioBuffer(44_100, [left, right])
     const buf = encodeWAV(audio as any, { format: 'float32' })
 
     const view = new DataView(buf)
@@ -162,7 +162,7 @@ describe('pcm/wav.ts', () => {
 
   it('handles exact +1.0 and -1.0 boundaries for pcm formats', () => {
     const samples = new Float32Array([1.0, -1.0])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
 
     const buf16 = encodeWAV(audio as any, { format: 'pcm16' })
     assert.deepStrictEqual(new Uint8Array(buf16.slice(44, 48)), new Uint8Array([
@@ -185,7 +185,7 @@ describe('pcm/wav.ts', () => {
 
   it('handles NaN and Infinity values predictably', () => {
     const samples = new Float32Array([Number.NaN, Infinity, -Infinity])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
 
     // Integer formats: NaN -> 0, Infinity -> clamped to +1, -Infinity -> clamped to -1
     const buf16 = encodeWAV(audio as any, { format: 'pcm16' })
@@ -205,7 +205,7 @@ describe('pcm/wav.ts', () => {
 
   it('encodes zero-length buffers correctly', () => {
     const samples = new Float32Array([])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeWAV(audio as any, { format: 'pcm16' })
 
     assert.strictEqual(buf.byteLength, 44)
