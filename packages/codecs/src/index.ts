@@ -1,4 +1,4 @@
-export type * from './common.js'
-export * from './mock-audio-buffer.js'
-export * from './wav.js'
-export * from './aiff.js'
+export type * from './common/types.js'
+export * from './common/mock-audio-buffer.js'
+export * from './pcm/wav.js'
+export * from './pcm/aiff.js'

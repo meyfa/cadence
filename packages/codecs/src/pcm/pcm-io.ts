@@ -1,4 +1,4 @@
-import type { AudioBufferLike } from './common.js'
+import type { AudioBufferLike } from '../common/types.js'
 
 /**
  * Write an entity to a DataView at the given offset, and return the number of bytes written.
