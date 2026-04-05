@@ -1,6 +1,7 @@
 import { createAudioGraph } from '@audiograph'
-import { AIFFFormat, WAVFormat } from '@codecs'
+import { AIFFFormat, createLeadingSilenceTransform, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
+import { numeric } from '@utility'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Button } from '../../components/button/Button.js'
 import { BaseDialog } from '../../components/dialog/BaseDialog.js'
@@ -8,7 +9,7 @@ import { Dropdown } from '../../components/dropdown/Dropdown.js'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
 import { useCompilationState } from '../../state/CompilationContext.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
-import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
+import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, LEADING_SILENCE_OPTIONS, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
 
 export const ExportDialog: FunctionComponent<{
   open: boolean
@@ -33,6 +34,7 @@ export const ExportDialog: FunctionComponent<{
   const [wavFormat, setWavFormat] = useState<WAVFormat>(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
   const [aiffFormat, setAiffFormat] = useState<AIFFFormat>(AIFF_FORMAT_OPTIONS[0].value as AIFFFormat)
   const [sampleRate, setSampleRate] = useState<SampleRate>(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
+  const [leadingSilence, setLeadingSilence] = useState<string>(LEADING_SILENCE_OPTIONS[0].value)
 
   const onDialogClose = useCallback(() => {
     if (!exporting) {
@@ -50,6 +52,7 @@ export const ExportDialog: FunctionComponent<{
     setWavFormat(WAV_FORMAT_OPTIONS[0].value as WAVFormat)
     setAiffFormat(AIFF_FORMAT_OPTIONS[0].value as AIFFFormat)
     setSampleRate(SAMPLE_RATE_OPTIONS[0].value as SampleRate)
+    setLeadingSilence(LEADING_SILENCE_OPTIONS[0].value)
 
     setExporting(false)
     setProgress(undefined)
@@ -64,6 +67,10 @@ export const ExportDialog: FunctionComponent<{
     const rate = Number.parseInt(sampleRate, 10)
     const exportType = type === 'wav' ? WAV : AIFF
     const format = type === 'wav' ? wavFormat : aiffFormat
+
+    const transforms = [
+      createLeadingSilenceTransform(numeric('s', Number.parseFloat(leadingSilence)))
+    ]
 
     const token = ++tokenRef.current
 
@@ -90,19 +97,20 @@ export const ExportDialog: FunctionComponent<{
     void (async () => {
       try {
         const graph = createAudioGraph(program)
-        const errors = await renderAndSave(graph, rate, onProgress, exportType, { format })
+        const errors = await renderAndSave(graph, rate, transforms, onProgress, exportType, { format })
         onComplete(errors)
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error('Unknown error during export')
         onComplete([error])
       }
     })()
-  }, [program, sampleRate, type, wavFormat, aiffFormat, onClose])
+  }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat, onClose])
 
   const metrics = useMemo(() => {
-    const options = { sampleRate, type, wavFormat, aiffFormat }
+    const silence = numeric('s', Number.parseFloat(leadingSilence))
+    const options = { sampleRate, leadingSilence: silence, type, wavFormat, aiffFormat }
     return program != null ? computeExportMetrics(program, options) : undefined
-  }, [program, sampleRate, type, wavFormat, aiffFormat])
+  }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat])
 
   return (
     <BaseDialog
@@ -173,6 +181,15 @@ export const ExportDialog: FunctionComponent<{
           options={SAMPLE_RATE_OPTIONS}
           value={sampleRate}
           onChange={(value) => setSampleRate(value as SampleRate)}
+          disabled={exporting}
+        />
+      </ExportField>
+
+      <ExportField label='Leading silence'>
+        <Dropdown
+          options={LEADING_SILENCE_OPTIONS}
+          value={leadingSilence}
+          onChange={(value) => setLeadingSilence(value)}
           disabled={exporting}
         />
       </ExportField>

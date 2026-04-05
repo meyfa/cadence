@@ -23,3 +23,5 @@ export interface AudioDescription {
   readonly length: number
   readonly numberOfChannels: number
 }
+
+export type AudioBufferTransform = (input: AudioBufferLike) => AudioBufferLike
