@@ -2,8 +2,8 @@ import { useDroppable } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
 import { useCallback, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
-import { removeTabFromPane } from '../algorithms.js'
-import type { LayoutNodeId, PaneNode, Tab } from '../types.js'
+import { removeTabFromPane, updateFocusedTab } from '../algorithms.js'
+import type { LayoutNodeId, PaneNode, Tab, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
 import { useLayout } from './LayoutContext.js'
 import type { LayoutNodeViewProps } from './LayoutNodeView.js'
@@ -41,24 +41,28 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
 }) => {
   const { tabs, activeTabId } = node
 
+  // TODO unify this with the LayoutNodeDispatch prop
+  const [layout, layoutDispatch] = useLayout()
+
+  const onTabFocus = useCallback((id: TabId) => {
+    layoutDispatch((layout) => updateFocusedTab(layout, id))
+  }, [layoutDispatch])
+
   const selectedIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTabId))
 
   const onSelectionChange = useCallback((index: number) => {
     const selectedTab = tabs.at(index)
     if (selectedTab != null) {
       dispatch?.((node) => node.type === 'pane' ? { ...node, activeTabId: selectedTab.id } : node)
+      onTabFocus(selectedTab.id)
     }
-  }, [dispatch, tabs])
-
-  // TODO unify this with the LayoutNodeDispatch prop
-  const [, layoutDispatch] = useLayout()
+  }, [dispatch, onTabFocus, tabs])
 
   const onClose = useCallback((tab: Tab) => {
-    if (onBeforeTabClose?.(tab) === false) {
-      return
+    const prevented = onBeforeTabClose?.(tab) === false
+    if (!prevented) {
+      layoutDispatch((layout) => removeTabFromPane(layout, tab.id))
     }
-
-    layoutDispatch((layout) => removeTabFromPane(layout, tab.id))
   }, [onBeforeTabClose, layoutDispatch])
 
   return (
@@ -75,6 +79,8 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
               TabTitleComponent={TabTitleComponent}
               dropIndicatorColor={styles.dropIndicatorColor}
               tab={tab}
+              state={tab.id === layout.focusedTabId ? 'focused' : tab.id === activeTabId ? 'active' : 'inactive'}
+              onTabFocus={() => onTabFocus(tab.id)}
               onClose={() => onClose(tab)}
             />
           ))}

@@ -38,4 +38,5 @@ export interface SplitNode extends BaseLayoutNode {
 
 export interface DockLayout {
   readonly main?: LayoutNode
+  readonly focusedTabId?: TabId
 }
