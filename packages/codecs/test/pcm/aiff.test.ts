@@ -1,7 +1,7 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { MockAudioBuffer } from '../../src/common/mock-audio-buffer.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
 import type { AudioDescription } from '../../src/common/types.js'
 import { encodeAIFF, estimateAIFFSize } from '../../src/pcm/aiff.js'
 
@@ -23,7 +23,7 @@ describe('pcm/aiff.ts', () => {
 
   it('encodes pcm16 correctly (big-endian)', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeAIFF(audio as any, { format: 'pcm16' })
 
     assert.strictEqual(buf.byteLength, 54 + samples.length * 2)
@@ -60,7 +60,7 @@ describe('pcm/aiff.ts', () => {
 
   it('encodes pcm24 correctly (big-endian)', () => {
     const samples = new Float32Array([1.2, 0.25, -0.25, -1.2])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeAIFF(audio as any, { format: 'pcm24' })
 
     assert.strictEqual(buf.byteLength, 54 + samples.length * 3)
@@ -74,7 +74,7 @@ describe('pcm/aiff.ts', () => {
 
   it('pads SSND data to even size when needed', () => {
     const samples = new Float32Array([0.0])
-    const audio = new MockAudioBuffer(44_100, [samples])
+    const audio = new SimpleAudioBuffer(44_100, [samples])
     const buf = encodeAIFF(audio as any, { format: 'pcm24' })
 
     // dataSize = 3, so SSND payload is odd and we add one pad byte.
@@ -89,7 +89,7 @@ describe('pcm/aiff.ts', () => {
   it('encodes float32 as AIFC and interleaves stereo correctly (big-endian)', () => {
     const left = new Float32Array([1.0, -1.0])
     const right = new Float32Array([0.5, -0.5])
-    const audio = new MockAudioBuffer(44_100, [left, right])
+    const audio = new SimpleAudioBuffer(44_100, [left, right])
     const buf = encodeAIFF(audio as any, { format: 'float32' })
     const view = new DataView(buf)
 
