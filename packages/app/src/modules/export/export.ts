@@ -71,17 +71,18 @@ export async function renderAndSave<TEncodingOptions> (
   options: TEncodingOptions
 ): Promise<readonly Error[]> {
   const renderer = createAudioRenderer({
-    channels: RENDER_CHANNELS,
-    sampleRate,
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
       arrayBuffer: numeric('bytes', 0),
       audioBuffer: numeric('bytes', 0)
-    },
-    onProgress
+    }
   })
 
-  const { audioBuffer, errors } = await renderer.render(graph)
+  const { audioBuffer, errors } = await renderer.render(graph, {
+    channels: RENDER_CHANNELS,
+    sampleRate,
+    onProgress
+  })
   if (audioBuffer == null || errors.length > 0) {
     return errors
   }
