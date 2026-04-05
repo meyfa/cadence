@@ -1,7 +1,8 @@
 import type { FunctionComponent } from 'react'
+import logoUrl from './logo.svg'
 
 export const Logo: FunctionComponent = () => {
   return (
-    <img src='./logo.svg' alt='Cadence logo' title='Cadence' className='w-8 h-8' />
+    <img src={logoUrl} alt='Cadence logo' title='Cadence' className='w-8 h-8' />
   )
 }
