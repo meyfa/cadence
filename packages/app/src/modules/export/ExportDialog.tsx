@@ -1,107 +1,14 @@
-import type { AudioGraph, Node } from '@audiograph'
 import { createAudioGraph } from '@audiograph'
-import { AIFFFormat, AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize, WAVFormat, type AIFFEncodingOptions, type WAVEncodingOptions } from '@codecs'
-import { beatsToSeconds, calculateTotalLength } from '@core'
+import { AIFFFormat, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
-import { numeric, type Numeric } from '@utility'
-import { createAudioRenderer } from '@webaudio'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
 import { Button } from '../../components/button/Button.js'
 import { BaseDialog } from '../../components/dialog/BaseDialog.js'
-import { Dropdown, type Option } from '../../components/dropdown/Dropdown.js'
+import { Dropdown } from '../../components/dropdown/Dropdown.js'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
 import { useCompilationState } from '../../state/CompilationContext.js'
-import { saveFile } from '../../utilities/files.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
-
-const ASSET_LOAD_TIMEOUT = numeric('s', 30)
-const RENDER_CHANNELS = 2 // stereo
-
-type FileType = 'wav' | 'aiff'
-type SampleRate = '44100' | '48000' | '96000'
-
-interface ExportFileType<TEncodingOptions = never> {
-  readonly extension: string
-  readonly mimeType: string
-  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => Numeric<'bytes'>
-  readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
-}
-
-const WAV: ExportFileType<WAVEncodingOptions> = {
-  extension: 'wav',
-  mimeType: 'audio/wav',
-  estimateSize: estimateWAVSize,
-  encode: encodeWAV
-}
-
-const AIFF: ExportFileType<AIFFEncodingOptions> = {
-  extension: 'aiff',
-  mimeType: 'audio/aiff',
-  estimateSize: estimateAIFFSize,
-  encode: encodeAIFF
-}
-
-const FILE_TYPE_OPTIONS: readonly Option[] = [
-  { label: 'WAV', value: 'wav' },
-  { label: 'AIFF', value: 'aiff' }
-]
-
-const WAV_FORMAT_OPTIONS: readonly Option[] = [
-  { label: 'Float 32-bit', value: 'float32' },
-  { label: 'PCM 16-bit', value: 'pcm16' },
-  { label: 'PCM 24-bit', value: 'pcm24' },
-  { label: 'PCM 32-bit', value: 'pcm32' }
-]
-
-const AIFF_FORMAT_OPTIONS: readonly Option[] = [
-  { label: 'Float 32-bit', value: 'float32' },
-  { label: 'PCM 16-bit', value: 'pcm16' },
-  { label: 'PCM 24-bit', value: 'pcm24' },
-  { label: 'PCM 32-bit', value: 'pcm32' }
-]
-
-const SAMPLE_RATE_OPTIONS: readonly Option[] = [
-  { label: '44.1 kHz', value: '44100' },
-  { label: '48 kHz', value: '48000' },
-  { label: '96 kHz', value: '96000' }
-]
-
-function getDefaultFileName (type: ExportFileType): string {
-  return `track.${type.extension}`
-}
-
-async function renderAndSave<TEncodingOptions> (
-  graph: AudioGraph<Node>,
-  sampleRate: number,
-  onProgress: (progress: number) => void,
-  type: ExportFileType<TEncodingOptions>,
-  options: TEncodingOptions
-): Promise<readonly Error[]> {
-  const renderer = createAudioRenderer({
-    channels: RENDER_CHANNELS,
-    sampleRate,
-    assetLoadTimeout: ASSET_LOAD_TIMEOUT,
-    cacheLimits: {
-      arrayBuffer: numeric('bytes', 0),
-      audioBuffer: numeric('bytes', 0)
-    },
-    onProgress
-  })
-
-  const { audioBuffer, errors } = await renderer.render(graph)
-  if (audioBuffer == null || errors.length > 0) {
-    return errors
-  }
-
-  const encoded = type.encode(audioBuffer, options)
-
-  const content = new Blob([encoded], { type: type.mimeType })
-  const filename = getDefaultFileName(type)
-
-  saveFile({ content, filename })
-
-  return errors
-}
+import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
 
 export const ExportDialog: FunctionComponent<{
   open: boolean
@@ -154,6 +61,7 @@ export const ExportDialog: FunctionComponent<{
       return
     }
 
+    const rate = Number.parseInt(sampleRate, 10)
     const exportType = type === 'wav' ? WAV : AIFF
     const format = type === 'wav' ? wavFormat : aiffFormat
 
@@ -169,61 +77,32 @@ export const ExportDialog: FunctionComponent<{
       }
     }
 
-    void (async () => {
-      try {
-        const rate = Number.parseInt(sampleRate, 10)
-
-        const graph = createAudioGraph(program)
-        const renderErrors = await renderAndSave(graph, rate, onProgress, exportType, { format })
-        if (tokenRef.current !== token) {
-          return
-        }
-
-        if (renderErrors.length > 0) {
-          setErrors(renderErrors)
-          return
-        }
-
-        onClose()
-      } catch (err: unknown) {
-        if (tokenRef.current !== token) {
-          return
-        }
-
-        const error = err instanceof Error ? err : new Error('Unknown error during export')
-        setErrors((prev) => [...prev, error])
-      } finally {
-        if (tokenRef.current === token) {
-          setExporting(false)
+    const onComplete = (errors: readonly Error[]) => {
+      if (tokenRef.current === token) {
+        setErrors(errors)
+        setExporting(false)
+        if (errors.length === 0) {
+          onClose()
         }
       }
+    }
+
+    void (async () => {
+      try {
+        const graph = createAudioGraph(program)
+        const errors = await renderAndSave(graph, rate, onProgress, exportType, { format })
+        onComplete(errors)
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error('Unknown error during export')
+        onComplete([error])
+      }
     })()
-  }, [program, type, wavFormat, aiffFormat, sampleRate, onClose])
+  }, [program, sampleRate, type, wavFormat, aiffFormat, onClose])
 
-  const trackDuration = useMemo(() => {
-    if (program == null) {
-      return undefined
-    }
-
-    const lengthInBeats = calculateTotalLength(program)
-    return beatsToSeconds(lengthInBeats, program.track.tempo)
-  }, [program])
-
-  const estimatedSize = useMemo(() => {
-    if (trackDuration == null) {
-      return undefined
-    }
-
-    const exportType = type === 'wav' ? WAV : AIFF
-    const format = type === 'wav' ? wavFormat : aiffFormat
-
-    const description: AudioDescription = {
-      length: Math.ceil(trackDuration.value * Number.parseInt(sampleRate, 10)),
-      numberOfChannels: RENDER_CHANNELS
-    }
-
-    return exportType.estimateSize(description, { format })
-  }, [trackDuration, type, wavFormat, aiffFormat, sampleRate])
+  const metrics = useMemo(() => {
+    const options = { sampleRate, type, wavFormat, aiffFormat }
+    return program != null ? computeExportMetrics(program, options) : undefined
+  }, [program, sampleRate, type, wavFormat, aiffFormat])
 
   return (
     <BaseDialog
@@ -298,19 +177,12 @@ export const ExportDialog: FunctionComponent<{
         />
       </ExportField>
 
-      <div className='flex flex-col mb-4'>
-        {trackDuration != null && (
-          <div>
-            Duration: {formatDuration(trackDuration)}
-          </div>
-        )}
-
-        {estimatedSize != null && (
-          <div>
-            File size: {formatBytes(estimatedSize)} (estimated)
-          </div>
-        )}
-      </div>
+      {metrics != null && (
+        <div className='flex flex-col mb-4'>
+          <div>Duration: {formatDuration(metrics.duration)}</div>
+          <div>File size: {formatBytes(metrics.fileSize)} (estimated)</div>
+        </div>
+      )}
 
       <ProgressBar disabled={!exporting} progress={progress} />
     </BaseDialog>
