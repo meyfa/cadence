@@ -15,6 +15,8 @@
         "files.trimTrailingWhitespace": true,
         "eslint.format.enable": true,
         "editor.tabSize": 2,
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "js/ts.tsdk.promptToUseWorkspaceVersion": true,
         "js/ts.preferences.importModuleSpecifierEnding": "js",
         "js/ts.preferences.preferTypeOnlyAutoImports": true,
         "js/ts.preferences.quoteStyle": "single"
