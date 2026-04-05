@@ -19,6 +19,7 @@ RUN npm run build
 FROM nginx:stable-alpine AS deploy
 WORKDIR /usr/share/nginx/html
 
+COPY container/nginx-server.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/packages/app/dist ./
 
 EXPOSE 80

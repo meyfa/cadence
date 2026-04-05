@@ -2,6 +2,8 @@
 
 !LICENSE
 
+!container/nginx-server.conf
+
 !**/package.json
 !**/package-lock.json
 
