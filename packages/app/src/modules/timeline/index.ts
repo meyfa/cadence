@@ -1,12 +1,17 @@
 import { createAudioGraph } from '@audiograph'
 import type { Program } from '@core'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayout, useNotificationService, useRegisterCommand } from '@editor'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
+import { Notification } from '../../components/notification/Notification.js'
+import { numeric } from '@utility'
+
+const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
+const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
 
 const moduleId = 'timeline' as ModuleId
 export const timelinePanelId = `${moduleId}.timeline` as PanelId
@@ -18,6 +23,7 @@ const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
 
 const Commands: FunctionComponent = () => {
   const [, layoutDispatch] = useLayout()
+  const { showNotification } = useNotificationService()
 
   const audioEngine = useAudioEngine()
 
@@ -47,9 +53,21 @@ const Commands: FunctionComponent = () => {
 
       if (audioEngine.playing.get()) {
         audioEngine.stop()
-      } else if (program != null) {
-        audioEngine.play(createAudioGraph(program))
+        return
       }
+
+      if (program == null) {
+        showNotification(Notification, {
+          severity: 'error',
+          message: PLAYBACK_ERROR_MESSAGE
+        }, {
+          kind: `${moduleId}.playback.error`,
+          timeout: PLAYBACK_ERROR_TIMEOUT
+        })
+        return
+      }
+
+      audioEngine.play(createAudioGraph(program))
     }
   }), [])
 

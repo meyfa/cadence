@@ -129,13 +129,13 @@ export const ExportDialog: FunctionComponent<{
       )}
     >
       {program == null && (
-        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content rounded-md'>
+        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
           Please fix compilation errors before exporting.
         </div>
       )}
 
       {errors.length > 0 && (
-        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content rounded-md'>
+        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
           Errors occurred during export:
           <ul className='list-disc list-inside'>
             {errors.map((error, index) => (

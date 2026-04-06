@@ -42,8 +42,10 @@ html.dark {
   --color-accent-100: light-dark(oklch(70.7% 0.165 254.624), oklch(54.6% 0.245 262.881));
   --color-accent-200: light-dark(oklch(54.6% 0.245 262.881), oklch(70.7% 0.165 254.624));
 
-  /* var(--color-red-300), var(--color-red-700) */
-  --color-error-surface: light-dark(oklch(80.8% 0.114 19.571), oklch(51.4% 0.222 16.935));
+  /* var(--color-red-300), var(--color-red-800) */
+  --color-error-surface: light-dark(oklch(80.8% 0.114 19.571), oklch(44.4% 0.177 26.899));
+  /* var(--color-red-600), var(--color-red-500) */
+  --color-error-frame: light-dark(oklch(57.7% 0.245 27.325), oklch(63.7% 0.237 25.331));
   /* var(--color-black), var(--color-white) */
   --color-error-content: light-dark(#000, #fff);
 

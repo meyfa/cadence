@@ -4,8 +4,8 @@ import type { ComponentType } from 'react'
 export type DialogId = Brand<string, 'editor.DialogId'>
 
 export interface DialogComponentProps {
-  open: boolean
-  onClose: () => void
+  readonly open: boolean
+  readonly onClose: () => void
 }
 
 type DisposeDialog = () => void

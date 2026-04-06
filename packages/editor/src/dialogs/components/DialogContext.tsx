@@ -16,10 +16,10 @@ interface DialogServiceInternal extends DialogService {
 const DialogContext = createContext<DialogServiceInternal | undefined>(undefined)
 
 export const DialogProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
-  const [dialogs, setDialogs] = useState<readonly DialogEntry[]>([])
+  const [entries, setEntries] = useState<readonly DialogEntry[]>([])
 
   const closeDialog = useCallback((id: DialogId) => {
-    setDialogs((dialogs) => dialogs.filter((item) => item.id !== id))
+    setEntries((entries) => entries.filter((item) => item.id !== id))
   }, [])
 
   const showDialog = useCallback(<P extends DialogComponentProps>(
@@ -27,15 +27,15 @@ export const DialogProvider: FunctionComponent<PropsWithChildren> = ({ children 
     props: Omit<P, 'open' | 'onClose'>
   ) => {
     const id = randomId() as DialogId
-    setDialogs((d) => [...d, { id, component, props }] as DialogEntry[])
+    setEntries((d) => [...d, { id, component, props }] as DialogEntry[])
     return () => closeDialog(id)
   }, [closeDialog])
 
   const value = useMemo(() => ({
-    dialogs,
+    dialogs: entries,
     showDialog,
     closeDialog
-  }), [dialogs, showDialog, closeDialog])
+  }), [entries, showDialog, closeDialog])
 
   return (
     <DialogContext value={value}>
