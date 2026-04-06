@@ -9,6 +9,10 @@ const isMacOS = (
     : navigator.userAgent
 ).toLowerCase().includes('mac')
 
+function isCoarsePointer (): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+}
+
 export const StyledTabTitle: FunctionComponent<Pick<TabTitleProps, 'tab' | 'state' | 'onClose'> & {
   TitleComponent: ModuleRenderFn<PanelProps, string>
   NotificationsComponent: ModuleRenderFn<PanelProps, number | null>
@@ -18,13 +22,15 @@ export const StyledTabTitle: FunctionComponent<Pick<TabTitleProps, 'tab' | 'stat
   const focused = state === 'focused' || dragging
   const active = state === 'active' || focused
 
+  const coarsePointer = isCoarsePointer()
+
   const closeButton = closeable && onClose != null && (
     <button
       type='button'
       className={clsx(
-        'p-0.5 rounded cursor-default',
+        'shrink-0 p-0.5 rounded cursor-default',
         isMacOS ? '-ml-2' : '-mr-2',
-        active ? '' : 'opacity-0 enabled:group-hocus:opacity-100',
+        active ? '' : (coarsePointer ? 'invisible' : 'opacity-0 enabled:group-hocus:opacity-100'),
         focused ? 'text-content-300' : 'text-content-50',
         'enabled:cursor-pointer enabled:hocus:bg-content-100/20 enabled:hocus:text-content-300'
       )}
