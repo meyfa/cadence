@@ -11,6 +11,7 @@
     "test": "tsx --test \"test/**/*.test.ts\""
   },
   "dependencies": {
+    "@emotion/cache": "11.14.0",
     "@floating-ui/react-dom": "2.1.8",
     "superstruct": "2.0.2"
   }

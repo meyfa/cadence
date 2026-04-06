@@ -21,6 +21,11 @@ export interface CadenceEditorOptions {
    */
   readonly extensions?: readonly Extension[]
 
+  /**
+   * Content Security Policy (CSP) nonce for the editor's style elements.
+   */
+  readonly cspNonce?: string
+
   readonly onChange: (value: string) => void
   readonly onLocationChange?: (location: EditorLocation | undefined) => void
 }
@@ -75,6 +80,8 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
       }),
 
       ...(extensions ?? []),
+
+      EditorView.cspNonce.of(options.cspNonce ?? ''),
 
       updateListener
     ]

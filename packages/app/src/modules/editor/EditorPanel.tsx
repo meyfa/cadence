@@ -4,6 +4,7 @@ import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import { numeric } from '@utility'
 import { useCallback, type FunctionComponent } from 'react'
 import { useEditor } from '../../components/contexts/EditorContext.js'
+import { getCspNonce } from '../../csp.js'
 import { useEffectiveTheme } from '../../theme.js'
 
 const indent = '  ' // 2 spaces
@@ -32,6 +33,7 @@ export const EditorPanel: FunctionComponent<PanelProps> = () => {
       indent={indent}
       theme={theme}
       extensions={extensions}
+      cspNonce={getCspNonce()}
       className='relative h-full overflow-hidden'
       onChange={onChange}
       onLocationChange={onLocationChange}
