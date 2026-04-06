@@ -36,7 +36,7 @@ const themeSystem: Command = {
   }
 }
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
@@ -57,7 +57,7 @@ const Commands: FunctionComponent = () => {
 export const viewModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   menu: {
     sections: [
