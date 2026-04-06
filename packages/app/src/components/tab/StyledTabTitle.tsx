@@ -50,7 +50,7 @@ export const StyledTabTitle: FunctionComponent<Pick<TabTitleProps, 'tab' | 'stat
 
       <TitleComponent panelProps={tab.component.props} />
 
-      <div className='px-1 py-0.5 text-xs leading-none bg-error-surface text-error-content rounded empty:hidden'>
+      <div className='px-1 py-0.5 text-xs leading-none bg-error-surface text-error-content border border-error-frame rounded empty:hidden'>
         <NotificationsComponent panelProps={tab.component.props} />
       </div>
 

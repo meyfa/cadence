@@ -1,4 +1,4 @@
-import { CommonProvider, DialogHost, ModuleHost } from '@editor'
+import { CommonProvider, DialogHost, ModuleHost, NotificationHost } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -105,6 +105,7 @@ root.render(
           <CompilationProvider compileOptions={compileOptions}>
             <App storage={storage} initialState={initialState} />
             <DialogHost />
+            <NotificationHost />
             <ModuleHost />
           </CompilationProvider>
         </EditorProvider>
