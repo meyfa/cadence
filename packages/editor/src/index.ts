@@ -21,7 +21,8 @@ export * from './input/keyboard-shortcuts.js'
 
 // layout
 export type * from './layout/types.js'
-export * from './layout/algorithms.js'
+export * from './layout/algorithms/find.js'
+export * from './layout/algorithms/mutate.js'
 export * from './layout/components/LayoutContext.js'
 export * from './layout/components/DockLayoutView.js'
 export type { TabTitleProps } from './layout/components/TabTitle.js'

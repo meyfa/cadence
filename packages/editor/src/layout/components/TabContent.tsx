@@ -1,7 +1,7 @@
 import { TabPanel } from '@headlessui/react'
 import { useEffect, useRef, type ComponentType, type FunctionComponent } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
-import { updateFocusedTab } from '../algorithms.js'
+import { updateFocusedTab } from '../algorithms/mutate.js'
 import type { Tab as LayoutTab } from '../types.js'
 import type { LayoutDispatch } from './LayoutContext.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
