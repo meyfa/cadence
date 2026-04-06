@@ -1,7 +1,6 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useProblems, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
-import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
 

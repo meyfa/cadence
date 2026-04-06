@@ -1,8 +1,8 @@
 import type { PanelProps } from '@editor'
+import { useProblems } from '@editor'
 import { RangeError } from '@language'
 import clsx from 'clsx'
-import { type FunctionComponent } from 'react'
-import { useProblems, type Problem } from '../../hooks/problems.js'
+import type { FunctionComponent } from 'react'
 
 export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
   const problems = useProblems()
@@ -19,7 +19,7 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
         {problems.map((problem, index) => (
           <div key={index}>
             <span className='text-content-100'>
-              {formatProblemSource(problem.source)}
+              {`${problem.label}:`}
             </span>
             {' '}
             {formatError(problem.error)}
@@ -28,15 +28,6 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
       </div>
     </div>
   )
-}
-
-function formatProblemSource (source: Problem['source']): string {
-  switch (source) {
-    case 'compiler':
-      return 'Compiler:'
-    case 'playback':
-      return 'Playback:'
-  }
 }
 
 function formatError (error: Error): string {
