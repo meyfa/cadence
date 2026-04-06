@@ -1,33 +1,27 @@
-import { createAudioGraph } from '@audiograph'
+import { useCommandRegistry, type CommandId } from '@editor'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
-import { useCallback, type FunctionComponent } from 'react'
+import { type FunctionComponent } from 'react'
 import { Button } from '../../components/button/Button.js'
+import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { GainSlider } from '../../components/gain-slider/GainSlider.js'
 import { useObservable } from '../../hooks/observable.js'
-import { usePrevious } from '../../hooks/previous.js'
-import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
-import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 
 export const PlaybackControls: FunctionComponent = () => {
-  const { program } = useCompilationState()
-  const lastProgram = usePrevious(program)
-
   const engine = useAudioEngine()
 
   const playing = useObservable(engine.playing)
   const outputGain = useObservable(engine.outputGain)
 
-  const onPlayPause = useCallback(() => {
-    if (playing) {
-      engine.stop()
-    } else if (lastProgram != null) {
-      engine.play(createAudioGraph(lastProgram))
-    }
-  }, [engine, playing, lastProgram])
+  const { getCommandById } = useCommandRegistry()
+  const togglePlaybackCommand = getCommandById('timeline.playback.toggle' as CommandId)
 
   return (
     <>
-      <Button onClick={onPlayPause} title={playing ? 'Stop' : 'Play'}>
+      <Button
+        title={playing ? 'Stop' : 'Play'}
+        disabled={togglePlaybackCommand == null}
+        onClick={() => togglePlaybackCommand?.run()}
+      >
         {playing ? <StopOutlined /> : <PlayArrowOutlined />}
       </Button>
 
