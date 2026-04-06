@@ -1,8 +1,8 @@
 import type { ComponentType, FunctionComponent } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
-import type { LayoutNode, Tab } from '../types.js'
+import type { LayoutNode, Tab, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
-import type { LayoutNodeDispatch } from './LayoutContext.js'
+import type { LayoutDispatch } from './LayoutContext.js'
 import { PaneNodeView } from './PaneNodeView.js'
 import { SplitNodeView } from './SplitNodeView.js'
 import type { TabContentProps } from './TabContent.js'
@@ -14,7 +14,8 @@ export interface LayoutNodeViewProps<TNode extends LayoutNode = LayoutNode> {
   readonly FallbackComponent: ComponentType<FallbackProps>
   readonly styles: DockLayoutStyles
   readonly node: TNode
-  readonly dispatch?: LayoutNodeDispatch
+  readonly focusedTabId?: TabId
+  readonly dispatch?: LayoutDispatch
   readonly onBeforeTabClose?: (tab: Tab) => boolean
 }
 

@@ -1,8 +1,8 @@
 import { activateTabOfType, useLayout, type DialogComponentProps, type PanelId } from '@editor'
 import { useCallback, type FunctionComponent } from 'react'
+import { useEditor } from '../../components/contexts/EditorContext.js'
 import { ConfirmationDialog } from '../../components/dialog/ConfirmationDialog.js'
 import { demoCode } from '../../defaults/demo-code.js'
-import { useEditor } from '../../components/contexts/EditorContext.js'
 
 export const LoadDemoDialog: FunctionComponent<DialogComponentProps & {
   editorPanelId: PanelId
@@ -12,7 +12,7 @@ export const LoadDemoDialog: FunctionComponent<DialogComponentProps & {
 
   const onConfirm = useCallback(() => {
     editorDispatch((state) => ({ ...state, code: demoCode }))
-    activateTabOfType(layoutDispatch, editorPanelId)
+    layoutDispatch((layout) => activateTabOfType(layout, editorPanelId))
     onClose()
   }, [editorDispatch, layoutDispatch, editorPanelId, onClose])
 

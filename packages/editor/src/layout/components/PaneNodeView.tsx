@@ -2,10 +2,9 @@ import { useDroppable } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
 import { useCallback, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
-import { removeTabFromPane, updateFocusedTab } from '../algorithms.js'
+import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms.js'
 import type { LayoutNodeId, PaneNode, Tab, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
-import { useLayout } from './LayoutContext.js'
 import type { LayoutNodeViewProps } from './LayoutNodeView.js'
 import { TabContent } from './TabContent.js'
 import { TabTitle } from './TabTitle.js'
@@ -36,34 +35,37 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
   FallbackComponent,
   styles,
   node,
+  focusedTabId,
   dispatch,
   onBeforeTabClose
 }) => {
-  const { tabs, activeTabId } = node
-
-  // TODO unify this with the LayoutNodeDispatch prop
-  const [layout, layoutDispatch] = useLayout()
+  const { id: nodeId, tabs, activeTabId } = node
 
   const onTabFocus = useCallback((id: TabId) => {
-    layoutDispatch((layout) => updateFocusedTab(layout, id))
-  }, [layoutDispatch])
+    dispatch?.((layout) => updateFocusedTab(layout, id))
+  }, [dispatch])
 
   const selectedIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTabId))
 
   const onSelectionChange = useCallback((index: number) => {
     const selectedTab = tabs.at(index)
     if (selectedTab != null) {
-      dispatch?.((node) => node.type === 'pane' ? { ...node, activeTabId: selectedTab.id } : node)
+      dispatch?.((layout) => transformNode(layout, nodeId, (node) => {
+        if (node.type !== 'pane') {
+          return node
+        }
+        return { ...node, activeTabId: selectedTab.id }
+      }))
       onTabFocus(selectedTab.id)
     }
-  }, [dispatch, onTabFocus, tabs])
+  }, [dispatch, onTabFocus, nodeId, tabs])
 
   const onClose = useCallback((tab: Tab) => {
     const prevented = onBeforeTabClose?.(tab) === false
     if (!prevented) {
-      layoutDispatch((layout) => removeTabFromPane(layout, tab.id))
+      dispatch?.((layout) => removeTabFromPane(layout, tab.id))
     }
-  }, [onBeforeTabClose, layoutDispatch])
+  }, [onBeforeTabClose, dispatch])
 
   return (
     <TabGroup
@@ -79,7 +81,7 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
               TabTitleComponent={TabTitleComponent}
               dropIndicatorColor={styles.dropIndicatorColor}
               tab={tab}
-              state={tab.id === layout.focusedTabId ? 'focused' : tab.id === activeTabId ? 'active' : 'inactive'}
+              state={tab.id === focusedTabId ? 'focused' : tab.id === activeTabId ? 'active' : 'inactive'}
               onTabFocus={() => onTabFocus(tab.id)}
               onClose={() => onClose(tab)}
             />
@@ -93,6 +95,7 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
             TabContentComponent={TabContentComponent}
             FallbackComponent={FallbackComponent}
             tab={tab}
+            dispatch={dispatch}
           />
         ))}
       </TabPanelsDroppable>

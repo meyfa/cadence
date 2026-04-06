@@ -44,7 +44,7 @@ const Commands: FunctionComponent = () => {
     id: viewEditorId,
     label: 'Show view: Editor',
     run: () => {
-      activateTabOfType(layoutDispatch, editorPanelId)
+      layoutDispatch((layout) => activateTabOfType(layout, editorPanelId))
     }
   }), [layoutDispatch])
 

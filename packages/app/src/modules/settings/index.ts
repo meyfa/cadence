@@ -17,7 +17,7 @@ const Commands: FunctionComponent = () => {
     id: viewSettingsId,
     label: 'Show view: Settings',
     run: () => {
-      activateTabOfType(layoutDispatch, settingsPanelId)
+      layoutDispatch((layout) => activateTabOfType(layout, settingsPanelId))
     }
   }), [layoutDispatch])
 

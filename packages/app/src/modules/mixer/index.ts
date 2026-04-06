@@ -17,7 +17,7 @@ const Commands: FunctionComponent = () => {
     id: viewMixerId,
     label: 'Show view: Mixer',
     run: () => {
-      activateTabOfType(layoutDispatch, mixerPanelId)
+      layoutDispatch((layout) => activateTabOfType(layout, mixerPanelId))
     }
   }), [layoutDispatch])
 

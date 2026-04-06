@@ -4,8 +4,8 @@ import { Group, Panel, Separator, useGroupRef, type Layout } from 'react-resizab
 import { useChangeOrigin } from '../../hooks/change-origin.js'
 import type { SplitNode, SplitOrientation } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
-import { useChildNodeDispatch } from './LayoutContext.js'
 import { LayoutNodeView, type LayoutNodeViewProps } from './LayoutNodeView.js'
+import { transformNode } from '../algorithms.js'
 
 // The interval during which layout changes are considered part of the same change stack.
 const CHANGE_STACK_WINDOW = numeric('s', 0.05)
@@ -14,7 +14,7 @@ type LayoutChangeOrigin = 'library' | 'self'
 
 export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = ({ node, ...props }) => {
   const { dispatch, styles } = props
-  const { orientation, children, sizes } = node
+  const { id: nodeId, orientation, children, sizes } = node
 
   const groupRef = useGroupRef()
 
@@ -35,12 +35,12 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
 
   const onLayoutChange = useCallback((newLayout: Layout) => {
     if (pushChangeOrigin('library')) {
-      dispatch?.((node) => {
+      dispatch?.((layout) => transformNode(layout, nodeId, (node) => {
         if (node.type !== 'split') {
           return node
         }
         return { ...node, sizes: node.children.map(({ id }) => (newLayout[id] ?? 100) / 100) }
-      })
+      }))
       return
     }
 
@@ -48,7 +48,7 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
       // Reassert desired layout
       applyLayoutProp()
     }
-  }, [pushChangeOrigin, dispatch, applyLayoutProp, layout])
+  }, [pushChangeOrigin, dispatch, applyLayoutProp, layout, nodeId])
 
   useLayoutEffect(() => {
     if (pushChangeOrigin('self')) {
@@ -58,7 +58,7 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
 
   return (
     <Group
-      id={node.id}
+      id={nodeId}
       groupRef={groupRef}
       orientation={orientation}
       defaultLayout={layout}
@@ -77,12 +77,12 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
   )
 }
 
-const SplitNodeChildView: FunctionComponent<LayoutNodeViewProps> = ({ node, dispatch, ...props }) => {
-  const childDispatch = useChildNodeDispatch(dispatch, node.id)
+const SplitNodeChildView: FunctionComponent<LayoutNodeViewProps> = (props) => {
+  const { node } = props
 
   return (
     <Panel id={node.id} minSize='5rem'>
-      <LayoutNodeView {...props} node={node} dispatch={childDispatch} />
+      <LayoutNodeView {...props} />
     </Panel>
   )
 }

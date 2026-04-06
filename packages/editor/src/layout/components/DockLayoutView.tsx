@@ -4,12 +4,12 @@ import { useCallback, useState, type ComponentType, type FunctionComponent } fro
 import type { FallbackProps } from 'react-error-boundary'
 import { findPaneById, findPaneByTabId, moveTabBetweenPanes, moveTabIntoPane, moveTabToSplit } from '../algorithms.js'
 import type { DockLayout, Tab, TabId } from '../types.js'
-import { useLayoutNodeDispatch, type LayoutDispatch } from './LayoutContext.js'
+import type { LayoutDispatch } from './LayoutContext.js'
 import { LayoutNodeView } from './LayoutNodeView.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
-import type { TabTitleProps } from './TabTitle.js'
 import type { TabContentProps } from './TabContent.js'
+import type { TabTitleProps } from './TabTitle.js'
 
 const DRAGGED_TAB_OPACITY = 0.6
 
@@ -75,8 +75,6 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
   onBeforeTabClose,
   className
 }) => {
-  const mainDispatch = useLayoutNodeDispatch(dispatch, 'main')
-
   const [draggedTab, setDraggedTab] = useState<Tab | undefined>(undefined)
 
   const mouseSensor = useSensor(MouseSensor, {
@@ -163,7 +161,8 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
             FallbackComponent={FallbackComponent}
             styles={styles}
             node={layout.main}
-            dispatch={draggedTab != null ? undefined : mainDispatch}
+            focusedTabId={layout.focusedTabId}
+            dispatch={draggedTab != null ? undefined : dispatch}
             onBeforeTabClose={onBeforeTabClose}
           />
         )}
