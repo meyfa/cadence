@@ -3,7 +3,6 @@ import type { Program } from '@core'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
 import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
 import { useEffect, useRef, type FunctionComponent } from 'react'
-import { usePrevious } from '../../hooks/previous.js'
 import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { PlaybackControls } from './PlaybackControls.js'
@@ -22,13 +21,12 @@ const Commands: FunctionComponent = () => {
 
   const audioEngine = useAudioEngine()
 
-  const { program: currentProgram } = useCompilationState()
-  const lastProgram = usePrevious(currentProgram)
-  const lastProgramRef = useRef<Program | undefined>(lastProgram)
+  const { program } = useCompilationState()
+  const programRef = useRef<Program | undefined>(program)
 
   useEffect(() => {
-    lastProgramRef.current = lastProgram
-  }, [lastProgram])
+    programRef.current = program
+  }, [program])
 
   useRegisterCommand(() => ({
     id: viewTimelineId,
@@ -45,7 +43,7 @@ const Commands: FunctionComponent = () => {
       'Ctrl+Shift+Space'
     ],
     run: () => {
-      const program = lastProgramRef.current
+      const program = programRef.current
 
       if (audioEngine.playing.get()) {
         audioEngine.stop()
