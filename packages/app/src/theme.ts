@@ -37,6 +37,7 @@ export function useThemeSetting (): ThemeSetting {
   useEffect(() => {
     const listener = () => setSetting(getThemeSetting())
     themeSettingChangeListeners.add(listener)
+    listener()
     return () => {
       themeSettingChangeListeners.delete(listener)
     }
@@ -53,6 +54,7 @@ export function useEffectiveTheme (): Theme {
   useEffect(() => {
     const listener = () => setTheme(getEffectiveTheme() ?? getSystemTheme())
     effectiveThemeChangeListeners.add(listener)
+    listener()
     return () => {
       effectiveThemeChangeListeners.delete(listener)
     }
@@ -67,6 +69,7 @@ export function useSystemTheme (): Theme {
   useEffect(() => {
     const listener = () => setTheme(getSystemTheme())
     prefersLightColorScheme.addEventListener('change', listener)
+    listener()
     return () => {
       prefersLightColorScheme.removeEventListener('change', listener)
     }
