@@ -19,7 +19,7 @@ const Commands: FunctionComponent = () => {
     id: viewProblemsId,
     label: 'Show view: Problems',
     run: () => {
-      activateTabOfType(layoutDispatch, problemsPanelId)
+      layoutDispatch((layout) => activateTabOfType(layout, problemsPanelId))
     }
   }), [layoutDispatch])
 

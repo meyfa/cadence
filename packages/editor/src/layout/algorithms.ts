@@ -1,6 +1,20 @@
 import { insertAt, move, randomId, removeAt } from '@utility'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, Tab, TabId } from './types.js'
 
+export function findNodeById (layout: DockLayout, nodeId: LayoutNodeId): LayoutNode | undefined {
+  const findInNode = (node: LayoutNode): LayoutNode | undefined => {
+    if (node.id === nodeId) {
+      return node
+    }
+
+    if (node.type === 'split') {
+      return node.children.map(findInNode).find((item) => item != null)
+    }
+  }
+
+  return layout.main != null ? findInNode(layout.main) : undefined
+}
+
 export function findPane (layout: DockLayout, predicate: (pane: PaneNode) => boolean): PaneNode | undefined {
   const findInNode = (node: LayoutNode): PaneNode | undefined => {
     switch (node.type) {
@@ -271,6 +285,26 @@ export function moveTabToSplit (layout: DockLayout, tabId: TabId, siblingId: Lay
       }
     ]
   ]), { focusTabId: tab.id })
+}
+
+export function transformNode (layout: DockLayout, nodeId: LayoutNodeId, fn: (node: LayoutNode) => LayoutNode): DockLayout {
+  const node = findNodeById(layout, nodeId)
+  if (node == null) {
+    return layout
+  }
+
+  return updateNodesInLayout(layout, new Map([[nodeId, fn(node)]]))
+}
+
+export function activateTabOfType (layout: DockLayout, type: string): DockLayout {
+  const tab = findTabByComponentType(layout, type)
+
+  // If no such tab exists, create one
+  if (tab == null) {
+    return createTab(layout, { type })
+  }
+
+  return activateTabInPane(layout, tab.id)
 }
 
 export function updateFocusedTab (layout: DockLayout, tabId: TabId): DockLayout {

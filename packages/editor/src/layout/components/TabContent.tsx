@@ -3,7 +3,7 @@ import { useEffect, useRef, type ComponentType, type FunctionComponent } from 'r
 import type { FallbackProps } from 'react-error-boundary'
 import { updateFocusedTab } from '../algorithms.js'
 import type { Tab as LayoutTab } from '../types.js'
-import { useLayout } from './LayoutContext.js'
+import type { LayoutDispatch } from './LayoutContext.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 
 export interface TabContentProps {
@@ -13,9 +13,8 @@ export interface TabContentProps {
 export const TabContent: FunctionComponent<TabContentProps & {
   TabContentComponent: ComponentType<TabContentProps>
   FallbackComponent: ComponentType<FallbackProps>
-}> = ({ TabContentComponent, FallbackComponent, tab }) => {
-  const [, layoutDispatch] = useLayout()
-
+  dispatch?: LayoutDispatch
+}> = ({ TabContentComponent, FallbackComponent, tab, dispatch }) => {
   const panelRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export const TabContent: FunctionComponent<TabContentProps & {
 
     const listener = (event: FocusEvent) => {
       if (event.target instanceof HTMLElement && panel.contains(event.target)) {
-        layoutDispatch((layout) => updateFocusedTab(layout, tab.id))
+        dispatch?.((layout) => updateFocusedTab(layout, tab.id))
       }
     }
 
@@ -35,7 +34,7 @@ export const TabContent: FunctionComponent<TabContentProps & {
     return () => {
       panel.removeEventListener('focusin', listener)
     }
-  }, [layoutDispatch, tab.id])
+  }, [dispatch, tab.id])
 
   return (
     <TabPanel unmount={false} style={{ position: 'relative', width: '100%', height: '100%' }} ref={panelRef}>

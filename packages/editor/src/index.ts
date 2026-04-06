@@ -13,7 +13,6 @@ export type * from './editor/types.js'
 export * from './editor/components/Editor.js'
 
 // hooks
-export * from './hooks/activate-tab-of-type.js'
 export * from './hooks/global-events.js'
 export * from './hooks/safe-context.js'
 
