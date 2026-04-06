@@ -1,7 +1,7 @@
 import type { Brand } from '@utility'
 import type { KeyboardShortcut } from '../input/keyboard-shortcuts.js'
 
-export type CommandId = Brand<string, 'app.CommandId'>
+export type CommandId = Brand<string, 'editor.CommandId'>
 
 export interface Command {
   readonly id: CommandId

@@ -6,7 +6,7 @@ import type { SerializedComponent } from '../layout/types.js'
 
 export type ModuleRenderFn<P = {}, T extends ReactNode = ReactNode> = (props: P) => T
 
-export type ModuleId = Brand<string, 'app.ModuleId'>
+export type ModuleId = Brand<string, 'editor.ModuleId'>
 
 export interface Module {
   readonly id: ModuleId
@@ -22,7 +22,7 @@ export interface Module {
   }
 }
 
-export type PanelId = Brand<string, 'app.PanelId'>
+export type PanelId = Brand<string, 'editor.PanelId'>
 
 export interface Panel {
   readonly id: PanelId
