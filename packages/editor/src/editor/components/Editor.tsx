@@ -9,10 +9,11 @@ export const Editor: FunctionComponent<{
   indent: string
   theme: EditorTheme
   extensions?: readonly Extension[]
+  cspNonce?: string
   className?: string
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
-}> = ({ document, indent, theme, extensions, className, ...props }) => {
+}> = ({ document, indent, theme, extensions, cspNonce, className, ...props }) => {
   const handleRef = useRef<CadenceEditorHandle>(null)
   const onChange = useMutableCallback(props.onChange)
   const onLocationChange = useMutableCallback(props.onLocationChange)
@@ -30,6 +31,7 @@ export const Editor: FunctionComponent<{
       theme,
       indent,
       extensions,
+      cspNonce,
       onChange: (...args) => onChange.current(...args),
       onLocationChange: (...args) => onLocationChange.current?.(...args)
     })

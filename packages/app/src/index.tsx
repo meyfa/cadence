@@ -1,4 +1,6 @@
 import { CommonProvider, DialogHost, ModuleHost, NotificationHost } from '@editor'
+import createCache from '@emotion/cache'
+import { CacheProvider } from '@emotion/react'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngineOptions } from '@webaudio'
@@ -8,6 +10,7 @@ import { App } from './App.js'
 import { AudioEngineContext } from './components/contexts/AudioEngineContext.js'
 import { CompilationProvider } from './components/contexts/CompilationContext.js'
 import { EditorProvider } from './components/contexts/EditorContext.js'
+import { getCspNonce } from './csp.js'
 import { defaultLayout } from './defaults/default-layout.js'
 import { demoCode } from './defaults/demo-code.js'
 import './index.css'
@@ -90,6 +93,11 @@ const engine = createAudioEngine({
   outputGain: initialState.settings.outputGain
 })
 
+const emotionCache = createCache({
+  key: 'cadence',
+  nonce: getCspNonce()
+})
+
 const container = document.getElementById('root')
 if (container == null) {
   throw new Error('container == null')
@@ -99,17 +107,19 @@ const root = createRoot(container)
 
 root.render(
   <StrictMode>
-    <CommonProvider modules={modules}>
-      <AudioEngineContext value={engine}>
-        <EditorProvider>
-          <CompilationProvider compileOptions={compileOptions}>
-            <App storage={storage} initialState={initialState} />
-            <DialogHost />
-            <NotificationHost />
-            <ModuleHost />
-          </CompilationProvider>
-        </EditorProvider>
-      </AudioEngineContext>
-    </CommonProvider>
+    <CacheProvider value={emotionCache}>
+      <CommonProvider modules={modules}>
+        <AudioEngineContext value={engine}>
+          <EditorProvider>
+            <CompilationProvider compileOptions={compileOptions}>
+              <App storage={storage} initialState={initialState} />
+              <DialogHost />
+              <NotificationHost />
+              <ModuleHost />
+            </CompilationProvider>
+          </EditorProvider>
+        </AudioEngineContext>
+      </CommonProvider>
+    </CacheProvider>
   </StrictMode>
 )
