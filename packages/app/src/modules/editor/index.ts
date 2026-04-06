@@ -1,7 +1,8 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useDialogService, useLayoutDispatch, useRegisterCommand } from '@editor'
+import { activateTabOfType, useDialogService, useLayoutDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
+import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { useEditor, useEditorDispatch } from '../../components/contexts/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
@@ -41,6 +42,8 @@ const GlobalHooks: FunctionComponent = () => {
       dispatch: editorDispatch
     }
   }, [editor, editorDispatch])
+
+  const { errors } = useCompilationState()
 
   useRegisterCommand(() => ({
     id: viewEditorId,
@@ -95,6 +98,8 @@ const GlobalHooks: FunctionComponent = () => {
       showDialog(LoadDemoDialog, { editorPanelId })
     }
   }), [showDialog])
+
+  useProvideProblems(moduleId, 'Compiler', errors)
 
   return null
 }

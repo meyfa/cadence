@@ -35,5 +35,9 @@ export * from './modules/components/ModuleContext.js'
 export type * from './notifications/types.js'
 export * from './notifications/components/NotificationContext.js'
 
+// problems
+export type * from './problems/types.js'
+export * from './problems/components/ProblemContext.js'
+
 // provider
 export * from './provider/CommonProvider.js'

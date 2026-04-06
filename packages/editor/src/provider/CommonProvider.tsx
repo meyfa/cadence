@@ -6,6 +6,7 @@ import { LayoutProvider } from '../layout/components/LayoutContext.js'
 import { ModuleProvider } from '../modules/components/ModuleContext.js'
 import type { Module } from '../modules/types.js'
 import { NotificationProvider } from '../notifications/components/NotificationContext.js'
+import { ProblemProvider } from '../problems/components/ProblemContext.js'
 
 export const CommonProvider: FunctionComponent<PropsWithChildren<{
   modules: readonly Module[]
@@ -16,9 +17,11 @@ export const CommonProvider: FunctionComponent<PropsWithChildren<{
         <NotificationProvider>
           <CommandRegistryProvider>
             <MenuProvider>
-              <ModuleProvider modules={modules}>
-                {children}
-              </ModuleProvider>
+              <ProblemProvider>
+                <ModuleProvider modules={modules}>
+                  {children}
+                </ModuleProvider>
+              </ProblemProvider>
             </MenuProvider>
           </CommandRegistryProvider>
         </NotificationProvider>

@@ -1,12 +1,13 @@
 import { createAudioGraph } from '@audiograph'
 import type { Program } from '@core'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useNotificationService, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useNotificationService, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
+import { useObservable } from '../../hooks/observable.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
@@ -26,6 +27,7 @@ const GlobalHooks: FunctionComponent = () => {
   const { showNotification } = useNotificationService()
 
   const audioEngine = useAudioEngine()
+  const errors = useObservable(audioEngine.errors)
 
   const { program } = useCompilationState()
   const programRef = useRef<Program | undefined>(program)
@@ -70,6 +72,8 @@ const GlobalHooks: FunctionComponent = () => {
       audioEngine.play(createAudioGraph(program))
     }
   }), [])
+
+  useProvideProblems(moduleId, 'Playback', errors)
 
   return null
 }
