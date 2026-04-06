@@ -1,5 +1,5 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { MixerPanel } from './MixerPanel.js'
 
@@ -11,7 +11,7 @@ const viewShowSectionId = 'view.show' as MenuSectionId
 const viewMixerId = `${moduleId}.view.mixer` as CommandId
 
 const Commands: FunctionComponent = () => {
-  const [, layoutDispatch] = useLayout()
+  const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
     id: viewMixerId,

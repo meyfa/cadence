@@ -1,7 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import type { Program } from '@core'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayout, useNotificationService, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useNotificationService, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
@@ -22,7 +22,7 @@ const viewTimelineId = `${moduleId}.view.timeline` as CommandId
 const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
 
 const Commands: FunctionComponent = () => {
-  const [, layoutDispatch] = useLayout()
+  const layoutDispatch = useLayoutDispatch()
   const { showNotification } = useNotificationService()
 
   const audioEngine = useAudioEngine()

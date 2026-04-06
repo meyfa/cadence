@@ -33,9 +33,10 @@ export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children 
   )
 }
 
-export function useEditor (): [EditorState, EditorDispatch] {
-  const state = useSafeContext(EditorContext, 'EditorContext')
-  const dispatch = useSafeContext(EditorDispatchContext, 'EditorDispatchContext')
+export function useEditor (): EditorState {
+  return useSafeContext(EditorContext, 'EditorContext')
+}
 
-  return [state, dispatch]
+export function useEditorDispatch (): EditorDispatch {
+  return useSafeContext(EditorDispatchContext, 'EditorDispatchContext')
 }

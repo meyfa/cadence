@@ -1,5 +1,5 @@
 import type { Command, CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
-import { useLayout, useRegisterCommand } from '@editor'
+import { useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
@@ -37,7 +37,7 @@ const themeSystem: Command = {
 }
 
 const Commands: FunctionComponent = () => {
-  const [, layoutDispatch] = useLayout()
+  const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
     id: layoutResetId,

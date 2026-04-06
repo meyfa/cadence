@@ -27,9 +27,10 @@ export const LayoutProvider: FunctionComponent<PropsWithChildren> = ({ children 
   )
 }
 
-export function useLayout (): [DockLayout, LayoutDispatch] {
-  const state = useSafeContext(LayoutContext, 'LayoutContext')
-  const dispatch = useSafeContext(LayoutDispatchContext, 'LayoutDispatchContext')
+export function useLayout (): DockLayout {
+  return useSafeContext(LayoutContext, 'LayoutContext')
+}
 
-  return [state, dispatch]
+export function useLayoutDispatch (): LayoutDispatch {
+  return useSafeContext(LayoutDispatchContext, 'LayoutDispatchContext')
 }

@@ -1,8 +1,8 @@
-import { useLayout } from '@editor'
+import { useLayout, useLayoutDispatch } from '@editor'
 import { numeric } from '@utility'
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { useAudioEngine } from '../components/contexts/AudioEngineContext.js'
-import { useEditor } from '../components/contexts/EditorContext.js'
+import { useEditor, useEditorDispatch } from '../components/contexts/EditorContext.js'
 import type { CadenceEditorState, PartialCadenceEditorState } from '../state/state.js'
 import type { Storage } from '../state/storage.js'
 import { applyThemeSetting, useThemeSetting } from '../theme.js'
@@ -30,9 +30,12 @@ export function useStorageSync (
   const engine = useAudioEngine()
   const outputGain = useObservable(engine.outputGain)
 
-  const [layout, layoutDispatch] = useLayout()
+  const layout = useLayout()
+  const layoutDispatch = useLayoutDispatch()
 
-  const [editor, editorDispatch] = useEditor()
+  const editor = useEditor()
+  const editorDispatch = useEditorDispatch()
+
   const { code } = editor
 
   // Apply initial data on mount
