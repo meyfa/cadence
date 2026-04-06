@@ -5,7 +5,7 @@ import { useChangeOrigin } from '../../hooks/change-origin.js'
 import type { SplitNode, SplitOrientation } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
 import { LayoutNodeView, type LayoutNodeViewProps } from './LayoutNodeView.js'
-import { transformNode } from '../algorithms.js'
+import { transformNode } from '../algorithms/mutate.js'
 
 // The interval during which layout changes are considered part of the same change stack.
 const CHANGE_STACK_WINDOW = numeric('s', 0.05)
