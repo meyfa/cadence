@@ -10,7 +10,7 @@ const fileExportSectionId = 'file.export' as MenuSectionId
 
 const exportAudioId = `${moduleId}.file.export` as CommandId
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const { showDialog } = useDialogService()
 
   useRegisterCommand(() => ({
@@ -30,7 +30,7 @@ const Commands: FunctionComponent = () => {
 export const exportModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   menu: {
     sections: [

@@ -10,7 +10,7 @@ const viewShowSectionId = 'view.show' as MenuSectionId
 
 const viewMixerId = `${moduleId}.view.mixer` as CommandId
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
@@ -27,7 +27,7 @@ const Commands: FunctionComponent = () => {
 export const mixerModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   panels: [
     {

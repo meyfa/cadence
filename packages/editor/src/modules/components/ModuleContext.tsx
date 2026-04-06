@@ -17,9 +17,9 @@ export const ModuleProvider: FunctionComponent<PropsWithChildren<{
 export const ModuleHost: FunctionComponent = () => {
   const modules = useModules()
 
-  return modules.map(({ Commands, id }) => (
+  return modules.map(({ GlobalHooks, id }) => (
     <Fragment key={id}>
-      {Commands != null && <Commands />}
+      {GlobalHooks != null && <GlobalHooks />}
     </Fragment>
   ))
 }

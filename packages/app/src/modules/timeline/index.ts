@@ -21,7 +21,7 @@ const viewShowSectionId = 'view.show' as MenuSectionId
 const viewTimelineId = `${moduleId}.view.timeline` as CommandId
 const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showNotification } = useNotificationService()
 
@@ -77,7 +77,7 @@ const Commands: FunctionComponent = () => {
 export const timelineModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   panels: [
     {

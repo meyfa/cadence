@@ -10,8 +10,8 @@ export type ModuleId = Brand<string, 'app.ModuleId'>
 
 export interface Module {
   readonly id: ModuleId
+  readonly GlobalHooks?: ComponentType
   readonly panels?: readonly Panel[]
-  readonly Commands?: ComponentType
   readonly menu?: {
     readonly sections?: readonly MenuSectionDefinition[]
     readonly items?: readonly MenuItemDefinition[]

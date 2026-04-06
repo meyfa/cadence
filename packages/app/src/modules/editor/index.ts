@@ -23,7 +23,7 @@ const fileOpenId = `${moduleId}.file.open` as CommandId
 const fileSaveId = `${moduleId}.file.save` as CommandId
 const loadDemoId = `${moduleId}.load-demo` as CommandId
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showDialog } = useDialogService()
 
@@ -102,7 +102,7 @@ const Commands: FunctionComponent = () => {
 export const editorModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   panels: [
     {

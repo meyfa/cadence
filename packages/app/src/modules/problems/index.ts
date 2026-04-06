@@ -12,7 +12,7 @@ const viewShowSectionId = 'view.show' as MenuSectionId
 
 const viewProblemsId = `${moduleId}.view.problems` as CommandId
 
-const Commands: FunctionComponent = () => {
+const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
@@ -29,7 +29,7 @@ const Commands: FunctionComponent = () => {
 export const problemsModule: Module = {
   id: moduleId,
 
-  Commands,
+  GlobalHooks,
 
   panels: [
     {
