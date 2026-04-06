@@ -1,5 +1,5 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayout, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { useProblems } from '../../hooks/problems.js'
 import { pluralize } from '../../utilities/strings.js'
@@ -13,7 +13,7 @@ const viewShowSectionId = 'view.show' as MenuSectionId
 const viewProblemsId = `${moduleId}.view.problems` as CommandId
 
 const Commands: FunctionComponent = () => {
-  const [, layoutDispatch] = useLayout()
+  const layoutDispatch = useLayoutDispatch()
 
   useRegisterCommand(() => ({
     id: viewProblemsId,

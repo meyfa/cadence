@@ -3,7 +3,7 @@ import { Editor, type EditorLocation, type PanelProps } from '@editor'
 import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import { numeric } from '@utility'
 import { useCallback, type FunctionComponent } from 'react'
-import { useEditor } from '../../components/contexts/EditorContext.js'
+import { useEditor, useEditorDispatch } from '../../components/contexts/EditorContext.js'
 import { getCspNonce } from '../../csp.js'
 import { useEffectiveTheme } from '../../theme.js'
 
@@ -16,20 +16,22 @@ const extensions = [
 ]
 
 export const EditorPanel: FunctionComponent<PanelProps> = () => {
-  const [editorState, dispatch] = useEditor()
+  const editor = useEditor()
+  const editorDispatch = useEditorDispatch()
+
   const theme = useEffectiveTheme()
 
   const onChange = useCallback((code: string) => {
-    dispatch((prev) => ({ ...prev, code }))
-  }, [dispatch])
+    editorDispatch((prev) => ({ ...prev, code }))
+  }, [editorDispatch])
 
   const onLocationChange = useCallback((caret: EditorLocation | undefined) => {
-    dispatch((prev) => ({ ...prev, caret }))
-  }, [dispatch])
+    editorDispatch((prev) => ({ ...prev, caret }))
+  }, [editorDispatch])
 
   return (
     <Editor
-      document={editorState.code}
+      document={editor.code}
       indent={indent}
       theme={theme}
       extensions={extensions}

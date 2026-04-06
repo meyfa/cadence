@@ -1,5 +1,5 @@
 import type { DockLayoutStyles, MenuId, MenuSpec, Module, Panel, PanelId, Tab, TabContentProps, TabTitleProps } from '@editor'
-import { DockLayoutView, useLayout, useModules, useRegisterMenu } from '@editor'
+import { DockLayoutView, useLayout, useLayoutDispatch, useModules, useRegisterMenu } from '@editor'
 import { FunctionComponent, useCallback, useMemo } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
@@ -34,7 +34,9 @@ export const App: FunctionComponent<{
 }> = ({ storage, initialState }) => {
   const [hasExternalChange, resetExternalChange] = useStorageSync(storage, initialState)
 
-  const [layout, layoutDispatch] = useLayout()
+  const layout = useLayout()
+  const layoutDispatch = useLayoutDispatch()
+
   const onBeforeTabClose = useOnBeforeTabClose()
 
   useRegisterMenu(fileMenu)

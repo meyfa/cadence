@@ -1,8 +1,8 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useDialogService, useLayout, useRegisterCommand } from '@editor'
+import { activateTabOfType, useDialogService, useLayoutDispatch, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
-import { useEditor } from '../../components/contexts/EditorContext.js'
+import { useEditor, useEditorDispatch } from '../../components/contexts/EditorContext.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
 import { LoadDemoDialog } from './LoadDemoDialog.js'
@@ -24,21 +24,23 @@ const fileSaveId = `${moduleId}.file.save` as CommandId
 const loadDemoId = `${moduleId}.load-demo` as CommandId
 
 const Commands: FunctionComponent = () => {
-  const [, layoutDispatch] = useLayout()
+  const layoutDispatch = useLayoutDispatch()
   const { showDialog } = useDialogService()
-  const [editorState, editorDispatch] = useEditor()
+
+  const editor = useEditor()
+  const editorDispatch = useEditorDispatch()
 
   const editorRef = useRef({
-    state: editorState,
+    state: editor,
     dispatch: editorDispatch
   })
 
   useEffect(() => {
     editorRef.current = {
-      state: editorState,
+      state: editor,
       dispatch: editorDispatch
     }
-  }, [editorState, editorDispatch])
+  }, [editor, editorDispatch])
 
   useRegisterCommand(() => ({
     id: viewEditorId,
@@ -144,8 +146,8 @@ export const editorModule: Module = {
         commandId: viewEditorId,
         position: 'end',
         Label: () => {
-          const [editor] = useEditor()
-          return `Ln ${editor.caret?.line ?? '-'}, Col ${editor.caret?.column ?? '-'}`
+          const { caret } = useEditor()
+          return `Ln ${caret?.line ?? '-'}, Col ${caret?.column ?? '-'}`
         }
       }
     ]

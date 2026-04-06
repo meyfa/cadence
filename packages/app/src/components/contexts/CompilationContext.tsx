@@ -11,7 +11,7 @@ const CompilationContext = createContext<CompilationState | undefined>(undefined
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
   compileOptions: CompileOptions
 }>> = ({ compileOptions, children }) => {
-  const [editor] = useEditor()
+  const editor = useEditor()
   const result = useCompiler(editor.code, compileOptions)
 
   return (
