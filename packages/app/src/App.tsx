@@ -53,7 +53,7 @@ export const App: FunctionComponent<{
         The editor state has changed in another tab or window. Reload to apply the changes?
       </ConfirmationDialog>
 
-      <div className='flex flex-col h-dvh'>
+      <div className='flex flex-col h-svh overflow-hidden'>
         <Header logo={<Logo />} />
 
         <DockLayoutView
