@@ -7,25 +7,30 @@ import { ModuleProvider } from '../modules/components/ModuleContext.js'
 import type { Module } from '../modules/types.js'
 import { NotificationProvider } from '../notifications/components/NotificationContext.js'
 import { ProblemProvider } from '../problems/components/ProblemContext.js'
+import { PersistenceProvider } from '../persistence/components/PersistenceContext.js'
+import type { PersistenceEngine } from '../persistence/engine.js'
 
 export const CommonProvider: FunctionComponent<PropsWithChildren<{
+  persistenceEngine: PersistenceEngine
   modules: readonly Module[]
-}>> = ({ children, modules }) => {
+}>> = ({ children, persistenceEngine, modules }) => {
   return (
-    <LayoutProvider>
-      <DialogProvider>
-        <NotificationProvider>
-          <CommandRegistryProvider>
-            <MenuProvider>
-              <ProblemProvider>
-                <ModuleProvider modules={modules}>
-                  {children}
-                </ModuleProvider>
-              </ProblemProvider>
-            </MenuProvider>
-          </CommandRegistryProvider>
-        </NotificationProvider>
-      </DialogProvider>
-    </LayoutProvider>
+    <PersistenceProvider engine={persistenceEngine}>
+      <LayoutProvider>
+        <DialogProvider>
+          <NotificationProvider>
+            <CommandRegistryProvider>
+              <MenuProvider>
+                <ProblemProvider>
+                  <ModuleProvider modules={modules}>
+                    {children}
+                  </ModuleProvider>
+                </ProblemProvider>
+              </MenuProvider>
+            </CommandRegistryProvider>
+          </NotificationProvider>
+        </DialogProvider>
+      </LayoutProvider>
+    </PersistenceProvider>
   )
 }

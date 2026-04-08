@@ -1,4 +1,4 @@
-import { CommonProvider, DialogHost, ModuleHost, NotificationHost } from '@editor'
+import { CommonProvider, createLocalStorageBackend, DialogHost, ModuleHost, NotificationHost, PersistenceEngine } from '@editor'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import type { CompileOptions } from '@language'
@@ -98,6 +98,11 @@ const emotionCache = createCache({
   nonce: getCspNonce()
 })
 
+// TODO use this
+const persistenceEngine = new PersistenceEngine(createLocalStorageBackend({
+  prefix: 'cadence'
+}))
+
 const container = document.getElementById('root')
 if (container == null) {
   throw new Error('container == null')
@@ -108,7 +113,7 @@ const root = createRoot(container)
 root.render(
   <StrictMode>
     <CacheProvider value={emotionCache}>
-      <CommonProvider modules={modules}>
+      <CommonProvider persistenceEngine={persistenceEngine} modules={modules}>
         <AudioEngineContext value={engine}>
           <EditorProvider>
             <CompilationProvider compileOptions={compileOptions}>
