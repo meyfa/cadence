@@ -1,27 +1,17 @@
-import { useCommandRegistry, type CommandId, type PanelProps } from '@editor'
-import { GitHub, RestartAltOutlined } from '@mui/icons-material'
+import { useModules, type PanelProps } from '@editor'
+import { GitHub } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
-import { Button } from '../../components/button/Button.js'
 import { Card } from '../../components/card/Card.js'
-import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
-import { GainSlider } from '../../components/gain-slider/GainSlider.js'
-import { Radio } from '../../components/radio/Radio.js'
-import { RadioGroup } from '../../components/radio/RadioGroup.js'
-import { useObservable } from '../../hooks/observable.js'
-import type { ThemeSetting } from '../../state/settings.js'
-import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
 
 export const SettingsPanel: FunctionComponent<PanelProps> = () => {
-  const { getCommandById } = useCommandRegistry()
+  const modules = useModules()
 
-  const themeSetting = useThemeSetting()
-  const systemTheme = useSystemTheme()
-
-  const engine = useAudioEngine()
-  const outputGain = useObservable(engine.outputGain)
-
-  // TODO do not hardcode command id
-  const loadDemoCommand = getCommandById('editor.load-demo' as CommandId)
+  const settingsCards = modules.flatMap(({ id, settings }) => {
+    return (settings?.cards ?? []).map((Component, index) => ({
+      key: `${id}.${index}`,
+      Component
+    }))
+  })
 
   return (
     <div className='h-full overflow-auto p-4 text-content-300'>
@@ -30,35 +20,9 @@ export const SettingsPanel: FunctionComponent<PanelProps> = () => {
           Settings
         </div>
 
-        <Card title='Output gain'>
-          Adjust the output gain of the audio engine.
-
-          <GainSlider label='Output gain' gain={outputGain} onChange={(gain) => engine.outputGain.set(gain)} />
-        </Card>
-
-        <Card title='Theme'>
-          <RadioGroup value={themeSetting} onChange={(value) => applyThemeSetting(value as ThemeSetting)}>
-            <Radio value='dark'>Dark</Radio>
-            <Radio value='light'>Light</Radio>
-            <Radio value='system'>
-              System
-              {systemTheme === 'light' ? ' (light)' : ' (dark)'}
-            </Radio>
-          </RadioGroup>
-        </Card>
-
-        {loadDemoCommand != null && (
-          <Card title='Reset project'>
-            To delete your current project and load the demo project, click the button below.
-
-            <div className='flex items-center gap-4'>
-              <Button onClick={() => loadDemoCommand.run()}>
-                <RestartAltOutlined className='mr-2' />
-                Load demo project
-              </Button>
-            </div>
-          </Card>
-        )}
+        {settingsCards.map(({ key, Component }) => (
+          <Component key={key} />
+        ))}
 
         <Card title='About Cadence'>
           <a href='https://github.com/meyfa/cadence' target='_blank' rel='noreferrer' className='outline-none hocus:underline text-content-200 hocus:text-content-300'>
