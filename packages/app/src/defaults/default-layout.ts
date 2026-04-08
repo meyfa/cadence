@@ -3,7 +3,7 @@ import { editorPanelId } from '../modules/editor/index.js'
 import { mixerPanelId } from '../modules/mixer/index.js'
 import { problemsPanelId } from '../modules/problems/index.js'
 import { settingsPanelId } from '../modules/settings/index.js'
-import { timelinePanelId } from '../modules/timeline/index.js'
+import { timelinePanelId } from '../modules/playback/index.js'
 
 export const defaultLayout: DockLayout = {
   main: {

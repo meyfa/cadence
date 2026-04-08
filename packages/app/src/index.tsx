@@ -16,10 +16,10 @@ import { commandPaletteModule } from './modules/command-palette/index.js'
 import { editorModule } from './modules/editor/index.js'
 import { exportModule } from './modules/export/index.js'
 import { mixerModule } from './modules/mixer/index.js'
+import { playbackModule } from './modules/playback/index.js'
+import { defaultOutputGain } from './modules/playback/persistence.js'
 import { problemsModule } from './modules/problems/index.js'
 import { settingsModule } from './modules/settings/index.js'
-import { timelineModule } from './modules/timeline/index.js'
-import { defaultOutputGain } from './modules/timeline/persistence.js'
 import { viewModule } from './modules/view/index.js'
 import { defaultThemeSetting } from './modules/view/persistence.js'
 import { appPersistenceDefaults } from './persistence/persistence.js'
@@ -33,7 +33,7 @@ const modules = [
   problemsModule,
   settingsModule,
   viewModule,
-  timelineModule
+  playbackModule
 ]
 
 const compileOptions: CompileOptions = {

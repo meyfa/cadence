@@ -8,26 +8,26 @@ import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { useObservable } from '../../hooks/observable.js'
-import { useTimelineSettingsSync } from './persistence.js'
 import { OutputGainSettingsCard } from './OutputGainSettingsCard.js'
+import { usePlaybackSettingsSync } from './persistence.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
 const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
 const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
 
-const moduleId = 'timeline' as ModuleId
+const moduleId = 'playback' as ModuleId
 export const timelinePanelId = `${moduleId}.timeline` as PanelId
 
 const viewShowSectionId = 'view.show' as MenuSectionId
 
 const viewTimelineId = `${moduleId}.view.timeline` as CommandId
-const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
+const togglePlaybackId = `${moduleId}.toggle` as CommandId
 
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showNotification } = useNotificationService()
-  useTimelineSettingsSync()
+  usePlaybackSettingsSync()
 
   const audioEngine = useAudioEngine()
   const errors = useObservable(audioEngine.errors)
@@ -81,7 +81,7 @@ const GlobalHooks: FunctionComponent = () => {
   return null
 }
 
-export const timelineModule: Module = {
+export const playbackModule: Module = {
   id: moduleId,
 
   GlobalHooks,

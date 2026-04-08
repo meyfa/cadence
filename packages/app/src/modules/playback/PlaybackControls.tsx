@@ -13,7 +13,7 @@ export const PlaybackControls: FunctionComponent = () => {
   const outputGain = useObservable(engine.outputGain)
 
   const { getCommandById } = useCommandRegistry()
-  const togglePlaybackCommand = getCommandById('timeline.playback.toggle' as CommandId)
+  const togglePlaybackCommand = getCommandById('playback.toggle' as CommandId)
 
   return (
     <>
