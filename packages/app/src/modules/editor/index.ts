@@ -7,6 +7,7 @@ import { useEditor, useEditorDispatch } from '../../components/contexts/EditorCo
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './EditorPanel.js'
 import { LoadDemoDialog } from './LoadDemoDialog.js'
+import { ResetProjectSettingsCard } from './ResetProjectSettingsCard.js'
 
 const DEFAULT_FILENAME = 'track.cadence'
 const FILE_ACCEPT = '.cadence,text/plain'
@@ -142,6 +143,12 @@ export const editorModule: Module = {
         commandId: fileSaveId,
         label: 'Save…'
       }
+    ]
+  },
+
+  settings: {
+    cards: [
+      ResetProjectSettingsCard
     ]
   },
 

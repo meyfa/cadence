@@ -16,6 +16,9 @@ export interface Module {
     readonly sections?: readonly MenuSectionDefinition[]
     readonly items?: readonly MenuItemDefinition[]
   }
+  readonly settings?: {
+    readonly cards?: readonly ComponentType[]
+  }
   readonly inserts?: {
     readonly header?: readonly HeaderInsert[]
     readonly footer?: readonly FooterInsert[]

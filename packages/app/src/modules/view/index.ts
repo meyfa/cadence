@@ -3,6 +3,7 @@ import { useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
+import { ThemeSettingsCard } from './ThemeSettingsCard.js'
 
 const moduleId = 'view' as ModuleId
 
@@ -77,6 +78,12 @@ export const viewModule: Module = {
         commandId: layoutResetId,
         label: 'Reset layout'
       }
+    ]
+  },
+
+  settings: {
+    cards: [
+      ThemeSettingsCard
     ]
   }
 }

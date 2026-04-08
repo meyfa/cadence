@@ -8,6 +8,7 @@ import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { useObservable } from '../../hooks/observable.js'
+import { OutputGainSettingsCard } from './OutputGainSettingsCard.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
 
@@ -99,6 +100,12 @@ export const timelineModule: Module = {
         commandId: viewTimelineId,
         label: 'Timeline'
       }
+    ]
+  },
+
+  settings: {
+    cards: [
+      OutputGainSettingsCard
     ]
   },
 
