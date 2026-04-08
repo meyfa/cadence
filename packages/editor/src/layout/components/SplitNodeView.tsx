@@ -34,6 +34,10 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
   }, [layout])
 
   const onLayoutChange = useCallback((newLayout: Layout) => {
+    if (layoutsEqual(newLayout, layout)) {
+      return
+    }
+
     if (pushChangeOrigin('library')) {
       dispatch?.((layout) => transformNode(layout, nodeId, (node) => {
         if (node.type !== 'split') {
@@ -44,16 +48,13 @@ export const SplitNodeView: FunctionComponent<LayoutNodeViewProps<SplitNode>> = 
       return
     }
 
-    if (!layoutsEqual(newLayout, layout)) {
-      // Reassert desired layout
-      applyLayoutProp()
-    }
+    // Reassert desired layout
+    applyLayoutProp()
   }, [pushChangeOrigin, dispatch, applyLayoutProp, layout, nodeId])
 
   useLayoutEffect(() => {
-    if (pushChangeOrigin('self')) {
-      applyLayoutProp()
-    }
+    pushChangeOrigin('self')
+    applyLayoutProp()
   }, [pushChangeOrigin, applyLayoutProp])
 
   return (

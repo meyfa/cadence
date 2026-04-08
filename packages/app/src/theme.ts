@@ -1,4 +1,3 @@
-import type { ThemeSetting } from './state/settings.js'
 import { numeric } from '@utility'
 import { useEffect, useState } from 'react'
 
@@ -10,6 +9,9 @@ const SYSTEM_THEME = 'system'
 
 export const themes = Object.freeze([DARK_THEME, LIGHT_THEME] as const)
 export type Theme = typeof themes[number]
+
+export const themeSettings = Object.freeze([DARK_THEME, LIGHT_THEME, SYSTEM_THEME] as const)
+export type ThemeSetting = typeof themeSettings[number]
 
 const THEME_TRANSITION_DURATION = numeric('s', 0.2)
 

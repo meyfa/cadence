@@ -11,8 +11,6 @@ import { AudioEngineContext } from './components/contexts/AudioEngineContext.js'
 import { CompilationProvider } from './components/contexts/CompilationContext.js'
 import { EditorProvider } from './components/contexts/EditorContext.js'
 import { getCspNonce } from './csp.js'
-import { defaultLayout } from './defaults/default-layout.js'
-import { demoCode } from './defaults/demo-code.js'
 import './index.css'
 import { commandPaletteModule } from './modules/command-palette/index.js'
 import { editorModule } from './modules/editor/index.js'
@@ -21,9 +19,11 @@ import { mixerModule } from './modules/mixer/index.js'
 import { problemsModule } from './modules/problems/index.js'
 import { settingsModule } from './modules/settings/index.js'
 import { timelineModule } from './modules/timeline/index.js'
+import { defaultOutputGain } from './modules/timeline/persistence.js'
 import { viewModule } from './modules/view/index.js'
-import { parseEditorState, serializeEditorState, type CadenceEditorState } from './state/state.js'
-import { BrowserLocalStorage } from './state/storage.js'
+import { defaultThemeSetting } from './modules/view/persistence.js'
+import { appPersistenceDefaults } from './persistence/persistence.js'
+import { applyThemeSetting } from './theme.js'
 
 const modules = [
   commandPaletteModule,
@@ -66,31 +66,11 @@ const audioEngineOptions = {
       }
 } satisfies Partial<AudioEngineOptions>
 
-const defaultState: CadenceEditorState = {
-  settings: {
-    theme: 'dark',
-    outputGain: numeric('db', -12)
-  },
-  layout: defaultLayout,
-  code: demoCode
-}
-
-const STORAGE_KEY = 'cadence-editor'
-const storage = new BrowserLocalStorage(STORAGE_KEY, serializeEditorState, parseEditorState)
-const storedState = storage.load()
-
-const initialState: CadenceEditorState = {
-  settings: {
-    theme: storedState?.settings?.theme ?? defaultState.settings.theme,
-    outputGain: storedState?.settings?.outputGain ?? defaultState.settings.outputGain
-  },
-  layout: storedState?.layout ?? defaultState.layout,
-  code: storedState?.code ?? defaultState.code
-}
+applyThemeSetting(defaultThemeSetting)
 
 const engine = createAudioEngine({
   ...audioEngineOptions,
-  outputGain: initialState.settings.outputGain
+  outputGain: defaultOutputGain
 })
 
 const emotionCache = createCache({
@@ -98,7 +78,6 @@ const emotionCache = createCache({
   nonce: getCspNonce()
 })
 
-// TODO use this
 const persistenceEngine = new PersistenceEngine(createLocalStorageBackend({
   prefix: 'cadence'
 }))
@@ -113,11 +92,11 @@ const root = createRoot(container)
 root.render(
   <StrictMode>
     <CacheProvider value={emotionCache}>
-      <CommonProvider persistenceEngine={persistenceEngine} modules={modules}>
+      <CommonProvider persistenceEngine={persistenceEngine} initialLayout={appPersistenceDefaults.layout} modules={modules}>
         <AudioEngineContext value={engine}>
-          <EditorProvider>
+          <EditorProvider initialState={{ code: appPersistenceDefaults.code }}>
             <CompilationProvider compileOptions={compileOptions}>
-              <App storage={storage} initialState={initialState} />
+              <App />
               <DialogHost />
               <NotificationHost />
               <ModuleHost />

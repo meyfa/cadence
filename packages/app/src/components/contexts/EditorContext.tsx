@@ -21,8 +21,10 @@ export type EditorDispatch = Dispatch<SetStateAction<EditorState>>
 const EditorContext = createContext<EditorState | undefined>(undefined)
 const EditorDispatchContext = createContext<EditorDispatch | undefined>(undefined)
 
-export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = useReducer(editorReducer, initialEditorState)
+export const EditorProvider: FunctionComponent<PropsWithChildren<{
+  initialState?: EditorState
+}>> = ({ children, initialState = initialEditorState }) => {
+  const [state, dispatch] = useReducer(editorReducer, initialState)
 
   return (
     <EditorContext value={state}>
