@@ -7,9 +7,7 @@ import { Header } from './components/header/Header.js'
 import { Logo } from './components/logo/Logo.js'
 import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
 import { StyledTabTitle } from './components/tab/StyledTabTitle.js'
-import { useStorageSync } from './hooks/storage.js'
-import type { CadenceEditorState, PartialCadenceEditorState } from './state/state.js'
-import type { Storage } from './state/storage.js'
+import { useAppPersistenceSync } from './persistence/persistence.js'
 
 const fileMenu: MenuSpec = {
   id: 'file' as MenuId,
@@ -28,11 +26,8 @@ const dockLayoutStyles: DockLayoutStyles = {
   dropIndicatorColor: 'var(--color-content-300)'
 }
 
-export const App: FunctionComponent<{
-  storage: Storage<CadenceEditorState, PartialCadenceEditorState>
-  initialState: CadenceEditorState
-}> = ({ storage, initialState }) => {
-  const [hasExternalChange, resetExternalChange] = useStorageSync(storage, initialState)
+export const App: FunctionComponent = () => {
+  const { loaded, hasExternalChange, acceptRemoteChanges, keepLocalChanges } = useAppPersistenceSync()
 
   const layout = useLayout()
   const layoutDispatch = useLayoutDispatch()
@@ -47,30 +42,32 @@ export const App: FunctionComponent<{
       <ConfirmationDialog
         open={hasExternalChange}
         title='External changes detected'
-        onConfirm={() => window.location.reload()}
-        onCancel={resetExternalChange}
-        confirmText='Reload'
+        onConfirm={acceptRemoteChanges}
+        onCancel={keepLocalChanges}
+        confirmText='Apply'
         cancelText='Ignore'
       >
-        The editor state has changed in another tab or window. Reload to apply the changes?
+        The project state has changed in another tab or window. Apply the remote changes?
       </ConfirmationDialog>
 
-      <div className='flex flex-col h-svh overflow-hidden'>
-        <Header logo={<Logo />} />
+      {loaded && (
+        <div className='flex flex-col h-svh overflow-hidden'>
+          <Header logo={<Logo />} />
 
-        <DockLayoutView
-          TabTitleComponent={RenderTabTitle}
-          TabContentComponent={RenderTabContent}
-          FallbackComponent={PanelErrorFallback}
-          styles={dockLayoutStyles}
-          layout={layout}
-          dispatch={layoutDispatch}
-          onBeforeTabClose={onBeforeTabClose}
-          className='flex-1 min-h-0 min-w-0'
-        />
+          <DockLayoutView
+            TabTitleComponent={RenderTabTitle}
+            TabContentComponent={RenderTabContent}
+            FallbackComponent={PanelErrorFallback}
+            styles={dockLayoutStyles}
+            layout={layout}
+            dispatch={layoutDispatch}
+            onBeforeTabClose={onBeforeTabClose}
+            className='flex-1 min-h-0 min-w-0'
+          />
 
-        <Footer />
-      </div>
+          <Footer />
+        </div>
+      )}
     </>
   )
 }

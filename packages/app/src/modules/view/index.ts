@@ -3,6 +3,7 @@ import { useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'
+import { useViewSettingsSync } from './persistence.js'
 import { ThemeSettingsCard } from './ThemeSettingsCard.js'
 
 const moduleId = 'view' as ModuleId
@@ -39,6 +40,7 @@ const themeSystem: Command = {
 
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
+  useViewSettingsSync()
 
   useRegisterCommand(() => ({
     id: layoutResetId,

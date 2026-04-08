@@ -8,6 +8,7 @@ import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { useObservable } from '../../hooks/observable.js'
+import { useTimelineSettingsSync } from './persistence.js'
 import { OutputGainSettingsCard } from './OutputGainSettingsCard.js'
 import { PlaybackControls } from './PlaybackControls.js'
 import { TimelinePanel } from './TimelinePanel.js'
@@ -26,6 +27,7 @@ const togglePlaybackId = `${moduleId}.playback.toggle` as CommandId
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showNotification } = useNotificationService()
+  useTimelineSettingsSync()
 
   const audioEngine = useAudioEngine()
   const errors = useObservable(audioEngine.errors)

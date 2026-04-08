@@ -2,7 +2,7 @@ import { createContext, useReducer, type Dispatch, type FunctionComponent, type 
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { DockLayout } from '../types.js'
 
-const initialLayout: DockLayout = {
+const initialLayoutState: DockLayout = {
   main: undefined
 }
 
@@ -15,7 +15,9 @@ export type LayoutDispatch = Dispatch<SetStateAction<DockLayout>>
 export const LayoutContext = createContext<DockLayout | undefined>(undefined)
 export const LayoutDispatchContext = createContext<Dispatch<SetStateAction<DockLayout>> | undefined>(undefined)
 
-export const LayoutProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
+export const LayoutProvider: FunctionComponent<PropsWithChildren<{
+  initialLayout?: DockLayout
+}>> = ({ children, initialLayout = initialLayoutState }) => {
   const [state, dispatch] = useReducer(layoutReducer, initialLayout)
 
   return (

@@ -8,7 +8,7 @@ export function readonly<T, S> (struct: Struct<T, S>): Struct<Readonly<T>, S> {
   return struct
 }
 
-export const numeric = <const U extends Unit> (unit: U) => object({
+export const validateNumeric = <const U extends Unit> (unit: U) => object({
   unit: literal(unit),
   value: number()
 })
