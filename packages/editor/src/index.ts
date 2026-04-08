@@ -36,6 +36,13 @@ export * from './modules/components/ModuleContext.js'
 export type * from './notifications/types.js'
 export * from './notifications/components/NotificationContext.js'
 
+// persistence
+export type * from './persistence/types.js'
+export * from './persistence/engine.js'
+export * from './persistence/backends/local-storage.js'
+export * from './persistence/backends/memory.js'
+export * from './persistence/hooks.js'
+
 // problems
 export type * from './problems/types.js'
 export * from './problems/components/ProblemContext.js'
