@@ -9,8 +9,7 @@ import type { LayoutDispatch } from './LayoutContext.js'
 import { LayoutNodeView } from './LayoutNodeView.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
-import type { TabContentProps } from './TabContent.js'
-import type { TabTitleProps } from './TabTitle.js'
+import { PanelTabTitle, type TabTitleProps } from './TabTitle.js'
 
 const DRAGGED_TAB_OPACITY = 0.6
 
@@ -47,12 +46,10 @@ export interface DockLayoutStyles {
 
 export interface DockLayoutViewProps {
   readonly TabTitleComponent: ComponentType<TabTitleProps>
-  readonly TabContentComponent: ComponentType<TabContentProps>
   readonly FallbackComponent: ComponentType<FallbackProps>
   readonly styles: DockLayoutStyles
   readonly layout: DockLayout
   readonly dispatch: LayoutDispatch
-  readonly onBeforeTabClose?: (tab: Tab) => boolean
   readonly className?: string
 }
 
@@ -68,12 +65,10 @@ export const DockLayoutView: FunctionComponent<DockLayoutViewProps> = (props) =>
 
 const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
   TabTitleComponent,
-  TabContentComponent,
   FallbackComponent,
   styles,
   layout,
   dispatch,
-  onBeforeTabClose,
   className
 }) => {
   const [draggedTab, setDraggedTab] = useState<Tab | undefined>(undefined)
@@ -158,13 +153,11 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
         {layout.main != null && (
           <LayoutNodeView
             TabTitleComponent={TabTitleComponent}
-            TabContentComponent={TabContentComponent}
             FallbackComponent={FallbackComponent}
             styles={styles}
             node={layout.main}
             focusedTabId={layout.focusedTabId}
             dispatch={draggedTab != null ? undefined : dispatch}
-            onBeforeTabClose={onBeforeTabClose}
           />
         )}
       </div>
@@ -175,7 +168,7 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
           modifiers={[snapOverlayTopLeftToCursor]}
           style={{ pointerEvents: 'none', opacity: DRAGGED_TAB_OPACITY }}
         >
-          <TabTitleComponent tab={draggedTab} state='dragging' />
+          <PanelTabTitle TabTitleComponent={TabTitleComponent} tab={draggedTab} state='dragging' />
         </DragOverlay>
       )}
     </DndContext>
