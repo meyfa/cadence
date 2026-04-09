@@ -1,22 +1,15 @@
 import { useSafeContext } from '@editor'
-import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
 import { numeric } from '@utility'
 import { createAudioEngine, type AudioEngine, type AudioEngineOptions } from '@webaudio'
+import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
+import { isLikelyMobile, isLowMemoryDevice } from '../../utilities/features.js'
 import { defaultOutputGain } from './persistence.js'
 
 const AudioEngineContext = createContext<AudioEngine | undefined>(undefined)
 
-const lowMemoryDevice = 'deviceMemory' in navigator
-  ? (navigator as any).deviceMemory <= 2
-  : undefined
-
-const likelyMobile = 'userAgentData' in navigator && 'mobile' in (navigator as any).userAgentData
-  ? (navigator as any).userAgentData.mobile === true
-  : matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height) <= 768
-
 const audioEngineOptions = {
   assetLoadTimeout: numeric('s', 5),
-  cacheLimits: lowMemoryDevice === true || likelyMobile
+  cacheLimits: isLowMemoryDevice() === true || isLikelyMobile()
     ? {
         arrayBuffer: numeric('bytes', 60 * 1024 * 1024), // compressed: 60 MB
         audioBuffer: numeric('bytes', 30 * 1024 * 1024) // decompressed: 30 MB
