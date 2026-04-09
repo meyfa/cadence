@@ -4,14 +4,14 @@ import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@edito
 import { activateTabOfType, useLayoutDispatch, useNotificationService, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
-import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
 import { useCompilationState } from '../../components/contexts/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { useObservable } from '../../hooks/observable.js'
-import { OutputGainSettingsCard } from './OutputGainSettingsCard.js'
+import { PlaybackProvider, useAudioEngine } from './provider.js'
+import { OutputGainSettingsCard } from './components/OutputGainSettingsCard.js'
 import { usePlaybackSettingsSync } from './persistence.js'
-import { PlaybackControls } from './PlaybackControls.js'
-import { TimelinePanel } from './TimelinePanel.js'
+import { PlaybackControls } from './components/PlaybackControls.js'
+import { TimelinePanel } from './components/TimelinePanel.js'
 
 const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
 const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
@@ -83,6 +83,8 @@ const GlobalHooks: FunctionComponent = () => {
 
 export const playbackModule: Module = {
   id: moduleId,
+
+  Provider: PlaybackProvider,
 
   GlobalHooks,
 

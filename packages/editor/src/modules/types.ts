@@ -1,15 +1,17 @@
 import type { Brand } from '@utility'
-import type { ComponentType, ReactNode } from 'react'
+import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
 import type { CommandId } from '../commands/commands.js'
 import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'
 import type { SerializedComponent } from '../layout/types.js'
 
 export type ModuleRenderFn<P = {}, T extends ReactNode = ReactNode> = (props: P) => T
+export type ModuleProviderComponent = ComponentType<PropsWithChildren>
 
 export type ModuleId = Brand<string, 'editor.ModuleId'>
 
 export interface Module {
   readonly id: ModuleId
+  readonly Provider?: ModuleProviderComponent
   readonly GlobalHooks?: ComponentType
   readonly panels?: readonly Panel[]
   readonly menu?: {

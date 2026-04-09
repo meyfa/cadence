@@ -1,10 +1,10 @@
 import { useCommandRegistry, type CommandId } from '@editor'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import { type FunctionComponent } from 'react'
-import { Button } from '../../components/button/Button.js'
-import { useAudioEngine } from '../../components/contexts/AudioEngineContext.js'
-import { GainSlider } from '../../components/gain-slider/GainSlider.js'
-import { useObservable } from '../../hooks/observable.js'
+import { Button } from '../../../components/button/Button.js'
+import { GainSlider } from '../../../components/gain-slider/GainSlider.js'
+import { useObservable } from '../../../hooks/observable.js'
+import { useAudioEngine } from '../provider.js'
 
 export const PlaybackControls: FunctionComponent = () => {
   const engine = useAudioEngine()
