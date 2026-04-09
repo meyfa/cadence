@@ -1,7 +1,7 @@
+import { useObservable } from '@editor'
 import type { FunctionComponent } from 'react'
 import { Card } from '../../../components/card/Card.js'
 import { GainSlider } from '../../../components/gain-slider/GainSlider.js'
-import { useObservable } from '../../../hooks/observable.js'
 import { useAudioEngine } from '../provider.js'
 
 export const OutputGainSettingsCard: FunctionComponent = () => {

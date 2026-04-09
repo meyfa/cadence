@@ -7,7 +7,7 @@ import { Button } from '../../components/button/Button.js'
 import { BaseDialog } from '../../components/dialog/BaseDialog.js'
 import { Dropdown } from '../../components/dropdown/Dropdown.js'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
-import { useCompilationState } from '../../components/contexts/CompilationContext.js'
+import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
 import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, LEADING_SILENCE_OPTIONS, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
 
@@ -15,7 +15,8 @@ export const ExportDialog: FunctionComponent<{
   open: boolean
   onClose: () => void
 }> = ({ open, onClose }) => {
-  const { program } = useCompilationState()
+  const { loading, result: { program: currentProgram } } = useCompilationState()
+  const program = loading ? undefined : currentProgram
 
   // Track the current async operation to avoid setting state after the
   // component has been unmounted or a new export was started.
@@ -128,7 +129,13 @@ export const ExportDialog: FunctionComponent<{
         </>
       )}
     >
-      {program == null && (
+      {loading && (
+        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
+          Please wait while the project is being compiled…
+        </div>
+      )}
+
+      {!loading && program == null && (
         <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
           Please fix compilation errors before exporting.
         </div>

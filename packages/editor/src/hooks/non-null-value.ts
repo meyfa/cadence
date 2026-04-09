@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Return the last non-null/undefined value of the input.
+ * Return the most recent non-null/undefined value of the input.
  */
-export function usePrevious<T> (value: T | undefined): T | undefined {
+export function useNonNullValue<T> (value: T | undefined): T | undefined {
   const [lastValue, setLastValue] = useState(value)
 
   useEffect(() => {

@@ -1,17 +1,15 @@
 import { createAudioGraph } from '@audiograph'
-import type { Program } from '@core'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useNotificationService, useProvideProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
-import { useEffect, useRef, type FunctionComponent } from 'react'
-import { useCompilationState } from '../../components/contexts/CompilationContext.js'
+import { useRef, type FunctionComponent } from 'react'
+import { useCompilationState, type CompilationState } from '../../compilation/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
-import { useObservable } from '../../hooks/observable.js'
-import { PlaybackProvider, useAudioEngine } from './provider.js'
 import { OutputGainSettingsCard } from './components/OutputGainSettingsCard.js'
-import { usePlaybackSettingsSync } from './persistence.js'
 import { PlaybackControls } from './components/PlaybackControls.js'
 import { TimelinePanel } from './components/TimelinePanel.js'
+import { usePlaybackSettingsSync } from './persistence.js'
+import { PlaybackProvider, useAudioEngine } from './provider.js'
 
 const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
 const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
@@ -32,12 +30,9 @@ const GlobalHooks: FunctionComponent = () => {
   const audioEngine = useAudioEngine()
   const errors = useObservable(audioEngine.errors)
 
-  const { program } = useCompilationState()
-  const programRef = useRef<Program | undefined>(program)
-
-  useEffect(() => {
-    programRef.current = program
-  }, [program])
+  const compilation = useCompilationState()
+  const compilationRef = useRef<CompilationState>(compilation)
+  compilationRef.current = compilation
 
   useRegisterCommand(() => ({
     id: viewTimelineId,
@@ -54,7 +49,8 @@ const GlobalHooks: FunctionComponent = () => {
       'Ctrl+Shift+Space'
     ],
     run: () => {
-      const program = programRef.current
+      const { loading, result, compileNow } = compilationRef.current
+      const { program } = loading ? compileNow() : result
 
       if (audioEngine.playing.get()) {
         audioEngine.stop()
@@ -62,10 +58,7 @@ const GlobalHooks: FunctionComponent = () => {
       }
 
       if (program == null) {
-        showNotification(Notification, {
-          severity: 'error',
-          message: PLAYBACK_ERROR_MESSAGE
-        }, {
+        showNotification(Notification, { severity: 'error', message: PLAYBACK_ERROR_MESSAGE }, {
           kind: `${moduleId}.playback.error`,
           timeout: PLAYBACK_ERROR_TIMEOUT
         })
