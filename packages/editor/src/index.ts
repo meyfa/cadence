@@ -13,7 +13,10 @@ export type * from './editor/types.js'
 export * from './editor/components/Editor.js'
 
 // hooks
+export * from './hooks/debounced-value.js'
 export * from './hooks/global-events.js'
+export * from './hooks/non-null-value.js'
+export * from './hooks/observable.js'
 export * from './hooks/safe-context.js'
 
 // input

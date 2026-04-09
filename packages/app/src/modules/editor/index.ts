@@ -2,7 +2,7 @@ import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from
 import { activateTabOfType, useDialogService, useLayoutDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
-import { useCompilationState } from '../../components/contexts/CompilationContext.js'
+import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { useProjectSource, useProjectSourceDispatch } from '../../project-source/ProjectSourceContext.js'
 import { getProjectFileContent, setProjectFileContent, TRACK_FILE_PATH } from '../../project-source/model.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
@@ -50,7 +50,7 @@ const GlobalHooks: FunctionComponent = () => {
     }
   }, [source, sourceDispatch, editorDispatch])
 
-  const { errors } = useCompilationState()
+  const { result: { errors } } = useCompilationState()
 
   useRegisterCommand(() => ({
     id: viewEditorId,

@@ -53,39 +53,30 @@ export interface CompileResult {
   readonly errors: readonly RangeError[]
 }
 
+export function compileSource (source: ProjectSourceState, compileOptions: CompileOptions): CompileResult {
+  const code = getProjectFileContent(source, TRACK_FILE_PATH) ?? ''
+
+  const lexResult = safeLex(code)
+  if (!lexResult.complete) {
+    return { errors: unwrapError(lexResult.error) }
+  }
+
+  const parseResult = safeParse(lexResult.value)
+  if (!parseResult.complete) {
+    return { errors: unwrapError(parseResult.error) }
+  }
+
+  const compileResult = safeCompile(parseResult.value, compileOptions)
+  if (!compileResult.complete) {
+    return { errors: unwrapError(compileResult.error) }
+  }
+
+  return {
+    program: compileResult.value,
+    errors: []
+  }
+}
+
 export function useCompiler (source: ProjectSourceState, compileOptions: CompileOptions): CompileResult {
-  const code = useMemo(() => {
-    return getProjectFileContent(source, TRACK_FILE_PATH) ?? ''
-  }, [source])
-
-  const lexResult = useMemo(() => safeLex(code), [code])
-
-  const parseResult = useMemo(() => {
-    if (lexResult.complete) {
-      return safeParse(lexResult.value)
-    }
-  }, [lexResult])
-
-  const compileResult = useMemo(() => {
-    if (parseResult?.complete === true) {
-      return safeCompile(parseResult.value, compileOptions)
-    }
-  }, [parseResult, compileOptions])
-
-  const errors = useMemo(() => {
-    if (!lexResult.complete) {
-      return unwrapError(lexResult.error)
-    }
-    if (parseResult?.complete === false) {
-      return unwrapError(parseResult.error)
-    }
-    if (compileResult?.complete === false) {
-      return unwrapError(compileResult.error)
-    }
-    return []
-  }, [parseResult, compileResult])
-
-  const program = compileResult?.complete === true ? compileResult.value : undefined
-
-  return useMemo(() => ({ program, errors }), [program, errors])
+  return useMemo(() => compileSource(source, compileOptions), [source, compileOptions])
 }
