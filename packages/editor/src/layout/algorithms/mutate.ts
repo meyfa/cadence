@@ -190,12 +190,12 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
   ]), { focusTabId: tabId })
 }
 
-export function activateTabOfType (layout: DockLayout, type: string): DockLayout {
+export function activateTabOfType (layout: DockLayout, type: string, create: () => SerializedComponent): DockLayout {
   const tab = findTabByComponentType(layout, type)
 
   // If no such tab exists, create one
   if (tab == null) {
-    return createTab(layout, { type })
+    return createTab(layout, create())
   }
 
   return activateTabInPane(layout, tab.id)

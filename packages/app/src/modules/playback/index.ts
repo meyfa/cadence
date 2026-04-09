@@ -43,7 +43,7 @@ const GlobalHooks: FunctionComponent = () => {
     id: viewTimelineId,
     label: 'Show view: Timeline',
     run: () => {
-      layoutDispatch((layout) => activateTabOfType(layout, timelinePanelId))
+      layoutDispatch((layout) => activateTabOfType(layout, timelinePanelId, () => ({ type: timelinePanelId })))
     }
   }), [layoutDispatch])
 

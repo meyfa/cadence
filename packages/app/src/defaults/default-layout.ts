@@ -1,9 +1,11 @@
 import type { DockLayout, LayoutNodeId, TabId } from '@editor'
 import { editorPanelId } from '../modules/editor/index.js'
+import type { EditorPanelProps } from '../modules/editor/panel-props.js'
 import { mixerPanelId } from '../modules/mixer/index.js'
+import { timelinePanelId } from '../modules/playback/index.js'
 import { problemsPanelId } from '../modules/problems/index.js'
 import { settingsPanelId } from '../modules/settings/index.js'
-import { timelinePanelId } from '../modules/playback/index.js'
+import { TRACK_FILE_PATH } from '../project-source/model.js'
 
 export const defaultLayout: DockLayout = {
   main: {
@@ -16,9 +18,25 @@ export const defaultLayout: DockLayout = {
         id: 'main-tabs' as LayoutNodeId,
         type: 'pane',
         tabs: [
-          { id: 'editor' as TabId, component: { type: editorPanelId } },
-          { id: 'mixer' as TabId, component: { type: mixerPanelId } },
-          { id: 'settings' as TabId, component: { type: settingsPanelId } }
+          {
+            id: 'editor' as TabId,
+            component: {
+              type: editorPanelId,
+              props: { filePath: TRACK_FILE_PATH } satisfies EditorPanelProps
+            }
+          },
+          {
+            id: 'mixer' as TabId,
+            component: {
+              type: mixerPanelId
+            }
+          },
+          {
+            id: 'settings' as TabId,
+            component: {
+              type: settingsPanelId
+            }
+          }
         ],
         activeTabId: 'editor' as TabId
       },
@@ -26,8 +44,18 @@ export const defaultLayout: DockLayout = {
         id: 'bottom-dock' as LayoutNodeId,
         type: 'pane',
         tabs: [
-          { id: 'problems' as TabId, component: { type: problemsPanelId } },
-          { id: 'timeline' as TabId, component: { type: timelinePanelId } }
+          {
+            id: 'problems' as TabId,
+            component: {
+              type: problemsPanelId
+            }
+          },
+          {
+            id: 'timeline' as TabId,
+            component: {
+              type: timelinePanelId
+            }
+          }
         ],
         activeTabId: 'timeline' as TabId
       }

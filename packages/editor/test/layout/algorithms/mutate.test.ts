@@ -93,18 +93,22 @@ describe('layout/algorithms/mutate.ts', () => {
 
   describe('activateTabOfType', () => {
     it('focuses an existing tab when the component type already exists', () => {
-      const updated = activateTabOfType(testLayout, 'ComponentC')
+      const updated = activateTabOfType(testLayout, 'ComponentC', () => ({ type: 'ComponentC' }))
 
       assert.strictEqual(getPane(updated, pane2Id).activeTabId, tab3Id)
       assert.strictEqual(updated.focusedTabId, tab3Id)
     })
 
     it('creates a new tab when the component type does not exist', () => {
-      const updated = activateTabOfType(testLayout, 'ComponentX')
+      const updated = activateTabOfType(testLayout, 'ComponentX', () => ({
+        type: 'ComponentX',
+        props: { someProp: 'someValue' }
+      }))
       const tab = findTabByComponentType(updated, 'ComponentX')
 
       assert.ok(tab != null)
       assert.strictEqual(updated.focusedTabId, tab.id)
+      assert.deepStrictEqual(tab.component, { type: 'ComponentX', props: { someProp: 'someValue' } })
     })
   })
 

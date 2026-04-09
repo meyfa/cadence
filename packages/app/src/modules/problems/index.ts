@@ -18,7 +18,7 @@ const GlobalHooks: FunctionComponent = () => {
     id: viewProblemsId,
     label: 'Show view: Problems',
     run: () => {
-      layoutDispatch((layout) => activateTabOfType(layout, problemsPanelId))
+      layoutDispatch((layout) => activateTabOfType(layout, problemsPanelId, () => ({ type: problemsPanelId })))
     }
   }), [layoutDispatch])
 

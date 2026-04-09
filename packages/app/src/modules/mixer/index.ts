@@ -17,7 +17,7 @@ const GlobalHooks: FunctionComponent = () => {
     id: viewMixerId,
     label: 'Show view: Mixer',
     run: () => {
-      layoutDispatch((layout) => activateTabOfType(layout, mixerPanelId))
+      layoutDispatch((layout) => activateTabOfType(layout, mixerPanelId, () => ({ type: mixerPanelId })))
     }
   }), [layoutDispatch])
 
