@@ -1,20 +1,22 @@
 import { TabPanel } from '@headlessui/react'
 import { useEffect, useRef, type ComponentType, type FunctionComponent } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
+import type { PanelId } from '../../modules/types.js'
 import { updateFocusedTab } from '../algorithms/mutate.js'
 import type { Tab as LayoutTab } from '../types.js'
 import type { LayoutDispatch } from './LayoutContext.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
+import { usePanelById } from './panel-lookup.js'
 
 export interface TabContentProps {
   readonly tab: LayoutTab
 }
 
 export const TabContent: FunctionComponent<TabContentProps & {
-  TabContentComponent: ComponentType<TabContentProps>
   FallbackComponent: ComponentType<FallbackProps>
   dispatch?: LayoutDispatch
-}> = ({ TabContentComponent, FallbackComponent, tab, dispatch }) => {
+}> = ({ FallbackComponent, tab, dispatch }) => {
+  const panel = usePanelById(tab.component.type as PanelId)
   const panelRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -39,7 +41,9 @@ export const TabContent: FunctionComponent<TabContentProps & {
   return (
     <TabPanel unmount={false} style={{ position: 'relative', width: '100%', height: '100%' }} ref={panelRef}>
       <PanelErrorBoundary FallbackComponent={FallbackComponent}>
-        <TabContentComponent tab={tab} />
+        {panel == null
+          ? `Unknown tab type: ${tab.component.type}`
+          : <panel.Panel panelProps={tab.component.props} />}
       </PanelErrorBoundary>
     </TabPanel>
   )

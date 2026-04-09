@@ -1,6 +1,6 @@
-import type { DockLayoutStyles, MenuId, MenuSpec, Module, Panel, PanelId, Tab, TabContentProps, TabTitleProps } from '@editor'
-import { DockLayoutView, useLayout, useLayoutDispatch, useModules, useRegisterMenu } from '@editor'
-import { FunctionComponent, useCallback, useMemo } from 'react'
+import type { DockLayoutStyles, MenuId, MenuSpec } from '@editor'
+import { DockLayoutView, useLayout, useLayoutDispatch, useRegisterMenu } from '@editor'
+import type { FunctionComponent } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
 import { Header } from './components/header/Header.js'
@@ -32,8 +32,6 @@ export const App: FunctionComponent = () => {
   const layout = useLayout()
   const layoutDispatch = useLayoutDispatch()
 
-  const onBeforeTabClose = useOnBeforeTabClose()
-
   useRegisterMenu(fileMenu)
   useRegisterMenu(viewMenu)
 
@@ -55,13 +53,11 @@ export const App: FunctionComponent = () => {
           <Header logo={<Logo />} />
 
           <DockLayoutView
-            TabTitleComponent={RenderTabTitle}
-            TabContentComponent={RenderTabContent}
+            TabTitleComponent={StyledTabTitle}
             FallbackComponent={PanelErrorFallback}
             styles={dockLayoutStyles}
             layout={layout}
             dispatch={layoutDispatch}
-            onBeforeTabClose={onBeforeTabClose}
             className='flex-1 min-h-0 min-w-0'
           />
 
@@ -70,61 +66,4 @@ export const App: FunctionComponent = () => {
       )}
     </>
   )
-}
-
-function useOnBeforeTabClose (): (tab: Tab) => boolean {
-  const modules = useModules()
-
-  return useCallback((tab: Tab) => {
-    const panel = findPanelById(modules, tab.component.type as PanelId)
-    return panel?.closeable ?? false
-  }, [modules])
-}
-
-const RenderTabTitle: FunctionComponent<TabTitleProps> = ({ tab, ...props }) => {
-  const panel = usePanelById(tab.component.type as PanelId)
-
-  return (
-    <StyledTabTitle
-      TitleComponent={panel?.Title ?? EmptyStringComponent}
-      NotificationsComponent={panel?.Notifications ?? NullComponent}
-      tab={tab}
-      closeable={panel?.closeable ?? false}
-      {...props}
-    />
-  )
-}
-
-const RenderTabContent: FunctionComponent<TabContentProps> = ({ tab }) => {
-  const panel = usePanelById(tab.component.type as PanelId)
-
-  if (panel == null) {
-    return (
-      <div className='p-4'>
-        Unknown tab type: {tab.component.type}
-      </div>
-    )
-  }
-
-  return <panel.Panel panelProps={tab.component.props} />
-}
-
-const EmptyStringComponent = () => ''
-const NullComponent = () => null
-
-function findPanelById (modules: readonly Module[], id: PanelId): Panel | undefined {
-  for (const module of modules) {
-    for (const panel of module.panels ?? []) {
-      if (panel.id === id) {
-        return panel
-      }
-    }
-  }
-  return undefined
-}
-
-function usePanelById (id: PanelId): Panel | undefined {
-  const modules = useModules()
-
-  return useMemo(() => findPanelById(modules, id), [modules, id])
 }

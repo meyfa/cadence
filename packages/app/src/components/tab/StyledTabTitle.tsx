@@ -1,4 +1,4 @@
-import type { ModuleRenderFn, PanelProps, TabTitleProps } from '@editor'
+import type { TabTitleProps } from '@editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
@@ -13,11 +13,7 @@ function isCoarsePointer (): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }
 
-export const StyledTabTitle: FunctionComponent<Pick<TabTitleProps, 'tab' | 'state' | 'onClose'> & {
-  TitleComponent: ModuleRenderFn<PanelProps, string>
-  NotificationsComponent: ModuleRenderFn<PanelProps, number | null>
-  closeable: boolean
-}> = ({ tab, state, onClose, TitleComponent, NotificationsComponent, closeable }) => {
+export const StyledTabTitle: FunctionComponent<TabTitleProps> = ({ tab, state, onClose, TitleComponent, NotificationsComponent, closeable }) => {
   const dragging = state === 'dragging'
   const focused = state === 'focused' || dragging
   const active = state === 'active' || focused

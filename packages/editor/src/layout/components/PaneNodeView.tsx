@@ -3,7 +3,7 @@ import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortabl
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
 import { useCallback, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms/mutate.js'
-import type { LayoutNodeId, PaneNode, Tab, TabId } from '../types.js'
+import type { LayoutNodeId, PaneNode, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
 import type { LayoutNodeViewProps } from './LayoutNodeView.js'
 import { TabContent } from './TabContent.js'
@@ -31,13 +31,11 @@ export function parsePaneNodeDropTarget (id: string): PaneNodeDropTargetInfo | u
 
 export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
   TabTitleComponent,
-  TabContentComponent,
   FallbackComponent,
   styles,
   node,
   focusedTabId,
-  dispatch,
-  onBeforeTabClose
+  dispatch
 }) => {
   const { id: nodeId, tabs, activeTabId } = node
 
@@ -60,12 +58,9 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
     }
   }, [dispatch, onTabFocus, nodeId, tabs])
 
-  const onClose = useCallback((tab: Tab) => {
-    const prevented = onBeforeTabClose?.(tab) === false
-    if (!prevented) {
-      dispatch?.((layout) => removeTabFromPane(layout, tab.id))
-    }
-  }, [onBeforeTabClose, dispatch])
+  const onClose = useCallback((id: TabId) => {
+    dispatch?.((layout) => removeTabFromPane(layout, id))
+  }, [dispatch])
 
   return (
     <TabGroup
@@ -83,7 +78,7 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
               tab={tab}
               state={tab.id === focusedTabId ? 'focused' : tab.id === activeTabId ? 'active' : 'inactive'}
               onTabFocus={() => onTabFocus(tab.id)}
-              onClose={() => onClose(tab)}
+              onClose={() => onClose(tab.id)}
             />
           ))}
         </SortableContext>
@@ -92,7 +87,6 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
         {tabs.map((tab) => (
           <TabContent
             key={tab.id}
-            TabContentComponent={TabContentComponent}
             FallbackComponent={FallbackComponent}
             tab={tab}
             dispatch={dispatch}
