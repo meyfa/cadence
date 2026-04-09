@@ -17,7 +17,7 @@ const GlobalHooks: FunctionComponent = () => {
     id: viewSettingsId,
     label: 'Show view: Settings',
     run: () => {
-      layoutDispatch((layout) => activateTabOfType(layout, settingsPanelId))
+      layoutDispatch((layout) => activateTabOfType(layout, settingsPanelId, () => ({ type: settingsPanelId })))
     }
   }), [layoutDispatch])
 

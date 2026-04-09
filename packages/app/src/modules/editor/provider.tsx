@@ -3,13 +3,11 @@ import { useSafeContext } from '@editor'
 import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 
 export interface EditorState {
-  readonly code: string
-  readonly caret?: EditorLocation
+  readonly carets: Readonly<Record<string, EditorLocation | undefined>>
 }
 
 const initialEditorState: EditorState = {
-  code: '',
-  caret: undefined
+  carets: {}
 }
 
 function editorReducer (state: EditorState, action: SetStateAction<EditorState>): EditorState {
@@ -21,10 +19,8 @@ export type EditorDispatch = Dispatch<SetStateAction<EditorState>>
 const EditorContext = createContext<EditorState | undefined>(undefined)
 const EditorDispatchContext = createContext<EditorDispatch | undefined>(undefined)
 
-export const EditorProvider: FunctionComponent<PropsWithChildren<{
-  initialState?: EditorState
-}>> = ({ children, initialState = initialEditorState }) => {
-  const [state, dispatch] = useReducer(editorReducer, initialState)
+export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
+  const [state, dispatch] = useReducer(editorReducer, initialEditorState)
 
   return (
     <EditorContext value={state}>

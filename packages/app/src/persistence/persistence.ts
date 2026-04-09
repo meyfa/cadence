@@ -1,14 +1,15 @@
 import { useLayout, useLayoutDispatch, usePersistentBinding, type DockLayout, type PersistenceDomain } from '@editor'
-import { defaultLayout } from '../defaults/default-layout.js'
-import { dockLayoutSchema } from './layout.js'
-import { string } from 'superstruct'
-import { demoCode } from '../defaults/demo-code.js'
 import { useCallback, useMemo } from 'react'
-import { useEditor, useEditorDispatch } from '../components/contexts/EditorContext.js'
+import { record, string, type as structType } from 'superstruct'
+import { defaultLayout } from '../defaults/default-layout.js'
+import { demoCode } from '../defaults/demo-code.js'
+import { useProjectSource, useProjectSourceDispatch } from '../project-source/ProjectSourceContext.js'
+import { createProjectSourceState, type ProjectSourceState } from '../project-source/model.js'
+import { dockLayoutSchema } from './layout.js'
 
 export const appPersistenceDefaults = {
   layout: defaultLayout,
-  code: demoCode
+  source: createProjectSourceState(demoCode)
 }
 
 const layoutDomain: PersistenceDomain<DockLayout> = {
@@ -19,12 +20,16 @@ const layoutDomain: PersistenceDomain<DockLayout> = {
   areEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b)
 }
 
-const editorDomain: PersistenceDomain<string> = {
-  key: 'editor.code',
-  fallbackValue: demoCode,
+const sourceStateSchema = structType({
+  files: record(string(), string())
+})
+
+const sourceDomain: PersistenceDomain<ProjectSourceState> = {
+  key: 'project.source',
+  fallbackValue: createProjectSourceState(demoCode),
   serialize: (value) => value,
-  deserialize: (value) => string().create(value),
-  areEqual: (a, b) => a === b
+  deserialize: (value) => sourceStateSchema.create(value),
+  areEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b)
 }
 
 export interface AppPersistenceSyncState {
@@ -44,34 +49,36 @@ export function useAppPersistenceSync (): AppPersistenceSyncState {
     onConflict: 'manual'
   })
 
-  // editor
+  // project source
 
-  const editor = useEditor()
-  const editorDispatch = useEditorDispatch()
+  const source = useProjectSource()
+  const sourceDispatch = useProjectSourceDispatch()
 
-  const applyCode = useCallback((code: string) => {
-    editorDispatch((state) => state.code === code ? state : { ...state, code })
-  }, [editorDispatch])
+  const applySource = useCallback((next: ProjectSourceState) => {
+    sourceDispatch((state) => {
+      return JSON.stringify(state) === JSON.stringify(next) ? state : next
+    })
+  }, [sourceDispatch])
 
-  const { meta: editorMeta, controls: editorControls } = usePersistentBinding(editorDomain, editor.code, applyCode, {
+  const { meta: sourceMeta, controls: sourceControls } = usePersistentBinding(sourceDomain, source, applySource, {
     onConflict: 'manual'
   })
 
   // combined
 
-  const loaded = layoutMeta.loaded && editorMeta.loaded
-  const hasExternalChange = layoutMeta.conflict != null || editorMeta.conflict != null
+  const loaded = layoutMeta.loaded && sourceMeta.loaded
+  const hasExternalChange = layoutMeta.conflict != null || sourceMeta.conflict != null
 
   return useMemo(() => ({
     loaded,
     hasExternalChange,
     acceptRemoteChanges: () => {
       layoutControls.acceptRemote()
-      editorControls.acceptRemote()
+      sourceControls.acceptRemote()
     },
     keepLocalChanges: () => {
       layoutControls.keepLocal()
-      editorControls.keepLocal()
+      sourceControls.keepLocal()
     }
-  }), [loaded, hasExternalChange, layoutControls, editorControls])
+  }), [loaded, hasExternalChange, layoutControls, sourceControls])
 }

@@ -6,7 +6,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
 import { CompilationProvider } from './components/contexts/CompilationContext.js'
-import { EditorProvider } from './components/contexts/EditorContext.js'
 import { getCspNonce } from './csp.js'
 import './index.css'
 import { commandPaletteModule } from './modules/command-palette/index.js'
@@ -18,6 +17,7 @@ import { problemsModule } from './modules/problems/index.js'
 import { settingsModule } from './modules/settings/index.js'
 import { viewModule } from './modules/view/index.js'
 import { defaultThemeSetting } from './modules/view/persistence.js'
+import { ProjectSourceProvider } from './project-source/ProjectSourceContext.js'
 import { appPersistenceDefaults } from './persistence/persistence.js'
 import { applyThemeSetting } from './theme.js'
 
@@ -63,14 +63,14 @@ root.render(
   <StrictMode>
     <CacheProvider value={emotionCache}>
       <CommonProvider persistenceEngine={persistenceEngine} initialLayout={appPersistenceDefaults.layout} modules={modules}>
-        <EditorProvider initialState={{ code: appPersistenceDefaults.code }}>
+        <ProjectSourceProvider initialState={appPersistenceDefaults.source}>
           <CompilationProvider compileOptions={compileOptions}>
             <App />
             <DialogHost />
             <NotificationHost />
             <ModuleHost />
           </CompilationProvider>
-        </EditorProvider>
+        </ProjectSourceProvider>
       </CommonProvider>
     </CacheProvider>
   </StrictMode>
