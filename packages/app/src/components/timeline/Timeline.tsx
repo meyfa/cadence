@@ -1,5 +1,6 @@
 import { calculateTotalLength, type BeatRange, type Part, type Program } from '@core'
 import { useGlobalMouseMove, useGlobalMouseUp } from '@editor'
+import { Warning } from '@mui/icons-material'
 import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
@@ -25,6 +26,9 @@ const MINOR_TICKS_MIN_BEAT_WIDTH = 10
 
 // When zoomed far out, bar labels are reduced to every N bars (stride).
 const SPARSE_BAR_LABELS_STRIDE_BARS = 4
+
+// If this beat count is exceeded, then rendering will be limited to preserve performance.
+const RENDERING_LIMIT_BEATS = 4096
 
 export const Timeline: FunctionComponent<{
   program: Program
@@ -113,7 +117,17 @@ const TimeRuler: FunctionComponent<{
 }> = ({ beatsPerBar, trackLength, beatWidth, selection, onSelect }) => {
   const totalBeats = Math.ceil(trackLength.value)
 
+  const limited = totalBeats > RENDERING_LIMIT_BEATS
+
   const { majorTickPath, minorTickPath, barLabelBeats } = useMemo(() => {
+    if (limited) {
+      return {
+        majorTickPath: '',
+        minorTickPath: '',
+        barLabelBeats: []
+      }
+    }
+
     const isZoomedFarOut = beatWidth < MINOR_TICKS_MIN_BEAT_WIDTH
     const majorStrideBeats = beatsPerBar * (isZoomedFarOut ? SPARSE_BAR_LABELS_STRIDE_BARS : 1)
     const minorStrideBeats = isZoomedFarOut ? beatsPerBar : 1
@@ -246,6 +260,15 @@ const TimeRuler: FunctionComponent<{
           </text>
         ))}
       </svg>
+
+      {limited && (
+        <div className='pointer-events-none absolute inset-0'>
+          <div className='sticky top-0 left-0 z-10 inline-flex h-6 items-center px-2 text-sm text-content-100'>
+            <Warning className='mr-1' fontSize='inherit' />
+            Track exceeds rendering limit
+          </div>
+        </div>
+      )}
     </div>
   )
 }
