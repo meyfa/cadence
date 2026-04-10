@@ -8,6 +8,7 @@ import { saveFile } from '../../utilities/files.js'
 
 const ASSET_LOAD_TIMEOUT = numeric('s', 30)
 
+export const MAX_EXPORT_DURATION = numeric('s', 60 * 60) // 1 hour
 export const RENDER_CHANNELS = 2 // stereo
 
 export type FileType = 'wav' | 'aiff'
