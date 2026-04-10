@@ -3,13 +3,13 @@ import { AIFFFormat, createLeadingSilenceTransform, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
 import { numeric } from '@utility'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Button } from '../../components/button/Button.js'
 import { BaseDialog } from '../../components/dialog/BaseDialog.js'
 import { Dropdown } from '../../components/dropdown/Dropdown.js'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
-import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { formatBytes, formatDuration } from '../../utilities/strings.js'
-import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, LEADING_SILENCE_OPTIONS, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
+import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, LEADING_SILENCE_OPTIONS, MAX_EXPORT_DURATION, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
 
 export const ExportDialog: FunctionComponent<{
   open: boolean
@@ -60,8 +60,24 @@ export const ExportDialog: FunctionComponent<{
     setErrors([])
   }, [open])
 
-  const onExport = useCallback(() => {
+  const metrics = useMemo(() => {
     if (program == null) {
+      return undefined
+    }
+
+    return computeExportMetrics(program, {
+      sampleRate,
+      leadingSilence: numeric('s', Number.parseFloat(leadingSilence)),
+      type,
+      wavFormat,
+      aiffFormat
+    })
+  }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat])
+
+  const exceedsMaxDuration = metrics != null && metrics.duration.value > MAX_EXPORT_DURATION.value
+
+  const onExport = useCallback(() => {
+    if (program == null || exceedsMaxDuration) {
       return
     }
 
@@ -105,13 +121,7 @@ export const ExportDialog: FunctionComponent<{
         onComplete([error])
       }
     })()
-  }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat, onClose])
-
-  const metrics = useMemo(() => {
-    const silence = numeric('s', Number.parseFloat(leadingSilence))
-    const options = { sampleRate, leadingSilence: silence, type, wavFormat, aiffFormat }
-    return program != null ? computeExportMetrics(program, options) : undefined
-  }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat])
+  }, [program, exceedsMaxDuration, sampleRate, leadingSilence, type, wavFormat, aiffFormat, onClose])
 
   return (
     <BaseDialog
@@ -120,7 +130,7 @@ export const ExportDialog: FunctionComponent<{
       title='Export audio'
       actions={(
         <>
-          <Button onClick={onExport} disabled={program == null || exporting}>
+          <Button onClick={onExport} disabled={program == null || exceedsMaxDuration || exporting}>
             Export
           </Button>
           <Button onClick={onDialogClose} disabled={exporting}>
@@ -130,26 +140,32 @@ export const ExportDialog: FunctionComponent<{
       )}
     >
       {loading && (
-        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
+        <ExportErrorMessage>
           Please wait while the project is being compiled…
-        </div>
+        </ExportErrorMessage>
       )}
 
       {!loading && program == null && (
-        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
+        <ExportErrorMessage>
           Please fix compilation errors before exporting.
-        </div>
+        </ExportErrorMessage>
+      )}
+
+      {!loading && exceedsMaxDuration && (
+        <ExportErrorMessage>
+          The track exceeds the export limit ({formatDuration(MAX_EXPORT_DURATION)}).
+        </ExportErrorMessage>
       )}
 
       {errors.length > 0 && (
-        <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
+        <ExportErrorMessage>
           Errors occurred during export:
           <ul className='list-disc list-inside'>
             {errors.map((error, index) => (
               <li key={index} className='pl-4 -indent-4 mt-2'>{error.message}</li>
             ))}
           </ul>
-        </div>
+        </ExportErrorMessage>
       )}
 
       <ExportField label='File type'>
@@ -223,5 +239,13 @@ const ExportField: FunctionComponent<PropsWithChildren<{
       </Label>
       {children}
     </Field>
+  )
+}
+
+const ExportErrorMessage: FunctionComponent<PropsWithChildren> = ({ children }) => {
+  return (
+    <div className='mb-4 px-2 py-1 bg-error-surface text-error-content border border-error-frame rounded-md'>
+      {children}
+    </div>
   )
 }
