@@ -3,8 +3,7 @@ import { indentUnit } from '@codemirror/language'
 import { Compartment, EditorState, type Extension, type SelectionRange, type Text } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
-import { cadenceDarkTheme, cadenceLightTheme } from './theme.js'
-import type { EditorLocation, EditorTheme } from './types.js'
+import type { EditorLocation } from './types.js'
 
 export interface CadenceEditorOptions {
   readonly document: string
@@ -13,8 +12,6 @@ export interface CadenceEditorOptions {
    * The string used for indentation, for example '  ' (two spaces).
    */
   readonly indent: string
-
-  readonly theme: EditorTheme
 
   /**
    * Extensions such as language support or linting.
@@ -35,7 +32,6 @@ export interface CadenceEditorHandle {
 
   readonly setDocument: (value: string) => void
   readonly setIndent: (indent: string) => void
-  readonly setTheme: (theme: EditorTheme) => void
 
   readonly destroy: () => void
 }
@@ -54,7 +50,6 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
   })
 
   const indentUnitConfig = new Compartment()
-  const themeConfig = new Compartment()
 
   const state = EditorState.create({
     doc: options.document,
@@ -68,10 +63,6 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
         // Disable browser save dialog, improving UX for users accustomed to regularly pressing Ctrl+S
         { key: 'Ctrl-s', run: () => true }
       ]),
-
-      themeConfig.of(
-        options.theme === 'light' ? cadenceLightTheme : cadenceDarkTheme
-      ),
 
       EditorView.theme({
         '&.cm-editor': {
@@ -109,14 +100,6 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
     setIndent: (value: string) => {
       view.dispatch({
         effects: indentUnitConfig.reconfigure(indentUnit.of(value))
-      })
-    },
-
-    setTheme: (theme: EditorTheme) => {
-      view.dispatch({
-        effects: themeConfig.reconfigure(
-          theme === 'light' ? cadenceLightTheme : cadenceDarkTheme
-        )
       })
     },
 
