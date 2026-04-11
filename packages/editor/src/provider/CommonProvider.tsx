@@ -9,6 +9,7 @@ import { NotificationProvider } from '../notifications/components/NotificationCo
 import { PersistenceProvider } from '../persistence/components/PersistenceContext.js'
 import type { PersistenceEngine } from '../persistence/engine.js'
 import { ProblemProvider } from '../problems/components/ProblemContext.js'
+import { ProjectSourceProvider } from '../project-source/components/ProjectSourceContext.js'
 
 export const CommonProvider: FunctionComponent<PropsWithChildren<{
   persistenceEngine: PersistenceEngine
@@ -16,21 +17,23 @@ export const CommonProvider: FunctionComponent<PropsWithChildren<{
 }>> = ({ children, persistenceEngine, modules }) => {
   return (
     <PersistenceProvider engine={persistenceEngine}>
-      <LayoutProvider>
-        <DialogProvider>
-          <NotificationProvider>
-            <CommandRegistryProvider>
-              <MenuProvider>
-                <ProblemProvider>
-                  <ModuleProvider modules={modules}>
-                    {children}
-                  </ModuleProvider>
-                </ProblemProvider>
-              </MenuProvider>
-            </CommandRegistryProvider>
-          </NotificationProvider>
-        </DialogProvider>
-      </LayoutProvider>
+      <ProjectSourceProvider>
+        <LayoutProvider>
+          <DialogProvider>
+            <NotificationProvider>
+              <CommandRegistryProvider>
+                <MenuProvider>
+                  <ProblemProvider>
+                    <ModuleProvider modules={modules}>
+                      {children}
+                    </ModuleProvider>
+                  </ProblemProvider>
+                </MenuProvider>
+              </CommandRegistryProvider>
+            </NotificationProvider>
+          </DialogProvider>
+        </LayoutProvider>
+      </ProjectSourceProvider>
     </PersistenceProvider>
   )
 }

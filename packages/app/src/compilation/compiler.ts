@@ -1,7 +1,8 @@
+import { getProjectFileContent, type ProjectSource } from '@editor'
 import type { Program } from '@core'
 import { compile, CompoundError, lex, parse, RangeError, Result, type CompileOptions } from '@language'
 import { useMemo } from 'react'
-import { getProjectFileContent, TRACK_FILE_PATH, type ProjectSourceState } from '../project-source/model.js'
+import { TRACK_FILE_PATH } from '../persistence/constants.js'
 
 type UnwrappableError = RangeError | CompoundError<RangeError>
 
@@ -53,7 +54,7 @@ export interface CompileResult {
   readonly errors: readonly RangeError[]
 }
 
-export function compileSource (source: ProjectSourceState, compileOptions: CompileOptions): CompileResult {
+export function compileSource (source: ProjectSource, compileOptions: CompileOptions): CompileResult {
   const code = getProjectFileContent(source, TRACK_FILE_PATH) ?? ''
 
   const lexResult = safeLex(code)
@@ -77,6 +78,6 @@ export function compileSource (source: ProjectSourceState, compileOptions: Compi
   }
 }
 
-export function useCompiler (source: ProjectSourceState, compileOptions: CompileOptions): CompileResult {
+export function useCompiler (source: ProjectSource, compileOptions: CompileOptions): CompileResult {
   return useMemo(() => compileSource(source, compileOptions), [source, compileOptions])
 }

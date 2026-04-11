@@ -1,18 +1,20 @@
-import { useSafeContext } from '@editor'
 import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
-import { createProjectSourceState, type ProjectSourceState } from './model.js'
+import { useSafeContext } from '../../hooks/safe-context.js'
+import { createProjectSourceState, type ProjectSource } from '../model.js'
 
-function projectSourceReducer (state: ProjectSourceState, action: SetStateAction<ProjectSourceState>): ProjectSourceState {
+const initialState = createProjectSourceState()
+
+function projectSourceReducer (state: ProjectSource, action: SetStateAction<ProjectSource>): ProjectSource {
   return typeof action === 'function' ? action(state) : action
 }
 
-export type ProjectSourceDispatch = Dispatch<SetStateAction<ProjectSourceState>>
+export type ProjectSourceDispatch = Dispatch<SetStateAction<ProjectSource>>
 
-const ProjectSourceContext = createContext<ProjectSourceState | undefined>(undefined)
+const ProjectSourceContext = createContext<ProjectSource | undefined>(undefined)
 const ProjectSourceDispatchContext = createContext<ProjectSourceDispatch | undefined>(undefined)
 
 export const ProjectSourceProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = useReducer(projectSourceReducer, createProjectSourceState())
+  const [state, dispatch] = useReducer(projectSourceReducer, initialState)
 
   return (
     <ProjectSourceContext value={state}>
@@ -23,7 +25,7 @@ export const ProjectSourceProvider: FunctionComponent<PropsWithChildren> = ({ ch
   )
 }
 
-export function useProjectSource (): ProjectSourceState {
+export function useProjectSource (): ProjectSource {
   return useSafeContext(ProjectSourceContext, 'ProjectSourceContext')
 }
 
