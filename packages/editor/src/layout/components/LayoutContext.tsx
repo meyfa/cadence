@@ -15,10 +15,8 @@ export type LayoutDispatch = Dispatch<SetStateAction<DockLayout>>
 export const LayoutContext = createContext<DockLayout | undefined>(undefined)
 export const LayoutDispatchContext = createContext<Dispatch<SetStateAction<DockLayout>> | undefined>(undefined)
 
-export const LayoutProvider: FunctionComponent<PropsWithChildren<{
-  initialLayout?: DockLayout
-}>> = ({ children, initialLayout = initialLayoutState }) => {
-  const [state, dispatch] = useReducer(layoutReducer, initialLayout)
+export const LayoutProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
+  const [state, dispatch] = useReducer(layoutReducer, initialLayoutState)
 
   return (
     <LayoutContext value={state}>

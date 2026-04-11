@@ -7,11 +7,6 @@ import { useProjectSource, useProjectSourceDispatch } from '../project-source/Pr
 import { createProjectSourceState, type ProjectSourceState } from '../project-source/model.js'
 import { dockLayoutSchema } from './layout.js'
 
-export const appPersistenceDefaults = {
-  layout: defaultLayout,
-  source: createProjectSourceState(demoCode)
-}
-
 const layoutDomain: PersistenceDomain<DockLayout> = {
   key: 'app.layout',
   fallbackValue: defaultLayout,

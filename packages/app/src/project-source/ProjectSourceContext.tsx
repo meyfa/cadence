@@ -11,10 +11,8 @@ export type ProjectSourceDispatch = Dispatch<SetStateAction<ProjectSourceState>>
 const ProjectSourceContext = createContext<ProjectSourceState | undefined>(undefined)
 const ProjectSourceDispatchContext = createContext<ProjectSourceDispatch | undefined>(undefined)
 
-export const ProjectSourceProvider: FunctionComponent<PropsWithChildren<{
-  initialState?: ProjectSourceState
-}>> = ({ children, initialState = createProjectSourceState() }) => {
-  const [state, dispatch] = useReducer(projectSourceReducer, initialState)
+export const ProjectSourceProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
+  const [state, dispatch] = useReducer(projectSourceReducer, createProjectSourceState())
 
   return (
     <ProjectSourceContext value={state}>
