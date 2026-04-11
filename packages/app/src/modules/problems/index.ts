@@ -1,7 +1,7 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
 import { activateTabOfType, useLayoutDispatch, useProblems, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
-import { pluralize } from '../../utilities/strings.js'
+import { pluralize } from '../../utilities/format.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
 
 const moduleId = 'problems' as ModuleId

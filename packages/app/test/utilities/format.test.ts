@@ -1,9 +1,9 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { formatBytes, formatDuration } from '../../src/utilities/strings.js'
+import { formatBytes, formatDuration } from '../../src/utilities/format.js'
 
-describe('utilities/strings.ts', () => {
+describe('utilities/format.ts', () => {
   describe('formatDuration', () => {
     it('formats durations correctly', () => {
       const testCases = [
