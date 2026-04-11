@@ -1,6 +1,6 @@
 import type { Extension } from '@codemirror/state'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
-import { useMutableCallback } from '../../hooks/mutable-callback.js'
+import { useLatestRef } from '../../hooks/latest-ref.js'
 import { createCadenceEditor, type CadenceEditorHandle } from '../handle.js'
 import type { EditorLocation } from '../types.js'
 
@@ -15,8 +15,8 @@ export const Editor: FunctionComponent<{
   onLocationChange?: (location: EditorLocation | undefined) => void
 }> = ({ document, indent, theme, extensions, cspNonce, className, ...props }) => {
   const handleRef = useRef<CadenceEditorHandle>(null)
-  const onChange = useMutableCallback(props.onChange)
-  const onLocationChange = useMutableCallback(props.onLocationChange)
+  const onChange = useLatestRef(props.onChange)
+  const onLocationChange = useLatestRef(props.onLocationChange)
 
   // Initialize editor
   const initialize = useCallback((container: HTMLDivElement | null) => {

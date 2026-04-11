@@ -1,16 +1,16 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
-import { useEffect, useRef, type FunctionComponent } from 'react'
+import type { FunctionComponent } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { TRACK_FILE_PATH } from '../../persistence/constants.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
-import { EditorPanel } from './components/EditorPanel.js'
 import { getFocusedEditorCaret } from './caret.js'
+import { EditorPanel } from './components/EditorPanel.js'
 import { LoadDemoDialog } from './components/LoadDemoDialog.js'
+import { ResetProjectSettingsCard } from './components/ResetProjectSettingsCard.js'
 import { getEditorPanelProps, type EditorPanelProps } from './panel-props.js'
 import { EditorProvider, useEditor, useEditorDispatch } from './provider.js'
-import { ResetProjectSettingsCard } from './components/ResetProjectSettingsCard.js'
 
 const DEFAULT_FILENAME = TRACK_FILE_PATH
 const FILE_ACCEPT = '.cadence,text/plain'
@@ -36,19 +36,11 @@ const GlobalHooks: FunctionComponent = () => {
   const sourceDispatch = useProjectSourceDispatch()
   const editorDispatch = useEditorDispatch()
 
-  const editorRef = useRef({
+  const editorRef = useLatestRef({
     source,
     sourceDispatch,
     editorDispatch
   })
-
-  useEffect(() => {
-    editorRef.current = {
-      source: source,
-      sourceDispatch: sourceDispatch,
-      editorDispatch
-    }
-  }, [source, sourceDispatch, editorDispatch])
 
   const { result: { errors } } = useCompilationState()
 

@@ -1,5 +1,6 @@
 import { numeric } from '@utility'
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useLatestRef } from '../hooks/latest-ref.js'
 import { usePersistenceContext } from './components/PersistenceContext.js'
 import type { PersistenceDomain, PersistenceEvent } from './types.js'
 
@@ -51,11 +52,9 @@ export function usePersistentBinding<T> (
   const previousPersistedValueRef = useRef(persistedValue)
   const previousLoadedRef = useRef(meta.loaded)
   const previousConflictRef = useRef(meta.conflict)
-  const applyValueRef = useRef(applyValue)
-  const areEqualRef = useRef(areEqual)
 
-  applyValueRef.current = applyValue
-  areEqualRef.current = areEqual
+  const applyValueRef = useLatestRef(applyValue)
+  const areEqualRef = useLatestRef(areEqual)
 
   const { loaded, conflict } = meta
 
