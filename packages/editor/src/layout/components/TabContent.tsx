@@ -43,7 +43,7 @@ export const TabContent: FunctionComponent<TabContentProps & {
       <PanelErrorBoundary FallbackComponent={FallbackComponent}>
         {panel == null
           ? `Unknown tab type: ${tab.component.type}`
-          : <panel.Panel panelProps={tab.component.props} />}
+          : <panel.Panel panelProps={tab.component.props} tabId={tab.id} />}
       </PanelErrorBoundary>
     </TabPanel>
   )

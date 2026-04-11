@@ -1,9 +1,9 @@
-import type { EditorLocation } from '@editor'
+import type { EditorLocation, TabId } from '@editor'
 import { useSafeContext } from '@editor'
 import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
 
 export interface EditorState {
-  readonly carets: Readonly<Record<string, EditorLocation | undefined>>
+  readonly carets: Readonly<Record<TabId, EditorLocation | undefined>>
 }
 
 const initialEditorState: EditorState = {

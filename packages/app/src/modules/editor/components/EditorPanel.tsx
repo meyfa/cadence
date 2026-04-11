@@ -15,7 +15,7 @@ import { cadenceDarkTheme, cadenceLightTheme } from '../theme.js'
 const indent = '  ' // 2 spaces
 const lintDelay = numeric('s', 0.25)
 
-export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps }) => {
+export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }) => {
   const { filePath } = getEditorPanelProps(panelProps)
   const editorDispatch = useEditorDispatch()
   const source = useProjectSource()
@@ -33,10 +33,10 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps }) => {
       ...prev,
       carets: {
         ...prev.carets,
-        [filePath]: caret
+        [tabId]: caret
       }
     }))
-  }, [editorDispatch, filePath])
+  }, [editorDispatch, tabId])
 
   const viewDispatchRef = useRef<EditorViewDispatch | undefined>(undefined)
 

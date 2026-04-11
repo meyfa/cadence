@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { findNode, findNodeById, findPane, findPaneById, findPaneByTabId, findTab, findTabByComponentType } from '../../../src/layout/algorithms/find.js'
+import { findFocusedTab, findNode, findNodeById, findPane, findPaneById, findPaneByTabId, findTab, findTabByComponentType } from '../../../src/layout/algorithms/find.js'
 import { pane1Id, pane2Id, pane3Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.js'
 
 describe('layout/algorithms/find.ts', () => {
@@ -43,6 +43,13 @@ describe('layout/algorithms/find.ts', () => {
     it('should find a tab by predicate', () => {
       const tab = findTab(testLayout, (tab) => tab.id === tab2Id)
       assert.strictEqual(tab?.id, tab2Id)
+    })
+  })
+
+  describe('findFocusedTab', () => {
+    it('should find the focused tab', () => {
+      const tab = findFocusedTab(testLayout)
+      assert.strictEqual(tab?.id, testLayout.focusedTabId)
     })
   })
 
