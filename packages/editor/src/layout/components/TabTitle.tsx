@@ -143,7 +143,7 @@ export const TabTitle: FunctionComponent<{
       {...attributes}
       {...listeners}
       onFocusCapture={disabled ? undefined : onTabFocus}
-      style={{ position: 'relative', outline: 'none', pointerEvents: disabled ? 'none' : undefined }}
+      style={{ position: 'relative', flex: 'none', outline: 'none', pointerEvents: disabled ? 'none' : undefined }}
     >
       <div
         ref={setBeforeDropRef}
