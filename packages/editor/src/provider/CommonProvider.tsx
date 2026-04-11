@@ -3,22 +3,20 @@ import { CommandRegistryProvider } from '../commands/components/CommandRegistryC
 import { MenuProvider } from '../commands/components/MenuContext.js'
 import { DialogProvider } from '../dialogs/components/DialogContext.js'
 import { LayoutProvider } from '../layout/components/LayoutContext.js'
-import type { DockLayout } from '../layout/types.js'
 import { ModuleProvider } from '../modules/components/ModuleContext.js'
 import type { Module } from '../modules/types.js'
 import { NotificationProvider } from '../notifications/components/NotificationContext.js'
-import { ProblemProvider } from '../problems/components/ProblemContext.js'
 import { PersistenceProvider } from '../persistence/components/PersistenceContext.js'
 import type { PersistenceEngine } from '../persistence/engine.js'
+import { ProblemProvider } from '../problems/components/ProblemContext.js'
 
 export const CommonProvider: FunctionComponent<PropsWithChildren<{
   persistenceEngine: PersistenceEngine
-  initialLayout?: DockLayout
   modules: readonly Module[]
-}>> = ({ children, persistenceEngine, initialLayout, modules }) => {
+}>> = ({ children, persistenceEngine, modules }) => {
   return (
     <PersistenceProvider engine={persistenceEngine}>
-      <LayoutProvider initialLayout={initialLayout}>
+      <LayoutProvider>
         <DialogProvider>
           <NotificationProvider>
             <CommandRegistryProvider>

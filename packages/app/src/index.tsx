@@ -16,7 +16,6 @@ import { playbackModule } from './modules/playback/index.js'
 import { problemsModule } from './modules/problems/index.js'
 import { settingsModule } from './modules/settings/index.js'
 import { viewModule } from './modules/view/index.js'
-import { appPersistenceDefaults } from './persistence/persistence.js'
 import { ProjectSourceProvider } from './project-source/ProjectSourceContext.js'
 import { applyThemeSetting } from './theme.js'
 
@@ -62,8 +61,8 @@ const root = createRoot(container)
 root.render(
   <StrictMode>
     <CacheProvider value={emotionCache}>
-      <CommonProvider persistenceEngine={persistenceEngine} initialLayout={appPersistenceDefaults.layout} modules={modules}>
-        <ProjectSourceProvider initialState={appPersistenceDefaults.source}>
+      <CommonProvider persistenceEngine={persistenceEngine} modules={modules}>
+        <ProjectSourceProvider>
           <CompilationProvider compileOptions={compileOptions}>
             <App />
             <DialogHost />
