@@ -5,24 +5,36 @@ export class PersistenceEngine {
   private readonly backend: StorageBackend
   private readonly instanceId: string
 
+  private loadCounter = 0
+
   constructor (backend: StorageBackend, instanceId: string = randomId()) {
     this.backend = backend
     this.instanceId = instanceId
   }
 
+  get isLoading (): boolean {
+    return this.loadCounter > 0
+  }
+
   async load<T> (domain: PersistenceDomain<T>): Promise<T | undefined> {
-    const storedValueString = await this.backend.get(domain.key)
-    if (storedValueString == null) {
-      return undefined
-    }
+    ++this.loadCounter
 
-    const envelope = parseStoredValue(storedValueString)
-    if (envelope == null) {
-      return undefined
-    }
+    try {
+      const storedValueString = await this.backend.get(domain.key)
+      if (storedValueString == null) {
+        return undefined
+      }
 
-    const deserialized = tryDeserialize(domain, envelope.payload)
-    return deserialized.ok ? deserialized.value : undefined
+      const envelope = parseStoredValue(storedValueString)
+      if (envelope == null) {
+        return undefined
+      }
+
+      const deserialized = tryDeserialize(domain, envelope.payload)
+      return deserialized.ok ? deserialized.value : undefined
+    } finally {
+      --this.loadCounter
+    }
   }
 
   async save<T> (domain: PersistenceDomain<T>, value: T): Promise<void> {

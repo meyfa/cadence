@@ -2,6 +2,7 @@ import type { PersistenceDomain } from '@editor'
 import { usePersistentBinding } from '@editor'
 import { enums, type, type Struct } from 'superstruct'
 import { applyThemeSetting, useThemeSetting, type ThemeSetting } from '../../theme.js'
+import { useRef } from 'react'
 
 export const defaultThemeSetting: ThemeSetting = 'dark'
 
@@ -28,7 +29,11 @@ const viewSettingsDomain: PersistenceDomain<ViewSettings> = {
 export function useViewSettingsSync (): void {
   const themeSetting = useThemeSetting()
 
+  // Avoid visual transition on initial load.
+  const isFirstLoadRef = useRef(true)
+
   usePersistentBinding(viewSettingsDomain, { theme: themeSetting }, (persisted) => {
-    applyThemeSetting(persisted.theme)
+    applyThemeSetting(persisted.theme, { immediate: isFirstLoadRef.current })
+    isFirstLoadRef.current = false
   }, { onConflict: 'accept-remote' })
 }

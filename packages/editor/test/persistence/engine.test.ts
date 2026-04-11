@@ -19,6 +19,33 @@ describe('persistence/engine.ts', () => {
     assert.strictEqual(await engine.load(domain), undefined)
   })
 
+  it('should expose isLoading while a load is in flight', async () => {
+    let resolveGet: ((value: string | undefined) => void) | undefined
+    const backend = {
+      get: async () => await new Promise<string | undefined>((resolve) => {
+        resolveGet = resolve
+      }),
+      set: async () => {},
+      subscribe: () => () => {}
+    }
+    const engine = new PersistenceEngine(backend, 'instance-a')
+
+    assert.strictEqual(engine.isLoading, false)
+
+    const loadPromise = engine.load(domain)
+
+    assert.strictEqual(engine.isLoading, true)
+
+    resolveGet?.(JSON.stringify({
+      instanceId: 'instance-b',
+      timestamp: 1234,
+      payload: 'CADENCE'
+    }))
+
+    assert.strictEqual(await loadPromise, 'cadence')
+    assert.strictEqual(engine.isLoading, false)
+  })
+
   it('should save serialized values with an instance id and timestamp envelope', async () => {
     const backend = createMemoryStorageBackend()
     const engine = new PersistenceEngine(backend, 'instance-a')
