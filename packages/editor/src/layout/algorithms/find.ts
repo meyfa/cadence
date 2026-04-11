@@ -43,6 +43,12 @@ export function findTab (layout: DockLayout, predicate: (tab: Tab) => boolean): 
   return layout.main != null ? findInNode(layout.main) : undefined
 }
 
+export function findFocusedTab (layout: DockLayout): Tab | undefined {
+  return layout.focusedTabId != null
+    ? findTab(layout, (tab) => tab.id === layout.focusedTabId)
+    : undefined
+}
+
 export function findTabByComponentType (layout: DockLayout, componentType: string): Tab | undefined {
   return findTab(layout, (tab) => tab.component.type === componentType)
 }

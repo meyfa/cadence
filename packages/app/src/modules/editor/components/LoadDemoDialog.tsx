@@ -18,10 +18,7 @@ export const LoadDemoDialog: FunctionComponent<DialogComponentProps & {
     sourceDispatch((state) => setProjectFileContent(state, TRACK_FILE_PATH, demoCode))
     editorDispatch((state) => ({
       ...state,
-      carets: {
-        ...state.carets,
-        [TRACK_FILE_PATH]: undefined
-      }
+      carets: {}
     }))
     layoutDispatch((layout) => activateTabOfType(layout, editorPanelId, () => ({
       type: editorPanelId,

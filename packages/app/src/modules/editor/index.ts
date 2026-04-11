@@ -1,5 +1,5 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useDialogService, useLayoutDispatch, useProvideProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, useDialogService, useLayout, useLayoutDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import { useEffect, useRef, type FunctionComponent } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
@@ -7,6 +7,7 @@ import { useProjectSource, useProjectSourceDispatch } from '../../project-source
 import { getProjectFileContent, setProjectFileContent, TRACK_FILE_PATH } from '../../project-source/model.js'
 import { openTextFile, saveTextFile } from '../../utilities/files.js'
 import { EditorPanel } from './components/EditorPanel.js'
+import { getFocusedEditorCaret } from './caret.js'
 import { LoadDemoDialog } from './components/LoadDemoDialog.js'
 import { getEditorPanelProps, type EditorPanelProps } from './panel-props.js'
 import { EditorProvider, useEditor, useEditorDispatch } from './provider.js'
@@ -78,10 +79,7 @@ const GlobalHooks: FunctionComponent = () => {
           editorRef.current.sourceDispatch((state) => setProjectFileContent(state, TRACK_FILE_PATH, content))
           editorRef.current.editorDispatch((state) => ({
             ...state,
-            carets: {
-              ...state.carets,
-              [TRACK_FILE_PATH]: undefined
-            }
+            carets: {}
           }))
         }
       }).catch(() => {
@@ -175,8 +173,9 @@ export const editorModule: Module = {
         commandId: viewEditorId,
         position: 'end',
         Label: () => {
+          const layout = useLayout()
           const editor = useEditor()
-          const caret = editor.carets[TRACK_FILE_PATH]
+          const caret = getFocusedEditorCaret(layout, editorPanelId, editor.carets)
           return `Ln ${caret?.line ?? '-'}, Col ${caret?.column ?? '-'}`
         }
       }

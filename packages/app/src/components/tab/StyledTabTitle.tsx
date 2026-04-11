@@ -42,10 +42,10 @@ export const StyledTabTitle: FunctionComponent<TabTitleProps> = ({ tab, state, o
     >
       {macOS && closeButton}
 
-      <TitleComponent panelProps={tab.component.props} />
+      <TitleComponent panelProps={tab.component.props} tabId={tab.id} />
 
       <div className='px-1 py-0.5 text-xs leading-none bg-error-surface text-error-content border border-error-frame rounded empty:hidden'>
-        <NotificationsComponent panelProps={tab.component.props} />
+        <NotificationsComponent panelProps={tab.component.props} tabId={tab.id} />
       </div>
 
       {!macOS && closeButton}

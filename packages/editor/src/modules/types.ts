@@ -2,7 +2,7 @@ import type { Brand } from '@utility'
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
 import type { CommandId } from '../commands/commands.js'
 import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'
-import type { SerializedComponent } from '../layout/types.js'
+import type { SerializedComponent, TabId } from '../layout/types.js'
 
 export type ModuleRenderFn<P = {}, T extends ReactNode = ReactNode> = (props: P) => T
 export type ModuleProviderComponent = ComponentType<PropsWithChildren>
@@ -39,6 +39,7 @@ export interface Panel {
 
 export interface PanelProps {
   readonly panelProps: SerializedComponent['props']
+  readonly tabId: TabId
 }
 
 export interface HeaderInsert {
