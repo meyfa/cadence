@@ -1,10 +1,9 @@
-import { useLayout, useLayoutDispatch, usePersistentBinding, type DockLayout, type PersistenceDomain } from '@editor'
+import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch, type DockLayout, type PersistenceDomain, type ProjectSource } from '@editor'
 import { useCallback, useMemo } from 'react'
 import { record, string, type as structType } from 'superstruct'
 import { defaultLayout } from '../defaults/default-layout.js'
 import { demoCode } from '../defaults/demo-code.js'
-import { useProjectSource, useProjectSourceDispatch } from '../project-source/ProjectSourceContext.js'
-import { createProjectSourceState, type ProjectSourceState } from '../project-source/model.js'
+import { TRACK_FILE_PATH } from './constants.js'
 import { dockLayoutSchema } from './layout.js'
 
 const layoutDomain: PersistenceDomain<DockLayout> = {
@@ -19,9 +18,11 @@ const sourceStateSchema = structType({
   files: record(string(), string())
 })
 
-const sourceDomain: PersistenceDomain<ProjectSourceState> = {
+const sourceDomain: PersistenceDomain<ProjectSource> = {
   key: 'project.source',
-  fallbackValue: createProjectSourceState(demoCode),
+  fallbackValue: createProjectSourceState({
+    [TRACK_FILE_PATH]: demoCode
+  }),
   serialize: (value) => value,
   deserialize: (value) => sourceStateSchema.create(value),
   areEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -48,7 +49,7 @@ export function useAppPersistenceSync (): AppPersistenceSyncState {
   const source = useProjectSource()
   const sourceDispatch = useProjectSourceDispatch()
 
-  const applySource = useCallback((next: ProjectSourceState) => {
+  const applySource = useCallback((next: ProjectSource) => {
     sourceDispatch((state) => {
       return JSON.stringify(state) === JSON.stringify(next) ? state : next
     })

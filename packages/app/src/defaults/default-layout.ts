@@ -4,8 +4,8 @@ import type { EditorPanelProps } from '../modules/editor/panel-props.js'
 import { mixerPanelId } from '../modules/mixer/index.js'
 import { timelinePanelId } from '../modules/playback/index.js'
 import { problemsPanelId } from '../modules/problems/index.js'
+import { TRACK_FILE_PATH } from '../persistence/constants.js'
 import { settingsPanelId } from '../modules/settings/index.js'
-import { TRACK_FILE_PATH } from '../project-source/model.js'
 
 export const defaultLayout: DockLayout = {
   main: {

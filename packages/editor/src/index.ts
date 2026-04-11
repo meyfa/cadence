@@ -46,6 +46,11 @@ export * from './persistence/backends/memory.js'
 export * from './persistence/binding.js'
 export * from './persistence/settlement.js'
 
+// project source
+export type * from './project-source/model.js'
+export * from './project-source/model.js'
+export * from './project-source/components/ProjectSourceContext.js'
+
 // problems
 export type * from './problems/types.js'
 export * from './problems/components/ProblemContext.js'

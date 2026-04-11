@@ -1,8 +1,7 @@
-import { useDebouncedValue, useSafeContext } from '@editor'
+import { useDebouncedValue, useProjectSource, useSafeContext } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
 import { createContext, useCallback, useMemo, useRef, type FunctionComponent, type PropsWithChildren } from 'react'
-import { useProjectSource } from '../project-source/ProjectSourceContext.js'
 import { compileSource, useCompiler, type CompileResult } from './compiler.js'
 
 export interface CompilationState {

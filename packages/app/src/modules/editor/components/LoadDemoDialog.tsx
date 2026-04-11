@@ -1,9 +1,8 @@
-import { activateTabOfType, useLayoutDispatch, type DialogComponentProps, type PanelId } from '@editor'
+import { activateTabOfType, setProjectFileContent, useLayoutDispatch, useProjectSourceDispatch, type DialogComponentProps, type PanelId } from '@editor'
 import { useCallback, type FunctionComponent } from 'react'
 import { ConfirmationDialog } from '../../../components/dialog/ConfirmationDialog.js'
 import { demoCode } from '../../../defaults/demo-code.js'
-import { useProjectSourceDispatch } from '../../../project-source/ProjectSourceContext.js'
-import { setProjectFileContent, TRACK_FILE_PATH } from '../../../project-source/model.js'
+import { TRACK_FILE_PATH } from '../../../persistence/constants.js'
 import { useEditorDispatch } from '../provider.js'
 import type { EditorPanelProps } from '../panel-props.js'
 
