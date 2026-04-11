@@ -1,9 +1,9 @@
 import { createAudioGraph } from '@audiograph'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
-import { useRef, type FunctionComponent } from 'react'
-import { useCompilationState, type CompilationState } from '../../compilation/CompilationContext.js'
+import { type FunctionComponent } from 'react'
+import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { OutputGainSettingsCard } from './components/OutputGainSettingsCard.js'
 import { PlaybackControls } from './components/PlaybackControls.js'
@@ -31,8 +31,7 @@ const GlobalHooks: FunctionComponent = () => {
   const errors = useObservable(audioEngine.errors)
 
   const compilation = useCompilationState()
-  const compilationRef = useRef<CompilationState>(compilation)
-  compilationRef.current = compilation
+  const compilationRef = useLatestRef(compilation)
 
   useRegisterCommand(() => ({
     id: viewTimelineId,

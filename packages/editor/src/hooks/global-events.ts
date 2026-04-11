@@ -1,14 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
+import { useLatestRef } from './latest-ref.js'
 
 function useWindowEvent<K extends keyof WindowEventMap> (
   type: K,
   handler: (ev: WindowEventMap[K]) => void
 ): void {
-  const handlerRef = useRef<typeof handler>(handler)
-
-  useEffect(() => {
-    handlerRef.current = handler
-  }, [handler])
+  const handlerRef = useLatestRef(handler)
 
   useEffect(() => {
     const listener = (event: WindowEventMap[K]) => {

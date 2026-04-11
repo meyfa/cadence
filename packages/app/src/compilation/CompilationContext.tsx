@@ -1,7 +1,7 @@
-import { useDebouncedValue, useProjectSource, useSafeContext } from '@editor'
+import { useDebouncedValue, useLatestRef, useProjectSource, useSafeContext } from '@editor'
 import type { CompileOptions } from '@language'
 import { numeric } from '@utility'
-import { createContext, useCallback, useMemo, useRef, type FunctionComponent, type PropsWithChildren } from 'react'
+import { createContext, useCallback, useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
 import { compileSource, useCompiler, type CompileResult } from './compiler.js'
 
 export interface CompilationState {
@@ -17,12 +17,10 @@ const COMPILE_DEBOUNCE = numeric('s', 0.25)
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
   compileOptions: CompileOptions
 }>> = ({ compileOptions, children }) => {
-  const compileOptionsRef = useRef(compileOptions)
-  compileOptionsRef.current = compileOptions
+  const compileOptionsRef = useLatestRef(compileOptions)
 
   const source = useProjectSource()
-  const sourceRef = useRef(source)
-  sourceRef.current = source
+  const sourceRef = useLatestRef(source)
 
   const compileNow = useCallback(() => {
     return compileSource(sourceRef.current, compileOptionsRef.current)
