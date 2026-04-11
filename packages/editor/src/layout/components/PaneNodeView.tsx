@@ -1,7 +1,8 @@
 import { useDroppable } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
-import { useCallback, useRef, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { CSSProperties, FunctionComponent, PropsWithChildren, WheelEvent } from 'react'
+import { useCallback, useRef } from 'react'
 import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms/mutate.js'
 import type { LayoutNodeId, PaneNode, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
@@ -142,15 +143,37 @@ const TabListDroppable: FunctionComponent<PropsWithChildren<{
   onElementRef: (element: HTMLDivElement | null) => void
   onEndDropAreaElementRef: (element: HTMLDivElement | null) => void
 }>> = ({ children, node, styles, dropIndicatorOffset, onElementRef, onEndDropAreaElementRef }) => {
+  const onWheel = useCallback((event: WheelEvent<HTMLDivElement>) => {
+    const { currentTarget, deltaY, shiftKey } = event
+
+    if (shiftKey || deltaY === 0 || currentTarget.scrollWidth <= currentTarget.clientWidth) {
+      return
+    }
+
+    const maxScrollLeft = currentTarget.scrollWidth - currentTarget.clientWidth
+    const scrollAmount = deltaY * 0.5
+
+    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, currentTarget.scrollLeft + scrollAmount))
+
+    if (nextScrollLeft !== currentTarget.scrollLeft) {
+      currentTarget.scrollLeft = nextScrollLeft
+      event.preventDefault()
+    }
+  }, [])
+
   return (
     <TabList
       ref={onElementRef}
+      onWheel={onWheel}
       style={{
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         backgroundColor: styles.tabListBackgroundColor,
-        borderBottom: `1px solid ${styles.tabListBorderColor}`
+        borderBottom: `1px solid ${styles.tabListBorderColor}`,
+        scrollbarWidth: 'thin'
       }}
     >
       {children}
@@ -215,6 +238,7 @@ function getDropIndicatorOffset (
   }
 
   const tabListRect = tabListElement.getBoundingClientRect()
+  const scrollOffset = tabListElement.scrollLeft
 
   if (tabDropTarget != null) {
     const tabElement = tabElements.get(tabDropTarget.tabId)
@@ -224,12 +248,12 @@ function getDropIndicatorOffset (
 
     const tabRect = tabElement.getBoundingClientRect()
     return tabDropTarget.position === 'before'
-      ? tabRect.left - tabListRect.left
-      : tabRect.right - tabListRect.left
+      ? scrollOffset + tabRect.left - tabListRect.left
+      : scrollOffset + tabRect.right - tabListRect.left
   }
 
   if (paneDropTarget?.nodeId === nodeId && paneDropTarget.target === 'tab-list' && endDropAreaElement != null) {
-    return endDropAreaElement.getBoundingClientRect().left - tabListRect.left
+    return scrollOffset + endDropAreaElement.getBoundingClientRect().left - tabListRect.left
   }
 
   return undefined
