@@ -134,6 +134,7 @@ export type Effect =
   PanEffect |
   LowpassEffect |
   HighpassEffect |
+  WidthEffect |
   DelayEffect |
   ReverbEffect
 
@@ -155,6 +156,11 @@ export interface LowpassEffect {
 export interface HighpassEffect {
   readonly type: 'highpass'
   readonly frequency: Numeric<'hz'>
+}
+
+export interface WidthEffect {
+  readonly type: 'width'
+  readonly width: Numeric<undefined>
 }
 
 export interface DelayEffect {

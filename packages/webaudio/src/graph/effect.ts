@@ -1,4 +1,4 @@
-import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode } from '@audiograph'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WidthNode } from '@audiograph'
 import type { Transport } from '../transport/transport.js'
 import { automate } from './automation.js'
 import type { Instance } from './instance.js'
@@ -27,6 +27,62 @@ export function createBiquadInstance (node: BiquadNode, transport: Transport): I
   audioNode.frequency.value = node.frequency.value
   audioNode.Q.value = -node.rolloffPerOctave.value
   return toInstance(audioNode)
+}
+
+export function createWidthInstance (node: WidthNode, transport: Transport): Instance {
+  const { ctx } = transport
+
+  // Upmix to stereo if necessary
+  const input = ctx.createGain()
+  input.channelCount = 2
+  input.channelCountMode = 'explicit'
+  input.channelInterpretation = 'speakers'
+
+  const splitter = ctx.createChannelSplitter(2)
+
+  const merger = ctx.createChannelMerger(2)
+
+  const directGain = (1 + node.width.value) / 2
+  const crossGain = (1 - node.width.value) / 2
+
+  const leftDirect = ctx.createGain()
+  leftDirect.gain.value = directGain
+
+  const leftCross = ctx.createGain()
+  leftCross.gain.value = crossGain
+
+  const rightCross = ctx.createGain()
+  rightCross.gain.value = crossGain
+
+  const rightDirect = ctx.createGain()
+  rightDirect.gain.value = directGain
+
+  input.connect(splitter)
+
+  splitter.connect(leftDirect, 0)
+  splitter.connect(leftCross, 1)
+  splitter.connect(rightCross, 0)
+  splitter.connect(rightDirect, 1)
+
+  leftDirect.connect(merger, 0, 0)
+  leftCross.connect(merger, 0, 0)
+  rightCross.connect(merger, 0, 1)
+  rightDirect.connect(merger, 0, 1)
+
+  return {
+    input,
+    output: merger,
+    loaded: Promise.resolve(),
+    dispose: () => {
+      input.disconnect()
+      splitter.disconnect()
+      leftDirect.disconnect()
+      leftCross.disconnect()
+      rightCross.disconnect()
+      rightDirect.disconnect()
+      merger.disconnect()
+    }
+  }
 }
 
 export function createDelayInstance (node: DelayNode, transport: Transport): Instance {

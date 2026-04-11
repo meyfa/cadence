@@ -402,6 +402,18 @@ describe('lowering.ts', () => {
       })
     })
 
+    it('should handle width', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'width',
+        width: numeric(undefined, 0.75)
+      }))
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'width',
+        width: numeric(undefined, 0.75)
+      })
+    })
+
     it('should handle delay', () => {
       const graph = createAudioGraph(createProgramWithEffect({
         type: 'delay',

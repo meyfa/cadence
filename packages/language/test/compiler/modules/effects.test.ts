@@ -86,6 +86,23 @@ describe('compiler/modules/effects.ts', () => {
     })
   })
 
+  describe('width', () => {
+    const width = effects.exports.get('width')
+    assert.ok(width != null && FunctionType.is(width))
+
+    it('should create width effect', () => {
+      const context = createFunctionContext()
+      const result = width.data.invoke(context, {
+        width: numeric(undefined, 0.8)
+      })
+
+      assert.deepStrictEqual(result.data, {
+        type: 'width',
+        width: numeric(undefined, 0.8)
+      })
+    })
+  })
+
   describe('delay', () => {
     const delay = effects.exports.get('delay')
     assert.ok(delay != null && FunctionType.is(delay))

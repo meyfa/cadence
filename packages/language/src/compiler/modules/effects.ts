@@ -31,6 +31,10 @@ const highpass = createEffectConstructor('highpass', [
   { name: 'frequency', type: NumberType.with('hz'), required: true }
 ])
 
+const width = createEffectConstructor('width', [
+  { name: 'width', type: NumberType.with(undefined), required: true }
+])
+
 const delay = createEffectConstructor('delay', [
   { name: 'mix', type: NumberType.with(undefined), required: true },
   { name: 'time', type: NumberType.with('beats'), required: true },
@@ -50,6 +54,7 @@ export const effectsModule = ModuleType.of({
     ['pan', pan],
     ['lowpass', lowpass],
     ['highpass', highpass],
+    ['width', width],
     ['delay', delay],
     ['reverb', reverb]
   ])
