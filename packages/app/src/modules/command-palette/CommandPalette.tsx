@@ -2,8 +2,9 @@ import type { Command, CommandId } from '@editor'
 import { useCommandRegistry, useGlobalEscapePress, useRegisterCommand } from '@editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
-import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FunctionComponent, type ReactNode } from 'react'
 import { ShortcutKeys } from '../../components/commands/ShortcutKeys.js'
+import { fuzzyMatch } from '../../utilities/fuzzy-match.js'
 
 export const CommandPalette: FunctionComponent = () => {
   const { commands } = useCommandRegistry()
@@ -55,14 +56,22 @@ export const CommandPalette: FunctionComponent = () => {
     }
   }, [open])
 
-  const searchResults = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase()
-    if (normalizedSearch === '') {
-      return sortedCommands
+  const searchResults = useMemo<readonly SearchResult[]>(() => {
+    const query = search.trim()
+    if (query === '') {
+      return sortedCommands.map((command) => ({ command }))
     }
 
-    // TODO fuzzy search
-    return sortedCommands.filter((command) => command.label.toLowerCase().includes(normalizedSearch))
+    const results: SearchResult[] = []
+
+    for (const command of sortedCommands) {
+      const match = fuzzyMatch({ text: command.label, query })
+      if (match != null) {
+        results.push({ command, matchIndices: match.indices })
+      }
+    }
+
+    return results
   }, [sortedCommands, search])
 
   const dispatchCommandAndClose = useCallback((command: Command) => {
@@ -76,7 +85,7 @@ export const CommandPalette: FunctionComponent = () => {
     if (event.key === 'Enter' && !hasModifiers) {
       const firstCommand = searchResults.at(0)
       if (firstCommand != null) {
-        dispatchCommandAndClose(firstCommand)
+        dispatchCommandAndClose(firstCommand.command)
       }
     }
   }, [dispatchCommandAndClose, searchResults])
@@ -143,8 +152,13 @@ export const CommandPalette: FunctionComponent = () => {
               No commands found.
             </div>
           )}
-          {searchResults.map((command) => (
-            <SearchResult key={command.id} command={command} dispatchCommand={dispatchCommandAndClose} />
+          {searchResults.map(({ command, matchIndices }) => (
+            <CommandPaletteItem
+              key={command.id}
+              command={command}
+              matchIndices={matchIndices}
+              dispatchCommand={dispatchCommandAndClose}
+            />
           ))}
         </div>
       </div>
@@ -152,10 +166,16 @@ export const CommandPalette: FunctionComponent = () => {
   )
 }
 
-const SearchResult: FunctionComponent<{
+interface SearchResult {
+  readonly command: Command
+  readonly matchIndices?: readonly number[]
+}
+
+const CommandPaletteItem: FunctionComponent<{
   command: Command
+  matchIndices?: readonly number[]
   dispatchCommand: (command: Command) => void
-}> = ({ command, dispatchCommand }) => {
+}> = ({ command, matchIndices, dispatchCommand }) => {
   // Show only the first shortcut due to space constraints
   const shortcut = command.keyboardShortcuts?.at(0)
 
@@ -169,9 +189,43 @@ const SearchResult: FunctionComponent<{
       onClick={() => dispatchCommand(command)}
     >
       <div className='grow py-1'>
-        {command.label}
+        <HighlightedLabel label={command.label} highlightIndices={matchIndices} />
       </div>
       {shortcut != null && (<ShortcutKeys shortcut={shortcut} />)}
     </button>
   )
+}
+
+const HighlightedLabel: FunctionComponent<{
+  label: string
+  highlightIndices?: readonly number[]
+}> = ({ label, highlightIndices }) => {
+  if (highlightIndices == null || highlightIndices.length === 0) {
+    return <>{label}</>
+  }
+
+  const elements: ReactNode[] = []
+
+  const chars = label.split('')
+  let lastIndex = 0
+
+  for (const index of highlightIndices) {
+    // text between highlighted characters
+    if (index > lastIndex) {
+      elements.push(label.slice(lastIndex, index))
+    }
+
+    // highlighted character
+    elements.push(
+      <span key={index} className='font-bold text-accent-200'>{chars[index]}</span>
+    )
+
+    lastIndex = index + 1
+  }
+
+  if (lastIndex < label.length) {
+    elements.push(label.slice(lastIndex))
+  }
+
+  return <>{elements}</>
 }

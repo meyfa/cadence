@@ -8,7 +8,7 @@ import { Button } from '../../components/button/Button.js'
 import { BaseDialog } from '../../components/dialog/BaseDialog.js'
 import { Dropdown } from '../../components/dropdown/Dropdown.js'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.js'
-import { formatBytes, formatDuration } from '../../utilities/strings.js'
+import { formatBytes, formatDuration } from '../../utilities/format.js'
 import { AIFF, AIFF_FORMAT_OPTIONS, computeExportMetrics, FILE_TYPE_OPTIONS, LEADING_SILENCE_OPTIONS, MAX_EXPORT_DURATION, renderAndSave, SAMPLE_RATE_OPTIONS, WAV, WAV_FORMAT_OPTIONS, type FileType, type SampleRate } from './export.js'
 
 export const ExportDialog: FunctionComponent<{

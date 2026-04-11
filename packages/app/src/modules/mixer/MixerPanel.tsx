@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Popover } from '../../components/popover/Popover.js'
-import { pluralize } from '../../utilities/strings.js'
+import { pluralize } from '../../utilities/format.js'
 import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from './flowchart.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {

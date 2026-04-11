@@ -4,7 +4,7 @@ import { Warning } from '@mui/icons-material'
 import { numeric, type Numeric } from '@utility'
 import clsx from 'clsx'
 import React, { useCallback, useMemo, useRef, useState, type FunctionComponent } from 'react'
-import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/strings.js'
+import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/format.js'
 import { Popover } from '../popover/Popover.js'
 
 const TIMELINE_ZOOM_MIN = 4
