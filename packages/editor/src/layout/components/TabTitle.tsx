@@ -1,14 +1,30 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { Tab as HUITab } from '@headlessui/react'
+import { useDroppable } from '@dnd-kit/core'
 import React, { useCallback, type ComponentType, type FunctionComponent } from 'react'
 import type { ModuleRenderFn, PanelId, PanelProps } from '../../modules/types.js'
-import type { Tab } from '../types.js'
+import type { Tab, TabId } from '../types.js'
 import { usePanelById } from './panel-lookup.js'
 import { ErrorBoundary } from 'react-error-boundary'
 
 const MOUSE_BUTTON_MIDDLE = 1
 
 type TabTitleState = 'inactive' | 'active' | 'focused' | 'dragging'
+type TabDropPosition = 'before' | 'after'
+
+function getTabDropTargetId (tab: Tab, position: TabDropPosition): string {
+  return `${tab.id}:${position}`
+}
+
+export interface TabDropTargetInfo {
+  readonly tabId: Tab['id']
+  readonly position: TabDropPosition
+}
+
+export function parseTabDropTarget (id: string): TabDropTargetInfo | undefined {
+  const [tabId, position] = id.split(':') as [Tab['id'], string]
+  return position === 'before' || position === 'after' ? { tabId, position } : undefined
+}
 
 export interface TabTitleProps {
   readonly TitleComponent: ModuleRenderFn<PanelProps, string>
@@ -63,24 +79,28 @@ export const TabTitle: FunctionComponent<{
   tab: Tab
   state: TabTitleState
   onClose: () => void
-  dropIndicatorColor: string
+  onElementRef?: (tabId: TabId, element: HTMLDivElement | null) => void
   onTabFocus?: () => void
 }> = ({
   TabTitleComponent,
-  dropIndicatorColor,
   tab,
   state,
   onClose,
+  onElementRef,
   onTabFocus
 }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging, isOver, isSorting } = useSortable({ id: tab.id })
+  const { attributes, listeners, setNodeRef, isSorting } = useSortable({ id: tab.id })
+  const { setNodeRef: setBeforeDropRef } = useDroppable({ id: getTabDropTargetId(tab, 'before') })
+  const { setNodeRef: setAfterDropRef } = useDroppable({ id: getTabDropTargetId(tab, 'after') })
   const panel = usePanelById(tab.component.type as PanelId)
 
   const disabled = isSorting || state === 'dragging'
   const resolvedOnClose = panel?.closeable === true ? onClose : undefined
 
-  const showDropIndicator = isOver && !isDragging
-  const dropIndicatorOnRightSide = showDropIndicator && (transform?.x ?? 0) < 0
+  const setElementRef = useCallback((element: HTMLDivElement | null) => {
+    setNodeRef(element)
+    onElementRef?.(tab.id, element)
+  }, [onElementRef, setNodeRef, tab.id])
 
   const onMouseDown = useCallback((event: React.MouseEvent) => {
     if (event.button === MOUSE_BUTTON_MIDDLE) {
@@ -119,12 +139,21 @@ export const TabTitle: FunctionComponent<{
   return (
     <HUITab
       as='div'
-      ref={setNodeRef}
+      ref={setElementRef}
       {...attributes}
       {...listeners}
       onFocusCapture={disabled ? undefined : onTabFocus}
       style={{ position: 'relative', outline: 'none', pointerEvents: disabled ? 'none' : undefined }}
     >
+      <div
+        ref={setBeforeDropRef}
+        style={{ position: 'absolute', inset: 0, right: '50%', pointerEvents: 'none' }}
+      />
+      <div
+        ref={setAfterDropRef}
+        style={{ position: 'absolute', inset: 0, left: '50%', pointerEvents: 'none' }}
+      />
+
       <div onMouseDown={onMouseDown} onMouseUp={onMouseUp}>
         <PanelTabTitle
           TabTitleComponent={TabTitleComponent}
@@ -133,19 +162,6 @@ export const TabTitle: FunctionComponent<{
           onClose={resolvedOnClose}
         />
       </div>
-
-      <div
-        style={{
-          display: showDropIndicator ? 'block' : 'none',
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: dropIndicatorOnRightSide ? undefined : 0,
-          right: dropIndicatorOnRightSide ? 0 : undefined,
-          width: '0.125rem',
-          backgroundColor: dropIndicatorColor
-        }}
-      />
     </HUITab>
   )
 }

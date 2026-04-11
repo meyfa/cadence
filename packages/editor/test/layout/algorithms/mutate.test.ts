@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { findPaneById, findPaneByTabId, findTabByComponentType } from '../../../src/layout/algorithms/find.js'
-import { activateTabInPane, activateTabOfType, createTab, moveTabBetweenPanes, moveTabIntoPane, moveTabToSplit, removeTabFromPane, transformNode, updateFocusedTab } from '../../../src/layout/algorithms/mutate.js'
+import { activateTabInPane, activateTabOfType, createTab, moveTabBetweenPanes, moveTabIntoPane, moveTabToPaneEnd, moveTabToSplit, removeTabFromPane, transformNode, updateFocusedTab } from '../../../src/layout/algorithms/mutate.js'
 import type { DockLayout, LayoutNodeId, PaneNode, SplitNode } from '../../../src/layout/types.js'
 import { pane1Id, pane2Id, pane3Id, tab1Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.js'
 
@@ -88,6 +88,38 @@ describe('layout/algorithms/mutate.ts', () => {
       assert.deepStrictEqual(getPane(updated, pane1Id).tabs.map((tab) => tab.id), [tab1Id])
       assert.deepStrictEqual(getPane(updated, pane3Id).tabs.map((tab) => tab.id), [tab2Id, tab4Id])
       assert.strictEqual(getPane(updated, pane3Id).activeTabId, tab2Id)
+    })
+
+    it('can insert a tab after another tab in the same pane', () => {
+      const updated = moveTabBetweenPanes(testLayout, tab1Id, tab2Id, 'after')
+
+      assert.deepStrictEqual(getPane(updated, pane1Id).tabs.map((tab) => tab.id), [tab2Id, tab1Id])
+      assert.strictEqual(getPane(updated, pane1Id).activeTabId, tab1Id)
+    })
+
+    it('can insert a tab after another tab in a different pane', () => {
+      const updated = moveTabBetweenPanes(testLayout, tab2Id, tab3Id, 'after')
+
+      assert.deepStrictEqual(getPane(updated, pane1Id).tabs.map((tab) => tab.id), [tab1Id])
+      assert.deepStrictEqual(getPane(updated, pane2Id).tabs.map((tab) => tab.id), [tab3Id, tab2Id])
+      assert.strictEqual(getPane(updated, pane2Id).activeTabId, tab2Id)
+    })
+  })
+
+  describe('moveTabToPaneEnd', () => {
+    it('moves a tab to the end of another pane', () => {
+      const updated = moveTabToPaneEnd(testLayout, tab2Id, pane2Id)
+
+      assert.deepStrictEqual(getPane(updated, pane1Id).tabs.map((tab) => tab.id), [tab1Id])
+      assert.deepStrictEqual(getPane(updated, pane2Id).tabs.map((tab) => tab.id), [tab3Id, tab2Id])
+      assert.strictEqual(getPane(updated, pane2Id).activeTabId, tab2Id)
+    })
+
+    it('moves a tab to the end of its own pane', () => {
+      const updated = moveTabToPaneEnd(testLayout, tab1Id, pane1Id)
+
+      assert.deepStrictEqual(getPane(updated, pane1Id).tabs.map((tab) => tab.id), [tab2Id, tab1Id])
+      assert.strictEqual(getPane(updated, pane1Id).activeTabId, tab1Id)
     })
   })
 

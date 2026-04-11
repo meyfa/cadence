@@ -13,6 +13,7 @@ export interface LayoutNodeViewProps<TNode extends LayoutNode = LayoutNode> {
   readonly styles: DockLayoutStyles
   readonly node: TNode
   readonly focusedTabId?: TabId
+  readonly currentDropTargetId?: string
   readonly dispatch?: LayoutDispatch
 }
 

@@ -1,7 +1,9 @@
-import { insertAt, move, randomId, removeAt } from '@utility'
+import { insertAt, randomId, removeAt } from '@utility'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, Tab, TabId } from '../types.js'
 import { findNodeById, findPaneById, findPaneByTabId, findTabByComponentType } from './find.js'
 import { updateNodesInLayout } from './internal.js'
+
+type TabInsertionPosition = 'before' | 'after'
 
 export function transformNode (layout: DockLayout, nodeId: LayoutNodeId, fn: (node: LayoutNode) => LayoutNode): DockLayout {
   const node = findNodeById(layout, nodeId)
@@ -147,24 +149,73 @@ export function moveTabIntoPane (layout: DockLayout, tabId: TabId, targetNodeId:
   ]), { focusTabId: tabId })
 }
 
-export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTabId: TabId): DockLayout {
+export function moveTabBetweenPanes (
+  layout: DockLayout,
+  tabId: TabId,
+  targetTabId: TabId,
+  position: TabInsertionPosition = 'before'
+): DockLayout {
   const sourcePane = findPaneByTabId(layout, tabId)
-  const targetPane = findPaneByTabId(layout, beforeTabId)
+  const targetPane = findPaneByTabId(layout, targetTabId)
   if (sourcePane == null || targetPane == null) {
     return layout
   }
 
-  // We know for sure that both tabs exist in their panes
+  const targetTabIndex = targetPane.tabs.findIndex((tab) => tab.id === targetTabId)
+
+  return moveTabToPaneIndex(layout, tabId, targetPane.id, targetTabIndex + (position === 'after' ? 1 : 0))
+}
+
+export function moveTabToPaneEnd (layout: DockLayout, tabId: TabId, targetNodeId: LayoutNodeId): DockLayout {
+  const targetPane = findPaneById(layout, targetNodeId)
+  if (targetPane == null) {
+    return layout
+  }
+
+  return moveTabToPaneIndex(layout, tabId, targetPane.id, targetPane.tabs.length)
+}
+
+export function activateTabOfType (layout: DockLayout, type: string, create: () => SerializedComponent): DockLayout {
+  const tab = findTabByComponentType(layout, type)
+
+  // If no such tab exists, create one
+  if (tab == null) {
+    return createTab(layout, create())
+  }
+
+  return activateTabInPane(layout, tab.id)
+}
+
+export function updateFocusedTab (layout: DockLayout, tabId: TabId): DockLayout {
+  return updateNodesInLayout(layout, new Map(), { focusTabId: tabId })
+}
+
+function moveTabToPaneIndex (layout: DockLayout, tabId: TabId, targetNodeId: LayoutNodeId, targetIndex: number): DockLayout {
+  const sourcePane = findPaneByTabId(layout, tabId)
+  const targetPane = findPaneById(layout, targetNodeId)
+  if (sourcePane == null || targetPane == null) {
+    return layout
+  }
+
   const tabIndex = sourcePane.tabs.findIndex((tab) => tab.id === tabId)
-  const beforeTabIndex = targetPane.tabs.findIndex((tab) => tab.id === beforeTabId)
+  if (tabIndex === -1) {
+    return layout
+  }
+
+  const tab = sourcePane.tabs[tabIndex]
+  const targetTabCount = targetPane.tabs.length
+  const normalizedTargetIndex = Math.max(0, Math.min(targetIndex, targetTabCount))
 
   if (sourcePane === targetPane) {
+    const adjustedTargetIndex = normalizedTargetIndex > tabIndex ? normalizedTargetIndex - 1 : normalizedTargetIndex
+    const remainingTabs = removeAt(sourcePane.tabs, tabIndex)
+
     return updateNodesInLayout(layout, new Map([
       [
         sourcePane.id,
         {
           ...sourcePane,
-          tabs: move([...sourcePane.tabs], tabIndex, beforeTabIndex),
+          tabs: insertAt(remainingTabs, adjustedTargetIndex, tab),
           activeTabId: tabId
         }
       ]
@@ -183,26 +234,11 @@ export function moveTabBetweenPanes (layout: DockLayout, tabId: TabId, beforeTab
       targetPane.id,
       {
         ...targetPane,
-        tabs: insertAt(targetPane.tabs, beforeTabIndex, sourcePane.tabs[tabIndex]),
+        tabs: insertAt(targetPane.tabs, normalizedTargetIndex, tab),
         activeTabId: tabId
       }
     ]
   ]), { focusTabId: tabId })
-}
-
-export function activateTabOfType (layout: DockLayout, type: string, create: () => SerializedComponent): DockLayout {
-  const tab = findTabByComponentType(layout, type)
-
-  // If no such tab exists, create one
-  if (tab == null) {
-    return createTab(layout, create())
-  }
-
-  return activateTabInPane(layout, tab.id)
-}
-
-export function updateFocusedTab (layout: DockLayout, tabId: TabId): DockLayout {
-  return updateNodesInLayout(layout, new Map(), { focusTabId: tabId })
 }
 
 export type SplitPlacement = 'north' | 'south' | 'east' | 'west'

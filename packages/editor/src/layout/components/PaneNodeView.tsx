@@ -1,13 +1,13 @@
 import { useDroppable } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
-import { useCallback, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
+import { useCallback, useRef, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
 import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms/mutate.js'
 import type { LayoutNodeId, PaneNode, TabId } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
 import type { LayoutNodeViewProps } from './LayoutNodeView.js'
 import { TabContent } from './TabContent.js'
-import { TabTitle } from './TabTitle.js'
+import { parseTabDropTarget, TabTitle } from './TabTitle.js'
 
 const paneNodeDropZones = ['north', 'south', 'east', 'west', 'center'] as const
 type PaneNodeDropZone = typeof paneNodeDropZones[number]
@@ -35,9 +35,15 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
   styles,
   node,
   focusedTabId,
+  currentDropTargetId,
   dispatch
 }) => {
   const { id: nodeId, tabs, activeTabId } = node
+  const tabDropTarget = currentDropTargetId != null ? parseTabDropTarget(currentDropTargetId) : undefined
+  const paneDropTarget = currentDropTargetId != null ? parsePaneNodeDropTarget(currentDropTargetId) : undefined
+  const tabListElementRef = useRef<HTMLDivElement | null>(null)
+  const endDropAreaElementRef = useRef<HTMLDivElement | null>(null)
+  const tabElementsRef = useRef(new Map<TabId, HTMLDivElement>())
 
   const onTabFocus = useCallback((id: TabId) => {
     dispatch?.((layout) => updateFocusedTab(layout, id))
@@ -62,19 +68,51 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
     dispatch?.((layout) => removeTabFromPane(layout, id))
   }, [dispatch])
 
+  const setTabListElement = useCallback((element: HTMLDivElement | null) => {
+    tabListElementRef.current = element
+  }, [])
+
+  const setTabElement = useCallback((tabId: TabId, element: HTMLDivElement | null) => {
+    if (element == null) {
+      tabElementsRef.current.delete(tabId)
+      return
+    }
+
+    tabElementsRef.current.set(tabId, element)
+  }, [])
+
+  const setEndDropAreaElement = useCallback((element: HTMLDivElement | null) => {
+    endDropAreaElementRef.current = element
+  }, [])
+
+  const dropIndicatorOffset = getDropIndicatorOffset(
+    node.id,
+    tabDropTarget,
+    paneDropTarget,
+    tabListElementRef.current,
+    tabElementsRef.current,
+    endDropAreaElementRef.current
+  )
+
   return (
     <TabGroup
       selectedIndex={selectedIndex}
       onChange={onSelectionChange}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
-      <TabListDroppable node={node} styles={styles}>
+      <TabListDroppable
+        node={node}
+        styles={styles}
+        dropIndicatorOffset={dropIndicatorOffset}
+        onElementRef={setTabListElement}
+        onEndDropAreaElementRef={setEndDropAreaElement}
+      >
         <SortableContext items={tabs.map((tab) => tab.id)} strategy={horizontalListSortingStrategy}>
           {tabs.map((tab) => (
             <TabTitle
               key={tab.id}
               TabTitleComponent={TabTitleComponent}
-              dropIndicatorColor={styles.dropIndicatorColor}
+              onElementRef={setTabElement}
               tab={tab}
               state={tab.id === focusedTabId ? 'focused' : tab.id === activeTabId ? 'active' : 'inactive'}
               onTabFocus={() => onTabFocus(tab.id)}
@@ -100,14 +138,13 @@ export const PaneNodeView: FunctionComponent<LayoutNodeViewProps<PaneNode>> = ({
 const TabListDroppable: FunctionComponent<PropsWithChildren<{
   node: PaneNode
   styles: DockLayoutStyles
-}>> = ({ children, node, styles }) => {
-  const { setNodeRef } = useDroppable({
-    id: getPaneNodeDropTargetId(node, 'tab-list')
-  })
-
+  dropIndicatorOffset?: number
+  onElementRef: (element: HTMLDivElement | null) => void
+  onEndDropAreaElementRef: (element: HTMLDivElement | null) => void
+}>> = ({ children, node, styles, dropIndicatorOffset, onElementRef, onEndDropAreaElementRef }) => {
   return (
     <TabList
-      ref={setNodeRef}
+      ref={onElementRef}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -117,8 +154,85 @@ const TabListDroppable: FunctionComponent<PropsWithChildren<{
       }}
     >
       {children}
+      <TabListEndDropArea node={node} onElementRef={onEndDropAreaElementRef} />
+      <TabDropIndicator dropIndicatorColor={styles.dropIndicatorColor} offset={dropIndicatorOffset} />
     </TabList>
   )
+}
+
+const TabListEndDropArea: FunctionComponent<{
+  node: PaneNode
+  onElementRef: (element: HTMLDivElement | null) => void
+}> = ({ node, onElementRef }) => {
+  const { setNodeRef } = useDroppable({
+    id: getPaneNodeDropTargetId(node, 'tab-list')
+  })
+
+  const setElementRef = useCallback((element: HTMLDivElement | null) => {
+    setNodeRef(element)
+    onElementRef(element)
+  }, [onElementRef, setNodeRef])
+
+  return (
+    <div
+      ref={setElementRef}
+      style={{ position: 'relative', flex: 1, alignSelf: 'stretch', minWidth: '1rem' }}
+    />
+  )
+}
+
+const TabDropIndicator: FunctionComponent<{
+  dropIndicatorColor: string
+  offset?: number
+}> = ({ dropIndicatorColor, offset }) => {
+  return (
+    <div
+      style={{
+        display: offset != null ? 'block' : 'none',
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: offset != null ? `${offset}px` : undefined,
+        width: '0.125rem',
+        transform: 'translateX(-50%)',
+        backgroundColor: dropIndicatorColor,
+        pointerEvents: 'none'
+      }}
+    />
+  )
+}
+
+function getDropIndicatorOffset (
+  nodeId: LayoutNodeId,
+  tabDropTarget: ReturnType<typeof parseTabDropTarget>,
+  paneDropTarget: ReturnType<typeof parsePaneNodeDropTarget>,
+  tabListElement: HTMLDivElement | null,
+  tabElements: ReadonlyMap<TabId, HTMLDivElement>,
+  endDropAreaElement: HTMLDivElement | null
+): number | undefined {
+  if (tabListElement == null) {
+    return undefined
+  }
+
+  const tabListRect = tabListElement.getBoundingClientRect()
+
+  if (tabDropTarget != null) {
+    const tabElement = tabElements.get(tabDropTarget.tabId)
+    if (tabElement == null) {
+      return undefined
+    }
+
+    const tabRect = tabElement.getBoundingClientRect()
+    return tabDropTarget.position === 'before'
+      ? tabRect.left - tabListRect.left
+      : tabRect.right - tabListRect.left
+  }
+
+  if (paneDropTarget?.nodeId === nodeId && paneDropTarget.target === 'tab-list' && endDropAreaElement != null) {
+    return endDropAreaElement.getBoundingClientRect().left - tabListRect.left
+  }
+
+  return undefined
 }
 
 const TabPanelsDroppable: FunctionComponent<PropsWithChildren<{
