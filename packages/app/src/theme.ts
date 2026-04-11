@@ -80,7 +80,9 @@ export function useSystemTheme (): Theme {
   return theme
 }
 
-export function applyThemeSetting (setting: ThemeSetting): void {
+export function applyThemeSetting (setting: ThemeSetting, options?: {
+  readonly immediate?: boolean
+}): void {
   if (document.documentElement.dataset.themeSetting === setting) {
     return
   }
@@ -88,7 +90,7 @@ export function applyThemeSetting (setting: ThemeSetting): void {
   document.documentElement.dataset.themeSetting = setting
   dispatchThemeSettingChange()
 
-  updateEffectiveTheme()
+  updateEffectiveTheme(options)
 }
 
 function getThemeSetting (): ThemeSetting {
@@ -116,7 +118,11 @@ function getSystemTheme (): Theme {
   return prefersLightColorScheme.matches ? LIGHT_THEME : DARK_THEME
 }
 
-function updateEffectiveTheme (): void {
+function updateEffectiveTheme (options?: {
+  readonly immediate?: boolean
+}): void {
+  const immediate = options?.immediate ?? false
+
   const setting = getThemeSetting()
   const theme = setting === SYSTEM_THEME ? getSystemTheme() : setting
 
@@ -125,7 +131,7 @@ function updateEffectiveTheme (): void {
     return
   }
 
-  if (previousTheme != null) {
+  if (!immediate && previousTheme != null) {
     document.documentElement.classList.add('theme-transition')
 
     setTimeout(() => {

@@ -1,9 +1,8 @@
 import { linter } from '@codemirror/lint'
-import { Compartment } from '@codemirror/state'
-import { Editor, type EditorLocation, type EditorViewDispatch, type PanelProps } from '@editor'
+import { Editor, type EditorLocation, type PanelProps } from '@editor'
 import { cadenceLanguageSupport, cadenceLinter } from '@language-support'
 import { numeric } from '@utility'
-import { useCallback, useLayoutEffect, useMemo, useRef, type FunctionComponent } from 'react'
+import { useCallback, type FunctionComponent } from 'react'
 import { getCspNonce } from '../../../csp.js'
 import { useProjectSource, useProjectSourceDispatch } from '../../../project-source/ProjectSourceContext.js'
 import { getProjectFileContent, setProjectFileContent } from '../../../project-source/model.js'
@@ -15,13 +14,17 @@ import { cadenceDarkTheme, cadenceLightTheme } from '../theme.js'
 const indent = '  ' // 2 spaces
 const lintDelay = numeric('s', 0.25)
 
+const extensions = [
+  cadenceLanguageSupport(),
+  linter(cadenceLinter, { delay: lintDelay.value * 1000 })
+]
+
 export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }) => {
   const { filePath } = getEditorPanelProps(panelProps)
   const editorDispatch = useEditorDispatch()
   const source = useProjectSource()
   const sourceDispatch = useProjectSourceDispatch()
 
-  const theme = useEffectiveTheme()
   const code = getProjectFileContent(source, filePath) ?? ''
 
   const onChange = useCallback((code: string) => {
@@ -38,32 +41,19 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }
     }))
   }, [editorDispatch, tabId])
 
-  const viewDispatchRef = useRef<EditorViewDispatch | undefined>(undefined)
-
-  const themeConfig = useMemo(() => new Compartment(), [])
-
-  useLayoutEffect(() => {
-    viewDispatchRef.current?.({
-      effects: themeConfig.reconfigure(theme === 'dark' ? cadenceDarkTheme : cadenceLightTheme)
-    })
-  }, [themeConfig, theme])
-
-  const extensions = useMemo(() => [
-    cadenceLanguageSupport(),
-    linter(cadenceLinter, { delay: lintDelay.value * 1000 }),
-    themeConfig.of(cadenceDarkTheme)
-  ], [themeConfig])
+  const effectiveTheme = useEffectiveTheme()
+  const theme = effectiveTheme === 'dark' ? cadenceDarkTheme : cadenceLightTheme
 
   return (
     <Editor
       document={code}
       indent={indent}
+      theme={theme}
       extensions={extensions}
       cspNonce={getCspNonce()}
       className='relative h-full overflow-hidden'
       onChange={onChange}
       onLocationChange={onLocationChange}
-      viewDispatchRef={viewDispatchRef}
     />
   )
 }

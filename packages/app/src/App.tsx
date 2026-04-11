@@ -1,5 +1,5 @@
 import type { DockLayoutStyles, MenuId, MenuSpec } from '@editor'
-import { DockLayoutView, useLayout, useLayoutDispatch, useRegisterMenu } from '@editor'
+import { DockLayoutView, useLayout, useLayoutDispatch, useLoadSettled, useRegisterMenu } from '@editor'
 import type { FunctionComponent } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'
@@ -27,7 +27,9 @@ const dockLayoutStyles: DockLayoutStyles = {
 }
 
 export const App: FunctionComponent = () => {
-  const { loaded, hasExternalChange, acceptRemoteChanges, keepLocalChanges } = useAppPersistenceSync()
+  const settled = useLoadSettled()
+
+  const { hasExternalChange, acceptRemoteChanges, keepLocalChanges } = useAppPersistenceSync()
 
   const layout = useLayout()
   const layoutDispatch = useLayoutDispatch()
@@ -48,7 +50,7 @@ export const App: FunctionComponent = () => {
         The project state has changed in another tab or window. Apply the remote changes?
       </ConfirmationDialog>
 
-      {loaded && (
+      {settled && (
         <div className='flex flex-col h-svh overflow-hidden'>
           <Header logo={<Logo />} />
 

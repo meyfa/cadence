@@ -16,9 +16,8 @@ import { playbackModule } from './modules/playback/index.js'
 import { problemsModule } from './modules/problems/index.js'
 import { settingsModule } from './modules/settings/index.js'
 import { viewModule } from './modules/view/index.js'
-import { defaultThemeSetting } from './modules/view/persistence.js'
-import { ProjectSourceProvider } from './project-source/ProjectSourceContext.js'
 import { appPersistenceDefaults } from './persistence/persistence.js'
+import { ProjectSourceProvider } from './project-source/ProjectSourceContext.js'
 import { applyThemeSetting } from './theme.js'
 
 const modules = [
@@ -41,7 +40,8 @@ const compileOptions: CompileOptions = {
   }
 }
 
-applyThemeSetting(defaultThemeSetting)
+// While the persistence is loading, apply the system theme.
+applyThemeSetting('system', { immediate: true })
 
 const emotionCache = createCache({
   key: 'cadence',

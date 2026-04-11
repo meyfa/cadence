@@ -33,7 +33,6 @@ const sourceDomain: PersistenceDomain<ProjectSourceState> = {
 }
 
 export interface AppPersistenceSyncState {
-  readonly loaded: boolean
   readonly hasExternalChange: boolean
   readonly acceptRemoteChanges: () => void
   readonly keepLocalChanges: () => void
@@ -66,11 +65,9 @@ export function useAppPersistenceSync (): AppPersistenceSyncState {
 
   // combined
 
-  const loaded = layoutMeta.loaded && sourceMeta.loaded
   const hasExternalChange = layoutMeta.conflict != null || sourceMeta.conflict != null
 
   return useMemo(() => ({
-    loaded,
     hasExternalChange,
     acceptRemoteChanges: () => {
       layoutControls.acceptRemote()
@@ -80,5 +77,5 @@ export function useAppPersistenceSync (): AppPersistenceSyncState {
       layoutControls.keepLocal()
       sourceControls.keepLocal()
     }
-  }), [loaded, hasExternalChange, layoutControls, sourceControls])
+  }), [hasExternalChange, layoutControls, sourceControls])
 }

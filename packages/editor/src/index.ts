@@ -43,7 +43,8 @@ export type * from './persistence/types.js'
 export * from './persistence/engine.js'
 export * from './persistence/backends/local-storage.js'
 export * from './persistence/backends/memory.js'
-export * from './persistence/hooks.js'
+export * from './persistence/binding.js'
+export * from './persistence/settlement.js'
 
 // problems
 export type * from './problems/types.js'

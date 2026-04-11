@@ -14,6 +14,11 @@ export interface CadenceEditorOptions {
   readonly indent: string
 
   /**
+   * The theme extension.
+   */
+  readonly theme: Extension
+
+  /**
    * Extensions such as language support or linting.
    */
   readonly extensions?: readonly Extension[]
@@ -32,6 +37,7 @@ export interface CadenceEditorHandle {
 
   readonly setDocument: (value: string) => void
   readonly setIndent: (indent: string) => void
+  readonly setTheme: (theme: Extension) => void
 
   readonly destroy: () => void
 }
@@ -50,6 +56,7 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
   })
 
   const indentUnitConfig = new Compartment()
+  const themeConfig = new Compartment()
 
   const state = EditorState.create({
     doc: options.document,
@@ -70,6 +77,7 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
         }
       }),
 
+      themeConfig.of(options.theme),
       ...(extensions ?? []),
 
       EditorView.cspNonce.of(options.cspNonce ?? ''),
@@ -100,6 +108,12 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
     setIndent: (value: string) => {
       view.dispatch({
         effects: indentUnitConfig.reconfigure(indentUnit.of(value))
+      })
+    },
+
+    setTheme: (theme: Extension) => {
+      view.dispatch({
+        effects: themeConfig.reconfigure(theme)
       })
     },
 
