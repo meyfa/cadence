@@ -7,6 +7,8 @@
     "./eslint.config.js",
     "./packages/*/src",
     "./packages/*/test",
-    "./packages/*/vite.config.ts"
+    "./packages/*/test-browser",
+    "./packages/*/vite.config.ts",
+    "./packages/*/vitest.config.ts"
   ]
 }

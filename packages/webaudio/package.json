@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "test": "tsx --test \"test/**/*.test.ts\""
+    "test": "tsx --test \"test/**/*.test.ts\"",
+    "test:browser": "vitest --config ./vitest.config.ts --run"
   }
 }

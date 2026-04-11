@@ -7,6 +7,31 @@ on:
   pull_request:
 
 jobs:
+  build:
+    name: Build
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build
+        id: docker-build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./
+          file: ./container/Containerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -33,27 +58,16 @@ jobs:
       - run: npm ci
       - run: npm run test
 
-  build:
-    name: Build
+  test-browser:
+    name: Browser Tests
+    runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm]
-    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build
-        id: docker-build
-        uses: docker/build-push-action@v7
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          context: ./
-          file: ./container/Containerfile
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: 24.14.1
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
