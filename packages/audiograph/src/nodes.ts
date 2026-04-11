@@ -8,6 +8,7 @@ export interface NodeTypeMap {
   readonly gain: GainNode
   readonly pan: PanNode
   readonly biquad: BiquadNode
+  readonly width: WidthNode
   readonly delay: DelayNode
   readonly reverb: ReverbNode
   readonly sample: SampleNode
@@ -34,6 +35,11 @@ export interface BiquadNode extends AnyNode {
   readonly filterType: 'lowpass' | 'highpass'
   readonly frequency: Numeric<'hz'>
   readonly rolloffPerOctave: Numeric<'db'>
+}
+
+export interface WidthNode extends AnyNode {
+  readonly type: 'width'
+  readonly width: Numeric<undefined>
 }
 
 export interface DelayNode extends AnyNode {
