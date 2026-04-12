@@ -1,3 +1,4 @@
+import type { Diagnostic } from '@codemirror/lint'
 import type { Extension } from '@codemirror/state'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useLatestRef } from '../../hooks/latest-ref.js'
@@ -9,11 +10,12 @@ export const Editor: FunctionComponent<{
   indent: string
   theme: Extension
   extensions?: readonly Extension[]
+  diagnostics?: readonly Diagnostic[]
   cspNonce?: string
   className?: string
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
-}> = ({ document, indent, theme, extensions, cspNonce, className, ...props }) => {
+}> = ({ document, indent, theme, extensions, diagnostics, cspNonce, className, ...props }) => {
   const handleRef = useRef<CadenceEditorHandle>(null)
   const onChange = useLatestRef(props.onChange)
   const onLocationChange = useLatestRef(props.onLocationChange)
@@ -31,6 +33,7 @@ export const Editor: FunctionComponent<{
       indent,
       theme,
       extensions,
+      diagnostics,
       cspNonce,
       onChange: (...args) => onChange.current(...args),
       onLocationChange: (...args) => onLocationChange.current?.(...args)
@@ -41,6 +44,7 @@ export const Editor: FunctionComponent<{
   useEffect(() => handleRef.current?.setDocument(document), [document])
   useEffect(() => handleRef.current?.setIndent(indent), [indent])
   useEffect(() => handleRef.current?.setTheme(theme), [theme])
+  useEffect(() => handleRef.current?.setDiagnostics(diagnostics), [diagnostics])
 
   return (
     <div ref={initialize} className={className} />
