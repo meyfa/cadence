@@ -13,6 +13,11 @@ import { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { tags as t } from '@lezer/highlight'
 
+function createUnderline (color: string): string {
+  const path = `<path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="${color}" fill="none" stroke-width="1"/>`
+  return `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3">${encodeURIComponent(path)}</svg>')`
+}
+
 const darkColors = {
   comment: '#7d8799',
   keyword: '#ca78e0',
@@ -38,7 +43,8 @@ const darkColors = {
   tooltipBackground: '#353a42',
   cursor: '#528bff',
   matchingBracket: '#bad0f847',
-  selectionMatchBackground: '#aafe661a'
+  selectionMatchBackground: '#aafe661a',
+  diagnosticError: '#ff605a'
 }
 
 const lightColors = {
@@ -68,7 +74,8 @@ const lightColors = {
   tooltipBackground: '#f7f7f8',
   cursor: '#526eff',
   matchingBracket: '#7894e847',
-  selectionMatchBackground: '#504ebf22'
+  selectionMatchBackground: '#504ebf22',
+  diagnosticError: '#d00010'
 }
 
 // The editor theme styles for this theme.
@@ -154,6 +161,20 @@ const cadenceEditorTheme = (dark: boolean) => {
       '& > ul > li[aria-selected]': {
         backgroundColor: colors.highlightBackground,
         color: colors.foreground
+      }
+    },
+
+    '.cm-diagnostic-error': {
+      borderLeftColor: colors.diagnosticError
+    },
+
+    '.cm-lintRange-error': {
+      backgroundImage: createUnderline(colors.diagnosticError)
+    },
+
+    '.cm-lintPoint-error': {
+      '&:after': {
+        borderBottomColor: colors.diagnosticError
       }
     }
   }, { dark })
