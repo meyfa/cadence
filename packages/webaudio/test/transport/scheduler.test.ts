@@ -1,121 +1,231 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createScheduler } from '../../src/transport/scheduler.js'
+import { createImmediateScheduler, createRealtimeScheduler } from '../../src/transport/scheduler.js'
 
 type SetInterval = typeof globalThis.setInterval
 type ClearInterval = typeof globalThis.clearInterval
 
 describe('transport/scheduler.ts', () => {
-  it('runs callbacks shortly before their target time', () => {
-    let nowSeconds = 10
+  describe('createRealtimeScheduler', () => {
+    it('runs callbacks shortly before their target time', () => {
+      let nowSeconds = 10
 
-    let intervalCallback: (() => void) | undefined
+      let intervalCallback: (() => void) | undefined
 
-    const scheduler = createScheduler({
-      now: () => nowSeconds,
-      tickInterval: numeric('s', 0.01),
-      scheduleAheadTime: numeric('s', 0.05),
+      const scheduler = createRealtimeScheduler({
+        now: () => nowSeconds,
+        tickInterval: numeric('s', 0.01),
+        scheduleAheadTime: numeric('s', 0.05),
 
-      timers: {
-        setInterval: ((handler: unknown) => {
-          intervalCallback = () => typeof handler === 'function' ? handler() : {}
-          return 1
-        }) as SetInterval,
+        timers: {
+          setInterval: ((handler: unknown) => {
+            intervalCallback = () => typeof handler === 'function' ? handler() : {}
+            return 1
+          }) as SetInterval,
 
-        clearInterval: (() => {
-          intervalCallback = undefined
-        }) as ClearInterval
-      }
+          clearInterval: (() => {
+            intervalCallback = undefined
+          }) as ClearInterval
+        }
+      })
+
+      scheduler.start(10)
+
+      let called = false
+      let callNow: number | undefined
+      let targetTime: number | undefined
+
+      scheduler.schedule(1, (time) => {
+        called = true
+        callNow = nowSeconds
+        targetTime = time
+      })
+
+      // Not yet within the schedule-ahead window
+      nowSeconds = 10.9
+      intervalCallback?.()
+      assert.strictEqual(called, false)
+
+      // Enter the window: transportNow=0.96, threshold=1.01 -> event time 1 runs
+      nowSeconds = 10.96
+      intervalCallback?.()
+
+      assert.strictEqual(called, true)
+      assert.strictEqual(targetTime, 11)
+      assert.ok(callNow != null && callNow < targetTime)
     })
 
-    scheduler.start(10)
+    it('executes past events immediately on start', () => {
+      const nowSeconds = 10
 
-    let called = false
-    let callNow: number | undefined
-    let targetTime: number | undefined
+      const scheduler = createRealtimeScheduler({
+        now: () => nowSeconds,
+        tickInterval: numeric('s', 0.01),
+        scheduleAheadTime: numeric('s', 0.05),
 
-    scheduler.schedule(1, (time) => {
-      called = true
-      callNow = nowSeconds
-      targetTime = time
+        timers: {
+          setInterval: (() => 1) as unknown as SetInterval,
+          clearInterval: (() => {}) as ClearInterval
+        }
+      })
+
+      let called = false
+      let targetTime = undefined
+
+      scheduler.schedule(-0.5, (time) => {
+        called = true
+        targetTime = time
+      })
+
+      scheduler.start(10)
+
+      assert.strictEqual(called, true)
+      assert.strictEqual(targetTime, 9.5)
     })
 
-    // Not yet within the schedule-ahead window
-    nowSeconds = 10.9
-    intervalCallback?.()
-    assert.strictEqual(called, false)
+    it('preserves chronological callback order', () => {
+      let nowSeconds = 10
 
-    // Enter the window: transportNow=0.96, threshold=1.01 -> event time 1 runs
-    nowSeconds = 10.96
-    intervalCallback?.()
+      let intervalCallback: (() => void) | undefined
 
-    assert.strictEqual(called, true)
-    assert.strictEqual(targetTime, 11)
-    assert.ok(callNow != null && callNow < targetTime)
+      const scheduler = createRealtimeScheduler({
+        now: () => nowSeconds,
+        tickInterval: numeric('s', 0.01),
+        scheduleAheadTime: numeric('s', 0.05),
+
+        timers: {
+          setInterval: ((handler: unknown) => {
+            intervalCallback = () => typeof handler === 'function' ? handler() : {}
+            return 1
+          }) as SetInterval,
+
+          clearInterval: (() => {
+            intervalCallback = undefined
+          }) as ClearInterval
+        }
+      })
+
+      // Schedule out of order before start
+      const calls: number[] = []
+      scheduler.schedule(2, (time) => calls.push(time))
+      scheduler.schedule(1, (time) => calls.push(time))
+
+      scheduler.start(10)
+
+      // Move time until both are within the window
+      nowSeconds = 11.96 // transportNow=1.96 -> threshold=2.01
+      intervalCallback?.()
+
+      assert.deepStrictEqual(calls, [11, 12])
+    })
+
+    it('preserves chronological callback order for events scheduled after start', () => {
+      let nowSeconds = 10
+
+      let intervalCallback: (() => void) | undefined
+
+      const scheduler = createRealtimeScheduler({
+        now: () => nowSeconds,
+        tickInterval: numeric('s', 0.01),
+        scheduleAheadTime: numeric('s', 0.05),
+
+        timers: {
+          setInterval: ((handler: unknown) => {
+            intervalCallback = () => typeof handler === 'function' ? handler() : {}
+            return 1
+          }) as SetInterval,
+
+          clearInterval: (() => {
+            intervalCallback = undefined
+          }) as ClearInterval
+        }
+      })
+
+      const calls: number[] = []
+
+      scheduler.start(10)
+      scheduler.schedule(2, (time) => calls.push(time))
+      scheduler.schedule(1, (time) => calls.push(time))
+
+      nowSeconds = 11.96
+      intervalCallback?.()
+
+      assert.deepStrictEqual(calls, [11, 12])
+    })
+
+    it('does not run callbacks after stop', () => {
+      let nowSeconds = 10
+
+      let intervalCallback: (() => void) | undefined
+
+      const scheduler = createRealtimeScheduler({
+        now: () => nowSeconds,
+        tickInterval: numeric('s', 0.01),
+        scheduleAheadTime: numeric('s', 0.05),
+
+        timers: {
+          setInterval: ((handler: unknown) => {
+            intervalCallback = () => typeof handler === 'function' ? handler() : {}
+            return 1
+          }) as SetInterval,
+
+          clearInterval: (() => {
+            intervalCallback = undefined
+          }) as ClearInterval
+        }
+      })
+
+      const calls: number[] = []
+
+      scheduler.start(10)
+      scheduler.stop()
+
+      nowSeconds = 10.96
+      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.flush()
+      intervalCallback?.()
+
+      assert.deepStrictEqual(calls, [])
+    })
   })
 
-  it('executes past events immediately on start', () => {
-    const nowSeconds = 10
+  describe('createImmediateScheduler', () => {
+    it('flushes all scheduled callbacks immediately on start', () => {
+      const scheduler = createImmediateScheduler()
 
-    const scheduler = createScheduler({
-      now: () => nowSeconds,
-      tickInterval: numeric('s', 0.01),
-      scheduleAheadTime: numeric('s', 0.05),
+      const calls: number[] = []
+      scheduler.schedule(2, (time) => calls.push(time))
+      scheduler.schedule(1, (time) => calls.push(time))
 
-      timers: {
-        setInterval: (() => 1) as unknown as SetInterval,
-        clearInterval: (() => {}) as ClearInterval
-      }
+      scheduler.start(10)
+
+      assert.deepStrictEqual(calls, [11, 12])
     })
 
-    let called = false
-    let targetTime = undefined
+    it('runs callbacks immediately after start', () => {
+      const scheduler = createImmediateScheduler()
 
-    scheduler.schedule(-0.5, (time) => {
-      called = true
-      targetTime = time
+      const calls: number[] = []
+      scheduler.start(10)
+
+      scheduler.schedule(2, (time) => calls.push(time))
+      scheduler.schedule(1, (time) => calls.push(time))
+
+      assert.deepStrictEqual(calls, [12, 11])
     })
 
-    scheduler.start(10)
+    it('does not run callbacks after stop', () => {
+      const scheduler = createImmediateScheduler()
 
-    assert.strictEqual(called, true)
-    assert.strictEqual(targetTime, 9.5)
-  })
+      const calls: number[] = []
+      scheduler.start(10)
+      scheduler.stop()
 
-  it('preserves chronological callback order', () => {
-    let nowSeconds = 10
+      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.flush()
 
-    let intervalCallback: (() => void) | undefined
-
-    const scheduler = createScheduler({
-      now: () => nowSeconds,
-      tickInterval: numeric('s', 0.01),
-      scheduleAheadTime: numeric('s', 0.05),
-
-      timers: {
-        setInterval: ((handler: unknown) => {
-          intervalCallback = () => typeof handler === 'function' ? handler() : {}
-          return 1
-        }) as SetInterval,
-
-        clearInterval: (() => {
-          intervalCallback = undefined
-        }) as ClearInterval
-      }
+      assert.deepStrictEqual(calls, [])
     })
-
-    // Schedule out of order before start
-    const calls: number[] = []
-    scheduler.schedule(2, (time) => calls.push(time))
-    scheduler.schedule(1, (time) => calls.push(time))
-
-    scheduler.start(10)
-
-    // Move time until both are within the window
-    nowSeconds = 11.96 // transportNow=1.96 -> threshold=2.01
-    intervalCallback?.()
-
-    assert.deepStrictEqual(calls, [11, 12])
   })
 })
