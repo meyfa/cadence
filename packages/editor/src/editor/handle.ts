@@ -1,4 +1,5 @@
 import { indentWithTab } from '@codemirror/commands'
+import { setDiagnostics, type Diagnostic } from '@codemirror/lint'
 import { indentUnit } from '@codemirror/language'
 import { Compartment, EditorState, type Extension, type SelectionRange, type Text } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
@@ -28,18 +29,23 @@ export interface CadenceEditorOptions {
    */
   readonly cspNonce?: string
 
+  /**
+   * Diagnostics to display in the editor, if managed externally.
+   */
+  readonly diagnostics?: readonly Diagnostic[]
+
   readonly onChange: (value: string) => void
   readonly onLocationChange?: (location: EditorLocation | undefined) => void
 }
 
 export interface CadenceEditorHandle {
   readonly view: EditorView
+  readonly destroy: () => void
 
   readonly setDocument: (value: string) => void
   readonly setIndent: (indent: string) => void
   readonly setTheme: (theme: Extension) => void
-
-  readonly destroy: () => void
+  readonly setDiagnostics: (diagnostics: readonly Diagnostic[] | undefined) => void
 }
 
 export function createCadenceEditor (parent: HTMLElement, options: CadenceEditorOptions): CadenceEditorHandle {
@@ -88,6 +94,10 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
 
   const view = new EditorView({ state, parent })
 
+  if (options.diagnostics != null) {
+    view.dispatch(setDiagnostics(view.state, options.diagnostics))
+  }
+
   // Emit initial cursor location
   if (options.onLocationChange != null) {
     options.onLocationChange(getEditorLocation(view.state.selection.ranges, view.state.doc))
@@ -95,6 +105,8 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
 
   return {
     view,
+
+    destroy: () => view.destroy(),
 
     setDocument: (value: string) => {
       const current = view.state.doc.toString()
@@ -117,7 +129,11 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
       })
     },
 
-    destroy: () => view.destroy()
+    setDiagnostics: (value: readonly Diagnostic[] | undefined) => {
+      if (value != null) {
+        view.dispatch(setDiagnostics(view.state, value))
+      }
+    }
   }
 }
 
