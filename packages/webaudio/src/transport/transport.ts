@@ -1,7 +1,8 @@
-import { DisposeStack, MutableObservable, numeric, type Numeric, type Observable } from '@utility'
+import type { Numeric, Observable } from '@utility'
+import { DisposeStack, MutableObservable, numeric } from '@utility'
 import { createIntervalTimeTracker } from '../time-tracker/interval.js'
 import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
-import { createScheduler } from './scheduler.js'
+import { createImmediateScheduler, createRealtimeScheduler } from './scheduler.js'
 
 export interface OfflineTransportOptions {
   readonly duration: Numeric<'s'>
@@ -55,14 +56,14 @@ export function createOnlineTransport (): OnlineTransport {
 
   const time = new MutableObservable(numeric('s', 0))
 
-  const scheduler = createScheduler({
+  const scheduler = createRealtimeScheduler({
     now: () => ctx.currentTime,
     tickInterval: TICK_INTERVAL,
     scheduleAheadTime: SCHEDULE_AHEAD_TIME
   })
   disposeStack.push(() => scheduler.stop())
 
-  const start = async (position: Numeric<'s'>) => {
+  const start: OnlineTransport['start'] = async (position) => {
     if (started) {
       return
     }
@@ -91,11 +92,11 @@ export function createOnlineTransport (): OnlineTransport {
     disposeStack.push(tracker.time.subscribe((value) => time.set(value)))
   }
 
-  const dispose = () => {
+  const dispose: OnlineTransport['dispose'] = () => {
     disposeStack.dispose()
   }
 
-  const schedule: Transport['schedule'] = (time, callback) => {
+  const schedule: OnlineTransport['schedule'] = (time, callback) => {
     scheduler.schedule(time, callback)
   }
 
@@ -114,18 +115,15 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
 
   const output = ctx.createGain()
   output.connect(ctx.destination)
+  disposeStack.push(() => output.disconnect())
 
   const time = new MutableObservable<Numeric<'s'> | undefined>(undefined)
 
-  const callbacks: Array<{
-    readonly time: number
-    readonly callback: (time: number) => void
-  }> = []
+  const scheduler = createImmediateScheduler()
+  disposeStack.push(() => scheduler.stop())
 
-  const render = async () => {
-    callbacks.sort((a, b) => a.time - b.time)
-    callbacks.forEach(({ time, callback }) => callback(time))
-    callbacks.splice(0, callbacks.length)
+  const render: OfflineTransport['render'] = async () => {
+    scheduler.start(0)
 
     try {
       const tracker = await createWorkletTimeTracker(ctx, output, {
@@ -147,7 +145,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
   }
 
   const schedule: Transport['schedule'] = (time, callback) => {
-    callbacks.push({ time, callback })
+    scheduler.schedule(time, callback)
   }
 
   return { ctx, output, time, render, schedule }
