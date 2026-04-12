@@ -55,9 +55,10 @@ export interface CompileResult {
 }
 
 export function compileSource (source: ProjectSource, compileOptions: CompileOptions): CompileResult {
-  const code = getProjectFileContent(source, TRACK_FILE_PATH) ?? ''
+  const entrypointPath = TRACK_FILE_PATH
+  const code = getProjectFileContent(source, entrypointPath) ?? ''
 
-  const lexResult = safeLex(code)
+  const lexResult = safeLex(code, entrypointPath)
   if (!lexResult.complete) {
     return { errors: unwrapError(lexResult.error) }
   }

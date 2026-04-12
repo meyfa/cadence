@@ -6,7 +6,7 @@ import { parse } from '../../src/parser/parser.js'
 /**
  * Helper function to create an array of tokens with automatically assigned source ranges
  */
-function makeTokens (tokens: ReadonlyArray<Readonly<{ name: string, text?: string }>>): Token[] {
+function makeTokens (tokens: ReadonlyArray<Readonly<{ name: string, text?: string }>>, filePath?: string): Token[] {
   let offset = 0
 
   return tokens.map(({ name, text }) => {
@@ -18,6 +18,7 @@ function makeTokens (tokens: ReadonlyArray<Readonly<{ name: string, text?: strin
       len: tokenText.length,
       line: 1,
       column: offset + 1,
+      filePath,
       state: ''
     }
 
@@ -549,6 +550,27 @@ describe('parser/parser.ts', () => {
         ]
       }
     })
+  })
+
+  it('should preserve file paths in split pattern step ranges', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'pattern' },
+      { name: '=' },
+      { name: '[' },
+      { name: 'word', text: 'xx' },
+      { name: ':' },
+      { name: 'number', text: '1' },
+      { name: ']' }
+    ], 'track.cadence'))
+
+    if (!result.complete) {
+      assert.fail(`Expected parse to succeed, got: ${result.error.message}`)
+    }
+
+    const assignment = result.value.children[0]
+    assert.strictEqual(assignment.type, 'Assignment')
+    assert.strictEqual(assignment.value.type, 'Pattern')
+    assert.strictEqual(assignment.value.children[1]?.range.filePath, 'track.cadence')
   })
 
   it('should parse property access expressions', () => {

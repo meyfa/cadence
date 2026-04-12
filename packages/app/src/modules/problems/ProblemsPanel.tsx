@@ -1,3 +1,4 @@
+import type { SourceRange } from '@ast'
 import type { PanelProps } from '@editor'
 import { useProblems } from '@editor'
 import { RangeError } from '@language'
@@ -16,13 +17,17 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
           </div>
         )}
 
-        {problems.map((problem, index) => (
+        {problems.map(({ error, label }, index) => (
           <div key={index}>
             <span className='text-content-100'>
-              {`${problem.label}:`}
+              {`${label}: `}
             </span>
-            {' '}
-            {formatError(problem.error)}
+            {error.message}
+            {error instanceof RangeError && error.range != null && (
+              <span className='text-content-100 text-sm'>
+                {` (${stringifyRange(error.range)})`}
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -30,11 +35,16 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
   )
 }
 
-function formatError (error: Error): string {
-  const range = error instanceof RangeError ? error.range : undefined
-  if (range == null) {
-    return error.message
+function stringifyRange (range: SourceRange, maxPathLength = 32): string {
+  const { filePath, line, column } = range
+
+  if (filePath != null) {
+    const fileName = filePath.split('/').at(-1) ?? filePath
+    const truncatedFileName = fileName.length > maxPathLength
+      ? fileName.slice(0, maxPathLength) + '…'
+      : fileName
+    return `${truncatedFileName}: Ln ${line}, Col ${column}`
   }
 
-  return `${error.message} at line ${range.line}, column ${range.column}`
+  return `Ln ${line}, Col ${column}`
 }

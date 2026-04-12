@@ -5,6 +5,7 @@ interface Token {
   readonly len: number
   readonly line: number
   readonly column: number
+  readonly filePath?: string
 }
 
 export interface SourceRange {
@@ -12,6 +13,7 @@ export interface SourceRange {
   readonly length: number
   readonly line: number
   readonly column: number
+  readonly filePath?: string
 }
 
 type Locatable = Token | ast.ASTNode
@@ -25,11 +27,14 @@ export function getSourceRange (item: Locatable): SourceRange {
     return item.range
   }
 
+  const filePath = item.filePath
+
   return {
     offset: item.offset,
     length: item.len,
     line: item.line,
-    column: item.column
+    column: item.column,
+    ...(filePath == null ? {} : { filePath })
   }
 }
 
@@ -41,6 +46,11 @@ export function combineSourceRanges (...items: Locatable[]): SourceRange {
   const ranges = items.map(getSourceRange)
   const first = ranges.reduce((min, range) => (range.offset < min.offset ? range : min), ranges[0])
   const end = Math.max(...ranges.map((range) => range.offset + range.length))
+  const filePath = ranges[0].filePath
+
+  if (ranges.some((range) => range.filePath !== filePath)) {
+    throw new Error('Cannot combine source ranges from different files')
+  }
 
   return {
     offset: first.offset,
@@ -48,10 +58,15 @@ export function combineSourceRanges (...items: Locatable[]): SourceRange {
 
     // This assumes that smaller offset means smaller line/column.
     line: first.line,
-    column: first.column
+    column: first.column,
+    ...(filePath == null ? {} : { filePath })
   }
 }
 
 export function areSourceRangesEqual (a: SourceRange, b: SourceRange): boolean {
-  return a.offset === b.offset && a.length === b.length && a.line === b.line && a.column === b.column
+  return a.offset === b.offset &&
+    a.length === b.length &&
+    a.line === b.line &&
+    a.column === b.column &&
+    a.filePath === b.filePath
 }

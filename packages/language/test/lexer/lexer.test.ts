@@ -139,11 +139,18 @@ describe('lexer/lexer.ts', () => {
   })
 
   it('should handle invalid input', () => {
-    const result = lex('foo = 42 $')
+    const result = lex('foo = 42 $', 'track.cadence')
     assert.strictEqual(result.complete, false)
     assert.strictEqual(result.error.name, 'LexError')
     assert.strictEqual(result.error.message, 'Unexpected input "$"')
-    assert.deepStrictEqual(result.error.range, { offset: 9, length: 1, line: 1, column: 10 })
+    assert.deepStrictEqual(result.error.range, { offset: 9, length: 1, line: 1, column: 10, filePath: 'track.cadence' })
+    assert.strictEqual(result.error.range.filePath, 'track.cadence')
+  })
+
+  it('should annotate tokens with the source file path', () => {
+    const result = lex('foo = 42', 'track.cadence')
+    assert.strictEqual(result.complete, true)
+    assert.strictEqual((result.value[0] as any)?.filePath, 'track.cadence')
   })
 
   it('should ignore whitespace and comments', () => {
