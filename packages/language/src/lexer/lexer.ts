@@ -71,7 +71,7 @@ const mainLexer = createLexer([
 
 export type LexResult = Result<Token[], LexError>
 
-export function lex (input: string): LexResult {
+export function lex (input: string, filePath?: string): LexResult {
   function getLineAndColumn (offset: number): Pick<SourceRange, 'line' | 'column'> {
     const lines = input.slice(0, offset).split(/(?:\r\n|\r|\n)/)
     const line = lines.length
@@ -88,10 +88,14 @@ export function lex (input: string): LexResult {
       error: new LexError(`Unexpected input "${context}"`, {
         offset: lexerResult.offset,
         length: 1,
+        filePath,
         ...getLineAndColumn(lexerResult.offset)
       })
     }
   }
 
-  return { complete: true, value: lexerResult.tokens }
+  return {
+    complete: true,
+    value: lexerResult.tokens.map((token) => ({ ...token, filePath }))
+  }
 }

@@ -6,7 +6,6 @@ import { cadenceLanguageSupport } from '@language-support'
 import { useCallback, useMemo, type FunctionComponent } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'
 import { getCspNonce } from '../../../csp.js'
-import { TRACK_FILE_PATH } from '../../../persistence/constants.js'
 import { useEffectiveTheme } from '../../../theme.js'
 import { getEditorPanelProps } from '../panel-props.js'
 import { useEditorDispatch } from '../provider.js'
@@ -47,10 +46,9 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }
 
   const { result: { errors } } = useCompilationState()
   const diagnostics = useMemo(() => {
-    if (filePath !== TRACK_FILE_PATH) {
-      return []
-    }
-    return errors.map((error) => convertError(error.message, error.range))
+    return errors
+      .filter((error) => error.range?.filePath === filePath)
+      .map((error) => convertError(error.message, error.range))
   }, [errors, filePath])
 
   return (

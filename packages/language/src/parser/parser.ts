@@ -166,7 +166,8 @@ function splitStepsFromWordToken (text: string, tokenRange: SourceRange): readon
       offset: tokenRange.offset + offset,
       line: tokenRange.line,
       column: tokenRange.column + offset,
-      length: stepValue.length
+      length: stepValue.length,
+      filePath: tokenRange.filePath
     }
 
     if (!isStepValue(stepValue)) {
