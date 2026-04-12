@@ -2,10 +2,10 @@ import { numeric } from '@utility'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FunctionComponent } from 'react'
 import { Group, Panel, Separator, useGroupRef, type Layout } from 'react-resizable-panels'
 import { useChangeOrigin } from '../../hooks/change-origin.js'
+import { transformNode } from '../algorithms/mutate.js'
 import type { SplitNode, SplitOrientation } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
 import { LayoutNodeView, type LayoutNodeViewProps } from './LayoutNodeView.js'
-import { transformNode } from '../algorithms/mutate.js'
 
 // The interval during which layout changes are considered part of the same change stack.
 const CHANGE_STACK_WINDOW = numeric('s', 0.05)
@@ -112,16 +112,6 @@ const ResizeHandle: FunctionComponent<{
   const separatorRef = useRef<HTMLDivElement | null>(null)
   const [isHighlighted, setIsHighlighted] = useState(false)
 
-  const updateHighlight = useCallback(() => {
-    const root = separatorRef.current
-    if (root == null) {
-      return
-    }
-
-    const selector = '[data-separator="hover"], [data-separator="active"], :focus-visible'
-    setIsHighlighted(root.matches(selector))
-  }, [])
-
   // The Separator component does not expose its state other than through data attributes,
   // so we need to observe those to apply our own styles.
   useLayoutEffect(() => {
@@ -130,19 +120,21 @@ const ResizeHandle: FunctionComponent<{
       return
     }
 
+    const updateHighlight = () => {
+      const state = root.dataset.separator ?? ''
+      setIsHighlighted(state === 'hover' || state === 'active' || state === 'focus')
+    }
+
     const observer = new MutationObserver(updateHighlight)
-    observer.observe(root, { attributeFilter: ['data-separator'] })
-    root.addEventListener('focus', updateHighlight)
-    root.addEventListener('blur', updateHighlight)
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-separator']
+    })
 
     updateHighlight()
 
-    return () => {
-      observer.disconnect()
-      root.removeEventListener('focus', updateHighlight)
-      root.removeEventListener('blur', updateHighlight)
-    }
-  }, [updateHighlight])
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <Separator
