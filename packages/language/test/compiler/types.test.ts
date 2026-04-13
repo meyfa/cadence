@@ -199,7 +199,7 @@ describe('compiler/types.ts', () => {
 
     it('should identify curve values correctly', () => {
       const value = CurveType.of({
-        type: 'linear',
+        type: 'lin',
         unit: 'db',
         start: numeric('db', -6),
         end: numeric('db', 0)
@@ -627,7 +627,7 @@ describe('compiler/types.ts', () => {
     describe('of()', () => {
       it('should narrow type correctly', () => {
         const curve1 = CurveType.of({
-          type: 'linear',
+          type: 'lin',
           unit: undefined,
           start: numeric(undefined, 0),
           end: numeric(undefined, 1)

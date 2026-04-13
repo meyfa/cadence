@@ -1,24 +1,27 @@
 import type { AutomationPoint } from '@core'
 import type { Numeric, Unit } from '@utility'
 
+const CURVE_HOLD = 'hold'
+const CURVE_LINEAR = 'lin'
+
 export type Curve<U extends Unit> = HoldCurve<U> | LinearCurve<U>
 
 export interface HoldCurve<U extends Unit> {
-  readonly type: 'hold'
+  readonly type: typeof CURVE_HOLD
   readonly unit: U
   readonly value: Numeric<U>
 }
 
 export interface LinearCurve<U extends Unit> {
-  readonly type: 'linear'
+  readonly type: typeof CURVE_LINEAR
   readonly unit: U
   readonly start: Numeric<U>
   readonly end: Numeric<U>
 }
 
 export const curveParameterCounts = new Map<string, number>([
-  ['hold', 1],
-  ['linear', 2]
+  [CURVE_HOLD, 1],
+  [CURVE_LINEAR, 2]
 ])
 
 export function createCurve<U extends Unit> (type: string, parameters: ReadonlyArray<Numeric<U>>): Curve<U> | undefined {
@@ -29,14 +32,14 @@ export function createCurve<U extends Unit> (type: string, parameters: ReadonlyA
   const unit = parameters.at(0)?.unit as U
 
   switch (type) {
-    case 'hold': {
+    case CURVE_HOLD: {
       const [value] = parameters
-      return { type: 'hold', unit, value }
+      return { type: CURVE_HOLD, unit, value }
     }
 
-    case 'linear': {
+    case CURVE_LINEAR: {
       const [start, end] = parameters
-      return { type: 'linear', unit, start, end }
+      return { type: CURVE_LINEAR, unit, start, end }
     }
 
     default:
@@ -46,13 +49,13 @@ export function createCurve<U extends Unit> (type: string, parameters: ReadonlyA
 
 export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: Numeric<'beats'>, timeEnd: Numeric<'beats'>): ReadonlyArray<AutomationPoint<U>> {
   switch (curve.type) {
-    case 'hold':
+    case CURVE_HOLD:
       return [
         { time: timeStart, value: curve.value, curve: 'step' },
         { time: timeEnd, value: curve.value, curve: 'step' }
       ]
 
-    case 'linear':
+    case CURVE_LINEAR:
       return [
         { time: timeStart, value: curve.start, curve: 'step' },
         { time: timeEnd, value: curve.end, curve: 'linear' }

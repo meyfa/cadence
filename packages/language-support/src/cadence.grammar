@@ -93,13 +93,24 @@ step {
   (word | "-") ("(" argumentList? ")")? (":" primary)?
 }
 
+Curve {
+  kw<"curve">
+  "["
+  (curveSegment | interpolationExpression)*
+  "]"
+}
+
+curveSegment {
+  CurveType { word } ("(" argumentList? ")")?
+}
+
 argumentList {
   (Property | expression)
   ("," (Property | expression))*
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | Call | VariableName
+  "(" expression ")" | Number | String | Pattern | Curve | Call | VariableName
 }
 
 Call {

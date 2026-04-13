@@ -10,6 +10,7 @@ const parserWithMetadata = parser.configure({
       Number: t.number,
       String: t.string,
       Pattern: t.special(t.string),
+      CurveType: t.function(t.name),
 
       keyword: t.keyword,
       unit: t.number,

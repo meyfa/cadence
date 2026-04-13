@@ -255,60 +255,17 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
     errors.push(...checkType([ParameterType], targetCheck.result, automation.target.range))
   }
 
-  const curveCheck = checkCurve(context, automation.curve)
+  const curveCheck = checkExpression(context, automation.curve)
   errors.push(...curveCheck.errors)
 
   if (targetCheck.result != null && curveCheck.result != null) {
     const { unit } = ParameterType.detail(targetCheck.result)
     errors.push(...checkType([CurveType.with(unit)], curveCheck.result, automation.curve.range))
+  } else if (curveCheck.result != null) {
+    errors.push(...checkType([CurveType], curveCheck.result, automation.curve.range))
   }
 
   return errors
-}
-
-function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
-  const expectedParameters = curveParameterCounts.get(curve.curveType)
-  if (expectedParameters == null) {
-    return { errors: [new CompileError(`Unknown curve type "${curve.curveType}"`, curve.range)] }
-  }
-
-  if (curve.parameters.length !== expectedParameters) {
-    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'parameter' : 'parameters'} for ${curve.curveType} curve, got ${curve.parameters.length}`
-    return { errors: [new CompileError(message, curve.range)] }
-  }
-
-  const errors: CompileError[] = []
-  const units: Array<Unit | undefined> = []
-
-  for (const point of curve.parameters) {
-    const pointCheck = checkExpression(context, point)
-    errors.push(...pointCheck.errors)
-
-    if (pointCheck.result != null) {
-      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
-      errors.push(...typeErrors)
-
-      const generics = typeErrors.length === 0
-        ? NumberType.detail(pointCheck.result)
-        : undefined
-
-      units.push(generics?.unit)
-    }
-  }
-
-  if (errors.length > 0) {
-    return { errors }
-  }
-
-  const firstUnit = units[0]
-  const result = CurveType.with(firstUnit)
-
-  const expected = NumberType.with(firstUnit)
-  for (let i = 1; i < units.length; ++i) {
-    errors.push(...checkType([expected], NumberType.with(units[i]), curve.parameters[i].range))
-  }
-
-  return { errors, result: errors.length > 0 ? undefined : result }
 }
 
 function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
@@ -514,11 +471,11 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     }
 
     case 'Pattern': {
-      const errors = checkPattern(context, expression)
-      if (errors.length > 0) {
-        return { errors }
-      }
-      return { errors: [], result: PatternType }
+      return checkPattern(context, expression)
+    }
+
+    case 'Curve': {
+      return checkCurve(context, expression)
     }
 
     case 'Identifier': {
@@ -583,7 +540,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
-function checkPattern (context: Context, pattern: ast.Pattern): readonly CompileError[] {
+function checkPattern (context: Context, pattern: ast.Pattern): Checked<Type> {
   const errors: CompileError[] = []
 
   for (const item of pattern.children) {
@@ -600,7 +557,7 @@ function checkPattern (context: Context, pattern: ast.Pattern): readonly Compile
     }
   }
 
-  return errors
+  return { errors, result: errors.length > 0 ? undefined : PatternType }
 }
 
 function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
@@ -620,6 +577,68 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
   errors.push(...parametersCheck.errors)
 
   return errors
+}
+
+function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
+  const errors: CompileError[] = []
+
+  const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
+  const otherChildren = curve.children.filter((c) => c.type !== 'CurveSegment')
+
+  for (const child of otherChildren) {
+    // TODO Add support for interpolation in curves
+    errors.push(new CompileError('Curve interpolation is not supported yet', child.range))
+  }
+
+  if (segments.length !== 1) {
+    // TODO Support zero or multiple segments
+    errors.push(new CompileError('Curve must have exactly one segment', curve.range))
+    return { errors }
+  }
+
+  const segment = segments[0]
+
+  const expectedParameters = curveParameterCounts.get(segment.curveType)
+  if (expectedParameters == null) {
+    return { errors: [new CompileError(`Unknown curve type "${segment.curveType}"`, segment.range)] }
+  }
+
+  if (segment.parameters.length !== expectedParameters) {
+    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'parameter' : 'parameters'} for ${segment.curveType} curve, got ${segment.parameters.length}`
+    return { errors: [new CompileError(message, segment.range)] }
+  }
+
+  const units: Array<Unit | undefined> = []
+
+  for (const point of segment.parameters) {
+    const pointCheck = checkExpression(context, point)
+    errors.push(...pointCheck.errors)
+
+    if (pointCheck.result != null) {
+      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
+      errors.push(...typeErrors)
+
+      const generics = typeErrors.length === 0
+        ? NumberType.detail(pointCheck.result)
+        : undefined
+
+      units.push(generics?.unit)
+    }
+  }
+
+  if (errors.length > 0) {
+    return { errors }
+  }
+
+  const firstUnit = units[0]
+  const result = CurveType.with(firstUnit)
+
+  const expected = NumberType.with(firstUnit)
+  for (let i = 1; i < units.length; ++i) {
+    errors.push(...checkType([expected], NumberType.with(units[i]), segment.parameters[i].range))
+  }
+
+  return { errors, result: errors.length > 0 ? undefined : result }
 }
 
 function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {
