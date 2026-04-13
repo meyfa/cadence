@@ -1,12 +1,15 @@
 import { ast } from '@ast'
-import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern, type Automation, type Bus, type BusId, type Instrument, type InstrumentId, type InstrumentRouting, type Mixer, type MixerRouting, type ParameterId, type Part, type Pattern, type Program, type Step, type Track } from '@core'
-import { numeric, type Numeric, type Unit } from '@utility'
+import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRouting, Mixer, MixerRouting, ParameterId, Part, Pattern, Program, Step, Track } from '@core'
+import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core'
+import type { Numeric, Unit } from '@utility'
+import { numeric } from '@utility'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { createCurve, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
-import { BusType, CurveType, EffectType, FunctionType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType, type CurveValue, type PatternValue, type StringValue, type Type, type Value } from './types.js'
+import type { CurveValue, PatternValue, StringValue, Type, Value } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType } from './types.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -204,7 +207,7 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
 
   for (const automation of part.automations) {
     const target = ParameterType.cast(resolve(context, automation.target))
-    const curve = generateCurve(context, automation.curve)
+    const curve = CurveType.cast(resolve(context, automation.curve))
 
     const rendered = renderCurvePoints(curve.data, startTime, endTime)
     const existing = context.top.automations.get(target.data.id)
@@ -223,12 +226,17 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
 }
 
 function generateCurve (context: Context, curve: ast.Curve): CurveValue {
-  const parameters = curve.parameters.map((point) => {
+  const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
+  assert(segments.length === 1)
+
+  const segment = segments[0]
+
+  const parameters = segment.parameters.map((point) => {
     return NumberType.cast(resolve(context, point)).data
   })
 
   return CurveType.of(
-    nonNull(createCurve(curve.curveType, parameters))
+    nonNull(createCurve(segment.curveType, parameters))
   )
 }
 
@@ -329,6 +337,9 @@ function resolve (context: Context, expression: ast.Expression): Value {
 
     case 'Pattern':
       return generatePattern(context, expression)
+
+    case 'Curve':
+      return generateCurve(context, expression)
 
     case 'Identifier': {
       let current: Context | undefined = context

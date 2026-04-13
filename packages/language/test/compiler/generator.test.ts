@@ -269,6 +269,78 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 0))
   })
 
+  it('should generate automation points for a lin curve', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('String', RANGE, { parts: ['instruments'] })
+        })
+      ],
+      children: [
+        // synth = sample("synth.wav")
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'synth' }),
+          value: ast.make('Call', RANGE, {
+            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+            arguments: [
+              ast.make('String', RANGE, { parts: ['synth.wav'] })
+            ]
+          })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          parts: [
+            ast.make('PartStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              properties: [
+                // (4.bars)
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 4 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
+              ],
+              routings: [],
+              automations: [
+                ast.make('AutomateStatement', RANGE, {
+                  target: ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
+                    property: ast.make('Identifier', RANGE, { name: 'gain' })
+                  }),
+                  curve: ast.make('Curve', RANGE, {
+                    children: [
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'lin',
+                        parameters: [
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: -60 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          }),
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: 0 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    })
+
+    const result = generate(program, OPTIONS)
+
+    assert.strictEqual(result.automations.size, 1)
+    const automation = [...result.automations.values()][0]
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+    ])
+  })
+
   it('should support buses as sources in mixer', () => {
     const program = ast.make('Program', RANGE, {
       imports: [],

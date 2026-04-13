@@ -635,6 +635,49 @@ describe('parser/parser.ts', () => {
     }
   })
 
+  it('should parse curve expressions', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'foo' },
+      { name: '=' },
+      { name: 'word', text: 'curve' },
+      { name: '[' },
+      { name: 'word', text: 'lin' },
+      { name: '(' },
+      { name: 'number', text: '0' },
+      { name: ',' },
+      { name: 'number', text: '1' },
+      { name: ')' },
+      { name: ']' }
+    ]))
+
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'foo' },
+            value: {
+              type: 'Curve',
+              children: [
+                {
+                  type: 'CurveSegment',
+                  curveType: 'lin',
+                  parameters: [
+                    { type: 'Number', value: 0 },
+                    { type: 'Number', value: 1 }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  })
+
   it('should parse property access with function calls', () => {
     // x = object.method1().method2()
     const nonParenthesized = makeTokens([

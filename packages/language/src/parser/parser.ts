@@ -306,15 +306,57 @@ const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   }
 )
 
-const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
-  p.eitherOr(
-    p.eitherOr(
-      number_,
-      string_
+const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
+  p.token((t) => t.name === 'word' ? t : undefined),
+  p.option(
+    combine3(
+      literal('('),
+      p.sepBy(
+        p.recursive(() => optionalExpression_),
+        literal(',')
+      ),
+      expectLiteral(')')
     ),
-    serialPattern_
+    undefined
   ),
-  identifier_
+  (curveTypeToken, callTail) => {
+    const curveType = curveTypeToken.text
+    const parameters = callTail == null ? [] : callTail[1]
+
+    const range = callTail == null
+      ? getSourceRange(curveTypeToken)
+      : combineSourceRanges(curveTypeToken, callTail[2])
+
+    return ast.make('CurveSegment', range, { curveType, parameters })
+  }
+)
+
+const curve_: p.Parser<Token, unknown, ast.Curve> = p.ab(
+  keyword('curve'),
+  combine3(
+    expectLiteral('['),
+    p.many(
+      p.eitherOr(curveSegment_, patternInterpolation_)
+    ),
+    expectLiteral(']')
+  ),
+  (_curve, [_l, children, _r]) => {
+    return ast.make('Curve', combineSourceRanges(_curve, _r), { children })
+  }
+)
+
+const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
+  identifier_,
+  p.eitherOr(
+    number_,
+    p.eitherOr(
+      string_,
+      p.eitherOr(
+        serialPattern_,
+        curve_
+      )
+    )
+  )
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -482,31 +524,6 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   }
 )
 
-const curve_: p.Parser<Token, unknown, ast.Curve> = p.ab(
-  p.token((t) => t.name === 'word' ? t : undefined),
-  p.option(
-    combine3(
-      literal('('),
-      p.sepBy(
-        optionalExpression_,
-        literal(',')
-      ),
-      expectLiteral(')')
-    ),
-    undefined
-  ),
-  (curveTypeToken, callTail) => {
-    const curveType = curveTypeToken.text
-    const parameters = callTail == null ? [] : callTail[1]
-
-    const range = callTail == null
-      ? getSourceRange(curveTypeToken)
-      : combineSourceRanges(curveTypeToken, callTail[2])
-
-    return ast.make('Curve', range, { curveType, parameters })
-  }
-)
-
 const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab(
   combine2(
     keyword('automate'),
@@ -514,7 +531,7 @@ const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab
   ),
   combine2(
     expect(keyword('as'), 'keyword "as"'),
-    curve_
+    expression_
   ),
   ([_automate, target], [_as, curve]) => {
     return ast.make('AutomateStatement', combineSourceRanges(_automate, curve), { target, curve })

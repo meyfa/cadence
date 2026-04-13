@@ -38,6 +38,17 @@ export interface Pattern extends ASTNode {
   readonly children: ReadonlyArray<Step | Expression>
 }
 
+export interface CurveSegment extends ASTNode {
+  readonly type: 'CurveSegment'
+  readonly curveType: string
+  readonly parameters: readonly Expression[]
+}
+
+export interface Curve extends ASTNode {
+  readonly type: 'Curve'
+  readonly children: ReadonlyArray<CurveSegment | Expression>
+}
+
 // Imports
 
 export interface UseStatement extends ASTNode {
@@ -83,7 +94,7 @@ export interface Call extends ASTNode {
   readonly arguments: ReadonlyArray<Expression | Property>
 }
 
-export type Value = Number | String | Pattern | Identifier
+export type Value = Identifier | Number | String | Pattern | Curve
 export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAccess | Call
 
 // Composite Types
@@ -146,13 +157,7 @@ export interface EffectStatement extends ASTNode {
 export interface AutomateStatement extends ASTNode {
   readonly type: 'AutomateStatement'
   readonly target: Expression
-  readonly curve: Curve
-}
-
-export interface Curve extends ASTNode {
-  readonly type: 'Curve'
-  readonly curveType: string
-  readonly parameters: readonly Expression[]
+  readonly curve: Expression
 }
 
 // Root Type
@@ -184,8 +189,12 @@ export interface NodeByType {
 
   Number: Number
   String: String
+
   Step: Step
   Pattern: Pattern
+
+  CurveSegment: CurveSegment
+  Curve: Curve
 
   UseStatement: UseStatement
 
@@ -204,7 +213,6 @@ export interface NodeByType {
   BusStatement: BusStatement
   EffectStatement: EffectStatement
   AutomateStatement: AutomateStatement
-  Curve: Curve
 
   Program: Program
 }
