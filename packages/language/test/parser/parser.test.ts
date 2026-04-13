@@ -641,6 +641,10 @@ describe('parser/parser.ts', () => {
       { name: '=' },
       { name: 'word', text: 'curve' },
       { name: '[' },
+      { name: 'word', text: 'hold' },
+      { name: '(' },
+      { name: 'number', text: '0' },
+      { name: ')' },
       { name: 'word', text: 'lin' },
       { name: '(' },
       { name: 'number', text: '0' },
@@ -662,6 +666,13 @@ describe('parser/parser.ts', () => {
             value: {
               type: 'Curve',
               children: [
+                {
+                  type: 'CurveSegment',
+                  curveType: 'hold',
+                  parameters: [
+                    { type: 'Number', value: 0 }
+                  ]
+                },
                 {
                   type: 'CurveSegment',
                   curveType: 'lin',

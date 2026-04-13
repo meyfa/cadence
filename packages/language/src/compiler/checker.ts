@@ -1,11 +1,13 @@
-import { ast, type SourceRange } from '@ast'
+import type { SourceRange } from '@ast'
+import { ast } from '@ast'
 import type { Unit } from '@utility'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { curveParameterCounts } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
-import { BusType, CurveType, EffectType, FunctionType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType, type ModuleValue, type Type } from './types.js'
+import type { ModuleValue, Type } from './types.js'
+import { BusType, CurveType, EffectType, FunctionType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType } from './types.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
@@ -590,13 +592,31 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
     errors.push(new CompileError('Curve interpolation is not supported yet', child.range))
   }
 
-  if (segments.length !== 1) {
-    // TODO Support zero or multiple segments
-    errors.push(new CompileError('Curve must have exactly one segment', curve.range))
+  if (segments.length === 0) {
+    errors.push(new CompileError('Curve must have at least one segment', curve.range))
     return { errors }
   }
 
-  const segment = segments[0]
+  const segmentChecks = segments.map((segment) => checkCurveSegment(context, segment))
+  errors.push(...segmentChecks.flatMap((c) => c.errors))
+
+  if (errors.length > 0) {
+    return { errors }
+  }
+
+  const firstUnit = segmentChecks[0].result
+
+  for (let i = 1; i < segmentChecks.length; ++i) {
+    if (segmentChecks[i].result !== firstUnit) {
+      errors.push(new CompileError('Curve segments must have the same unit', segments[i].range))
+    }
+  }
+
+  return { errors, result: CurveType.with(firstUnit) }
+}
+
+function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checked<Unit> {
+  const errors: CompileError[] = []
 
   const expectedParameters = curveParameterCounts.get(segment.curveType)
   if (expectedParameters == null) {
@@ -631,14 +651,12 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
   }
 
   const firstUnit = units[0]
-  const result = CurveType.with(firstUnit)
-
   const expected = NumberType.with(firstUnit)
   for (let i = 1; i < units.length; ++i) {
     errors.push(...checkType([expected], NumberType.with(units[i]), segment.parameters[i].range))
   }
 
-  return { errors, result: errors.length > 0 ? undefined : result }
+  return { errors, result: firstUnit }
 }
 
 function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {

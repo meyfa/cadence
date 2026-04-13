@@ -4,7 +4,7 @@ import { concatPatterns, createParallelPattern, createSerialPattern, mergePatter
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
-import { createCurve, renderCurvePoints } from './curves.js'
+import { createCurve, createCurveSegment, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
@@ -225,21 +225,6 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   return { name, length, routings }
 }
 
-function generateCurve (context: Context, curve: ast.Curve): CurveValue {
-  const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
-  assert(segments.length === 1)
-
-  const segment = segments[0]
-
-  const parameters = segment.parameters.map((point) => {
-    return NumberType.cast(resolve(context, point)).data
-  })
-
-  return CurveType.of(
-    nonNull(createCurve(segment.curveType, parameters))
-  )
-}
-
 function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
   const mixerContext = createLocalScope(context)
 
@@ -448,6 +433,25 @@ function generateStep (context: Context, expression: ast.Step): Step {
   }
 
   return { value, length, ...parameters }
+}
+
+function generateCurve (context: Context, curve: ast.Curve): CurveValue {
+  const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
+  const otherChildren = curve.children.filter((c) => c.type !== 'CurveSegment')
+  assert(segments.length > 0)
+  assert(otherChildren.length === 0)
+
+  const generatedSegments = segments.map((segment) => {
+    const parameters = segment.parameters.map((point) => {
+      return NumberType.cast(resolve(context, point)).data
+    })
+
+    return nonNull(createCurveSegment(segment.curveType, parameters))
+  })
+
+  return CurveType.of(
+    createCurve(generatedSegments)
+  )
 }
 
 function computeUnaryExpression (operator: ast.UnaryOperator, argument: Value): Value {

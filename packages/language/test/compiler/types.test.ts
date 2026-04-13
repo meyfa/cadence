@@ -199,10 +199,15 @@ describe('compiler/types.ts', () => {
 
     it('should identify curve values correctly', () => {
       const value = CurveType.of({
-        type: 'lin',
         unit: 'db',
-        start: numeric('db', -6),
-        end: numeric('db', 0)
+        segments: [
+          {
+            type: 'lin',
+            unit: 'db',
+            start: numeric('db', -6),
+            end: numeric('db', 0)
+          }
+        ]
       })
       assert.strictEqual(CurveType.is(value), true)
       assert.strictEqual(CurveType.with('db').is(value), true)
@@ -627,17 +632,27 @@ describe('compiler/types.ts', () => {
     describe('of()', () => {
       it('should narrow type correctly', () => {
         const curve1 = CurveType.of({
-          type: 'lin',
           unit: undefined,
-          start: numeric(undefined, 0),
-          end: numeric(undefined, 1)
+          segments: [
+            {
+              type: 'lin',
+              unit: undefined,
+              start: numeric(undefined, 0),
+              end: numeric(undefined, 1)
+            }
+          ]
         })
         expectTypeEquals<CurveValue<undefined>, typeof curve1>()
 
         const curve2 = CurveType.of({
-          type: 'hold',
           unit: 'db',
-          value: numeric('db', -6)
+          segments: [
+            {
+              type: 'hold',
+              unit: 'db',
+              value: numeric('db', -6)
+            }
+          ]
         })
         expectTypeEquals<CurveValue<'db'>, typeof curve2>()
 
