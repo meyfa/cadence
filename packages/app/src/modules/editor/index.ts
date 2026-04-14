@@ -1,20 +1,26 @@
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
 import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
-import { numeric } from '@utility'
 import type { FunctionComponent } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { TRACK_FILE_PATH } from '../../persistence/constants.js'
-import { openTextFile, saveTextFile } from '../../utilities/files.js'
+import { openFiles, readFileAsText, saveTextFile } from '../../utilities/files.js'
 import { getFocusedEditorCaret } from './caret.js'
 import { EditorPanel } from './components/EditorPanel.js'
 import { LoadDemoDialog } from './components/LoadDemoDialog.js'
 import { ResetProjectSettingsCard } from './components/ResetProjectSettingsCard.js'
-import { getEditorPanelProps, type EditorPanelProps } from './panel-props.js'
+import type { EditorPanelProps } from './panel-props.js'
+import { getEditorPanelProps } from './panel-props.js'
 import { EditorProvider, useEditor, useEditorDispatch } from './provider.js'
 
 const DEFAULT_FILENAME = TRACK_FILE_PATH
-const FILE_ACCEPT = '.cadence,text/plain'
-const FILE_OPEN_TIMEOUT = numeric('s', 5)
+const FILE_TYPES = [
+  {
+    description: 'Cadence files',
+    accept: {
+      'text/plain': ['.cadence']
+    }
+  }
+]
 
 const moduleId = 'editor' as ModuleId
 export const editorPanelId = `${moduleId}.editor` as PanelId
@@ -62,9 +68,8 @@ const GlobalHooks: FunctionComponent = () => {
       'Ctrl+O'
     ],
     run: () => {
-      openTextFile({
-        accept: FILE_ACCEPT,
-        signal: AbortSignal.timeout(FILE_OPEN_TIMEOUT.value * 1000)
+      openFiles({ types: FILE_TYPES }).then(async (files) => {
+        return files.length > 0 ? await readFileAsText(files[0]) : undefined
       }).then((content) => {
         if (content != null) {
           editorRef.current.sourceDispatch((state) => setProjectFileContent(state, TRACK_FILE_PATH, content))
@@ -74,7 +79,7 @@ const GlobalHooks: FunctionComponent = () => {
           }))
         }
       }).catch(() => {
-      // ignore errors
+        // ignore errors
       })
     }
   }), [])
