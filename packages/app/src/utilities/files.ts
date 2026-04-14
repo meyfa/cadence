@@ -23,47 +23,100 @@ export function saveTextFile (options: SaveOptions<string>): void {
   })
 }
 
-export async function openTextFile (options: {
-  readonly accept: string
-  readonly signal?: AbortSignal
-}): Promise<string | undefined> {
-  return new Promise((resolve, reject) => {
+interface OpenFilePickerOptions {
+  readonly excludeAcceptAllOption?: boolean
+  readonly multiple?: boolean
+  readonly types?: ReadonlyArray<{
+    readonly description?: string
+    readonly accept: Record<string, readonly string[]>
+  }>
+}
+
+type ShowOpenFilePicker = (options?: OpenFilePickerOptions) => Promise<FileSystemFileHandle[]>
+
+export async function openFiles (options?: OpenFilePickerOptions): Promise<File[]> {
+  try {
+    if ('showOpenFilePicker' in window && typeof window.showOpenFilePicker === 'function') {
+      const showOpenFilePicker = window.showOpenFilePicker as ShowOpenFilePicker
+      const handles = await showOpenFilePicker(options)
+      return await Promise.all(handles.map((handle) => handle.getFile()))
+    }
+
+    return await showOpenFilePickerFallback(options)
+  } catch (error) {
+    // "Thrown if the user dismisses the prompt without making a selection [...]."
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return []
+    }
+
+    throw error
+  }
+}
+
+async function showOpenFilePickerFallback (options?: OpenFilePickerOptions): Promise<File[]> {
+  const multiple = options?.multiple ?? false
+
+  const accept = options?.types?.flatMap((type) => {
+    // input accept attribute is a comma-separated list of both MIME types and file extensions.
+    return Object.entries(type.accept).flat()
+  }).join(',') ?? ''
+
+  return new Promise<File[]>((resolve, reject) => {
     const input = document.createElement('input')
+
     input.type = 'file'
-    input.accept = options.accept
     input.style.display = 'none'
 
-    const onChange = () => {
-      const file = input.files?.[0]
-      if (file == null) {
-        resolve(undefined)
-        cleanup()
-        return
-      }
+    input.multiple = multiple
+    input.accept = accept
 
-      readFileAsText(file).then(resolve, reject).finally(cleanup)
-    }
-
-    const onAbort = () => {
-      cleanup()
-      resolve(undefined)
-    }
+    let settled = false
 
     const cleanup = () => {
       input.removeEventListener('change', onChange)
-      options.signal?.removeEventListener('abort', onAbort)
-      document.body.removeChild(input)
+      window.removeEventListener('focus', onFocusReturn)
+      input.remove()
+
+      setTimeout(() => {
+        if (!settled) {
+          reject(new DOMException('User cancelled file picker', 'AbortError'))
+        }
+      }, 0)
     }
 
-    input.addEventListener('change', onChange)
-    options.signal?.addEventListener('abort', onAbort)
+    const onChange = () => {
+      settled = true
+
+      const files = Array.from(input.files ?? [])
+      cleanup()
+
+      if (files.length === 0) {
+        reject(new DOMException('No file selected', 'AbortError'))
+        return
+      }
+
+      resolve(files)
+    }
+
+    // Some browsers never fire change if user cancels.
+    // Use focus return heuristic as fallback signal.
+    const onFocusReturn = () => {
+      setTimeout(() => {
+        if (!settled && (input.files == null || input.files.length === 0)) {
+          cleanup()
+        }
+      }, 500)
+    }
+
+    input.addEventListener('change', onChange, { once: true })
+    window.addEventListener('focus', onFocusReturn, { once: true })
 
     document.body.appendChild(input)
     input.click()
   })
 }
 
-function readFileAsText (file: File): Promise<string> {
+export async function readFileAsText (file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
