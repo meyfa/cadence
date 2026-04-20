@@ -1,14 +1,16 @@
 import type { SourceRange } from '@ast'
 import type { Diagnostic } from '@codemirror/lint'
+import type { EditorView } from '@codemirror/view'
 import type { EditorLocation, PanelProps } from '@editor'
 import { Editor, getProjectFileContent, setProjectFileContent, useProjectSource, useProjectSourceDispatch } from '@editor'
 import { cadenceLanguageSupport } from '@language-support'
-import { useCallback, useMemo, type FunctionComponent } from 'react'
+import type { FunctionComponent } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'
 import { getCspNonce } from '../../../csp.js'
 import { useEffectiveTheme } from '../../../theme.js'
 import { getEditorPanelProps } from '../panel-props.js'
-import { useEditorDispatch } from '../provider.js'
+import { useEditorDispatch, useEditorRuntime } from '../provider.js'
 import { cadenceDarkTheme, cadenceLightTheme } from '../theme.js'
 
 const indent = '  ' // 2 spaces
@@ -37,6 +39,12 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }
   }, [filePath, sourceDispatch])
 
   const editorDispatch = useEditorDispatch()
+  const editorRuntime = useEditorRuntime()
+
+  const onEditorViewChange = useCallback((view: EditorView | undefined) => {
+    editorRuntime.viewRef.current = view
+  }, [editorRuntime])
+
   const onLocationChange = useCallback((caret: EditorLocation | undefined) => {
     editorDispatch((prev) => ({ ...prev, carets: { ...prev.carets, [tabId]: caret } }))
   }, [editorDispatch, tabId])
@@ -61,6 +69,7 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }
       cspNonce={getCspNonce()}
       className='relative h-full overflow-hidden'
       onChange={onChange}
+      onEditorViewChange={onEditorViewChange}
       onLocationChange={onLocationChange}
     />
   )
