@@ -1,10 +1,52 @@
-import { indentWithTab } from '@codemirror/commands'
-import { setDiagnostics, type Diagnostic } from '@codemirror/lint'
-import { indentUnit } from '@codemirror/language'
-import { Compartment, EditorState, type Extension, type SelectionRange, type Text } from '@codemirror/state'
-import { EditorView, keymap } from '@codemirror/view'
-import { basicSetup } from 'codemirror'
+import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language'
+import type { Diagnostic } from '@codemirror/lint'
+import { lintKeymap, setDiagnostics } from '@codemirror/lint'
+import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
+import type { Extension, SelectionRange, Text } from '@codemirror/state'
+import { Compartment, EditorState } from '@codemirror/state'
+import { drawSelection, dropCursor, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection } from '@codemirror/view'
 import type { EditorLocation } from './types.js'
+
+// Adapted from:
+// https://github.com/codemirror/basic-setup/blob/b43b3ae8dd8986d1bff587113ea32ab365246217/src/codemirror.ts
+const cadenceBasicSetup: Extension = [
+  lineNumbers(),
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  history(),
+  foldGutter(),
+  drawSelection(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+  autocompletion(),
+
+  // rectangular selection uses Shift+Alt+drag (CodeMirror defaults to Alt+drag)
+  rectangularSelection({
+    eventFilter: (event) => event.button === 0 && event.shiftKey && event.altKey
+  }),
+
+  // We do NOT include `crosshairCursor()` so holding Alt doesn't change the pointer cursor.
+  // crosshairCursor(),
+
+  highlightActiveLine(),
+  highlightSelectionMatches(),
+
+  keymap.of([
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+    ...completionKeymap,
+    ...lintKeymap
+  ])
+]
 
 export interface CadenceEditorOptions {
   readonly document: string
@@ -67,7 +109,11 @@ export function createCadenceEditor (parent: HTMLElement, options: CadenceEditor
   const state = EditorState.create({
     doc: options.document,
     extensions: [
-      basicSetup,
+      cadenceBasicSetup,
+
+      // Alt+Click adds an additional cursor
+      EditorView.clickAddsSelectionRange.of((event) => event.altKey),
+      suppressAltMenu(),
 
       indentUnitConfig.of(indentUnit.of(indent)),
 
@@ -147,4 +193,37 @@ function getEditorLocation (selections: readonly SelectionRange[], doc: Text): E
   const column = pos - line.from + 1
 
   return { line: line.number, column }
+}
+
+function suppressAltMenu (): Extension {
+  let armed = false
+
+  return EditorView.domEventHandlers({
+    keydown: (event) => {
+      if (event.key === 'Alt') {
+        armed = true
+      } else if (armed && event.altKey) {
+        armed = false
+      }
+      return false
+    },
+
+    keyup: (event) => {
+      if (event.key === 'Alt') {
+        const shouldSuppress = armed
+        armed = false
+        if (shouldSuppress) {
+          event.preventDefault()
+          event.stopPropagation()
+          return true
+        }
+      }
+      return false
+    },
+
+    blur: () => {
+      armed = false
+      return false
+    }
+  })
 }
