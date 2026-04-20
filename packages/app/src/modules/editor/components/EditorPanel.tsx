@@ -3,7 +3,7 @@ import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
 import type { EditorLocation, PanelProps } from '@editor'
 import { Editor, getProjectFileContent, setProjectFileContent, useProjectSource, useProjectSourceDispatch } from '@editor'
-import { cadenceLanguageSupport } from '@language-support'
+import { cadenceLanguageSupport, goToDefinitionExtension } from '@language-support'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'
@@ -15,7 +15,8 @@ import { cadenceDarkTheme, cadenceLightTheme } from '../theme.js'
 
 const indent = '  ' // 2 spaces
 const extensions = [
-  cadenceLanguageSupport()
+  cadenceLanguageSupport(),
+  goToDefinitionExtension()
 ]
 
 function convertError (message: string, range: SourceRange | undefined): Diagnostic {
