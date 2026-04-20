@@ -1,5 +1,8 @@
+import { syntaxTree } from '@codemirror/language'
+import { EditorSelection } from '@codemirror/state'
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
 import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
+import { goToDefinitionInTree } from '@language-support'
 import type { FunctionComponent } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { TRACK_FILE_PATH } from '../../persistence/constants.js'
@@ -10,7 +13,7 @@ import { LoadDemoDialog } from './components/LoadDemoDialog.js'
 import { ResetProjectSettingsCard } from './components/ResetProjectSettingsCard.js'
 import type { EditorPanelProps } from './panel-props.js'
 import { getEditorPanelProps } from './panel-props.js'
-import { EditorProvider, useEditor, useEditorDispatch } from './provider.js'
+import { EditorProvider, useEditor, useEditorDispatch, useEditorRuntime } from './provider.js'
 
 const DEFAULT_FILENAME = TRACK_FILE_PATH
 const FILE_TYPES = [
@@ -33,6 +36,7 @@ const viewEditorId = `${moduleId}.view.editor` as CommandId
 const fileOpenId = `${moduleId}.file.open` as CommandId
 const fileSaveId = `${moduleId}.file.save` as CommandId
 const loadDemoId = `${moduleId}.load-demo` as CommandId
+const goToDefinitionId = `${moduleId}.go-to-definition` as CommandId
 
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
@@ -41,11 +45,13 @@ const GlobalHooks: FunctionComponent = () => {
   const source = useProjectSource()
   const sourceDispatch = useProjectSourceDispatch()
   const editorDispatch = useEditorDispatch()
+  const editorRuntime = useEditorRuntime()
 
   const editorRef = useLatestRef({
     source,
     sourceDispatch,
-    editorDispatch
+    editorDispatch,
+    editorRuntime
   })
 
   const { result: { errors } } = useCompilationState()
@@ -105,6 +111,33 @@ const GlobalHooks: FunctionComponent = () => {
       showDialog(LoadDemoDialog, { editorPanelId })
     }
   }), [showDialog])
+
+  useRegisterCommand(() => ({
+    id: goToDefinitionId,
+    label: 'Go to definition',
+    keyboardShortcuts: [
+      'F12'
+    ],
+    run: () => {
+      const runtime = editorRef.current.editorRuntime
+      const view = runtime.viewRef.current
+      if (view == null) {
+        return
+      }
+
+      const tree = syntaxTree(view.state)
+      const caret = view.state.selection.main.head
+      const target = goToDefinitionInTree(tree, view.state.doc, caret)
+      if (target == null) {
+        view.focus()
+        return
+      }
+
+      const selection = EditorSelection.single(target.from)
+      view.dispatch({ selection, scrollIntoView: true })
+      view.focus()
+    }
+  }), [])
 
   useProvideProblems(moduleId, 'Compiler', errors)
 

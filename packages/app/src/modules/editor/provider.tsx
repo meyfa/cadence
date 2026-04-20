@@ -1,9 +1,15 @@
+import type { EditorView } from '@codemirror/view'
 import type { EditorLocation, TabId } from '@editor'
 import { useSafeContext } from '@editor'
-import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import type { Dispatch, FunctionComponent, PropsWithChildren, RefObject, SetStateAction } from 'react'
+import { createContext, useReducer, useRef } from 'react'
 
 export interface EditorState {
   readonly carets: Readonly<Record<TabId, EditorLocation | undefined>>
+}
+
+export interface EditorRuntimeState {
+  readonly viewRef: RefObject<EditorView | undefined>
 }
 
 const initialEditorState: EditorState = {
@@ -18,14 +24,18 @@ export type EditorDispatch = Dispatch<SetStateAction<EditorState>>
 
 const EditorContext = createContext<EditorState | undefined>(undefined)
 const EditorDispatchContext = createContext<EditorDispatch | undefined>(undefined)
+const EditorRuntimeContext = createContext<EditorRuntimeState | undefined>(undefined)
 
 export const EditorProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState)
+  const viewRef = useRef<EditorView | undefined>(undefined)
 
   return (
     <EditorContext value={state}>
       <EditorDispatchContext value={dispatch}>
-        {children}
+        <EditorRuntimeContext value={{ viewRef }}>
+          {children}
+        </EditorRuntimeContext>
       </EditorDispatchContext>
     </EditorContext>
   )
@@ -37,4 +47,8 @@ export function useEditor (): EditorState {
 
 export function useEditorDispatch (): EditorDispatch {
   return useSafeContext(EditorDispatchContext, 'EditorDispatchContext')
+}
+
+export function useEditorRuntime (): EditorRuntimeState {
+  return useSafeContext(EditorRuntimeContext, 'EditorRuntimeContext')
 }
