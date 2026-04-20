@@ -1,31 +1,13 @@
 import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
+import type { IdentifierKind, TextLike, WordRange } from './common.js'
+import { charAt, getWordRangeAt, isIdentifierKind } from './common.js'
 
 export interface GoToDefinitionResult {
   readonly name: string
   readonly from: number
   readonly to: number
 }
-
-interface TextLike {
-  readonly length: number
-  readonly sliceString: (from: number, to?: number) => string
-}
-
-interface WordRange {
-  readonly from: number
-  readonly to: number
-}
-
-const IDENTIFIER_KINDS = [
-  'VariableName',
-  'Callee',
-  'MemberAccess',
-  'PropertyName',
-  'VariableDefinition',
-  'UseAlias'
-] as const
-type IdentifierKind = typeof IDENTIFIER_KINDS[number]
 
 interface IdentifierAt {
   readonly kind: IdentifierKind | undefined
@@ -62,46 +44,6 @@ interface WritableTrackScope extends TrackScope {
 
 interface WritableMixerScope extends MixerScope {
   readonly buses: Map<string, GoToDefinitionResult>
-}
-
-function isIdentifierKind (value: string): value is IdentifierKind {
-  return IDENTIFIER_KINDS.includes(value as IdentifierKind)
-}
-
-const WORD_REGEXP = /[a-zA-Z_0-9#]/
-
-function isWordChar (char: string): boolean {
-  return char.length === 1 && WORD_REGEXP.test(char)
-}
-
-function charAt (document: TextLike, index: number): string {
-  return index >= 0 && index < document.length ? document.sliceString(index, index + 1) : ''
-}
-
-function getWordRangeAt (document: TextLike, position: number): WordRange | undefined {
-  if (position < 0 || position > document.length) {
-    return undefined
-  }
-
-  // Prefer the character under the cursor; fall back to the left neighbor.
-  const right = charAt(document, position)
-  const left = charAt(document, position - 1)
-  const anchor = isWordChar(right) ? position : (isWordChar(left) ? position - 1 : undefined)
-  if (anchor == null) {
-    return undefined
-  }
-
-  let from = anchor
-  while (from > 0 && isWordChar(charAt(document, from - 1))) {
-    --from
-  }
-
-  let to = anchor + 1
-  while (to < document.length && isWordChar(charAt(document, to))) {
-    ++to
-  }
-
-  return { from, to }
 }
 
 function scopeKey (typeName: string, from: number, to: number): string {

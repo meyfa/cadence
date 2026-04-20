@@ -1,13 +1,13 @@
-import assert from 'node:assert'
-import { describe, it } from 'node:test'
-import { readFile } from 'node:fs/promises'
 import { buildParser } from '@lezer/generator'
-import { goToDefinitionWithParser } from '../src/go-to-definition.js'
+import assert from 'node:assert'
+import { readFile } from 'node:fs/promises'
+import { describe, it } from 'node:test'
+import { goToDefinitionWithParser } from '../../src/go-to-definition/operation.js'
 
-const cadenceGrammar = await readFile(new URL('../src/cadence.grammar', import.meta.url), 'utf8')
+const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar)
 
-describe('go-to-definition.ts', () => {
+describe('go-to-definition/operation.ts', () => {
   it('resolves assignment references', () => {
     const source = [
       'foo = 1',
