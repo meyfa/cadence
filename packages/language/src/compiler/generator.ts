@@ -446,7 +446,11 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
       return NumberType.cast(resolve(context, point)).data
     })
 
-    return nonNull(createCurveSegment(segment.curveType, parameters))
+    const length = segment.length != null
+      ? NumberType.with(undefined).cast(resolve(context, segment.length)).data
+      : undefined
+
+    return nonNull(createCurveSegment(segment.curveType, parameters, length))
   })
 
   return CurveType.of(

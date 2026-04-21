@@ -14,12 +14,14 @@ export type CurveSegment<U extends Unit> = HoldCurveSegment<U> | LinearCurveSegm
 
 export interface HoldCurveSegment<U extends Unit> {
   readonly type: typeof SEGMENT_TYPE_HOLD
+  readonly length: Numeric<undefined>
   readonly unit: U
   readonly value: Numeric<U>
 }
 
 export interface LinearCurveSegment<U extends Unit> {
   readonly type: typeof SEGMENT_TYPE_LINEAR
+  readonly length: Numeric<undefined>
   readonly unit: U
   readonly start: Numeric<U>
   readonly end: Numeric<U>
@@ -35,7 +37,11 @@ export function createCurve<U extends Unit> (segments: ReadonlyArray<CurveSegmen
   return { unit, segments }
 }
 
-export function createCurveSegment<U extends Unit> (type: string, parameters: ReadonlyArray<Numeric<U>>): CurveSegment<U> {
+export function createCurveSegment<U extends Unit> (
+  type: string,
+  parameters: ReadonlyArray<Numeric<U>>,
+  length = numeric(undefined, 1)
+): CurveSegment<U> {
   if (curveParameterCounts.get(type) !== parameters.length) {
     throw new Error('Invalid curve parameters')
   }
@@ -45,12 +51,12 @@ export function createCurveSegment<U extends Unit> (type: string, parameters: Re
   switch (type) {
     case SEGMENT_TYPE_HOLD: {
       const [value] = parameters
-      return { type, unit, value }
+      return { type, length, unit, value }
     }
 
     case SEGMENT_TYPE_LINEAR: {
       const [start, end] = parameters
-      return { type, unit, start, end }
+      return { type, length, unit, start, end }
     }
 
     default:
@@ -61,26 +67,47 @@ export function createCurveSegment<U extends Unit> (type: string, parameters: Re
 export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: Numeric<'beats'>, timeEnd: Numeric<'beats'>): ReadonlyArray<AutomationPoint<U>> {
   const segments = curve.segments
   if (segments.length === 0) {
-    throw new Error('Invalid curve: no segments')
+    return []
   }
 
   const totalDuration = timeEnd.value - timeStart.value
-  const segmentDuration = totalDuration / segments.length
+  const segmentWeights = segments.map((segment) => Math.max(segment.length.value, 0))
+  const totalWeight = segmentWeights.reduce((sum, weight) => sum + weight, 0)
+
+  const getTimeAtWeight = (weight: number) => {
+    if (totalWeight === 0) {
+      return timeStart.value
+    }
+    return timeStart.value + totalDuration * (weight / totalWeight)
+  }
 
   const points: Array<AutomationPoint<U>> = []
+  let currentWeight = 0
 
   for (let i = 0; i < segments.length; ++i) {
     const segment = segments[i]
+    const segmentWeight = segmentWeights[i]
+
+    const segmentStart = getTimeAtWeight(currentWeight)
+    const segmentEnd = i === segments.length - 1
+      ? getTimeAtWeight(totalWeight)
+      : getTimeAtWeight(currentWeight + segmentWeight)
+
+    const endCurve = segment.type === SEGMENT_TYPE_LINEAR && segmentWeight > 0
+      ? 'linear'
+      : 'step'
 
     points.push({
-      time: numeric('beats', timeStart.value + segmentDuration * i),
+      time: numeric('beats', segmentStart),
       value: segment.type === SEGMENT_TYPE_LINEAR ? segment.start : segment.value,
       curve: 'step'
     }, {
-      time: numeric('beats', i === segments.length - 1 ? timeEnd.value : timeStart.value + segmentDuration * (i + 1)),
+      time: numeric('beats', segmentEnd),
       value: segment.type === SEGMENT_TYPE_LINEAR ? segment.end : segment.value,
-      curve: segment.type === SEGMENT_TYPE_LINEAR ? 'linear' : 'step'
+      curve: endCurve
     })
+
+    currentWeight += segmentWeight
   }
 
   return simplifyCurvePoints(points)

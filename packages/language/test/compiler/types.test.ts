@@ -203,6 +203,7 @@ describe('compiler/types.ts', () => {
         segments: [
           {
             type: 'lin',
+            length: numeric(undefined, 1),
             unit: 'db',
             start: numeric('db', -6),
             end: numeric('db', 0)
@@ -636,6 +637,7 @@ describe('compiler/types.ts', () => {
           segments: [
             {
               type: 'lin',
+              length: numeric(undefined, 1),
               unit: undefined,
               start: numeric(undefined, 0),
               end: numeric(undefined, 1)
@@ -649,6 +651,7 @@ describe('compiler/types.ts', () => {
           segments: [
             {
               type: 'hold',
+              length: numeric(undefined, 1),
               unit: 'db',
               value: numeric('db', -6)
             }

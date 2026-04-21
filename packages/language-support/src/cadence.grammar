@@ -101,7 +101,7 @@ Curve {
 }
 
 curveSegment {
-  CurveType { word } ("(" argumentList? ")")?
+  CurveType { word } ("(" argumentList? ")")? (":" primary)?
 }
 
 argumentList {
