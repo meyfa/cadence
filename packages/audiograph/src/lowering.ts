@@ -1,5 +1,5 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core'
-import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents } from '@core'
+import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import { numeric } from '@utility'
 import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
@@ -163,7 +163,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     case 'delay': {
       const delayNode = builder.addNode<DelayNode>('delay', {
         // TODO time variant
-        time: beatsToSeconds(effect.time, program.track.tempo)
+        time: timeToSeconds(effect.time, program.track.tempo)
       })
 
       if (effect.feedback.value > 0) {
@@ -189,7 +189,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const reverb = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
-        decay: effect.decay
+        decay: timeToSeconds(effect.decay, program.track.tempo)
       })
 
       return createDryWetMix(reverb, mix, builder)

@@ -1,6 +1,7 @@
 import type { Effect } from '@core'
 import type { PropertySchema } from '../schema.js'
-import { EffectType, FunctionType, ModuleType, NumberType, type Value } from '../types.js'
+import type { Value } from '../types.js'
+import { EffectType, FunctionType, ModuleType, NumberType } from '../types.js'
 
 // Factory
 
@@ -37,13 +38,13 @@ const width = createEffectConstructor('width', [
 
 const delay = createEffectConstructor('delay', [
   { name: 'mix', type: NumberType.with(undefined), required: true },
-  { name: 'time', type: NumberType.with('beats'), required: true },
+  { name: 'time', type: [NumberType.with('beats'), NumberType.with('s')], required: true },
   { name: 'feedback', type: NumberType.with(undefined), required: true }
 ])
 
 const reverb = createEffectConstructor('reverb', [
   { name: 'mix', type: NumberType.with(undefined), required: true },
-  { name: 'decay', type: NumberType.with('s'), required: true }
+  { name: 'decay', type: [NumberType.with('beats'), NumberType.with('s')], required: true }
 ])
 
 export const effectsModule = ModuleType.of({

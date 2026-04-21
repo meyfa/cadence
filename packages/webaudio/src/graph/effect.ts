@@ -86,7 +86,7 @@ export function createWidthInstance (node: WidthNode, transport: Transport): Ins
 }
 
 export function createDelayInstance (node: DelayNode, transport: Transport): Instance {
-  const audioNode = transport.ctx.createDelay()
+  const audioNode = transport.ctx.createDelay(Math.max(1, node.time.value))
   audioNode.delayTime.value = node.time.value
   return toInstance(audioNode)
 }

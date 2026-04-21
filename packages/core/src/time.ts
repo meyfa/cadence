@@ -1,4 +1,5 @@
-import { type Numeric, numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
 import type { Program } from './program.js'
 
 export interface BeatRange {
@@ -11,6 +12,13 @@ export function beatsToSeconds (
   tempo: Numeric<'bpm'>
 ): Numeric<'s'> {
   return numeric('s', (beats.value * 60) / tempo.value)
+}
+
+export function timeToSeconds (
+  time: Numeric<'beats'> | Numeric<'s'>,
+  tempo: Numeric<'bpm'>
+): Numeric<'s'> {
+  return time.unit === 's' ? time : beatsToSeconds(time, tempo)
 }
 
 export function calculateTotalLength (program: Program): Numeric<'beats'> {

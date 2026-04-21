@@ -166,14 +166,14 @@ export interface WidthEffect {
 export interface DelayEffect {
   readonly type: 'delay'
   readonly mix: Numeric<undefined>
-  readonly time: Numeric<'beats'>
+  readonly time: Numeric<'beats'> | Numeric<'s'>
   readonly feedback: Numeric<undefined>
 }
 
 export interface ReverbEffect {
   readonly type: 'reverb'
   readonly mix: Numeric<undefined>
-  readonly decay: Numeric<'s'>
+  readonly decay: Numeric<'beats'> | Numeric<'s'>
 }
 
 export interface MixerRouting {

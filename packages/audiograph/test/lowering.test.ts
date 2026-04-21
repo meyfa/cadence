@@ -525,5 +525,34 @@ describe('lowering.ts', () => {
         { from: 4 as NodeId, to: 1 as NodeId }
       ])
     })
+
+    it('should handle reverb specified in beats', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'reverb',
+        mix: numeric(undefined, 0.75),
+        decay: numeric('beats', 2)
+      }))
+
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'reverb',
+        decay: beatsToSeconds(numeric('beats', 2), numeric('bpm', 120))
+      } satisfies ReverbNode)
+    })
+
+    it('should handle delay specified in seconds', () => {
+      const graph = createAudioGraph(createProgramWithEffect({
+        type: 'delay',
+        mix: numeric(undefined, 0.25),
+        time: numeric('s', 1.5),
+        feedback: numeric(undefined, 0.4)
+      }))
+
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'delay',
+        time: numeric('s', 1.5)
+      } satisfies DelayNode)
+    })
   })
 })

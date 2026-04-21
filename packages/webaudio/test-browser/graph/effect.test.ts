@@ -1,7 +1,8 @@
 import type { NodeId } from '@audiograph'
-import { numeric, type Numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
 import { describe, expect, it } from 'vitest'
-import { createWidthInstance } from '../../src/graph/effect.js'
+import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
 import type { Transport } from '../../src/transport/transport.js'
 import { average, expectSamplesClose, fillSignal } from '../helpers.js'
 
@@ -52,6 +53,48 @@ async function renderWidth (options: {
     const output = await ctx.startRendering()
 
     return { input, output }
+  } finally {
+    instance.dispose()
+  }
+}
+
+async function renderDelay (options: {
+  readonly time: Numeric<'s'>
+}): Promise<{
+  readonly output: AudioBuffer
+}> {
+  const { time } = options
+
+  const delaySeconds = Math.max(1.25, time.value + 0.25)
+  const delaySamples = Math.ceil(delaySeconds * sampleRate)
+  const renderLength = delaySamples + 256
+
+  const ctx = new OfflineAudioContext({ sampleRate, length: renderLength, numberOfChannels: 1 })
+  const transport: Transport = {
+    ctx,
+    output: ctx.createGain(),
+    schedule: (_time, onSchedule) => onSchedule(0)
+  }
+
+  const instance = createDelayInstance({
+    id: 42 as NodeId,
+    type: 'delay',
+    time
+  }, transport)
+
+  try {
+    const source = ctx.createBufferSource()
+    const input = ctx.createBuffer(1, renderLength, sampleRate)
+    input.getChannelData(0)[0] = 1
+    source.buffer = input
+
+    source.connect(instance.input ?? ctx.destination)
+    instance.output?.connect(ctx.destination)
+
+    source.start(0)
+
+    const output = await ctx.startRendering()
+    return { output }
   } finally {
     instance.dispose()
   }
@@ -171,6 +214,20 @@ describe('graph/effect.ts', () => {
 
       expect(average(inverted.output.getChannelData(0))).toBeCloseTo(-0.25, 3)
       expect(average(inverted.output.getChannelData(1))).toBeCloseTo(1.25, 3)
+    })
+  })
+
+  describe('createDelayInstance', () => {
+    it('supports delay times longer than one second', async () => {
+      const time = numeric('s', 1.5)
+      const { output } = await renderDelay({ time })
+
+      const channel = output.getChannelData(0)
+      const peakIndex = channel.reduce((bestIndex, value, index, data) => {
+        return Math.abs(value) > Math.abs(data[bestIndex]) ? index : bestIndex
+      }, 0)
+
+      expect(peakIndex / sampleRate).toBeCloseTo(time.value, 2)
     })
   })
 })

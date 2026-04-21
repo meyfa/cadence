@@ -1,7 +1,10 @@
-import { isPitch, type Instrument, type InstrumentId, type Parameter, type ParameterId } from '@core'
-import { numeric, type Numeric, type Unit } from '@utility'
+import type { Instrument, InstrumentId, Parameter, ParameterId } from '@core'
+import { isPitch } from '@core'
+import type { Numeric, Unit } from '@utility'
+import { numeric } from '@utility'
 import type { FunctionContext } from '../functions.js'
-import { FunctionType, InstrumentType, ModuleType, NumberType, StringType, type InstrumentValue, type Value } from '../types.js'
+import type { InstrumentValue, Value } from '../types.js'
+import { FunctionType, InstrumentType, ModuleType, NumberType, StringType } from '../types.js'
 
 const UNITY_GAIN = numeric('db', 0)
 
