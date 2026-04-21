@@ -1,10 +1,12 @@
-import { ast, combineSourceRanges, getSourceRange, type SourceRange } from '@ast'
+import type { SourceRange } from '@ast'
+import { ast, combineSourceRanges, getSourceRange } from '@ast'
 import { isStepValue } from '@core'
 import { Token } from 'leac'
 import * as p from 'peberminta'
 import { truncateString } from '../result/errors.js'
 import type { Result } from '../result/result.js'
-import { isKeyword, type Keyword } from './constants.js'
+import type { Keyword } from './constants.js'
+import { isKeyword } from './constants.js'
 import { ParseError } from './error.js'
 
 const ERROR_CONTEXT_LIMIT = 16
@@ -308,26 +310,42 @@ const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
 
 const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
   p.token((t) => t.name === 'word' ? t : undefined),
-  p.option(
-    combine3(
-      literal('('),
-      p.sepBy(
-        p.recursive(() => optionalExpression_),
-        literal(',')
+  combine2(
+    p.option(
+      combine3(
+        literal('('),
+        p.sepBy(
+          p.recursive(() => optionalExpression_),
+          literal(',')
+        ),
+        expectLiteral(')')
       ),
-      expectLiteral(')')
+      undefined
     ),
-    undefined
+    p.option(
+      combine2(
+        literal(':'),
+        p.recursive(() => primary_)
+      ),
+      undefined
+    )
   ),
-  (curveTypeToken, callTail) => {
+  (curveTypeToken, [callTail, curveLength]) => {
     const curveType = curveTypeToken.text
     const parameters = callTail == null ? [] : callTail[1]
+    const length = curveLength?.[1]
 
-    const range = callTail == null
-      ? getSourceRange(curveTypeToken)
-      : combineSourceRanges(curveTypeToken, callTail[2])
+    const range = length != null
+      ? combineSourceRanges(curveTypeToken, length)
+      : callTail == null
+        ? getSourceRange(curveTypeToken)
+        : combineSourceRanges(curveTypeToken, callTail[2])
 
-    return ast.make('CurveSegment', range, { curveType, parameters })
+    return ast.make('CurveSegment', range, {
+      curveType,
+      parameters,
+      ...(length == null ? {} : { length })
+    })
   }
 )
 

@@ -618,6 +618,15 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
 function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checked<Unit> {
   const errors: CompileError[] = []
 
+  if (segment.length != null) {
+    const lengthCheck = checkExpression(context, segment.length)
+    errors.push(...lengthCheck.errors)
+
+    if (lengthCheck.result != null) {
+      errors.push(...checkType([NumberType.with(undefined)], lengthCheck.result, segment.length.range))
+    }
+  }
+
   const expectedParameters = curveParameterCounts.get(segment.curveType)
   if (expectedParameters == null) {
     return { errors: [new CompileError(`Unknown curve type "${segment.curveType}"`, segment.range)] }

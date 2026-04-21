@@ -42,6 +42,7 @@ export interface CurveSegment extends ASTNode {
   readonly type: 'CurveSegment'
   readonly curveType: string
   readonly parameters: readonly Expression[]
+  readonly length?: Expression
 }
 
 export interface Curve extends ASTNode {
