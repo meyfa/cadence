@@ -15,6 +15,7 @@ function createFunctionContext (): FunctionContext {
 describe('compiler/modules/effects.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
+  const seconds = (value: number) => numeric('s', value)
 
   const effects = effectsModule.data
 
@@ -120,6 +121,20 @@ describe('compiler/modules/effects.ts', () => {
         feedback: numeric(undefined, 0.3)
       })
     })
+
+    it('should create delay effect with seconds', () => {
+      const context = createFunctionContext()
+      const result = delay.data.invoke(context, {
+        time: seconds(1.5),
+        feedback: numeric(undefined, 0.3)
+      })
+
+      assert.deepStrictEqual(result.data, {
+        type: 'delay',
+        time: seconds(1.5),
+        feedback: numeric(undefined, 0.3)
+      })
+    })
   })
 
   describe('reverb', () => {
@@ -136,6 +151,20 @@ describe('compiler/modules/effects.ts', () => {
       assert.deepStrictEqual(result.data, {
         type: 'reverb',
         decay: numeric('s', 2.0),
+        mix: numeric(undefined, 0.4)
+      })
+    })
+
+    it('should create reverb effect with beats', () => {
+      const context = createFunctionContext()
+      const result = reverb.data.invoke(context, {
+        decay: beats(2),
+        mix: numeric(undefined, 0.4)
+      })
+
+      assert.deepStrictEqual(result.data, {
+        type: 'reverb',
+        decay: beats(2),
         mix: numeric(undefined, 0.4)
       })
     })

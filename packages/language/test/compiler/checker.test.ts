@@ -142,6 +142,130 @@ describe('compiler/checker.ts', () => {
       assert.deepStrictEqual(check(program), [])
     })
 
+    it('should accept delay effect time in beats or seconds', () => {
+      const createDelayCall = (value: number, unit: 'beats' | 's') => ast.make('Call', RANGE, {
+        callee: ast.make('PropertyAccess', RANGE, {
+          object: ast.make('Identifier', RANGE, { name: 'fx' }),
+          property: ast.make('Identifier', RANGE, { name: 'delay' })
+        }),
+        arguments: [
+          ast.make('Property', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'mix' }),
+            value: ast.make('Number', RANGE, { value: 0.25 })
+          }),
+          ast.make('Property', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'time' }),
+            value: ast.make('PropertyAccess', RANGE, {
+              object: ast.make('Number', RANGE, { value }),
+              property: ast.make('Identifier', RANGE, { name: unit })
+            })
+          }),
+          ast.make('Property', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'feedback' }),
+            value: ast.make('Number', RANGE, { value: 0.4 })
+          })
+        ]
+      })
+
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['effects'] }),
+            alias: 'fx'
+          })
+        ],
+        children: [
+          ast.make('MixerStatement', RANGE, {
+            properties: [],
+            buses: [
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+                properties: [],
+                sources: [],
+                effects: [
+                  ast.make('EffectStatement', RANGE, {
+                    expression: createDelayCall(3, 'beats')
+                  })
+                ]
+              }),
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+                properties: [],
+                sources: [],
+                effects: [
+                  ast.make('EffectStatement', RANGE, {
+                    expression: createDelayCall(1.5, 's')
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      })
+
+      assert.deepStrictEqual(check(program), [])
+    })
+
+    it('should accept reverb effect decay in beats or seconds', () => {
+      const createReverbCall = (value: number, unit: 'beats' | 's') => ast.make('Call', RANGE, {
+        callee: ast.make('PropertyAccess', RANGE, {
+          object: ast.make('Identifier', RANGE, { name: 'fx' }),
+          property: ast.make('Identifier', RANGE, { name: 'reverb' })
+        }),
+        arguments: [
+          ast.make('Property', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'mix' }),
+            value: ast.make('Number', RANGE, { value: 0.25 })
+          }),
+          ast.make('Property', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'decay' }),
+            value: ast.make('PropertyAccess', RANGE, {
+              object: ast.make('Number', RANGE, { value }),
+              property: ast.make('Identifier', RANGE, { name: unit })
+            })
+          })
+        ]
+      })
+
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['effects'] }),
+            alias: 'fx'
+          })
+        ],
+        children: [
+          ast.make('MixerStatement', RANGE, {
+            properties: [],
+            buses: [
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
+                properties: [],
+                sources: [],
+                effects: [
+                  ast.make('EffectStatement', RANGE, {
+                    expression: createReverbCall(3, 'beats')
+                  })
+                ]
+              }),
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
+                properties: [],
+                sources: [],
+                effects: [
+                  ast.make('EffectStatement', RANGE, {
+                    expression: createReverbCall(1.5, 's')
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      })
+
+      assert.deepStrictEqual(check(program), [])
+    })
+
     it('should allow parts and buses to shadow top-level variables', () => {
       const program = ast.make('Program', RANGE, {
         imports: [],

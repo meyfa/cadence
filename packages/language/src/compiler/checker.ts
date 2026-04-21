@@ -792,6 +792,7 @@ function checkArgumentList (
   const errorArguments = new Set<string>()
 
   const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
+  const getSpecTypes = (spec: PropertySpec): readonly Type[] => (Array.isArray(spec.type) ? spec.type : [spec.type]) as readonly Type[]
 
   const checkArgumentValue = (spec: PropertySpec, value: ast.Expression): void => {
     const expressionCheck = checkExpression(context, value)
@@ -802,7 +803,7 @@ function checkArgumentList (
       return
     }
 
-    errors.push(...checkType([spec.type], expressionCheck.result, value.range))
+    errors.push(...checkType(getSpecTypes(spec), expressionCheck.result, value.range))
     result.set(spec.name, expressionCheck.result)
   }
 
