@@ -27,10 +27,44 @@ export interface LinearCurveSegment<U extends Unit> {
   readonly end: Numeric<U>
 }
 
-export const curveParameterCounts = new Map<string, number>([
-  [SEGMENT_TYPE_HOLD, 1],
-  [SEGMENT_TYPE_LINEAR, 2]
+export interface CurveSegmentType {
+  readonly type: CurveSegment<any>['type']
+  readonly parameterCount: number
+  readonly create: <U extends Unit>(parameters: ReadonlyArray<Numeric<U>>, length: Numeric<undefined>) => CurveSegment<U>
+  readonly start: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
+  readonly end: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
+  readonly endCurve: AutomationPoint<any>['curve']
+}
+
+const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
+  [SEGMENT_TYPE_HOLD, {
+    type: SEGMENT_TYPE_HOLD,
+    parameterCount: 1,
+    create: (parameters, length) => {
+      const [value] = parameters
+      return { type: SEGMENT_TYPE_HOLD, length, unit: value.unit, value }
+    },
+    start: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
+    end: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
+    endCurve: 'step'
+  }],
+
+  [SEGMENT_TYPE_LINEAR, {
+    type: SEGMENT_TYPE_LINEAR,
+    parameterCount: 2,
+    create: (parameters, length) => {
+      const [start, end] = parameters
+      return { type: SEGMENT_TYPE_LINEAR, length, unit: start.unit, start, end }
+    },
+    start: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).start,
+    end: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).end,
+    endCurve: 'linear'
+  }]
 ])
+
+export function getCurveSegmentType (type: string): CurveSegmentType | undefined {
+  return curveSegmentTypes.get(type)
+}
 
 export function createCurve<U extends Unit> (segments: ReadonlyArray<CurveSegment<U>>): Curve<U> {
   const unit = segments.at(0)?.unit as U
@@ -42,26 +76,16 @@ export function createCurveSegment<U extends Unit> (
   parameters: ReadonlyArray<Numeric<U>>,
   length = numeric(undefined, 1)
 ): CurveSegment<U> {
-  if (curveParameterCounts.get(type) !== parameters.length) {
+  const definition = curveSegmentTypes.get(type)
+  if (definition == null) {
+    throw new Error(`Unknown curve type: ${type}`)
+  }
+
+  if (definition.parameterCount !== parameters.length) {
     throw new Error('Invalid curve parameters')
   }
 
-  const unit = parameters.at(0)?.unit as U
-
-  switch (type) {
-    case SEGMENT_TYPE_HOLD: {
-      const [value] = parameters
-      return { type, length, unit, value }
-    }
-
-    case SEGMENT_TYPE_LINEAR: {
-      const [start, end] = parameters
-      return { type, length, unit, start, end }
-    }
-
-    default:
-      throw new Error(`Unknown curve type: ${type}`)
-  }
+  return definition.create(parameters, length)
 }
 
 export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: Numeric<'beats'>, timeEnd: Numeric<'beats'>): ReadonlyArray<AutomationPoint<U>> {
@@ -76,9 +100,9 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: N
 
   const getTimeAtWeight = (weight: number) => {
     if (totalWeight === 0) {
-      return timeStart.value
+      return timeStart
     }
-    return timeStart.value + totalDuration * (weight / totalWeight)
+    return numeric('beats', timeStart.value + totalDuration * (weight / totalWeight))
   }
 
   const points: Array<AutomationPoint<U>> = []
@@ -88,23 +112,19 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: N
     const segment = segments[i]
     const segmentWeight = segmentWeights[i]
 
-    const segmentStart = getTimeAtWeight(currentWeight)
-    const segmentEnd = i === segments.length - 1
-      ? getTimeAtWeight(totalWeight)
-      : getTimeAtWeight(currentWeight + segmentWeight)
-
-    const endCurve = segment.type === SEGMENT_TYPE_LINEAR && segmentWeight > 0
-      ? 'linear'
-      : 'step'
+    const definition = getCurveSegmentType(segment.type)
+    if (definition == null) {
+      throw new Error(`Unknown curve segment type: ${segment.type}`)
+    }
 
     points.push({
-      time: numeric('beats', segmentStart),
-      value: segment.type === SEGMENT_TYPE_LINEAR ? segment.start : segment.value,
+      time: getTimeAtWeight(currentWeight),
+      value: definition.start(segment),
       curve: 'step'
     }, {
-      time: numeric('beats', segmentEnd),
-      value: segment.type === SEGMENT_TYPE_LINEAR ? segment.end : segment.value,
-      curve: endCurve
+      time: getTimeAtWeight(i === segments.length - 1 ? totalWeight : currentWeight + segmentWeight),
+      value: definition.end(segment),
+      curve: segmentWeight <= 0 ? 'step' : definition.endCurve
     })
 
     currentWeight += segmentWeight
