@@ -507,6 +507,161 @@ describe('compiler/generator.ts', () => {
     ])
   })
 
+  it('should use the previous segment end when lin start is omitted', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('String', RANGE, { parts: ['instruments'] })
+        })
+      ],
+      children: [
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'synth' }),
+          value: ast.make('Call', RANGE, {
+            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+            arguments: [
+              ast.make('String', RANGE, { parts: ['synth.wav'] })
+            ]
+          })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          parts: [
+            ast.make('PartStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              properties: [
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 8 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
+              ],
+              routings: [],
+              automations: [
+                ast.make('AutomateStatement', RANGE, {
+                  target: ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
+                    property: ast.make('Identifier', RANGE, { name: 'gain' })
+                  }),
+                  curve: ast.make('Curve', RANGE, {
+                    children: [
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'hold',
+                        parameters: [
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: -60 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          })
+                        ],
+                        length: ast.make('Number', RANGE, { value: 3 })
+                      }),
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'lin',
+                        parameters: [
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: 0 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          })
+                        ],
+                        length: ast.make('Number', RANGE, { value: 1 })
+                      })
+                    ]
+                  })
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    })
+
+    const result = generate(program, OPTIONS)
+
+    assert.strictEqual(result.automations.size, 1)
+    const automation = [...result.automations.values()][0]
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('beats', 24), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('beats', 32), value: numeric('db', 0), curve: 'linear' }
+    ])
+  })
+
+  it('should use the previous segment end when hold value is omitted', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [
+        ast.make('UseStatement', RANGE, {
+          library: ast.make('String', RANGE, { parts: ['instruments'] })
+        })
+      ],
+      children: [
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'synth' }),
+          value: ast.make('Call', RANGE, {
+            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
+            arguments: [
+              ast.make('String', RANGE, { parts: ['synth.wav'] })
+            ]
+          })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          parts: [
+            ast.make('PartStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              properties: [
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 8 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
+              ],
+              routings: [],
+              automations: [
+                ast.make('AutomateStatement', RANGE, {
+                  target: ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
+                    property: ast.make('Identifier', RANGE, { name: 'gain' })
+                  }),
+                  curve: ast.make('Curve', RANGE, {
+                    children: [
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'lin',
+                        parameters: [
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: -60 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          }),
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: -30 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          })
+                        ],
+                        length: ast.make('Number', RANGE, { value: 3 })
+                      }),
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'hold',
+                        parameters: [],
+                        length: ast.make('Number', RANGE, { value: 1 })
+                      })
+                    ]
+                  })
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    })
+
+    const result = generate(program, OPTIONS)
+
+    assert.strictEqual(result.automations.size, 1)
+    const automation = [...result.automations.values()][0]
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('beats', 24), value: numeric('db', -30), curve: 'linear' },
+      { time: numeric('beats', 32), value: numeric('db', -30), curve: 'step' }
+    ])
+  })
+
   it('should clamp non-positive curve segment lengths and step zero-length segments', () => {
     const program = ast.make('Program', RANGE, {
       imports: [

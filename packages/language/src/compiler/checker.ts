@@ -2,7 +2,7 @@ import type { SourceRange } from '@ast'
 import { ast } from '@ast'
 import type { Unit } from '@utility'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
-import { curveParameterCounts } from './curves.js'
+import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule, standardLibraryModuleNames } from './modules.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
@@ -597,8 +597,18 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
     return { errors }
   }
 
-  const segmentChecks = segments.map((segment) => checkCurveSegment(context, segment))
-  errors.push(...segmentChecks.flatMap((c) => c.errors))
+  const segmentChecks: Array<Checked<Unit>> = []
+  let previousUnit: Unit | undefined
+
+  for (let i = 0; i < segments.length; ++i) {
+    const segmentCheck = checkCurveSegment(context, segments[i], i > 0, previousUnit)
+    segmentChecks.push(segmentCheck)
+    errors.push(...segmentCheck.errors)
+
+    if (segmentCheck.errors.length === 0) {
+      previousUnit = segmentCheck.result
+    }
+  }
 
   if (errors.length > 0) {
     return { errors }
@@ -615,7 +625,7 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
   return { errors, result: CurveType.with(firstUnit) }
 }
 
-function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checked<Unit> {
+function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
   const errors: CompileError[] = []
 
   if (segment.length != null) {
@@ -627,12 +637,19 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checke
     }
   }
 
-  const expectedParameters = curveParameterCounts.get(segment.curveType)
+  const expectedParameters = getCurveSegmentType(segment.curveType)?.parameterCount
   if (expectedParameters == null) {
     return { errors: [new CompileError(`Unknown curve type "${segment.curveType}"`, segment.range)] }
   }
 
-  if (segment.parameters.length !== expectedParameters) {
+  const actualParameters = segment.parameters.length
+  const omittedFirstParameter = expectedParameters > 0 && actualParameters === expectedParameters - 1
+
+  if (omittedFirstParameter && !hasPrevious) {
+    return { errors: [new CompileError('First curve segment cannot omit its first parameter', segment.range)] }
+  }
+
+  if (!omittedFirstParameter && actualParameters !== expectedParameters) {
     const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'parameter' : 'parameters'} for ${segment.curveType} curve, got ${segment.parameters.length}`
     return { errors: [new CompileError(message, segment.range)] }
   }
@@ -644,14 +661,8 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checke
     errors.push(...pointCheck.errors)
 
     if (pointCheck.result != null) {
-      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
-      errors.push(...typeErrors)
-
-      const generics = typeErrors.length === 0
-        ? NumberType.detail(pointCheck.result)
-        : undefined
-
-      units.push(generics?.unit)
+      errors.push(...checkType([NumberType], pointCheck.result, point.range))
+      units.push(NumberType.detail(pointCheck.result).unit)
     }
   }
 
@@ -659,9 +670,10 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment): Checke
     return { errors }
   }
 
-  const firstUnit = units[0]
+  const firstUnit = omittedFirstParameter ? previousUnit : units[0]
+
   const expected = NumberType.with(firstUnit)
-  for (let i = 1; i < units.length; ++i) {
+  for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
     errors.push(...checkType([expected], NumberType.with(units[i]), segment.parameters[i].range))
   }
 

@@ -4,7 +4,8 @@ import { concatPatterns, createParallelPattern, createSerialPattern, mergePatter
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
-import { createCurve, createCurveSegment, renderCurvePoints } from './curves.js'
+import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
+import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
@@ -441,7 +442,15 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
   assert(segments.length > 0)
   assert(otherChildren.length === 0)
 
-  const generatedSegments = segments.map((segment) => {
+  const generatedSegments: Array<GeneratedCurveSegment<Unit>> = []
+
+  const getPreviousSegmentEnd = (): Numeric<Unit> => {
+    const previous = nonNull(generatedSegments.at(-1))
+    const definition = nonNull(getCurveSegmentType(previous.type))
+    return definition.end(previous)
+  }
+
+  for (const segment of segments) {
     const parameters = segment.parameters.map((point) => {
       return NumberType.cast(resolve(context, point)).data
     })
@@ -450,8 +459,13 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
       ? NumberType.with(undefined).cast(resolve(context, segment.length)).data
       : undefined
 
-    return nonNull(createCurveSegment(segment.curveType, parameters, length))
-  })
+    const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
+    const resolvedParameters = parameters.length < parameterCount
+      ? [getPreviousSegmentEnd(), ...parameters]
+      : parameters
+
+    generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
+  }
 
   return CurveType.of(
     createCurve(generatedSegments)
