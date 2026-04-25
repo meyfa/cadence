@@ -3,8 +3,8 @@ import type { Extension } from '@codemirror/state'
 import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import type { WordRange } from './common.js'
-import { findIdentifierRangeAt } from './common.js'
+import type { WordRange } from '../analysis/query.js'
+import { findIdentifierRangeAt } from '../analysis/query.js'
 import { goToDefinitionInTree } from './operation.js'
 
 function isApplePlatform (): boolean {
