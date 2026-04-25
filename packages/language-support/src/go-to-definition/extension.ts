@@ -3,8 +3,8 @@ import type { Extension } from '@codemirror/state'
 import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import type { WordRange } from '../analysis/query.js'
-import { findIdentifierRangeAt } from '../analysis/query.js'
+import { findIdentifierRangeAt, sameRange } from '../analysis/query.js'
+import type { SourceRange } from '../types.js'
 import { goToDefinitionInTree } from './operation.js'
 
 function isApplePlatform (): boolean {
@@ -29,9 +29,9 @@ function isPrimaryModifierKey (key: string): boolean {
   return APPLE_PLATFORM ? key === 'Meta' : key === 'Control'
 }
 
-function rangeContainsMouseX (view: EditorView, range: WordRange, mouse: MousePosition): boolean {
-  const start = view.coordsAtPos(range.from)
-  const end = view.coordsAtPos(range.to)
+function rangeContainsMouseX (view: EditorView, range: SourceRange, mouse: MousePosition): boolean {
+  const start = view.coordsAtPos(range.offset)
+  const end = view.coordsAtPos(range.offset + range.length)
   if (start == null || end == null) {
     return false
   }
@@ -55,7 +55,7 @@ const theme = EditorView.baseTheme({
   }
 })
 
-const setHover = StateEffect.define<WordRange | undefined>()
+const setHover = StateEffect.define<SourceRange | undefined>()
 
 const hoverDecorations = StateField.define<DecorationSet>({
   create: () => Decoration.none,
@@ -74,7 +74,7 @@ const hoverDecorations = StateField.define<DecorationSet>({
 
       next = effect.value == null
         ? Decoration.none
-        : Decoration.set([hoverMark.range(effect.value.from, effect.value.to)])
+        : Decoration.set([hoverMark.range(effect.value.offset, effect.value.offset + effect.value.length)])
     }
 
     return next
@@ -83,18 +83,14 @@ const hoverDecorations = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field)
 })
 
-function sameRange (a: WordRange | undefined, b: WordRange | undefined): boolean {
-  return a?.from === b?.from && a?.to === b?.to
-}
-
 interface MousePosition {
   readonly x: number
   readonly y: number
 }
 
 interface HoverMeasure {
-  readonly hoverRange: WordRange | undefined
-  readonly underlineRange: WordRange | undefined
+  readonly hoverRange: SourceRange | undefined
+  readonly underlineRange: SourceRange | undefined
 }
 
 interface MeasureRequest<T> {
@@ -110,9 +106,9 @@ class GoToDefinitionInteractionsPlugin {
 
   private lastMousePosition: MousePosition | undefined
   private modifierHeld = false
-  private lastHoverRange: WordRange | undefined
-  private lastDispatchedRange: WordRange | undefined
-  private pendingHoverDispatchRange: WordRange | undefined
+  private lastHoverRange: SourceRange | undefined
+  private lastDispatchedRange: SourceRange | undefined
+  private pendingHoverDispatchRange: SourceRange | undefined
   private hoverDispatchScheduled = false
 
   constructor (view: EditorView) {
@@ -223,7 +219,7 @@ class GoToDefinitionInteractionsPlugin {
     event.preventDefault()
     event.stopPropagation()
 
-    const selection = EditorSelection.single(target.from)
+    const selection = EditorSelection.single(target.range.offset)
     this.view.dispatch({ selection, scrollIntoView: true })
     this.view.focus()
   }
@@ -248,7 +244,7 @@ class GoToDefinitionInteractionsPlugin {
       return
     }
 
-    if (sameRange(range, this.lastHoverRange)) {
+    if (this.lastHoverRange != null && sameRange(range, this.lastHoverRange)) {
       return
     }
 
@@ -265,7 +261,7 @@ class GoToDefinitionInteractionsPlugin {
     this.scheduleHoverDispatch(range)
   }
 
-  private scheduleHoverDispatch (range: WordRange | undefined): void {
+  private scheduleHoverDispatch (range: SourceRange | undefined): void {
     this.pendingHoverDispatchRange = range
     if (this.hoverDispatchScheduled) {
       return
@@ -290,10 +286,15 @@ class GoToDefinitionInteractionsPlugin {
     })
   }
 
-  private dispatchHover (range: WordRange | undefined): void {
-    if (!sameRange(this.lastDispatchedRange, range)) {
+  private dispatchHover (range: SourceRange | undefined): void {
+    if (
+      (this.lastDispatchedRange == null && range != null) ||
+      (this.lastDispatchedRange != null && range == null) ||
+      (this.lastDispatchedRange != null && range != null && !sameRange(this.lastDispatchedRange, range))
+    ) {
       this.view.dispatch({ effects: setHover.of(range) })
     }
+
     this.lastDispatchedRange = range
   }
 }
