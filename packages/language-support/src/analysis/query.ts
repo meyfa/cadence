@@ -50,29 +50,70 @@ export function findDefinitionBindingAt (model: Model, tree: Tree, document: Tex
     : undefined
 }
 
-export function findUnusedAssignmentBindings (model: Model, tree: Tree, document: TextLike): readonly Binding[] {
-  const usedBindings = new Set<string>()
-  const cursor = tree.cursor()
+export type RangesByBinding = ReadonlyMap<string, readonly SourceRange[]>
 
-  const walk = (): void => {
-    if (isIdentifierKind(cursor.type.name)) {
-      const occurrence = findSemanticOccurrenceAt(tree, document, cursor.from)
-      const binding = occurrence == null ? undefined : resolveDefinitionBinding(model, occurrence, document)
-
-      if (occurrence != null && binding?.kind === 'assignment' && !sameRange(binding.range, occurrence.range)) {
-        usedBindings.add(binding.id)
-      }
-    }
-
-    if (cursor.firstChild()) {
-      do {
-        walk()
-      } while (cursor.nextSibling())
-      cursor.parent()
-    }
+export function findReferenceRangesAt (
+  model: Model,
+  tree: Tree,
+  document: TextLike,
+  position: number,
+  rangesByBinding?: RangesByBinding
+): readonly SourceRange[] {
+  const occurrence = findSemanticOccurrenceAt(tree, document, position)
+  if (occurrence == null || occurrence.name.length === 0) {
+    return []
   }
 
-  walk()
+  const binding = resolveDefinitionBinding(model, occurrence, document)
+  if (binding == null) {
+    return []
+  }
+
+  const ranges = rangesByBinding ?? buildReferenceRangesByBinding(model, tree, document)
+
+  return ranges.get(binding.id) ?? []
+}
+
+export function buildReferenceRangesByBinding (model: Model, tree: Tree, document: TextLike): RangesByBinding {
+  const rangesByBinding = new Map<string, Map<string, SourceRange>>()
+
+  walkResolvedIdentifierBindings(model, tree, document, (occurrence, binding) => {
+    const range = getReferenceRangeForBindingOccurrence(occurrence, document, binding)
+    if (range == null) {
+      return
+    }
+
+    const key = `${range.offset}:${range.length}`
+    const existingRanges = rangesByBinding.get(binding.id)
+    if (existingRanges == null) {
+      rangesByBinding.set(binding.id, new Map([[key, range]]))
+      return
+    }
+
+    existingRanges.set(key, range)
+  })
+
+  const sortedByBinding = new Map<string, readonly SourceRange[]>()
+
+  for (const [bindingId, ranges] of rangesByBinding) {
+    const sortedRanges = [...ranges.values()].sort((left, right) => {
+      return left.offset - right.offset || left.length - right.length
+    })
+
+    sortedByBinding.set(bindingId, sortedRanges)
+  }
+
+  return sortedByBinding
+}
+
+export function findUnusedAssignmentBindings (model: Model, tree: Tree, document: TextLike): readonly Binding[] {
+  const usedBindings = new Set<string>()
+
+  walkResolvedIdentifierBindings(model, tree, document, (occurrence, binding) => {
+    if (binding.kind === 'assignment' && !sameRange(binding.range, occurrence.range)) {
+      usedBindings.add(binding.id)
+    }
+  })
 
   return model.bindings.filter((binding) => {
     return binding.kind === 'assignment' && !usedBindings.has(binding.id)
@@ -170,6 +211,51 @@ function getEffectiveOccurrenceKind (occurrence: SemanticOccurrence, document: T
   }
 
   return isCorrect ? occurrence.kind : 'VariableName'
+}
+
+function getReferenceRangeForBindingOccurrence (
+  occurrence: SemanticOccurrence,
+  document: TextLike,
+  binding: Binding
+): SourceRange | undefined {
+  const effectiveKind = getEffectiveOccurrenceKind(occurrence, document)
+  if (effectiveKind === 'PropertyName') {
+    return undefined
+  }
+
+  const rootRange = findAccessChainRootBefore(document, occurrence.range.offset)
+  if (rootRange != null) {
+    const rootName = document.sliceString(rootRange.offset, rootRange.offset + rootRange.length)
+    if (rootName === binding.name) {
+      return rootRange
+    }
+  }
+
+  return occurrence.name === binding.name ? occurrence.range : undefined
+}
+
+type OccurrenceVisitor = (occurrence: SemanticOccurrence, binding: Binding) => void
+
+function walkResolvedIdentifierBindings (model: Model, tree: Tree, document: TextLike, visitor: OccurrenceVisitor): void {
+  const enter = (node: SyntaxNode) => {
+    if (!isIdentifierKind(node.type.name)) {
+      return
+    }
+
+    const occurrence = findSemanticOccurrenceAt(tree, document, node.from)
+    if (occurrence == null) {
+      return
+    }
+
+    const binding = resolveDefinitionBinding(model, occurrence, document)
+    if (binding == null) {
+      return
+    }
+
+    visitor(occurrence, binding)
+  }
+
+  tree.iterate({ enter })
 }
 
 function findBindingBySpan (model: Model, occurrence: SemanticOccurrence): Binding | undefined {

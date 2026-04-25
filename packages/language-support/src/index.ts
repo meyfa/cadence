@@ -6,5 +6,9 @@ export { cadenceLanguageSupport } from './language-support.js'
 export { goToDefinitionInTree, goToDefinitionWithParser } from './go-to-definition/operation.js'
 export { goToDefinitionExtension } from './go-to-definition/extension.js'
 
+// "highlight occurrences" feature
+export { findHighlightedOccurrencesInTree, findHighlightedOccurrencesWithParser } from './highlight-occurrences/operation.js'
+export { highlightOccurrencesExtension } from './highlight-occurrences/extension.js'
+
 // "unused variable" diagnostics
 export { findUnusedVariablesInTree, findUnusedVariablesWithParser } from './unused-variable/operation.js'
