@@ -1,9 +1,10 @@
 import type { SourceRange } from '@ast'
-import type { PanelProps } from '@editor'
+import type { PanelProps, ProblemKind } from '@editor'
 import { useProblems } from '@editor'
 import { RangeError } from '@language'
+import { Error, Warning } from '@mui/icons-material'
 import clsx from 'clsx'
-import type { FunctionComponent } from 'react'
+import type { FunctionComponent, ReactNode } from 'react'
 
 export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
   const problems = useProblems()
@@ -17,12 +18,15 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
           </div>
         )}
 
-        {problems.map(({ error, label }, index) => (
+        {problems.map(({ kind, label, message, error }, index) => (
           <div key={index}>
+            <span className='text-content-100 mr-1'>
+              {renderIconForProblemKind(kind)}
+            </span>
             <span className='text-content-100'>
               {`${label}: `}
             </span>
-            {error.message}
+            {message}
             {error instanceof RangeError && error.range != null && (
               <span className='text-content-100 text-sm'>
                 {` (${stringifyRange(error.range)})`}
@@ -33,6 +37,17 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
       </div>
     </div>
   )
+}
+
+function renderIconForProblemKind (kind: ProblemKind): ReactNode {
+  switch (kind) {
+    case 'error':
+      return <Error />
+    case 'warning':
+      return <Warning />
+    default:
+      kind satisfies never
+  }
 }
 
 function stringifyRange (range: SourceRange, maxPathLength = 32): string {
