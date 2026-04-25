@@ -1,19 +1,16 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
-import type { Binding, BindingKind, Model, TextLike } from './model.js'
+import type { SourceRange } from '../types.js'
+import type { Binding, BindingKind, Model } from './model.js'
 import { scopeKey } from './model.js'
-
-export interface WordRange {
-  readonly from: number
-  readonly to: number
-}
+import type { TextLike } from './text.js'
+import { toSourceRange } from './text.js'
 
 export type IdentifierKind = typeof IDENTIFIER_KINDS[number]
 
 export interface SemanticOccurrence {
   readonly kind: IdentifierKind | undefined
   readonly name: string
-  readonly from: number
-  readonly to: number
+  readonly range: SourceRange
   readonly node?: SyntaxNode
 }
 
@@ -33,11 +30,17 @@ function isIdentifierKind (value: string): value is IdentifierKind {
   return IDENTIFIER_KINDS.includes(value as IdentifierKind)
 }
 
-export function findIdentifierRangeAt (tree: Tree, document: TextLike, position: number): WordRange | undefined {
+export function sameRange (a: SourceRange, b: SourceRange): boolean {
+  return a.offset === b.offset && a.length === b.length
+}
+
+export function findIdentifierRangeAt (tree: Tree, document: TextLike, position: number): SourceRange | undefined {
   const node = findIdentifierNodeAt(tree, position)
-  return node != null
-    ? { from: node.from, to: node.to }
-    : getWordRangeAt(document, position)
+  if (node == null) {
+    return undefined
+  }
+
+  return toSourceRange(document, node.from, node.to)
 }
 
 export function findDefinitionBindingAt (model: Model, tree: Tree, document: TextLike, position: number): Binding | undefined {
@@ -53,15 +56,14 @@ function findSemanticOccurrenceAt (tree: Tree, document: TextLike, position: num
     return {
       kind: node.type.name as IdentifierKind,
       name: document.sliceString(node.from, node.to),
-      from: node.from,
-      to: node.to,
-      node
+      node,
+      range: toSourceRange(document, node.from, node.to)
     }
   }
 
   const range = getWordRangeAt(document, position)
   return range != null
-    ? { ...range, kind: undefined, name: document.sliceString(range.from, range.to) }
+    ? { kind: undefined, name: document.sliceString(range.offset, range.offset + range.length), range }
     : undefined
 }
 
@@ -81,16 +83,15 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
       return findFirstGlobalBinding(model, name)
   }
 
-  const root = findAccessChainRootBefore(document, occurrence.from)
+  const root = findAccessChainRootBefore(document, occurrence.range.offset)
   if (root != null) {
-    const rootName = document.sliceString(root.from, root.to)
+    const rootName = document.sliceString(root.offset, root.offset + root.length)
     if (rootName.length > 0 && rootName !== name) {
       const resolvedRoot = resolveDefinitionBinding(model, {
         kind: 'VariableName',
         name: rootName,
-        from: root.from,
-        to: root.to,
-        node: occurrence.node
+        node: occurrence.node,
+        range: root
       }, document)
 
       if (resolvedRoot != null) {
@@ -99,7 +100,7 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
     }
   }
 
-  const trackScopeId = findEnclosingScopeId(occurrence.node, 'TrackStatement')
+  const trackScopeId = findEnclosingScopeId(document, occurrence.node, 'TrackStatement')
   if (trackScopeId != null) {
     const definition = findScopedBinding(model, trackScopeId, name, 'part')
     if (definition != null) {
@@ -107,7 +108,7 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
     }
   }
 
-  const mixerScopeId = findEnclosingScopeId(occurrence.node, 'MixerStatement')
+  const mixerScopeId = findEnclosingScopeId(document, occurrence.node, 'MixerStatement')
   if (mixerScopeId != null) {
     const definition = findScopedBinding(model, mixerScopeId, name, 'bus')
     if (definition != null) {
@@ -144,7 +145,7 @@ function getEffectiveOccurrenceKind (occurrence: SemanticOccurrence, document: T
 
 function findBindingBySpan (model: Model, occurrence: SemanticOccurrence): Binding | undefined {
   const bindings = model.bindingsByName.get(occurrence.name)
-  return bindings?.find((binding) => binding.from === occurrence.from && binding.to === occurrence.to)
+  return bindings?.find((binding) => sameRange(binding.range, occurrence.range))
 }
 
 function findFirstGlobalBinding (model: Model, name: string): Binding | undefined {
@@ -196,7 +197,7 @@ function findIdentifierNodeAt (tree: Tree, position: number): SyntaxNode | undef
   return undefined
 }
 
-function getWordRangeAt (document: TextLike, position: number): WordRange | undefined {
+function getWordRangeAt (document: TextLike, position: number): SourceRange | undefined {
   if (position < 0 || position > document.length) {
     return undefined
   }
@@ -218,26 +219,30 @@ function getWordRangeAt (document: TextLike, position: number): WordRange | unde
     ++to
   }
 
-  return { from, to }
+  return toSourceRange(document, from, to)
 }
 
-function findEnclosingScopeId (node: SyntaxNode | undefined, scopeTypeName: 'TrackStatement' | 'MixerStatement'): string | undefined {
+function findEnclosingScopeId (
+  document: TextLike,
+  node: SyntaxNode | undefined,
+  scopeTypeName: 'TrackStatement' | 'MixerStatement'
+): string | undefined {
   for (let current = node; current != null; current = current.parent ?? undefined) {
     if (current.type.name === scopeTypeName) {
-      return scopeKey(current.type.name, current.from, current.to)
+      return scopeKey(current.type.name, toSourceRange(document, current.from, current.to))
     }
   }
 
   return undefined
 }
 
-function findAccessChainRootBefore (document: TextLike, memberFrom: number): WordRange | undefined {
+function findAccessChainRootBefore (document: TextLike, memberFrom: number): SourceRange | undefined {
   const dot = charBeforeNonWhitespace(document, memberFrom)
   if (dot == null || dot.char !== '.') {
     return undefined
   }
 
-  let root: WordRange | undefined
+  let root: SourceRange | undefined
   let currentDotIndex = dot.index
 
   while (currentDotIndex >= 0) {
@@ -249,7 +254,7 @@ function findAccessChainRootBefore (document: TextLike, memberFrom: number): Wor
 
     root = range
 
-    const beforeWord = charBeforeNonWhitespace(document, range.from)
+    const beforeWord = charBeforeNonWhitespace(document, range.offset)
     if (beforeWord == null || beforeWord.char !== '.') {
       break
     }

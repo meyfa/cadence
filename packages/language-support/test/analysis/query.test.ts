@@ -1,23 +1,21 @@
+import type { Tree } from '@lezer/common'
 import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
 import { analyzeTree } from '../../src/analysis/model.js'
 import { findDefinitionBindingAt } from '../../src/analysis/query.js'
+import { getRangeAt } from '../helpers.js'
+import type { TextLike } from '../../src/analysis/text.js'
+import { textFromString } from '../../src/analysis/text.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar)
 
-function parseDocument (source: string): {
-  readonly tree: ReturnType<typeof cadenceParser.parse>
-  readonly document: { readonly length: number, readonly sliceString: (from: number, to?: number) => string }
-} {
+function parseDocument (source: string): Readonly<{ tree: Tree, document: TextLike }> {
   return {
     tree: cadenceParser.parse(source),
-    document: {
-      length: source.length,
-      sliceString: (from, to) => source.slice(from, to)
-    }
+    document: textFromString(source)
   }
 }
 
@@ -41,7 +39,9 @@ describe('analysis/query.ts', () => {
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'assignment')
     assert.strictEqual(binding.name, 'kick')
-    assert.strictEqual(binding.from, source.indexOf('kick ='))
+
+    const kickOffset = source.indexOf('kick =')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, kickOffset, 'kick'.length))
   })
 
   it('resolves member access through the root identifier', () => {
@@ -64,7 +64,9 @@ describe('analysis/query.ts', () => {
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'assignment')
     assert.strictEqual(binding.name, 'synth')
-    assert.strictEqual(binding.from, source.indexOf('synth ='))
+
+    const synthOffset = source.indexOf('synth =')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, synthOffset, 'synth'.length))
   })
 
   it('does not resolve named argument keys', () => {
@@ -97,6 +99,8 @@ describe('analysis/query.ts', () => {
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'use-alias')
     assert.strictEqual(binding.name, 'fx')
-    assert.strictEqual(binding.from, source.indexOf('as fx') + 'as '.length)
+
+    const aliasOffset = source.indexOf('use "effects" as fx') + 'use "effects" as '.length
+    assert.deepStrictEqual(binding.range, getRangeAt(source, aliasOffset, 'fx'.length))
   })
 })

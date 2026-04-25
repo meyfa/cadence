@@ -1,19 +1,16 @@
 import type { Tree, TreeCursor } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
-
-export interface TextLike {
-  readonly length: number
-  readonly sliceString: (from: number, to?: number) => string
-}
+import type { SourceRange } from '../types.js'
+import type { TextLike } from './text.js'
+import { textFromString, toSourceRange } from './text.js'
 
 export type ScopeKind = 'root' | 'track' | 'mixer'
 
 export interface Scope {
   readonly id: string
   readonly kind: ScopeKind
-  readonly from: number
-  readonly to: number
   readonly parentId?: string
+  readonly range: SourceRange
 }
 
 export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
@@ -23,8 +20,7 @@ export interface Binding {
   readonly kind: BindingKind
   readonly scopeId: string
   readonly name: string
-  readonly from: number
-  readonly to: number
+  readonly range: SourceRange
 }
 
 export interface Model {
@@ -39,8 +35,7 @@ interface BindingInput {
   readonly kind: BindingKind
   readonly scopeId: string
   readonly name: string
-  readonly from: number
-  readonly to: number
+  readonly range: SourceRange
 }
 
 interface DefinitionBindingContext {
@@ -52,15 +47,15 @@ interface DefinitionBindingContext {
 }
 
 export function analyzeTree (tree: Tree, document: TextLike): Model {
-  const rootScopeId = scopeKey('Root', 0, document.length)
+  const rootRange = toSourceRange(document, 0, document.length)
+
+  const rootScopeId = scopeKey('Root', rootRange)
 
   const scopes = new Map<string, Scope>()
-
   scopes.set(rootScopeId, {
     id: rootScopeId,
     kind: 'root',
-    from: 0,
-    to: document.length
+    range: rootRange
   })
 
   const bindings: Binding[] = []
@@ -68,9 +63,9 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
   const bindingsByScope = new Map<string, Binding[]>()
 
   const addBinding = (input: BindingInput): void => {
-    const { kind, scopeId, name, from, to } = input
+    const { kind, scopeId, name, range } = input
 
-    const binding = { ...input, id: bindingKey(kind, scopeId, from, to) }
+    const binding = { ...input, id: bindingKey(kind, scopeId, range) }
     bindings.push(binding)
 
     appendIndexedValue(bindingsByName, name, binding)
@@ -91,6 +86,8 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
     const from = cursor.from
     const to = cursor.to
 
+    const range = toSourceRange(document, from, to)
+
     const nextParentType = typeName
 
     let nextScopeId = currentScopeId
@@ -100,16 +97,16 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 
     switch (typeName) {
       case 'TrackStatement': {
-        const id = scopeKey(typeName, from, to)
-        scopes.set(id, { id, kind: 'track', from, to, parentId: currentScopeId })
+        const id = scopeKey(typeName, range)
+        scopes.set(id, { id, kind: 'track', range, parentId: currentScopeId })
         nextScopeId = id
         nextTrackScopeId = id
         break
       }
 
       case 'MixerStatement': {
-        const id = scopeKey(typeName, from, to)
-        scopes.set(id, { id, kind: 'mixer', from, to, parentId: currentScopeId })
+        const id = scopeKey(typeName, range)
+        scopes.set(id, { id, kind: 'mixer', range, parentId: currentScopeId })
         nextScopeId = id
         nextMixerScopeId = id
         break
@@ -132,7 +129,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         })
 
         if (binding != null) {
-          addBinding({ ...binding, name, from, to })
+          addBinding({ ...binding, name, range })
         }
 
         break
@@ -141,7 +138,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
       case 'UseAlias': {
         const name = document.sliceString(from, to)
         if (name !== '*') {
-          addBinding({ kind: 'use-alias', scopeId: currentScopeId, name, from, to })
+          addBinding({ kind: 'use-alias', scopeId: currentScopeId, name, range })
         }
         break
       }
@@ -162,18 +159,15 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 
 export function analyzeSourceWithParser (parser: LRParser, source: string): Model {
   const tree = parser.parse(source)
-  return analyzeTree(tree, {
-    length: source.length,
-    sliceString: (from, to) => source.slice(from, to)
-  })
+  return analyzeTree(tree, textFromString(source))
 }
 
-export function scopeKey (typeName: string, from: number, to: number): string {
-  return `${typeName}:${from}:${to}`
+export function scopeKey (typeName: string, range: SourceRange): string {
+  return `${typeName}:${range.offset}:${range.length}`
 }
 
-function bindingKey (kind: BindingKind, scopeId: string, from: number, to: number): string {
-  return `${kind}:${scopeId}:${from}:${to}`
+function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): string {
+  return `${kind}:${scopeId}:${range.offset}:${range.length}`
 }
 
 function appendIndexedValue<Key, Value> (index: Map<Key, Value[]>, key: Key, value: Value): void {
@@ -186,7 +180,7 @@ function appendIndexedValue<Key, Value> (index: Map<Key, Value[]>, key: Key, val
   values.push(value)
 }
 
-function getDefinitionBinding (context: DefinitionBindingContext): Omit<BindingInput, 'name' | 'from' | 'to'> | undefined {
+function getDefinitionBinding (context: DefinitionBindingContext): Omit<BindingInput, 'name' | 'range'> | undefined {
   switch (context.parentType) {
     case 'Assignment':
       return context.assignmentHasEquals

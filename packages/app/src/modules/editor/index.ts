@@ -142,7 +142,7 @@ const GlobalHooks: FunctionComponent = () => {
         return
       }
 
-      const selection = EditorSelection.single(target.from)
+      const selection = EditorSelection.single(target.range.offset)
       view.dispatch({ selection, scrollIntoView: true })
       view.focus()
     }

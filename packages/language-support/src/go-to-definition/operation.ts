@@ -1,13 +1,14 @@
 import type { Tree } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
-import type { TextLike } from '../analysis/model.js'
 import { analyzeTree } from '../analysis/model.js'
 import { findDefinitionBindingAt } from '../analysis/query.js'
+import type { SourceRange } from '../types.js'
+import type { TextLike } from '../analysis/text.js'
+import { textFromString } from '../analysis/text.js'
 
 export interface GoToDefinitionResult {
   readonly name: string
-  readonly from: number
-  readonly to: number
+  readonly range: SourceRange
 }
 
 export function goToDefinitionInTree (tree: Tree, document: TextLike, pos: number): GoToDefinitionResult | undefined {
@@ -17,13 +18,10 @@ export function goToDefinitionInTree (tree: Tree, document: TextLike, pos: numbe
     return undefined
   }
 
-  return { name: binding.name, from: binding.from, to: binding.to }
+  return { name: binding.name, range: binding.range }
 }
 
 export function goToDefinitionWithParser (parser: LRParser, source: string, pos: number): GoToDefinitionResult | undefined {
   const tree = parser.parse(source)
-  return goToDefinitionInTree(tree, {
-    length: source.length,
-    sliceString: (from, to) => source.slice(from, to)
-  }, pos)
+  return goToDefinitionInTree(tree, textFromString(source), pos)
 }

@@ -3,6 +3,7 @@ import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
 import { goToDefinitionWithParser } from '../../src/go-to-definition/operation.js'
+import { getRangeAt } from '../helpers.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar)
@@ -20,9 +21,8 @@ describe('go-to-definition/operation.ts', () => {
     assert.ok(def)
 
     const defFrom = source.indexOf('foo')
-    assert.strictEqual(def.from, defFrom)
-    assert.strictEqual(def.to, defFrom + 'foo'.length)
     assert.strictEqual(def.name, 'foo')
+    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 'foo'.length))
   })
 
   it('resolves bus references inside mixer', () => {
@@ -33,9 +33,8 @@ describe('go-to-definition/operation.ts', () => {
     assert.ok(def)
 
     const defFrom = source.indexOf('bus a') + 'bus '.length
-    assert.strictEqual(def.from, defFrom)
-    assert.strictEqual(def.to, defFrom + 1)
     assert.strictEqual(def.name, 'a')
+    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 1))
   })
 
   it('resolves import alias usage', () => {
@@ -50,9 +49,8 @@ describe('go-to-definition/operation.ts', () => {
     assert.ok(def)
 
     const defFrom = source.indexOf('as lib') + 'as '.length
-    assert.strictEqual(def.from, defFrom)
-    assert.strictEqual(def.to, defFrom + 'lib'.length)
     assert.strictEqual(def.name, 'lib')
+    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 'lib'.length))
   })
 
   it('tolerates incomplete input', () => {
@@ -63,9 +61,8 @@ describe('go-to-definition/operation.ts', () => {
     assert.ok(def)
 
     const defFrom = source.indexOf('bus a') + 'bus '.length
-    assert.strictEqual(def.from, defFrom)
-    assert.strictEqual(def.to, defFrom + 1)
     assert.strictEqual(def.name, 'a')
+    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 1))
   })
 
   it('does not resolve member access by member name', () => {
@@ -87,9 +84,8 @@ describe('go-to-definition/operation.ts', () => {
     assert.ok(def)
 
     const synthFrom = source.indexOf('\nsynth =') + 1
-    assert.strictEqual(def.from, synthFrom)
-    assert.strictEqual(def.to, synthFrom + 'synth'.length)
     assert.strictEqual(def.name, 'synth')
+    assert.deepStrictEqual(def.range, getRangeAt(source, synthFrom, 'synth'.length))
   })
 
   it('does not resolve named argument keys', () => {
