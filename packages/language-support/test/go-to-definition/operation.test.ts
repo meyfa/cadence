@@ -2,7 +2,8 @@ import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { goToDefinitionWithParser } from '../../src/go-to-definition/operation.js'
+import { goToDefinition } from '../../src/go-to-definition/operation.js'
+import { applySemanticOperationWithParser } from '../../src/operations.js'
 import { getRangeAt } from '../helpers.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
@@ -16,25 +17,25 @@ describe('go-to-definition/operation.ts', () => {
       ''
     ].join('\n')
 
+    const defPos = source.indexOf('foo =')
     const refPos = source.lastIndexOf('foo') + 1
-    const def = goToDefinitionWithParser(cadenceParser, source, refPos)
-    assert.ok(def)
 
-    const defFrom = source.indexOf('foo')
-    assert.strictEqual(def.name, 'foo')
-    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 'foo'.length))
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 'foo'.length)
+    )
   })
 
   it('resolves bus references inside mixer', () => {
     const source = 'mixer { bus a { } bus b { a } }'
 
+    const defPos = source.indexOf('bus a') + 'bus '.length
     const refPos = source.lastIndexOf(' a ') + 2
-    const def = goToDefinitionWithParser(cadenceParser, source, refPos)
-    assert.ok(def)
 
-    const defFrom = source.indexOf('bus a') + 'bus '.length
-    assert.strictEqual(def.name, 'a')
-    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 1))
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 1)
+    )
   })
 
   it('resolves import alias usage', () => {
@@ -44,25 +45,25 @@ describe('go-to-definition/operation.ts', () => {
       ''
     ].join('\n')
 
+    const defPos = source.indexOf('as lib') + 'as '.length
     const refPos = source.indexOf('lib.foo') + 1
-    const def = goToDefinitionWithParser(cadenceParser, source, refPos)
-    assert.ok(def)
 
-    const defFrom = source.indexOf('as lib') + 'as '.length
-    assert.strictEqual(def.name, 'lib')
-    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 'lib'.length))
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 'lib'.length)
+    )
   })
 
   it('tolerates incomplete input', () => {
     const source = 'mixer { bus a { } bus b { a '
 
+    const defPos = source.indexOf('bus a') + 'bus '.length
     const refPos = source.lastIndexOf('a') + 1
-    const def = goToDefinitionWithParser(cadenceParser, source, refPos)
-    assert.ok(def)
 
-    const defFrom = source.indexOf('bus a') + 'bus '.length
-    assert.strictEqual(def.name, 'a')
-    assert.deepStrictEqual(def.range, getRangeAt(source, defFrom, 1))
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 1)
+    )
   })
 
   it('does not resolve member access by member name', () => {
@@ -79,13 +80,13 @@ describe('go-to-definition/operation.ts', () => {
       ''
     ].join('\n')
 
-    const pos = source.indexOf('synth.gain') + 'synth.'.length + 1
-    const def = goToDefinitionWithParser(cadenceParser, source, pos)
-    assert.ok(def)
+    const defPos = source.indexOf('synth =')
+    const refPos = source.indexOf('synth.gain') + 'synth.'.length + 1
 
-    const synthFrom = source.indexOf('\nsynth =') + 1
-    assert.strictEqual(def.name, 'synth')
-    assert.deepStrictEqual(def.range, getRangeAt(source, synthFrom, 'synth'.length))
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 'synth'.length)
+    )
   })
 
   it('does not resolve named argument keys', () => {
@@ -96,7 +97,10 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const pos = source.indexOf('tempo:') + 1
-    const def = goToDefinitionWithParser(cadenceParser, source, pos)
-    assert.strictEqual(def, undefined)
+
+    assert.strictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, pos),
+      undefined
+    )
   })
 })

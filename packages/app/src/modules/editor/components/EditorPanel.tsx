@@ -5,7 +5,7 @@ import type { EditorLocation, PanelProps, Problem } from '@editor'
 import { Editor, getProjectFileContent, setProjectFileContent, useProjectSource, useProjectSourceDispatch, useProvideProblems } from '@editor'
 import type { RangeError } from '@language'
 import type { LanguageDiagnostic, SourceRange } from '@language-support'
-import { cadenceLanguageSupport, findUnusedVariablesInTree, goToDefinitionExtension, highlightOccurrencesExtension } from '@language-support'
+import { applySemanticOperation, cadenceLanguageSupport, findUnusedVariables, goToDefinitionExtension, highlightOccurrencesExtension } from '@language-support'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'
@@ -77,7 +77,7 @@ export const EditorPanel: FunctionComponent<PanelProps> = ({ panelProps, tabId }
 
   const unusedVariables = useMemo(() => {
     return editorView != null
-      ? findUnusedVariablesInTree(syntaxTree(editorView.state), editorView.state.doc)
+      ? applySemanticOperation(findUnusedVariables, syntaxTree(editorView.state), editorView.state.doc)
       : []
   }, [analysisRevision, editorView])
 

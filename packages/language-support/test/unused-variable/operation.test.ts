@@ -2,7 +2,8 @@ import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { findUnusedVariablesWithParser } from '../../src/unused-variable/operation.js'
+import { applySemanticOperationWithParser } from '../../src/operations.js'
+import { findUnusedVariables } from '../../src/unused-variable/operation.js'
 import { getRangeAt } from '../helpers.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
@@ -21,13 +22,16 @@ describe('unused-variable/operation.ts', () => {
       ''
     ].join('\n')
 
-    assert.deepStrictEqual(findUnusedVariablesWithParser(cadenceParser, source), [
-      {
-        name: 'unused',
-        message: 'Unused variable "unused".',
-        range: getRangeAt(source, source.indexOf('unused ='), 'unused'.length)
-      }
-    ])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      [
+        {
+          name: 'unused',
+          message: 'Unused variable "unused".',
+          range: getRangeAt(source, source.indexOf('unused ='), 'unused'.length)
+        }
+      ]
+    )
   })
 
   it('does not report parts or buses as unused', () => {
@@ -43,7 +47,10 @@ describe('unused-variable/operation.ts', () => {
       ''
     ].join('\n')
 
-    assert.deepStrictEqual(findUnusedVariablesWithParser(cadenceParser, source), [])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      []
+    )
   })
 
   it('treats member access roots as references', () => {
@@ -57,6 +64,9 @@ describe('unused-variable/operation.ts', () => {
       ''
     ].join('\n')
 
-    assert.deepStrictEqual(findUnusedVariablesWithParser(cadenceParser, source), [])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      []
+    )
   })
 })
