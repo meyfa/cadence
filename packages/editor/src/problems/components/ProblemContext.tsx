@@ -1,7 +1,8 @@
-import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { ModuleId } from '../../modules/types.js'
-import type { Problem } from '../types.js'
+import type { Problem, ProblemInput } from '../types.js'
 
 interface ProblemContextValue {
   readonly problems: readonly Problem[]
@@ -44,12 +45,12 @@ export function useProblems (): readonly Problem[] {
   return problems
 }
 
-export function useProvideProblems (moduleId: ModuleId, label: string, errors: readonly Error[]): void {
+export function useProvideProblems (moduleId: ModuleId, sourceProblems: readonly ProblemInput[]): void {
   const { setSourceProblems, clearSourceProblems } = useSafeContext(ProblemContext, 'ProblemContext')
 
   const problems = useMemo(() => {
-    return errors.map((error) => ({ moduleId, label, error }))
-  }, [moduleId, label, errors])
+    return sourceProblems.map((entry): Problem => ({ moduleId, ...entry }))
+  }, [moduleId, sourceProblems])
 
   // update problems when errors change
   useLayoutEffect(() => {

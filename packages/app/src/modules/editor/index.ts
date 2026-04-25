@@ -1,9 +1,10 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection } from '@codemirror/state'
-import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId, ProblemInput } from '@editor'
 import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { goToDefinitionInTree } from '@language-support'
 import type { FunctionComponent } from 'react'
+import { useMemo } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { TRACK_FILE_PATH } from '../../persistence/constants.js'
 import { openFiles, readFileAsText, saveTextFile } from '../../utilities/files.js'
@@ -55,6 +56,14 @@ const GlobalHooks: FunctionComponent = () => {
   })
 
   const { result: { errors } } = useCompilationState()
+  const problems = useMemo(() => {
+    return errors.map((error): ProblemInput => ({
+      kind: 'error',
+      label: 'Compiler',
+      message: error.message,
+      error
+    }))
+  }, [errors])
 
   useRegisterCommand(() => ({
     id: viewEditorId,
@@ -139,7 +148,7 @@ const GlobalHooks: FunctionComponent = () => {
     }
   }), [])
 
-  useProvideProblems(moduleId, 'Compiler', errors)
+  useProvideProblems(moduleId, problems)
 
   return null
 }

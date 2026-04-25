@@ -1,8 +1,9 @@
 import { createAudioGraph } from '@audiograph'
-import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId, ProblemInput } from '@editor'
 import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
-import { type FunctionComponent } from 'react'
+import type { FunctionComponent } from 'react'
+import { useMemo } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { OutputGainSettingsCard } from './components/OutputGainSettingsCard.js'
@@ -29,6 +30,14 @@ const GlobalHooks: FunctionComponent = () => {
 
   const audioEngine = useAudioEngine()
   const errors = useObservable(audioEngine.errors)
+  const problems = useMemo(() => {
+    return errors.map((error): ProblemInput => ({
+      kind: 'error',
+      label: 'Playback',
+      message: error.message,
+      error
+    }))
+  }, [errors])
 
   const compilation = useCompilationState()
   const compilationRef = useLatestRef(compilation)
@@ -68,7 +77,7 @@ const GlobalHooks: FunctionComponent = () => {
     }
   }), [])
 
-  useProvideProblems(moduleId, 'Playback', errors)
+  useProvideProblems(moduleId, problems)
 
   return null
 }
