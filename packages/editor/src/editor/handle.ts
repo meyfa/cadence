@@ -6,6 +6,7 @@ import { lintKeymap, setDiagnostics } from '@codemirror/lint'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
 import type { Extension, SelectionRange, Text } from '@codemirror/state'
 import { Compartment, EditorState } from '@codemirror/state'
+import type { ViewUpdate } from '@codemirror/view'
 import { drawSelection, dropCursor, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection } from '@codemirror/view'
 import type { EditorLocation } from './types.js'
 
@@ -78,6 +79,7 @@ export interface CadenceEditorOptions {
 
   readonly onChange: (value: string) => void
   readonly onLocationChange?: (location: EditorLocation | undefined) => void
+  readonly onEditorViewUpdate?: (viewUpdate: ViewUpdate) => void
 }
 
 export interface CadenceEditorHandle {
@@ -93,7 +95,11 @@ export interface CadenceEditorHandle {
 export function createCadenceEditor (parent: HTMLElement, options: CadenceEditorOptions): CadenceEditorHandle {
   const { indent, extensions } = options
 
-  const updateListener = EditorView.updateListener.of(({ state, docChanged, selectionSet }) => {
+  const updateListener = EditorView.updateListener.of((update) => {
+    const { state, docChanged, selectionSet } = update
+
+    options.onEditorViewUpdate?.(update)
+
     if (docChanged) {
       options.onChange(state.doc.toString())
     }

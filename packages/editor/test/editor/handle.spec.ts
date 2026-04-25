@@ -1,5 +1,5 @@
 import { diagnosticCount } from '@codemirror/lint'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCadenceEditor } from '../../src/editor/handle.js'
 
 describe('editor/handle.ts', () => {
@@ -32,6 +32,29 @@ describe('editor/handle.ts', () => {
       ])
 
       expect(diagnosticCount(handle.view.state)).toBe(1)
+    } finally {
+      handle.destroy()
+    }
+  })
+
+  it('emits editor view updates when the document changes', () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+
+    const onEditorViewUpdate = vi.fn()
+    const handle = createCadenceEditor(container, {
+      document: 'track main {}',
+      indent: '  ',
+      theme: [],
+      onChange: () => {},
+      onLocationChange: () => {},
+      onEditorViewUpdate
+    })
+
+    try {
+      handle.setDocument('track alt {}')
+
+      expect(onEditorViewUpdate).toHaveBeenCalled()
     } finally {
       handle.destroy()
     }

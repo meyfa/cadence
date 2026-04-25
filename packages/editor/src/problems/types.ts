@@ -1,18 +1,17 @@
-import type { ModuleId } from '../modules/types.js'
-
 export type ProblemKind = 'error' | 'warning'
 
-export interface ProblemInput {
-  readonly kind: ProblemKind
-  readonly label: string
-  readonly message: string
-  readonly error?: Error
+export interface ProblemRange {
+  readonly offset: number
+  readonly length: number
+  readonly line: number
+  readonly column: number
+  readonly filePath?: string
 }
 
 export interface Problem {
-  readonly moduleId: ModuleId
   readonly kind: ProblemKind
   readonly label: string
   readonly message: string
+  readonly range?: ProblemRange
   readonly error?: Error
 }

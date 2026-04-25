@@ -1,6 +1,6 @@
 import type { Diagnostic } from '@codemirror/lint'
 import type { Extension } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
+import type { EditorView, ViewUpdate } from '@codemirror/view'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useLatestRef } from '../../hooks/latest-ref.js'
 import { createCadenceEditor, type CadenceEditorHandle } from '../handle.js'
@@ -15,6 +15,7 @@ export const Editor: FunctionComponent<{
   cspNonce?: string
   className?: string
   onEditorViewChange?: (view: EditorView | undefined) => void
+  onEditorViewUpdate?: (viewUpdate: ViewUpdate) => void
   onChange: (document: string) => void
   onLocationChange?: (location: EditorLocation | undefined) => void
 }> = ({ document, indent, theme, extensions, diagnostics, cspNonce, className, ...props }) => {
@@ -22,6 +23,7 @@ export const Editor: FunctionComponent<{
   const onChange = useLatestRef(props.onChange)
   const onLocationChange = useLatestRef(props.onLocationChange)
   const onEditorViewChange = useLatestRef(props.onEditorViewChange)
+  const onEditorViewUpdate = useLatestRef(props.onEditorViewUpdate)
 
   // Initialize editor
   const initialize = useCallback((container: HTMLDivElement | null) => {
@@ -40,7 +42,8 @@ export const Editor: FunctionComponent<{
       diagnostics,
       cspNonce,
       onChange: (...args) => onChange.current(...args),
-      onLocationChange: (...args) => onLocationChange.current?.(...args)
+      onLocationChange: (...args) => onLocationChange.current?.(...args),
+      onEditorViewUpdate: (...args) => onEditorViewUpdate.current?.(...args)
     })
 
     onEditorViewChange.current?.(handleRef.current.view)
