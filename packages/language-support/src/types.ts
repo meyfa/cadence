@@ -4,3 +4,9 @@ export interface SourceRange {
   readonly line: number
   readonly column: number
 }
+
+export interface LanguageDiagnostic {
+  readonly name: string
+  readonly message: string
+  readonly range: SourceRange
+}

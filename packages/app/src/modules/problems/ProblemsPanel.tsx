@@ -1,5 +1,4 @@
-import type { SourceRange } from '@ast'
-import type { PanelProps, ProblemKind } from '@editor'
+import type { PanelProps, ProblemKind, ProblemRange } from '@editor'
 import { useProblems } from '@editor'
 import { RangeError } from '@language'
 import { Error, Warning } from '@mui/icons-material'
@@ -18,22 +17,26 @@ export const ProblemsPanel: FunctionComponent<PanelProps> = () => {
           </div>
         )}
 
-        {problems.map(({ kind, label, message, error }, index) => (
-          <div key={index}>
-            <span className='text-content-100 mr-1'>
-              {renderIconForProblemKind(kind)}
-            </span>
-            <span className='text-content-100'>
-              {`${label}: `}
-            </span>
-            {message}
-            {error instanceof RangeError && error.range != null && (
-              <span className='text-content-100 text-sm'>
-                {` (${stringifyRange(error.range)})`}
+        {problems.map(({ kind, label, message, range, error }, index) => {
+          const problemRange = range ?? (error instanceof RangeError ? error.range : undefined)
+
+          return (
+            <div key={index}>
+              <span className='text-content-100 mr-1'>
+                {renderIconForProblemKind(kind)}
               </span>
-            )}
-          </div>
-        ))}
+              <span className='text-content-100'>
+                {`${label}: `}
+              </span>
+              {message}
+              {problemRange != null && (
+                <span className='text-content-100 text-sm'>
+                  {` (${stringifyRange(problemRange)})`}
+                </span>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -50,7 +53,7 @@ function renderIconForProblemKind (kind: ProblemKind): ReactNode {
   }
 }
 
-function stringifyRange (range: SourceRange, maxPathLength = 32): string {
+function stringifyRange (range: ProblemRange, maxPathLength = 32): string {
   const { filePath, line, column } = range
 
   if (filePath != null) {

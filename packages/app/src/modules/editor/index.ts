@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection } from '@codemirror/state'
-import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId, ProblemInput } from '@editor'
+import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@editor'
 import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
 import { goToDefinitionInTree } from '@language-support'
 import type { FunctionComponent } from 'react'
@@ -57,10 +57,11 @@ const GlobalHooks: FunctionComponent = () => {
 
   const { result: { errors } } = useCompilationState()
   const problems = useMemo(() => {
-    return errors.map((error): ProblemInput => ({
+    return errors.map((error): Problem => ({
       kind: 'error',
       label: 'Compiler',
       message: error.message,
+      range: error.range,
       error
     }))
   }, [errors])
@@ -148,7 +149,7 @@ const GlobalHooks: FunctionComponent = () => {
     }
   }), [])
 
-  useProvideProblems(moduleId, problems)
+  useProvideProblems(problems)
 
   return null
 }

@@ -44,7 +44,8 @@ const darkColors = {
   cursor: '#528bff',
   matchingBracket: '#bad0f847',
   selectionMatchBackground: '#aafe661a',
-  diagnosticError: '#ff605a'
+  diagnosticError: '#ff605a',
+  diagnosticWarning: '#ffb347'
 }
 
 const lightColors = {
@@ -75,7 +76,8 @@ const lightColors = {
   cursor: '#526eff',
   matchingBracket: '#7894e847',
   selectionMatchBackground: '#504ebf22',
-  diagnosticError: '#d00010'
+  diagnosticError: '#d00010',
+  diagnosticWarning: '#a08000'
 }
 
 // The editor theme styles for this theme.
@@ -168,13 +170,27 @@ const cadenceEditorTheme = (dark: boolean) => {
       borderLeftColor: colors.diagnosticError
     },
 
+    '.cm-diagnostic-warning': {
+      borderLeftColor: colors.diagnosticWarning
+    },
+
     '.cm-lintRange-error': {
       backgroundImage: createUnderline(colors.diagnosticError)
+    },
+
+    '.cm-lintRange-warning': {
+      backgroundImage: createUnderline(colors.diagnosticWarning)
     },
 
     '.cm-lintPoint-error': {
       '&:after': {
         borderBottomColor: colors.diagnosticError
+      }
+    },
+
+    '.cm-lintPoint-warning': {
+      '&:after': {
+        borderBottomColor: colors.diagnosticWarning
       }
     }
   }, { dark })

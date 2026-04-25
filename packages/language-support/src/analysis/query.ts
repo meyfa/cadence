@@ -50,6 +50,35 @@ export function findDefinitionBindingAt (model: Model, tree: Tree, document: Tex
     : undefined
 }
 
+export function findUnusedAssignmentBindings (model: Model, tree: Tree, document: TextLike): readonly Binding[] {
+  const usedBindings = new Set<string>()
+  const cursor = tree.cursor()
+
+  const walk = (): void => {
+    if (isIdentifierKind(cursor.type.name)) {
+      const occurrence = findSemanticOccurrenceAt(tree, document, cursor.from)
+      const binding = occurrence == null ? undefined : resolveDefinitionBinding(model, occurrence, document)
+
+      if (occurrence != null && binding?.kind === 'assignment' && !sameRange(binding.range, occurrence.range)) {
+        usedBindings.add(binding.id)
+      }
+    }
+
+    if (cursor.firstChild()) {
+      do {
+        walk()
+      } while (cursor.nextSibling())
+      cursor.parent()
+    }
+  }
+
+  walk()
+
+  return model.bindings.filter((binding) => {
+    return binding.kind === 'assignment' && !usedBindings.has(binding.id)
+  })
+}
+
 function findSemanticOccurrenceAt (tree: Tree, document: TextLike, position: number): SemanticOccurrence | undefined {
   const node = findIdentifierNodeAt(tree, position)
   if (node != null) {
