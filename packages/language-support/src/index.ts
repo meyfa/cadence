@@ -2,13 +2,16 @@
 export type * from './types.js'
 export { cadenceLanguageSupport } from './language-support.js'
 
+export type { SemanticOperation } from './operations.js'
+export { applySemanticOperation, applySemanticOperationWithParser } from './operations.js'
+
 // "go to definition" feature
-export { goToDefinitionInTree, goToDefinitionWithParser } from './go-to-definition/operation.js'
+export { goToDefinition } from './go-to-definition/operation.js'
 export { goToDefinitionExtension } from './go-to-definition/extension.js'
 
 // "highlight occurrences" feature
-export { findHighlightedOccurrencesInTree, findHighlightedOccurrencesWithParser } from './highlight-occurrences/operation.js'
+export { findHighlightedOccurrences } from './highlight-occurrences/operation.js'
 export { highlightOccurrencesExtension } from './highlight-occurrences/extension.js'
 
 // "unused variable" diagnostics
-export { findUnusedVariablesInTree, findUnusedVariablesWithParser } from './unused-variable/operation.js'
+export { findUnusedVariables } from './unused-variable/operation.js'

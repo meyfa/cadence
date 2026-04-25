@@ -5,9 +5,9 @@ import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
 import { analyzeTree } from '../../src/analysis/model.js'
 import { findDefinitionBindingAt } from '../../src/analysis/query.js'
-import { getRangeAt } from '../helpers.js'
-import type { TextLike } from '../../src/analysis/text.js'
 import { textFromString } from '../../src/analysis/text.js'
+import type { TextLike } from '../../src/types.js'
+import { getRangeAt } from '../helpers.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar)

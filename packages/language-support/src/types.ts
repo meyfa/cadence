@@ -10,3 +10,14 @@ export interface LanguageDiagnostic {
   readonly message: string
   readonly range: SourceRange
 }
+
+export interface TextLine {
+  readonly from: number
+  readonly number: number
+}
+
+export interface TextLike {
+  readonly length: number
+  readonly sliceString: (from: number, to?: number) => string
+  readonly lineAt: (position: number) => TextLine
+}

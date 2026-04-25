@@ -1,8 +1,7 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
-import type { SourceRange } from '../types.js'
+import type { SourceRange, TextLike } from '../types.js'
 import type { Binding, BindingKind, Model } from './model.js'
 import { scopeKey } from './model.js'
-import type { TextLike } from './text.js'
 import { toSourceRange } from './text.js'
 
 export type IdentifierKind = typeof IDENTIFIER_KINDS[number]

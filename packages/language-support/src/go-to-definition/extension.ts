@@ -4,8 +4,9 @@ import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 import { findIdentifierRangeAt, sameRange } from '../analysis/query.js'
+import { applySemanticOperation } from '../operations.js'
 import type { SourceRange } from '../types.js'
-import { goToDefinitionInTree } from './operation.js'
+import { goToDefinition } from './operation.js'
 
 function isApplePlatform (): boolean {
   const userAgent = navigator.userAgent.toLowerCase()
@@ -138,7 +139,7 @@ class GoToDefinitionInteractionsPlugin {
           return { hoverRange: undefined, underlineRange: undefined }
         }
 
-        const target = goToDefinitionInTree(tree, view.state.doc, position)
+        const target = applySemanticOperation(goToDefinition, tree, view.state.doc, position)
         const underlineRange = target == null ? undefined : hoverRange
 
         return { hoverRange, underlineRange }
@@ -211,7 +212,7 @@ class GoToDefinitionInteractionsPlugin {
       return
     }
 
-    const target = goToDefinitionInTree(tree, this.view.state.doc, position)
+    const target = applySemanticOperation(goToDefinition, tree, this.view.state.doc, position)
     if (target == null) {
       return
     }
@@ -219,7 +220,7 @@ class GoToDefinitionInteractionsPlugin {
     event.preventDefault()
     event.stopPropagation()
 
-    const selection = EditorSelection.single(target.range.offset)
+    const selection = EditorSelection.single(target.offset)
     this.view.dispatch({ selection, scrollIntoView: true })
     this.view.focus()
   }
@@ -252,7 +253,7 @@ class GoToDefinitionInteractionsPlugin {
 
     // Only underline identifiers that actually resolve.
     const tree = syntaxTree(this.view.state)
-    const target = goToDefinitionInTree(tree, this.view.state.doc, position)
+    const target = applySemanticOperation(goToDefinition, tree, this.view.state.doc, position)
     if (target == null) {
       this.scheduleHoverDispatch(undefined)
       return

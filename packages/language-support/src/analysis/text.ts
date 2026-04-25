@@ -1,15 +1,4 @@
-import type { SourceRange } from '../types.js'
-
-export interface TextLine {
-  readonly from: number
-  readonly number: number
-}
-
-export interface TextLike {
-  readonly length: number
-  readonly sliceString: (from: number, to?: number) => string
-  readonly lineAt: (position: number) => TextLine
-}
+import type { SourceRange, TextLike } from '../types.js'
 
 export function textFromString (source: string): TextLike {
   const lineStarts = getLineStarts(source)

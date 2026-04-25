@@ -1,7 +1,6 @@
 import type { Tree, TreeCursor } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
-import type { SourceRange } from '../types.js'
-import type { TextLike } from './text.js'
+import type { SourceRange, TextLike } from '../types.js'
 import { textFromString, toSourceRange } from './text.js'
 
 export type ScopeKind = 'root' | 'track' | 'mixer'

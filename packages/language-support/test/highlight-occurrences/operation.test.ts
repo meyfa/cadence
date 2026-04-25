@@ -2,7 +2,8 @@ import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { findHighlightedOccurrencesWithParser } from '../../src/highlight-occurrences/operation.js'
+import { findHighlightedOccurrences } from '../../src/highlight-occurrences/operation.js'
+import { applySemanticOperationWithParser } from '../../src/operations.js'
 import { getRangeAt } from '../helpers.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
@@ -23,11 +24,14 @@ describe('highlight-occurrences/operation.ts', () => {
 
     const position = source.lastIndexOf('foo <<') + 1
 
-    assert.deepStrictEqual(findHighlightedOccurrencesWithParser(cadenceParser, source, position), [
-      getRangeAt(source, source.indexOf('foo ='), 'foo'.length),
-      getRangeAt(source, source.indexOf('foo', source.indexOf('bar =')), 'foo'.length),
-      getRangeAt(source, source.lastIndexOf('foo <<'), 'foo'.length)
-    ])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('foo ='), 'foo'.length),
+        getRangeAt(source, source.indexOf('foo', source.indexOf('bar =')), 'foo'.length),
+        getRangeAt(source, source.lastIndexOf('foo <<'), 'foo'.length)
+      ]
+    )
   })
 
   it('normalizes member access references to the root identifier range', () => {
@@ -43,10 +47,13 @@ describe('highlight-occurrences/operation.ts', () => {
 
     const position = source.indexOf('synth.gain') + 'synth.'.length + 1
 
-    assert.deepStrictEqual(findHighlightedOccurrencesWithParser(cadenceParser, source, position), [
-      getRangeAt(source, source.indexOf('synth ='), 'synth'.length),
-      getRangeAt(source, source.indexOf('synth.gain'), 'synth'.length)
-    ])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('synth ='), 'synth'.length),
+        getRangeAt(source, source.indexOf('synth.gain'), 'synth'.length)
+      ]
+    )
   })
 
   it('does not highlight named argument keys', () => {
@@ -58,7 +65,10 @@ describe('highlight-occurrences/operation.ts', () => {
 
     const position = source.indexOf('tempo:') + 1
 
-    assert.deepStrictEqual(findHighlightedOccurrencesWithParser(cadenceParser, source, position), [])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      []
+    )
   })
 
   it('returns the definition when no other references exist', () => {
@@ -69,8 +79,11 @@ describe('highlight-occurrences/operation.ts', () => {
 
     const position = source.indexOf('lead =') + 1
 
-    assert.deepStrictEqual(findHighlightedOccurrencesWithParser(cadenceParser, source, position), [
-      getRangeAt(source, source.indexOf('lead ='), 'lead'.length)
-    ])
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('lead ='), 'lead'.length)
+      ]
+    )
   })
 })

@@ -2,7 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import { EditorSelection } from '@codemirror/state'
 import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@editor'
 import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@editor'
-import { goToDefinitionInTree } from '@language-support'
+import { applySemanticOperation, goToDefinition } from '@language-support'
 import type { FunctionComponent } from 'react'
 import { useMemo } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
@@ -137,13 +137,13 @@ const GlobalHooks: FunctionComponent = () => {
 
       const tree = syntaxTree(view.state)
       const caret = view.state.selection.main.head
-      const target = goToDefinitionInTree(tree, view.state.doc, caret)
+      const target = applySemanticOperation(goToDefinition, tree, view.state.doc, caret)
       if (target == null) {
         view.focus()
         return
       }
 
-      const selection = EditorSelection.single(target.range.offset)
+      const selection = EditorSelection.single(target.offset)
       view.dispatch({ selection, scrollIntoView: true })
       view.focus()
     }
