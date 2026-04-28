@@ -18,7 +18,7 @@ export function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transpo
   const instances = createInstances(graph, transport, fetcher)
   const promises = Array.from(instances.values(), (item) => item.loaded)
 
-  setupRoutings(graph, instances, transport.output)
+  setupRoutings(graph, instances, transport.input)
   scheduleNoteEvents(graph, instances)
 
   return {

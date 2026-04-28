@@ -11,9 +11,11 @@ const length = 1024
 
 function createTestTransport () {
   const ctx = new OfflineAudioContext({ sampleRate, length, numberOfChannels: 2 })
+  const output = ctx.createGain()
   const transport: Transport = {
     ctx,
-    output: ctx.createGain(),
+    input: output,
+    output,
     schedule: (_time, onSchedule) => onSchedule(0)
   }
 
@@ -70,9 +72,11 @@ async function renderDelay (options: {
   const renderLength = delaySamples + 256
 
   const ctx = new OfflineAudioContext({ sampleRate, length: renderLength, numberOfChannels: 1 })
+  const output = ctx.createGain()
   const transport: Transport = {
     ctx,
-    output: ctx.createGain(),
+    input: output,
+    output,
     schedule: (_time, onSchedule) => onSchedule(0)
   }
 

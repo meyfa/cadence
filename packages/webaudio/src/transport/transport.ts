@@ -12,6 +12,7 @@ export interface OfflineTransportOptions {
 
 export interface Transport {
   readonly ctx: BaseAudioContext
+  readonly input: AudioNode
   readonly output: GainNode
 
   readonly schedule: (time: number, callback: (time: number) => void) => void
@@ -47,7 +48,15 @@ export function createOnlineTransport (): OnlineTransport {
     void ctx.suspend()
   }
 
+  // Hard limit the output before applying output gain, as otherwise
+  // users could apply positive gain to the input (producing a signal >1)
+  // and therefore circumvent the output gain.
+  const input = ctx.createWaveShaper()
+  input.curve = new Float32Array([-1, 0, 1])
+  disposeStack.push(() => input.disconnect())
+
   const output = ctx.createGain()
+  input.connect(output)
   output.connect(ctx.destination)
   disposeStack.push(() => output.disconnect())
 
@@ -82,7 +91,7 @@ export function createOnlineTransport (): OnlineTransport {
       }
 
       try {
-        return await createWorkletTimeTracker(ctx, output, options)
+        return await createWorkletTimeTracker(ctx, input, options)
       } catch {
         return createIntervalTimeTracker(ctx, options)
       }
@@ -100,7 +109,7 @@ export function createOnlineTransport (): OnlineTransport {
     scheduler.schedule(time, callback)
   }
 
-  return { ctx, output, time, start, dispose, schedule }
+  return { ctx, input, output, time, start, dispose, schedule }
 }
 
 export function createOfflineTransport (options: OfflineTransportOptions): OfflineTransport {
@@ -113,7 +122,8 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
     sampleRate: options.sampleRate
   })
 
-  const output = ctx.createGain()
+  const input = ctx.createGain()
+  const output = input
   output.connect(ctx.destination)
   disposeStack.push(() => output.disconnect())
 
@@ -126,7 +136,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
     scheduler.start(0)
 
     try {
-      const tracker = await createWorkletTimeTracker(ctx, output, {
+      const tracker = await createWorkletTimeTracker(ctx, input, {
         updateInterval: TIME_UPDATE_INTERVAL_OFFLINE,
         offsetTime: numeric('s', 0)
       })
@@ -148,5 +158,5 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
     scheduler.schedule(time, callback)
   }
 
-  return { ctx, output, time, render, schedule }
+  return { ctx, input, output, time, render, schedule }
 }
