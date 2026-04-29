@@ -58,7 +58,7 @@
     "@emotion/styled": "11.14.1",
     "@headlessui/react": "2.2.10",
     "@lezer/highlight": "1.2.3",
-    "@lezer/lr": "1.4.8",
+    "@lezer/lr": "1.4.10",
     "@mui/icons-material": "9.0.0",
     "@mui/material": "9.0.0",
     "clsx": "2.1.1",
