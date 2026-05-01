@@ -152,6 +152,11 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
       return findFirstGlobalBinding(model, name)
   }
 
+  const explicitBusBinding = resolveExplicitBusBinding(model, occurrence, document)
+  if (explicitBusBinding != null) {
+    return explicitBusBinding
+  }
+
   const root = findAccessChainRootBefore(document, occurrence.range.offset)
   if (root != null) {
     const rootName = document.sliceString(root.offset, root.offset + root.length)
@@ -222,6 +227,14 @@ function getReferenceRangeForBindingOccurrence (
     return undefined
   }
 
+  const explicitBusRange = findExplicitBusBindingRange(document, occurrence.range.offset)
+  if (binding.kind === 'bus' && explicitBusRange != null) {
+    const busName = document.sliceString(explicitBusRange.offset, explicitBusRange.offset + explicitBusRange.length)
+    if (busName === binding.name) {
+      return explicitBusRange
+    }
+  }
+
   const rootRange = findAccessChainRootBefore(document, occurrence.range.offset)
   if (rootRange != null) {
     const rootName = document.sliceString(rootRange.offset, rootRange.offset + rootRange.length)
@@ -235,13 +248,24 @@ function getReferenceRangeForBindingOccurrence (
 
 type OccurrenceVisitor = (occurrence: SemanticOccurrence, binding: Binding) => void
 
+function resolveExplicitBusBinding (model: Model, occurrence: SemanticOccurrence, document: TextLike): Binding | undefined {
+  const explicitBusRange = findExplicitBusBindingRange(document, occurrence.range.offset)
+  if (explicitBusRange == null) {
+    return undefined
+  }
+
+  const busName = document.sliceString(explicitBusRange.offset, explicitBusRange.offset + explicitBusRange.length)
+  return findBindingByPriority(model.bindingsByName.get(busName), ['bus'], busName)
+}
+
 function walkResolvedIdentifierBindings (model: Model, tree: Tree, document: TextLike, visitor: OccurrenceVisitor): void {
   const enter = (node: SyntaxNode) => {
     if (!isIdentifierKind(node.type.name)) {
       return
     }
 
-    const occurrence = findSemanticOccurrenceAt(tree, document, node.from)
+    const lookupPosition = node.to - node.from > 1 ? node.from + 1 : node.from
+    const occurrence = findSemanticOccurrenceAt(tree, document, lookupPosition)
     if (occurrence == null) {
       return
     }
@@ -379,6 +403,30 @@ function findAccessChainRootBefore (document: TextLike, memberFrom: number): Sou
   return root
 }
 
+function findExplicitBusBindingRange (document: TextLike, memberFrom: number): SourceRange | undefined {
+  const root = findAccessChainRootBefore(document, memberFrom)
+  if (root == null) {
+    return undefined
+  }
+
+  const rootName = document.sliceString(root.offset, root.offset + root.length)
+  if (rootName !== 'bus') {
+    return undefined
+  }
+
+  return findAccessChainFirstMemberAfter(document, root)
+}
+
+function findAccessChainFirstMemberAfter (document: TextLike, root: SourceRange): SourceRange | undefined {
+  const dot = charAfterNonWhitespace(document, root.offset + root.length)
+  if (dot == null || dot.char !== '.') {
+    return undefined
+  }
+
+  const memberStart = skipWhitespaceRight(document, dot.index + 1)
+  return getWordRangeAt(document, memberStart)
+}
+
 function charAt (document: TextLike, index: number): string {
   return index >= 0 && index < document.length ? document.sliceString(index, index + 1) : ''
 }
@@ -397,11 +445,32 @@ function skipWhitespaceLeft (document: TextLike, position: number): number {
   return 0
 }
 
+function skipWhitespaceRight (document: TextLike, position: number): number {
+  for (let pos = position; pos < document.length; ++pos) {
+    if (!isWhitespace(charAt(document, pos))) {
+      return pos
+    }
+  }
+
+  return document.length
+}
+
 function charBeforeNonWhitespace (document: TextLike, position: number): { readonly index: number, readonly char: string } | undefined {
   for (let pos = position; pos > 0; --pos) {
     const char = charAt(document, pos - 1)
     if (!isWhitespace(char)) {
       return { index: pos - 1, char }
+    }
+  }
+
+  return undefined
+}
+
+function charAfterNonWhitespace (document: TextLike, position: number): { readonly index: number, readonly char: string } | undefined {
+  for (let pos = position; pos < document.length; ++pos) {
+    const char = charAt(document, pos)
+    if (!isWhitespace(char)) {
+      return { index: pos, char }
     }
   }
 

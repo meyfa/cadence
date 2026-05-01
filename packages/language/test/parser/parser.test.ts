@@ -195,6 +195,41 @@ describe('parser/parser.ts', () => {
     })
   })
 
+  it('should parse explicit bus parameter access', () => {
+    const result = parse(makeTokens([
+      { name: 'word', text: 'target' },
+      { name: '=' },
+      { name: 'word', text: 'bus' },
+      { name: '.' },
+      { name: 'word', text: 'main' },
+      { name: '.' },
+      { name: 'word', text: 'gain' }
+    ]))
+
+    assert.deepStrictEqual(stripRanges(result), {
+      complete: true,
+      value: {
+        type: 'Program',
+        imports: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'target' },
+            value: {
+              type: 'PropertyAccess',
+              object: {
+                type: 'PropertyAccess',
+                object: { type: 'Identifier', name: 'bus' },
+                property: { type: 'Identifier', name: 'main' }
+              },
+              property: { type: 'Identifier', name: 'gain' }
+            }
+          }
+        ]
+      }
+    })
+  })
+
   it('should parse string literals with escapes and interpolations', () => {
     const result = parse(makeTokens([
       { name: 'word', text: 'foo' },

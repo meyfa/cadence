@@ -125,7 +125,7 @@ export interface Bus {
   readonly id: BusId
   readonly name: string
   readonly pan?: Numeric<undefined>
-  readonly gain?: Numeric<'db'>
+  readonly gain: Parameter<'db'>
   readonly effects: readonly Effect[]
 }
 
@@ -140,7 +140,7 @@ export type Effect =
 
 export interface GainEffect {
   readonly type: 'gain'
-  readonly gain: Numeric<'db'>
+  readonly gain: Parameter<'db'>
 }
 
 export interface PanEffect {

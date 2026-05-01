@@ -14,7 +14,7 @@ describe('unused-variable/operation.ts', () => {
     const source = [
       'used = sample("/samples/used.wav")',
       'unused = sample("/samples/unused.wav")',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    used << [x---]',
       '  }',
@@ -36,7 +36,7 @@ describe('unused-variable/operation.ts', () => {
 
   it('does not report parts or buses as unused', () => {
     const source = [
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '  }',
       '}',
@@ -56,7 +56,7 @@ describe('unused-variable/operation.ts', () => {
   it('treats member access roots as references', () => {
     const source = [
       'synth = sample("...")',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as curve [hold(-60.db):3 lin(0.db):1]',
       '  }',
@@ -67,6 +67,32 @@ describe('unused-variable/operation.ts', () => {
     assert.deepStrictEqual(
       applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
       []
+    )
+  })
+
+  it('does not treat explicit bus namespace access as an assignment reference', () => {
+    const source = [
+      'foo = sample("...")',
+      'track (120.bpm) {',
+      '  part intro (4.bars) {',
+      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}',
+      ''
+    ].join('\n')
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      [
+        {
+          name: 'foo',
+          message: 'Unused variable "foo".',
+          range: getRangeAt(source, source.indexOf('foo ='), 'foo'.length)
+        }
+      ]
     )
   })
 })

@@ -190,6 +190,7 @@ export const NumberType = {
 }
 
 export const StringType = makeType<'string', {}, StringValue>('string')
+
 export const PatternType = makeType<'pattern', {}, PatternValue>('pattern')
 
 export const ParameterType = {
@@ -265,5 +266,25 @@ export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instr
 })
 
 export const PartType = makeType<'part', {}, PartValue>('part')
+
 export const EffectType = makeType<'effect', {}, EffectValue>('effect')
-export const BusType = makeType<'bus', {}, BusValue>('bus')
+
+export const BusType = makeType<'bus', {}, BusValue>('bus', undefined, {
+  propertyType (name: string): Type | undefined {
+    switch (name) {
+      case 'gain':
+        return ParameterType.with('db')
+      default:
+        return undefined
+    }
+  },
+
+  propertyValue (value, name: string): AnyValue | undefined {
+    switch (name) {
+      case 'gain':
+        return ParameterType.of(value.data.gain)
+      default:
+        return undefined
+    }
+  }
+})

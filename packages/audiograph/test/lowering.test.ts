@@ -45,6 +45,7 @@ describe('lowering.ts', () => {
     const instrumentId = 100 as InstrumentId
     const instrumentGainId = 200 as ParameterId
     const busId = 300 as BusId
+    const busGainId = 400 as ParameterId
 
     const program: Program = {
       beatsPerBar: 4,
@@ -75,6 +76,10 @@ describe('lowering.ts', () => {
           {
             id: busId,
             name: 'Bus 1',
+            gain: {
+              id: busGainId,
+              initial: numeric('db', -3)
+            },
             effects: []
           } satisfies Bus
         ],
@@ -115,8 +120,12 @@ describe('lowering.ts', () => {
       } satisfies IdentityNode,
       {
         id: 2 as NodeId,
-        type: 'identity'
-      } satisfies IdentityNode,
+        type: 'gain',
+        gain: {
+          initial: numeric(undefined, dbToGain(-3)),
+          points: []
+        }
+      } satisfies GainNode,
       {
         id: 3 as NodeId,
         length: undefined,
@@ -328,6 +337,10 @@ describe('lowering.ts', () => {
             {
               id: 100 as BusId,
               name: 'Bus 1',
+              gain: {
+                id: 400 as ParameterId,
+                initial: numeric('db', 0)
+              },
               effects: [effect]
             }
           ],
@@ -350,7 +363,10 @@ describe('lowering.ts', () => {
     it('should handle gain', () => {
       const graph = createAudioGraph(createProgramWithEffect({
         type: 'gain',
-        gain: numeric('db', -3)
+        gain: {
+          id: 400 as ParameterId,
+          initial: numeric('db', -3)
+        }
       }))
       assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
         id: 2 as NodeId,

@@ -72,7 +72,7 @@ describe('go-to-definition/operation.ts', () => {
       '',
       'synth = sample("...")',
       '',
-      'track {',
+      'track (120.bpm) {',
       '  part p {',
       '    automate synth.gain as curve [hold(-60.db) lin(-60.db, 0.db)]',
       '  }',
@@ -86,6 +86,28 @@ describe('go-to-definition/operation.ts', () => {
     assert.deepStrictEqual(
       applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
       getRangeAt(source, defPos, 'synth'.length)
+    )
+  })
+
+  it('resolves explicit bus namespace access to the bus definition', () => {
+    const source = [
+      'track (120.bpm) {',
+      '  part foo {',
+      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}',
+      ''
+    ].join('\n')
+
+    const defPos = source.indexOf('bus foo') + 'bus '.length
+    const refPos = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 'foo'.length)
     )
   })
 

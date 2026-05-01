@@ -3,11 +3,13 @@ import type { PanelProps } from '@editor'
 import { useNonNullValue } from '@editor'
 import { Flowchart } from '@flowchart'
 import clsx from 'clsx'
-import { useCallback, useMemo, useState, type CSSProperties, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { CSSProperties, FunctionComponent, PropsWithChildren } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Popover } from '../../components/popover/Popover.js'
 import { pluralize } from '../../utilities/format.js'
-import { createMixerFlowchart, type MixerFlowchartOptions, type MixerFlowNode } from './flowchart.js'
+import type { MixerFlowchartOptions, MixerFlowNode } from './flowchart.js'
+import { createMixerFlowchart } from './flowchart.js'
 
 const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   nodeSize: {
@@ -182,9 +184,7 @@ const BusNodeInfo: FunctionComponent<{
   return (
     <>
       <div className='font-bold'>bus.{object.name}</div>
-      {object.gain != null && (
-        <div>gain: {object.gain.value.toFixed(2)} {object.gain.unit}</div>
-      )}
+      <div>gain: {object.gain.initial.value.toFixed(2)} {object.gain.initial.unit}</div>
       {object.pan != null && (
         <div>pan: {object.pan.value.toFixed(2)}</div>
       )}
