@@ -14,7 +14,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'foo = sample("/samples/foo.wav")',
       'bar = foo',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    foo << [x---]',
       '  }',
@@ -37,7 +37,7 @@ describe('highlight-occurrences/operation.ts', () => {
   it('normalizes member access references to the root identifier range', () => {
     const source = [
       'synth = sample("...")',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as curve [hold(-60.db):3 lin(0.db):1]',
       '  }',
@@ -52,6 +52,30 @@ describe('highlight-occurrences/operation.ts', () => {
       [
         getRangeAt(source, source.indexOf('synth ='), 'synth'.length),
         getRangeAt(source, source.indexOf('synth.gain'), 'synth'.length)
+      ]
+    )
+  })
+
+  it('normalizes explicit bus namespace references to the bus member range', () => {
+    const source = [
+      'track (120.bpm) {',
+      '  part foo {',
+      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}',
+      ''
+    ].join('\n')
+
+    const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('bus.foo.gain') + 'bus.'.length, 'foo'.length),
+        getRangeAt(source, source.indexOf('bus foo') + 'bus '.length, 'foo'.length)
       ]
     )
   })

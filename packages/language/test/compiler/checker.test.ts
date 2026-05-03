@@ -440,6 +440,70 @@ describe('compiler/checker.ts', () => {
       assert.deepStrictEqual(check(program), [])
     })
 
+    it('should accept bus gain automation via explicit namespace', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [],
+        children: [
+          ast.make('TrackStatement', RANGE, {
+            properties: [],
+            parts: [
+              ast.make('PartStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'intro' }),
+                properties: [
+                  ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('Number', RANGE, { value: 4 }),
+                    property: ast.make('Identifier', RANGE, { name: 'bars' })
+                  })
+                ],
+                routings: [],
+                automations: [
+                  ast.make('AutomateStatement', RANGE, {
+                    target: ast.make('PropertyAccess', RANGE, {
+                      object: ast.make('PropertyAccess', RANGE, {
+                        object: ast.make('Identifier', RANGE, { name: 'bus' }),
+                        property: ast.make('Identifier', RANGE, { name: 'main' })
+                      }),
+                      property: ast.make('Identifier', RANGE, { name: 'gain' })
+                    }),
+                    curve: ast.make('Curve', RANGE, {
+                      children: [
+                        ast.make('CurveSegment', RANGE, {
+                          curveType: 'lin',
+                          parameters: [
+                            ast.make('PropertyAccess', RANGE, {
+                              object: ast.make('Number', RANGE, { value: -20 }),
+                              property: ast.make('Identifier', RANGE, { name: 'db' })
+                            }),
+                            ast.make('PropertyAccess', RANGE, {
+                              object: ast.make('Number', RANGE, { value: 0 }),
+                              property: ast.make('Identifier', RANGE, { name: 'db' })
+                            })
+                          ]
+                        })
+                      ]
+                    })
+                  })
+                ]
+              })
+            ]
+          }),
+          ast.make('MixerStatement', RANGE, {
+            properties: [],
+            buses: [
+              ast.make('BusStatement', RANGE, {
+                name: ast.make('Identifier', RANGE, { name: 'main' }),
+                properties: [],
+                sources: [],
+                effects: []
+              })
+            ]
+          })
+        ]
+      })
+
+      assert.deepStrictEqual(check(program), [])
+    })
+
     it('should accept curve automation with weighted segments', () => {
       const program = ast.make('Program', RANGE, {
         imports: [

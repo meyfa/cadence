@@ -23,7 +23,7 @@ describe('analysis/query.ts', () => {
   it('resolves assignment bindings from the shared analysis query', () => {
     const source = [
       'kick = sample("/samples/kick.wav")',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    kick << [x---]',
       '  }',
@@ -48,7 +48,7 @@ describe('analysis/query.ts', () => {
     const source = [
       'use "effects" as fx',
       'synth = sample("...")',
-      'track (4.bars) {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as curve [hold(-60.db):3 lin(0.db):1]',
       '  }',
@@ -67,6 +67,32 @@ describe('analysis/query.ts', () => {
 
     const synthOffset = source.indexOf('synth =')
     assert.deepStrictEqual(binding.range, getRangeAt(source, synthOffset, 'synth'.length))
+  })
+
+  it('resolves explicit bus namespace access to the bus binding', () => {
+    const source = [
+      'track (120.bpm) {',
+      '  part foo (4.bars) {',
+      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}',
+      ''
+    ].join('\n')
+
+    const { tree, document } = parseDocument(source)
+    const model = analyzeTree(tree, document)
+    const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
+    const binding = findDefinitionBindingAt(model, tree, document, position)
+
+    assert.ok(binding)
+    assert.strictEqual(binding.kind, 'bus')
+    assert.strictEqual(binding.name, 'foo')
+
+    const busOffset = source.indexOf('bus foo') + 'bus '.length
+    assert.deepStrictEqual(binding.range, getRangeAt(source, busOffset, 'foo'.length))
   })
 
   it('does not resolve named argument keys', () => {

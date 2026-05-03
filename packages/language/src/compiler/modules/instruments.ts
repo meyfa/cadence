@@ -1,34 +1,10 @@
-import type { Instrument, InstrumentId, Parameter, ParameterId } from '@core'
 import { isPitch } from '@core'
-import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
-import type { FunctionContext } from '../functions.js'
-import type { InstrumentValue, Value } from '../types.js'
+import { allocateInstrument, allocateParameter } from '../functions.js'
+import type { Value } from '../types.js'
 import { FunctionType, InstrumentType, ModuleType, NumberType, StringType } from '../types.js'
 
 const UNITY_GAIN = numeric('db', 0)
-
-function allocateInstrument (context: FunctionContext, data: Omit<Instrument, 'id'>): InstrumentValue {
-  const currentMaxId = Math.max(0, ...Array.from(context.instruments.keys()))
-  const id = (currentMaxId + 1) as InstrumentId
-
-  const instrument = InstrumentType.of({ ...data, id })
-  context.instruments.set(instrument.data.id, instrument.data)
-
-  return instrument
-}
-
-function allocateParameter<U extends Unit> (context: FunctionContext, initial: Numeric<U>): Parameter<U> {
-  const currentMaxId = Math.max(0, ...Array.from(context.automations.keys()))
-  const id = (currentMaxId + 1) as ParameterId
-
-  context.automations.set(id, {
-    parameterId: id,
-    points: []
-  })
-
-  return { id, initial }
-}
 
 const sample = FunctionType.of({
   arguments: [

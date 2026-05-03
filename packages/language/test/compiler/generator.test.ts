@@ -761,6 +761,79 @@ describe('compiler/generator.ts', () => {
     ])
   })
 
+  it('should automate bus gain via explicit namespace', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          parts: [
+            ast.make('PartStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              properties: [
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 4 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
+              ],
+              routings: [],
+              automations: [
+                ast.make('AutomateStatement', RANGE, {
+                  target: ast.make('PropertyAccess', RANGE, {
+                    object: ast.make('PropertyAccess', RANGE, {
+                      object: ast.make('Identifier', RANGE, { name: 'bus' }),
+                      property: ast.make('Identifier', RANGE, { name: 'main' })
+                    }),
+                    property: ast.make('Identifier', RANGE, { name: 'gain' })
+                  }),
+                  curve: ast.make('Curve', RANGE, {
+                    children: [
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'lin',
+                        parameters: [
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: -20 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          }),
+                          ast.make('PropertyAccess', RANGE, {
+                            object: ast.make('Number', RANGE, { value: 0 }),
+                            property: ast.make('Identifier', RANGE, { name: 'db' })
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                })
+              ]
+            })
+          ]
+        }),
+        ast.make('MixerStatement', RANGE, {
+          properties: [],
+          buses: [
+            ast.make('BusStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'main' }),
+              properties: [],
+              sources: [],
+              effects: []
+            })
+          ]
+        })
+      ]
+    })
+
+    const result = generate(program, OPTIONS)
+
+    assert.strictEqual(result.automations.size, 1)
+    const busGain = result.mixer.buses[0].gain
+    const automation = result.automations.get(busGain.id)
+    assert.ok(automation)
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('db', -20), curve: 'step' },
+      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+    ])
+  })
+
   it('should support buses as sources in mixer', () => {
     const program = ast.make('Program', RANGE, {
       imports: [],

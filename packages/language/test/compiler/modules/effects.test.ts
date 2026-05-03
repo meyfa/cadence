@@ -31,7 +31,10 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'gain',
-        gain: numeric('db', -6)
+        gain: {
+          id: 1,
+          initial: numeric('db', -6)
+        }
       })
     })
   })
@@ -117,6 +120,7 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'delay',
+        mix: undefined,
         time: beats(0.5),
         feedback: numeric(undefined, 0.3)
       })
@@ -131,6 +135,7 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'delay',
+        mix: undefined,
         time: seconds(1.5),
         feedback: numeric(undefined, 0.3)
       })

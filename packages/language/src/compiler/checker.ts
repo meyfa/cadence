@@ -16,19 +16,30 @@ export function check (program: ast.Program): readonly CompileError[] {
     return importResult.errors
   }
 
-  const top = createGlobalScope(importResult.result)
-
-  const context = createLocalScope(top)
-
   const assignments = program.children.filter((c) => c.type === 'Assignment')
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  const errors = [
-    ...checkAssignments(context, assignments),
-    ...checkTracks(context, tracks),
-    ...checkMixers(context, mixers)
-  ]
+  const top = createGlobalScope({
+    resolutions: importResult.result,
+    buses: new Map()
+  })
+
+  const context = createLocalScope(top)
+
+  const errors: CompileError[] = []
+
+  errors.push(...checkAssignments(context, assignments))
+
+  // Check mixers before tracks so that tracks can reference buses defined in the mixer
+  errors.push(...checkMixers(context, mixers))
+  for (const mixer of mixers) {
+    for (const bus of mixer.buses) {
+      context.buses.set(bus.name.name, BusType)
+    }
+  }
+
+  errors.push(...checkTracks(context, tracks))
 
   return errors
 }
@@ -36,10 +47,12 @@ export function check (program: ast.Program): readonly CompileError[] {
 interface Context {
   readonly parent?: Context
   readonly resolutions: ReadonlyMap<string, Type>
+  readonly buses: ReadonlyMap<string, Type>
 }
 
 interface MutableContext extends Context {
   readonly resolutions: Map<string, Type>
+  readonly buses: Map<string, Type>
 }
 
 interface Checked<TValue> {
@@ -47,16 +60,15 @@ interface Checked<TValue> {
   readonly result?: TValue
 }
 
-function createGlobalScope (initialResolutions: ReadonlyMap<string, Type>): Context {
-  return {
-    resolutions: initialResolutions
-  }
+function createGlobalScope (value: Omit<Context, 'parent'>): Context {
+  return value
 }
 
 function createLocalScope (parent: Context): MutableContext {
   return {
     parent,
-    resolutions: new Map()
+    resolutions: new Map(),
+    buses: new Map()
   }
 }
 
@@ -69,18 +81,26 @@ function ensureStandardModule (moduleName: string): ModuleValue {
   return module
 }
 
-function resolve (context: Context, name: string): Type | undefined {
+function recursiveLookup<T> (context: Context, lookup: (context: Context) => T | undefined): T | undefined {
   let current: Context | undefined = context
 
   while (current != null) {
-    const valueType = current.resolutions.get(name)
-    if (valueType != null) {
-      return valueType
+    const result = lookup(current)
+    if (result != null) {
+      return result
     }
     current = current.parent
   }
 
   return undefined
+}
+
+function resolve (context: Context, name: string): Type | undefined {
+  return recursiveLookup(context, (ctx) => ctx.resolutions.get(name))
+}
+
+function resolveBus (context: Context, name: string): Type | undefined {
+  return recursiveLookup(context, (ctx) => ctx.buses.get(name))
 }
 
 function checkType (options: readonly Type[], actual: Type, range?: SourceRange): readonly CompileError[] {
@@ -304,6 +324,7 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     seenBuses.add(bus.name.name)
 
     mixerContext.resolutions.set(bus.name.name, BusType)
+    mixerContext.buses.set(bus.name.name, BusType)
   }
 
   // Now that all buses are known, we can check the routings
@@ -512,6 +533,15 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
     }
 
     case 'PropertyAccess': {
+      if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
+        const busName = expression.property.name
+        const busType = resolveBus(context, busName)
+        if (busType == null) {
+          return { errors: [new CompileError(`Unknown bus "${busName}"`, expression.property.range)] }
+        }
+        return { errors: [], result: busType }
+      }
+
       const objectCheck = checkExpression(context, expression.object)
       if (objectCheck.result == null) {
         return { errors: objectCheck.errors }

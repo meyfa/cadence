@@ -64,6 +64,7 @@ interpolationExpression {
 
 VariableDefinition { word }
 VariableName { word }
+BusNamespace { kw<"bus"> }
 
 Number { number }
 
@@ -110,7 +111,7 @@ argumentList {
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | Curve | Call | VariableName
+  "(" expression ")" | Number | String | Pattern | Curve | Call | VariableName | BusNamespace
 }
 
 Call {

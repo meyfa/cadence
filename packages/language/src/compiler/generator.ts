@@ -7,6 +7,7 @@ import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
+import { allocateParameter } from './functions.js'
 import { getStandardModule } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import type { CurveValue, PatternValue, StringValue, Type, Value } from './types.js'
@@ -38,16 +39,17 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
 
   processAssignments(context, assignments)
 
+  // Automations in the track may refer to mixer buses, so the mixer must be generated first.
+  const mixer = mixers.length > 0
+    ? generateMixer(context, mixers[0])
+    : { buses: [], routings: [] }
+
   const track = tracks.length > 0
     ? generateTrack(context, tracks[0])
     : {
         tempo: numeric('bpm', options.tempo.default),
         parts: []
       }
-
-  const mixer = mixers.length > 0
-    ? generateMixer(context, mixers[0])
-    : { buses: [], routings: [] }
 
   return {
     beatsPerBar: options.beatsPerBar,
@@ -70,6 +72,7 @@ interface Context {
 interface TopLevelContext extends Context {
   readonly options: GenerateOptions
   readonly instruments: Map<InstrumentId, Instrument>
+  readonly buses: Map<string, Value>
   readonly automations: Map<ParameterId, Automation>
 }
 
@@ -84,6 +87,7 @@ function createGlobalScope (options: GenerateOptions, initialResolutions: Readon
     },
     options,
     instruments: new Map(),
+    buses: new Map(),
     automations: new Map(),
     resolutions: new Map(initialResolutions)
   }
@@ -233,7 +237,9 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
   for (const bus of buses) {
     assert(!mixerContext.resolutions.has(bus.name))
-    mixerContext.resolutions.set(bus.name, BusType.of(bus))
+    const busValue = BusType.of(bus)
+    mixerContext.resolutions.set(bus.name, busValue)
+    context.top.buses.set(bus.name, busValue)
   }
 
   const routings: MixerRouting[] = []
@@ -280,7 +286,12 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
     return EffectType.cast(resolve(context, effect.expression)).data
   })
 
-  return { id, name, ...properties, effects }
+  // Gain must always be allocated even if not explicitly set,
+  // as it could still be automated.
+  const gain = allocateParameter(context.top, properties.gain ?? numeric('db', 0))
+  const pan = properties.pan
+
+  return { id, name, gain, pan, effects }
 }
 
 function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
@@ -353,6 +364,10 @@ function resolve (context: Context, expression: ast.Expression): Value {
     }
 
     case 'PropertyAccess': {
+      if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
+        return nonNull(context.top.buses.get(expression.property.name))
+      }
+
       const object = resolve(context, expression.object)
       const property = expression.property.name
 

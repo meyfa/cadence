@@ -5,7 +5,8 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { ModuleDefinition } from '../../src/compiler/modules.js'
-import { BusType, BusValue, CurveType, type CurveValue, EffectType, type EffectValue, FunctionType, type FunctionValue, InstrumentType, type InstrumentValue, ModuleType, type ModuleValue, NumberType, type NumberValue, ParameterType, type ParameterValue, PartType, PartValue, PatternType, type PatternValue, StringType, type StringValue, type Value, type ValueFor } from '../../src/compiler/types.js'
+import type { BusValue, CurveValue, EffectValue, FunctionValue, InstrumentValue, ModuleValue, NumberValue, ParameterValue, PartValue, PatternValue, StringValue, Value, ValueFor } from '../../src/compiler/types.js'
+import { BusType, CurveType, EffectType, FunctionType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType } from '../../src/compiler/types.js'
 import { expectTypeEquals } from '../test-utils.js'
 
 describe('compiler/types.ts', () => {
@@ -620,6 +621,32 @@ describe('compiler/types.ts', () => {
       assert.strictEqual(BusType.name, 'bus')
       assert.strictEqual(BusType.generics, undefined)
       assert.strictEqual(BusType.format(), 'bus')
+    })
+
+    describe('propertyType()', () => {
+      it('should return property types', () => {
+        const gainType = BusType.propertyType('gain')
+        assert.strictEqual(gainType?.name, 'parameter')
+        assert.deepStrictEqual(gainType.generics, { unit: 'db' })
+      })
+    })
+
+    describe('propertyValue()', () => {
+      it('should return property values', () => {
+        const busValue = BusType.of({
+          id: 1 as any,
+          name: 'main',
+          pan: undefined,
+          gain: {
+            id: 2 as ParameterId,
+            initial: numeric('db', -3)
+          },
+          effects: []
+        })
+
+        const gainValue = BusType.propertyValue(busValue, 'gain')
+        assert.deepStrictEqual(gainValue?.data, busValue.data.gain)
+      })
     })
   })
 

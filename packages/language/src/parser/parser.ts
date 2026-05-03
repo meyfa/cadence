@@ -77,6 +77,11 @@ const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
     : undefined
 })
 
+const busNamespaceRoot_: p.Parser<Token, unknown, ast.Identifier> = p.map(
+  keyword('bus'),
+  (token) => ast.make('Identifier', getSourceRange(token), { name: token.text })
+)
+
 const number_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
   return t.name === 'number'
     ? ast.make('Number', getSourceRange(t), { value: Number.parseFloat(t.text) })
@@ -389,7 +394,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
 
 // Parse an identifier, a property access, or a call; chained as needed.
 const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
-  primary_,
+  p.eitherOr(primary_, busNamespaceRoot_),
   p.many(
     p.eitherOr(
       p.ab(

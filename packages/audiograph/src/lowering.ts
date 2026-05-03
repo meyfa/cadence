@@ -2,8 +2,9 @@ import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Progra
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import { numeric } from '@utility'
 import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
-import { createAudioGraphBuilder, type AudioGraphBuilder } from './builder.js'
-import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
+import type { AudioGraphBuilder } from './builder.js'
+import { createAudioGraphBuilder } from './builder.js'
+import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
 import type { BiquadNode, DelayNode, GainNode, IdentityNode, Node, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
 
@@ -72,7 +73,9 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
     appendEffect({ type: 'pan', pan: bus.pan })
   }
 
-  if (bus.gain != null) {
+  // Optimization: Skip adding a node if gain is 0 and is not automated.
+  // TODO: Make this more generic and move into appendEffect?
+  if (bus.gain.initial.value !== 0 || program.automations.has(bus.gain.id)) {
     appendEffect({ type: 'gain', gain: bus.gain })
   }
 
@@ -121,8 +124,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
   switch (effect.type) {
     case 'gain': {
       return toSubGraph(builder.addNode<GainNode>('gain', {
-        // TODO time variant
-        gain: timeVariant(numeric(undefined, dbToGain(effect.gain.value)), [])
+        gain: toTimeVariant(effect.gain, program, gainTransform)
       }))
     }
 
