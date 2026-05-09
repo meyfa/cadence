@@ -919,6 +919,35 @@ describe('compiler/checker.ts', () => {
       ])
     })
 
+    it('should reject curves with non-numeric parameters', () => {
+      const program = ast.make('Program', RANGE, {
+        imports: [
+          ast.make('UseStatement', RANGE, {
+            library: ast.make('String', RANGE, { parts: ['instruments'] })
+          })
+        ],
+        children: [
+          ast.make('Assignment', RANGE, {
+            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
+            value: ast.make('Curve', RANGE, {
+              children: [
+                ast.make('CurveSegment', RANGE, {
+                  curveType: 'hold',
+                  parameters: [
+                    ast.make('String', RANGE, { parts: ['not a number'] })
+                  ]
+                })
+              ]
+            })
+          })
+        ]
+      })
+
+      assert.deepStrictEqual(check(program), [
+        new CompileError('Expected type number, got string', RANGE)
+      ])
+    })
+
     it('should reject lin curves that omit the start for the first segment', () => {
       const program = ast.make('Program', RANGE, {
         imports: [
@@ -1105,6 +1134,50 @@ describe('compiler/checker.ts', () => {
         new CompileError('Expected type number(db), got number(bpm)', RANGE)
       ])
     })
+  })
+
+  it('should reject automations that target non-parameters', () => {
+    const program = ast.make('Program', RANGE, {
+      imports: [],
+      children: [
+        ast.make('Assignment', RANGE, {
+          key: ast.make('Identifier', RANGE, { name: 'some_value' }),
+          value: ast.make('String', RANGE, { parts: [''] })
+        }),
+        ast.make('TrackStatement', RANGE, {
+          properties: [],
+          parts: [
+            ast.make('PartStatement', RANGE, {
+              name: ast.make('Identifier', RANGE, { name: 'intro' }),
+              properties: [
+                ast.make('PropertyAccess', RANGE, {
+                  object: ast.make('Number', RANGE, { value: 4 }),
+                  property: ast.make('Identifier', RANGE, { name: 'bars' })
+                })
+              ],
+              routings: [],
+              automations: [
+                ast.make('AutomateStatement', RANGE, {
+                  target: ast.make('Identifier', RANGE, { name: 'some_value' }),
+                  curve: ast.make('Curve', RANGE, {
+                    children: [
+                      ast.make('CurveSegment', RANGE, {
+                        curveType: 'hold',
+                        parameters: [ast.make('Number', RANGE, { value: -60 })]
+                      })
+                    ]
+                  })
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    })
+
+    assert.deepStrictEqual(check(program), [
+      new CompileError('Expected type parameter, got string', RANGE)
+    ])
   })
 
   it('should reject duplicate mixer blocks', () => {
