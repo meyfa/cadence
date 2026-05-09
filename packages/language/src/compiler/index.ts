@@ -9,6 +9,9 @@ import { generate, type GenerateOptions } from './generator.js'
 export type CompileOptions = GenerateOptions
 export type CompileResult = Result<Program, CompoundError<CompileError>>
 
+export type { HoverInfo } from './hover.js'
+export { getStandardLibraryHoverInfo } from './hover.js'
+
 /**
  * Compile an AST into a runnable program. This includes semantic analysis followed by
  * synthesis of the program structure.

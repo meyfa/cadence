@@ -5,6 +5,7 @@ import type { InstrumentValue, Type, Value } from './types.js'
 import { InstrumentType } from './types.js'
 
 export interface FunctionDefinition<S extends PropertySchema = PropertySchema, R extends Type = Type> {
+  readonly summary?: string
   readonly arguments: S
   readonly returnType: R
   readonly invoke: FunctionHandler<S>

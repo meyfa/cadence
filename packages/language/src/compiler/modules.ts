@@ -5,6 +5,7 @@ import type { ModuleValue, Value } from './types.js'
 
 export interface ModuleDefinition {
   readonly name: string
+  readonly summary?: string
   readonly exports: ReadonlyMap<string, Value>
 }
 
