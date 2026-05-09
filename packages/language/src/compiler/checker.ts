@@ -280,11 +280,12 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
   const curveCheck = checkExpression(context, automation.curve)
   errors.push(...curveCheck.errors)
 
-  if (targetCheck.result != null && curveCheck.result != null) {
-    const { unit } = ParameterType.detail(targetCheck.result)
-    errors.push(...checkType([CurveType.with(unit)], curveCheck.result, automation.curve.range))
-  } else if (curveCheck.result != null) {
-    errors.push(...checkType([CurveType], curveCheck.result, automation.curve.range))
+  if (curveCheck.result != null) {
+    const curveType = targetCheck.result != null && ParameterType.equals(targetCheck.result)
+      ? CurveType.with(ParameterType.detail(targetCheck.result).unit)
+      : CurveType
+
+    errors.push(...checkType([curveType], curveCheck.result, automation.curve.range))
   }
 
   return errors
@@ -478,19 +479,7 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
       return { errors: [], result: NumberType.with(undefined) }
 
     case 'String': {
-      const errors: CompileError[] = []
-
-      for (const part of expression.parts) {
-        if (typeof part !== 'string') {
-          const partCheck = checkExpression(context, part)
-          if (partCheck.result == null) {
-            return { errors: partCheck.errors }
-          }
-          errors.push(...checkType([StringType], partCheck.result, part.range))
-        }
-      }
-
-      return { errors, result: StringType }
+      return checkString(context, expression)
     }
 
     case 'Pattern': {
@@ -572,6 +561,22 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
+function checkString (context: Context, string: ast.String): Checked<Type> {
+  const errors: CompileError[] = []
+
+  for (const part of string.parts) {
+    if (typeof part !== 'string') {
+      const partCheck = checkExpression(context, part)
+      if (partCheck.result == null) {
+        return { errors: partCheck.errors }
+      }
+      errors.push(...checkType([StringType], partCheck.result, part.range))
+    }
+  }
+
+  return { errors, result: StringType }
+}
+
 function checkPattern (context: Context, pattern: ast.Pattern): Checked<Type> {
   const errors: CompileError[] = []
 
@@ -589,7 +594,7 @@ function checkPattern (context: Context, pattern: ast.Pattern): Checked<Type> {
     }
   }
 
-  return { errors, result: errors.length > 0 ? undefined : PatternType }
+  return { errors, result: PatternType }
 }
 
 function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
@@ -691,8 +696,11 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
     errors.push(...pointCheck.errors)
 
     if (pointCheck.result != null) {
-      errors.push(...checkType([NumberType], pointCheck.result, point.range))
-      units.push(NumberType.detail(pointCheck.result).unit)
+      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
+      errors.push(...typeErrors)
+      if (typeErrors.length === 0) {
+        units.push(NumberType.detail(pointCheck.result).unit)
+      }
     }
   }
 
