@@ -3,6 +3,7 @@ import { numeric } from '@utility'
 import { FunctionType, ModuleType, NumberType, PatternType, Value } from '../types.js'
 
 const loop = FunctionType.of({
+  summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.',
   arguments: [
     { name: 'pattern', type: PatternType, required: true },
     { name: 'times', type: NumberType.with(undefined), required: false }
@@ -33,6 +34,7 @@ const loop = FunctionType.of({
 
 export const patternsModule = ModuleType.of({
   name: 'patterns',
+  summary: 'Functions for creating and manipulating patterns.',
 
   exports: new Map<string, Value>([
     ['loop', loop]

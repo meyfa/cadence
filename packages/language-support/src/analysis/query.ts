@@ -119,7 +119,7 @@ export function findUnusedAssignmentBindings (model: Model, tree: Tree, document
   })
 }
 
-function findSemanticOccurrenceAt (tree: Tree, document: TextLike, position: number): SemanticOccurrence | undefined {
+export function findSemanticOccurrenceAt (tree: Tree, document: TextLike, position: number): SemanticOccurrence | undefined {
   const node = findIdentifierNodeAt(tree, position)
   if (node != null) {
     return {
@@ -374,7 +374,7 @@ function findEnclosingScopeId (
   return undefined
 }
 
-function findAccessChainRootBefore (document: TextLike, memberFrom: number): SourceRange | undefined {
+export function findAccessChainRootBefore (document: TextLike, memberFrom: number): SourceRange | undefined {
   const dot = charBeforeNonWhitespace(document, memberFrom)
   if (dot == null || dot.char !== '.') {
     return undefined

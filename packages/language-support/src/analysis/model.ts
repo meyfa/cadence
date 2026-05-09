@@ -1,4 +1,4 @@
-import type { Tree, TreeCursor } from '@lezer/common'
+import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
 import type { SourceRange, TextLike } from '../types.js'
 import { textFromString, toSourceRange } from './text.js'
@@ -22,12 +22,19 @@ export interface Binding {
   readonly range: SourceRange
 }
 
+export interface ImportStatement {
+  readonly moduleName: string
+  readonly alias?: string
+  readonly aliasRange?: SourceRange
+}
+
 export interface Model {
   readonly rootScopeId: string
   readonly scopes: ReadonlyMap<string, Scope>
   readonly bindings: readonly Binding[]
   readonly bindingsByName: ReadonlyMap<string, readonly Binding[]>
   readonly bindingsByScope: ReadonlyMap<string, readonly Binding[]>
+  readonly imports: readonly ImportStatement[]
 }
 
 interface BindingInput {
@@ -60,6 +67,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
   const bindings: Binding[] = []
   const bindingsByName = new Map<string, Binding[]>()
   const bindingsByScope = new Map<string, Binding[]>()
+  const imports: ImportStatement[] = []
 
   const addBinding = (input: BindingInput): void => {
     const { kind, scopeId, name, range } = input
@@ -95,6 +103,17 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
     let nextAssignmentHasEquals = assignmentHasEquals
 
     switch (typeName) {
+      case 'UseStatement': {
+        const statement = parseUseStatement(document, cursor.node)
+        if (statement != null) {
+          imports.push(statement)
+          if (statement.alias != null && statement.aliasRange != null) {
+            addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
+          }
+        }
+        break
+      }
+
       case 'TrackStatement': {
         const id = scopeKey(typeName, range)
         scopes.set(id, { id, kind: 'track', range, parentId: currentScopeId })
@@ -133,14 +152,6 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 
         break
       }
-
-      case 'UseAlias': {
-        const name = document.sliceString(from, to)
-        if (name !== '*') {
-          addBinding({ kind: 'use-alias', scopeId: currentScopeId, name, range })
-        }
-        break
-      }
     }
 
     if (cursor.firstChild()) {
@@ -153,7 +164,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 
   walk(cursor, undefined, rootScopeId, undefined, undefined, false)
 
-  return { rootScopeId, scopes, bindings, bindingsByName, bindingsByScope }
+  return { rootScopeId, scopes, bindings, bindingsByName, bindingsByScope, imports }
 }
 
 export function analyzeSourceWithParser (parser: LRParser, source: string): Model {
@@ -198,4 +209,45 @@ function getDefinitionBinding (context: DefinitionBindingContext): Omit<BindingI
   }
 
   return undefined
+}
+
+function parseUseStatement (document: TextLike, node: SyntaxNode): ImportStatement | undefined {
+  let moduleName: string | undefined
+  let alias: string | undefined
+  let aliasRange: SourceRange | undefined
+
+  const cursor = node.cursor()
+
+  if (cursor.firstChild()) {
+    do {
+      switch (cursor.type.name) {
+        case 'String':
+          moduleName ??= parseStringLiteral(document.sliceString(cursor.from, cursor.to))
+          break
+        case 'UseAlias':
+          alias ??= document.sliceString(cursor.from, cursor.to)
+          aliasRange ??= toSourceRange(document, cursor.from, cursor.to)
+          break
+      }
+    } while (cursor.nextSibling())
+  }
+
+  if (moduleName == null || alias == null) {
+    return undefined
+  }
+
+  return {
+    moduleName,
+    alias: alias === '*' ? undefined : alias,
+    aliasRange
+  }
+}
+
+function parseStringLiteral (text: string): string | undefined {
+  try {
+    const value = JSON.parse(text)
+    return typeof value === 'string' ? value : undefined
+  } catch {
+    return undefined
+  }
 }

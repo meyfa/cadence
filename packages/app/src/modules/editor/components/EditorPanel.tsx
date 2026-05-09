@@ -5,7 +5,7 @@ import type { EditorLocation, PanelProps, Problem } from '@editor'
 import { Editor, getProjectFileContent, setProjectFileContent, useProjectSource, useProjectSourceDispatch, useProvideProblems } from '@editor'
 import type { RangeError } from '@language'
 import type { LanguageDiagnostic, SourceRange } from '@language-support'
-import { applySemanticOperation, cadenceLanguageSupport, findUnusedVariables, goToDefinitionExtension, highlightOccurrencesExtension } from '@language-support'
+import { applySemanticOperation, cadenceLanguageSupport, findUnusedVariables, goToDefinitionExtension, highlightOccurrencesExtension, hoverInfoExtension } from '@language-support'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'
@@ -19,7 +19,8 @@ const indent = '  ' // 2 spaces
 const extensions = [
   cadenceLanguageSupport(),
   highlightOccurrencesExtension(),
-  goToDefinitionExtension()
+  goToDefinitionExtension(),
+  hoverInfoExtension()
 ]
 
 function getCompilerDiagnostics (filePath: string, errors: readonly RangeError[]): readonly Diagnostic[] {

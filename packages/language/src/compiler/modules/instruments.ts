@@ -7,6 +7,7 @@ import { FunctionType, InstrumentType, ModuleType, NumberType, StringType } from
 const UNITY_GAIN = numeric('db', 0)
 
 const sample = FunctionType.of({
+  summary: 'Creates a sample-backed instrument from a URL.',
   arguments: [
     { name: 'url', type: StringType, required: true },
     { name: 'gain', type: NumberType.with('db'), required: false },
@@ -32,6 +33,7 @@ const sample = FunctionType.of({
 
 export const instrumentsModule = ModuleType.of({
   name: 'instruments',
+  summary: 'Functions for creating and manipulating instruments.',
 
   exports: new Map<string, Value>([
     ['sample', sample]

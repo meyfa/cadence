@@ -13,5 +13,10 @@ export { goToDefinitionExtension } from './go-to-definition/extension.js'
 export { findHighlightedOccurrences } from './highlight-occurrences/operation.js'
 export { highlightOccurrencesExtension } from './highlight-occurrences/extension.js'
 
+// "hover info" feature
+export type { HoverInfoWithRange } from './hover/operation.js'
+export { getHoverInfo } from './hover/operation.js'
+export { hoverInfoExtension } from './hover/extension.js'
+
 // "unused variable" diagnostics
 export { findUnusedVariables } from './unused-variable/operation.js'
