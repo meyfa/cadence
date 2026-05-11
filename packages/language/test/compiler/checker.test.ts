@@ -1028,7 +1028,7 @@ describe('compiler/checker.ts', () => {
       ]
     })
     assert.deepStrictEqual(check(program), [
-      new CompileError('Cyclic routing: bus1 -> bus3 -> bus2 -> bus1', RANGE)
+      new CompileError('Cyclic routing: bus1 -> bus2 -> bus3 -> bus1', RANGE)
     ])
   })
 
