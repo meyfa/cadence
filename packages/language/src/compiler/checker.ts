@@ -476,89 +476,36 @@ function checkCyclicRoutings (buses: readonly ast.BusStatement[]): readonly Comp
 function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
     case 'Number':
-      return { errors: [], result: NumberType.with(undefined) }
+      return checkNumber(context, expression)
 
-    case 'String': {
+    case 'String':
       return checkString(context, expression)
-    }
 
-    case 'Pattern': {
+    case 'Pattern':
       return checkPattern(context, expression)
-    }
 
-    case 'Curve': {
+    case 'Curve':
       return checkCurve(context, expression)
-    }
 
-    case 'Identifier': {
-      const valueType = resolve(context, expression.name)
-      if (valueType == null) {
-        return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.range)] }
-      }
-      return { errors: [], result: valueType }
-    }
+    case 'Identifier':
+      return checkIdentifier(context, expression)
 
-    case 'UnaryExpression': {
-      const argumentCheck = checkExpression(context, expression.argument)
+    case 'UnaryExpression':
+      return checkUnaryExpression(context, expression)
 
-      if (argumentCheck.result == null) {
-        return { errors: argumentCheck.errors }
-      }
+    case 'BinaryExpression':
+      return checkBinaryExpression(context, expression)
 
-      return checkUnaryExpression(expression.operator, argumentCheck.result, expression.range)
-    }
+    case 'PropertyAccess':
+      return checkPropertyAccess(context, expression)
 
-    case 'BinaryExpression': {
-      const leftCheck = checkExpression(context, expression.left)
-      const rightCheck = checkExpression(context, expression.right)
-
-      const errors = [...leftCheck.errors, ...rightCheck.errors]
-
-      if (leftCheck.result == null || rightCheck.result == null) {
-        return { errors }
-      }
-
-      return checkBinaryExpression(expression.operator, leftCheck.result, rightCheck.result, expression.range)
-    }
-
-    case 'PropertyAccess': {
-      if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-        const busName = expression.property.name
-        const busType = resolveBus(context, busName)
-        if (busType == null) {
-          return { errors: [new CompileError(`Unknown bus "${busName}"`, expression.property.range)] }
-        }
-        return { errors: [], result: busType }
-      }
-
-      const objectCheck = checkExpression(context, expression.object)
-      if (objectCheck.result == null) {
-        return { errors: objectCheck.errors }
-      }
-
-      return checkPropertyAccess(objectCheck.result, expression.property, expression.range)
-    }
-
-    case 'Call': {
-      const calleeCheck = checkExpression(context, expression.callee)
-      if (calleeCheck.result == null) {
-        return { errors: calleeCheck.errors }
-      }
-
-      const callee = calleeCheck.result
-      if (!FunctionType.equals(calleeCheck.result)) {
-        return { errors: [new CompileError(`Cannot call value of type ${callee.format()}`, expression.range)] }
-      }
-
-      const { schema, returnType } = FunctionType.detail(callee)
-      if (schema == null || returnType == null) {
-        return { errors: [new CompileError(`Function is missing type information`, expression.range)] }
-      }
-
-      const { errors } = checkArgumentList(context, expression.arguments, schema, expression.range)
-      return { errors, result: returnType }
-    }
+    case 'Call':
+      return checkCall(context, expression)
   }
+}
+
+function checkNumber (context: Context, number: ast.Number): Checked<Type> {
+  return { errors: [], result: NumberType.with(undefined) }
 }
 
 function checkString (context: Context, string: ast.String): Checked<Type> {
@@ -718,7 +665,25 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
   return { errors, result: firstUnit }
 }
 
-function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, range: SourceRange): Checked<Type> {
+function checkIdentifier (context: Context, identifier: ast.Identifier): Checked<Type> {
+  const valueType = resolve(context, identifier.name)
+  if (valueType == null) {
+    return { errors: [new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)] }
+  }
+
+  return { errors: [], result: valueType }
+}
+
+function checkUnaryExpression (context: Context, expression: ast.UnaryExpression): Checked<Type> {
+  const argumentCheck = checkExpression(context, expression.argument)
+
+  if (argumentCheck.result == null) {
+    return { errors: argumentCheck.errors }
+  }
+
+  const { range, operator } = expression
+  const argument = argumentCheck.result
+
   if (!NumberType.equals(argument)) {
     return { errors: [new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range)] }
   }
@@ -731,7 +696,20 @@ function checkUnaryExpression (operator: ast.UnaryOperator, argument: Type, rang
   }
 }
 
-function checkBinaryExpression (operator: ast.BinaryOperator, left: Type, right: Type, range: SourceRange): Checked<Type> {
+function checkBinaryExpression (context: Context, expression: ast.BinaryExpression): Checked<Type> {
+  const leftCheck = checkExpression(context, expression.left)
+  const rightCheck = checkExpression(context, expression.right)
+
+  const errors = [...leftCheck.errors, ...rightCheck.errors]
+
+  if (leftCheck.result == null || rightCheck.result == null) {
+    return { errors }
+  }
+
+  const { range, operator } = expression
+  const left = leftCheck.result
+  const right = rightCheck.result
+
   switch (operator) {
     case '+':
       return checkPlus(left, right, range)
@@ -806,7 +784,25 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
   return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkPropertyAccess (object: Type, property: ast.Identifier, range: SourceRange): Checked<Type> {
+function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<Type> {
+  // Special case: "bus" namespace
+  if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
+    const busName = expression.property.name
+    const busType = resolveBus(context, busName)
+    if (busType == null) {
+      return { errors: [new CompileError(`Unknown bus "${busName}"`, expression.property.range)] }
+    }
+    return { errors: [], result: busType }
+  }
+
+  const objectCheck = checkExpression(context, expression.object)
+  if (objectCheck.result == null) {
+    return { errors: objectCheck.errors }
+  }
+
+  const { property } = expression
+  const object = objectCheck.result
+
   if (NumberType.equals(object)) {
     if (!isSyntaxUnit(property.name)) {
       return { errors: [new CompileError(`Unknown unit "${property.name}"`, property.range)] }
@@ -832,6 +828,26 @@ function checkPropertyAccess (object: Type, property: ast.Identifier, range: Sou
   }
 
   return { errors: [new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range)] }
+}
+
+function checkCall (context: Context, expression: ast.Call): Checked<Type> {
+  const calleeCheck = checkExpression(context, expression.callee)
+  if (calleeCheck.result == null) {
+    return { errors: calleeCheck.errors }
+  }
+
+  const callee = calleeCheck.result
+  if (!FunctionType.equals(calleeCheck.result)) {
+    return { errors: [new CompileError(`Cannot call value of type ${callee.format()}`, expression.range)] }
+  }
+
+  const { schema, returnType } = FunctionType.detail(callee)
+  if (schema == null || returnType == null) {
+    return { errors: [new CompileError(`Function is missing type information`, expression.range)] }
+  }
+
+  const { errors } = checkArgumentList(context, expression.arguments, schema, expression.range)
+  return { errors, result: returnType }
 }
 
 function checkArgumentList (

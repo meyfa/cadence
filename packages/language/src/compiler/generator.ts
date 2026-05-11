@@ -338,52 +338,20 @@ function resolve (context: Context, expression: ast.Expression): Value {
     case 'Curve':
       return generateCurve(context, expression)
 
-    case 'Identifier': {
-      let current: Context | undefined = context
+    case 'Identifier':
+      return resolveIdentifier(context, expression)
 
-      while (current != null) {
-        const value = current.resolutions.get(expression.name)
-        if (value != null) {
-          return value
-        }
-        current = current.parent
-      }
+    case 'UnaryExpression':
+      return computeUnaryExpression(context, expression)
 
-      throw new CompileError(`Unknown identifier "${expression.name}"`, expression.range)
-    }
+    case 'BinaryExpression':
+      return computeBinaryExpression(context, expression)
 
-    case 'UnaryExpression': {
-      const arg = resolve(context, expression.argument)
-      return computeUnaryExpression(expression.operator, arg)
-    }
+    case 'PropertyAccess':
+      return resolvePropertyAccess(context, expression)
 
-    case 'BinaryExpression': {
-      const left = resolve(context, expression.left)
-      const right = resolve(context, expression.right)
-      return computeBinaryExpression(expression.operator, left, right)
-    }
-
-    case 'PropertyAccess': {
-      if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-        return nonNull(context.top.buses.get(expression.property.name))
-      }
-
-      const object = resolve(context, expression.object)
-      const property = expression.property.name
-
-      if (NumberType.is(object)) {
-        assert(isSyntaxUnit(property))
-        return toNumberValue(context.top.options, property, object.data.value)
-      }
-
-      return nonNull(object.type.propertyValue(object, property)) as Value
-    }
-
-    case 'Call': {
-      const func = FunctionType.cast(resolve(context, expression.callee))
-      const args = resolveArgumentList(context, expression.arguments, func.data.arguments)
-      return func.data.invoke(context.top, args)
-    }
+    case 'Call':
+      return resolveCall(context, expression)
   }
 }
 
@@ -487,8 +455,24 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
   )
 }
 
-function computeUnaryExpression (operator: ast.UnaryOperator, argument: Value): Value {
-  switch (operator) {
+function resolveIdentifier (context: Context, identifier: ast.Identifier): Value {
+  let current: Context | undefined = context
+
+  while (current != null) {
+    const value = current.resolutions.get(identifier.name)
+    if (value != null) {
+      return value
+    }
+    current = current.parent
+  }
+
+  throw new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)
+}
+
+function computeUnaryExpression (context: Context, expression: ast.UnaryExpression): Value {
+  const argument = resolve(context, expression.argument)
+
+  switch (expression.operator) {
     case '+':
       if (NumberType.is(argument)) {
         return argument
@@ -505,8 +489,11 @@ function computeUnaryExpression (operator: ast.UnaryOperator, argument: Value): 
   assert(false)
 }
 
-function computeBinaryExpression (operator: ast.BinaryOperator, left: Value, right: Value): Value {
-  switch (operator) {
+function computeBinaryExpression (context: Context, expression: ast.BinaryExpression): Value {
+  const left = resolve(context, expression.left)
+  const right = resolve(context, expression.right)
+
+  switch (expression.operator) {
     case '+':
       return computePlus(left, right)
     case '-':
@@ -570,6 +557,30 @@ function computeDivide (left: Value, right: Value): Value {
   }
 
   assert(false)
+}
+
+function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess): Value {
+  // Special case: "bus" namespace
+  if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
+    return nonNull(context.top.buses.get(expression.property.name))
+  }
+
+  const object = resolve(context, expression.object)
+  const property = expression.property.name
+
+  if (NumberType.is(object)) {
+    assert(isSyntaxUnit(property))
+    return toNumberValue(context.top.options, property, object.data.value)
+  }
+
+  return nonNull(object.type.propertyValue(object, property)) as Value
+}
+
+function resolveCall (context: Context, expression: ast.Call): Value {
+  const func = FunctionType.cast(resolve(context, expression.callee))
+  const args = resolveArgumentList(context, expression.arguments, func.data.arguments)
+
+  return func.data.invoke(context.top, args)
 }
 
 function resolveArgumentList<S extends PropertySchema> (context: Context, args: ast.ArgumentList, schema: S): InferSchema<S> {
