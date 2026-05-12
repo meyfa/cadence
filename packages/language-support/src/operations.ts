@@ -1,8 +1,9 @@
 import type { Tree } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
+import { getAnalysisModel } from './analysis/cache.js'
 import { textFromString } from './analysis/text.js'
 import type { TextLike } from './types.js'
-import { analyzeTree, type Model } from './analysis/model.js'
+import type { Model } from './analysis/model.js'
 
 export type SemanticOperation<Args extends readonly unknown[], Result> =
   (model: Model, tree: Tree, document: TextLike, ...args: Args) => Result
@@ -13,7 +14,7 @@ export function applySemanticOperation<Args extends readonly unknown[], Result> 
   document: TextLike,
   ...args: Args
 ): Result {
-  const model = analyzeTree(tree, document)
+  const model = getAnalysisModel(tree, document)
   return operation(model, tree, document, ...args)
 }
 
@@ -25,6 +26,6 @@ export function applySemanticOperationWithParser<Args extends readonly unknown[]
 ): Result {
   const tree = parser.parse(source)
   const document = textFromString(source)
-  const model = analyzeTree(tree, document)
+  const model = getAnalysisModel(tree, document)
   return operation(model, tree, document, ...args)
 }
