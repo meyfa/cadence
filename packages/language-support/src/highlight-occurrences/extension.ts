@@ -3,8 +3,8 @@ import type { EditorState, Extension } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 import type { Tree } from '@lezer/common'
+import { getAnalysisModel } from '../analysis/cache.js'
 import type { Model } from '../analysis/model.js'
-import { analyzeTree } from '../analysis/model.js'
 import type { RangesByBinding } from '../analysis/query.js'
 import { buildReferenceRangesByBinding, findDefinitionBindingAt } from '../analysis/query.js'
 
@@ -54,7 +54,7 @@ interface AnalysisState {
 
 function buildAnalysisState (state: EditorState): AnalysisState {
   const tree = syntaxTree(state)
-  const model = analyzeTree(tree, state.doc)
+  const model = getAnalysisModel(tree, state.doc)
   const rangesByBinding = buildReferenceRangesByBinding(model, tree, state.doc)
   return { tree, model, rangesByBinding }
 }
