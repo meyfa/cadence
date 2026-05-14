@@ -169,4 +169,25 @@ describe('analysis/model.ts', () => {
       ]
     )
   })
+
+  it('includes identifiers that are part of an incomplete statement', () => {
+    const source = [
+      'part main {',
+      '  foo = 42',
+      '  foo',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSourceWithParser(cadenceParser, source)
+
+    assert.deepStrictEqual(
+      model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
+      [
+        { kind: 'VariableName', name: 'main' },
+        { kind: 'VariableDefinition', name: 'foo' },
+        { kind: 'VariableName', name: 'foo' }
+      ]
+    )
+  })
 })

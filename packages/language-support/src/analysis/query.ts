@@ -125,20 +125,21 @@ export function findUnusedAssignmentBindings (model: Model, tree: Tree, document
 }
 
 function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence, document: TextLike): Binding | undefined {
-  const name = occurrence.name
-  const effectiveKind = getEffectiveOccurrenceKind(occurrence, document)
+  const { name } = occurrence
 
-  switch (effectiveKind) {
+  switch (occurrence.kind) {
+    case 'PropertyName':
+      return undefined
+
     case 'VariableDefinition':
     case 'UseAlias':
       return findBindingBySpan(model, occurrence)
 
-    case 'PropertyName':
-      return undefined
-
     case 'Callee':
       return findFirstGlobalBinding(model, name)
   }
+
+  // VariableName, MemberAccess
 
   const explicitBusBinding = resolveExplicitBusBinding(model, occurrence, document)
   if (explicitBusBinding != null) {
@@ -181,37 +182,12 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
   return findFirstGlobalBinding(model, name) ?? findFallbackScopedBinding(model, name)
 }
 
-function getEffectiveOccurrenceKind (occurrence: SemanticOccurrence, document: TextLike): IdentifierKind | undefined {
-  const parent = occurrence.node?.parent
-
-  // Fix cases where Lezer classifies an identifier as a VariableDefinition even when
-  // it is not actually defining a variable.
-  let isCorrect = true
-
-  if (occurrence.kind === 'VariableDefinition' && parent != null) {
-    switch (parent.type.name) {
-      case 'Assignment':
-        isCorrect = document.sliceString(parent.from, parent.to).includes('=')
-        break
-      case 'PartStatement':
-        isCorrect = /^\s*part\b/.test(document.sliceString(parent.from, parent.from + 16))
-        break
-      case 'BusStatement':
-        isCorrect = /^\s*bus\b/.test(document.sliceString(parent.from, parent.from + 16))
-        break
-    }
-  }
-
-  return isCorrect ? occurrence.kind : 'VariableName'
-}
-
 function getReferenceRangeForBindingOccurrence (
   occurrence: SemanticOccurrence,
   document: TextLike,
   binding: Binding
 ): SourceRange | undefined {
-  const effectiveKind = getEffectiveOccurrenceKind(occurrence, document)
-  if (effectiveKind === 'PropertyName') {
+  if (occurrence.kind === 'PropertyName') {
     return undefined
   }
 

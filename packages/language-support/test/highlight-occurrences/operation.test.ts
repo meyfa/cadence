@@ -133,4 +133,22 @@ describe('highlight-occurrences/operation.ts', () => {
     assert.deepStrictEqual(endOfName.length, 2, 'end of name')
     assert.deepStrictEqual(afterName.length, 0, 'after name')
   })
+
+  it('returns the definition and reference also for incomplete syntax', () => {
+    const source = [
+      'foo = 42',
+      'foo',
+      ''
+    ].join('\n')
+
+    const position = source.lastIndexOf('foo') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('foo ='), 'foo'.length),
+        getRangeAt(source, source.lastIndexOf('foo'), 'foo'.length)
+      ]
+    )
+  })
 })
