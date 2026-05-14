@@ -4,13 +4,11 @@ import { CompoundError } from '../result/errors.js'
 import type { Result } from '../result/result.js'
 import { check as checkerCheck } from './checker.js'
 import type { CompileError } from './error.js'
-import { generate, type GenerateOptions } from './generator.js'
+import type { GenerateOptions } from './generator.js'
+import { generate } from './generator.js'
 
 export type CompileOptions = GenerateOptions
 export type CompileResult = Result<Program, CompoundError<CompileError>>
-
-export type { HoverInfo } from './hover.js'
-export { getStandardLibraryHoverInfo } from './hover.js'
 
 /**
  * Compile an AST into a runnable program. This includes semantic analysis followed by

@@ -4,7 +4,7 @@ import type { Unit } from '@utility'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
-import { getStandardModule, standardLibraryModuleNames } from './modules.js'
+import { getStandardModuleNames, getStandardModuleValue } from './modules.js'
 import { checkCyclicRoutings } from './routings.js'
 import type { PropertySchema, PropertySpec } from './schema.js'
 import type { ModuleValue, Type } from './types.js'
@@ -74,7 +74,7 @@ function createLocalScope (parent: Context): MutableContext {
 }
 
 function ensureStandardModule (moduleName: string): ModuleValue {
-  const module = getStandardModule(moduleName)
+  const module = getStandardModuleValue(moduleName)
   if (module == null) {
     throw new Error(`Missing standard library module: ${moduleName}`)
   }
@@ -114,6 +114,8 @@ function checkType (options: readonly Type[], actual: Type, range?: SourceRange)
 }
 
 function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMap<string, Type>> {
+  const standardLibraryModuleNames = getStandardModuleNames()
+
   const errors: CompileError[] = []
 
   const defaults = new Set<string>()

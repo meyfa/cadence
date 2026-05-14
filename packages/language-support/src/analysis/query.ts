@@ -114,7 +114,7 @@ export function findUnusedAssignmentBindings (model: Model, document: TextLike):
   })
 }
 
-function resolveDefinitionBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
+export function resolveDefinitionBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
   switch (occurrence.kind) {
     case 'PropertyName':
       return undefined
@@ -169,14 +169,6 @@ function getReferenceRangeForBindingOccurrence (
     const busName = document.sliceString(explicitBusRange.offset, explicitBusRange.offset + explicitBusRange.length)
     if (busName === binding.name) {
       return explicitBusRange
-    }
-  }
-
-  const rootRange = findAccessChainRootBefore(document, occurrence.range.offset)
-  if (rootRange != null) {
-    const rootName = document.sliceString(rootRange.offset, rootRange.offset + rootRange.length)
-    if (rootName === binding.name) {
-      return rootRange
     }
   }
 
@@ -268,7 +260,26 @@ function getWordRangeAt (document: TextLike, position: number): SourceRange | un
   return toSourceRange(document, from, to)
 }
 
-export function findAccessChainRootBefore (document: TextLike, memberFrom: number, limit?: number): SourceRange | undefined {
+export function computeAccessChain (model: Model, document: TextLike, member: Identifier): readonly Identifier[] {
+  const identifiers: Identifier[] = []
+
+  let currentMember: Identifier | undefined = member
+  while (currentMember != null) {
+    identifiers.push(currentMember)
+
+    const rangeBefore = findAccessChainRootBefore(document, currentMember.range.offset, 1)
+    if (rangeBefore == null) {
+      break
+    }
+
+    currentMember = findIdentifierAt(model, rangeBefore.offset, 'strict')
+  }
+
+  // reverse to get chain in order from left to right (e.g. "foo.bar.baz" -> ["foo", "bar", "baz"])
+  return identifiers.reverse()
+}
+
+function findAccessChainRootBefore (document: TextLike, memberFrom: number, limit?: number): SourceRange | undefined {
   const dot = charBeforeNonWhitespace(document, memberFrom)
   if (dot == null || dot.char !== '.') {
     return undefined
