@@ -127,38 +127,18 @@ function resolveDefinitionBinding (model: Model, occurrence: Identifier, documen
       return findFirstGlobalBinding(model, occurrence.name)
 
     case 'VariableName':
+      return resolveVariableBinding(model, occurrence, document)
+
     case 'MemberAccess':
-      return resolveVariableOrMemberBinding(model, occurrence, document)
+      return resolveExplicitBusBinding(model, occurrence, document)
 
     default:
       occurrence.kind satisfies never
   }
 }
 
-function resolveVariableOrMemberBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
+function resolveVariableBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
   const { name } = occurrence
-
-  const explicitBusBinding = resolveExplicitBusBinding(model, occurrence, document)
-  if (explicitBusBinding != null) {
-    return explicitBusBinding
-  }
-
-  const root = findAccessChainRootBefore(document, occurrence.range.offset)
-  if (root != null) {
-    const rootName = document.sliceString(root.offset, root.offset + root.length)
-    if (rootName.length > 0 && rootName !== name) {
-      const resolvedRoot = resolveDefinitionBinding(model, {
-        kind: 'VariableName',
-        scopeId: occurrence.scopeId,
-        name: rootName,
-        range: root
-      }, document)
-
-      if (resolvedRoot != null) {
-        return resolvedRoot
-      }
-    }
-  }
 
   const scope = model.scopes.get(occurrence.scopeId)
 
@@ -288,16 +268,17 @@ function getWordRangeAt (document: TextLike, position: number): SourceRange | un
   return toSourceRange(document, from, to)
 }
 
-export function findAccessChainRootBefore (document: TextLike, memberFrom: number): SourceRange | undefined {
+export function findAccessChainRootBefore (document: TextLike, memberFrom: number, limit?: number): SourceRange | undefined {
   const dot = charBeforeNonWhitespace(document, memberFrom)
   if (dot == null || dot.char !== '.') {
     return undefined
   }
 
+  let steps = 0
   let root: SourceRange | undefined
   let currentDotIndex = dot.index
 
-  while (currentDotIndex >= 0) {
+  while (currentDotIndex >= 0 && (limit == null || steps < limit)) {
     const wordEnd = skipWhitespaceLeft(document, currentDotIndex)
     const range = getWordRangeAt(document, wordEnd)
     if (range == null) {
@@ -312,13 +293,14 @@ export function findAccessChainRootBefore (document: TextLike, memberFrom: numbe
     }
 
     currentDotIndex = beforeWord.index
+    ++steps
   }
 
   return root
 }
 
 function findExplicitBusBindingRange (document: TextLike, memberFrom: number): SourceRange | undefined {
-  const root = findAccessChainRootBefore(document, memberFrom)
+  const root = findAccessChainRootBefore(document, memberFrom, 1)
   if (root == null) {
     return undefined
   }
