@@ -161,8 +161,7 @@ describe('analysis/model.ts', () => {
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
         { kind: 'VariableName', name: 'fx' },
-        // should be MemberAccess, but this is a known limitation of the model when parsing incomplete code
-        { kind: 'VariableName', name: 'delay' }
+        { kind: 'MemberAccess', name: 'delay' }
       ]
     )
   })

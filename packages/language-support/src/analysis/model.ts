@@ -3,7 +3,7 @@ import type { LRParser } from '@lezer/lr'
 import type { SourceRange, TextLike } from '../types.js'
 import { textFromString, toSourceRange } from './text.js'
 
-export interface Model {
+export interface BaseModel {
   readonly rootScopeId: string
   readonly scopes: ReadonlyMap<string, Scope>
   readonly identifiers: readonly Identifier[]
@@ -12,6 +12,13 @@ export interface Model {
   readonly bindingsByScope: ReadonlyMap<string, readonly Binding[]>
   readonly imports: readonly ImportStatement[]
 }
+
+export interface ReferenceModel {
+  readonly identifierBindingMap: ReadonlyMap<Identifier, Binding>
+  readonly referenceMap: ReadonlyMap<Binding, readonly Identifier[]>
+}
+
+export type Model = BaseModel & ReferenceModel
 
 // scope
 
@@ -207,20 +214,24 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         break
       }
 
+      case 'PropertyName': {
+        const name = document.sliceString(from, to)
+        identifiers.push({ kind: typeName, scopeId: currentScopeId, name, range })
+        break
+      }
+
       case 'VariableName':
       case 'Callee':
       case 'MemberAccess':
-      case 'BusNamespace':
-      case 'PropertyName': {
-        const kind = typeName === 'BusNamespace' ? 'VariableName' : typeName
-        const name = document.sliceString(from, to)
-
-        const identifier: Identifier = { kind, scopeId: currentScopeId, name, range, previousSibling }
-        identifiers.push(identifier)
-
-        if (kind !== 'PropertyName') {
-          accessChainTail = identifier
+      case 'BusNamespace': {
+        let kind = typeName === 'BusNamespace' ? 'VariableName' : typeName
+        if (kind !== 'Callee' && previousSibling != null) {
+          kind = 'MemberAccess'
         }
+
+        const name = document.sliceString(from, to)
+        accessChainTail = { kind, scopeId: currentScopeId, name, range, previousSibling }
+        identifiers.push(accessChainTail)
 
         break
       }
@@ -277,12 +288,18 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
   identifiers.sort((a, b) => a.range.offset - b.range.offset)
   bindings.sort((a, b) => a.range.offset - b.range.offset)
 
-  return { rootScopeId, scopes, identifiers, bindings, bindingsByName, bindingsByScope, imports }
+  const baseModel = { rootScopeId, scopes, identifiers, bindings, bindingsByName, bindingsByScope, imports }
+
+  return { ...baseModel, ...resolveReferences(baseModel) }
 }
 
 export function analyzeSourceWithParser (parser: LRParser, source: string): Model {
   const tree = parser.parse(source)
   return analyzeTree(tree, textFromString(source))
+}
+
+export function sameRange (a: SourceRange, b: SourceRange): boolean {
+  return a.offset === b.offset && a.length === b.length
 }
 
 function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
@@ -375,4 +392,109 @@ function parseStringLiteral (text: string): string | undefined {
   } catch {
     return undefined
   }
+}
+
+function resolveReferences (model: BaseModel): ReferenceModel {
+  const identifierBindingMap = new Map<Identifier, Binding>()
+  const referenceMap = new Map<Binding, Identifier[]>()
+
+  for (const identifier of model.identifiers) {
+    const binding = resolveDefinitionBinding(model, identifier)
+    if (binding != null) {
+      identifierBindingMap.set(identifier, binding)
+
+      const references = referenceMap.get(binding)
+      if (references == null) {
+        referenceMap.set(binding, [identifier])
+        continue
+      }
+
+      references.push(identifier)
+    }
+  }
+
+  return { identifierBindingMap, referenceMap }
+}
+
+function resolveDefinitionBinding (model: BaseModel, occurrence: Identifier): Binding | undefined {
+  switch (occurrence.kind) {
+    case 'PropertyName':
+      return undefined
+
+    // Ensure that definitions resolve to themselves
+    case 'VariableDefinition':
+    case 'UseAlias':
+      return findBindingBySpan(model, occurrence.range)
+
+    case 'VariableName':
+    case 'Callee':
+    case 'MemberAccess':
+      return findRegularBinding(model, occurrence)
+
+    default:
+      occurrence.kind satisfies never
+  }
+}
+
+function findBindingBySpan (model: BaseModel, range: SourceRange): Binding | undefined {
+  let low = 0
+  let high = model.bindings.length - 1
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const binding = model.bindings[mid]
+
+    if (sameRange(binding.range, range)) {
+      return binding
+    }
+
+    if (binding.range.offset < range.offset || (binding.range.offset === range.offset && binding.range.length < range.length)) {
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+
+  return undefined
+}
+
+function findRegularBinding (model: BaseModel, occurrence: Identifier): Binding | undefined {
+  if (isExplicitBusReference(occurrence)) {
+    return findExplicitBusBinding(model, occurrence.name)
+  }
+
+  if (occurrence.previousSibling != null) {
+    return undefined
+  }
+
+  if (model.imports.some((statement) => statement.alias === occurrence.name)) {
+    return model.bindingsByName.get(occurrence.name)?.find((binding) => binding.kind === 'use-alias')
+  }
+
+  let scopeId: string | undefined = occurrence.scopeId
+
+  while (scopeId != null) {
+    const scoped = model.bindingsByScope.get(scopeId) ?? []
+
+    const binding = scoped.find((binding) => binding.name === occurrence.name)
+    if (binding != null) {
+      return binding
+    }
+
+    const scope = model.scopes.get(scopeId)
+    scopeId = scope?.parentId
+  }
+
+  return undefined
+}
+
+function isExplicitBusReference (identifier: Identifier): boolean {
+  return identifier.previousSibling != null &&
+    identifier.previousSibling.name === 'bus' &&
+    identifier.previousSibling.previousSibling == null
+}
+
+function findExplicitBusBinding (model: BaseModel, busName: string): Binding | undefined {
+  const busBindings = model.bindingsByName.get(busName) ?? []
+  return busBindings.find((binding) => binding.kind === 'bus')
 }
