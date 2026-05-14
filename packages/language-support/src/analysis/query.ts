@@ -1,16 +1,8 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
 import type { SourceRange, TextLike } from '../types.js'
-import type { Binding, BindingKind, Identifier, IdentifierKind, Model } from './model.js'
+import type { Binding, BindingKind, Identifier, Model } from './model.js'
 import { isIdentifierKind } from './model.js'
 import { toSourceRange } from './text.js'
-
-export interface SemanticOccurrence {
-  readonly kind: IdentifierKind | undefined
-  readonly name: string
-  readonly range: SourceRange
-  readonly node?: SyntaxNode
-  readonly scopeId: string
-}
 
 const GLOBAL_BINDING_PRIORITY: readonly BindingKind[] = ['use-alias', 'assignment']
 const FALLBACK_BINDING_PRIORITY: readonly BindingKind[] = ['part', 'bus']
@@ -125,9 +117,7 @@ export function findUnusedAssignmentBindings (model: Model, tree: Tree, document
   })
 }
 
-function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence, document: TextLike): Binding | undefined {
-  const { name } = occurrence
-
+function resolveDefinitionBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
   switch (occurrence.kind) {
     case 'PropertyName':
       return undefined
@@ -137,10 +127,19 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
       return findBindingBySpan(model, occurrence)
 
     case 'Callee':
-      return findFirstGlobalBinding(model, name)
-  }
+      return findFirstGlobalBinding(model, occurrence.name)
 
-  // VariableName, MemberAccess
+    case 'VariableName':
+    case 'MemberAccess':
+      return resolveVariableOrMemberBinding(model, occurrence, document)
+
+    default:
+      occurrence.kind satisfies never
+  }
+}
+
+function resolveVariableOrMemberBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
+  const { name } = occurrence
 
   const explicitBusBinding = resolveExplicitBusBinding(model, occurrence, document)
   if (explicitBusBinding != null) {
@@ -155,7 +154,6 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
         kind: 'VariableName',
         scopeId: occurrence.scopeId,
         name: rootName,
-        node: occurrence.node,
         range: root
       }, document)
 
@@ -181,7 +179,7 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
 }
 
 function getReferenceRangeForBindingOccurrence (
-  occurrence: SemanticOccurrence,
+  occurrence: Identifier,
   document: TextLike,
   binding: Binding
 ): SourceRange | undefined {
@@ -208,9 +206,9 @@ function getReferenceRangeForBindingOccurrence (
   return occurrence.name === binding.name ? occurrence.range : undefined
 }
 
-type OccurrenceVisitor = (occurrence: SemanticOccurrence, binding: Binding) => void
+type OccurrenceVisitor = (occurrence: Identifier, binding: Binding) => void
 
-function resolveExplicitBusBinding (model: Model, occurrence: SemanticOccurrence, document: TextLike): Binding | undefined {
+function resolveExplicitBusBinding (model: Model, occurrence: Identifier, document: TextLike): Binding | undefined {
   const explicitBusRange = findExplicitBusBindingRange(document, occurrence.range.offset)
   if (explicitBusRange == null) {
     return undefined
@@ -243,7 +241,7 @@ function walkResolvedIdentifierBindings (model: Model, tree: Tree, document: Tex
   tree.iterate({ enter })
 }
 
-function findBindingBySpan (model: Model, occurrence: SemanticOccurrence): Binding | undefined {
+function findBindingBySpan (model: Model, occurrence: Identifier): Binding | undefined {
   const bindings = model.bindingsByName.get(occurrence.name)
   return bindings?.find((binding) => sameRange(binding.range, occurrence.range))
 }
