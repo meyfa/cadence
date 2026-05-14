@@ -2,7 +2,6 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState, Extension } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import type { Tree } from '@lezer/common'
 import { getAnalysisModel } from '../analysis/cache.js'
 import type { Model } from '../analysis/model.js'
 import type { RangesByBinding } from '../analysis/query.js'
@@ -47,7 +46,6 @@ const plugin = ViewPlugin.fromClass(HighlightOccurrencesPlugin, {
 })
 
 interface AnalysisState {
-  readonly tree: Tree
   readonly model: Model
   readonly rangesByBinding: RangesByBinding
 }
@@ -56,18 +54,18 @@ function buildAnalysisState (state: EditorState): AnalysisState {
   const tree = syntaxTree(state)
   const model = getAnalysisModel(tree, state.doc)
   const rangesByBinding = buildReferenceRangesByBinding(model, tree, state.doc)
-  return { tree, model, rangesByBinding }
+  return { model, rangesByBinding }
 }
 
 function getOccurrenceDecorations (state: EditorState, analysisState: AnalysisState): DecorationSet {
   const { doc, selection } = state
-  const { tree, model, rangesByBinding } = analysisState
+  const { model, rangesByBinding } = analysisState
 
   if (selection.ranges.length !== 1 || !selection.main.empty) {
     return Decoration.none
   }
 
-  const binding = findDefinitionBindingAt(model, tree, doc, selection.main.head)
+  const binding = findDefinitionBindingAt(model, doc, selection.main.head)
   const ranges = binding != null ? rangesByBinding.get(binding.id) : undefined
 
   if (ranges == null || ranges.length === 0) {

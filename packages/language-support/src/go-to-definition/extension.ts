@@ -3,7 +3,8 @@ import type { Extension } from '@codemirror/state'
 import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import { findIdentifierRangeAt, sameRange } from '../analysis/query.js'
+import { getAnalysisModel } from '../analysis/cache.js'
+import { findIdentifierAt, sameRange } from '../analysis/query.js'
 import { applySemanticOperation } from '../operations.js'
 import type { SourceRange } from '../types.js'
 import { goToDefinition } from './operation.js'
@@ -28,6 +29,15 @@ function isPrimaryModifierPressed (event: MouseEvent | KeyboardEvent): boolean {
 
 function isPrimaryModifierKey (key: string): boolean {
   return APPLE_PLATFORM ? key === 'Meta' : key === 'Control'
+}
+
+function getPositionForMouse (view: EditorView, mouse: MousePosition): number | undefined {
+  const pos = view.posAndSideAtCoords(mouse)
+  if (pos == null) {
+    return undefined
+  }
+
+  return pos.assoc < 0 ? pos.pos - 1 : pos.pos
 }
 
 function rangeContainsMouseX (view: EditorView, range: SourceRange, mouse: MousePosition): boolean {
@@ -123,13 +133,16 @@ class GoToDefinitionInteractionsPlugin {
           return { hoverRange: undefined, underlineRange: undefined }
         }
 
-        const position = view.posAtCoords(this.lastMousePosition)
+        const position = getPositionForMouse(view, this.lastMousePosition)
         if (position == null) {
           return { hoverRange: undefined, underlineRange: undefined }
         }
 
         const tree = syntaxTree(view.state)
-        const hoverRange = findIdentifierRangeAt(tree, view.state.doc, position)
+        const model = getAnalysisModel(tree, view.state.doc)
+
+        // TODO use just one model and avoid re-parsing for this
+        const hoverRange = findIdentifierAt(model, position)?.range
         if (hoverRange == null) {
           return { hoverRange: undefined, underlineRange: undefined }
         }
@@ -201,13 +214,15 @@ class GoToDefinitionInteractionsPlugin {
     }
 
     const mouse = { x: event.clientX, y: event.clientY }
-    const position = this.view.posAtCoords(mouse)
+    const position = getPositionForMouse(this.view, mouse)
     if (position == null) {
       return
     }
 
     const tree = syntaxTree(this.view.state)
-    const hoverRange = findIdentifierRangeAt(tree, this.view.state.doc, position)
+    const model = getAnalysisModel(tree, this.view.state.doc)
+
+    const hoverRange = findIdentifierAt(model, position)?.range
     if (hoverRange == null || !rangeContainsMouseX(this.view, hoverRange, mouse)) {
       return
     }
@@ -231,13 +246,16 @@ class GoToDefinitionInteractionsPlugin {
       return
     }
 
-    const position = this.view.posAtCoords(this.lastMousePosition)
+    const position = getPositionForMouse(this.view, this.lastMousePosition)
     if (position == null) {
       this.scheduleHoverDispatch(undefined)
       return
     }
 
-    const range = findIdentifierRangeAt(syntaxTree(this.view.state), this.view.state.doc, position)
+    const tree = syntaxTree(this.view.state)
+    const model = getAnalysisModel(tree, this.view.state.doc)
+
+    const range = findIdentifierAt(model, position)?.range
 
     if (range == null || !rangeContainsMouseX(this.view, range, this.lastMousePosition)) {
       this.lastHoverRange = undefined
@@ -252,7 +270,6 @@ class GoToDefinitionInteractionsPlugin {
     this.lastHoverRange = range
 
     // Only underline identifiers that actually resolve.
-    const tree = syntaxTree(this.view.state)
     const target = applySemanticOperation(goToDefinition, tree, this.view.state.doc, position)
     if (target == null) {
       this.scheduleHoverDispatch(undefined)

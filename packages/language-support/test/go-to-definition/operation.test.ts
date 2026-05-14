@@ -30,10 +30,17 @@ describe('go-to-definition/operation.ts', () => {
     const source = 'mixer { bus a { } bus b { a } }'
 
     const defPos = source.indexOf('bus a') + 'bus '.length
-    const refPos = source.lastIndexOf(' a ') + 2
+
+    const refPosLeft = source.lastIndexOf(' a ') + 1
+    const refPosRight = source.lastIndexOf(' a ') + 2
 
     assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPosLeft),
+      getRangeAt(source, defPos, 1)
+    )
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPosRight),
       getRangeAt(source, defPos, 1)
     )
   })
