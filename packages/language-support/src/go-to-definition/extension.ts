@@ -3,12 +3,16 @@ import type { Extension } from '@codemirror/state'
 import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import { getAnalysisModel } from '../analysis/cache.js'
 import { sameRange } from '../analysis/model.js'
-import { findIdentifierAt } from '../analysis/query.js'
 import { applySemanticOperation } from '../operations.js'
 import type { SourceRange } from '../types.js'
+import type { GoToDefinitionResult } from './operation.js'
 import { goToDefinition } from './operation.js'
+
+interface Coordinates {
+  readonly x: number
+  readonly y: number
+}
 
 function isApplePlatform (): boolean {
   const userAgent = navigator.userAgent.toLowerCase()
@@ -32,8 +36,25 @@ function isPrimaryModifierKey (key: string): boolean {
   return APPLE_PLATFORM ? key === 'Meta' : key === 'Control'
 }
 
-function getPositionForMouse (view: EditorView, mouse: MousePosition): number | undefined {
-  const pos = view.posAndSideAtCoords(mouse)
+function findDefinitionAtCoordinates (view: EditorView, coords: Coordinates): GoToDefinitionResult | undefined {
+  const position = getPositionAtCoordinates(view, coords)
+  if (position == null) {
+    return undefined
+  }
+
+  const tree = syntaxTree(view.state)
+
+  const result = applySemanticOperation(goToDefinition, tree, view.state.doc, position)
+  if (result == null) {
+    return undefined
+  }
+
+  // Don't treat trailing whitespace (right of token) as hovering the token.
+  return rangeContainsXCoordinate(view, result.identifier.range, coords) ? result : undefined
+}
+
+function getPositionAtCoordinates (view: EditorView, coords: Coordinates): number | undefined {
+  const pos = view.posAndSideAtCoords(coords)
   if (pos == null) {
     return undefined
   }
@@ -41,7 +62,7 @@ function getPositionForMouse (view: EditorView, mouse: MousePosition): number | 
   return pos.assoc < 0 ? pos.pos - 1 : pos.pos
 }
 
-function rangeContainsMouseX (view: EditorView, range: SourceRange, mouse: MousePosition): boolean {
+function rangeContainsXCoordinate (view: EditorView, range: SourceRange, coords: Coordinates): boolean {
   const start = view.coordsAtPos(range.offset)
   const end = view.coordsAtPos(range.offset + range.length)
   if (start == null || end == null) {
@@ -53,7 +74,7 @@ function rangeContainsMouseX (view: EditorView, range: SourceRange, mouse: Mouse
 
   // Small tolerance to avoid flicker on exact boundaries.
   const tolerance = 1
-  return mouse.x >= minX - tolerance && mouse.x <= maxX + tolerance
+  return coords.x >= minX - tolerance && coords.x <= maxX + tolerance
 }
 
 const HOVER_CLASS = 'cm-cadence-go-to-definition-hover'
@@ -95,16 +116,6 @@ const hoverDecorations = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field)
 })
 
-interface MousePosition {
-  readonly x: number
-  readonly y: number
-}
-
-interface HoverMeasure {
-  readonly hoverRange: SourceRange | undefined
-  readonly underlineRange: SourceRange | undefined
-}
-
 interface MeasureRequest<T> {
   readonly read: (view: EditorView) => T
   readonly write?: (measure: T, view: EditorView) => void
@@ -114,11 +125,10 @@ interface MeasureRequest<T> {
 class GoToDefinitionInteractionsPlugin {
   private readonly view: EditorView
 
-  private readonly hoverMeasureRequest: MeasureRequest<HoverMeasure>
+  private readonly hoverMeasureRequest: MeasureRequest<SourceRange | undefined>
 
-  private lastMousePosition: MousePosition | undefined
+  private lastMousePosition: Coordinates | undefined
   private modifierHeld = false
-  private lastHoverRange: SourceRange | undefined
   private lastDispatchedRange: SourceRange | undefined
   private pendingHoverDispatchRange: SourceRange | undefined
   private hoverDispatchScheduled = false
@@ -129,39 +139,14 @@ class GoToDefinitionInteractionsPlugin {
     this.hoverMeasureRequest = {
       key: this,
 
-      read: (view: EditorView): HoverMeasure => {
-        if (!this.modifierHeld || this.lastMousePosition == null) {
-          return { hoverRange: undefined, underlineRange: undefined }
-        }
-
-        const position = getPositionForMouse(view, this.lastMousePosition)
-        if (position == null) {
-          return { hoverRange: undefined, underlineRange: undefined }
-        }
-
-        const tree = syntaxTree(view.state)
-        const model = getAnalysisModel(tree, view.state.doc)
-
-        // TODO use just one model and avoid re-parsing for this
-        const hoverRange = findIdentifierAt(model, position)?.range
-        if (hoverRange == null) {
-          return { hoverRange: undefined, underlineRange: undefined }
-        }
-
-        // Don't treat trailing whitespace (right of token) as hovering the token.
-        if (!rangeContainsMouseX(view, hoverRange, this.lastMousePosition)) {
-          return { hoverRange: undefined, underlineRange: undefined }
-        }
-
-        const target = applySemanticOperation(goToDefinition, tree, view.state.doc, position)
-        const underlineRange = target == null ? undefined : hoverRange
-
-        return { hoverRange, underlineRange }
+      read: (view: EditorView): SourceRange | undefined => {
+        return this.modifierHeld && this.lastMousePosition != null
+          ? findDefinitionAtCoordinates(view, this.lastMousePosition)?.identifier.range
+          : undefined
       },
 
-      write: (measure: HoverMeasure) => {
-        this.lastHoverRange = measure.hoverRange
-        this.scheduleHoverDispatch(measure.underlineRange)
+      write: (measure: SourceRange | undefined) => {
+        this.scheduleHoverDispatch(measure)
       }
     }
   }
@@ -170,8 +155,6 @@ class GoToDefinitionInteractionsPlugin {
     if (!update.docChanged) {
       return
     }
-
-    this.lastHoverRange = undefined
 
     if (this.modifierHeld && this.lastMousePosition != null) {
       this.view.requestMeasure(this.hoverMeasureRequest)
@@ -190,7 +173,6 @@ class GoToDefinitionInteractionsPlugin {
   onMouseLeave (): void {
     this.lastMousePosition = undefined
     this.modifierHeld = false
-    this.lastHoverRange = undefined
     this.scheduleHoverDispatch(undefined)
   }
 
@@ -204,7 +186,6 @@ class GoToDefinitionInteractionsPlugin {
   onKeyUp (event: KeyboardEvent): void {
     if (isPrimaryModifierKey(event.key)) {
       this.modifierHeld = false
-      this.lastHoverRange = undefined
       this.scheduleHoverDispatch(undefined)
     }
   }
@@ -214,70 +195,27 @@ class GoToDefinitionInteractionsPlugin {
       return
     }
 
-    const mouse = { x: event.clientX, y: event.clientY }
-    const position = getPositionForMouse(this.view, mouse)
-    if (position == null) {
-      return
-    }
+    const mousePosition = { x: event.clientX, y: event.clientY }
 
-    const tree = syntaxTree(this.view.state)
-    const model = getAnalysisModel(tree, this.view.state.doc)
-
-    const hoverRange = findIdentifierAt(model, position)?.range
-    if (hoverRange == null || !rangeContainsMouseX(this.view, hoverRange, mouse)) {
-      return
-    }
-
-    const target = applySemanticOperation(goToDefinition, tree, this.view.state.doc, position)
-    if (target == null) {
+    const range = findDefinitionAtCoordinates(this.view, mousePosition)?.binding.range
+    if (range == null) {
       return
     }
 
     event.preventDefault()
     event.stopPropagation()
 
-    const selection = EditorSelection.single(target.offset)
+    const selection = EditorSelection.single(range.offset)
     this.view.dispatch({ selection, scrollIntoView: true })
     this.view.focus()
   }
 
   private refreshHover (): void {
-    if (!this.modifierHeld || this.lastMousePosition == null) {
-      this.scheduleHoverDispatch(undefined)
-      return
-    }
+    const identifier = this.modifierHeld && this.lastMousePosition != null
+      ? findDefinitionAtCoordinates(this.view, this.lastMousePosition)?.identifier
+      : undefined
 
-    const position = getPositionForMouse(this.view, this.lastMousePosition)
-    if (position == null) {
-      this.scheduleHoverDispatch(undefined)
-      return
-    }
-
-    const tree = syntaxTree(this.view.state)
-    const model = getAnalysisModel(tree, this.view.state.doc)
-
-    const range = findIdentifierAt(model, position)?.range
-
-    if (range == null || !rangeContainsMouseX(this.view, range, this.lastMousePosition)) {
-      this.lastHoverRange = undefined
-      this.scheduleHoverDispatch(undefined)
-      return
-    }
-
-    if (this.lastHoverRange != null && sameRange(range, this.lastHoverRange)) {
-      return
-    }
-
-    this.lastHoverRange = range
-
-    // Only underline identifiers that actually resolve.
-    const target = applySemanticOperation(goToDefinition, tree, this.view.state.doc, position)
-    if (target == null) {
-      this.scheduleHoverDispatch(undefined)
-      return
-    }
-
-    this.scheduleHoverDispatch(range)
+    this.scheduleHoverDispatch(identifier?.range)
   }
 
   private scheduleHoverDispatch (range: SourceRange | undefined): void {
@@ -297,11 +235,9 @@ class GoToDefinitionInteractionsPlugin {
       const next = this.pendingHoverDispatchRange
       this.pendingHoverDispatchRange = undefined
 
-      if (!this.view.dom.isConnected) {
-        return
+      if (this.view.dom.isConnected) {
+        this.dispatchHover(next)
       }
-
-      this.dispatchHover(next)
     })
   }
 

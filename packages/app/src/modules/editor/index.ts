@@ -137,13 +137,14 @@ const GlobalHooks: FunctionComponent = () => {
 
       const tree = syntaxTree(view.state)
       const caret = view.state.selection.main.head
-      const target = applySemanticOperation(goToDefinition, tree, view.state.doc, caret)
+
+      const target = applySemanticOperation(goToDefinition, tree, view.state.doc, caret)?.binding
       if (target == null) {
         view.focus()
         return
       }
 
-      const selection = EditorSelection.single(target.offset)
+      const selection = EditorSelection.single(target.range.offset)
       view.dispatch({ selection, scrollIntoView: true })
       view.focus()
     }
