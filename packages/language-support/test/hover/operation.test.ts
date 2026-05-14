@@ -108,4 +108,46 @@ describe('hover/operation.ts', () => {
       undefined
     )
   })
+
+  it('uses correct boundary for identifier lookup', () => {
+    const source = [
+      'use "instruments" as *',
+      'foo = sample("...")',
+      ''
+    ].join('\n')
+
+    const beforeNamePosition = source.indexOf(' sample')
+    const startOfNamePosition = source.indexOf('sample')
+    const endOfNamePosition = source.indexOf('sample') + 'sample'.length
+    const afterNamePosition = source.indexOf('sample') + 'sample'.length + 1
+
+    const beforeName = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, beforeNamePosition)
+    const startOfName = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, startOfNamePosition)
+    const endOfName = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, endOfNamePosition)
+    const afterName = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, afterNamePosition)
+
+    assert.ok(beforeName == null, 'before name')
+    assert.ok(startOfName != null, 'start of name')
+    assert.ok(endOfName != null, 'end of name')
+    assert.ok(afterName == null, 'after name')
+  })
+
+  it('returns docs for identifiers not part of valid syntax', () => {
+    // member accesses cannot be standalone expressions, but should still show hover info
+    const source = [
+      'use "effects" as fx',
+      'fx.delay',
+      ''
+    ].join('\n')
+
+    const modulePosition = source.indexOf('fx.delay') + 1
+    const moduleDocs = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, modulePosition)
+
+    assert.strictEqual(moduleDocs?.title, 'module effects')
+
+    const memberPosition = source.indexOf('delay') + 1
+    const memberDocs = applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, memberPosition)
+
+    assert.strictEqual(memberDocs?.title.slice(0, 'delay'.length), 'delay')
+  })
 })

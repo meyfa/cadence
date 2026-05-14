@@ -8,6 +8,6 @@ export interface GoToDefinitionResult {
 }
 
 export const goToDefinition: SemanticOperation<[pos: number], SourceRange | undefined> = (model, tree, document, pos) => {
-  const binding = findDefinitionBindingAt(model, tree, document, pos)
+  const binding = findDefinitionBindingAt(model, document, pos)
   return binding?.range
 }

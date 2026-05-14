@@ -34,7 +34,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.lastIndexOf('kick <<') + 1
-    const binding = findDefinitionBindingAt(model, tree, document, position)
+    const binding = findDefinitionBindingAt(model, document, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'assignment')
@@ -59,7 +59,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.indexOf('synth.gain') + 'synth.'.length + 1
-    const binding = findDefinitionBindingAt(model, tree, document, position)
+    const binding = findDefinitionBindingAt(model, document, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'assignment')
@@ -85,7 +85,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
-    const binding = findDefinitionBindingAt(model, tree, document, position)
+    const binding = findDefinitionBindingAt(model, document, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'bus')
@@ -106,7 +106,7 @@ describe('analysis/query.ts', () => {
     const model = analyzeTree(tree, document)
     const position = source.indexOf('tempo:') + 1
 
-    assert.strictEqual(findDefinitionBindingAt(model, tree, document, position), undefined)
+    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
   })
 
   it('prefers import aliases over assignments with the same name', () => {
@@ -120,7 +120,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.lastIndexOf('fx.delay') + 1
-    const binding = findDefinitionBindingAt(model, tree, document, position)
+    const binding = findDefinitionBindingAt(model, document, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'use-alias')

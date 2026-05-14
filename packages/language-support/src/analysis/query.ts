@@ -1,10 +1,8 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
 import type { SourceRange, TextLike } from '../types.js'
-import type { Binding, BindingKind, Model } from './model.js'
-import { scopeKey } from './model.js'
+import type { Binding, BindingKind, Identifier, IdentifierKind, Model } from './model.js'
+import { isIdentifierKind, scopeKey } from './model.js'
 import { toSourceRange } from './text.js'
-
-export type IdentifierKind = typeof IDENTIFIER_KINDS[number]
 
 export interface SemanticOccurrence {
   readonly kind: IdentifierKind | undefined
@@ -13,40 +11,52 @@ export interface SemanticOccurrence {
   readonly node?: SyntaxNode
 }
 
-const IDENTIFIER_KINDS = [
-  'VariableName',
-  'Callee',
-  'MemberAccess',
-  'PropertyName',
-  'VariableDefinition',
-  'UseAlias'
-] as const
-
 const GLOBAL_BINDING_PRIORITY: readonly BindingKind[] = ['use-alias', 'assignment']
 const FALLBACK_BINDING_PRIORITY: readonly BindingKind[] = ['part', 'bus']
-
-function isIdentifierKind (value: string): value is IdentifierKind {
-  return IDENTIFIER_KINDS.includes(value as IdentifierKind)
-}
 
 export function sameRange (a: SourceRange, b: SourceRange): boolean {
   return a.offset === b.offset && a.length === b.length
 }
 
-export function findIdentifierRangeAt (tree: Tree, document: TextLike, position: number): SourceRange | undefined {
-  const node = findIdentifierNodeAt(tree, position)
-  if (node == null) {
+export function findIdentifierAt (model: Model, position: number, boundary: 'strict' | 'inclusive' = 'strict'): Identifier | undefined {
+  let low = 0
+  let high = model.identifiers.length - 1
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const identifier = model.identifiers[mid]
+
+    if (position < identifier.range.offset) {
+      high = mid - 1
+    } else if (position >= identifier.range.offset + identifier.range.length) {
+      low = mid + 1
+    } else {
+      return identifier
+    }
+  }
+
+  if (boundary === 'inclusive') {
+    const leftCandidate = model.identifiers.at(high)
+    if (leftCandidate != null && leftCandidate.range.offset + leftCandidate.range.length === position) {
+      return leftCandidate
+    }
+
+    const rightCandidate = model.identifiers.at(low)
+    if (rightCandidate != null && rightCandidate.range.offset === position) {
+      return rightCandidate
+    }
+  }
+
+  return undefined
+}
+
+export function findDefinitionBindingAt (model: Model, document: TextLike, position: number): Binding | undefined {
+  const occurrence = findIdentifierAt(model, position, 'inclusive')
+  if (occurrence == null) {
     return undefined
   }
 
-  return toSourceRange(document, node.from, node.to)
-}
-
-export function findDefinitionBindingAt (model: Model, tree: Tree, document: TextLike, position: number): Binding | undefined {
-  const occurrence = findSemanticOccurrenceAt(tree, document, position)
-  return occurrence != null && occurrence.name.length > 0
-    ? resolveDefinitionBinding(model, occurrence, document)
-    : undefined
+  return resolveDefinitionBinding(model, occurrence, document)
 }
 
 export type RangesByBinding = ReadonlyMap<string, readonly SourceRange[]>
@@ -58,12 +68,7 @@ export function findReferenceRangesAt (
   position: number,
   rangesByBinding?: RangesByBinding
 ): readonly SourceRange[] {
-  const occurrence = findSemanticOccurrenceAt(tree, document, position)
-  if (occurrence == null || occurrence.name.length === 0) {
-    return []
-  }
-
-  const binding = resolveDefinitionBinding(model, occurrence, document)
+  const binding = findDefinitionBindingAt(model, document, position)
   if (binding == null) {
     return []
   }
@@ -117,23 +122,6 @@ export function findUnusedAssignmentBindings (model: Model, tree: Tree, document
   return model.bindings.filter((binding) => {
     return binding.kind === 'assignment' && !usedBindings.has(binding.id)
   })
-}
-
-export function findSemanticOccurrenceAt (tree: Tree, document: TextLike, position: number): SemanticOccurrence | undefined {
-  const node = findIdentifierNodeAt(tree, position)
-  if (node != null) {
-    return {
-      kind: node.type.name as IdentifierKind,
-      name: document.sliceString(node.from, node.to),
-      node,
-      range: toSourceRange(document, node.from, node.to)
-    }
-  }
-
-  const range = getWordRangeAt(document, position)
-  return range != null
-    ? { kind: undefined, name: document.sliceString(range.offset, range.offset + range.length), range }
-    : undefined
 }
 
 function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence, document: TextLike): Binding | undefined {
@@ -265,7 +253,7 @@ function walkResolvedIdentifierBindings (model: Model, tree: Tree, document: Tex
     }
 
     const lookupPosition = node.to - node.from > 1 ? node.from + 1 : node.from
-    const occurrence = findSemanticOccurrenceAt(tree, document, lookupPosition)
+    const occurrence = findIdentifierAt(model, lookupPosition)
     if (occurrence == null) {
       return
     }
@@ -315,21 +303,6 @@ function findBindingByPriority (
     if (binding != null) {
       return binding
     }
-  }
-
-  return undefined
-}
-
-function findIdentifierNodeAt (tree: Tree, position: number): SyntaxNode | undefined {
-  const maxDepth = 8
-  let node: SyntaxNode | undefined = tree.resolveInner(position, -1)
-
-  for (let depth = 0; depth < maxDepth && node != null; ++depth) {
-    if (isIdentifierKind(node.type.name)) {
-      return node
-    }
-
-    node = node.parent ?? undefined
   }
 
   return undefined

@@ -3,7 +3,17 @@ import type { LRParser } from '@lezer/lr'
 import type { SourceRange, TextLike } from '../types.js'
 import { textFromString, toSourceRange } from './text.js'
 
-export type ScopeKind = 'root' | 'track' | 'mixer'
+export interface Model {
+  readonly rootScopeId: string
+  readonly scopes: ReadonlyMap<string, Scope>
+  readonly identifiers: readonly Identifier[]
+  readonly bindings: readonly Binding[]
+  readonly bindingsByName: ReadonlyMap<string, readonly Binding[]>
+  readonly bindingsByScope: ReadonlyMap<string, readonly Binding[]>
+  readonly imports: readonly ImportStatement[]
+}
+
+// scope
 
 export interface Scope {
   readonly id: string
@@ -12,7 +22,33 @@ export interface Scope {
   readonly range: SourceRange
 }
 
-export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
+export type ScopeKind = 'root' | 'track' | 'mixer'
+
+// identifier
+
+export interface Identifier {
+  readonly id: string
+  readonly kind: IdentifierKind
+  readonly name: string
+  readonly range: SourceRange
+}
+
+const IDENTIFIER_KINDS = [
+  'VariableName',
+  'Callee',
+  'MemberAccess',
+  'PropertyName',
+  'VariableDefinition',
+  'UseAlias'
+] as const
+
+export type IdentifierKind = typeof IDENTIFIER_KINDS[number]
+
+export function isIdentifierKind (value: string): value is IdentifierKind {
+  return IDENTIFIER_KINDS.includes(value as IdentifierKind)
+}
+
+// binding
 
 export interface Binding {
   readonly id: string
@@ -22,27 +58,17 @@ export interface Binding {
   readonly range: SourceRange
 }
 
+export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
+
+// import
+
 export interface ImportStatement {
   readonly moduleName: string
   readonly alias?: string
   readonly aliasRange?: SourceRange
 }
 
-export interface Model {
-  readonly rootScopeId: string
-  readonly scopes: ReadonlyMap<string, Scope>
-  readonly bindings: readonly Binding[]
-  readonly bindingsByName: ReadonlyMap<string, readonly Binding[]>
-  readonly bindingsByScope: ReadonlyMap<string, readonly Binding[]>
-  readonly imports: readonly ImportStatement[]
-}
-
-interface BindingInput {
-  readonly kind: BindingKind
-  readonly scopeId: string
-  readonly name: string
-  readonly range: SourceRange
-}
+// analysis
 
 interface DefinitionBindingContext {
   readonly parentType: string | undefined
@@ -51,6 +77,8 @@ interface DefinitionBindingContext {
   readonly mixerScopeId: string | undefined
   readonly assignmentHasEquals: boolean
 }
+
+// public API
 
 export function analyzeTree (tree: Tree, document: TextLike): Model {
   const rootRange = toSourceRange(document, 0, document.length)
@@ -64,12 +92,17 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
     range: rootRange
   })
 
+  const identifiers: Identifier[] = []
   const bindings: Binding[] = []
   const bindingsByName = new Map<string, Binding[]>()
   const bindingsByScope = new Map<string, Binding[]>()
   const imports: ImportStatement[] = []
 
-  const addBinding = (input: BindingInput): void => {
+  const addIdentifier = (input: Omit<Identifier, 'id'>): void => {
+    identifiers.push({ ...input, id: identifierKey(input.kind, input.range) })
+  }
+
+  const addBinding = (input: Omit<Binding, 'id'>): void => {
     const { kind, scopeId, name, range } = input
 
     const binding = { ...input, id: bindingKey(kind, scopeId, range) }
@@ -108,6 +141,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         if (statement != null) {
           imports.push(statement)
           if (statement.alias != null && statement.aliasRange != null) {
+            addIdentifier({ kind: 'UseAlias', name: statement.alias, range: statement.aliasRange })
             addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
           }
         }
@@ -146,10 +180,25 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
           assignmentHasEquals: nextAssignmentHasEquals
         })
 
-        if (binding != null) {
-          addBinding({ ...binding, name, range })
+        if (binding == null) {
+          // Invalid/incomplete syntax encountered.
+          // We still add an identifier as a best-effort approach to provide some level of functionality.
+          addIdentifier({ kind: 'VariableName', name, range })
+          break
         }
 
+        addIdentifier({ kind: 'VariableDefinition', name, range })
+        addBinding({ ...binding, name, range })
+
+        break
+      }
+
+      case 'VariableName':
+      case 'Callee':
+      case 'MemberAccess':
+      case 'PropertyName': {
+        const name = document.sliceString(from, to)
+        addIdentifier({ kind: typeName, name, range })
         break
       }
     }
@@ -164,7 +213,10 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 
   walk(cursor, undefined, rootScopeId, undefined, undefined, false)
 
-  return { rootScopeId, scopes, bindings, bindingsByName, bindingsByScope, imports }
+  identifiers.sort((a, b) => a.range.offset - b.range.offset)
+  bindings.sort((a, b) => a.range.offset - b.range.offset)
+
+  return { rootScopeId, scopes, identifiers, bindings, bindingsByName, bindingsByScope, imports }
 }
 
 export function analyzeSourceWithParser (parser: LRParser, source: string): Model {
@@ -174,6 +226,10 @@ export function analyzeSourceWithParser (parser: LRParser, source: string): Mode
 
 export function scopeKey (typeName: string, range: SourceRange): string {
   return `${typeName}:${range.offset}:${range.length}`
+}
+
+function identifierKey (kind: IdentifierKind, range: SourceRange): string {
+  return `${kind}:${range.offset}:${range.length}`
 }
 
 function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): string {
@@ -190,7 +246,7 @@ function appendIndexedValue<Key, Value> (index: Map<Key, Value[]>, key: Key, val
   values.push(value)
 }
 
-function getDefinitionBinding (context: DefinitionBindingContext): Omit<BindingInput, 'name' | 'range'> | undefined {
+function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding, 'id' | 'name' | 'range'> | undefined {
   switch (context.parentType) {
     case 'Assignment':
       return context.assignmentHasEquals
@@ -243,6 +299,7 @@ function parseUseStatement (document: TextLike, node: SyntaxNode): ImportStateme
   }
 }
 
+// TODO Use proper string parsing instead of JSON.parse
 function parseStringLiteral (text: string): string | undefined {
   try {
     const value = JSON.parse(text)

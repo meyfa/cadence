@@ -110,4 +110,27 @@ describe('highlight-occurrences/operation.ts', () => {
       ]
     )
   })
+
+  it('uses correct boundary for identifier lookup', () => {
+    const source = [
+      'foo = 42',
+      'bar = foo // reference',
+      ''
+    ].join('\n')
+
+    const beforeNamePosition = source.indexOf(' foo // reference')
+    const startOfNamePosition = source.indexOf('foo // reference')
+    const endOfNamePosition = source.indexOf('foo // reference') + 'foo'.length
+    const afterNamePosition = source.indexOf('foo // reference') + 'foo'.length + 1
+
+    const beforeName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, beforeNamePosition)
+    const startOfName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, startOfNamePosition)
+    const endOfName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, endOfNamePosition)
+    const afterName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, afterNamePosition)
+
+    assert.deepStrictEqual(beforeName.length, 0, 'before name')
+    assert.deepStrictEqual(startOfName.length, 2, 'start of name')
+    assert.deepStrictEqual(endOfName.length, 2, 'end of name')
+    assert.deepStrictEqual(afterName.length, 0, 'after name')
+  })
 })

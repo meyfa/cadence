@@ -1,8 +1,7 @@
 import type { HoverInfo } from '@language'
 import { getStandardLibraryHoverInfo } from '@language'
-import type { Tree } from '@lezer/common'
 import type { Binding, ImportStatement, Model } from '../analysis/model.js'
-import { findAccessChainRootBefore, findDefinitionBindingAt, findSemanticOccurrenceAt } from '../analysis/query.js'
+import { findAccessChainRootBefore, findDefinitionBindingAt, findIdentifierAt } from '../analysis/query.js'
 import type { SemanticOperation } from '../operations.js'
 import type { SourceRange, TextLike } from '../types.js'
 
@@ -11,17 +10,17 @@ export interface HoverInfoWithRange extends HoverInfo {
 }
 
 export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange | undefined> = (model, tree, document, pos) => {
-  const occurrence = findSemanticOccurrenceAt(tree, document, pos)
-  if (occurrence?.kind == null || occurrence.name.length === 0) {
+  const occurrence = findIdentifierAt(model, pos, 'inclusive')
+  if (occurrence == null) {
     return undefined
   }
 
-  const memberInfo = resolveMemberHover(model, tree, document, occurrence.range, occurrence.name)
+  const memberInfo = resolveMemberHover(model, document, occurrence.range, occurrence.name)
   if (memberInfo != null) {
     return { ...memberInfo, range: occurrence.range }
   }
 
-  const binding = findDefinitionBindingAt(model, tree, document, pos)
+  const binding = findDefinitionBindingAt(model, document, pos)
   if (binding?.kind === 'use-alias') {
     const moduleName = findModuleNameForBinding(model.imports, binding)
 
@@ -56,7 +55,6 @@ export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange |
 
 function resolveMemberHover (
   model: Model,
-  tree: Tree,
   document: TextLike,
   range: SourceRange,
   memberName: string
@@ -67,7 +65,7 @@ function resolveMemberHover (
   }
 
   const rootPosition = rootRange.offset + Math.min(rootRange.length - 1, 1)
-  const rootBinding = findDefinitionBindingAt(model, tree, document, rootPosition)
+  const rootBinding = findDefinitionBindingAt(model, document, rootPosition)
   if (rootBinding?.kind !== 'use-alias') {
     return undefined
   }
