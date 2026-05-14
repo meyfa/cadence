@@ -132,4 +132,20 @@ describe('go-to-definition/operation.ts', () => {
       undefined
     )
   })
+
+  it('resolves incomplete syntax referring to an assignment', () => {
+    const source = [
+      'foo = 42',
+      'foo',
+      ''
+    ].join('\n')
+
+    const defPos = source.indexOf('foo =')
+    const refPos = source.lastIndexOf('foo') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
+      getRangeAt(source, defPos, 'foo'.length)
+    )
+  })
 })
