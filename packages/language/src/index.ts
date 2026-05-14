@@ -9,3 +9,6 @@ export * from './parser/error.js'
 
 export * from './compiler/index.js'
 export * from './compiler/error.js'
+
+export type { ModuleDefinition, Documentation } from './compiler/modules.js'
+export { getStandardModuleNames, getStandardModule, getDocumentation } from './compiler/modules.js'

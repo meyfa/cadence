@@ -8,7 +8,7 @@ import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { allocateParameter } from './functions.js'
-import { getStandardModule } from './modules.js'
+import { getStandardModuleValue } from './modules.js'
 import type { InferSchema, PropertySchema } from './schema.js'
 import type { CurveValue, PatternValue, StringValue, Type, Value } from './types.js'
 import { BusType, CurveType, EffectType, FunctionType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType } from './types.js'
@@ -125,7 +125,7 @@ function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<stri
     // Checker guarantees this is a simple string
     const name = library.parts.filter((part) => typeof part === 'string').join('')
 
-    const module = getStandardModule(name)
+    const module = getStandardModuleValue(name)
     assert(module != null)
 
     return module

@@ -1,103 +1,86 @@
-import type { HoverInfo } from '@language'
-import { getStandardLibraryHoverInfo } from '@language'
-import type { Binding, ImportStatement, Model } from '../analysis/model.js'
-import { findAccessChainRootBefore, findDefinitionBindingAt, findIdentifierAt } from '../analysis/query.js'
+import type { Documentation } from '@language'
+import { getDocumentation, getStandardModule } from '@language'
+import type { Binding, Identifier, Model } from '../analysis/model.js'
+import { computeAccessChain, findDefinitionBindingAt, findIdentifierAt, resolveDefinitionBinding, sameRange } from '../analysis/query.js'
 import type { SemanticOperation } from '../operations.js'
 import type { SourceRange, TextLike } from '../types.js'
 
-export interface HoverInfoWithRange extends HoverInfo {
+export interface HoverInfoWithRange extends Documentation {
   readonly range: SourceRange
 }
 
 export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange | undefined> = (model, tree, document, pos) => {
-  const occurrence = findIdentifierAt(model, pos, 'inclusive')
-  if (occurrence == null) {
+  const identifier = findIdentifierAt(model, pos, 'inclusive')
+  if (identifier == null || identifier.kind === 'PropertyName') {
     return undefined
   }
 
-  const memberInfo = resolveMemberHover(model, document, occurrence.range, occurrence.name)
-  if (memberInfo != null) {
-    return { ...memberInfo, range: occurrence.range }
-  }
+  const chain = computeAccessChain(model, document, identifier)
 
-  const binding = findDefinitionBindingAt(model, document, pos)
-  if (binding?.kind === 'use-alias') {
-    const moduleName = findModuleNameForBinding(model.imports, binding)
+  switch (chain.length) {
+    // hovering "foo" in "foo.bar.baz" -> show documentation for "foo" (module or default-imported value)
+    case 1:
+      return getHoverInfoForIdentifier(model, document, chain[0])
 
-    const info = moduleName == null ? undefined : getStandardLibraryHoverInfo(moduleName)
-    if (info == null) {
+    // hovering "bar" in "foo.bar.baz" -> show documentation for "bar" export of module "foo" (if "foo" is a module alias)
+    case 2:
+      return getHoverInfoForMemberAccess(model, document, chain[0], chain[1])
+
+    // hovering "baz" in "foo.bar.baz" -> no documentation (modules don't have nested members)
+    default:
       return undefined
+  }
+}
+
+function withRange (info: Documentation | undefined, range: SourceRange): HoverInfoWithRange | undefined {
+  return info == null ? undefined : { ...info, range }
+}
+
+function getHoverInfoForIdentifier (model: Model, document: TextLike, identifier: Identifier): HoverInfoWithRange | undefined {
+  const binding = findDefinitionBindingAt(model, document, identifier.range.offset)
+
+  switch (binding?.kind) {
+    case undefined:
+      return getHoverInfoForDefaultImport(model, identifier)
+
+    case 'use-alias': {
+      const moduleName = findModuleNameForBinding(model, binding)
+      return moduleName != null
+        ? withRange(getDocumentation(moduleName), identifier.range)
+        : undefined
     }
 
-    return { ...info, range: occurrence.range }
+    default:
+      return undefined
   }
-
-  if (binding != null) {
-    return undefined
-  }
-
-  if (!isHoverableWildcardOccurrenceKind(occurrence.kind)) {
-    return undefined
-  }
-
-  const moduleName = findWildcardModuleForExport(model.imports, occurrence.name)
-  if (moduleName == null) {
-    return undefined
-  }
-
-  const info = getStandardLibraryHoverInfo(moduleName, occurrence.name)
-  if (info == null) {
-    return undefined
-  }
-
-  return { ...info, range: occurrence.range }
 }
 
-function resolveMemberHover (
-  model: Model,
-  document: TextLike,
-  range: SourceRange,
-  memberName: string
-): HoverInfo | undefined {
-  const rootRange = findAccessChainRootBefore(document, range.offset)
-  if (rootRange == null) {
+function getHoverInfoForMemberAccess (model: Model, document: TextLike, object: Identifier, property: Identifier): HoverInfoWithRange | undefined {
+  const binding = resolveDefinitionBinding(model, object, document)
+  if (binding == null || binding.kind !== 'use-alias') {
     return undefined
   }
 
-  const rootPosition = rootRange.offset + Math.min(rootRange.length - 1, 1)
-  const rootBinding = findDefinitionBindingAt(model, document, rootPosition)
-  if (rootBinding?.kind !== 'use-alias') {
-    return undefined
-  }
-
-  const moduleName = findModuleNameForBinding(model.imports, rootBinding)
-  if (moduleName == null) {
-    return undefined
-  }
-
-  return getStandardLibraryHoverInfo(moduleName, memberName)
+  const moduleName = findModuleNameForBinding(model, binding)
+  return moduleName != null
+    ? withRange(getDocumentation(moduleName, property.name), property.range)
+    : undefined
 }
 
-function findModuleNameForBinding (imports: readonly ImportStatement[], binding: Binding): string | undefined {
-  return imports.find((statement) => statement.alias === binding.name)?.moduleName
-}
-
-function isHoverableWildcardOccurrenceKind (kind: string): boolean {
-  return kind === 'VariableName' || kind === 'Callee'
-}
-
-function findWildcardModuleForExport (imports: readonly ImportStatement[], exportName: string): string | undefined {
-  let resolvedModuleName: string | undefined
-
-  for (const statement of imports) {
-    if (statement.alias != null) {
-      continue
-    }
-
-    if (getStandardLibraryHoverInfo(statement.moduleName, exportName) != null) {
-      resolvedModuleName = statement.moduleName
+function getHoverInfoForDefaultImport (model: Model, identifier: Identifier): HoverInfoWithRange | undefined {
+  for (const { moduleName } of model.imports) {
+    if (getStandardModule(moduleName)?.exports.has(identifier.name)) {
+      return withRange(getDocumentation(moduleName, identifier.name), identifier.range)
     }
   }
 
-  return resolvedModuleName
+  return undefined
+}
+
+function findModuleNameForBinding (model: Model, binding: Binding): string | undefined {
+  const module = model.imports.find((statement) => {
+    return statement.aliasRange != null && sameRange(statement.aliasRange, binding.range)
+  })
+
+  return module?.moduleName
 }
