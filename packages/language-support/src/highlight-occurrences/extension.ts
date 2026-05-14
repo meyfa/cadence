@@ -53,7 +53,7 @@ interface AnalysisState {
 function buildAnalysisState (state: EditorState): AnalysisState {
   const tree = syntaxTree(state)
   const model = getAnalysisModel(tree, state.doc)
-  const rangesByBinding = buildReferenceRangesByBinding(model, tree, state.doc)
+  const rangesByBinding = buildReferenceRangesByBinding(model, state.doc)
   return { model, rangesByBinding }
 }
 

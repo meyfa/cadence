@@ -1,7 +1,5 @@
-import type { SyntaxNode, Tree } from '@lezer/common'
 import type { SourceRange, TextLike } from '../types.js'
 import type { Binding, BindingKind, Identifier, Model } from './model.js'
-import { isIdentifierKind } from './model.js'
 import { toSourceRange } from './text.js'
 
 const GLOBAL_BINDING_PRIORITY: readonly BindingKind[] = ['use-alias', 'assignment']
@@ -56,7 +54,6 @@ export type RangesByBinding = ReadonlyMap<string, readonly SourceRange[]>
 
 export function findReferenceRangesAt (
   model: Model,
-  tree: Tree,
   document: TextLike,
   position: number,
   rangesByBinding?: RangesByBinding
@@ -66,15 +63,15 @@ export function findReferenceRangesAt (
     return []
   }
 
-  const ranges = rangesByBinding ?? buildReferenceRangesByBinding(model, tree, document)
+  const ranges = rangesByBinding ?? buildReferenceRangesByBinding(model, document)
 
   return ranges.get(binding.id) ?? []
 }
 
-export function buildReferenceRangesByBinding (model: Model, tree: Tree, document: TextLike): RangesByBinding {
+export function buildReferenceRangesByBinding (model: Model, document: TextLike): RangesByBinding {
   const rangesByBinding = new Map<string, Map<string, SourceRange>>()
 
-  walkResolvedIdentifierBindings(model, tree, document, (occurrence, binding) => {
+  walkResolvedIdentifierBindings(model, document, (occurrence, binding) => {
     const range = getReferenceRangeForBindingOccurrence(occurrence, document, binding)
     if (range == null) {
       return
@@ -103,10 +100,10 @@ export function buildReferenceRangesByBinding (model: Model, tree: Tree, documen
   return sortedByBinding
 }
 
-export function findUnusedAssignmentBindings (model: Model, tree: Tree, document: TextLike): readonly Binding[] {
+export function findUnusedAssignmentBindings (model: Model, document: TextLike): readonly Binding[] {
   const usedBindings = new Set<string>()
 
-  walkResolvedIdentifierBindings(model, tree, document, (occurrence, binding) => {
+  walkResolvedIdentifierBindings(model, document, (occurrence, binding) => {
     if (binding.kind === 'assignment' && !sameRange(binding.range, occurrence.range)) {
       usedBindings.add(binding.id)
     }
@@ -218,27 +215,13 @@ function resolveExplicitBusBinding (model: Model, occurrence: Identifier, docume
   return findBindingByPriority(model.bindingsByName.get(busName), ['bus'], busName)
 }
 
-function walkResolvedIdentifierBindings (model: Model, tree: Tree, document: TextLike, visitor: OccurrenceVisitor): void {
-  const enter = (node: SyntaxNode) => {
-    if (!isIdentifierKind(node.type.name)) {
-      return
+function walkResolvedIdentifierBindings (model: Model, document: TextLike, visitor: OccurrenceVisitor): void {
+  for (const identifier of model.identifiers) {
+    const binding = resolveDefinitionBinding(model, identifier, document)
+    if (binding != null) {
+      visitor(identifier, binding)
     }
-
-    const lookupPosition = node.to - node.from > 1 ? node.from + 1 : node.from
-    const occurrence = findIdentifierAt(model, lookupPosition)
-    if (occurrence == null) {
-      return
-    }
-
-    const binding = resolveDefinitionBinding(model, occurrence, document)
-    if (binding == null) {
-      return
-    }
-
-    visitor(occurrence, binding)
   }
-
-  tree.iterate({ enter })
 }
 
 function findBindingBySpan (model: Model, occurrence: Identifier): Binding | undefined {
