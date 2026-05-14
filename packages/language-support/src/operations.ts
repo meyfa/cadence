@@ -6,7 +6,7 @@ import type { TextLike } from './types.js'
 import type { Model } from './analysis/model.js'
 
 export type SemanticOperation<Args extends readonly unknown[], Result> =
-  (model: Model, tree: Tree, document: TextLike, ...args: Args) => Result
+  (model: Model, ...args: Args) => Result
 
 export function applySemanticOperation<Args extends readonly unknown[], Result> (
   operation: SemanticOperation<Args, Result>,
@@ -15,7 +15,7 @@ export function applySemanticOperation<Args extends readonly unknown[], Result> 
   ...args: Args
 ): Result {
   const model = getAnalysisModel(tree, document)
-  return operation(model, tree, document, ...args)
+  return operation(model, ...args)
 }
 
 export function applySemanticOperationWithParser<Args extends readonly unknown[], Result> (
@@ -27,5 +27,5 @@ export function applySemanticOperationWithParser<Args extends readonly unknown[]
   const tree = parser.parse(source)
   const document = textFromString(source)
   const model = getAnalysisModel(tree, document)
-  return operation(model, tree, document, ...args)
+  return operation(model, ...args)
 }

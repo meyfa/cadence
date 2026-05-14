@@ -3,6 +3,7 @@ import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
 import { analyzeSourceWithParser } from '../../src/analysis/model.js'
+import { findIdentifierAt } from '../../src/analysis/query.js'
 
 const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar)
@@ -202,5 +203,53 @@ describe('analysis/model.ts', () => {
         { kind: 'VariableName', name: 'foo' }
       ]
     )
+  })
+
+  it('sets previous sibling for member accesses', () => {
+    const source = [
+      'foo = a.b',
+      'bar = d.e.f',
+      ''
+    ].join('\n')
+
+    const model = analyzeSourceWithParser(cadenceParser, source)
+
+    const b = model.identifiers.find((identifier) => identifier.name === 'b')
+    const a = model.identifiers.find((identifier) => identifier.name === 'a')
+    assert.ok(b != null, 'expected to find b')
+    assert.ok(a != null, 'expected to find a')
+    assert.strictEqual(b.previousSibling, a)
+
+    const f = model.identifiers.find((identifier) => identifier.name === 'f')
+    const e = model.identifiers.find((identifier) => identifier.name === 'e')
+    const d = model.identifiers.find((identifier) => identifier.name === 'd')
+    assert.ok(f != null, 'expected to find f')
+    assert.ok(e != null, 'expected to find e')
+    assert.ok(d != null, 'expected to find d')
+    assert.strictEqual(f.previousSibling, e)
+    assert.strictEqual(e.previousSibling, d)
+  })
+
+  it('does not set previous sibling for call arguments', () => {
+    const source = [
+      'use "effects" as fx',
+      'delay = 1',
+      'mixer {',
+      '  bus main {',
+      '    effect fx.delay(time: delay)',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSourceWithParser(cadenceParser, source)
+
+    const timeProperty = findIdentifierAt(model, source.indexOf('time:'))
+    assert.strictEqual(timeProperty?.kind, 'PropertyName')
+    assert.strictEqual(timeProperty.previousSibling, undefined)
+
+    const delayArgument = findIdentifierAt(model, source.indexOf('delay)') + 1)
+    assert.strictEqual(delayArgument?.kind, 'VariableName')
+    assert.strictEqual(delayArgument.previousSibling, undefined)
   })
 })

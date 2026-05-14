@@ -31,6 +31,12 @@ export interface Identifier {
   readonly scopeId: string
   readonly name: string
   readonly range: SourceRange
+
+  /**
+   * For member accesses (e.g. "bar" or "baz" in "foo.bar.baz"),
+   * this points to the previous identifier in the access chain.
+   */
+  readonly previousSibling?: Identifier
 }
 
 const IDENTIFIER_KINDS = [
@@ -116,8 +122,9 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
     currentScopeId: string,
     trackScopeId: string | undefined,
     mixerScopeId: string | undefined,
-    assignmentHasEquals: boolean
-  ): void => {
+    assignmentHasEquals: boolean,
+    previousSibling?: Identifier
+  ): Identifier | undefined => {
     const typeName = cursor.type.name
     const from = cursor.from
     const to = cursor.to
@@ -130,6 +137,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
     let nextTrackScopeId = trackScopeId
     let nextMixerScopeId = mixerScopeId
     let nextAssignmentHasEquals = assignmentHasEquals
+    let accessChainTail: Identifier | undefined
 
     switch (typeName) {
       case 'UseStatement': {
@@ -161,7 +169,16 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
       }
 
       case 'Assignment': {
-        nextAssignmentHasEquals = document.sliceString(from, to).includes('=')
+        nextAssignmentHasEquals = false
+
+        cursor.node.cursor().iterate((node) => {
+          if (node.type.name === '=') {
+            nextAssignmentHasEquals = true
+            return false
+          }
+          return true
+        })
+
         break
       }
 
@@ -179,7 +196,8 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         if (binding == null) {
           // Invalid/incomplete syntax encountered.
           // We still add an identifier as a best-effort approach to provide some level of functionality.
-          identifiers.push({ kind: 'VariableName', scopeId: currentScopeId, name, range })
+          accessChainTail = { kind: 'VariableName', scopeId: currentScopeId, name, range, previousSibling }
+          identifiers.push(accessChainTail)
           break
         }
 
@@ -192,19 +210,66 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
       case 'VariableName':
       case 'Callee':
       case 'MemberAccess':
+      case 'BusNamespace':
       case 'PropertyName': {
+        const kind = typeName === 'BusNamespace' ? 'VariableName' : typeName
         const name = document.sliceString(from, to)
-        identifiers.push({ kind: typeName, scopeId: currentScopeId, name, range })
+
+        const identifier: Identifier = { kind, scopeId: currentScopeId, name, range, previousSibling }
+        identifiers.push(identifier)
+
+        if (kind !== 'PropertyName') {
+          accessChainTail = identifier
+        }
+
         break
       }
     }
 
+    // The parser defaults to 'Assignment' for incomplete syntax (e.g. standalone 'fx.delay'),
+    // so we use heuristics to still collect identifiers in that case.
+    const trackAccessChain = typeName === 'AccessOrCall' || (typeName === 'Assignment' && !nextAssignmentHasEquals)
+
+    let nextPreviousSibling = previousSibling
+
     if (cursor.firstChild()) {
       do {
-        walk(cursor, nextParentType, nextScopeId, nextTrackScopeId, nextMixerScopeId, nextAssignmentHasEquals)
+        const childTypeName = cursor.type.name
+
+        const childPreviousSibling = (() => {
+          if (typeName === 'Call') {
+            return childTypeName === 'Callee' ? previousSibling : undefined
+          }
+
+          return trackAccessChain && shouldKeepPreviousSibling(cursor.node)
+            ? nextPreviousSibling
+            : undefined
+        })()
+
+        const childAccessChainTail = walk(
+          cursor,
+          nextParentType,
+          nextScopeId,
+          nextTrackScopeId,
+          nextMixerScopeId,
+          nextAssignmentHasEquals,
+          childPreviousSibling
+        )
+
+        if (typeName === 'Call') {
+          accessChainTail ??= childAccessChainTail
+          continue
+        }
+
+        if (trackAccessChain && childAccessChainTail != null) {
+          nextPreviousSibling = childAccessChainTail
+          accessChainTail = childAccessChainTail
+        }
       } while (cursor.nextSibling())
       cursor.parent()
     }
+
+    return accessChainTail
   }
 
   walk(cursor, undefined, rootScopeId, undefined, undefined, false)
@@ -218,6 +283,17 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
 export function analyzeSourceWithParser (parser: LRParser, source: string): Model {
   const tree = parser.parse(source)
   return analyzeTree(tree, textFromString(source))
+}
+
+function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
+  const type = node.type.name
+
+  return type === 'AccessOrCall' ||
+    type === 'Callee' ||
+    type === 'Call' ||
+    type === 'MemberAccess' ||
+    type === 'VariableName' ||
+    type === 'BusNamespace'
 }
 
 function scopeKey (typeName: string, range: SourceRange): string {

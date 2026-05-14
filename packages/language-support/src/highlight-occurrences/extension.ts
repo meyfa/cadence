@@ -53,19 +53,19 @@ interface AnalysisState {
 function buildAnalysisState (state: EditorState): AnalysisState {
   const tree = syntaxTree(state)
   const model = getAnalysisModel(tree, state.doc)
-  const rangesByBinding = buildReferenceRangesByBinding(model, state.doc)
+  const rangesByBinding = buildReferenceRangesByBinding(model)
   return { model, rangesByBinding }
 }
 
 function getOccurrenceDecorations (state: EditorState, analysisState: AnalysisState): DecorationSet {
-  const { doc, selection } = state
+  const { selection } = state
   const { model, rangesByBinding } = analysisState
 
   if (selection.ranges.length !== 1 || !selection.main.empty) {
     return Decoration.none
   }
 
-  const binding = findDefinitionBindingAt(model, doc, selection.main.head)
+  const binding = findDefinitionBindingAt(model, selection.main.head)
   const ranges = binding != null ? rangesByBinding.get(binding.id) : undefined
 
   if (ranges == null || ranges.length === 0) {

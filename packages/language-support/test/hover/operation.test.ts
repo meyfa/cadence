@@ -151,6 +151,26 @@ describe('hover/operation.ts', () => {
     assert.strictEqual(memberDocs?.title.slice(0, 'delay'.length), 'delay')
   })
 
+  it('does not treat call arguments as aliased module members', () => {
+    const source = [
+      'use "effects" as fx',
+      'delay = 1',
+      'mixer {',
+      '  bus main {',
+      '    effect fx.reverb(delay)',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const position = source.lastIndexOf('delay)') + 1
+
+    assert.strictEqual(
+      applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, position),
+      undefined
+    )
+  })
+
   it('does not return docs for non-default imports', () => {
     const source = [
       'use "effects" as fx',
