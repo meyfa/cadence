@@ -34,7 +34,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.lastIndexOf('kick <<') + 1
-    const binding = findDefinitionBindingAt(model, document, position)
+    const binding = findDefinitionBindingAt(model, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'assignment')
@@ -60,7 +60,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.indexOf('bus.foo.gain') + 'bus.'.length + 1
-    const binding = findDefinitionBindingAt(model, document, position)
+    const binding = findDefinitionBindingAt(model, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'bus')
@@ -81,7 +81,7 @@ describe('analysis/query.ts', () => {
     const model = analyzeTree(tree, document)
     const position = source.indexOf('tempo:') + 1
 
-    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
+    assert.strictEqual(findDefinitionBindingAt(model, position), undefined)
   })
 
   it('does not resolve member access', () => {
@@ -101,7 +101,7 @@ describe('analysis/query.ts', () => {
     const model = analyzeTree(tree, document)
     const position = source.indexOf('synth.gain') + 'synth.'.length + 1
 
-    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
+    assert.strictEqual(findDefinitionBindingAt(model, position), undefined)
   })
 
   it('does not resolve member access of an explicit bus access', () => {
@@ -121,7 +121,7 @@ describe('analysis/query.ts', () => {
     const model = analyzeTree(tree, document)
     const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
 
-    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
+    assert.strictEqual(findDefinitionBindingAt(model, position), undefined)
   })
 
   it('prefers import aliases over assignments with the same name', () => {
@@ -135,7 +135,7 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.lastIndexOf('fx.delay') + 1
-    const binding = findDefinitionBindingAt(model, document, position)
+    const binding = findDefinitionBindingAt(model, position)
 
     assert.ok(binding)
     assert.strictEqual(binding.kind, 'use-alias')

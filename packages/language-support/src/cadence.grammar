@@ -119,7 +119,7 @@ Call {
   "(" argumentList? ")"
 }
 
-accessOrCall {
+AccessOrCall {
   primary
   (
     "." Unit |
@@ -129,7 +129,7 @@ accessOrCall {
 }
 
 expression {
-  accessOrCall | UnaryExpression | BinaryExpression
+  AccessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
