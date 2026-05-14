@@ -1,12 +1,6 @@
 import type { SourceRange } from '../types.js'
-import type { Binding, BindingKind, Identifier, Model } from './model.js'
-
-const GLOBAL_BINDING_PRIORITY: readonly BindingKind[] = ['use-alias', 'assignment']
-const FALLBACK_BINDING_PRIORITY: readonly BindingKind[] = ['part', 'bus']
-
-export function sameRange (a: SourceRange, b: SourceRange): boolean {
-  return a.offset === b.offset && a.length === b.length
-}
+import type { Binding, Identifier, Model } from './model.js'
+import { sameRange } from './model.js'
 
 export function findIdentifierAt (model: Model, position: number, boundary: 'strict' | 'inclusive' = 'strict'): Identifier | undefined {
   let low = 0
@@ -51,179 +45,40 @@ export function findDefinitionBindingAt (model: Model, position: number): Bindin
 
 export type RangesByBinding = ReadonlyMap<string, readonly SourceRange[]>
 
-export function findReferenceRangesAt (
-  model: Model,
-  position: number,
-  rangesByBinding?: RangesByBinding
-): readonly SourceRange[] {
+export function findReferenceRangesAt (model: Model, position: number): readonly SourceRange[] {
   const binding = findDefinitionBindingAt(model, position)
-  if (binding == null) {
-    return []
-  }
-
-  const ranges = rangesByBinding ?? buildReferenceRangesByBinding(model)
-
-  return ranges.get(binding.id) ?? []
+  return binding == null ? [] : getReferrenceRangesForBinding(model, binding)
 }
 
 export function buildReferenceRangesByBinding (model: Model): RangesByBinding {
-  const rangesByBinding = new Map<string, Map<string, SourceRange>>()
+  return new Map(
+    model.bindings.map((binding) => [binding.id, getReferrenceRangesForBinding(model, binding)])
+  )
+}
 
-  walkResolvedIdentifierBindings(model, (occurrence, binding) => {
-    const range = getReferenceRangeForBindingOccurrence(occurrence, binding)
-    if (range == null) {
-      return
-    }
+function getReferrenceRangesForBinding (model: Model, binding: Binding): readonly SourceRange[] {
+  const references = model.referenceMap.get(binding) ?? []
 
-    const key = `${range.offset}:${range.length}`
-    const existingRanges = rangesByBinding.get(binding.id)
-    if (existingRanges == null) {
-      rangesByBinding.set(binding.id, new Map([[key, range]]))
-      return
-    }
+  const ranges = references.map((reference) => reference.range)
+  ranges.sort((a, b) => a.offset - b.offset || a.length - b.length)
 
-    existingRanges.set(key, range)
-  })
-
-  const sortedByBinding = new Map<string, readonly SourceRange[]>()
-
-  for (const [bindingId, ranges] of rangesByBinding) {
-    const sortedRanges = [...ranges.values()].sort((left, right) => {
-      return left.offset - right.offset || left.length - right.length
-    })
-
-    sortedByBinding.set(bindingId, sortedRanges)
-  }
-
-  return sortedByBinding
+  return ranges
 }
 
 export function findUnusedAssignmentBindings (model: Model): readonly Binding[] {
-  const usedBindings = new Set<string>()
-
-  walkResolvedIdentifierBindings(model, (occurrence, binding) => {
-    if (binding.kind === 'assignment' && !sameRange(binding.range, occurrence.range)) {
-      usedBindings.add(binding.id)
-    }
-  })
-
   return model.bindings.filter((binding) => {
-    return binding.kind === 'assignment' && !usedBindings.has(binding.id)
+    // Buses and parts are implicitly used by the runtime.
+    if (binding.kind !== 'assignment') {
+      return false
+    }
+
+    const references = model.referenceMap.get(binding) ?? []
+    return references.every((reference) => sameRange(binding.range, reference.range))
   })
 }
 
 export function resolveDefinitionBinding (model: Model, occurrence: Identifier): Binding | undefined {
-  switch (occurrence.kind) {
-    case 'PropertyName':
-      return undefined
-
-    case 'VariableDefinition':
-    case 'UseAlias':
-      return findBindingBySpan(model, occurrence)
-
-    case 'Callee':
-      return findFirstGlobalBinding(model, occurrence.name)
-
-    case 'VariableName':
-      return resolveVariableBinding(model, occurrence)
-
-    case 'MemberAccess':
-      return resolveExplicitBusBinding(model, occurrence)
-
-    default:
-      occurrence.kind satisfies never
-  }
-}
-
-function resolveVariableBinding (model: Model, occurrence: Identifier): Binding | undefined {
-  const { name } = occurrence
-
-  const scope = model.scopes.get(occurrence.scopeId)
-
-  const part = scope?.kind === 'track' ? findScopedBinding(model, scope.id, name, 'part') : undefined
-  if (part != null) {
-    return part
-  }
-
-  const bus = scope?.kind === 'mixer' ? findScopedBinding(model, scope.id, name, 'bus') : undefined
-  if (bus != null) {
-    return bus
-  }
-
-  return findFirstGlobalBinding(model, name) ?? findFallbackScopedBinding(model, name)
-}
-
-function getReferenceRangeForBindingOccurrence (
-  occurrence: Identifier,
-  binding: Binding
-): SourceRange | undefined {
-  if (occurrence.kind === 'PropertyName') {
-    return undefined
-  }
-
-  if (binding.kind === 'bus' && isExplicitBusReference(occurrence) && occurrence.name === binding.name) {
-    return occurrence.range
-  }
-
-  return occurrence.name === binding.name ? occurrence.range : undefined
-}
-
-type OccurrenceVisitor = (occurrence: Identifier, binding: Binding) => void
-
-function resolveExplicitBusBinding (model: Model, occurrence: Identifier): Binding | undefined {
-  if (!isExplicitBusReference(occurrence)) {
-    return undefined
-  }
-
-  return findBindingByPriority(model.bindingsByName.get(occurrence.name), ['bus'], occurrence.name)
-}
-
-function walkResolvedIdentifierBindings (model: Model, visitor: OccurrenceVisitor): void {
-  for (const identifier of model.identifiers) {
-    const binding = resolveDefinitionBinding(model, identifier)
-    if (binding != null) {
-      visitor(identifier, binding)
-    }
-  }
-}
-
-function findBindingBySpan (model: Model, occurrence: Identifier): Binding | undefined {
-  const bindings = model.bindingsByName.get(occurrence.name)
-  return bindings?.find((binding) => sameRange(binding.range, occurrence.range))
-}
-
-function findFirstGlobalBinding (model: Model, name: string): Binding | undefined {
-  return findBindingByPriority(model.bindingsByName.get(name), GLOBAL_BINDING_PRIORITY)
-}
-
-function findScopedBinding (model: Model, scopeId: string, name: string, kind: 'part' | 'bus'): Binding | undefined {
-  return findBindingByPriority(model.bindingsByScope.get(scopeId), [kind], name)
-}
-
-function findFallbackScopedBinding (model: Model, name: string): Binding | undefined {
-  return findBindingByPriority(model.bindingsByName.get(name), FALLBACK_BINDING_PRIORITY)
-}
-
-function findBindingByPriority (
-  bindings: readonly Binding[] | undefined,
-  kinds: readonly BindingKind[],
-  name?: string
-): Binding | undefined {
-  if (bindings == null) {
-    return undefined
-  }
-
-  for (const kind of kinds) {
-    const binding = bindings.find((candidate) => {
-      return candidate.kind === kind && (name == null || candidate.name === name)
-    })
-
-    if (binding != null) {
-      return binding
-    }
-  }
-
-  return undefined
+  return model.identifierBindingMap.get(occurrence)
 }
 
 export function computeAccessChain (member: Identifier): readonly Identifier[] {
@@ -237,9 +92,4 @@ export function computeAccessChain (member: Identifier): readonly Identifier[] {
 
   // reverse to get chain in order from left to right (e.g. "foo.bar.baz" -> ["foo", "bar", "baz"])
   return identifiers.reverse()
-}
-
-function isExplicitBusReference (identifier: Identifier): boolean {
-  const chain = computeAccessChain(identifier)
-  return chain.length === 2 && chain[0].name === 'bus'
 }

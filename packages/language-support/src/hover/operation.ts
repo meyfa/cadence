@@ -1,7 +1,8 @@
 import type { Documentation } from '@language'
 import { getDocumentation, getStandardModule } from '@language'
 import type { Binding, Identifier, Model } from '../analysis/model.js'
-import { computeAccessChain, findDefinitionBindingAt, findIdentifierAt, resolveDefinitionBinding, sameRange } from '../analysis/query.js'
+import { sameRange } from '../analysis/model.js'
+import { computeAccessChain, findDefinitionBindingAt, findIdentifierAt, resolveDefinitionBinding } from '../analysis/query.js'
 import type { SemanticOperation } from '../operations.js'
 import type { SourceRange } from '../types.js'
 
