@@ -44,36 +44,11 @@ describe('analysis/query.ts', () => {
     assert.deepStrictEqual(binding.range, getRangeAt(source, kickOffset, 'kick'.length))
   })
 
-  it('resolves member access through the root identifier', () => {
-    const source = [
-      'use "effects" as fx',
-      'synth = sample("...")',
-      'track (120.bpm) {',
-      '  part intro (4.bars) {',
-      '    automate synth.gain as curve [hold(-60.db):3 lin(0.db):1]',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const { tree, document } = parseDocument(source)
-    const model = analyzeTree(tree, document)
-    const position = source.indexOf('synth.gain') + 'synth.'.length + 1
-    const binding = findDefinitionBindingAt(model, document, position)
-
-    assert.ok(binding)
-    assert.strictEqual(binding.kind, 'assignment')
-    assert.strictEqual(binding.name, 'synth')
-
-    const synthOffset = source.indexOf('synth =')
-    assert.deepStrictEqual(binding.range, getRangeAt(source, synthOffset, 'synth'.length))
-  })
-
   it('resolves explicit bus namespace access to the bus binding', () => {
     const source = [
       'track (120.bpm) {',
       '  part foo (4.bars) {',
-      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '    automate bus.foo.gain as curve [hold(0.db)]',
       '  }',
       '}',
       'mixer {',
@@ -84,7 +59,7 @@ describe('analysis/query.ts', () => {
 
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
-    const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
+    const position = source.indexOf('bus.foo.gain') + 'bus.'.length + 1
     const binding = findDefinitionBindingAt(model, document, position)
 
     assert.ok(binding)
@@ -105,6 +80,46 @@ describe('analysis/query.ts', () => {
     const { tree, document } = parseDocument(source)
     const model = analyzeTree(tree, document)
     const position = source.indexOf('tempo:') + 1
+
+    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
+  })
+
+  it('does not resolve member access', () => {
+    const source = [
+      'use "effects" as fx',
+      'gain = 0.db',
+      'synth = sample("...", gain: gain)',
+      'track (120.bpm) {',
+      '  part intro (4.bars) {',
+      '    automate synth.gain as curve [hold(0.db)]',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const { tree, document } = parseDocument(source)
+    const model = analyzeTree(tree, document)
+    const position = source.indexOf('synth.gain') + 'synth.'.length + 1
+
+    assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
+  })
+
+  it('does not resolve member access of an explicit bus access', () => {
+    const source = [
+      'track (120.bpm) {',
+      '  part main (4.bars) {',
+      '    automate bus.foo.gain as curve [hold(0.db)]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}',
+      ''
+    ].join('\n')
+
+    const { tree, document } = parseDocument(source)
+    const model = analyzeTree(tree, document)
+    const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
 
     assert.strictEqual(findDefinitionBindingAt(model, document, position), undefined)
   })

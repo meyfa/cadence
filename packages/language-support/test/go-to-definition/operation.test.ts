@@ -73,29 +73,6 @@ describe('go-to-definition/operation.ts', () => {
     )
   })
 
-  it('does not resolve member access by member name', () => {
-    const source = [
-      'use "foo" as gain',
-      '',
-      'synth = sample("...")',
-      '',
-      'track (120.bpm) {',
-      '  part p {',
-      '    automate synth.gain as curve [hold(-60.db) lin(-60.db, 0.db)]',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const defPos = source.indexOf('synth =')
-    const refPos = source.indexOf('synth.gain') + 'synth.'.length + 1
-
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 'synth'.length)
-    )
-  })
-
   it('resolves explicit bus namespace access to the bus definition', () => {
     const source = [
       'track (120.bpm) {',
@@ -110,7 +87,7 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const defPos = source.indexOf('bus foo') + 'bus '.length
-    const refPos = source.indexOf('bus.foo.gain') + 'bus.foo.'.length + 1
+    const refPos = source.indexOf('bus.foo.gain') + 'bus.'.length + 1
 
     assert.deepStrictEqual(
       applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
@@ -129,6 +106,28 @@ describe('go-to-definition/operation.ts', () => {
 
     assert.strictEqual(
       applySemanticOperationWithParser(goToDefinition, cadenceParser, source, pos),
+      undefined
+    )
+  })
+
+  it('does not resolve member access', () => {
+    const source = [
+      'use "foo" as gain',
+      '',
+      'synth = sample("...")',
+      '',
+      'track (120.bpm) {',
+      '  part p {',
+      '    automate synth.gain as curve [hold(-60.db) lin(-60.db, 0.db)]',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const refPos = source.indexOf('synth.gain') + 'synth.'.length + 1
+
+    assert.strictEqual(
+      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
       undefined
     )
   })
