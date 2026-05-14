@@ -1,7 +1,7 @@
 import type { SyntaxNode, Tree } from '@lezer/common'
 import type { SourceRange, TextLike } from '../types.js'
 import type { Binding, BindingKind, Identifier, IdentifierKind, Model } from './model.js'
-import { isIdentifierKind, scopeKey } from './model.js'
+import { isIdentifierKind } from './model.js'
 import { toSourceRange } from './text.js'
 
 export interface SemanticOccurrence {
@@ -9,6 +9,7 @@ export interface SemanticOccurrence {
   readonly name: string
   readonly range: SourceRange
   readonly node?: SyntaxNode
+  readonly scopeId: string
 }
 
 const GLOBAL_BINDING_PRIORITY: readonly BindingKind[] = ['use-alias', 'assignment']
@@ -152,6 +153,7 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
     if (rootName.length > 0 && rootName !== name) {
       const resolvedRoot = resolveDefinitionBinding(model, {
         kind: 'VariableName',
+        scopeId: occurrence.scopeId,
         name: rootName,
         node: occurrence.node,
         range: root
@@ -163,20 +165,16 @@ function resolveDefinitionBinding (model: Model, occurrence: SemanticOccurrence,
     }
   }
 
-  const trackScopeId = findEnclosingScopeId(document, occurrence.node, 'TrackStatement')
-  if (trackScopeId != null) {
-    const definition = findScopedBinding(model, trackScopeId, name, 'part')
-    if (definition != null) {
-      return definition
-    }
+  const scope = model.scopes.get(occurrence.scopeId)
+
+  const part = scope?.kind === 'track' ? findScopedBinding(model, scope.id, name, 'part') : undefined
+  if (part != null) {
+    return part
   }
 
-  const mixerScopeId = findEnclosingScopeId(document, occurrence.node, 'MixerStatement')
-  if (mixerScopeId != null) {
-    const definition = findScopedBinding(model, mixerScopeId, name, 'bus')
-    if (definition != null) {
-      return definition
-    }
+  const bus = scope?.kind === 'mixer' ? findScopedBinding(model, scope.id, name, 'bus') : undefined
+  if (bus != null) {
+    return bus
   }
 
   return findFirstGlobalBinding(model, name) ?? findFallbackScopedBinding(model, name)
@@ -307,20 +305,6 @@ function getWordRangeAt (document: TextLike, position: number): SourceRange | un
   }
 
   return toSourceRange(document, from, to)
-}
-
-function findEnclosingScopeId (
-  document: TextLike,
-  node: SyntaxNode | undefined,
-  scopeTypeName: 'TrackStatement' | 'MixerStatement'
-): string | undefined {
-  for (let current = node; current != null; current = current.parent ?? undefined) {
-    if (current.type.name === scopeTypeName) {
-      return scopeKey(current.type.name, toSourceRange(document, current.from, current.to))
-    }
-  }
-
-  return undefined
 }
 
 export function findAccessChainRootBefore (document: TextLike, memberFrom: number): SourceRange | undefined {

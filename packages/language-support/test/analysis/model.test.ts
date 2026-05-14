@@ -86,28 +86,41 @@ describe('analysis/model.ts', () => {
       '    automate kick.gain as curve [hold(-60.db)]',
       '  }',
       '}',
+      '',
+      'mixer {',
+      '  bus drums {',
+      '    kick snare',
+      '  }',
+      '}',
       ''
     ].join('\n')
 
     const model = analyzeSourceWithParser(cadenceParser, source)
 
     assert.deepStrictEqual(
-      model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
+      model.identifiers.map(({ kind, scopeId, name }) => ({
+        kind,
+        scope: model.scopes.get(scopeId)?.kind,
+        name
+      })),
       [
-        { kind: 'UseAlias', name: 'p' },
-        { kind: 'VariableDefinition', name: 'base_path' },
-        { kind: 'VariableDefinition', name: 'kick' },
-        { kind: 'Callee', name: 'sample' },
-        { kind: 'VariableName', name: 'base_path' },
-        { kind: 'VariableDefinition', name: 'tempo' },
-        { kind: 'PropertyName', name: 'tempo' },
-        { kind: 'VariableName', name: 'tempo' },
-        { kind: 'VariableDefinition', name: 'intro' },
-        { kind: 'VariableName', name: 'kick' },
-        { kind: 'VariableName', name: 'p' },
-        { kind: 'Callee', name: 'loop' },
-        { kind: 'VariableName', name: 'kick' },
-        { kind: 'MemberAccess', name: 'gain' }
+        { kind: 'UseAlias', scope: 'root', name: 'p' },
+        { kind: 'VariableDefinition', scope: 'root', name: 'base_path' },
+        { kind: 'VariableDefinition', scope: 'root', name: 'kick' },
+        { kind: 'Callee', scope: 'root', name: 'sample' },
+        { kind: 'VariableName', scope: 'root', name: 'base_path' },
+        { kind: 'VariableDefinition', scope: 'root', name: 'tempo' },
+        { kind: 'PropertyName', scope: 'track', name: 'tempo' },
+        { kind: 'VariableName', scope: 'track', name: 'tempo' },
+        { kind: 'VariableDefinition', scope: 'track', name: 'intro' },
+        { kind: 'VariableName', scope: 'track', name: 'kick' },
+        { kind: 'VariableName', scope: 'track', name: 'p' },
+        { kind: 'Callee', scope: 'track', name: 'loop' },
+        { kind: 'VariableName', scope: 'track', name: 'kick' },
+        { kind: 'MemberAccess', scope: 'track', name: 'gain' },
+        { kind: 'VariableDefinition', scope: 'mixer', name: 'drums' },
+        { kind: 'VariableName', scope: 'mixer', name: 'kick' },
+        { kind: 'VariableName', scope: 'mixer', name: 'snare' }
       ]
     )
   })
