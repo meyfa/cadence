@@ -27,8 +27,8 @@ export type ScopeKind = 'root' | 'track' | 'mixer'
 // identifier
 
 export interface Identifier {
-  readonly id: string
   readonly kind: IdentifierKind
+  readonly scopeId: string
   readonly name: string
   readonly range: SourceRange
 }
@@ -98,10 +98,6 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
   const bindingsByScope = new Map<string, Binding[]>()
   const imports: ImportStatement[] = []
 
-  const addIdentifier = (input: Omit<Identifier, 'id'>): void => {
-    identifiers.push({ ...input, id: identifierKey(input.kind, input.range) })
-  }
-
   const addBinding = (input: Omit<Binding, 'id'>): void => {
     const { kind, scopeId, name, range } = input
 
@@ -141,7 +137,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         if (statement != null) {
           imports.push(statement)
           if (statement.alias != null && statement.aliasRange != null) {
-            addIdentifier({ kind: 'UseAlias', name: statement.alias, range: statement.aliasRange })
+            identifiers.push({ kind: 'UseAlias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
             addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
           }
         }
@@ -183,11 +179,11 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
         if (binding == null) {
           // Invalid/incomplete syntax encountered.
           // We still add an identifier as a best-effort approach to provide some level of functionality.
-          addIdentifier({ kind: 'VariableName', name, range })
+          identifiers.push({ kind: 'VariableName', scopeId: currentScopeId, name, range })
           break
         }
 
-        addIdentifier({ kind: 'VariableDefinition', name, range })
+        identifiers.push({ kind: 'VariableDefinition', scopeId: currentScopeId, name, range })
         addBinding({ ...binding, name, range })
 
         break
@@ -198,7 +194,7 @@ export function analyzeTree (tree: Tree, document: TextLike): Model {
       case 'MemberAccess':
       case 'PropertyName': {
         const name = document.sliceString(from, to)
-        addIdentifier({ kind: typeName, name, range })
+        identifiers.push({ kind: typeName, scopeId: currentScopeId, name, range })
         break
       }
     }
@@ -224,12 +220,8 @@ export function analyzeSourceWithParser (parser: LRParser, source: string): Mode
   return analyzeTree(tree, textFromString(source))
 }
 
-export function scopeKey (typeName: string, range: SourceRange): string {
+function scopeKey (typeName: string, range: SourceRange): string {
   return `${typeName}:${range.offset}:${range.length}`
-}
-
-function identifierKey (kind: IdentifierKind, range: SourceRange): string {
-  return `${kind}:${range.offset}:${range.length}`
 }
 
 function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): string {
