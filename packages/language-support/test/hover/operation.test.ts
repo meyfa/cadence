@@ -150,4 +150,19 @@ describe('hover/operation.ts', () => {
 
     assert.strictEqual(memberDocs?.title.slice(0, 'delay'.length), 'delay')
   })
+
+  it('does not return docs for non-default imports', () => {
+    const source = [
+      'use "effects" as fx',
+      'foo = delay',
+      ''
+    ].join('\n')
+
+    const position = source.indexOf('delay') + 1
+
+    assert.strictEqual(
+      applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, position),
+      undefined
+    )
+  })
 })

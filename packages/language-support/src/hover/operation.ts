@@ -68,7 +68,11 @@ function getHoverInfoForMemberAccess (model: Model, document: TextLike, object: 
 }
 
 function getHoverInfoForDefaultImport (model: Model, identifier: Identifier): HoverInfoWithRange | undefined {
-  for (const { moduleName } of model.imports) {
+  for (const { alias, moduleName } of model.imports) {
+    if (alias != null) {
+      continue // not a default import
+    }
+
     if (getStandardModule(moduleName)?.exports.has(identifier.name)) {
       return withRange(getDocumentation(moduleName, identifier.name), identifier.range)
     }
