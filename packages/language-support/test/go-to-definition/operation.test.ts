@@ -18,12 +18,12 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const defPos = source.indexOf('foo =')
-    const refPos = source.lastIndexOf('foo') + 1
+    const refPos = source.lastIndexOf('foo')
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 'foo'.length)
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 
   it('resolves bus references inside mixer', () => {
@@ -34,15 +34,15 @@ describe('go-to-definition/operation.ts', () => {
     const refPosLeft = source.lastIndexOf(' a ') + 1
     const refPosRight = source.lastIndexOf(' a ') + 2
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPosLeft),
-      getRangeAt(source, defPos, 1)
-    )
+    const identifierRange = getRangeAt(source, refPosLeft, 'a'.length)
+    const bindingRange = getRangeAt(source, defPos, 'a'.length)
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPosRight),
-      getRangeAt(source, defPos, 1)
-    )
+    for (const refPos of [refPosLeft, refPosRight]) {
+      const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+      assert.deepStrictEqual(result?.identifier.range, identifierRange)
+      assert.deepStrictEqual(result.binding.range, bindingRange)
+    }
   })
 
   it('resolves import alias usage', () => {
@@ -53,24 +53,24 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const defPos = source.indexOf('as lib') + 'as '.length
-    const refPos = source.indexOf('lib.foo') + 1
+    const refPos = source.indexOf('lib.foo')
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 'lib'.length)
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'lib'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'lib'.length))
   })
 
   it('tolerates incomplete input', () => {
     const source = 'mixer { bus a { } bus b { a '
 
     const defPos = source.indexOf('bus a') + 'bus '.length
-    const refPos = source.lastIndexOf('a') + 1
+    const refPos = source.lastIndexOf('a')
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 1)
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'a'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'a'.length))
   })
 
   it('resolves explicit bus namespace access to the bus definition', () => {
@@ -87,12 +87,12 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const defPos = source.indexOf('bus foo') + 'bus '.length
-    const refPos = source.indexOf('bus.foo.gain') + 'bus.'.length + 1
+    const refPos = source.indexOf('bus.foo.gain') + 'bus.'.length
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 'foo'.length)
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 
   it('does not resolve named argument keys', () => {
@@ -102,12 +102,10 @@ describe('go-to-definition/operation.ts', () => {
       ''
     ].join('\n')
 
-    const pos = source.indexOf('tempo:') + 1
+    const pos = source.indexOf('tempo:')
 
-    assert.strictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, pos),
-      undefined
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, pos)
+    assert.strictEqual(result, undefined)
   })
 
   it('does not resolve member access', () => {
@@ -124,12 +122,10 @@ describe('go-to-definition/operation.ts', () => {
       ''
     ].join('\n')
 
-    const refPos = source.indexOf('synth.gain') + 'synth.'.length + 1
+    const refPos = source.indexOf('synth.gain') + 'synth.'.length
 
-    assert.strictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      undefined
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+    assert.strictEqual(result, undefined)
   })
 
   it('resolves incomplete syntax referring to an assignment', () => {
@@ -140,11 +136,11 @@ describe('go-to-definition/operation.ts', () => {
     ].join('\n')
 
     const defPos = source.indexOf('foo =')
-    const refPos = source.lastIndexOf('foo') + 1
+    const refPos = source.lastIndexOf('foo')
 
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos),
-      getRangeAt(source, defPos, 'foo'.length)
-    )
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 })

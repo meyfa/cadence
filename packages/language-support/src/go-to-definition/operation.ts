@@ -1,13 +1,29 @@
-import { findDefinitionBindingAt } from '../analysis/query.js'
+import type { Binding, Identifier } from '../analysis/model.js'
+import { findIdentifierAt, resolveDefinitionBinding } from '../analysis/query.js'
 import type { SemanticOperation } from '../operations.js'
-import type { SourceRange } from '../types.js'
 
 export interface GoToDefinitionResult {
-  readonly name: string
-  readonly range: SourceRange
+  /**
+   * The identifier at the original position that the definition was requested for.
+   */
+  readonly identifier: Identifier
+
+  /**
+   * The binding that the identifier resolves to.
+   */
+  readonly binding: Binding
 }
 
-export const goToDefinition: SemanticOperation<[pos: number], SourceRange | undefined> = (model, pos) => {
-  const binding = findDefinitionBindingAt(model, pos)
-  return binding?.range
+export const goToDefinition: SemanticOperation<[pos: number], GoToDefinitionResult | undefined> = (model, pos) => {
+  const identifier = findIdentifierAt(model, pos, 'inclusive')
+  if (identifier == null) {
+    return undefined
+  }
+
+  const binding = resolveDefinitionBinding(model, identifier)
+  if (binding == null) {
+    return undefined
+  }
+
+  return { identifier, binding }
 }
