@@ -251,4 +251,66 @@ describe('analysis/model.ts', () => {
     assert.strictEqual(delayArgument?.kind, 'VariableName')
     assert.strictEqual(delayArgument.previousSibling, undefined)
   })
+
+  it('resolves known values for identifiers', () => {
+    const source = [
+      'use "instruments" as *',
+      'use "patterns" as p',
+      '',
+      'kick = sample("/samples/kick.wav")',
+      'snare = sample("/samples/snare.wav")',
+      '',
+      'track {',
+      '  part intro {',
+      '    kick << p.loop([x---])',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSourceWithParser(cadenceParser, source)
+
+    const aliasIdentifier = findIdentifierAt(model, source.indexOf('as p') + 'as '.length)
+    assert.strictEqual(aliasIdentifier?.name, 'p')
+    assert.deepStrictEqual(model.knownValues.get(aliasIdentifier), {
+      moduleName: 'patterns'
+    })
+
+    const sampleIdentifier = findIdentifierAt(model, source.indexOf('sample("/samples/kick.wav")'))
+    assert.strictEqual(sampleIdentifier?.name, 'sample')
+    assert.deepStrictEqual(model.knownValues.get(sampleIdentifier), {
+      moduleName: 'instruments',
+      exportName: 'sample'
+    })
+
+    const pIdentifier = findIdentifierAt(model, source.indexOf('p.loop'))
+    assert.strictEqual(pIdentifier?.name, 'p')
+    assert.deepStrictEqual(model.knownValues.get(pIdentifier), {
+      moduleName: 'patterns'
+    })
+
+    const loopIdentifier = findIdentifierAt(model, source.indexOf('loop([x---])'))
+    assert.strictEqual(loopIdentifier?.name, 'loop')
+    assert.deepStrictEqual(model.knownValues.get(loopIdentifier), {
+      moduleName: 'patterns',
+      exportName: 'loop'
+    })
+  })
+
+  it('does not set known values for property names', () => {
+    const source = [
+      'use "effects" as *',
+      '',
+      'mixer {',
+      '  bus main (gain: -3.db) {}',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSourceWithParser(cadenceParser, source)
+
+    const gainProperty = findIdentifierAt(model, source.indexOf('gain:'))
+    assert.strictEqual(gainProperty?.kind, 'PropertyName')
+    assert.strictEqual(model.knownValues.get(gainProperty), undefined)
+  })
 })

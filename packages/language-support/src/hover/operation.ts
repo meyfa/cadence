@@ -1,8 +1,6 @@
 import type { Documentation } from '@language'
-import { getDocumentation, getStandardModule } from '@language'
-import type { Binding, Identifier, Model } from '../analysis/model.js'
-import { sameRange } from '../analysis/model.js'
-import { computeAccessChain, findDefinitionBindingAt, findIdentifierAt, resolveDefinitionBinding } from '../analysis/query.js'
+import { getDocumentation } from '@language'
+import { findIdentifierAt } from '../analysis/query.js'
 import type { SemanticOperation } from '../operations.js'
 import type { SourceRange } from '../types.js'
 
@@ -16,76 +14,11 @@ export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange |
     return undefined
   }
 
-  const chain = computeAccessChain(identifier)
-
-  switch (chain.length) {
-    // hovering "foo" in "foo.bar.baz" -> show documentation for "foo" (module or default-imported value)
-    case 1:
-      return getHoverInfoForIdentifier(model, chain[0])
-
-    // hovering "bar" in "foo.bar.baz" -> show documentation for "bar" export of module "foo" (if "foo" is a module alias)
-    case 2:
-      return getHoverInfoForMemberAccess(model, chain[0], chain[1])
-
-    // hovering "baz" in "foo.bar.baz" -> no documentation (modules don't have nested members)
-    default:
-      return undefined
-  }
-}
-
-function withRange (info: Documentation | undefined, range: SourceRange): HoverInfoWithRange | undefined {
-  return info == null ? undefined : { ...info, range }
-}
-
-function getHoverInfoForIdentifier (model: Model, identifier: Identifier): HoverInfoWithRange | undefined {
-  const binding = findDefinitionBindingAt(model, identifier.range.offset)
-
-  switch (binding?.kind) {
-    case undefined:
-      return getHoverInfoForDefaultImport(model, identifier)
-
-    case 'use-alias': {
-      const moduleName = findModuleNameForBinding(model, binding)
-      return moduleName != null
-        ? withRange(getDocumentation(moduleName), identifier.range)
-        : undefined
-    }
-
-    default:
-      return undefined
-  }
-}
-
-function getHoverInfoForMemberAccess (model: Model, object: Identifier, property: Identifier): HoverInfoWithRange | undefined {
-  const binding = resolveDefinitionBinding(model, object)
-  if (binding == null || binding.kind !== 'use-alias') {
-    return undefined
-  }
-
-  const moduleName = findModuleNameForBinding(model, binding)
-  return moduleName != null
-    ? withRange(getDocumentation(moduleName, property.name), property.range)
-    : undefined
-}
-
-function getHoverInfoForDefaultImport (model: Model, identifier: Identifier): HoverInfoWithRange | undefined {
-  for (const { alias, moduleName } of model.imports) {
-    if (alias != null) {
-      continue // not a default import
-    }
-
-    if (getStandardModule(moduleName)?.exports.has(identifier.name)) {
-      return withRange(getDocumentation(moduleName, identifier.name), identifier.range)
-    }
+  const knownValue = model.knownValues.get(identifier)
+  if (knownValue != null) {
+    const info = getDocumentation(knownValue.moduleName, knownValue.exportName)
+    return info == null ? undefined : { ...info, range: identifier.range }
   }
 
   return undefined
-}
-
-function findModuleNameForBinding (model: Model, binding: Binding): string | undefined {
-  const module = model.imports.find((statement) => {
-    return statement.aliasRange != null && sameRange(statement.aliasRange, binding.range)
-  })
-
-  return module?.moduleName
 }
