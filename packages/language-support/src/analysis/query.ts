@@ -80,16 +80,3 @@ export function findUnusedAssignmentBindings (model: Model): readonly Binding[] 
 export function resolveDefinitionBinding (model: Model, occurrence: Identifier): Binding | undefined {
   return model.identifierBindingMap.get(occurrence)
 }
-
-export function computeAccessChain (member: Identifier): readonly Identifier[] {
-  const identifiers: Identifier[] = []
-
-  let current: Identifier | undefined = member
-  while (current != null) {
-    identifiers.push(current)
-    current = current.previousSibling
-  }
-
-  // reverse to get chain in order from left to right (e.g. "foo.bar.baz" -> ["foo", "bar", "baz"])
-  return identifiers.reverse()
-}
