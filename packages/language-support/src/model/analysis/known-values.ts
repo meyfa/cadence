@@ -1,6 +1,5 @@
 import { getStandardModule } from '@language'
-import type { BaseModel, Binding, Identifier, IdentifierId, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
-import { findImportAt } from '../query.js'
+import type { BaseModel, Identifier, IdentifierId, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
 
 export function computeKnownValueModel (baseModel: BaseModel, referenceModel: ReferenceModel): KnownValueModel {
   const knownValues = new Map<IdentifierId, KnownValue>()
@@ -27,7 +26,7 @@ function resolveKnownValue (baseModel: BaseModel, referenceModel: ReferenceModel
 
   if (identifier.previousSibling.previousSibling == null) {
     // resolving "bar" in "foo.bar.baz" -> could be an export of the module aliased as "foo"
-    return resolveKnownValueWithMember(baseModel, referenceModel, identifier.previousSibling, identifier)
+    return resolveKnownValueWithMember(referenceModel, identifier.previousSibling, identifier)
   }
 
   // resolving "baz" in "foo.bar.baz" -> not known (modules don't have nested members)
@@ -39,48 +38,32 @@ function resolveKnownValueForIdentifier (baseModel: BaseModel, referenceModel: R
 
   switch (binding?.kind) {
     case undefined:
-      return resolveKnownValueForDefaultImport(baseModel, identifier)
+      return resolveKnownValueForDefaultImport(baseModel, identifier.name)
 
-    case 'use-alias': {
-      const moduleName = findModuleNameForBinding(baseModel, binding)
-      return moduleName != null ? { moduleName } : undefined
-    }
+    case 'use-alias':
+      return binding.moduleName != null ? { moduleName: binding.moduleName } : undefined
 
     default:
       return undefined
   }
 }
 
-function resolveKnownValueWithMember (baseModel: BaseModel, referenceModel: ReferenceModel, object: Identifier, property: Identifier): KnownValue | undefined {
+function resolveKnownValueWithMember (referenceModel: ReferenceModel, object: Identifier, property: Identifier): KnownValue | undefined {
   const binding = referenceModel.identifierBindingMap.get(object.id)
-  if (binding == null || binding.kind !== 'use-alias') {
+  if (binding == null || binding.kind !== 'use-alias' || binding.moduleName == null) {
     return undefined
   }
 
-  const moduleName = findModuleNameForBinding(baseModel, binding)
-  return moduleName != null ? { moduleName, exportName: property.name } : undefined
+  return { moduleName: binding.moduleName, exportName: property.name }
 }
 
-function resolveKnownValueForDefaultImport (baseModel: BaseModel, identifier: Identifier): KnownValue | undefined {
+function resolveKnownValueForDefaultImport (baseModel: BaseModel, name: string): KnownValue | undefined {
   for (const { alias, moduleName } of baseModel.imports) {
     // Must not have an alias (i.e. be a default import)
-    if (alias == null && getStandardModule(moduleName)?.exports.has(identifier.name)) {
-      return { moduleName, exportName: identifier.name }
+    if (alias == null && getStandardModule(moduleName)?.exports.has(name)) {
+      return { moduleName, exportName: name }
     }
   }
 
   return undefined
-}
-
-function findModuleNameForBinding (model: BaseModel, binding: Binding): string | undefined {
-  if (binding.kind !== 'use-alias') {
-    return undefined
-  }
-
-  const importStatement = findImportAt(model, binding.range.offset)
-  if (importStatement == null || importStatement.alias !== binding.name) {
-    return undefined
-  }
-
-  return importStatement.moduleName
 }

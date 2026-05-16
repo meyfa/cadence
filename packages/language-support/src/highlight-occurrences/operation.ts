@@ -15,8 +15,5 @@ export const findHighlightedOccurrences: SemanticOperation<[pos: number], readon
 
   const references = model.referenceMap.get(binding.id) ?? []
 
-  const ranges = references.map((reference) => reference.range)
-  ranges.sort((a, b) => a.offset - b.offset || a.length - b.length)
-
-  return ranges
+  return references.map((reference) => reference.range)
 }

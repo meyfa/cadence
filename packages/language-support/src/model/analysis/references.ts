@@ -24,6 +24,10 @@ export function computeReferenceModel (model: BaseModel): ReferenceModel {
     references.push(identifier)
   }
 
+  for (const references of referenceMap.values()) {
+    references.sort((a, b) => a.range.offset - b.range.offset)
+  }
+
   return { identifierBindingMap, referenceMap }
 }
 

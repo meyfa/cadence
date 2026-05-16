@@ -63,6 +63,11 @@ export interface Binding {
   readonly scopeId: string
   readonly name: string
   readonly range: SourceRange
+
+  /**
+   * For use-aliases, this is the module that is being imported.
+   */
+  readonly moduleName?: string
 }
 
 export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus'
