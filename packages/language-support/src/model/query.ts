@@ -1,5 +1,5 @@
 import type { SourceRange } from '../utilities/range.js'
-import type { BaseModel, Binding, Identifier, ImportStatement } from './model.js'
+import type { BaseModel, Binding, Identifier, Import } from './model.js'
 
 export function findIdentifierAt (model: BaseModel, position: number): Identifier | undefined {
   return binarySearch(model.identifiers, position)
@@ -9,7 +9,7 @@ export function findBindingAt (model: BaseModel, position: number): Binding | un
   return binarySearch(model.bindings, position)
 }
 
-export function findImportAt (model: BaseModel, position: number): ImportStatement | undefined {
+export function findImportAt (model: BaseModel, position: number): Import | undefined {
   return binarySearch(model.imports, position)
 }
 

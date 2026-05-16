@@ -13,7 +13,7 @@ function isUnused (binding: Binding, model: ReferenceModel): boolean {
     return false
   }
 
-  const references = model.referenceMap.get(binding) ?? []
+  const references = model.referenceMap.get(binding.id) ?? []
 
   // The binding itself counts as a reference, so check if there are any others.
   return references.every((reference) => sameRange(binding.range, reference.range))

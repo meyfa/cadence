@@ -20,7 +20,7 @@ export const goToDefinition: SemanticOperation<[pos: number], GoToDefinitionResu
     return undefined
   }
 
-  const binding = model.identifierBindingMap.get(identifier)
+  const binding = model.identifierBindingMap.get(identifier.id)
   if (binding == null) {
     return undefined
   }

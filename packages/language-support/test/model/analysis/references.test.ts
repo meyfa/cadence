@@ -30,13 +30,13 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.name === 'kick')
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
     assert.strictEqual(binding.kind, 'assignment')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 
-    const references = model.referenceMap.get(binding)
+    const references = model.referenceMap.get(binding.id)
     assert.deepStrictEqual(references, [identifier])
   })
 
@@ -57,13 +57,13 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
     assert.strictEqual(binding.kind, 'assignment')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 
-    const references = model.referenceMap.get(binding)
+    const references = model.referenceMap.get(binding.id)
     assert.ok(references != null)
     assert.ok(references.includes(identifier))
   })
@@ -87,13 +87,13 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
     assert.strictEqual(binding.kind, 'bus')
     assert.strictEqual(binding.name, 'foo')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('bus foo') + 'bus '.length, 'foo'.length))
 
-    const references = model.referenceMap.get(binding)
+    const references = model.referenceMap.get(binding.id)
     assert.ok(references != null)
     assert.ok(references.includes(identifier))
   })
@@ -111,7 +111,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -134,7 +134,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -157,7 +157,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -175,7 +175,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier)
+    const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
     assert.strictEqual(binding.kind, 'use-alias')
     assert.strictEqual(binding.name, 'fx')

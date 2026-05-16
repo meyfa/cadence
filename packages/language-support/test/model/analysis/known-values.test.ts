@@ -42,26 +42,26 @@ describe('model/analysis/known-values.ts', () => {
 
     const aliasIdentifier = findIdentifierAt(model, source.indexOf('as p') + 'as '.length)
     assert.strictEqual(aliasIdentifier?.name, 'p')
-    assert.deepStrictEqual(model.knownValues.get(aliasIdentifier), {
+    assert.deepStrictEqual(model.knownValues.get(aliasIdentifier.id), {
       moduleName: 'patterns'
     })
 
     const sampleIdentifier = findIdentifierAt(model, source.indexOf('sample("/samples/kick.wav")'))
     assert.strictEqual(sampleIdentifier?.name, 'sample')
-    assert.deepStrictEqual(model.knownValues.get(sampleIdentifier), {
+    assert.deepStrictEqual(model.knownValues.get(sampleIdentifier.id), {
       moduleName: 'instruments',
       exportName: 'sample'
     })
 
     const pIdentifier = findIdentifierAt(model, source.indexOf('p.loop'))
     assert.strictEqual(pIdentifier?.name, 'p')
-    assert.deepStrictEqual(model.knownValues.get(pIdentifier), {
+    assert.deepStrictEqual(model.knownValues.get(pIdentifier.id), {
       moduleName: 'patterns'
     })
 
     const loopIdentifier = findIdentifierAt(model, source.indexOf('loop([x---])'))
     assert.strictEqual(loopIdentifier?.name, 'loop')
-    assert.deepStrictEqual(model.knownValues.get(loopIdentifier), {
+    assert.deepStrictEqual(model.knownValues.get(loopIdentifier.id), {
       moduleName: 'patterns',
       exportName: 'loop'
     })
@@ -81,6 +81,6 @@ describe('model/analysis/known-values.ts', () => {
 
     const gainProperty = findIdentifierAt(model, source.indexOf('gain:'))
     assert.strictEqual(gainProperty?.kind, 'PropertyName')
-    assert.strictEqual(model.knownValues.get(gainProperty), undefined)
+    assert.strictEqual(model.knownValues.get(gainProperty.id), undefined)
   })
 })

@@ -14,7 +14,7 @@ export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange |
     return undefined
   }
 
-  const knownValue = model.knownValues.get(identifier)
+  const knownValue = model.knownValues.get(identifier.id)
   if (knownValue != null) {
     const info = getDocumentation(knownValue.moduleName, knownValue.exportName)
     return info == null ? undefined : { ...info, range: identifier.range }
