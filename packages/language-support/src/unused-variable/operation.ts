@@ -1,6 +1,6 @@
-import { findUnusedAssignmentBindings } from '../analysis/query.js'
-import type { SemanticOperation } from '../operations.js'
-import type { LanguageDiagnostic } from '../types.js'
+import { findUnusedAssignmentBindings } from '../model/query.js'
+import type { SemanticOperation } from '../utilities/operations.js'
+import type { LanguageDiagnostic } from '../utilities/diagnostic.js'
 
 export const findUnusedVariables: SemanticOperation<[], readonly LanguageDiagnostic[]> = (model) => {
   return findUnusedAssignmentBindings(model).map((binding) => ({

@@ -1,8 +1,8 @@
-import type { SourceRange } from '../types.js'
-import type { Binding, Identifier, Model } from './model.js'
-import { sameRange } from './model.js'
+import type { SourceRange } from '../utilities/range.js'
+import { sameRange } from '../utilities/range.js'
+import type { BaseModel, Binding, Identifier, ReferenceModel } from './model.js'
 
-export function findIdentifierAt (model: Model, position: number, boundary: 'strict' | 'inclusive' = 'strict'): Identifier | undefined {
+export function findIdentifierAt (model: BaseModel, position: number, boundary: 'strict' | 'inclusive' = 'strict'): Identifier | undefined {
   let low = 0
   let high = model.identifiers.length - 1
 
@@ -34,7 +34,7 @@ export function findIdentifierAt (model: Model, position: number, boundary: 'str
   return undefined
 }
 
-export function findDefinitionBindingAt (model: Model, position: number): Binding | undefined {
+export function findDefinitionBindingAt (model: BaseModel & ReferenceModel, position: number): Binding | undefined {
   const occurrence = findIdentifierAt(model, position, 'inclusive')
   if (occurrence == null) {
     return undefined
@@ -45,18 +45,18 @@ export function findDefinitionBindingAt (model: Model, position: number): Bindin
 
 export type RangesByBinding = ReadonlyMap<string, readonly SourceRange[]>
 
-export function findReferenceRangesAt (model: Model, position: number): readonly SourceRange[] {
+export function findReferenceRangesAt (model: BaseModel & ReferenceModel, position: number): readonly SourceRange[] {
   const binding = findDefinitionBindingAt(model, position)
   return binding == null ? [] : getReferrenceRangesForBinding(model, binding)
 }
 
-export function buildReferenceRangesByBinding (model: Model): RangesByBinding {
+export function buildReferenceRangesByBinding (model: BaseModel & ReferenceModel): RangesByBinding {
   return new Map(
     model.bindings.map((binding) => [binding.id, getReferrenceRangesForBinding(model, binding)])
   )
 }
 
-function getReferrenceRangesForBinding (model: Model, binding: Binding): readonly SourceRange[] {
+function getReferrenceRangesForBinding (model: ReferenceModel, binding: Binding): readonly SourceRange[] {
   const references = model.referenceMap.get(binding) ?? []
 
   const ranges = references.map((reference) => reference.range)
@@ -65,7 +65,7 @@ function getReferrenceRangesForBinding (model: Model, binding: Binding): readonl
   return ranges
 }
 
-export function findUnusedAssignmentBindings (model: Model): readonly Binding[] {
+export function findUnusedAssignmentBindings (model: BaseModel & ReferenceModel): readonly Binding[] {
   return model.bindings.filter((binding) => {
     // Buses and parts are implicitly used by the runtime.
     if (binding.kind !== 'assignment') {
@@ -77,6 +77,6 @@ export function findUnusedAssignmentBindings (model: Model): readonly Binding[] 
   })
 }
 
-export function resolveDefinitionBinding (model: Model, occurrence: Identifier): Binding | undefined {
+export function resolveDefinitionBinding (model: ReferenceModel, occurrence: Identifier): Binding | undefined {
   return model.identifierBindingMap.get(occurrence)
 }

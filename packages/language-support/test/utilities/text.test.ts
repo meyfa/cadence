@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { textFromString, toSourceRange } from '../../src/analysis/text.js'
+import { textFromString, toSourceRange } from '../../src/utilities/text.js'
 
-describe('analysis/text.ts', () => {
+describe('utilities/text.ts', () => {
   describe('textFromString()', () => {
     it('maps offsets to the correct line starts across mixed newlines', () => {
       const source = 'alpha\r\nbeta\rgamma\ndelta'

@@ -1,9 +1,9 @@
-// main language support exports
-export type * from './types.js'
 export { cadenceLanguageSupport } from './language-support.js'
 
-export type { SemanticOperation } from './operations.js'
-export { applySemanticOperation, applySemanticOperationWithParser } from './operations.js'
+export type * from './utilities/diagnostic.js'
+
+export type { SemanticOperation } from './utilities/operations.js'
+export { applySemanticOperation, applySemanticOperationWithParser } from './utilities/operations.js'
 
 // "go to definition" feature
 export { goToDefinition } from './go-to-definition/operation.js'

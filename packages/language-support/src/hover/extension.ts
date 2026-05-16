@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { Extension } from '@codemirror/state'
 import { EditorView, hoverTooltip } from '@codemirror/view'
-import { applySemanticOperation } from '../operations.js'
+import { applySemanticOperation } from '../utilities/operations.js'
 import { getHoverInfo } from './operation.js'
 
 const theme = EditorView.baseTheme({
