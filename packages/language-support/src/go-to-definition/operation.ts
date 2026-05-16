@@ -20,10 +20,10 @@ export const goToDefinition: SemanticOperation<[pos: number], GoToDefinitionResu
     return undefined
   }
 
-  const binding = model.identifierBindingMap.get(identifier.id)
-  if (binding == null) {
+  const resolution = model.resolutions.get(identifier.id)
+  if (resolution == null || resolution.kind !== 'binding') {
     return undefined
   }
 
-  return { identifier, binding }
+  return { identifier, binding: resolution.binding }
 }

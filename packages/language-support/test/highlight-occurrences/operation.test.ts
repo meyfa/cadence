@@ -145,4 +145,53 @@ describe('highlight-occurrences/operation.ts', () => {
       ]
     )
   })
+
+  it('highlights occurrences of a default-imported symbol', () => {
+    const source = [
+      'use "patterns" as *',
+      'pattern1 = loop([x---])',
+      'pattern2 = loop([x-x-])',
+      ''
+    ].join('\n')
+
+    const position = source.indexOf('loop([x---])') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('loop([x---])'), 'loop'.length),
+        getRangeAt(source, source.indexOf('loop([x-x-])'), 'loop'.length)
+      ]
+    )
+  })
+
+  it('highlights only identical default-imported symbols', () => {
+    const source = [
+      'use "effects" as *',
+      'foo = delay',
+      'bar = reverb',
+      'baz = delay',
+      'qux = reverb',
+      ''
+    ].join('\n')
+
+    const delayPosition = source.indexOf('delay') + 1
+    const reverbPosition = source.indexOf('reverb') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, delayPosition),
+      [
+        getRangeAt(source, source.indexOf('delay'), 'delay'.length),
+        getRangeAt(source, source.lastIndexOf('delay'), 'delay'.length)
+      ]
+    )
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, reverbPosition),
+      [
+        getRangeAt(source, source.indexOf('reverb'), 'reverb'.length),
+        getRangeAt(source, source.lastIndexOf('reverb'), 'reverb'.length)
+      ]
+    )
+  })
 })

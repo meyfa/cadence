@@ -8,12 +8,22 @@ export const findHighlightedOccurrences: SemanticOperation<[pos: number], readon
     return []
   }
 
-  const binding = model.identifierBindingMap.get(identifier.id)
-  if (binding == null) {
+  const resolution = model.resolutions.get(identifier.id)
+  if (resolution == null) {
     return []
   }
 
-  const references = model.referenceMap.get(binding.id) ?? []
+  switch (resolution.kind) {
+    // Resolves directly to a binding (an identifier that is declared in the same file).
+    case 'binding':
+      return model.bindingReferences.get(resolution.binding.id)
+        ?.map(({ range }) => range) ?? []
 
-  return references.map((reference) => reference.range)
+    // Resolves to an exported member of a default-imported module.
+    // References to other members of the same module must be filtered out.
+    case 'import':
+      return model.importReferences.get(resolution.import.id)
+        ?.filter((ref) => ref.name === identifier.name)
+        .map(({ range }) => range) ?? []
+  }
 }

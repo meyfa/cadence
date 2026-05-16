@@ -30,13 +30,15 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.name === 'kick')
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
-    assert.ok(binding != null)
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
     assert.strictEqual(binding.kind, 'regular')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 
-    const references = model.referenceMap.get(binding.id)
+    const references = model.bindingReferences.get(binding.id)
     assert.deepStrictEqual(references, [identifier])
   })
 
@@ -57,13 +59,15 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
-    assert.ok(binding != null)
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
     assert.strictEqual(binding.kind, 'regular')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 
-    const references = model.referenceMap.get(binding.id)
+    const references = model.bindingReferences.get(binding.id)
     assert.ok(references != null)
     assert.ok(references.includes(identifier))
   })
@@ -87,13 +91,15 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
-    assert.ok(binding != null)
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
     assert.strictEqual(binding.kind, 'bus')
     assert.strictEqual(binding.name, 'foo')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('bus foo') + 'bus '.length, 'foo'.length))
 
-    const references = model.referenceMap.get(binding.id)
+    const references = model.bindingReferences.get(binding.id)
     assert.ok(references != null)
     assert.ok(references.includes(identifier))
   })
@@ -111,7 +117,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
+    const binding = model.resolutions.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -134,7 +140,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
+    const binding = model.resolutions.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -157,7 +163,7 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
+    const binding = model.resolutions.get(identifier.id)
     assert.strictEqual(binding, undefined)
   })
 
@@ -175,10 +181,93 @@ describe('model/analysis/references.ts', () => {
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 
-    const binding = model.identifierBindingMap.get(identifier.id)
-    assert.ok(binding != null)
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
     assert.strictEqual(binding.kind, 'use-alias')
     assert.strictEqual(binding.name, 'fx')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('as fx') + 'as '.length, 'fx'.length))
+  })
+
+  it('resolves default imports', () => {
+    const source = [
+      'use "patterns" as *',
+      'track {',
+      '  part main {',
+      '    kick << loop([x---])',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('loop')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'import')
+
+    const imp = resolution.import
+    assert.strictEqual(imp.moduleName, 'patterns')
+    assert.strictEqual(imp.alias, undefined)
+  })
+
+  it('prefers local variables over default imports', () => {
+    const source = [
+      'use "patterns" as *',
+      'loop = [x---]',
+      'track {',
+      '  part main {',
+      '    kick << loop',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('loop')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+  })
+
+  it('does not resolve default imports for property names', () => {
+    const source = [
+      'use "patterns" as *',
+      'foo = bar(loop: 4)',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('loop:')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution, undefined)
+  })
+
+  it('does not resolve default imports for member accesses', () => {
+    const source = [
+      'use "patterns" as *',
+      'foo = bar.loop',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('bar.loop') + 'bar.'.length
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution, undefined)
   })
 })
