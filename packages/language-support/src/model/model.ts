@@ -82,7 +82,7 @@ export interface Import {
   readonly moduleName: string
   readonly range: SourceRange
   readonly alias?: string
-  readonly aliasRange?: SourceRange
+  readonly aliasRange: SourceRange
 }
 
 // resolution
