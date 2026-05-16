@@ -8,6 +8,7 @@ import type { Result } from '../result/result.js'
 import type { Keyword } from './constants.js'
 import { isKeyword } from './constants.js'
 import { ParseError } from './error.js'
+import { parseStringEscape } from './string.js'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -97,30 +98,7 @@ const stringEscape_: p.Parser<Token, unknown, string> = p.token((t) => {
     return undefined
   }
 
-  // We treat `\\x` as escaping the next character `x`, similar to many languages.
-  // This is required so `\\{` can be used to write a literal `{` in strings.
-  // (JSON.parse would keep the backslash for `\\{`.)
-  const escaped = t.text[1]
-  switch (escaped) {
-    case '"':
-      return '"'
-    case '\\':
-      return '\\'
-    case 'n':
-      return '\n'
-    case 'r':
-      return '\r'
-    case 't':
-      return '\t'
-    case 'b':
-      return '\b'
-    case 'f':
-      return '\f'
-    case 'v':
-      return '\v'
-    default:
-      return escaped
-  }
+  return parseStringEscape(t.text)
 })
 
 const stringInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(

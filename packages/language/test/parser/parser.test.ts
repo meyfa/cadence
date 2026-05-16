@@ -2,6 +2,7 @@ import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { parse } from '../../src/parser/parser.js'
+import { parseStringLiteral } from '../../src/parser/string.js'
 
 /**
  * Helper function to create an array of tokens with automatically assigned source ranges
@@ -48,6 +49,12 @@ function stripRanges (node: unknown): unknown {
 }
 
 describe('parser/parser.ts', () => {
+  it('parses plain string literals with language escape rules', () => {
+    assert.strictEqual(parseStringLiteral('"effects\\{main\\}"'), 'effects{main}')
+    assert.strictEqual(parseStringLiteral('"effects\\nmain"'), 'effects\nmain')
+    assert.strictEqual(parseStringLiteral('"effects{main}"'), undefined)
+  })
+
   it('should accept empty input', () => {
     const result = parse(makeTokens([]))
     assert.deepStrictEqual(stripRanges(result), {

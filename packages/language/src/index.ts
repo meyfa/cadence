@@ -6,6 +6,7 @@ export * from './lexer/error.js'
 
 export * from './parser/parser.js'
 export * from './parser/error.js'
+export * from './parser/string.js'
 
 export * from './compiler/index.js'
 export * from './compiler/error.js'
