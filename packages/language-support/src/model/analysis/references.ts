@@ -1,6 +1,5 @@
-import type { SourceRange } from '../../utilities/range.js'
-import { sameRange } from '../../utilities/range.js'
 import type { BaseModel, Binding, Identifier, ReferenceModel } from '../model.js'
+import { findBindingAt } from '../query.js'
 
 export function computeReferenceModel (model: BaseModel): ReferenceModel {
   const identifierBindingMap = new Map<Identifier, Binding>()
@@ -34,7 +33,7 @@ function resolveDefinitionBinding (model: BaseModel, occurrence: Identifier): Bi
     // Ensure that definitions resolve to themselves
     case 'VariableDefinition':
     case 'UseAlias':
-      return findBindingBySpan(model, occurrence.range)
+      return findBindingAt(model, occurrence.range.offset)
 
     case 'VariableName':
     case 'Callee':
@@ -44,28 +43,6 @@ function resolveDefinitionBinding (model: BaseModel, occurrence: Identifier): Bi
     default:
       occurrence.kind satisfies never
   }
-}
-
-function findBindingBySpan (model: BaseModel, range: SourceRange): Binding | undefined {
-  let low = 0
-  let high = model.bindings.length - 1
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2)
-    const binding = model.bindings[mid]
-
-    if (sameRange(binding.range, range)) {
-      return binding
-    }
-
-    if (binding.range.offset < range.offset || (binding.range.offset === range.offset && binding.range.length < range.length)) {
-      low = mid + 1
-    } else {
-      high = mid - 1
-    }
-  }
-
-  return undefined
 }
 
 function findRegularBinding (model: BaseModel, occurrence: Identifier): Binding | undefined {

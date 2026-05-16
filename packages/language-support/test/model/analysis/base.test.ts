@@ -321,4 +321,32 @@ describe('model/analysis/base.ts', () => {
       ]
     )
   })
+
+  it('includes list of imports', () => {
+    const source = [
+      'use "effects" as fx',
+      'use "patterns" as *',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    assert.deepStrictEqual(
+      model.imports.map(({ moduleName, range, alias, aliasRange }) => ({ moduleName, range, alias, aliasRange })),
+      [
+        {
+          moduleName: 'effects',
+          range: getRangeAt(source, source.indexOf('use "effects" as fx'), 'use "effects" as fx'.length),
+          alias: 'fx',
+          aliasRange: getRangeAt(source, source.indexOf('as fx') + 'as '.length, 'fx'.length)
+        },
+        {
+          moduleName: 'patterns',
+          range: getRangeAt(source, source.indexOf('use "patterns" as *'), 'use "patterns" as *'.length),
+          alias: undefined,
+          aliasRange: undefined
+        }
+      ]
+    )
+  })
 })

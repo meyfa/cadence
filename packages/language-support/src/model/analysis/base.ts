@@ -198,6 +198,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
   identifiers.sort((a, b) => a.range.offset - b.range.offset)
   bindings.sort((a, b) => a.range.offset - b.range.offset)
+  imports.sort((a, b) => a.range.offset - b.range.offset)
 
   return { rootScopeId, scopes, identifiers, bindings, bindingsByName, bindingsByScope, imports }
 }
@@ -285,11 +286,12 @@ function parseUseStatement (document: TextLike, node: SyntaxNode): ImportStateme
     return undefined
   }
 
-  return {
-    moduleName,
-    alias: alias === '*' ? undefined : alias,
-    aliasRange
+  const result = { moduleName, range: toSourceRange(document, node.from, node.to) }
+  if (alias === '*') {
+    return result
   }
+
+  return { ...result, alias, aliasRange }
 }
 
 // TODO Use proper string parsing instead of JSON.parse

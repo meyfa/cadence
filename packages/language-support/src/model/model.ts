@@ -78,6 +78,7 @@ export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
 
 export interface ImportStatement {
   readonly moduleName: string
+  readonly range: SourceRange
   readonly alias?: string
   readonly aliasRange?: SourceRange
 }

@@ -1,6 +1,6 @@
 import { getStandardModule } from '@language'
-import { sameRange } from '../../utilities/range.js'
 import type { BaseModel, Binding, Identifier, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
+import { findImportAt } from '../query.js'
 
 export function computeKnownValueModel (baseModel: BaseModel, referenceModel: ReferenceModel): KnownValueModel {
   const knownValues = new Map<Identifier, KnownValue>()
@@ -77,12 +77,10 @@ function findModuleNameForBinding (model: BaseModel, binding: Binding): string |
     return undefined
   }
 
-  const importStatement = model.imports.find((statement) =>
-    statement.alias != null &&
-    statement.alias === binding.name &&
-    statement.aliasRange != null &&
-    sameRange(statement.aliasRange, binding.range)
-  )
+  const importStatement = findImportAt(model, binding.range.offset)
+  if (importStatement == null || importStatement.alias !== binding.name) {
+    return undefined
+  }
 
-  return importStatement?.moduleName
+  return importStatement.moduleName
 }
