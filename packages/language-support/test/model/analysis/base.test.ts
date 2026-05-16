@@ -340,7 +340,7 @@ describe('model/analysis/base.ts', () => {
           moduleName: 'patterns',
           range: getRangeAt(source, source.indexOf('use "patterns" as *'), 'use "patterns" as *'.length),
           alias: undefined,
-          aliasRange: undefined
+          aliasRange: getRangeAt(source, source.indexOf('as *') + 'as '.length, '*'.length)
         }
       ]
     )

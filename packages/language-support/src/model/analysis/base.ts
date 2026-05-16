@@ -1,5 +1,5 @@
-import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import { parseStringLiteral } from '@language'
+import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { SourceRange } from '../../utilities/range.js'
 import type { TextLike } from '../../utilities/text.js'
 import { toSourceRange } from '../../utilities/text.js'
@@ -72,7 +72,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         }
 
         const { alias, aliasRange, moduleName } = statement
-        if (alias != null && aliasRange != null) {
+        if (alias != null) {
           addIdentifier({ kind: 'definition', scopeId, name: alias, range: aliasRange })
           addBinding({ kind: 'use-alias', scopeId, name: alias, range: aliasRange, moduleName })
         }
@@ -287,14 +287,16 @@ function parseUseStatement (document: TextLike, node: SyntaxNode): Omit<Import, 
     } while (cursor.nextSibling())
   }
 
-  if (moduleName == null || alias == null) {
+  if (moduleName == null || alias == null || aliasRange == null) {
     return undefined
   }
 
-  const result = { moduleName, range: toSourceRange(document, node.from, node.to) }
+  const range = toSourceRange(document, node.from, node.to)
+
+  const result = { moduleName, range, aliasRange }
   if (alias === '*') {
     return result
   }
 
-  return { ...result, alias, aliasRange }
+  return { ...result, alias }
 }
