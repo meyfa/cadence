@@ -11,7 +11,7 @@ const occurrenceMark = Decoration.mark({ class: OCCURRENCE_CLASS })
 
 const theme = EditorView.baseTheme({
   [`.${OCCURRENCE_CLASS}`]: {
-    backgroundColor: 'rgb(127 127 127 / 20%)',
+    backgroundColor: 'rgb(150 150 150 / 24%)',
     borderRadius: '2px'
   }
 })
