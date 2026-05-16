@@ -12,8 +12,9 @@ export interface BaseModel {
 }
 
 export interface ReferenceModel {
-  readonly identifierBindingMap: ReadonlyMap<IdentifierId, Binding>
-  readonly referenceMap: ReadonlyMap<BindingId, readonly Identifier[]>
+  readonly resolutions: ReadonlyMap<IdentifierId, Resolution>
+  readonly bindingReferences: ReadonlyMap<BindingId, readonly Identifier[]>
+  readonly importReferences: ReadonlyMap<ImportId, readonly Identifier[]>
 }
 
 export interface KnownValueModel {
@@ -83,6 +84,27 @@ export interface Import {
   readonly alias?: string
   readonly aliasRange?: SourceRange
 }
+
+// resolution
+
+export type Resolution = {
+  readonly kind: ResolutionKind
+  readonly binding?: Binding
+  readonly import?: Import
+} & (
+  // Resolved to a binding (variable, use-alias, etc.)
+  {
+    readonly kind: 'binding'
+    readonly binding: Binding
+  } |
+  // Resolved to a default import (e.g. "loop" in "use 'patterns' as *")
+  {
+    readonly kind: 'import'
+    readonly import: Import
+  }
+)
+
+export type ResolutionKind = 'binding' | 'import'
 
 // known values
 

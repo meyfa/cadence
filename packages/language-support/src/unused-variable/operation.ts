@@ -12,7 +12,7 @@ function isUnused (binding: Binding, model: ReferenceModel): boolean {
     return false
   }
 
-  const references = model.referenceMap.get(binding.id)
+  const references = model.bindingReferences.get(binding.id)
 
   // At most one reference, which would be the definition itself.
   return references == null || references.length <= 1

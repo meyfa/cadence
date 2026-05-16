@@ -83,4 +83,27 @@ describe('model/analysis/known-values.ts', () => {
     assert.strictEqual(gainProperty?.kind, 'property-name')
     assert.strictEqual(model.knownValues.get(gainProperty.id), undefined)
   })
+
+  it('does not set known values for nested identifiers', () => {
+    const source = [
+      'use "effects" as fx',
+      'foo = fx.pan.gain',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    const panIdentifier = findIdentifierAt(model, source.indexOf('pan'))
+    assert.strictEqual(panIdentifier?.name, 'pan')
+    assert.deepStrictEqual(model.knownValues.get(panIdentifier.id), {
+      moduleName: 'effects',
+      exportName: 'pan'
+    })
+
+    // This test ensures that the resolution uses the previous sibling instead of
+    // the access chain's root, which would incorrectly treat "fx.pan.gain" as "fx.gain".
+    const gainIdentifier = findIdentifierAt(model, source.indexOf('gain'))
+    assert.strictEqual(gainIdentifier?.name, 'gain')
+    assert.strictEqual(model.knownValues.get(gainIdentifier.id), undefined)
+  })
 })
