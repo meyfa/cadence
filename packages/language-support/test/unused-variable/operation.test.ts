@@ -24,7 +24,7 @@ describe('unused-variable/operation.ts', () => {
       [
         {
           name: 'unused',
-          message: 'Unused variable "unused".',
+          message: 'Unused variable "unused"',
           range: getRangeAt(source, source.indexOf('unused ='), 'unused'.length)
         }
       ]
@@ -86,8 +86,26 @@ describe('unused-variable/operation.ts', () => {
       [
         {
           name: 'foo',
-          message: 'Unused variable "foo".',
+          message: 'Unused variable "foo"',
           range: getRangeAt(source, source.indexOf('foo ='), 'foo'.length)
+        }
+      ]
+    )
+  })
+
+  it('reports unused imports', () => {
+    const source = [
+      'use "patterns" as patterns',
+      ''
+    ].join('\n')
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      [
+        {
+          name: 'patterns',
+          message: 'Unused import "patterns"',
+          range: getRangeAt(source, source.indexOf('as patterns') + 'as '.length, 'patterns'.length)
         }
       ]
     )
