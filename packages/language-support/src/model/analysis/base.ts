@@ -1,4 +1,5 @@
 import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
+import { parseStringLiteral } from '@language'
 import type { SourceRange } from '../../utilities/range.js'
 import type { TextLike } from '../../utilities/text.js'
 import { toSourceRange } from '../../utilities/text.js'
@@ -296,14 +297,4 @@ function parseUseStatement (document: TextLike, node: SyntaxNode): Omit<Import, 
   }
 
   return { ...result, alias, aliasRange }
-}
-
-// TODO Use proper string parsing instead of JSON.parse
-function parseStringLiteral (text: string): string | undefined {
-  try {
-    const value = JSON.parse(text)
-    return typeof value === 'string' ? value : undefined
-  } catch {
-    return undefined
-  }
 }

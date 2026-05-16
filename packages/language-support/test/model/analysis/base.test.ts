@@ -345,4 +345,24 @@ describe('model/analysis/base.ts', () => {
       ]
     )
   })
+
+  it('parses import module names with language string escapes', () => {
+    // Note: JSON.parse() would throw on '\\{'.
+    const source = [
+      'use "effects\\{main\\}" as fx',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    assert.deepStrictEqual(
+      model.imports.map(({ moduleName, alias }) => ({ moduleName, alias })),
+      [
+        {
+          moduleName: 'effects{main}',
+          alias: 'fx'
+        }
+      ]
+    )
+  })
 })
