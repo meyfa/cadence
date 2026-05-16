@@ -1,14 +1,14 @@
 import { getStandardModule } from '@language'
-import type { BaseModel, Binding, Identifier, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
+import type { BaseModel, Binding, Identifier, IdentifierId, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
 import { findImportAt } from '../query.js'
 
 export function computeKnownValueModel (baseModel: BaseModel, referenceModel: ReferenceModel): KnownValueModel {
-  const knownValues = new Map<Identifier, KnownValue>()
+  const knownValues = new Map<IdentifierId, KnownValue>()
 
   for (const identifier of baseModel.identifiers) {
     const value = resolveKnownValue(baseModel, referenceModel, identifier)
     if (value != null) {
-      knownValues.set(identifier, value)
+      knownValues.set(identifier.id, value)
     }
   }
 
@@ -35,7 +35,7 @@ function resolveKnownValue (baseModel: BaseModel, referenceModel: ReferenceModel
 }
 
 function resolveKnownValueForIdentifier (baseModel: BaseModel, referenceModel: ReferenceModel, identifier: Identifier): KnownValue | undefined {
-  const binding = referenceModel.identifierBindingMap.get(identifier)
+  const binding = referenceModel.identifierBindingMap.get(identifier.id)
 
   switch (binding?.kind) {
     case undefined:
@@ -52,7 +52,7 @@ function resolveKnownValueForIdentifier (baseModel: BaseModel, referenceModel: R
 }
 
 function resolveKnownValueWithMember (baseModel: BaseModel, referenceModel: ReferenceModel, object: Identifier, property: Identifier): KnownValue | undefined {
-  const binding = referenceModel.identifierBindingMap.get(object)
+  const binding = referenceModel.identifierBindingMap.get(object.id)
   if (binding == null || binding.kind !== 'use-alias') {
     return undefined
   }

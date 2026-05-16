@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { BaseModel } from '../../src/model/model.js'
+import type { BaseModel, IdentifierId, ScopeId } from '../../src/model/model.js'
 import { findIdentifierAt } from '../../src/model/query.js'
 import { getRangeAt } from '../helpers.js'
 
@@ -9,36 +9,40 @@ describe('analysis/query.ts', () => {
     const source = '  foo = bar(baz: qux)  '
 
     const model: BaseModel = {
-      rootScopeId: 'root',
+      rootScopeId: 'root' as ScopeId,
       scopes: [
         {
-          id: 'root',
+          id: 'root' as ScopeId,
           kind: 'root',
           range: getRangeAt(source, 0, source.length)
         }
       ],
       identifiers: [
         {
+          id: '1' as IdentifierId,
           kind: 'VariableName',
-          scopeId: 'root',
+          scopeId: 'root' as ScopeId,
           name: 'foo',
           range: getRangeAt(source, source.indexOf('foo'), 'foo'.length)
         },
         {
+          id: '2' as IdentifierId,
           kind: 'Callee',
-          scopeId: 'root',
+          scopeId: 'root' as ScopeId,
           name: 'bar',
           range: getRangeAt(source, source.indexOf('bar'), 'bar'.length)
         },
         {
+          id: '3' as IdentifierId,
           kind: 'PropertyName',
-          scopeId: 'root',
+          scopeId: 'root' as ScopeId,
           name: 'baz',
           range: getRangeAt(source, source.indexOf('baz'), 'baz'.length)
         },
         {
+          id: '4' as IdentifierId,
           kind: 'VariableName',
-          scopeId: 'root',
+          scopeId: 'root' as ScopeId,
           name: 'qux',
           range: getRangeAt(source, source.indexOf('qux'), 'qux'.length)
         }

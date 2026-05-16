@@ -1,28 +1,31 @@
+import type { Brand } from '@utility'
 import type { SourceRange } from '../utilities/range.js'
 
 export type Model = BaseModel & ReferenceModel & KnownValueModel
 
 export interface BaseModel {
-  readonly rootScopeId: string
+  readonly rootScopeId: ScopeId
   readonly scopes: readonly Scope[]
   readonly identifiers: readonly Identifier[]
   readonly bindings: readonly Binding[]
-  readonly imports: readonly ImportStatement[]
+  readonly imports: readonly Import[]
 }
 
 export interface ReferenceModel {
-  readonly identifierBindingMap: ReadonlyMap<Identifier, Binding>
-  readonly referenceMap: ReadonlyMap<Binding, readonly Identifier[]>
+  readonly identifierBindingMap: ReadonlyMap<IdentifierId, Binding>
+  readonly referenceMap: ReadonlyMap<BindingId, readonly Identifier[]>
 }
 
 export interface KnownValueModel {
-  readonly knownValues: ReadonlyMap<Identifier, KnownValue>
+  readonly knownValues: ReadonlyMap<IdentifierId, KnownValue>
 }
 
 // scope
 
+export type ScopeId = Brand<string, 'language-support.ScopeId'>
+
 export interface Scope {
-  readonly id: string
+  readonly id: ScopeId
   readonly kind: ScopeKind
   readonly parentId?: string
   readonly range: SourceRange
@@ -32,7 +35,10 @@ export type ScopeKind = 'root' | 'track' | 'mixer'
 
 // identifier
 
+export type IdentifierId = Brand<string, 'language-support.IdentifierId'>
+
 export interface Identifier {
+  readonly id: IdentifierId
   readonly kind: IdentifierKind
   readonly scopeId: string
   readonly name: string
@@ -62,8 +68,10 @@ export function isIdentifierKind (value: string): value is IdentifierKind {
 
 // binding
 
+export type BindingId = Brand<string, 'language-support.BindingId'>
+
 export interface Binding {
-  readonly id: string
+  readonly id: BindingId
   readonly kind: BindingKind
   readonly scopeId: string
   readonly name: string
@@ -74,7 +82,10 @@ export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
 
 // import
 
-export interface ImportStatement {
+export type ImportId = Brand<string, 'language-support.ImportId'>
+
+export interface Import {
+  readonly id: ImportId
   readonly moduleName: string
   readonly range: SourceRange
   readonly alias?: string

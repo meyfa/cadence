@@ -1,11 +1,11 @@
-import type { BaseModel, Binding, Identifier, ReferenceModel } from '../model.js'
+import type { BaseModel, Binding, BindingId, Identifier, IdentifierId, ReferenceModel } from '../model.js'
 import { findBindingAt } from '../query.js'
 
 export function computeReferenceModel (model: BaseModel): ReferenceModel {
   const lookup = buildBindingLookup(model)
 
-  const identifierBindingMap = new Map<Identifier, Binding>()
-  const referenceMap = new Map<Binding, Identifier[]>()
+  const identifierBindingMap = new Map<IdentifierId, Binding>()
+  const referenceMap = new Map<BindingId, Identifier[]>()
 
   for (const identifier of model.identifiers) {
     const binding = resolveDefinitionBinding(identifier, model, lookup)
@@ -13,11 +13,11 @@ export function computeReferenceModel (model: BaseModel): ReferenceModel {
       continue
     }
 
-    identifierBindingMap.set(identifier, binding)
+    identifierBindingMap.set(identifier.id, binding)
 
-    const references = referenceMap.get(binding)
+    const references = referenceMap.get(binding.id)
     if (references == null) {
-      referenceMap.set(binding, [identifier])
+      referenceMap.set(binding.id, [identifier])
       continue
     }
 

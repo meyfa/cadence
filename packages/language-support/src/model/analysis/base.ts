@@ -2,7 +2,7 @@ import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { SourceRange } from '../../utilities/range.js'
 import type { TextLike } from '../../utilities/text.js'
 import { toSourceRange } from '../../utilities/text.js'
-import type { BaseModel, Binding, BindingKind, Identifier, ImportStatement, Scope, ScopeKind } from '../model.js'
+import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId, ScopeKind } from '../model.js'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const rootRange = toSourceRange(document, 0, document.length)
@@ -12,7 +12,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const scopes: Scope[] = [{ id: rootScopeId, kind: 'root', range: rootRange }]
   const identifiers: Identifier[] = []
   const bindings: Binding[] = []
-  const imports: ImportStatement[] = []
+  const imports: Import[] = []
 
   const addScope = (input: Omit<Scope, 'id'>): Scope => {
     const scope = { ...input, id: scopeKey(input.kind, input.range) }
@@ -20,10 +20,22 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     return scope
   }
 
+  const addIdentifier = (input: Omit<Identifier, 'id'>): Identifier => {
+    const identifier = { ...input, id: identifierKey(input.kind, input.scopeId, input.range) }
+    identifiers.push(identifier)
+    return identifier
+  }
+
   const addBinding = (input: Omit<Binding, 'id'>): Binding => {
     const binding = { ...input, id: bindingKey(input.kind, input.scopeId, input.range) }
     bindings.push(binding)
     return binding
+  }
+
+  const addImport = (input: Omit<Import, 'id'>): Import => {
+    const statement = { ...input, id: importKey(input.moduleName, input.range) }
+    imports.push(statement)
+    return statement
   }
 
   const cursor = tree.cursor()
@@ -55,9 +67,9 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'UseStatement': {
         const statement = parseUseStatement(document, cursor.node)
         if (statement != null) {
-          imports.push(statement)
+          addImport(statement)
           if (statement.alias != null && statement.aliasRange != null) {
-            identifiers.push({ kind: 'UseAlias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
+            addIdentifier({ kind: 'UseAlias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
             addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
           }
         }
@@ -106,12 +118,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         if (binding == null) {
           // Invalid/incomplete syntax encountered.
           // We still add an identifier as a best-effort approach to provide some level of functionality.
-          accessChainTail = { kind: 'VariableName', scopeId: currentScopeId, name, range, previousSibling }
-          identifiers.push(accessChainTail)
+          accessChainTail = addIdentifier({ kind: 'VariableName', scopeId: currentScopeId, name, range, previousSibling })
           break
         }
 
-        identifiers.push({ kind: 'VariableDefinition', scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: 'VariableDefinition', scopeId: currentScopeId, name, range })
         addBinding({ ...binding, name, range })
 
         break
@@ -119,7 +130,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'PropertyName': {
         const name = document.sliceString(from, to)
-        identifiers.push({ kind: typeName, scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: typeName, scopeId: currentScopeId, name, range })
         break
       }
 
@@ -133,8 +144,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         }
 
         const name = document.sliceString(from, to)
-        accessChainTail = { kind, scopeId: currentScopeId, name, range, previousSibling }
-        identifiers.push(accessChainTail)
+        accessChainTail = addIdentifier({ kind, scopeId: currentScopeId, name, range, previousSibling })
 
         break
       }
@@ -211,12 +221,20 @@ function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
     type === 'BusNamespace'
 }
 
-function scopeKey (kind: ScopeKind, range: SourceRange): string {
-  return `${kind}:${range.offset}:${range.length}`
+function scopeKey (kind: ScopeKind, range: SourceRange): ScopeId {
+  return `${kind}:${range.offset}:${range.length}` as ScopeId
 }
 
-function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): string {
-  return `${kind}:${scopeId}:${range.offset}:${range.length}`
+function identifierKey (kind: IdentifierKind, scopeId: string, range: SourceRange): IdentifierId {
+  return `${kind}:${scopeId}:${range.offset}:${range.length}` as IdentifierId
+}
+
+function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): BindingId {
+  return `${kind}:${scopeId}:${range.offset}:${range.length}` as BindingId
+}
+
+function importKey (moduleName: string, range: SourceRange): ImportId {
+  return `${moduleName}:${range.offset}:${range.length}` as ImportId
 }
 
 interface DefinitionBindingContext {
@@ -248,7 +266,7 @@ function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding,
   return undefined
 }
 
-function parseUseStatement (document: TextLike, node: SyntaxNode): ImportStatement | undefined {
+function parseUseStatement (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> | undefined {
   let moduleName: string | undefined
   let alias: string | undefined
   let aliasRange: SourceRange | undefined
