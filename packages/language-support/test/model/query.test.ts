@@ -10,7 +10,13 @@ describe('analysis/query.ts', () => {
 
     const model: BaseModel = {
       rootScopeId: 'root',
-      scopes: new Map(),
+      scopes: [
+        {
+          id: 'root',
+          kind: 'root',
+          range: getRangeAt(source, 0, source.length)
+        }
+      ],
       identifiers: [
         {
           kind: 'VariableName',
@@ -38,8 +44,6 @@ describe('analysis/query.ts', () => {
         }
       ],
       bindings: [],
-      bindingsByName: new Map(),
-      bindingsByScope: new Map(),
       imports: []
     }
 

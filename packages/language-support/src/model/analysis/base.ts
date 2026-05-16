@@ -2,34 +2,28 @@ import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { SourceRange } from '../../utilities/range.js'
 import type { TextLike } from '../../utilities/text.js'
 import { toSourceRange } from '../../utilities/text.js'
-import type { BaseModel, Binding, BindingKind, Identifier, ImportStatement, Scope } from '../model.js'
+import type { BaseModel, Binding, BindingKind, Identifier, ImportStatement, Scope, ScopeKind } from '../model.js'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const rootRange = toSourceRange(document, 0, document.length)
 
-  const rootScopeId = scopeKey('Root', rootRange)
+  const rootScopeId = scopeKey('root', rootRange)
 
-  const scopes = new Map<string, Scope>()
-  scopes.set(rootScopeId, {
-    id: rootScopeId,
-    kind: 'root',
-    range: rootRange
-  })
-
+  const scopes: Scope[] = [{ id: rootScopeId, kind: 'root', range: rootRange }]
   const identifiers: Identifier[] = []
   const bindings: Binding[] = []
-  const bindingsByName = new Map<string, Binding[]>()
-  const bindingsByScope = new Map<string, Binding[]>()
   const imports: ImportStatement[] = []
 
-  const addBinding = (input: Omit<Binding, 'id'>): void => {
-    const { kind, scopeId, name, range } = input
+  const addScope = (input: Omit<Scope, 'id'>): Scope => {
+    const scope = { ...input, id: scopeKey(input.kind, input.range) }
+    scopes.push(scope)
+    return scope
+  }
 
-    const binding = { ...input, id: bindingKey(kind, scopeId, range) }
+  const addBinding = (input: Omit<Binding, 'id'>): Binding => {
+    const binding = { ...input, id: bindingKey(input.kind, input.scopeId, input.range) }
     bindings.push(binding)
-
-    appendIndexedValue(bindingsByName, name, binding)
-    appendIndexedValue(bindingsByScope, scopeId, binding)
+    return binding
   }
 
   const cursor = tree.cursor()
@@ -71,18 +65,16 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'TrackStatement': {
-        const id = scopeKey(typeName, range)
-        scopes.set(id, { id, kind: 'track', range, parentId: currentScopeId })
-        nextScopeId = id
-        nextTrackScopeId = id
+        const scope = addScope({ kind: 'track', range, parentId: currentScopeId })
+        nextScopeId = scope.id
+        nextTrackScopeId = scope.id
         break
       }
 
       case 'MixerStatement': {
-        const id = scopeKey(typeName, range)
-        scopes.set(id, { id, kind: 'mixer', range, parentId: currentScopeId })
-        nextScopeId = id
-        nextMixerScopeId = id
+        const scope = addScope({ kind: 'mixer', range, parentId: currentScopeId })
+        nextScopeId = scope.id
+        nextMixerScopeId = scope.id
         break
       }
 
@@ -196,19 +188,16 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
   walk(cursor, undefined, rootScopeId, undefined, undefined, false)
 
-  identifiers.sort((a, b) => a.range.offset - b.range.offset)
-  bindings.sort((a, b) => a.range.offset - b.range.offset)
-  imports.sort((a, b) => a.range.offset - b.range.offset)
+  sortByOffset(scopes)
+  sortByOffset(identifiers)
+  sortByOffset(bindings)
+  sortByOffset(imports)
 
-  return { rootScopeId, scopes, identifiers, bindings, bindingsByName, bindingsByScope, imports }
+  return { rootScopeId, scopes, identifiers, bindings, imports }
 }
 
-interface DefinitionBindingContext {
-  readonly parentType: string | undefined
-  readonly currentScopeId: string
-  readonly trackScopeId: string | undefined
-  readonly mixerScopeId: string | undefined
-  readonly assignmentHasEquals: boolean
+function sortByOffset (items: Array<{ readonly range: SourceRange }>): void {
+  items.sort((a, b) => a.range.offset - b.range.offset)
 }
 
 function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
@@ -222,22 +211,20 @@ function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
     type === 'BusNamespace'
 }
 
-function scopeKey (typeName: string, range: SourceRange): string {
-  return `${typeName}:${range.offset}:${range.length}`
+function scopeKey (kind: ScopeKind, range: SourceRange): string {
+  return `${kind}:${range.offset}:${range.length}`
 }
 
 function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): string {
   return `${kind}:${scopeId}:${range.offset}:${range.length}`
 }
 
-function appendIndexedValue<Key, Value> (index: Map<Key, Value[]>, key: Key, value: Value): void {
-  const values = index.get(key)
-  if (values == null) {
-    index.set(key, [value])
-    return
-  }
-
-  values.push(value)
+interface DefinitionBindingContext {
+  readonly parentType: string | undefined
+  readonly currentScopeId: string
+  readonly trackScopeId: string | undefined
+  readonly mixerScopeId: string | undefined
+  readonly assignmentHasEquals: boolean
 }
 
 function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding, 'id' | 'name' | 'range'> | undefined {
