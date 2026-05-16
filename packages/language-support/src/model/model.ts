@@ -4,11 +4,9 @@ export type Model = BaseModel & ReferenceModel & KnownValueModel
 
 export interface BaseModel {
   readonly rootScopeId: string
-  readonly scopes: ReadonlyMap<string, Scope>
+  readonly scopes: readonly Scope[]
   readonly identifiers: readonly Identifier[]
   readonly bindings: readonly Binding[]
-  readonly bindingsByName: ReadonlyMap<string, readonly Binding[]>
-  readonly bindingsByScope: ReadonlyMap<string, readonly Binding[]>
   readonly imports: readonly ImportStatement[]
 }
 

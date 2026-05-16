@@ -15,69 +15,6 @@ function analyzeSource (source: string): BaseModel {
 }
 
 describe('model/analysis/base.ts', () => {
-  it('builds scopes and bindings for valid programs', () => {
-    const source = [
-      'use "effects" as fx',
-      'kick = sample("/samples/kick.wav")',
-      'snare = sample("/samples/snare.wav", gain: -3.db)',
-      '',
-      'track (120.bpm) {',
-      '  part intro (4.bars) {',
-      '    kick << [x---]',
-      '  }',
-      '}',
-      '',
-      'mixer {',
-      '  bus drums (gain: -1.5.db) {',
-      '    kick snare',
-      '  }',
-      '  bus delay {',
-      '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const model = analyzeSource(source)
-
-    assert.ok(model.scopes.has(model.rootScopeId))
-
-    const trackScope = [...model.scopes.values()].find((scope) => scope.kind === 'track')
-    const mixerScope = [...model.scopes.values()].find((scope) => scope.kind === 'mixer')
-
-    assert.ok(trackScope)
-    assert.ok(mixerScope)
-    assert.strictEqual(trackScope.parentId, model.rootScopeId)
-    assert.strictEqual(mixerScope.parentId, model.rootScopeId)
-
-    assert.deepStrictEqual(
-      model.bindings.map((binding) => ({ kind: binding.kind, name: binding.name })),
-      [
-        { kind: 'use-alias', name: 'fx' },
-        { kind: 'assignment', name: 'kick' },
-        { kind: 'assignment', name: 'snare' },
-        { kind: 'part', name: 'intro' },
-        { kind: 'bus', name: 'drums' },
-        { kind: 'bus', name: 'delay' }
-      ]
-    )
-
-    assert.deepStrictEqual(
-      model.bindingsByName.get('kick')?.map((binding) => binding.kind),
-      ['assignment']
-    )
-
-    assert.deepStrictEqual(
-      model.bindingsByScope.get(trackScope.id)?.map((binding) => binding.name),
-      ['intro']
-    )
-
-    assert.deepStrictEqual(
-      model.bindingsByScope.get(mixerScope.id)?.map((binding) => binding.name),
-      ['drums', 'delay']
-    )
-  })
-
   it('builds a sorted list of identifiers', () => {
     const source = [
       'use "instruments" as *',
@@ -107,7 +44,7 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map(({ kind, scopeId, name }) => ({
         kind,
-        scope: model.scopes.get(scopeId)?.kind,
+        scope: model.scopes.find((scope) => scope.id === scopeId)?.kind,
         name
       })),
       [
@@ -258,6 +195,66 @@ describe('model/analysis/base.ts', () => {
     const delay = model.identifiers.find((item) => item.name === 'delay' && item.range.offset === source.indexOf('delay)'))
     assert.ok(delay != null, 'expected to find delay')
     assert.strictEqual(delay.previousSibling, undefined)
+  })
+
+  it('builds scopes and bindings for valid programs', () => {
+    const source = [
+      'use "effects" as fx',
+      'kick = sample("/samples/kick.wav")',
+      'snare = sample("/samples/snare.wav", gain: -3.db)',
+      '',
+      'track (120.bpm) {',
+      '  part intro (4.bars) {',
+      '    kick << [x---]',
+      '  }',
+      '} // end track',
+      '',
+      'mixer {',
+      '  bus drums (gain: -1.5.db) {',
+      '    kick snare',
+      '  }',
+      '  bus delay {',
+      '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
+      '  }',
+      '} // end mixer',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    const rootRange = getRangeAt(source, 0, source.length)
+    const rootScopeId = `root:${rootRange.offset}:${rootRange.length}`
+
+    const trackStart = source.indexOf('track')
+    const trackEnd = source.indexOf('} // end track') + '}'.length
+    const trackRange = getRangeAt(source, trackStart, trackEnd - trackStart)
+    const trackScopeId = `track:${trackRange.offset}:${trackRange.length}`
+
+    const mixerStart = source.indexOf('mixer')
+    const mixerEnd = source.indexOf('} // end mixer') + '}'.length
+    const mixerRange = getRangeAt(source, mixerStart, mixerEnd - mixerStart)
+    const mixerScopeId = `mixer:${mixerRange.offset}:${mixerRange.length}`
+
+    assert.deepStrictEqual(
+      model.scopes.map(({ id, kind, parentId }) => ({ id, kind, parentId })),
+      [
+        { id: rootScopeId, kind: 'root', parentId: undefined },
+        { id: trackScopeId, kind: 'track', parentId: rootScopeId },
+        { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId }
+      ]
+    )
+
+    assert.deepStrictEqual(
+      model.bindings.map(({ kind, name }) => ({ kind, name })),
+      [
+        { kind: 'use-alias', name: 'fx' },
+        { kind: 'assignment', name: 'kick' },
+        { kind: 'assignment', name: 'snare' },
+        { kind: 'part', name: 'intro' },
+        { kind: 'bus', name: 'drums' },
+        { kind: 'bus', name: 'delay' }
+      ]
+    )
   })
 
   it('includes bindings for definitions', () => {

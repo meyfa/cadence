@@ -2,11 +2,13 @@ import type { BaseModel, Binding, Identifier, ReferenceModel } from '../model.js
 import { findBindingAt } from '../query.js'
 
 export function computeReferenceModel (model: BaseModel): ReferenceModel {
+  const lookup = buildBindingLookup(model)
+
   const identifierBindingMap = new Map<Identifier, Binding>()
   const referenceMap = new Map<Binding, Identifier[]>()
 
   for (const identifier of model.identifiers) {
-    const binding = resolveDefinitionBinding(model, identifier)
+    const binding = resolveDefinitionBinding(identifier, model, lookup)
     if (binding == null) {
       continue
     }
@@ -25,7 +27,56 @@ export function computeReferenceModel (model: BaseModel): ReferenceModel {
   return { identifierBindingMap, referenceMap }
 }
 
-function resolveDefinitionBinding (model: BaseModel, occurrence: Identifier): Binding | undefined {
+interface BindingLookup {
+  readonly useAliases: ReadonlyMap<string, Binding>
+  readonly buses: ReadonlyMap<string, Binding>
+  readonly byScopeAndName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
+  readonly parentScopes: ReadonlyMap<string, string>
+}
+
+function buildBindingLookup (model: BaseModel): BindingLookup {
+  const useAliases = new Map<string, Binding>()
+  const buses = new Map<string, Binding>()
+  const byScopeAndName = new Map<string, Map<string, Binding>>()
+
+  for (const binding of model.bindings) {
+    switch (binding.kind) {
+      case 'use-alias':
+        if (!useAliases.has(binding.name)) {
+          useAliases.set(binding.name, binding)
+        }
+        break
+
+      case 'bus':
+        if (!buses.has(binding.name)) {
+          buses.set(binding.name, binding)
+        }
+        break
+
+      default:
+        break
+    }
+
+    let scopeMap = byScopeAndName.get(binding.scopeId)
+    if (scopeMap == null) {
+      scopeMap = new Map<string, Binding>()
+      byScopeAndName.set(binding.scopeId, scopeMap)
+    }
+
+    scopeMap.set(binding.name, binding)
+  }
+
+  const parentScopes = new Map<string, string>()
+  for (const scope of model.scopes) {
+    if (scope.parentId != null) {
+      parentScopes.set(scope.id, scope.parentId)
+    }
+  }
+
+  return { useAliases, buses, byScopeAndName, parentScopes }
+}
+
+function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
   switch (occurrence.kind) {
     case 'PropertyName':
       return undefined
@@ -38,38 +89,37 @@ function resolveDefinitionBinding (model: BaseModel, occurrence: Identifier): Bi
     case 'VariableName':
     case 'Callee':
     case 'MemberAccess':
-      return findRegularBinding(model, occurrence)
+      return findRegularBinding(occurrence, lookup)
 
     default:
       occurrence.kind satisfies never
   }
 }
 
-function findRegularBinding (model: BaseModel, occurrence: Identifier): Binding | undefined {
+function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Binding | undefined {
   if (isExplicitBusReference(occurrence)) {
-    return findExplicitBusBinding(model, occurrence.name)
+    return lookup.buses.get(occurrence.name)
   }
 
   if (occurrence.previousSibling != null) {
     return undefined
   }
 
-  if (model.imports.some((statement) => statement.alias === occurrence.name)) {
-    return model.bindingsByName.get(occurrence.name)?.find((binding) => binding.kind === 'use-alias')
+  // Prefer alias imports over other types of bindings.
+  const useAliasBinding = lookup.useAliases.get(occurrence.name)
+  if (useAliasBinding != null) {
+    return useAliasBinding
   }
 
   let scopeId: string | undefined = occurrence.scopeId
 
   while (scopeId != null) {
-    const scoped = model.bindingsByScope.get(scopeId) ?? []
-
-    const binding = scoped.find((binding) => binding.name === occurrence.name)
+    const binding = lookup.byScopeAndName.get(scopeId)?.get(occurrence.name)
     if (binding != null) {
       return binding
     }
 
-    const scope = model.scopes.get(scopeId)
-    scopeId = scope?.parentId
+    scopeId = lookup.parentScopes.get(scopeId)
   }
 
   return undefined
@@ -79,9 +129,4 @@ function isExplicitBusReference (identifier: Identifier): boolean {
   return identifier.previousSibling != null &&
     identifier.previousSibling.name === 'bus' &&
     identifier.previousSibling.previousSibling == null
-}
-
-function findExplicitBusBinding (model: BaseModel, busName: string): Binding | undefined {
-  const busBindings = model.bindingsByName.get(busName) ?? []
-  return busBindings.find((binding) => binding.kind === 'bus')
 }
