@@ -44,7 +44,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const walk = (
     cursor: TreeCursor,
     parentType: string | undefined,
-    currentScopeId: string,
+    scopeId: string,
     trackScopeId: string | undefined,
     mixerScopeId: string | undefined,
     assignmentHasEquals: boolean,
@@ -58,7 +58,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
     const nextParentType = typeName
 
-    let nextScopeId = currentScopeId
+    let nextScopeId = scopeId
     let nextTrackScopeId = trackScopeId
     let nextMixerScopeId = mixerScopeId
     let nextAssignmentHasEquals = assignmentHasEquals
@@ -71,26 +71,26 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           break
         }
 
-        addImport(statement)
-
-        const { alias, aliasRange } = statement
+        const { alias, aliasRange, moduleName } = statement
         if (alias != null && aliasRange != null) {
-          addIdentifier({ kind: 'definition', scopeId: currentScopeId, name: alias, range: aliasRange })
-          addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: alias, range: aliasRange })
+          addIdentifier({ kind: 'definition', scopeId, name: alias, range: aliasRange })
+          addBinding({ kind: 'use-alias', scopeId, name: alias, range: aliasRange, moduleName })
         }
+
+        addImport(statement)
 
         break
       }
 
       case 'TrackStatement': {
-        const scope = addScope({ kind: 'track', range, parentId: currentScopeId })
+        const scope = addScope({ kind: 'track', range, parentId: scopeId })
         nextScopeId = scope.id
         nextTrackScopeId = scope.id
         break
       }
 
       case 'MixerStatement': {
-        const scope = addScope({ kind: 'mixer', range, parentId: currentScopeId })
+        const scope = addScope({ kind: 'mixer', range, parentId: scopeId })
         nextScopeId = scope.id
         nextMixerScopeId = scope.id
         break
@@ -115,7 +115,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
         const binding = getDefinitionBinding({
           parentType,
-          currentScopeId,
+          scopeId,
           trackScopeId: nextTrackScopeId,
           mixerScopeId: nextMixerScopeId,
           assignmentHasEquals: nextAssignmentHasEquals
@@ -124,11 +124,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         if (binding == null) {
           // Invalid/incomplete syntax encountered.
           // We still add an identifier as a best-effort approach to provide some level of functionality.
-          accessChainTail = addIdentifier({ kind: 'plain', scopeId: currentScopeId, name, range, previousSibling })
+          accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
           break
         }
 
-        addIdentifier({ kind: 'definition', scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: 'definition', scopeId, name, range })
         addBinding({ ...binding, name, range })
 
         break
@@ -136,7 +136,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'PropertyName': {
         const name = document.sliceString(from, to)
-        addIdentifier({ kind: 'property-name', scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: 'property-name', scopeId, name, range })
         break
       }
 
@@ -145,7 +145,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'MemberAccess':
       case 'BusNamespace': {
         const name = document.sliceString(from, to)
-        accessChainTail = addIdentifier({ kind: 'plain', scopeId: currentScopeId, name, range, previousSibling })
+        accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
         break
       }
     }
@@ -239,7 +239,7 @@ function importKey (moduleName: string, range: SourceRange): ImportId {
 
 interface DefinitionBindingContext {
   readonly parentType: string | undefined
-  readonly currentScopeId: string
+  readonly scopeId: string
   readonly trackScopeId: string | undefined
   readonly mixerScopeId: string | undefined
   readonly assignmentHasEquals: boolean
@@ -249,7 +249,7 @@ function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding,
   switch (context.parentType) {
     case 'Assignment':
       return context.assignmentHasEquals
-        ? { kind: 'regular', scopeId: context.currentScopeId }
+        ? { kind: 'regular', scopeId: context.scopeId }
         : undefined
 
     case 'PartStatement':
