@@ -9,7 +9,7 @@ export interface HoverInfoWithRange extends Documentation {
 }
 
 export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange | undefined> = (model, pos) => {
-  const identifier = findIdentifierAt(model, pos, 'inclusive')
+  const identifier = findIdentifierAt(model, pos)
   if (identifier == null || identifier.kind === 'PropertyName') {
     return undefined
   }
