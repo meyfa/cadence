@@ -9,7 +9,7 @@ export const findUnusedVariables: SemanticOperation<[], readonly LanguageDiagnos
 
 function isUnused (binding: Binding, model: ReferenceModel): boolean {
   // Buses and parts are implicitly used by the runtime.
-  if (binding.kind !== 'assignment') {
+  if (binding.kind === 'bus' || binding.kind === 'part') {
     return false
   }
 
@@ -20,9 +20,11 @@ function isUnused (binding: Binding, model: ReferenceModel): boolean {
 }
 
 function toDiagnostic (binding: Binding): LanguageDiagnostic {
+  const type = binding.kind === 'use-alias' ? 'import' : 'variable'
+
   return {
     name: binding.name,
-    message: `Unused variable "${binding.name}".`,
+    message: `Unused ${type} "${binding.name}"`,
     range: binding.range
   }
 }
