@@ -1,8 +1,8 @@
 import type { Documentation } from '@language'
 import { getDocumentation } from '@language'
-import { findIdentifierAt } from '../analysis/query.js'
-import type { SemanticOperation } from '../operations.js'
-import type { SourceRange } from '../types.js'
+import { findIdentifierAt } from '../model/query.js'
+import type { SemanticOperation } from '../utilities/operations.js'
+import type { SourceRange } from '../utilities/range.js'
 
 export interface HoverInfoWithRange extends Documentation {
   readonly range: SourceRange

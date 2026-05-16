@@ -2,10 +2,10 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState, Extension } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import { getAnalysisModel } from '../analysis/cache.js'
-import type { Model } from '../analysis/model.js'
-import type { RangesByBinding } from '../analysis/query.js'
-import { buildReferenceRangesByBinding, findDefinitionBindingAt } from '../analysis/query.js'
+import { analyzeTree } from '../model/analysis.js'
+import type { Model } from '../model/model.js'
+import type { RangesByBinding } from '../model/query.js'
+import { buildReferenceRangesByBinding, findDefinitionBindingAt } from '../model/query.js'
 
 const OCCURRENCE_CLASS = 'cm-cadence-highlight-occurrence'
 
@@ -51,8 +51,7 @@ interface AnalysisState {
 }
 
 function buildAnalysisState (state: EditorState): AnalysisState {
-  const tree = syntaxTree(state)
-  const model = getAnalysisModel(tree, state.doc)
+  const model = analyzeTree(syntaxTree(state), state.doc)
   const rangesByBinding = buildReferenceRangesByBinding(model)
   return { model, rangesByBinding }
 }

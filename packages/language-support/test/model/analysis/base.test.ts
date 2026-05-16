@@ -1,14 +1,20 @@
-import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
-import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { analyzeSourceWithParser } from '../../src/analysis/model.js'
-import { findIdentifierAt } from '../../src/analysis/query.js'
+import { computeBaseModel } from '../../../src/model/analysis/base.js'
+import type { BaseModel } from '../../../src/model/model.js'
+import { textFromString } from '../../../src/utilities/text.js'
+import { getCadenceParser, getRangeAt } from '../../helpers.js'
 
-const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
-const cadenceParser = buildParser(cadenceGrammar)
+const cadenceParser = await getCadenceParser()
 
-describe('analysis/model.ts', () => {
+function analyzeSource (source: string): BaseModel {
+  const tree = cadenceParser.parse(source)
+  const document = textFromString(source)
+
+  return computeBaseModel(tree, document)
+}
+
+describe('model/analysis/base.ts', () => {
   it('builds scopes and bindings for valid programs', () => {
     const source = [
       'use "effects" as fx',
@@ -32,7 +38,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.ok(model.scopes.has(model.rootScopeId))
 
@@ -96,7 +102,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.deepStrictEqual(
       model.identifiers.map(({ kind, scopeId, name }) => ({
@@ -137,7 +143,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
@@ -155,7 +161,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
@@ -172,7 +178,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
@@ -192,7 +198,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
@@ -211,7 +217,7 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
     const b = model.identifiers.find((identifier) => identifier.name === 'b')
     const a = model.identifiers.find((identifier) => identifier.name === 'a')
@@ -241,76 +247,78 @@ describe('analysis/model.ts', () => {
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
-    const timeProperty = findIdentifierAt(model, source.indexOf('time:'))
-    assert.strictEqual(timeProperty?.kind, 'PropertyName')
-    assert.strictEqual(timeProperty.previousSibling, undefined)
+    // "time" (of "time: delay"), as well as "delay" (the argument) should not have a previous sibling.
 
-    const delayArgument = findIdentifierAt(model, source.indexOf('delay)') + 1)
-    assert.strictEqual(delayArgument?.kind, 'VariableName')
-    assert.strictEqual(delayArgument.previousSibling, undefined)
+    const time = model.identifiers.find((item) => item.name === 'time' && item.range.offset === source.indexOf('time:'))
+    assert.ok(time != null, 'expected to find time')
+    assert.strictEqual(time.previousSibling, undefined)
+
+    const delay = model.identifiers.find((item) => item.name === 'delay' && item.range.offset === source.indexOf('delay)'))
+    assert.ok(delay != null, 'expected to find delay')
+    assert.strictEqual(delay.previousSibling, undefined)
   })
 
-  it('resolves known values for identifiers', () => {
+  it('includes bindings for definitions', () => {
     const source = [
-      'use "instruments" as *',
-      'use "patterns" as p',
-      '',
       'kick = sample("/samples/kick.wav")',
-      'snare = sample("/samples/snare.wav")',
+      'track (120.bpm) {',
+      '  part intro (4.bars) {',
+      '    kick << [x---]',
+      '  }',
+      '}',
       '',
-      'track {',
-      '  part intro {',
-      '    kick << p.loop([x---])',
+      'mixer {',
+      '  bus drums (gain: -1.5.db) {',
+      '    kick snare',
       '  }',
       '}',
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
-    const aliasIdentifier = findIdentifierAt(model, source.indexOf('as p') + 'as '.length)
-    assert.strictEqual(aliasIdentifier?.name, 'p')
-    assert.deepStrictEqual(model.knownValues.get(aliasIdentifier), {
-      moduleName: 'patterns'
-    })
-
-    const sampleIdentifier = findIdentifierAt(model, source.indexOf('sample("/samples/kick.wav")'))
-    assert.strictEqual(sampleIdentifier?.name, 'sample')
-    assert.deepStrictEqual(model.knownValues.get(sampleIdentifier), {
-      moduleName: 'instruments',
-      exportName: 'sample'
-    })
-
-    const pIdentifier = findIdentifierAt(model, source.indexOf('p.loop'))
-    assert.strictEqual(pIdentifier?.name, 'p')
-    assert.deepStrictEqual(model.knownValues.get(pIdentifier), {
-      moduleName: 'patterns'
-    })
-
-    const loopIdentifier = findIdentifierAt(model, source.indexOf('loop([x---])'))
-    assert.strictEqual(loopIdentifier?.name, 'loop')
-    assert.deepStrictEqual(model.knownValues.get(loopIdentifier), {
-      moduleName: 'patterns',
-      exportName: 'loop'
-    })
+    assert.deepStrictEqual(
+      model.bindings.map((binding) => ({ kind: binding.kind, name: binding.name, range: binding.range })),
+      [
+        {
+          kind: 'assignment',
+          name: 'kick',
+          range: getRangeAt(source, source.indexOf('kick ='), 'kick'.length)
+        },
+        {
+          kind: 'part',
+          name: 'intro',
+          range: getRangeAt(source, source.indexOf('intro (4.bars)'), 'intro'.length)
+        },
+        {
+          kind: 'bus',
+          name: 'drums',
+          range: getRangeAt(source, source.indexOf('bus drums') + 'bus '.length, 'drums'.length)
+        }
+      ]
+    )
   })
 
-  it('does not set known values for property names', () => {
+  it('includes bindings for alias imports', () => {
     const source = [
-      'use "effects" as *',
-      '',
-      'mixer {',
-      '  bus main (gain: -3.db) {}',
-      '}',
+      'use "effects" as fx',
+      'use "patterns" as *',
       ''
     ].join('\n')
 
-    const model = analyzeSourceWithParser(cadenceParser, source)
+    const model = analyzeSource(source)
 
-    const gainProperty = findIdentifierAt(model, source.indexOf('gain:'))
-    assert.strictEqual(gainProperty?.kind, 'PropertyName')
-    assert.strictEqual(model.knownValues.get(gainProperty), undefined)
+    assert.deepStrictEqual(
+      model.bindings.map((binding) => ({ kind: binding.kind, name: binding.name, range: binding.range })),
+      [
+        {
+          kind: 'use-alias',
+          name: 'fx',
+          range: getRangeAt(source, source.indexOf('as fx') + 'as '.length, 'fx'.length)
+        }
+      ]
+    )
   })
 })

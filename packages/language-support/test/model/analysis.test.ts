@@ -1,14 +1,12 @@
-import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
-import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { getAnalysisModel } from '../../src/analysis/cache.js'
-import { textFromString } from '../../src/analysis/text.js'
+import { analyzeTree } from '../../src/model/analysis.js'
+import { textFromString } from '../../src/utilities/text.js'
+import { getCadenceParser } from '../helpers.js'
 
-const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
-const cadenceParser = buildParser(cadenceGrammar)
+const cadenceParser = await getCadenceParser()
 
-describe('analysis/cache.ts', () => {
+describe('model/analysis.ts', () => {
   it('reuses the analyzed model for repeated lookups on the same tree and document', () => {
     const source = [
       'foo = 1',
@@ -19,8 +17,8 @@ describe('analysis/cache.ts', () => {
     const tree = cadenceParser.parse(source)
     const document = textFromString(source)
 
-    const firstModel = getAnalysisModel(tree, document)
-    const secondModel = getAnalysisModel(tree, document)
+    const firstModel = analyzeTree(tree, document)
+    const secondModel = analyzeTree(tree, document)
 
     assert.strictEqual(secondModel, firstModel)
   })
@@ -36,8 +34,8 @@ describe('analysis/cache.ts', () => {
     const secondTree = cadenceParser.parse(source)
     const document = textFromString(source)
 
-    const firstModel = getAnalysisModel(firstTree, document)
-    const secondModel = getAnalysisModel(secondTree, document)
+    const firstModel = analyzeTree(firstTree, document)
+    const secondModel = analyzeTree(secondTree, document)
 
     assert.notStrictEqual(secondModel, firstModel)
   })

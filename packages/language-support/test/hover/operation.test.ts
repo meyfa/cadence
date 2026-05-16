@@ -1,13 +1,10 @@
-import { buildParser } from '@lezer/generator'
 import assert from 'node:assert'
-import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
 import { getHoverInfo } from '../../src/hover/operation.js'
-import { applySemanticOperationWithParser } from '../../src/operations.js'
-import { getRangeAt } from '../helpers.js'
+import { applySemanticOperationWithParser } from '../../src/utilities/operations.js'
+import { getCadenceParser, getRangeAt } from '../helpers.js'
 
-const cadenceGrammar = await readFile(new URL('../../src/cadence.grammar', import.meta.url), 'utf8')
-const cadenceParser = buildParser(cadenceGrammar)
+const cadenceParser = await getCadenceParser()
 
 describe('hover/operation.ts', () => {
   it('returns function docs for wildcard-imported symbols', () => {
