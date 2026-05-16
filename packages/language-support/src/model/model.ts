@@ -51,20 +51,7 @@ export interface Identifier {
   readonly previousSibling?: Identifier
 }
 
-const IDENTIFIER_KINDS = [
-  'VariableName',
-  'Callee',
-  'MemberAccess',
-  'PropertyName',
-  'VariableDefinition',
-  'UseAlias'
-] as const
-
-export type IdentifierKind = typeof IDENTIFIER_KINDS[number]
-
-export function isIdentifierKind (value: string): value is IdentifierKind {
-  return IDENTIFIER_KINDS.includes(value as IdentifierKind)
-}
+export type IdentifierKind = 'plain' | 'definition' | 'property-name'
 
 // binding
 
@@ -78,7 +65,7 @@ export interface Binding {
   readonly range: SourceRange
 }
 
-export type BindingKind = 'assignment' | 'use-alias' | 'part' | 'bus'
+export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus'
 
 // import
 

@@ -48,23 +48,23 @@ describe('model/analysis/base.ts', () => {
         name
       })),
       [
-        { kind: 'UseAlias', scope: 'root', name: 'p' },
-        { kind: 'VariableDefinition', scope: 'root', name: 'base_path' },
-        { kind: 'VariableDefinition', scope: 'root', name: 'kick' },
-        { kind: 'Callee', scope: 'root', name: 'sample' },
-        { kind: 'VariableName', scope: 'root', name: 'base_path' },
-        { kind: 'VariableDefinition', scope: 'root', name: 'tempo' },
-        { kind: 'PropertyName', scope: 'track', name: 'tempo' },
-        { kind: 'VariableName', scope: 'track', name: 'tempo' },
-        { kind: 'VariableDefinition', scope: 'track', name: 'intro' },
-        { kind: 'VariableName', scope: 'track', name: 'kick' },
-        { kind: 'VariableName', scope: 'track', name: 'p' },
-        { kind: 'Callee', scope: 'track', name: 'loop' },
-        { kind: 'VariableName', scope: 'track', name: 'kick' },
-        { kind: 'MemberAccess', scope: 'track', name: 'gain' },
-        { kind: 'VariableDefinition', scope: 'mixer', name: 'drums' },
-        { kind: 'VariableName', scope: 'mixer', name: 'kick' },
-        { kind: 'VariableName', scope: 'mixer', name: 'snare' }
+        { kind: 'definition', scope: 'root', name: 'p' },
+        { kind: 'definition', scope: 'root', name: 'base_path' },
+        { kind: 'definition', scope: 'root', name: 'kick' },
+        { kind: 'plain', scope: 'root', name: 'sample' },
+        { kind: 'plain', scope: 'root', name: 'base_path' },
+        { kind: 'definition', scope: 'root', name: 'tempo' },
+        { kind: 'property-name', scope: 'track', name: 'tempo' },
+        { kind: 'plain', scope: 'track', name: 'tempo' },
+        { kind: 'definition', scope: 'track', name: 'intro' },
+        { kind: 'plain', scope: 'track', name: 'kick' },
+        { kind: 'plain', scope: 'track', name: 'p' },
+        { kind: 'plain', scope: 'track', name: 'loop' },
+        { kind: 'plain', scope: 'track', name: 'kick' },
+        { kind: 'plain', scope: 'track', name: 'gain' },
+        { kind: 'definition', scope: 'mixer', name: 'drums' },
+        { kind: 'plain', scope: 'mixer', name: 'kick' },
+        { kind: 'plain', scope: 'mixer', name: 'snare' }
       ]
     )
   })
@@ -85,9 +85,9 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        { kind: 'VariableName', name: 'sample' },
-        { kind: 'VariableDefinition', name: 'intro' },
-        { kind: 'VariableName', name: 'kick' }
+        { kind: 'plain', name: 'sample' },
+        { kind: 'definition', name: 'intro' },
+        { kind: 'plain', name: 'kick' }
       ]
     )
   })
@@ -103,8 +103,8 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        { kind: 'VariableName', name: 'fx' },
-        { kind: 'MemberAccess', name: 'delay' }
+        { kind: 'plain', name: 'fx' },
+        { kind: 'plain', name: 'delay' }
       ]
     )
   })
@@ -120,8 +120,7 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        // should be Callee, but this is a known limitation of the model when parsing incomplete code
-        { kind: 'VariableName', name: 'delay' }
+        { kind: 'plain', name: 'delay' }
       ]
     )
   })
@@ -140,9 +139,9 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        { kind: 'VariableName', name: 'main' },
-        { kind: 'VariableDefinition', name: 'foo' },
-        { kind: 'VariableName', name: 'foo' }
+        { kind: 'plain', name: 'main' },
+        { kind: 'definition', name: 'foo' },
+        { kind: 'plain', name: 'foo' }
       ]
     )
   })
@@ -248,8 +247,8 @@ describe('model/analysis/base.ts', () => {
       model.bindings.map(({ kind, name }) => ({ kind, name })),
       [
         { kind: 'use-alias', name: 'fx' },
-        { kind: 'assignment', name: 'kick' },
-        { kind: 'assignment', name: 'snare' },
+        { kind: 'regular', name: 'kick' },
+        { kind: 'regular', name: 'snare' },
         { kind: 'part', name: 'intro' },
         { kind: 'bus', name: 'drums' },
         { kind: 'bus', name: 'delay' }
@@ -280,7 +279,7 @@ describe('model/analysis/base.ts', () => {
       model.bindings.map((binding) => ({ kind: binding.kind, name: binding.name, range: binding.range })),
       [
         {
-          kind: 'assignment',
+          kind: 'regular',
           name: 'kick',
           range: getRangeAt(source, source.indexOf('kick ='), 'kick'.length)
         },

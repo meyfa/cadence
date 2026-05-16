@@ -32,7 +32,7 @@ describe('model/analysis/references.ts', () => {
 
     const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
-    assert.strictEqual(binding.kind, 'assignment')
+    assert.strictEqual(binding.kind, 'regular')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 
@@ -59,7 +59,7 @@ describe('model/analysis/references.ts', () => {
 
     const binding = model.identifierBindingMap.get(identifier.id)
     assert.ok(binding != null)
-    assert.strictEqual(binding.kind, 'assignment')
+    assert.strictEqual(binding.kind, 'regular')
     assert.strictEqual(binding.name, 'kick')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('kick ='), 'kick'.length))
 

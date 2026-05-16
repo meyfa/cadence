@@ -78,18 +78,14 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
 
 function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
   switch (occurrence.kind) {
-    case 'PropertyName':
-      return undefined
+    case 'plain':
+      return findRegularBinding(occurrence, lookup)
 
-    // Ensure that definitions resolve to themselves
-    case 'VariableDefinition':
-    case 'UseAlias':
+    case 'definition':
       return findBindingAt(model, occurrence.range.offset)
 
-    case 'VariableName':
-    case 'Callee':
-    case 'MemberAccess':
-      return findRegularBinding(occurrence, lookup)
+    case 'property-name':
+      return undefined
 
     default:
       occurrence.kind satisfies never

@@ -16,7 +16,7 @@ export function computeKnownValueModel (baseModel: BaseModel, referenceModel: Re
 }
 
 function resolveKnownValue (baseModel: BaseModel, referenceModel: ReferenceModel, identifier: Identifier): KnownValue | undefined {
-  if (identifier.kind === 'PropertyName') {
+  if (identifier.kind === 'property-name') {
     return undefined
   }
 

@@ -66,13 +66,18 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     switch (typeName) {
       case 'UseStatement': {
         const statement = parseUseStatement(document, cursor.node)
-        if (statement != null) {
-          addImport(statement)
-          if (statement.alias != null && statement.aliasRange != null) {
-            addIdentifier({ kind: 'UseAlias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
-            addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: statement.alias, range: statement.aliasRange })
-          }
+        if (statement == null) {
+          break
         }
+
+        addImport(statement)
+
+        const { alias, aliasRange } = statement
+        if (alias != null && aliasRange != null) {
+          addIdentifier({ kind: 'definition', scopeId: currentScopeId, name: alias, range: aliasRange })
+          addBinding({ kind: 'use-alias', scopeId: currentScopeId, name: alias, range: aliasRange })
+        }
+
         break
       }
 
@@ -118,11 +123,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         if (binding == null) {
           // Invalid/incomplete syntax encountered.
           // We still add an identifier as a best-effort approach to provide some level of functionality.
-          accessChainTail = addIdentifier({ kind: 'VariableName', scopeId: currentScopeId, name, range, previousSibling })
+          accessChainTail = addIdentifier({ kind: 'plain', scopeId: currentScopeId, name, range, previousSibling })
           break
         }
 
-        addIdentifier({ kind: 'VariableDefinition', scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: 'definition', scopeId: currentScopeId, name, range })
         addBinding({ ...binding, name, range })
 
         break
@@ -130,7 +135,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'PropertyName': {
         const name = document.sliceString(from, to)
-        addIdentifier({ kind: typeName, scopeId: currentScopeId, name, range })
+        addIdentifier({ kind: 'property-name', scopeId: currentScopeId, name, range })
         break
       }
 
@@ -138,14 +143,8 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'Callee':
       case 'MemberAccess':
       case 'BusNamespace': {
-        let kind = typeName === 'BusNamespace' ? 'VariableName' : typeName
-        if (kind !== 'Callee' && previousSibling != null) {
-          kind = 'MemberAccess'
-        }
-
         const name = document.sliceString(from, to)
-        accessChainTail = addIdentifier({ kind, scopeId: currentScopeId, name, range, previousSibling })
-
+        accessChainTail = addIdentifier({ kind: 'plain', scopeId: currentScopeId, name, range, previousSibling })
         break
       }
     }
@@ -249,7 +248,7 @@ function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding,
   switch (context.parentType) {
     case 'Assignment':
       return context.assignmentHasEquals
-        ? { kind: 'assignment', scopeId: context.currentScopeId }
+        ? { kind: 'regular', scopeId: context.currentScopeId }
         : undefined
 
     case 'PartStatement':

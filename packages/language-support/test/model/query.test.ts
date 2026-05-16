@@ -20,28 +20,28 @@ describe('analysis/query.ts', () => {
       identifiers: [
         {
           id: '1' as IdentifierId,
-          kind: 'VariableName',
+          kind: 'plain',
           scopeId: 'root' as ScopeId,
           name: 'foo',
           range: getRangeAt(source, source.indexOf('foo'), 'foo'.length)
         },
         {
           id: '2' as IdentifierId,
-          kind: 'Callee',
+          kind: 'plain',
           scopeId: 'root' as ScopeId,
           name: 'bar',
           range: getRangeAt(source, source.indexOf('bar'), 'bar'.length)
         },
         {
           id: '3' as IdentifierId,
-          kind: 'PropertyName',
+          kind: 'property-name',
           scopeId: 'root' as ScopeId,
           name: 'baz',
           range: getRangeAt(source, source.indexOf('baz'), 'baz'.length)
         },
         {
           id: '4' as IdentifierId,
-          kind: 'VariableName',
+          kind: 'plain',
           scopeId: 'root' as ScopeId,
           name: 'qux',
           range: getRangeAt(source, source.indexOf('qux'), 'qux'.length)
