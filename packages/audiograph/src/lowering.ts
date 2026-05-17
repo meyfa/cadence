@@ -101,10 +101,23 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     ? convertPitchToMidi(instrument.rootNote)
     : DEFAULT_ROOT_NOTE
 
+  const length = (() => {
+    if (instrument.length == null) {
+      return undefined
+    }
+
+    const value = instrument.length.value
+    if (Number.isNaN(value)) {
+      throw new Error(`Invalid length: ${value}`)
+    }
+
+    return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
+  })()
+
   const source = builder.addNode<SampleNode>('sample', {
     sampleUrl: instrument.sampleUrl,
     rootNote,
-    length: instrument.length
+    length
   })
 
   const gain = builder.addNode<GainNode>('gain', {
@@ -129,6 +142,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'pan': {
+      if (Number.isNaN(effect.pan.value)) {
+        throw new Error(`Invalid pan: ${effect.pan.value}`)
+      }
+
       return toSubGraph(builder.addNode<PanNode>('pan', {
         // TODO time variant
         pan: numeric(undefined, Math.max(-1, Math.min(1, effect.pan.value)))
@@ -136,6 +153,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'lowpass': {
+      if (!Number.isFinite(effect.frequency.value)) {
+        throw new Error(`Invalid frequency: ${effect.frequency.value}`)
+      }
+
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'lowpass',
         // TODO time variant
@@ -146,6 +167,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'highpass': {
+      if (!Number.isFinite(effect.frequency.value)) {
+        throw new Error(`Invalid frequency: ${effect.frequency.value}`)
+      }
+
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'highpass',
         // TODO time variant
@@ -156,6 +181,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'width': {
+      if (Number.isNaN(effect.width.value)) {
+        throw new Error(`Invalid width: ${effect.width.value}`)
+      }
+
       return toSubGraph(builder.addNode<WidthNode>('width', {
         // TODO time variant
         width: numeric(undefined, Math.max(0, Math.min(1, effect.width.value)))
@@ -163,6 +192,14 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'delay': {
+      if (Number.isNaN(effect.feedback.value)) {
+        throw new Error(`Invalid feedback: ${effect.feedback.value}`)
+      }
+
+      if (!Number.isFinite(effect.time.value)) {
+        throw new Error(`Invalid time: ${effect.time.value}`)
+      }
+
       const delayNode = builder.addNode<DelayNode>('delay', {
         // TODO time variant
         time: timeToSeconds(effect.time, program.track.tempo)
@@ -184,6 +221,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'reverb': {
+      if (!Number.isFinite(effect.decay.value)) {
+        throw new Error(`Invalid decay: ${effect.decay.value}`)
+      }
+
       const mix = Math.max(0, Math.min(1, effect.mix.value))
       if (mix <= 0) {
         return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
@@ -200,6 +241,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 }
 
 function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph {
+  if (Number.isNaN(mix)) {
+    throw new Error(`Invalid mix: ${mix}`)
+  }
+
   if (mix <= 0) {
     return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
   }

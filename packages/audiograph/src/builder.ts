@@ -18,6 +18,14 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   readonly tempo: Numeric<'bpm'>
   readonly length: Numeric<'beats'>
 }): AudioGraphBuilder<TNode> {
+  if (!Number.isFinite(meta.tempo.value) || meta.tempo.value <= 0) {
+    throw new Error(`Invalid tempo: ${meta.tempo.value}`)
+  }
+
+  if (!Number.isFinite(meta.length.value) || meta.length.value < 0) {
+    throw new Error(`Invalid length: ${meta.length.value}`)
+  }
+
   const nodes = new Map<NodeId, TNode>()
   const edges: Edge[] = []
   const outputIds: NodeId[] = []
@@ -49,6 +57,10 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   }
 
   const addNoteEvents: AudioGraphBuilder<TNode>['addNoteEvents'] = (nodeId, events) => {
+    for (const event of events) {
+      validateNoteEvent(event)
+    }
+
     const existing = noteEvents.get(nodeId)
     if (existing == null) {
       noteEvents.set(nodeId, events)
@@ -75,4 +87,26 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
     addNoteEvents,
     graph
   }
+}
+
+function validateNoteEvent (event: NoteOptions): void {
+  if (!Number.isFinite(event.time) || event.time < 0) {
+    throw invalidNoteEvent(event)
+  }
+
+  if (event.pitch != null && (!Number.isFinite(event.pitch) || event.pitch < 0 || event.pitch > 127)) {
+    throw invalidNoteEvent(event)
+  }
+
+  if (!Number.isFinite(event.velocity) || event.velocity < 0 || event.velocity > 1) {
+    throw invalidNoteEvent(event)
+  }
+
+  if (event.duration != null && (!Number.isFinite(event.duration) || event.duration < 0)) {
+    throw invalidNoteEvent(event)
+  }
+}
+
+function invalidNoteEvent (event: NoteOptions): Error {
+  return new Error(`Invalid note event: ${JSON.stringify(event)}`)
 }

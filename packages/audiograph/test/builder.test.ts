@@ -2,6 +2,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'
+import type { MidiNote } from '@core'
 
 describe('builder.ts', () => {
   const tempo = numeric('bpm', 120)
@@ -14,6 +15,25 @@ describe('builder.ts', () => {
 
     assert.strictEqual(graph.tempo, tempo)
     assert.strictEqual(graph.length, length)
+  })
+
+  it('should throw for infinite tempo', () => {
+    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', Infinity), length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', -Infinity), length }))
+  })
+
+  it('should throw for non-positive tempo', () => {
+    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', 0), length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', -120), length }))
+  })
+
+  it('should throw for negative length', () => {
+    assert.throws(() => createAudioGraphBuilder({ tempo, length: numeric('beats', -1) }))
+  })
+
+  it('should throw for NaN tempo and length', () => {
+    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', Number.NaN), length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo, length: numeric('beats', Number.NaN) }))
   })
 
   it('should assign unique IDs to nodes', () => {
@@ -78,5 +98,97 @@ describe('builder.ts', () => {
       { from: node2.id, to: node3.id },
       { from: node2.id, to: node4.id }
     ])
+  })
+
+  it('should add note events', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
+    builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 0.8 },
+      { time: 1, pitch: 61 as MidiNote, velocity: 0.8 },
+      { time: 2, pitch: 62 as MidiNote, velocity: 0.8 }
+    ])
+
+    const graph = builder.graph()
+
+    assert.strictEqual(graph.noteEvents.size, 1)
+    assert.deepStrictEqual(graph.noteEvents.get(node1.id), [
+      { time: 0, pitch: 60, velocity: 0.8 },
+      { time: 1, pitch: 61, velocity: 0.8 },
+      { time: 2, pitch: 62, velocity: 0.8 }
+    ])
+  })
+
+  it('should throw for note events with invalid time', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: -1, pitch: 60 as MidiNote, velocity: 0.8 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: Infinity, pitch: 60 as MidiNote, velocity: 0.8 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: -Infinity, pitch: 60 as MidiNote, velocity: 0.8 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: Number.NaN, pitch: 60 as MidiNote, velocity: 0.8 }
+    ]))
+  })
+
+  it('should throw for note events with invalid velocity', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: -0.1 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 1.1 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: Number.NaN }
+    ]))
+  })
+
+  it('should throw for note events with invalid pitch', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: -1 as MidiNote, velocity: 0.8 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 128 as MidiNote, velocity: 0.8 }
+    ]))
+  })
+
+  it('should throw for note events with invalid duration', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: -1 }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: Infinity }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: -Infinity }
+    ]))
+
+    assert.throws(() => builder.addNoteEvents(node1.id, [
+      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: Number.NaN }
+    ]))
   })
 })
