@@ -1,1097 +1,380 @@
-import { ast, getEmptySourceRange } from '@ast'
+import { ast } from '@ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'
-import { CompileError } from '../../src/compiler/error.js'
+import type { CompileError } from '../../src/compiler/error.js'
+import { lex } from '../../src/lexer/lexer.js'
+import { parse } from '../../src/parser/parser.js'
+import { assertResultComplete } from '../test-utils.js'
+
+/**
+ * Helper function to lex and parse source code into an AST.
+ * This assumes that the lexer and parser are implemented correctly.
+ */
+function lexAndParse (source: string): ast.Program {
+  const tokens = lex(source)
+  assertResultComplete(tokens)
+
+  const result = parse(tokens.value)
+  assertResultComplete(result)
+
+  return result.value
+}
+
+function checkSource (source: string): readonly CompileError[] {
+  return check(lexAndParse(source))
+}
+
+function assertValid (source: string): void {
+  assert.deepStrictEqual(checkSource(source), [])
+}
+
+function assertErrorMessages (source: string, expectedMessages: string[]): void {
+  assert.deepStrictEqual(
+    checkSource(source).map((error) => error.message),
+    expectedMessages
+  )
+}
 
 describe('compiler/checker.ts', () => {
-  const RANGE = getEmptySourceRange()
-
   describe('valid', () => {
     it('should accept an empty program', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: []
-      })
-      assert.deepStrictEqual(check(program), [])
+      assertValid('')
     })
 
     it('should accept use statements without alias', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['patterns'] })
-          }),
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] })
-          })
-        ],
-        children: []
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'use "patterns" as *',
+        'use "effects" as *'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should define names from imported libraries', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['instruments'] })
-          })
-        ],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
-            value: ast.make('Call', RANGE, {
-              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-              arguments: [
-                ast.make('String', RANGE, { parts: ['piano.wav'] })
-              ]
-            })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'use "instruments" as *',
+        'myinstrument = sample("piano.wav")'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should accept imports with alias', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] }),
-            alias: 'myalias'
-          })
-        ],
-        children: []
-      })
-      assert.deepStrictEqual(check(program), [])
+      assertValid('use "effects" as myalias')
     })
 
     it('should accept a program with one track and unique parts', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: [
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                properties: [
-                  ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 4 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                ],
-                routings: [],
-                automations: []
-              }),
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'main' }),
-                properties: [
-                  ast.make('Property', RANGE, {
-                    key: ast.make('Identifier', RANGE, { name: 'length' }),
-                    value: ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 8 }),
-                      property: ast.make('Identifier', RANGE, { name: 'bars' })
-                    })
-                  })
-                ],
-                routings: [],
-                automations: []
-              })
-            ]
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'track {',
+        '  part intro (4.bars) {}',
+        '  part main (length: 8.bars) {}',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should accept variable declarations and usages in correct order', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('Number', RANGE, { value: 42 })
-          }),
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'bar' }),
-            value: ast.make('Identifier', RANGE, { name: 'foo' })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'foo = 42',
+        'bar = foo'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should allow shadowing of imported names', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] })
-          })
-        ],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'gain' }),
-            value: ast.make('PropertyAccess', RANGE, {
-              object: ast.make('Number', RANGE, { value: 3 }),
-              property: ast.make('Identifier', RANGE, { name: 'db' })
-            })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'use "effects" as *',
+        'gain = 3.db'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should accept delay effect time in beats or seconds', () => {
-      const createDelayCall = (value: number, unit: 'beats' | 's') => ast.make('Call', RANGE, {
-        callee: ast.make('PropertyAccess', RANGE, {
-          object: ast.make('Identifier', RANGE, { name: 'fx' }),
-          property: ast.make('Identifier', RANGE, { name: 'delay' })
-        }),
-        arguments: [
-          ast.make('Property', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'mix' }),
-            value: ast.make('Number', RANGE, { value: 0.25 })
-          }),
-          ast.make('Property', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'time' }),
-            value: ast.make('PropertyAccess', RANGE, {
-              object: ast.make('Number', RANGE, { value }),
-              property: ast.make('Identifier', RANGE, { name: unit })
-            })
-          }),
-          ast.make('Property', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'feedback' }),
-            value: ast.make('Number', RANGE, { value: 0.4 })
-          })
-        ]
-      })
+      const source = [
+        'use "effects" as fx',
+        'mixer {',
+        '  bus bus1 {',
+        '    effect fx.delay(mix: 0.25, time: 3.beats, feedback: 0.4)',
+        '  }',
+        '  bus bus2 {',
+        '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
+        '  }',
+        '}'
+      ].join('\n')
 
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] }),
-            alias: 'fx'
-          })
-        ],
-        children: [
-          ast.make('MixerStatement', RANGE, {
-            properties: [],
-            buses: [
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-                properties: [],
-                sources: [],
-                effects: [
-                  ast.make('EffectStatement', RANGE, {
-                    expression: createDelayCall(3, 'beats')
-                  })
-                ]
-              }),
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-                properties: [],
-                sources: [],
-                effects: [
-                  ast.make('EffectStatement', RANGE, {
-                    expression: createDelayCall(1.5, 's')
-                  })
-                ]
-              })
-            ]
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid(source)
     })
 
     it('should accept reverb effect decay in beats or seconds', () => {
-      const createReverbCall = (value: number, unit: 'beats' | 's') => ast.make('Call', RANGE, {
-        callee: ast.make('PropertyAccess', RANGE, {
-          object: ast.make('Identifier', RANGE, { name: 'fx' }),
-          property: ast.make('Identifier', RANGE, { name: 'reverb' })
-        }),
-        arguments: [
-          ast.make('Property', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'mix' }),
-            value: ast.make('Number', RANGE, { value: 0.25 })
-          }),
-          ast.make('Property', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'decay' }),
-            value: ast.make('PropertyAccess', RANGE, {
-              object: ast.make('Number', RANGE, { value }),
-              property: ast.make('Identifier', RANGE, { name: unit })
-            })
-          })
-        ]
-      })
+      const source = [
+        'use "effects" as fx',
+        'mixer {',
+        '  bus bus1 {',
+        '    effect fx.reverb(mix: 0.25, decay: 3.beats)',
+        '  }',
+        '  bus bus2 {',
+        '    effect fx.reverb(mix: 0.25, decay: 1.5.s)',
+        '  }',
+        '}'
+      ].join('\n')
 
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] }),
-            alias: 'fx'
-          })
-        ],
-        children: [
-          ast.make('MixerStatement', RANGE, {
-            properties: [],
-            buses: [
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-                properties: [],
-                sources: [],
-                effects: [
-                  ast.make('EffectStatement', RANGE, {
-                    expression: createReverbCall(3, 'beats')
-                  })
-                ]
-              }),
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-                properties: [],
-                sources: [],
-                effects: [
-                  ast.make('EffectStatement', RANGE, {
-                    expression: createReverbCall(1.5, 's')
-                  })
-                ]
-              })
-            ]
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid(source)
     })
 
     it('should allow parts and buses to shadow top-level variables', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('Number', RANGE, { value: 42 })
-          }),
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: [
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'foo' }),
-                properties: [
-                  ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 4 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                ],
-                routings: [],
-                automations: []
-              })
-            ]
-          }),
-          ast.make('MixerStatement', RANGE, {
-            properties: [],
-            buses: [
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'foo' }),
-                properties: [],
-                sources: [],
-                effects: []
-              })
-            ]
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'foo = 42',
+        'track {',
+        '  part foo (4.bars) {}',
+        '}',
+        'mixer {',
+        '  bus foo {}',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should accept a pattern with interpolation', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'some_chord' }),
-            value: ast.make('Pattern', RANGE, {
-              mode: 'parallel',
-              children: [
-                ast.make('Step', RANGE, { value: 'D4', parameters: [] }),
-                ast.make('Step', RANGE, { value: 'G4', parameters: [] })
-              ]
-            })
-          }),
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_pattern' }),
-            value: ast.make('Pattern', RANGE, {
-              mode: 'serial',
-              children: [
-                ast.make('Step', RANGE, { value: 'C4', parameters: [] }),
-                ast.make('BinaryExpression', RANGE, {
-                  operator: '+',
-                  left: ast.make('Identifier', RANGE, { name: 'some_chord' }),
-                  right: ast.make('Pattern', RANGE, {
-                    mode: 'parallel',
-                    children: [
-                      ast.make('Step', RANGE, { value: 'E4', parameters: [] }),
-                      ast.make('Step', RANGE, { value: 'A4', parameters: [] })
-                    ]
-                  })
-                }),
-                ast.make('Step', RANGE, { value: 'E4', parameters: [] })
-              ]
-            })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'some_chord = [<D4 G4>]',
+        'my_pattern = [C4 {some_chord + [<E4 A4>]} E4]'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should allow buses as sources in mixer', () => {
-      // Should be possible even in reverse order
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('MixerStatement', RANGE, {
-            properties: [],
-            buses: [
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-                properties: [],
-                sources: [
-                  ast.make('Identifier', RANGE, { name: 'bus2' })
-                ],
-                effects: []
-              }),
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-                properties: [],
-                sources: [],
-                effects: []
-              })
-            ]
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [])
+      const source = [
+        'mixer {',
+        '  bus bus1 { bus2 }',
+        '  bus bus2 {}',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
     })
 
     it('should accept lin curves', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    }),
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 0 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ]
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid('my_curve = curve[lin((-60).db, 0.db)]')
     })
 
     it('should accept bus gain automation via explicit namespace', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: [
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                properties: [
-                  ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 4 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                ],
-                routings: [],
-                automations: [
-                  ast.make('AutomateStatement', RANGE, {
-                    target: ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('PropertyAccess', RANGE, {
-                        object: ast.make('Identifier', RANGE, { name: 'bus' }),
-                        property: ast.make('Identifier', RANGE, { name: 'main' })
-                      }),
-                      property: ast.make('Identifier', RANGE, { name: 'gain' })
-                    }),
-                    curve: ast.make('Curve', RANGE, {
-                      children: [
-                        ast.make('CurveSegment', RANGE, {
-                          curveType: 'lin',
-                          parameters: [
-                            ast.make('PropertyAccess', RANGE, {
-                              object: ast.make('Number', RANGE, { value: -20 }),
-                              property: ast.make('Identifier', RANGE, { name: 'db' })
-                            }),
-                            ast.make('PropertyAccess', RANGE, {
-                              object: ast.make('Number', RANGE, { value: 0 }),
-                              property: ast.make('Identifier', RANGE, { name: 'db' })
-                            })
-                          ]
-                        })
-                      ]
-                    })
-                  })
-                ]
-              })
-            ]
-          }),
-          ast.make('MixerStatement', RANGE, {
-            properties: [],
-            buses: [
-              ast.make('BusStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'main' }),
-                properties: [],
-                sources: [],
-                effects: []
-              })
-            ]
-          })
-        ]
-      })
+      const source = [
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate bus.main.gain as curve[lin((-20).db, 0.db)]',
+        '  }',
+        '}',
+        'mixer {',
+        '  bus main {}',
+        '}'
+      ].join('\n')
 
-      assert.deepStrictEqual(check(program), [])
+      assertValid(source)
     })
 
     it('should accept curves with weighted segments', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ],
-                  length: ast.make('Number', RANGE, { value: 3 })
-                }),
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    }),
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 0 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ],
-                  length: ast.make('Number', RANGE, { value: 1 })
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid('my_curve = curve[hold((-60).db):3 lin((-60).db, 0.db):1]')
     })
 
     it('should accept lin curves that omit the start after the first segment', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ],
-                  length: ast.make('Number', RANGE, { value: 3 })
-                }),
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 0 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ],
-                  length: ast.make('Number', RANGE, { value: 1 })
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid('my_curve = curve[hold((-60).db):3 lin(0.db):1]')
     })
 
     it('should accept hold curves that omit the value after the first segment', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    }),
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -30 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ],
-                  length: ast.make('Number', RANGE, { value: 3 })
-                }),
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: [],
-                  length: ast.make('Number', RANGE, { value: 1 })
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [])
+      assertValid('my_curve = curve[lin((-60).db, (-30).db):3 hold:1]')
     })
   })
 
   describe('invalid', () => {
     it('should reject imports of unknown libraries', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['unknownlib'] })
-          })
-        ],
-        children: []
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Unknown module "unknownlib"', RANGE)
+      assertErrorMessages('use "unknownlib" as *', [
+        'Unknown module "unknownlib"'
       ])
     })
 
     it('should reject duplicate non-alias imports', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] })
-          }),
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['effects'] })
-          })
-        ],
-        children: []
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Duplicate import of "effects"', RANGE)
+      const source = [
+        'use "effects" as *',
+        'use "effects" as *'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate import of "effects"'
       ])
     })
 
     it('should not define names from non-imported libraries', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
-            value: ast.make('Call', RANGE, {
-              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-              arguments: [
-                ast.make('String', RANGE, { parts: ['piano.wav'] })
-              ]
-            })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Unknown identifier "sample"', RANGE)
+      assertErrorMessages('myinstrument = sample("piano.wav")', [
+        'Unknown identifier "sample"'
       ])
     })
 
     it('should reject unknown module export access', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['instruments'] }),
-            alias: 'inst'
-          })
-        ],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'myinstrument' }),
-            value: ast.make('PropertyAccess', RANGE, {
-              object: ast.make('Identifier', RANGE, { name: 'inst' }),
-              property: ast.make('Identifier', RANGE, { name: 'foobar' })
-            })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Module "instruments" has no export named "foobar"', RANGE)
+      const source = [
+        'use "instruments" as inst',
+        'myinstrument = inst.foobar'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Module "instruments" has no export named "foobar"'
       ])
     })
 
     it('should reject variable usage before declaration', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('Identifier', RANGE, { name: 'bar' })
-          }),
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'bar' }),
-            value: ast.make('Number', RANGE, { value: 100 })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Unknown identifier "bar"', RANGE)
+      const source = [
+        'foo = bar',
+        'bar = 100'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "bar"'
       ])
     })
 
     it('should reject variable reassignment', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('Number', RANGE, { value: 42 })
-          }),
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'foo' }),
-            value: ast.make('Number', RANGE, { value: 100 })
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Identifier "foo" is already defined', RANGE)
+      const source = [
+        'foo = 42',
+        'foo = 100'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "foo" is already defined'
       ])
     })
 
     it('should reject duplicate track blocks', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: []
-          }),
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: []
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Multiple track definitions', RANGE),
-        new CompileError('Multiple track definitions', RANGE)
+      const source = [
+        'track {}',
+        'track {}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Multiple track definitions',
+        'Multiple track definitions'
       ])
     })
 
     it('should reject duplicate properties', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('TrackStatement', RANGE, {
-            properties: [
-              ast.make('Property', RANGE, {
-                key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-                value: ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 120 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bpm' })
-                })
-              }),
-              ast.make('Property', RANGE, {
-                key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-                value: ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 120 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bpm' })
-                })
-              })
-            ],
-            parts: []
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Duplicate property named "tempo"', RANGE)
+      assertErrorMessages('track(tempo: 120.bpm, tempo: 120.bpm) {}', [
+        'Duplicate property named "tempo"'
       ])
     })
 
     it('should reject duplicate part blocks within a track', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('TrackStatement', RANGE, {
-            properties: [],
-            parts: [
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                properties: [
-                  ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 4 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                ],
-                routings: [],
-                automations: []
-              }),
-              ast.make('PartStatement', RANGE, {
-                name: ast.make('Identifier', RANGE, { name: 'intro' }),
-                properties: [
-                  ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 8 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                ],
-                routings: [],
-                automations: []
-              })
-            ]
-          })
-        ]
-      })
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Duplicate part named "intro"', RANGE)
+      const source = [
+        'track {',
+        '  part intro (4.bars) {}',
+        '  part intro (8.bars) {}',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate part named "intro"'
       ])
     })
 
     it('should reject curves with non-numeric parameters', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: [
-                    ast.make('String', RANGE, { parts: ['not a number'] })
-                  ]
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Expected type number, got string', RANGE)
+      assertErrorMessages('my_curve = curve[hold("not a number")]', [
+        'Expected type number, got string'
       ])
     })
 
     it('should reject lin curves that omit the start for the first segment', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 0 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ]
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [
-        new CompileError('First curve segment cannot omit its first parameter', RANGE)
+      assertErrorMessages('my_curve = curve[lin(0.db)]', [
+        'First curve segment cannot omit its first parameter'
       ])
     })
 
     it('should reject hold curves that omit the value for the first segment', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: []
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [
-        new CompileError('First curve segment cannot omit its first parameter', RANGE)
+      assertErrorMessages('my_curve = curve[hold]', [
+        'First curve segment cannot omit its first parameter'
       ])
     })
 
     it('should reject omitted lin starts when the inherited and explicit units differ', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'my_curve' }),
-            value: ast.make('Curve', RANGE, {
-              children: [
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'hold',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: -60 }),
-                      property: ast.make('Identifier', RANGE, { name: 'db' })
-                    })
-                  ]
-                }),
-                ast.make('CurveSegment', RANGE, {
-                  curveType: 'lin',
-                  parameters: [
-                    ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Number', RANGE, { value: 120 }),
-                      property: ast.make('Identifier', RANGE, { name: 'bpm' })
-                    })
-                  ]
-                })
-              ]
-            })
-          })
-        ]
-      })
-
-      assert.deepStrictEqual(check(program), [
-        new CompileError('Expected type number(db), got number(bpm)', RANGE)
+      assertErrorMessages('my_curve = curve[hold((-60).db) lin(120.bpm)]', [
+        'Expected type number(db), got number(bpm)'
       ])
     })
   })
 
   it('should reject automations that target non-parameters', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'some_value' }),
-          value: ast.make('String', RANGE, { parts: [''] })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('Identifier', RANGE, { name: 'some_value' }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'hold',
-                        parameters: [ast.make('Number', RANGE, { value: -60 })]
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'some_value = ""',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate some_value as curve[hold(-60)]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Expected type parameter, got string', RANGE)
+    assertErrorMessages(source, [
+      'Expected type parameter, got string'
     ])
   })
 
   it('should reject duplicate mixer blocks', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: []
-        }),
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: []
-        })
-      ]
-    })
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Multiple mixer definitions', RANGE),
-      new CompileError('Multiple mixer definitions', RANGE)
+    const source = [
+      'mixer {}',
+      'mixer {}'
+    ].join('\n')
+
+    assertErrorMessages(source, [
+      'Multiple mixer definitions',
+      'Multiple mixer definitions'
     ])
   })
 
   it('should reject duplicate bus blocks within a mixer', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              properties: [],
-              sources: [],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              properties: [],
-              sources: [],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Duplicate bus named "foo"', RANGE)
+    const source = [
+      'mixer {',
+      '  bus foo {}',
+      '  bus foo {}',
+      '}'
+    ].join('\n')
+
+    assertErrorMessages(source, [
+      'Duplicate bus named "foo"'
     ])
   })
 
   it('should reject cyclic mixer routings', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            // bus1 -> bus3 -> bus2 -> bus1
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus3' })
-              ],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus1' })
-              ],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus3' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus2' })
-              ],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Cyclic routing: bus1 -> bus2 -> bus3 -> bus1', RANGE)
+    const source = [
+      'mixer {',
+      '  bus bus1 { bus3 }',
+      '  bus bus2 { bus1 }',
+      '  bus bus3 { bus2 }',
+      '}'
+    ].join('\n')
+
+    assertErrorMessages(source, [
+      'Cyclic routing: bus1 -> bus2 -> bus3 -> bus1'
     ])
   })
 
   it('should only report buses that are part of a cycle', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            // first -> bus1 <-> bus2 (first is NOT part of the cycle)
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'first' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus1' })
-              ],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus2' })
-              ],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus1' })
-              ],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Cyclic routing: bus1 -> bus2 -> bus1', RANGE)
+    const source = [
+      'mixer {',
+      '  bus first { bus1 }',
+      '  bus bus1 { bus2 }',
+      '  bus bus2 { bus1 }',
+      '}'
+    ].join('\n')
+
+    assertErrorMessages(source, [
+      'Cyclic routing: bus1 -> bus2 -> bus1'
     ])
   })
 
   it('should reject patterns with interpolation of the wrong type', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'my_pattern' }),
-          value: ast.make('Pattern', RANGE, {
-            mode: 'serial',
-            children: [
-              ast.make('Step', RANGE, { value: 'C4', parameters: [] }),
-              ast.make('Number', RANGE, { value: 42 }),
-              ast.make('Step', RANGE, { value: 'E4', parameters: [] })
-            ]
-          })
-        })
-      ]
-    })
-    assert.deepStrictEqual(check(program), [
-      new CompileError('Expected type pattern, got number', RANGE)
+    assertErrorMessages('my_pattern = [C4{42}E4]', [
+      'Expected type pattern, got number'
     ])
   })
 })
