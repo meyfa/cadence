@@ -20,5 +20,10 @@ describe('constants.ts', () => {
       const gainNeg20 = dbToGain(-20)
       assert.ok(Math.abs(gainNeg20 - 0.1) < 1e-10)
     })
+
+    it('should throw for invalid input', () => {
+      assert.throws(() => dbToGain(Number.NaN), /Invalid gain/)
+      assert.throws(() => dbToGain(Infinity), /Invalid gain/)
+    })
   })
 })
