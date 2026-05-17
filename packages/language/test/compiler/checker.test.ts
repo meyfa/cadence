@@ -163,6 +163,18 @@ describe('compiler/checker.ts', () => {
       assertValid('my_curve = curve[lin((-60).db, 0.db)]')
     })
 
+    it('should accept curves with weighted segments', () => {
+      assertValid('my_curve = curve[hold((-60).db):3 lin((-60).db, 0.db):1]')
+    })
+
+    it('should accept lin curves that omit the start after the first segment', () => {
+      assertValid('my_curve = curve[hold((-60).db):3 lin(0.db):1]')
+    })
+
+    it('should accept hold curves that omit the value after the first segment', () => {
+      assertValid('my_curve = curve[lin((-60).db, (-30).db):3 hold:1]')
+    })
+
     it('should accept bus gain automation via explicit namespace', () => {
       const source = [
         'track {',
@@ -176,18 +188,6 @@ describe('compiler/checker.ts', () => {
       ].join('\n')
 
       assertValid(source)
-    })
-
-    it('should accept curves with weighted segments', () => {
-      assertValid('my_curve = curve[hold((-60).db):3 lin((-60).db, 0.db):1]')
-    })
-
-    it('should accept lin curves that omit the start after the first segment', () => {
-      assertValid('my_curve = curve[hold((-60).db):3 lin(0.db):1]')
-    })
-
-    it('should accept hold curves that omit the value after the first segment', () => {
-      assertValid('my_curve = curve[lin((-60).db, (-30).db):3 hold:1]')
     })
   })
 
@@ -302,79 +302,79 @@ describe('compiler/checker.ts', () => {
         'Expected type number(db), got number(bpm)'
       ])
     })
-  })
 
-  it('should reject automations that target non-parameters', () => {
-    const source = [
-      'some_value = ""',
-      'track {',
-      '  part intro (4.bars) {',
-      '    automate some_value as curve[hold(-60)]',
-      '  }',
-      '}'
-    ].join('\n')
+    it('should reject automations that target non-parameters', () => {
+      const source = [
+        'some_value = ""',
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate some_value as curve[hold(-60)]',
+        '  }',
+        '}'
+      ].join('\n')
 
-    assertErrorMessages(source, [
-      'Expected type parameter, got string'
-    ])
-  })
+      assertErrorMessages(source, [
+        'Expected type parameter, got string'
+      ])
+    })
 
-  it('should reject duplicate mixer blocks', () => {
-    const source = [
-      'mixer {}',
-      'mixer {}'
-    ].join('\n')
+    it('should reject duplicate mixer blocks', () => {
+      const source = [
+        'mixer {}',
+        'mixer {}'
+      ].join('\n')
 
-    assertErrorMessages(source, [
-      'Multiple mixer definitions',
-      'Multiple mixer definitions'
-    ])
-  })
+      assertErrorMessages(source, [
+        'Multiple mixer definitions',
+        'Multiple mixer definitions'
+      ])
+    })
 
-  it('should reject duplicate bus blocks within a mixer', () => {
-    const source = [
-      'mixer {',
-      '  bus foo {}',
-      '  bus foo {}',
-      '}'
-    ].join('\n')
+    it('should reject duplicate bus blocks within a mixer', () => {
+      const source = [
+        'mixer {',
+        '  bus foo {}',
+        '  bus foo {}',
+        '}'
+      ].join('\n')
 
-    assertErrorMessages(source, [
-      'Duplicate bus named "foo"'
-    ])
-  })
+      assertErrorMessages(source, [
+        'Duplicate bus named "foo"'
+      ])
+    })
 
-  it('should reject cyclic mixer routings', () => {
-    const source = [
-      'mixer {',
-      '  bus bus1 { bus3 }',
-      '  bus bus2 { bus1 }',
-      '  bus bus3 { bus2 }',
-      '}'
-    ].join('\n')
+    it('should reject cyclic mixer routings', () => {
+      const source = [
+        'mixer {',
+        '  bus bus1 { bus3 }',
+        '  bus bus2 { bus1 }',
+        '  bus bus3 { bus2 }',
+        '}'
+      ].join('\n')
 
-    assertErrorMessages(source, [
-      'Cyclic routing: bus1 -> bus2 -> bus3 -> bus1'
-    ])
-  })
+      assertErrorMessages(source, [
+        'Cyclic routing: bus1 -> bus2 -> bus3 -> bus1'
+      ])
+    })
 
-  it('should only report buses that are part of a cycle', () => {
-    const source = [
-      'mixer {',
-      '  bus first { bus1 }',
-      '  bus bus1 { bus2 }',
-      '  bus bus2 { bus1 }',
-      '}'
-    ].join('\n')
+    it('should only report buses that are part of a cycle', () => {
+      const source = [
+        'mixer {',
+        '  bus first { bus1 }',
+        '  bus bus1 { bus2 }',
+        '  bus bus2 { bus1 }',
+        '}'
+      ].join('\n')
 
-    assertErrorMessages(source, [
-      'Cyclic routing: bus1 -> bus2 -> bus1'
-    ])
-  })
+      assertErrorMessages(source, [
+        'Cyclic routing: bus1 -> bus2 -> bus1'
+      ])
+    })
 
-  it('should reject patterns with interpolation of the wrong type', () => {
-    assertErrorMessages('my_pattern = [C4{42}E4]', [
-      'Expected type pattern, got number'
-    ])
+    it('should reject patterns with interpolation of the wrong type', () => {
+      assertErrorMessages('my_pattern = [C4{42}E4]', [
+        'Expected type pattern, got number'
+      ])
+    })
   })
 })
