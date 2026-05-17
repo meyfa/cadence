@@ -1,28 +1,36 @@
-import { ast, getEmptySourceRange } from '@ast'
 import type { Program } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { generate } from '../../src/compiler/generator.js'
+import { lex } from '../../src/lexer/lexer.js'
+import { parse } from '../../src/parser/parser.js'
+import { assertResultComplete } from '../test-utils.js'
 
-describe('compiler/generator.ts', () => {
-  const RANGE = getEmptySourceRange()
+function lexAndParse (source: string) {
+  const tokens = lex(source)
+  assertResultComplete(tokens)
 
-  const OPTIONS = {
+  const result = parse(tokens.value)
+  assertResultComplete(result)
+
+  return result.value
+}
+
+function generateSource (source: string) {
+  return generate(lexAndParse(source), {
     tempo: {
       default: 120,
       minimum: 1,
       maximum: 300
     },
     beatsPerBar: 4
-  }
+  })
+}
 
+describe('compiler/generator.ts', () => {
   it('should produce a correct empty program', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: []
-    })
-    const result = generate(program, OPTIONS)
+    const result = generateSource('')
     assert.deepStrictEqual(result, {
       beatsPerBar: 4,
       instruments: new Map(),
@@ -39,299 +47,92 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should set track tempo from AST', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('TrackStatement', RANGE, {
-          properties: [
-            ast.make('Property', RANGE, {
-              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('PropertyAccess', RANGE, {
-                object: ast.make('Number', RANGE, { value: 140 }),
-                property: ast.make('Identifier', RANGE, { name: 'bpm' })
-              })
-            })
-          ],
-          parts: []
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const result = generateSource('track (tempo: 140.bpm) {}')
     assert.deepStrictEqual(result.track.tempo, numeric('bpm', 140))
   })
 
   it('should clamp track tempo to maximum', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('TrackStatement', RANGE, {
-          properties: [
-            ast.make('Property', RANGE, {
-              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('PropertyAccess', RANGE, {
-                object: ast.make('Number', RANGE, { value: 400 }),
-                property: ast.make('Identifier', RANGE, { name: 'bpm' })
-              })
-            })
-          ],
-          parts: []
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const result = generateSource('track (tempo: 400.bpm) {}')
     assert.deepStrictEqual(result.track.tempo, numeric('bpm', 300))
   })
 
   it('should support tempo from a variable', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        // foo = 90 bpm
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'foo' }),
-          value: ast.make('PropertyAccess', RANGE, {
-            object: ast.make('Number', RANGE, { value: 90 }),
-            property: ast.make('Identifier', RANGE, { name: 'bpm' })
-          })
-        }),
-        // bar = foo * 2
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'bar' }),
-          value: ast.make('BinaryExpression', RANGE, {
-            operator: '*',
-            left: ast.make('Identifier', RANGE, { name: 'foo' }),
-            right: ast.make('Number', RANGE, { value: 2 })
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [
-            ast.make('Property', RANGE, {
-              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('Identifier', RANGE, { name: 'bar' })
-            })
-          ],
-          parts: []
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const source = [
+      'foo = 90.bpm',
+      'bar = foo * 2',
+      'track (tempo: bar) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
     assert.deepStrictEqual(result.track.tempo, numeric('bpm', 180))
   })
 
   it('should support imported names', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['effects'] })
-        })
-      ],
-      children: [
-        // mygain = gain
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'mygain' }),
-          value: ast.make('Identifier', RANGE, { name: 'gain' })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [
-            ast.make('Property', RANGE, {
-              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('Identifier', RANGE, { name: 'mygain' })
-            })
-          ],
-          parts: []
-        })
-      ]
-    })
-    assert.doesNotThrow(() => generate(program, OPTIONS))
+    const source = [
+      'use "instruments" as *',
+      'kick = sample("kick.wav")'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.instruments.size, 1)
+    assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'kick.wav')
   })
 
   it('should support import aliases', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['effects'] }),
-          alias: 'fx'
-        })
-      ],
-      children: [
-        // mygain = fx.gain
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'mygain' }),
-          value: ast.make('PropertyAccess', RANGE, {
-            object: ast.make('Identifier', RANGE, { name: 'fx' }),
-            property: ast.make('Identifier', RANGE, { name: 'gain' })
-          })
-        })
-      ]
-    })
-    assert.doesNotThrow(() => generate(program, OPTIONS))
+    const source = [
+      'use "instruments" as inst',
+      'kick = inst.sample("kick.wav")'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.instruments.size, 1)
+    assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'kick.wav')
   })
 
   it('should support shadowing of imported names', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['effects'] })
-        })
-      ],
-      children: [
-        // gain = 140 bpm
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'gain' }),
-          value: ast.make('PropertyAccess', RANGE, {
-            object: ast.make('Number', RANGE, { value: 140 }),
-            property: ast.make('Identifier', RANGE, { name: 'bpm' })
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [
-            ast.make('Property', RANGE, {
-              key: ast.make('Identifier', RANGE, { name: 'tempo' }),
-              value: ast.make('Identifier', RANGE, { name: 'gain' })
-            })
-          ],
-          parts: []
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
-    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 140))
+    const source = [
+      'use "effects" as *',
+      'gain = 123.bpm',
+      'track (tempo: gain) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 123))
   })
 
   it('should allow parts and buses to shadow top-level variables', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'foo' }),
-          value: ast.make('Number', RANGE, { value: 42 })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: []
-            })
-          ]
-        }),
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'foo' }),
-              properties: [],
-              sources: [],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const source = [
+      'foo = 42',
+      'track {',
+      '  part foo (4.bars) {}',
+      '}',
+      'mixer {',
+      '  bus foo {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
     assert.deepStrictEqual(result.track.parts[0].name, 'foo')
     assert.deepStrictEqual(result.mixer.buses[0].name, 'foo')
   })
 
   it('should clamp negative part lengths to 0', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('UnaryExpression', RANGE, {
-                  operator: '-',
-                  argument: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Number', RANGE, { value: 4 }),
-                    property: ast.make('Identifier', RANGE, { name: 'bars' })
-                  })
-                })
-              ],
-              routings: [],
-              automations: []
-            })
-          ]
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const result = generateSource('track { part intro (-4.bars) {} }')
     assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 0))
   })
 
   it('should generate automation points for a lin curve', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        // synth = sample("synth.wav")
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                // (4.bars)
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ]
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate synth.gain as curve[lin((-60).db, 0.db)]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -342,79 +143,17 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should allocate equal time to multiple curve segments', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -30 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ]
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -30 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ]
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate synth.gain as curve[lin((-60).db, (-30).db) lin((-30).db, 0.db)]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -426,77 +165,17 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should allocate curve time by segment length weights', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 8 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'hold',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 3 })
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 1 })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (8.bars) {',
+      '    automate synth.gain as curve[hold((-60).db):3 lin((-60).db, 0.db):1]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -508,73 +187,17 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should use the previous segment end when lin start is omitted', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 8 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'hold',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 3 })
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 1 })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (8.bars) {',
+      '    automate synth.gain as curve[hold((-60).db):3 lin(0.db):1]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -586,72 +209,17 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should use the previous segment end when hold value is omitted', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 8 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -30 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 3 })
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'hold',
-                        parameters: [],
-                        length: ast.make('Number', RANGE, { value: 1 })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (8.bars) {',
+      '    automate synth.gain as curve[lin((-60).db, (-30).db):3 hold:1]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -663,94 +231,17 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should clamp non-positive curve segment lengths and step zero-length segments', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['instruments'] })
-        })
-      ],
-      children: [
-        ast.make('Assignment', RANGE, {
-          key: ast.make('Identifier', RANGE, { name: 'synth' }),
-          value: ast.make('Call', RANGE, {
-            callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-            arguments: [
-              ast.make('String', RANGE, { parts: ['synth.wav'] })
-            ]
-          })
-        }),
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('Identifier', RANGE, { name: 'synth' }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'hold',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('UnaryExpression', RANGE, {
-                          operator: '-',
-                          argument: ast.make('Number', RANGE, { value: 2 })
-                        })
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -60 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -30 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 0 })
-                      }),
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -30 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ],
-                        length: ast.make('Number', RANGE, { value: 1 })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate synth.gain as curve[hold((-60).db):(-2) lin((-60).db, (-30).db):0 lin((-30).db, 0.db):1]',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const automation = [...result.automations.values()][0]
@@ -762,67 +253,18 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should automate bus gain via explicit namespace', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('TrackStatement', RANGE, {
-          properties: [],
-          parts: [
-            ast.make('PartStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'intro' }),
-              properties: [
-                ast.make('PropertyAccess', RANGE, {
-                  object: ast.make('Number', RANGE, { value: 4 }),
-                  property: ast.make('Identifier', RANGE, { name: 'bars' })
-                })
-              ],
-              routings: [],
-              automations: [
-                ast.make('AutomateStatement', RANGE, {
-                  target: ast.make('PropertyAccess', RANGE, {
-                    object: ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Identifier', RANGE, { name: 'bus' }),
-                      property: ast.make('Identifier', RANGE, { name: 'main' })
-                    }),
-                    property: ast.make('Identifier', RANGE, { name: 'gain' })
-                  }),
-                  curve: ast.make('Curve', RANGE, {
-                    children: [
-                      ast.make('CurveSegment', RANGE, {
-                        curveType: 'lin',
-                        parameters: [
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: -20 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          }),
-                          ast.make('PropertyAccess', RANGE, {
-                            object: ast.make('Number', RANGE, { value: 0 }),
-                            property: ast.make('Identifier', RANGE, { name: 'db' })
-                          })
-                        ]
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        }),
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'main' }),
-              properties: [],
-              sources: [],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate bus.main.gain as curve[lin((-20).db, 0.db)]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus main {}',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
     const busGain = result.mixer.buses[0].gain
@@ -835,31 +277,14 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should support buses as sources in mixer', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-              properties: [],
-              sources: [
-                ast.make('Identifier', RANGE, { name: 'bus2' })
-              ],
-              effects: []
-            }),
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus2' }),
-              properties: [],
-              sources: [],
-              effects: []
-            })
-          ]
-        })
-      ]
-    })
-    const result = generate(program, OPTIONS)
+    const source = [
+      'mixer {',
+      '  bus bus1 { bus2 }',
+      '  bus bus2 {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
     assert.deepStrictEqual(result.mixer.routings, [
       {
         implicit: false,
@@ -875,55 +300,16 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should preserve seconds for delay effect time', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['effects'] }),
-          alias: 'fx'
-        })
-      ],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-              properties: [],
-              sources: [],
-              effects: [
-                ast.make('EffectStatement', RANGE, {
-                  expression: ast.make('Call', RANGE, {
-                    callee: ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Identifier', RANGE, { name: 'fx' }),
-                      property: ast.make('Identifier', RANGE, { name: 'delay' })
-                    }),
-                    arguments: [
-                      ast.make('Property', RANGE, {
-                        key: ast.make('Identifier', RANGE, { name: 'mix' }),
-                        value: ast.make('Number', RANGE, { value: 0.25 })
-                      }),
-                      ast.make('Property', RANGE, {
-                        key: ast.make('Identifier', RANGE, { name: 'time' }),
-                        value: ast.make('PropertyAccess', RANGE, {
-                          object: ast.make('Number', RANGE, { value: 1.5 }),
-                          property: ast.make('Identifier', RANGE, { name: 's' })
-                        })
-                      }),
-                      ast.make('Property', RANGE, {
-                        key: ast.make('Identifier', RANGE, { name: 'feedback' }),
-                        value: ast.make('Number', RANGE, { value: 0.4 })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "effects" as fx',
+      'mixer {',
+      '  bus bus1 {',
+      '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
     assert.deepStrictEqual(result.mixer.buses[0].effects[0], {
       type: 'delay',
       mix: numeric(undefined, 0.25),
@@ -933,51 +319,16 @@ describe('compiler/generator.ts', () => {
   })
 
   it('should preserve beats for reverb decay', () => {
-    const program = ast.make('Program', RANGE, {
-      imports: [
-        ast.make('UseStatement', RANGE, {
-          library: ast.make('String', RANGE, { parts: ['effects'] }),
-          alias: 'fx'
-        })
-      ],
-      children: [
-        ast.make('MixerStatement', RANGE, {
-          properties: [],
-          buses: [
-            ast.make('BusStatement', RANGE, {
-              name: ast.make('Identifier', RANGE, { name: 'bus1' }),
-              properties: [],
-              sources: [],
-              effects: [
-                ast.make('EffectStatement', RANGE, {
-                  expression: ast.make('Call', RANGE, {
-                    callee: ast.make('PropertyAccess', RANGE, {
-                      object: ast.make('Identifier', RANGE, { name: 'fx' }),
-                      property: ast.make('Identifier', RANGE, { name: 'reverb' })
-                    }),
-                    arguments: [
-                      ast.make('Property', RANGE, {
-                        key: ast.make('Identifier', RANGE, { name: 'mix' }),
-                        value: ast.make('Number', RANGE, { value: 0.25 })
-                      }),
-                      ast.make('Property', RANGE, {
-                        key: ast.make('Identifier', RANGE, { name: 'decay' }),
-                        value: ast.make('PropertyAccess', RANGE, {
-                          object: ast.make('Number', RANGE, { value: 2 }),
-                          property: ast.make('Identifier', RANGE, { name: 'beats' })
-                        })
-                      })
-                    ]
-                  })
-                })
-              ]
-            })
-          ]
-        })
-      ]
-    })
+    const source = [
+      'use "effects" as fx',
+      'mixer {',
+      '  bus bus1 {',
+      '    effect fx.reverb(mix: 0.25, decay: 2.beats)',
+      '  }',
+      '}'
+    ].join('\n')
 
-    const result = generate(program, OPTIONS)
+    const result = generateSource(source)
     assert.deepStrictEqual(result.mixer.buses[0].effects[0], {
       type: 'reverb',
       mix: numeric(undefined, 0.25),
@@ -987,40 +338,13 @@ describe('compiler/generator.ts', () => {
 
   describe('instruments.sample', () => {
     it('should allocate instrument and parameter IDs correctly', () => {
-      const program = ast.make('Program', RANGE, {
-        imports: [
-          ast.make('UseStatement', RANGE, {
-            library: ast.make('String', RANGE, { parts: ['instruments'] })
-          })
-        ],
-        children: [
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'inst1' }),
-            value: ast.make('Call', RANGE, {
-              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-              arguments: [
-                ast.make('Property', RANGE, {
-                  key: ast.make('Identifier', RANGE, { name: 'url' }),
-                  value: ast.make('String', RANGE, { parts: ['sample1.wav'] })
-                })
-              ]
-            })
-          }),
-          ast.make('Assignment', RANGE, {
-            key: ast.make('Identifier', RANGE, { name: 'inst2' }),
-            value: ast.make('Call', RANGE, {
-              callee: ast.make('Identifier', RANGE, { name: 'sample' }),
-              arguments: [
-                ast.make('Property', RANGE, {
-                  key: ast.make('Identifier', RANGE, { name: 'url' }),
-                  value: ast.make('String', RANGE, { parts: ['sample2.wav'] })
-                })
-              ]
-            })
-          })
-        ]
-      })
-      const result = generate(program, OPTIONS)
+      const source = [
+        'use "instruments" as *',
+        'inst1 = sample(url: "sample1.wav")',
+        'inst2 = sample(url: "sample2.wav")'
+      ].join('\n')
+
+      const result = generateSource(source)
       assert.deepStrictEqual(result.instruments.size, 2)
       assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'sample1.wav')
       assert.deepStrictEqual(result.instruments.get(2 as any)?.sampleUrl, 'sample2.wav')
