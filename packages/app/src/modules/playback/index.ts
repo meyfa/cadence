@@ -3,7 +3,7 @@ import type { CommandId, MenuSectionId, Module, ModuleId, PanelId, Problem } fro
 import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
 import { numeric } from '@utility'
 import type { FunctionComponent } from 'react'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Notification } from '../../components/notification/Notification.js'
 import { OutputGainSettingsCard } from './components/OutputGainSettingsCard.js'
@@ -26,21 +26,32 @@ const togglePlaybackId = `${moduleId}.toggle` as CommandId
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showNotification } = useNotificationService()
+
   usePlaybackSettingsSync()
 
+  const compilation = useCompilationState()
+  const compilationRef = useLatestRef(compilation)
+
+  const [graphErrors, setGraphErrors] = useState<readonly Error[]>([])
+
   const audioEngine = useAudioEngine()
-  const errors = useObservable(audioEngine.errors)
+  const engineErrors = useObservable(audioEngine.errors)
+
   const problems = useMemo(() => {
-    return errors.map((error): Problem => ({
+    return [...engineErrors, ...graphErrors].map((error): Problem => ({
       kind: 'error',
       label: 'Playback',
       message: error.message,
       error
     }))
-  }, [errors])
+  }, [engineErrors, graphErrors])
 
-  const compilation = useCompilationState()
-  const compilationRef = useLatestRef(compilation)
+  const showErrorNotification = useCallback(() => {
+    showNotification(Notification, { severity: 'error', message: PLAYBACK_ERROR_MESSAGE }, {
+      kind: `${moduleId}.playback.error`,
+      timeout: PLAYBACK_ERROR_TIMEOUT
+    })
+  }, [showNotification])
 
   useRegisterCommand(() => ({
     id: viewTimelineId,
@@ -66,16 +77,27 @@ const GlobalHooks: FunctionComponent = () => {
       }
 
       if (program == null) {
-        showNotification(Notification, { severity: 'error', message: PLAYBACK_ERROR_MESSAGE }, {
-          kind: `${moduleId}.playback.error`,
-          timeout: PLAYBACK_ERROR_TIMEOUT
-        })
+        showErrorNotification()
         return
       }
 
-      audioEngine.play(createAudioGraph(program))
+      try {
+        audioEngine.play(createAudioGraph(program))
+        setGraphErrors([])
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        const error = new Error(`Failed to create audio graph: ${message}`, {
+          cause: err instanceof Error ? err : undefined
+        })
+
+        setGraphErrors([error])
+        showErrorNotification()
+
+        // An error here is unexpected. Rethrow to make it available in the console.
+        throw error
+      }
     }
-  }), [])
+  }), [audioEngine, showErrorNotification])
 
   useProvideProblems(problems)
 
