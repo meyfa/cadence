@@ -27,7 +27,15 @@ const config = defineConfig({
     }
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+
+    // Exclude audio worklet processors from inlining, as the Content Security Policy
+    // may prevent loading them from base64-encoded data URLs.
+    assetsInlineLimit: (filePath) => {
+      if (filePath.endsWith('.worklet.js')) {
+        return false
+      }
+    }
   }
 })
 
