@@ -1,8 +1,9 @@
-import { numeric, MutableObservable } from '@utility'
+import { MutableObservable, numeric } from '@utility'
+import { addWorkletModule } from '../worklets/loader.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 const PROCESSOR_NAME = 'cadence-time-tracker'
-const moduleLoadPromises = new WeakMap<BaseAudioContext, Promise<void>>()
+const PROCESSOR_MODULE_URL = new URL('./time-tracker.worklet.js', import.meta.url)
 
 export async function createWorkletTimeTracker (
   ctx: BaseAudioContext,
@@ -13,7 +14,7 @@ export async function createWorkletTimeTracker (
 
   const time = new MutableObservable(numeric('s', 0))
 
-  await ensureModuleLoaded(ctx)
+  await addWorkletModule(ctx, PROCESSOR_MODULE_URL.href)
 
   const node = new AudioWorkletNode(ctx, PROCESSOR_NAME, {
     numberOfInputs: 0,
@@ -51,81 +52,4 @@ export async function createWorkletTimeTracker (
   }
 
   return { time, dispose }
-}
-
-async function ensureModuleLoaded (ctx: BaseAudioContext): Promise<void> {
-  if (!('audioWorklet' in ctx) || (ctx as any).audioWorklet == null) {
-    throw new Error('AudioWorklet not available')
-  }
-
-  const existing = moduleLoadPromises.get(ctx)
-  if (existing != null) {
-    await existing
-    return
-  }
-
-  try {
-    const promise = (async () => {
-      const source = createProcessorModuleSource()
-      const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }))
-
-      try {
-        await (ctx as any).audioWorklet.addModule(url)
-      } finally {
-        URL.revokeObjectURL(url)
-      }
-    })()
-
-    moduleLoadPromises.set(ctx, promise)
-    await promise
-  } catch (err: unknown) {
-    moduleLoadPromises.delete(ctx)
-    throw err
-  }
-}
-
-function createProcessorModuleSource (): string {
-  return `
-class CadenceTimeTrackerProcessor extends AudioWorkletProcessor {
-  #framesUntilPost
-  #postIntervalFrames
-
-  constructor () {
-    super()
-
-    this.#framesUntilPost = 0
-    this.#postIntervalFrames = 1200 // ~25ms at 48kHz
-
-    this.port.onmessage = (event) => {
-      if (event == null || event.data == null || typeof event.data !== 'object' || event.data.type !== 'init') {
-        return
-      }
-
-      const { postIntervalFrames } = event.data
-
-      this.#postIntervalFrames = Math.max(1, Math.floor(postIntervalFrames))
-      this.#framesUntilPost = 0
-    }
-  }
-
-  process (inputs, outputs) {
-    const output = outputs[0]
-    if (output == null || output[0] == null) {
-      return true
-    }
-
-    const frames = output[0].length
-    this.#framesUntilPost -= frames
-
-    if (this.#framesUntilPost <= 0) {
-      this.#framesUntilPost += this.#postIntervalFrames
-      this.port.postMessage({ type: 'time', currentTime })
-    }
-
-    return true
-  }
-}
-
-registerProcessor('${PROCESSOR_NAME}', CadenceTimeTrackerProcessor);
-`.trimStart()
 }
