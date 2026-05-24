@@ -165,7 +165,11 @@ export default defineConfig([
   {
     ignores: [
       'dist',
-      'packages/*/dist'
+      'packages/*/dist',
+
+      // TypeScript treats worklets as global scripts which interfere with one another.
+      // They must be excluded from the TSConfig, and therefore also from ESLint, which relies on the TSConfig.
+      'packages/webaudio/src/**/*.worklet.js'
     ]
   },
   {

@@ -10,5 +10,8 @@
     "./packages/*/test-browser",
     "./packages/*/vite.config.ts",
     "./packages/*/vitest.config.ts"
+  ],
+  "exclude": [
+    "./packages/webaudio/src/**/*.worklet.js"
   ]
 }
