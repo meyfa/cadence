@@ -22,5 +22,22 @@ describe('transport/transport.ts', () => {
       expect(buffer.numberOfChannels).toBe(2)
       expect(buffer.sampleRate).toBe(44_100)
     })
+
+    it('tracks time during offline rendering', async () => {
+      const transport = createOfflineTransport({
+        duration: numeric('s', 3),
+        channels: 2,
+        sampleRate: 44_100
+      })
+
+      await transport.render()
+      const trackedTime = transport.time.get()
+
+      expect(trackedTime).toBeDefined()
+      expect(trackedTime?.unit).toBe('s')
+
+      // 2 significant digits: 128 frames (one quantum) at 44.1kHz is approximately 2.9ms
+      expect(trackedTime?.value).toBeCloseTo(3, 2)
+    })
   })
 })

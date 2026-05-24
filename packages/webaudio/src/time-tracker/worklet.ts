@@ -1,54 +1,30 @@
 import { MutableObservable, numeric } from '@utility'
-import { addWorkletModule } from '../worklets/loader.js'
+import { createTimeMeter } from '../worklets/metering/factory.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
-
-const PROCESSOR_NAME = 'cadence-time-tracker'
-const PROCESSOR_MODULE_URL = new URL('./time-tracker.worklet.js', import.meta.url)
 
 export async function createWorkletTimeTracker (
   ctx: BaseAudioContext,
-  connectTo: AudioNode,
+  input: AudioNode,
   options: TimeTrackerOptions
 ): Promise<TimeTracker> {
   const { updateInterval, offsetTime } = options
 
+  const interval = Math.max(1, Math.floor(updateInterval.value * ctx.sampleRate))
+  const instance = await createTimeMeter(ctx, { interval })
+
+  input.connect(instance.node)
+
   const time = new MutableObservable(numeric('s', 0))
-
-  await addWorkletModule(ctx, PROCESSOR_MODULE_URL.href)
-
-  const node = new AudioWorkletNode(ctx, PROCESSOR_NAME, {
-    numberOfInputs: 0,
-    numberOfOutputs: 1,
-    outputChannelCount: [1]
+  const unsubscribe = instance.measurements.subscribe((measurement) => {
+    if (measurement != null) {
+      time.set(numeric('s', measurement.time - offsetTime.value))
+    }
   })
 
-  let disposed = false
-
-  const postIntervalFrames = Math.max(1, Math.round(updateInterval.value * ctx.sampleRate))
-  node.port.postMessage({ type: 'init', postIntervalFrames })
-
-  node.port.onmessage = (event: MessageEvent<unknown>) => {
-    if (disposed || event.data == null || typeof event.data !== 'object' || !('type' in event.data) || typeof event.data.type !== 'string') {
-      return
-    }
-
-    if (event.data.type === 'time') {
-      const { currentTime } = event.data as unknown as { currentTime: number }
-      time.set(numeric('s', currentTime - offsetTime.value))
-    }
-  }
-
-  node.connect(connectTo)
-
   const dispose = () => {
-    if (disposed) {
-      return
-    }
-
-    disposed = true
-
-    node.port.onmessage = null
-    node.disconnect()
+    unsubscribe()
+    input.disconnect(instance.node)
+    instance.dispose()
   }
 
   return { time, dispose }
