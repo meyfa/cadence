@@ -37,11 +37,11 @@ class MockAudioBuffer {
 
 describe('graph/noise.ts', () => {
   describe('generateReverbImpulseResponse', () => {
-    it('generates an impulse response with the expected properties', async () => {
+    it('generates an impulse response with the expected properties', () => {
       const sampleRate = 44_100
       const decay = numeric('s', 1.5)
 
-      const ir = await generateReverbImpulseResponse({
+      const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
         numberOfChannels: 4,
         sampleRate,
@@ -55,11 +55,11 @@ describe('graph/noise.ts', () => {
       assert.strictEqual(ir.sampleRate, sampleRate)
     })
 
-    it('generates an impulse response with a decaying envelope', async () => {
+    it('generates an impulse response with a decaying envelope', () => {
       const sampleRate = 44_100
       const decay = numeric('s', 2)
 
-      const ir = await generateReverbImpulseResponse({
+      const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
         numberOfChannels: 1,
         sampleRate,
@@ -76,11 +76,11 @@ describe('graph/noise.ts', () => {
       assert(secondHalfAvg < firstHalfAvg * 0.1, `Expected second half average (${secondHalfAvg}) to be less than 10% of first half average (${firstHalfAvg})`)
     })
 
-    it('generates different noise for different channels', async () => {
+    it('generates different noise for different channels', () => {
       const sampleRate = 44_100
       const decay = numeric('s', 1)
 
-      const ir = await generateReverbImpulseResponse({
+      const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
         numberOfChannels: 2,
         sampleRate,
@@ -94,11 +94,11 @@ describe('graph/noise.ts', () => {
       assert.notDeepStrictEqual(channelData1, channelData2, 'Expected different noise patterns for different channels')
     })
 
-    it('handles long decay times without errors', async () => {
+    it('handles long decay times without errors', () => {
       const sampleRate = 44_100
       const decay = numeric('s', 30)
 
-      const ir = await generateReverbImpulseResponse({
+      const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
         numberOfChannels: 1,
         sampleRate,

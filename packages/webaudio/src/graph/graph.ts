@@ -5,36 +5,42 @@ import { createNodeInstance } from './factory.js'
 import type { Instance } from './instance.js'
 
 export interface WebAudioGraph {
-  /**
-   * Resolves once all instances have finished their load attempts.
-   * Rejects if any instance fails to load or the timeout is reached.
-   */
-  readonly loaded: Promise<void>
-
   readonly dispose: () => void
 }
 
-export function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): WebAudioGraph {
-  const instances = createInstances(graph, transport, fetcher)
-  const promises = Array.from(instances.values(), (item) => item.loaded)
+export async function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): Promise<WebAudioGraph> {
+  const instances = new Map<NodeId, Instance>()
+  let disposed = false
+
+  const promises = new Map<NodeId, Promise<void>>()
+  for (const node of graph.nodes.values()) {
+    promises.set(node.id, createNodeInstance(node, transport, fetcher).then((instance) => {
+      if (disposed) {
+        instance.dispose()
+        return
+      }
+
+      instances.set(node.id, instance)
+    }))
+  }
+
+  try {
+    await Promise.all(promises.values())
+  } catch (err: unknown) {
+    disposed = true
+    instances.forEach((instance) => instance.dispose())
+    throw err
+  }
 
   setupRoutings(graph, instances, transport.input)
   scheduleNoteEvents(graph, instances)
 
   return {
-    loaded: Promise.all(promises).then(() => undefined),
-    dispose: () => instances.forEach((instance) => instance.dispose())
+    dispose: () => {
+      disposed = true
+      instances.forEach((instance) => instance.dispose())
+    }
   }
-}
-
-function createInstances (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): Map<NodeId, Instance> {
-  const instances = new Map<NodeId, Instance>()
-
-  for (const node of graph.nodes.values()) {
-    instances.set(node.id, createNodeInstance(node, transport, fetcher))
-  }
-
-  return instances
 }
 
 function setupRoutings (graph: AudioGraph<Node>, instances: Map<NodeId, Instance>, output: AudioNode): void {

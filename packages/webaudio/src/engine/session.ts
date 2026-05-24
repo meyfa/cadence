@@ -45,13 +45,16 @@ export function createAudioSession (
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
-  const webAudioGraph = createWebAudioGraph(graph, transport, fetcher)
-  disposeStack.pushDisposable(webAudioGraph)
+  const webAudioGraphPromise = createWebAudioGraph(graph, transport, fetcher)
+    .then((webAudioGraph) => {
+      disposeStack.pushDisposable(webAudioGraph)
+      return webAudioGraph
+    })
 
   let disposed = false
 
   const start = () => {
-    webAudioGraph.loaded.then(() => {
+    webAudioGraphPromise.then(() => {
       if (disposed) {
         return
       }

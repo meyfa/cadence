@@ -18,6 +18,6 @@ const factories = Object.freeze({
   sample: createSampleInstance
 })
 
-export function createNodeInstance (node: Node, transport: Transport, fetcher: AudioFetcher): Instance {
+export async function createNodeInstance (node: Node, transport: Transport, fetcher: AudioFetcher): Promise<Instance> {
   return factories[node.type](node as any, transport, fetcher)
 }
