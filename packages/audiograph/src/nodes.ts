@@ -5,13 +5,20 @@ import type { AnyNode } from './graph.js'
 
 export interface NodeTypeMap {
   readonly identity: IdentityNode
+
+  // effects
   readonly gain: GainNode
   readonly pan: PanNode
   readonly biquad: BiquadNode
   readonly width: WidthNode
   readonly delay: DelayNode
   readonly reverb: ReverbNode
+
+  // sources
   readonly sample: SampleNode
+
+  // metering
+  readonly gain_meter: GainMeterNode
 }
 
 export type Node = NodeTypeMap[keyof NodeTypeMap]
@@ -19,6 +26,8 @@ export type Node = NodeTypeMap[keyof NodeTypeMap]
 export interface IdentityNode extends AnyNode {
   readonly type: 'identity'
 }
+
+// effects
 
 export interface GainNode extends AnyNode {
   readonly type: 'gain'
@@ -52,9 +61,22 @@ export interface ReverbNode extends AnyNode {
   readonly decay: Numeric<'s'>
 }
 
+// sources
+
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly sampleUrl: string
   readonly rootNote: MidiNote
   readonly length?: Numeric<'s'>
+}
+
+// metering
+
+export interface GainMeterNode extends AnyNode {
+  readonly type: 'gain_meter'
+
+  /**
+   * The approximate interval, in seconds, at which the gain meter should post updates.
+   */
+  readonly interval: Numeric<'s'>
 }
