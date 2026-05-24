@@ -18,6 +18,8 @@ class TimeMeterProcessor extends workletScope.AudioWorkletProcessor {
     this.port.onmessage = (event) => {
       this.#interval = event.data.interval
       this.#counter = 0
+
+      this.port.postMessage('ready')
     }
   }
 
