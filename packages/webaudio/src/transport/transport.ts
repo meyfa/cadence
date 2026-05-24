@@ -149,6 +149,10 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
 
     const buffer = await ctx.startRendering()
 
+    // Offline rendering knows its exact end time even if the worklet meter's
+    // final postMessage is delayed or never observed on the main thread.
+    time.set(numeric('s', buffer.length / buffer.sampleRate))
+
     disposeStack.dispose()
 
     return buffer
