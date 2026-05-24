@@ -72,7 +72,6 @@ export function createWidthInstance (node: WidthNode, transport: Transport): Ins
   return {
     input,
     output: merger,
-    loaded: Promise.resolve(),
     dispose: () => {
       input.disconnect()
       splitter.disconnect()
@@ -96,23 +95,20 @@ export function createReverbInstance (node: ReverbNode, transport: Transport): I
 
   const audioNode = ctx.createConvolver()
 
-  const promise = generateReverbImpulseResponse({
+  audioNode.buffer = generateReverbImpulseResponse({
     createBuffer: (options) => new AudioBuffer(options),
     numberOfChannels: ctx.destination.channelCount,
     sampleRate: ctx.sampleRate,
     decay: node.decay
-  }).then((buffer) => {
-    audioNode.buffer = buffer
   })
 
-  return toInstance(audioNode, promise)
+  return toInstance(audioNode)
 }
 
 function toInstance (node: AudioNode, loaded = Promise.resolve()): Instance {
   return {
     input: node,
     output: node,
-    loaded,
     dispose: () => {
       node.disconnect()
     }

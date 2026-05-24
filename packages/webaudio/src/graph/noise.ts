@@ -11,7 +11,7 @@ export function generateReverbImpulseResponse (options: {
   readonly numberOfChannels: number
   readonly sampleRate: number
   readonly decay: Numeric<'s'>
-}): Promise<AudioBuffer> {
+}): AudioBuffer {
   const { sampleRate, numberOfChannels, decay, createBuffer } = options
 
   // buffer length must be non-zero
@@ -31,7 +31,7 @@ export function generateReverbImpulseResponse (options: {
     }
   }
 
-  return Promise.resolve(ir)
+  return ir
 }
 
 // 2 seconds at 44.1kHz

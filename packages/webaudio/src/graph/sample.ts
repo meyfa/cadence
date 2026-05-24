@@ -5,7 +5,7 @@ import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
 import type { Instance } from './instance.js'
 
-export function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Instance {
+export async function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Promise<Instance> {
   const { ctx } = transport
 
   // declick
@@ -18,10 +18,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
 
   const output = ctx.createGain()
 
-  let sampleBuffer: AudioBuffer | undefined
-  const loaded = fetcher.fetch(ctx, node.sampleUrl).then((buffer) => {
-    sampleBuffer = buffer
-  })
+  const sampleBuffer = await fetcher.fetch(ctx, node.sampleUrl)
 
   const dispose = () => {
     output.disconnect()
@@ -33,7 +30,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
   }
 
   const triggerNote = (options: NoteOptions) => transport.schedule(options.time, (time) => {
-    if (sampleBuffer == null || time < 0) {
+    if (time < 0) {
       return
     }
 
@@ -90,12 +87,7 @@ export function createSampleInstance (node: SampleNode, transport: Transport, fe
     }
   })
 
-  return {
-    loaded,
-    dispose,
-    output,
-    triggerNote
-  }
+  return { dispose, output, triggerNote }
 }
 
 interface ActiveSource {

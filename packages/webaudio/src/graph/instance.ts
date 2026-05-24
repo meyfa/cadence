@@ -1,7 +1,6 @@
 import type { NoteOptions } from '@audiograph'
 
 export interface Instance {
-  readonly loaded: Promise<void>
   readonly dispose: () => void
 
   readonly input?: AudioNode

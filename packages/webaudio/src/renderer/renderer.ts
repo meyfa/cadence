@@ -44,9 +44,6 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
         duration
       })
 
-      const webAudioGraph = createWebAudioGraph(graph, transport, fetcher)
-      disposeStack.pushDisposable(webAudioGraph)
-
       if (options.onProgress != null) {
         disposeStack.push(transport.time.subscribe((time) => {
           if (time == null) {
@@ -59,7 +56,9 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
       let audioBuffer: AudioBuffer | undefined
 
       try {
-        await webAudioGraph.loaded
+        const webAudioGraph = await createWebAudioGraph(graph, transport, fetcher)
+        disposeStack.pushDisposable(webAudioGraph)
+
         audioBuffer = await transport.render()
       } catch (err: unknown) {
         return {
