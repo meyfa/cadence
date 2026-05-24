@@ -17,7 +17,7 @@ export async function createMeter<T> (
 ): Promise<MeterInstance<T | undefined>> {
   await addWorkletModule(ctx, url.href)
 
-  const measurements = new MutableObservable<T | undefined>(undefined)
+  let disposed = false
 
   const node = new AudioWorkletNode(ctx, processor, {
     numberOfInputs: 1,
@@ -25,9 +25,19 @@ export async function createMeter<T> (
     outputChannelCount: [1]
   })
 
-  let disposed = false
+  // Wait for configuration to be acknowledged before processing begins
+  const readyPromise = new Promise<void>((resolve) => {
+    node.port.onmessage = (event: MessageEvent) => {
+      if (event.data === 'ready') {
+        resolve()
+      }
+    }
+  })
 
   node.port.postMessage(configuration)
+  await readyPromise
+
+  const measurements = new MutableObservable<T | undefined>(undefined)
 
   node.port.onmessage = (event: MessageEvent<T>) => {
     if (!disposed) {
