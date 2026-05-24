@@ -84,5 +84,39 @@ describe('disposable/disposable.ts', () => {
 
       assert.deepStrictEqual(calls, [3, 1, 2])
     })
+
+    it('should immediately dispose disposables added after disposal', () => {
+      const disposeStack = new DisposeStack()
+      const calls: number[] = []
+
+      disposeStack.push(() => calls.push(1))
+      disposeStack.dispose()
+
+      disposeStack.push(() => calls.push(2))
+      assert.deepStrictEqual(calls, [1, 2])
+
+      disposeStack.pushDisposable({
+        dispose () {
+          calls.push(3)
+        }
+      })
+      assert.deepStrictEqual(calls, [1, 2, 3])
+    })
+
+    it('should ignore reentrant dispose() calls', () => {
+      const disposeStack = new DisposeStack()
+      const calls: string[] = []
+
+      disposeStack.push(() => calls.push('first'))
+      disposeStack.push(() => {
+        calls.push('second:start')
+        disposeStack.dispose()
+        calls.push('second:end')
+      })
+
+      disposeStack.dispose()
+
+      assert.deepStrictEqual(calls, ['second:start', 'second:end', 'first'])
+    })
   })
 })
