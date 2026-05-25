@@ -1,4 +1,5 @@
-import { createContext, Fragment, type FunctionComponent, type PropsWithChildren, type ReactNode } from 'react'
+import type { FunctionComponent, PropsWithChildren, ReactNode } from 'react'
+import { createContext, Fragment } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { Module } from '../types.js'
 

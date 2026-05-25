@@ -9,6 +9,8 @@ export type ModuleProviderComponent = ComponentType<PropsWithChildren>
 
 export type ModuleId = Brand<string, 'editor.ModuleId'>
 
+export type ServiceId = Brand<string, 'editor.ServiceId'>
+
 export interface Module {
   readonly id: ModuleId
   readonly Provider?: ModuleProviderComponent

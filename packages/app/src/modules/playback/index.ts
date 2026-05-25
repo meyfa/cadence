@@ -1,6 +1,7 @@
+import type { AudioGraphOptions } from '@audiograph'
 import { createAudioGraph } from '@audiograph'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@editor'
-import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand, useRegisterService } from '@editor'
 import { numeric } from '@utility'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
@@ -11,9 +12,16 @@ import { PlaybackControls } from './components/PlaybackControls.js'
 import { TimelinePanel } from './components/TimelinePanel.js'
 import { usePlaybackSettingsSync } from './persistence.js'
 import { PlaybackProvider, useAudioEngine } from './provider.js'
+import { METERING_SERVICE_ID, MeteringService } from './services/metering.js'
 
 const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
 const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
+
+const AUDIO_GRAPH_OPTIONS: AudioGraphOptions = {
+  metering: {
+    interval: numeric('s', 0.1)
+  }
+}
 
 const moduleId = 'playback' as ModuleId
 export const timelinePanelId = `${moduleId}.timeline` as PanelId
@@ -82,7 +90,7 @@ const GlobalHooks: FunctionComponent = () => {
       }
 
       try {
-        audioEngine.play(createAudioGraph(program))
+        audioEngine.play(createAudioGraph(program, AUDIO_GRAPH_OPTIONS))
         setGraphErrors([])
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error'
@@ -100,6 +108,12 @@ const GlobalHooks: FunctionComponent = () => {
   }), [audioEngine, showErrorNotification])
 
   useProvideProblems(problems)
+
+  useRegisterService<MeteringService>(METERING_SERVICE_ID, {
+    subscribeToGain: (key, observer) => {
+      return audioEngine.meters.subscribeToGain(key, observer)
+    }
+  }, [audioEngine])
 
   return null
 }
