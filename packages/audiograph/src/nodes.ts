@@ -1,6 +1,7 @@
 import type { MidiNote } from '@core'
 import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
+import type { EntityKey } from './entities.js'
 import type { AnyNode } from './graph.js'
 
 export interface NodeTypeMap {
@@ -74,6 +75,11 @@ export interface SampleNode extends AnyNode {
 
 export interface GainMeterNode extends AnyNode {
   readonly type: 'gain_meter'
+
+  /**
+   * The entity for which this gain meter is measuring the gain.
+   */
+  readonly key: EntityKey
 
   /**
    * The approximate interval, in seconds, at which the gain meter should post updates.

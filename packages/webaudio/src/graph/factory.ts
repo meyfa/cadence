@@ -1,6 +1,7 @@
 import type { Node } from '@audiograph'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
+import type { GainMeasurement } from '../worklets/metering/messages.js'
 import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance, createWidthInstance } from './effect.js'
 import type { Instance } from './instance.js'
 import { createGainMeterInstance } from './metering.js'
@@ -24,6 +25,16 @@ const factories = Object.freeze({
   gain_meter: createGainMeterInstance
 })
 
-export async function createNodeInstance (node: Node, transport: Transport, fetcher: AudioFetcher): Promise<Instance> {
-  return factories[node.type](node as any, transport, fetcher)
+type NodeFactoryArguments = readonly [
+  transport: Transport,
+  fetcher: AudioFetcher,
+  meterCallbacks?: MeterCallbacks
+]
+
+export interface MeterCallbacks {
+  readonly onGain: (key: string, measurement: GainMeasurement) => void
+}
+
+export async function createNodeInstance (node: Node, ...args: NodeFactoryArguments): Promise<Instance> {
+  return factories[node.type](node as any, ...args)
 }

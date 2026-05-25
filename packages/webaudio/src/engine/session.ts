@@ -1,8 +1,11 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { dbToGain } from '@audiograph'
-import { type BeatRange, beatsToSeconds } from '@core'
-import { DisposeStack, MutableObservable, numeric, type Numeric, type Observable } from '@utility'
+import type { BeatRange } from '@core'
+import { beatsToSeconds } from '@core'
+import type { Numeric, Observable } from '@utility'
+import { DisposeStack, MutableObservable, numeric } from '@utility'
 import type { AudioFetcher } from '../assets/fetcher.js'
+import type { MeterCallbacks } from '../graph/factory.js'
 import { createWebAudioGraph } from '../graph/graph.js'
 import { createOnlineTransport } from '../transport/transport.js'
 
@@ -18,7 +21,8 @@ export function createAudioSession (
   graph: AudioGraph<Node>,
   range: BeatRange,
   outputGain: Observable<Numeric<'db'>>,
-  fetcher: AudioFetcher
+  fetcher: AudioFetcher,
+  meterCallbacks: MeterCallbacks
 ): AudioSession {
   const disposeStack = new DisposeStack()
 
@@ -45,7 +49,7 @@ export function createAudioSession (
   const position = new MutableObservable(range.start)
   const errors = new MutableObservable<readonly Error[]>([])
 
-  const webAudioGraphPromise = createWebAudioGraph(graph, transport, fetcher)
+  const webAudioGraphPromise = createWebAudioGraph(graph, transport, fetcher, meterCallbacks)
     .then((webAudioGraph) => {
       disposeStack.pushDisposable(webAudioGraph)
       return webAudioGraph

@@ -1,6 +1,7 @@
 import type { AudioGraph, Node, NodeId } from '@audiograph'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
+import type { MeterCallbacks } from './factory.js'
 import { createNodeInstance } from './factory.js'
 import type { Instance } from './instance.js'
 
@@ -8,20 +9,27 @@ export interface WebAudioGraph {
   readonly dispose: () => void
 }
 
-export async function createWebAudioGraph (graph: AudioGraph<Node>, transport: Transport, fetcher: AudioFetcher): Promise<WebAudioGraph> {
+export async function createWebAudioGraph (
+  graph: AudioGraph<Node>,
+  transport: Transport,
+  fetcher: AudioFetcher,
+  meterCallbacks?: MeterCallbacks
+): Promise<WebAudioGraph> {
   const instances = new Map<NodeId, Instance>()
   let disposed = false
 
   const promises = new Map<NodeId, Promise<void>>()
   for (const node of graph.nodes.values()) {
-    promises.set(node.id, createNodeInstance(node, transport, fetcher).then((instance) => {
+    const promise = createNodeInstance(node, transport, fetcher, meterCallbacks).then((instance) => {
       if (disposed) {
         instance.dispose()
         return
       }
 
       instances.set(node.id, instance)
-    }))
+    })
+
+    promises.set(node.id, promise)
   }
 
   try {

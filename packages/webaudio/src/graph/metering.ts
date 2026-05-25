@@ -1,17 +1,35 @@
 import type { GainMeterNode } from '@audiograph'
+import type { UnsubscribeFn } from '@utility'
+import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
-import type { Instance } from './instance.js'
 import { createGainMeter } from '../worklets/metering/factory.js'
+import type { MeterCallbacks } from './factory.js'
+import type { Instance } from './instance.js'
 
-export async function createGainMeterInstance (node: GainMeterNode, transport: Transport): Promise<Instance> {
+export async function createGainMeterInstance (
+  node: GainMeterNode,
+  transport: Transport,
+  fetcher: AudioFetcher,
+  meterCallbacks?: MeterCallbacks
+): Promise<Instance> {
   const instance = await createGainMeter(transport.ctx, {
     interval: node.interval.value * transport.ctx.sampleRate
   })
+
+  let unsubscribe: UnsubscribeFn | undefined
+  if (meterCallbacks != null) {
+    unsubscribe = instance.measurements.subscribe((measurement) => {
+      if (measurement != null) {
+        meterCallbacks.onGain(node.key, measurement)
+      }
+    })
+  }
 
   return {
     input: instance.node,
     output: instance.node,
     dispose: () => {
+      unsubscribe?.()
       instance.dispose()
     }
   }

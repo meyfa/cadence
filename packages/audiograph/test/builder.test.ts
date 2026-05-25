@@ -1,8 +1,10 @@
+import type { BusId, InstrumentId, MidiNote } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'
-import type { MidiNote } from '@core'
+import { createEntityKey } from '../src/entities.js'
+import type { NodeId } from '../src/graph.js'
 
 describe('builder.ts', () => {
   const tempo = numeric('bpm', 120)
@@ -190,5 +192,38 @@ describe('builder.ts', () => {
     assert.throws(() => builder.addNoteEvents(node1.id, [
       { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: Number.NaN }
     ]))
+  })
+
+  it('should add meters', () => {
+    const builder = createAudioGraphBuilder({ tempo, length })
+
+    // output
+    const outputKey = createEntityKey({ type: 'output' })
+    const outputMeters = {
+      gainMeterId: 100 as NodeId
+    }
+    builder.addMeters(outputKey, outputMeters)
+
+    // bus
+    const busKey = createEntityKey({ type: 'bus', id: 1 as BusId })
+    const busMeters = {
+      gainMeterId: 200 as NodeId
+    }
+    builder.addMeters(busKey, busMeters)
+
+    // instrument
+    const instrumentKey = createEntityKey({ type: 'instrument', id: 2 as InstrumentId })
+    const instrumentMeters = {
+      gainMeterId: 300 as NodeId
+    }
+    builder.addMeters(instrumentKey, instrumentMeters)
+
+    const graph = builder.graph()
+
+    assert.deepStrictEqual([...graph.meters.entries()], [
+      [outputKey, outputMeters],
+      [busKey, busMeters],
+      [instrumentKey, instrumentMeters]
+    ])
   })
 })

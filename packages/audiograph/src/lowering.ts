@@ -1,16 +1,31 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core'
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
+import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
+import type { EntityKey } from './entities.js'
+import { createEntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
-import type { BiquadNode, DelayNode, GainNode, IdentityNode, Node, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
+import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
-export function createAudioGraph (program: Program): AudioGraph<Node> {
+export interface AudioGraphOptions {
+  /**
+   * If specified, the graph will include additional nodes for metering with the given interval.
+   * One node will be added for each instrument, bus, and the output.
+   */
+  readonly metering?: MeteringOptions
+}
+
+interface MeteringOptions {
+  readonly interval: Numeric<'s'>
+}
+
+export function createAudioGraph (program: Program, options?: AudioGraphOptions): AudioGraph<Node> {
   const builder = createAudioGraphBuilder<Node>({
     tempo: program.track.tempo,
     length: calculateTotalLength(program)
@@ -38,6 +53,10 @@ export function createAudioGraph (program: Program): AudioGraph<Node> {
   createRoutings(program, busSubgraphs, instrumentSubgraphs, output.id, builder)
 
   createNoteEvents(program.track, instruments, builder)
+
+  if (options?.metering != null) {
+    createMeteringNodes(busSubgraphs, instrumentSubgraphs, output.id, builder, options.metering)
+  }
 
   return builder.graph()
 }
@@ -332,5 +351,46 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
     }
 
     offsetBeats += part.length.value
+  }
+}
+
+function createMeteringNodes (
+  busSubgraphs: ReadonlyMap<BusId, SubGraph>,
+  instrumentSubgraphs: ReadonlyMap<InstrumentId, SubGraph>,
+  outputId: NodeId,
+  builder: Builder,
+  options: MeteringOptions
+): void {
+  const intervalSeconds = options.interval.value
+  if (!Number.isFinite(intervalSeconds) || intervalSeconds <= 0) {
+    throw new Error(`Invalid metering interval: ${options.interval.value}`)
+  }
+
+  const createMeters = (key: EntityKey, sources: readonly NodeId[]): void => {
+    const gainMeter = builder.addNode<GainMeterNode>('gain_meter', {
+      key,
+      interval: options.interval
+    })
+
+    builder.addMeters(key, {
+      gainMeterId: gainMeter.id
+    })
+
+    builder.addEdges(sources, [gainMeter.id])
+  }
+
+  {
+    const key = createEntityKey({ type: 'output' })
+    createMeters(key, [outputId])
+  }
+
+  for (const [busId, subgraph] of busSubgraphs) {
+    const key = createEntityKey({ type: 'bus', id: busId })
+    createMeters(key, subgraph.outputs)
+  }
+
+  for (const [instrumentId, subgraph] of instrumentSubgraphs) {
+    const key = createEntityKey({ type: 'instrument', id: instrumentId })
+    createMeters(key, subgraph.outputs)
   }
 }
