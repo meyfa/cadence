@@ -1,7 +1,7 @@
 import type { Observable } from '@utility'
 import { MutableObservable } from '@utility'
 import { addWorkletModule } from '../loader.js'
-import type { MeterConfiguration, TimeMeasurement } from './messages.js'
+import type { GainMeasurement, MeterConfiguration, TimeMeasurement } from './messages.js'
 
 export interface MeterInstance<T> {
   readonly dispose: () => void
@@ -61,4 +61,9 @@ type MeterFactory<T> = (ctx: BaseAudioContext, configuration: MeterConfiguration
 export const createTimeMeter: MeterFactory<TimeMeasurement> = async (ctx, configuration) => {
   const url = new URL('./time-meter.worklet.js', import.meta.url)
   return await createMeter(ctx, url, 'time_meter', configuration)
+}
+
+export const createGainMeter: MeterFactory<GainMeasurement> = async (ctx, configuration) => {
+  const url = new URL('./gain-meter.worklet.js', import.meta.url)
+  return await createMeter(ctx, url, 'gain_meter', configuration)
 }
