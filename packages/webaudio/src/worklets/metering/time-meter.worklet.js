@@ -32,6 +32,7 @@ class TimeMeterProcessor extends workletScope.AudioWorkletProcessor {
       return true
     }
 
+    // For silent frames, input may be empty, so the frame count must be determined from output.
     this.#counter -= outputs[0]?.[0]?.length ?? 0
 
     if (this.#counter <= 0) {
