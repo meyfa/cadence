@@ -1,19 +1,19 @@
 import type { Bus, BusId, Instrument, InstrumentId, Program } from '@core'
 import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeId } from '@flowchart'
 
-const mixerObjectTypes = ['Bus', 'Instrument'] as const
+const mixerObjectTypes = ['bus', 'instrument'] as const
 type MixerObjectType = typeof mixerObjectTypes[number]
 type MixerObjectId = BusId | InstrumentId
 type MixerObject = Bus | Instrument
 
 type MixerNodeData = {
-  readonly type: 'Output'
+  readonly type: 'output'
   readonly object?: undefined
 } | {
-  readonly type: 'Bus'
+  readonly type: 'bus'
   readonly object: Bus
 } | {
-  readonly type: 'Instrument'
+  readonly type: 'instrument'
   readonly object: Instrument
 }
 
@@ -21,9 +21,9 @@ interface MixerEdgeData {}
 
 function getObjectsOfType (program: Program, type: MixerObjectType): Iterable<[MixerObjectId, MixerObject]> {
   switch (type) {
-    case 'Bus':
+    case 'bus':
       return program.mixer.buses.map((bus) => [bus.id, bus])
-    case 'Instrument':
+    case 'instrument':
       return program.instruments.entries()
   }
 }
@@ -69,7 +69,7 @@ function createNodes (program: Program, options: MixerFlowchartOptions): Nodes {
     data
   })
 
-  const output = createNode({ type: 'Output' })
+  const output = createNode({ type: 'output' })
   all.push(output)
 
   for (const type of mixerObjectTypes) {
@@ -93,7 +93,7 @@ function createEdges (program: Program, options: MixerFlowchartOptions, nodes: N
     const from = nodes.byObject[sourceType].get(routing.source.id)?.id
 
     const destinationType = routing.destination.type
-    const to = destinationType === 'Output'
+    const to = destinationType === 'output'
       ? nodes.output.id
       : nodes.byObject[destinationType].get(routing.destination.id)?.id
 

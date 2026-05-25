@@ -28,11 +28,11 @@ function createProgramWithInstrument (instrument: Instrument): Program {
         {
           implicit: true,
           source: {
-            type: 'Instrument',
+            type: 'instrument',
             id: instrument.id
           },
           destination: {
-            type: 'Output'
+            type: 'output'
           }
         }
       ]
@@ -65,11 +65,11 @@ function createProgramWithEffect (effect: Effect): Program {
         {
           implicit: false,
           source: {
-            type: 'Bus',
+            type: 'bus',
             id: 100 as BusId
           },
           destination: {
-            type: 'Output'
+            type: 'output'
           }
         }
       ]
@@ -153,11 +153,11 @@ describe('lowering.ts', () => {
           {
             implicit: false,
             source: {
-              type: 'Instrument',
+              type: 'instrument',
               id: instrumentId
             },
             destination: {
-              type: 'Bus',
+              type: 'bus',
               id: busId
             }
           } satisfies MixerRouting,
@@ -165,11 +165,11 @@ describe('lowering.ts', () => {
           {
             implicit: true,
             source: {
-              type: 'Bus',
+              type: 'bus',
               id: busId
             },
             destination: {
-              type: 'Output'
+              type: 'output'
             }
           } satisfies MixerRouting
         ]
@@ -272,11 +272,11 @@ describe('lowering.ts', () => {
           {
             implicit: true,
             source: {
-              type: 'Instrument',
+              type: 'instrument',
               id: instrumentId
             },
             destination: {
-              type: 'Output'
+              type: 'output'
             }
           } satisfies MixerRouting
         ]
@@ -337,11 +337,11 @@ describe('lowering.ts', () => {
             routings: [
               {
                 source: {
-                  type: 'Pattern',
+                  type: 'pattern',
                   value: createSerialPattern([{ value: 'C4' }, { value: 'E4' }], 1)
                 },
                 destination: {
-                  type: 'Instrument',
+                  type: 'instrument',
                   id: instrumentId
                 }
               } satisfies InstrumentRouting
@@ -353,11 +353,11 @@ describe('lowering.ts', () => {
             routings: [
               {
                 source: {
-                  type: 'Pattern',
+                  type: 'pattern',
                   value: createSerialPattern([{ value: 'G4' }, { value: 'B4' }], 1)
                 },
                 destination: {
-                  type: 'Instrument',
+                  type: 'instrument',
                   id: instrumentId
                 }
               } satisfies InstrumentRouting
@@ -1017,22 +1017,22 @@ describe('lowering.ts', () => {
             {
               implicit: false,
               source: {
-                type: 'Instrument',
+                type: 'instrument',
                 id: instrumentId
               },
               destination: {
-                type: 'Bus',
+                type: 'bus',
                 id: busId
               }
             } satisfies MixerRouting,
             {
               implicit: true,
               source: {
-                type: 'Bus',
+                type: 'bus',
                 id: busId
               },
               destination: {
-                type: 'Output'
+                type: 'output'
               }
             } satisfies MixerRouting
           ]

@@ -288,13 +288,13 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.mixer.routings, [
       {
         implicit: false,
-        destination: { type: 'Bus', id: 0 },
-        source: { type: 'Bus', id: 1 }
+        destination: { type: 'bus', id: 0 },
+        source: { type: 'bus', id: 1 }
       },
       {
         implicit: true,
-        destination: { type: 'Output' },
-        source: { type: 'Bus', id: 0 }
+        destination: { type: 'output' },
+        source: { type: 'bus', id: 0 }
       }
     ])
   })

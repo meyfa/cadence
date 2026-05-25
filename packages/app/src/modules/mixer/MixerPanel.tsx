@@ -37,13 +37,24 @@ const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   }
 }
 
+function getNodeTypeLabel (type: MixerFlowNode['data']['type']): string {
+  switch (type) {
+    case 'output':
+      return 'Output'
+    case 'bus':
+      return 'Bus'
+    case 'instrument':
+      return 'Instrument'
+  }
+}
+
 function getNodeLabel ({ data }: MixerFlowNode): string {
   switch (data.type) {
-    case 'Output':
+    case 'output':
       return 'Main Output'
-    case 'Bus':
+    case 'bus':
       return data.object.name
-    case 'Instrument': {
+    case 'instrument': {
       return data.object.sampleUrl.split('/').pop() ?? data.object.sampleUrl
     }
   }
@@ -154,7 +165,7 @@ const MixerNode: FunctionComponent<{
         onClick={openPopover}
       >
         <div className='text-content-100'>
-          {node.data.type}
+          {getNodeTypeLabel(node.data.type)}
         </div>
         <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
           {getNodeLabel(node)}
@@ -163,9 +174,9 @@ const MixerNode: FunctionComponent<{
 
       {popover && (
         <Popover anchor={container} onClose={closePopover}>
-          {node.data.type === 'Output' && (<OutputNodeInfo />)}
-          {node.data.type === 'Bus' && (<BusNodeInfo object={node.data.object} />)}
-          {node.data.type === 'Instrument' && (<InstrumentNodeInfo object={node.data.object} />)}
+          {node.data.type === 'output' && (<OutputNodeInfo />)}
+          {node.data.type === 'bus' && (<BusNodeInfo object={node.data.object} />)}
+          {node.data.type === 'instrument' && (<InstrumentNodeInfo object={node.data.object} />)}
         </Popover>
       )}
     </>

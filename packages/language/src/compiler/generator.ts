@@ -199,12 +199,12 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
 
     return {
       source: {
-        type: 'Pattern',
+        type: 'pattern',
         value: source.data
       },
 
       destination: {
-        type: 'Instrument',
+        type: 'instrument',
         id: instrument.data.id
       }
     }
@@ -254,25 +254,25 @@ function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
 
   for (const routing of routings) {
     switch (routing.source.type) {
-      case 'Bus':
+      case 'bus':
         unroutedBuses.delete(routing.source.id)
         break
-      case 'Instrument':
+      case 'instrument':
         unroutedInstruments.delete(routing.source.id)
         break
     }
   }
 
   const createImplicitRouting = (source: MixerRouting['source']) => {
-    routings.push({ implicit: true, source, destination: { type: 'Output' } })
+    routings.push({ implicit: true, source, destination: { type: 'output' } })
   }
 
   for (const busId of unroutedBuses) {
-    createImplicitRouting({ type: 'Bus', id: busId })
+    createImplicitRouting({ type: 'bus', id: busId })
   }
 
   for (const instrumentId of unroutedInstruments) {
-    createImplicitRouting({ type: 'Instrument', id: instrumentId })
+    createImplicitRouting({ type: 'instrument', id: instrumentId })
   }
 
   return { buses, routings }
@@ -303,9 +303,9 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
     const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
       implicit: false,
       source: src.type === 'instrument'
-        ? { type: 'Instrument', id: src.id as InstrumentId }
-        : { type: 'Bus', id: src.id as BusId },
-      destination: { type: 'Bus', id: destination.id }
+        ? { type: 'instrument', id: src.id as InstrumentId }
+        : { type: 'bus', id: src.id as BusId },
+      destination: { type: 'bus', id: destination.id }
     })
 
     if (InstrumentType.is(source)) {
