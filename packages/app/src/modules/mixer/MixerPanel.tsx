@@ -1,13 +1,17 @@
+import { createEntityKey } from '@audiograph'
 import type { Bus, Instrument } from '@core'
 import type { PanelProps } from '@editor'
-import { useNonNullValue } from '@editor'
+import { useNonNullValue, useService } from '@editor'
 import { Flowchart } from '@flowchart'
+import type { GainMeasurement } from '@webaudio'
 import clsx from 'clsx'
 import type { CSSProperties, FunctionComponent, PropsWithChildren } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Popover } from '../../components/popover/Popover.js'
 import { pluralize } from '../../utilities/format.js'
+import type { MeteringService } from '../playback/services/metering.js'
+import { METERING_SERVICE_ID } from '../playback/services/metering.js'
 import type { MixerFlowchartOptions, MixerFlowNode } from './flowchart.js'
 import { createMixerFlowchart } from './flowchart.js'
 
@@ -153,22 +157,55 @@ const MixerNode: FunctionComponent<{
   const openPopover = useCallback(() => setPopover(true), [])
   const closePopover = useCallback(() => setPopover(false), [])
 
+  const [measurement, setMeasurement] = useState<GainMeasurement>({ peak: [0, 0], rms: [0, 0] })
+
+  const meteringService = useService<MeteringService>(METERING_SERVICE_ID)
+
+  const entityKey = useMemo(() => {
+    switch (node.data.type) {
+      case 'output':
+        return createEntityKey({ type: node.data.type })
+      case 'bus':
+        return createEntityKey({ type: node.data.type, id: node.data.object.id })
+      case 'instrument':
+        return createEntityKey({ type: node.data.type, id: node.data.object.id })
+    }
+  }, [node.data])
+
+  useEffect(() => {
+    return meteringService?.subscribeToGain(entityKey, setMeasurement)
+  }, [meteringService, entityKey])
+
+  const { peak, rms } = measurement
+
   return (
     <>
       <button
         type='button'
         className={clsx(
-          'w-full h-full px-2 py-1 flex flex-col justify-center text-start leading-snug text-sm rounded-md border cursor-pointer',
+          'w-full h-full px-2 py-1 flex leading-snug text-sm rounded-md border cursor-pointer',
           highlight ? 'bg-surface-300 border-accent-200 ring-1 ring-accent-200' : 'bg-surface-200 border-frame-200'
         )}
         ref={setContainer}
         onClick={openPopover}
       >
-        <div className='text-content-100'>
-          {getNodeTypeLabel(node.data.type)}
-        </div>
-        <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
-          {getNodeLabel(node)}
+        {/* vertical stereo peak/RMS meters */}
+        <svg className='w-3.5 h-full mr-2 shrink-0'>
+          <rect x='0' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
+          <rect x='8' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
+          <rect x='0' y={(1 - rms[0]) * 100 + '%'} width='6' height={rms[0] * 100 + '%'} fill='var(--color-accent-100)' className='transition-all duration-100' />
+          <rect x='8' y={(1 - rms[1]) * 100 + '%'} width='6' height={rms[1] * 100 + '%'} fill='var(--color-accent-100)' className='transition-all duration-100' />
+          <rect x='0' y={(1 - peak[0]) * 100 + '%'} width='6' height='2' fill={peak[0] > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)'} />
+          <rect x='8' y={(1 - peak[1]) * 100 + '%'} width='6' height='2' fill={peak[1] > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)'} />
+        </svg>
+        {/* node info */}
+        <div className='grow min-w-0 flex flex-col justify-center text-start'>
+          <div className='text-content-100'>
+            {getNodeTypeLabel(node.data.type)}
+          </div>
+          <div className='text-content-300 whitespace-nowrap text-ellipsis overflow-hidden'>
+            {getNodeLabel(node)}
+          </div>
         </div>
       </button>
 
@@ -185,7 +222,7 @@ const MixerNode: FunctionComponent<{
 
 const OutputNodeInfo: FunctionComponent = () => {
   return (
-    <div>(Output)</div>
+    <div className='font-bold'>(Output)</div>
   )
 }
 

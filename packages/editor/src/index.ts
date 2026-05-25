@@ -34,6 +34,7 @@ export type { TabTitleProps } from './layout/components/TabTitle.js'
 // modules
 export type * from './modules/types.js'
 export * from './modules/components/ModuleContext.js'
+export * from './modules/components/ServiceContext.js'
 
 // notifications
 export type * from './notifications/types.js'
