@@ -104,12 +104,12 @@ export interface Part {
 
 export interface InstrumentRouting {
   readonly source: {
-    readonly type: 'Pattern'
+    readonly type: 'pattern'
     readonly value: Pattern
   }
 
   readonly destination: {
-    readonly type: 'Instrument'
+    readonly type: 'instrument'
     readonly id: InstrumentId
   }
 }
@@ -180,17 +180,17 @@ export interface MixerRouting {
   readonly implicit: boolean
 
   readonly source: {
-    readonly type: 'Instrument'
+    readonly type: 'instrument'
     readonly id: InstrumentId
   } | {
-    readonly type: 'Bus'
+    readonly type: 'bus'
     readonly id: BusId
   }
 
   readonly destination: {
-    readonly type: 'Output'
+    readonly type: 'output'
   } | {
-    readonly type: 'Bus'
+    readonly type: 'bus'
     readonly id: BusId
   }
 }

@@ -302,18 +302,18 @@ function createRoutings (
 ): void {
   const findSource = (item: MixerRouting['source']): SubGraph | undefined => {
     switch (item.type) {
-      case 'Bus':
+      case 'bus':
         return busSubgraphs.get(item.id)
-      case 'Instrument':
+      case 'instrument':
         return instrumentSubgraphs.get(item.id)
     }
   }
 
   const findDestination = (item: MixerRouting['destination']): SubGraph | undefined => {
     switch (item.type) {
-      case 'Output':
+      case 'output':
         return { inputs: [outputId], outputs: [outputId] }
-      case 'Bus':
+      case 'bus':
         return busSubgraphs.get(item.id)
     }
   }
