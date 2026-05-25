@@ -91,4 +91,47 @@ describe('worklets/metering/gain-meter.worklet.js', () => {
       instance.dispose()
     }
   })
+
+  it('continues reporting at the configured interval after input becomes inactive', async () => {
+    // The input will become silent after the first render quantum. This will result in an empty input for subsequent quanta.
+    // However, the meter should continue reporting measurements of 0 for both RMS and peak at the configured interval,
+    // rather than stopping reporting because it thinks the audio context is not advancing.
+    // This can be done by using the output buffer length, instead of the input buffer length, to determine the frame count.
+
+    const interval = 128
+    const sampleRate = 48_000
+    const quantum = 128
+    const length = quantum * 3
+    const ctx = new OfflineAudioContext({ sampleRate, length, numberOfChannels: 1 })
+    const instance = await createGainMeter(ctx, { interval })
+    const measurements: GainMeasurement[] = []
+    const unsubscribe = instance.measurements.subscribe((measurement) => {
+      if (measurement != null) {
+        measurements.push(measurement)
+      }
+    })
+
+    try {
+      const input = ctx.createBuffer(1, quantum, sampleRate)
+      input.getChannelData(0).fill(0.5)
+
+      const source = ctx.createBufferSource()
+      source.buffer = input
+
+      source.connect(instance.node)
+      instance.node.connect(ctx.destination)
+
+      source.start(0)
+      await ctx.startRendering()
+
+      await expect.poll(() => measurements.length).toBe(3)
+      expect(measurements[0]?.rms).toEqual([expect.closeTo(0.5, 6), expect.closeTo(0.5, 6)])
+      expect(measurements[0]?.peak).toEqual([expect.closeTo(0.5, 6), expect.closeTo(0.5, 6)])
+      expect(measurements[1]).toEqual({ rms: [0, 0], peak: [0, 0] })
+      expect(measurements[2]).toEqual({ rms: [0, 0], peak: [0, 0] })
+    } finally {
+      unsubscribe()
+      instance.dispose()
+    }
+  })
 })

@@ -62,9 +62,8 @@ class GainMeterProcessor extends workletScope.AudioWorkletProcessor {
       this.#sampleCount[channelIndex] += frameCount
     }
 
-    const frameCount = channels[0]?.length ?? channels[1]?.length ?? 0
-
-    this.#counter -= frameCount
+    // For silent frames, input may be empty, so the frame count must be determined from output.
+    this.#counter -= outputs[0]?.[0]?.length ?? 0
 
     if (this.#counter <= 0) {
       this.#counter += this.#interval
