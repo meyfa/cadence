@@ -1,6 +1,6 @@
-type UnsubscribeFn = () => void
+export type UnsubscribeFn = () => void
 
-type Observer<T> = (value: T) => void
+export type Observer<T> = (value: T) => void
 
 export interface Observable<T> {
   readonly get: () => T
@@ -34,5 +34,9 @@ export class MutableObservable<T> implements Observable<T> {
     return () => {
       this.observers.delete(observer)
     }
+  }
+
+  get observerCount (): number {
+    return this.observers.size
   }
 }

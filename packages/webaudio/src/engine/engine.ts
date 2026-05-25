@@ -1,8 +1,13 @@
-import type { AudioGraph, Node } from '@audiograph'
+import type { AudioGraph, EntityKey, Node } from '@audiograph'
 import type { BeatRange } from '@core'
-import { DisposeStack, MutableObservable, numeric, type Numeric, type Observable } from '@utility'
-import { createAudioFetcher, type CacheLimits } from '../assets/fetcher.js'
-import { createAudioSession, type AudioSession } from './session.js'
+import type { Numeric, Observable, Observer, UnsubscribeFn } from '@utility'
+import { DisposeStack, MutableObservable, numeric } from '@utility'
+import type { CacheLimits } from '../assets/fetcher.js'
+import { createAudioFetcher } from '../assets/fetcher.js'
+import type { MeterCallbacks } from '../graph/factory.js'
+import type { GainMeasurement } from './engine.js'
+import type { AudioSession } from './session.js'
+import { createAudioSession } from './session.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
@@ -20,7 +25,13 @@ export interface AudioEngine {
   readonly range: MutableObservable<BeatRange>
   readonly position: Observable<Numeric<'beats'>>
   readonly errors: Observable<readonly Error[]>
+
+  readonly meters: {
+    readonly subscribeToGain: (key: EntityKey, observer: Observer<GainMeasurement>) => UnsubscribeFn
+  }
 }
+
+export type { GainMeasurement } from '../worklets/metering/messages.js'
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const outputGain = new MutableObservable(options.outputGain)
@@ -34,6 +45,18 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const position = new MutableObservable(range.get().start)
   const errors = new MutableObservable<readonly Error[]>([])
 
+  const gainMeters = new Map<string, MutableObservable<GainMeasurement>>()
+
+  const meterCallbacks: MeterCallbacks = {
+    onGain: (key, measurement) => gainMeters.get(key)?.set(measurement)
+  }
+
+  const resetMeters = () => {
+    for (const meter of gainMeters.values()) {
+      meter.set({ peak: [0, 0], rms: [0, 0] })
+    }
+  }
+
   let session: AudioSession | undefined
   let stopSession: (() => void) | undefined
 
@@ -44,7 +67,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
 
     const disposeStack = new DisposeStack()
 
-    const thisSession = session = createAudioSession(graph, range.get(), outputGain, fetcher)
+    const thisSession = session = createAudioSession(graph, range.get(), outputGain, fetcher, meterCallbacks)
     disposeStack.pushDisposable(thisSession)
 
     const stopThisSession = stopSession = () => {
@@ -53,6 +76,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
       if (session === thisSession) {
         session = undefined
         playing.set(false)
+        resetMeters()
       }
 
       if (stopSession === stopThisSession) {
@@ -74,6 +98,8 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
       }
     }))
 
+    resetMeters()
+
     thisSession.start()
     playing.set(true)
   }
@@ -82,5 +108,25 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
     stopSession?.()
   }
 
-  return { outputGain, playing, play, stop, range, position, errors }
+  const meters = {
+    subscribeToGain: (key: EntityKey, observer: Observer<GainMeasurement>): UnsubscribeFn => {
+      let meter = gainMeters.get(key)
+      if (meter == null) {
+        meter = new MutableObservable<GainMeasurement>({ peak: [0, 0], rms: [0, 0] })
+        gainMeters.set(key, meter)
+      }
+
+      const unsubscribe = meter.subscribe(observer)
+
+      return () => {
+        unsubscribe()
+
+        if (meter.observerCount <= 0) {
+          gainMeters.delete(key)
+        }
+      }
+    }
+  }
+
+  return { outputGain, playing, play, stop, range, position, errors, meters }
 }

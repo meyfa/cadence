@@ -51,5 +51,22 @@ describe('observable/observable.ts', () => {
 
       assert.deepStrictEqual(notifiedValues, [0, 0, 1, 1, 2, 2])
     })
+
+    it('should update observerCount correctly', () => {
+      const obs = new MutableObservable(0)
+      assert.strictEqual(obs.observerCount, 0)
+
+      const unsubscribe1 = obs.subscribe(() => {})
+      assert.strictEqual(obs.observerCount, 1)
+
+      const unsubscribe2 = obs.subscribe(() => {})
+      assert.strictEqual(obs.observerCount, 2)
+
+      unsubscribe1()
+      assert.strictEqual(obs.observerCount, 1)
+
+      unsubscribe2()
+      assert.strictEqual(obs.observerCount, 0)
+    })
   })
 })

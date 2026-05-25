@@ -1,5 +1,19 @@
 import type { MidiNote } from '@core'
 import type { Brand, Numeric } from '@utility'
+import type { EntityKey } from './entities.js'
+
+export interface AudioGraph<TNode = AnyNode> {
+  readonly nodes: ReadonlyMap<NodeId, TNode>
+  readonly edges: readonly Edge[]
+  readonly outputIds: readonly NodeId[]
+
+  readonly tempo: Numeric<'bpm'>
+  readonly length: Numeric<'beats'>
+
+  readonly noteEvents: ReadonlyMap<NodeId, readonly NoteOptions[]>
+
+  readonly meters: ReadonlyMap<EntityKey, Meters>
+}
 
 export type NodeId = Brand<number, 'audiograph.NodeId'>
 
@@ -20,13 +34,6 @@ export interface NoteOptions {
   readonly duration?: number
 }
 
-export interface AudioGraph<TNode = AnyNode> {
-  readonly nodes: ReadonlyMap<NodeId, TNode>
-  readonly edges: readonly Edge[]
-  readonly outputIds: readonly NodeId[]
-
-  readonly tempo: Numeric<'bpm'>
-  readonly length: Numeric<'beats'>
-
-  readonly noteEvents: ReadonlyMap<NodeId, readonly NoteOptions[]>
+export interface Meters {
+  readonly gainMeterId: NodeId
 }

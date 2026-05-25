@@ -4,6 +4,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { dbToGain } from '../src/constants.js'
+import { createEntityKey } from '../src/entities.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
@@ -960,5 +961,141 @@ describe('lowering.ts', () => {
         } satisfies ReverbNode)
       })
     })
+  })
+
+  describe('metering', () => {
+    it('should not add metering by default', () => {
+      const graph = createAudioGraph(createProgramWithInstrument({
+        id: 100 as InstrumentId,
+        sampleUrl: 'foo.wav',
+        gain: {
+          id: 200 as ParameterId,
+          initial: numeric('db', -6)
+        }
+      }))
+
+      assert.strictEqual(graph.meters.size, 0)
+    })
+
+    it('should add meters when enabled', () => {
+      const instrumentId = 100 as InstrumentId
+      const busId = 200 as BusId
+
+      const program: Program = {
+        beatsPerBar: 4,
+        instruments: new Map([
+          [
+            instrumentId,
+            {
+              id: instrumentId,
+              sampleUrl: 'foo.wav',
+              gain: {
+                id: 200 as ParameterId,
+                initial: numeric('db', -6)
+              }
+            } satisfies Instrument
+          ]
+        ]),
+        automations: new Map(),
+        track: {
+          tempo: numeric('bpm', 120),
+          parts: []
+        },
+        mixer: {
+          buses: [
+            {
+              id: busId,
+              name: 'Bus 1',
+              gain: {
+                id: 201 as ParameterId,
+                initial: numeric('db', -3)
+              },
+              effects: []
+            } satisfies Bus
+          ],
+          routings: [
+            {
+              implicit: false,
+              source: {
+                type: 'Instrument',
+                id: instrumentId
+              },
+              destination: {
+                type: 'Bus',
+                id: busId
+              }
+            } satisfies MixerRouting,
+            {
+              implicit: true,
+              source: {
+                type: 'Bus',
+                id: busId
+              },
+              destination: {
+                type: 'Output'
+              }
+            } satisfies MixerRouting
+          ]
+        }
+      }
+
+      const interval = numeric('s', 0.123)
+
+      const graph = createAudioGraph(program, {
+        metering: { interval }
+      })
+
+      const outputKey = createEntityKey({ type: 'output' })
+      const outputMeters = graph.meters.get(outputKey)
+      assert.ok(outputMeters)
+
+      const outputGainMeter = graph.nodes.get(outputMeters.gainMeterId)
+      assert.strictEqual(outputGainMeter?.type, 'gain_meter')
+      assert.deepStrictEqual(outputGainMeter.key, outputKey)
+      assert.deepStrictEqual(outputGainMeter.interval, interval)
+
+      const busKey = createEntityKey({ type: 'bus', id: busId })
+      const busMeters = graph.meters.get(busKey)
+      assert.ok(busMeters)
+
+      const busGainMeter = graph.nodes.get(busMeters.gainMeterId)
+      assert.strictEqual(busGainMeter?.type, 'gain_meter')
+      assert.deepStrictEqual(busGainMeter.key, busKey)
+      assert.deepStrictEqual(busGainMeter.interval, interval)
+
+      const instrumentKey = createEntityKey({ type: 'instrument', id: instrumentId })
+      const instrumentMeters = graph.meters.get(instrumentKey)
+      assert.ok(instrumentMeters)
+
+      const instrumentGainMeter = graph.nodes.get(instrumentMeters.gainMeterId)
+      assert.strictEqual(instrumentGainMeter?.type, 'gain_meter')
+      assert.deepStrictEqual(instrumentGainMeter.key, instrumentKey)
+      assert.deepStrictEqual(instrumentGainMeter.interval, interval)
+    })
+  })
+
+  it('should throw for invalid metering interval', () => {
+    const program = createProgramWithInstrument({
+      id: 100 as InstrumentId,
+      sampleUrl: 'foo.wav',
+      gain: {
+        id: 200 as ParameterId,
+        initial: numeric('db', -6)
+      }
+    })
+
+    for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {
+      const options = {
+        metering: {
+          interval: numeric('s', interval)
+        }
+      }
+
+      assert.throws(
+        () => createAudioGraph(program, options),
+        /Invalid metering interval/,
+        `should throw for interval: ${interval}`
+      )
+    }
   })
 })

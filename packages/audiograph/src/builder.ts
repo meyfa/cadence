@@ -1,5 +1,6 @@
 import type { Numeric } from '@utility'
-import type { AnyNode, AudioGraph, Edge, NodeId, NoteOptions } from './graph.js'
+import type { AnyNode, AudioGraph, Edge, Meters, NodeId, NoteOptions } from './graph.js'
+import type { EntityKey } from './entities.js'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => T
@@ -10,6 +11,8 @@ export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly setOutput: (nodeId: NodeId) => void
 
   readonly addNoteEvents: (nodeId: NodeId, events: readonly NoteOptions[]) => void
+
+  readonly addMeters: (key: EntityKey, meters: Meters) => void
 
   readonly graph: () => AudioGraph<TNode>
 }
@@ -30,6 +33,7 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   const edges: Edge[] = []
   const outputIds: NodeId[] = []
   const noteEvents = new Map<NodeId, readonly NoteOptions[]>()
+  const meters = new Map<EntityKey, Meters>()
 
   let nextId = 1 as NodeId
 
@@ -70,13 +74,18 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
     noteEvents.set(nodeId, [...existing, ...events])
   }
 
+  const addMeters: AudioGraphBuilder<TNode>['addMeters'] = (key, value) => {
+    meters.set(key, value)
+  }
+
   const graph: AudioGraphBuilder<TNode>['graph'] = () => ({
     nodes,
     edges,
     outputIds,
     tempo: meta.tempo,
     length: meta.length,
-    noteEvents
+    noteEvents,
+    meters
   })
 
   return {
@@ -85,6 +94,7 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
     addEdges,
     setOutput,
     addNoteEvents,
+    addMeters,
     graph
   }
 }
