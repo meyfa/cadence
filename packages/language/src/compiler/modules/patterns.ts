@@ -22,11 +22,29 @@ const loop = FunctionType.of({
     }
 
     if (pattern.length == null) {
-    // infinite pattern multiplied by finite factor remains infinite
+      // infinite pattern multiplied by finite factor remains infinite
       return PatternType.of(loopPattern(pattern))
     }
 
     const duration = numeric('beats', pattern.length.value * factor)
+
+    return PatternType.of(loopPattern(pattern, duration))
+  }
+})
+
+const fill = FunctionType.of({
+  summary: 'Repeats a pattern until it fills the specified duration. Longer patterns are truncated.',
+  arguments: [
+    { name: 'pattern', type: PatternType, required: true },
+    { name: 'duration', type: NumberType.with('beats'), required: true }
+  ],
+
+  returnType: PatternType,
+
+  invoke: (_context, { pattern, duration }) => {
+    if (duration.value <= 0 || !Number.isFinite(duration.value)) {
+      return PatternType.of(createSerialPattern([], 1))
+    }
 
     return PatternType.of(loopPattern(pattern, duration))
   }
@@ -37,6 +55,7 @@ export const patternsModule = ModuleType.of({
   summary: 'Functions for creating and manipulating patterns.',
 
   exports: new Map<string, Value>([
-    ['loop', loop]
+    ['loop', loop],
+    ['fill', fill]
   ])
 })

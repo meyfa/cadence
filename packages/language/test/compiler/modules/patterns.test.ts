@@ -1,4 +1,4 @@
-import { createSerialPattern, renderPatternEvents } from '@core'
+import { createSerialPattern, loopPattern, renderPatternEvents } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -47,11 +47,11 @@ describe('compiler/modules/patterns.ts', () => {
     })
 
     it('should keep infinite patterns infinite', () => {
-      const pattern = createSerialPattern([
+      const pattern = loopPattern(createSerialPattern([
         { value: 'x' },
         { value: '-' },
         { value: 'C4' }
-      ], 2)
+      ], 2))
       const context = createFunctionContext()
 
       const result = loop.data.invoke(context, { pattern })
@@ -163,6 +163,155 @@ describe('compiler/modules/patterns.ts', () => {
 
       assert.deepStrictEqual(events, [
         { time: beats(0), gate: beats(0.5) }
+      ])
+    })
+  })
+
+  describe('fill', () => {
+    const fill = patterns.exports.get('fill')
+    assert.ok(fill != null && FunctionType.is(fill))
+
+    it('should loop finite patterns until the duration is filled', () => {
+      const pattern = createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(2.0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length, beats(2.0))
+
+      const events = renderPatternEvents(resultPattern.data, beats(5.0))
+
+      assert.deepStrictEqual(events, [
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
+        { time: beats(1.5), gate: beats(0.5) }
+      ])
+    })
+
+    it('should truncate infinite patterns to the requested duration', () => {
+      const pattern = loopPattern(createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2))
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(2.0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length, beats(2.0))
+
+      const events = renderPatternEvents(resultPattern.data, beats(5.0))
+
+      assert.deepStrictEqual(events, [
+        { time: beats(0), gate: beats(0.5) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
+        { time: beats(1.5), gate: beats(0.5) }
+      ])
+    })
+
+    it('should return empty pattern when filling an empty pattern', () => {
+      const pattern = createSerialPattern([], 4)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(2.0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should return empty pattern when duration is zero', () => {
+      const pattern = createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should treat negative duration as empty', () => {
+      const pattern = createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(-2.0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should treat non-finite duration as empty', () => {
+      const pattern = createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'C4' }
+      ], 2)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(Number.POSITIVE_INFINITY)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length?.value, 0)
+
+      const events = renderPatternEvents(resultPattern.data, beats(2.0))
+      assert.deepStrictEqual(events, [])
+    })
+
+    it('should trim notes with gate that extends beyond the duration', () => {
+      const pattern = createSerialPattern([
+        { value: 'A4', gate: numeric(undefined, 3) },
+        { value: 'B4', gate: numeric(undefined, 5) }
+      ], 1)
+      const context = createFunctionContext()
+
+      const result = fill.data.invoke(context, {
+        pattern,
+        duration: beats(4.0)
+      })
+      const resultPattern = PatternType.cast(result)
+      assert.deepStrictEqual(resultPattern.data.length, beats(4.0))
+
+      const events = renderPatternEvents(resultPattern.data, beats(4.0))
+
+      assert.deepStrictEqual(events, [
+        { time: beats(0), gate: beats(3.0), pitch: 'A4' },
+        { time: beats(1), gate: beats(3.0), pitch: 'B4' },
+        { time: beats(2), gate: beats(2.0), pitch: 'A4' },
+        { time: beats(3), gate: beats(1.0), pitch: 'B4' }
       ])
     })
   })

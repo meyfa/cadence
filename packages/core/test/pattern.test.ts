@@ -316,6 +316,22 @@ describe('pattern.ts', () => {
       ])
     })
 
+    it('should trim gates that extend beyond the target duration', () => {
+      const pattern = createSerialPattern([
+        { value: 'A4', gate: numeric(undefined, 3) },
+        { value: 'B4', gate: numeric(undefined, 5) }
+      ], 1)
+      const looped = loopPattern(pattern, beats(4))
+
+      assert.strictEqual(looped.length?.value, 4)
+      assert.deepStrictEqual([...looped.evaluate()], [
+        { time: beats(0), gate: beats(3), pitch: 'A4' },
+        { time: beats(1), gate: beats(3), pitch: 'B4' },
+        { time: beats(2), gate: beats(2), pitch: 'A4' },
+        { time: beats(3), gate: beats(1), pitch: 'B4' }
+      ])
+    })
+
     it('should return the same pattern if it is infinite and no duration is provided', () => {
       const pattern = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1))
       const looped = loopPattern(pattern)
@@ -493,6 +509,21 @@ describe('pattern.ts', () => {
         renderPatternEvents(pattern, beats(2)),
         [
           { time: beats(0), gate: beats(1) }
+        ]
+      )
+    })
+
+    it('should trim gates that extend beyond the render end', () => {
+      const pattern = createSerialPattern([
+        { value: 'A4', gate: numeric(undefined, 3) },
+        { value: 'B4', gate: numeric(undefined, 5) }
+      ], 1)
+
+      assert.deepStrictEqual(
+        renderPatternEvents(pattern, beats(2)),
+        [
+          { time: beats(0), gate: beats(2), pitch: 'A4' },
+          { time: beats(1), gate: beats(1), pitch: 'B4' }
         ]
       )
     })

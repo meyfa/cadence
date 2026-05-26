@@ -259,14 +259,20 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
 
       do {
         for (const event of pattern.evaluate()) {
-          if (offset + event.time.value >= duration.value) {
+          const eventTime = offset + event.time.value
+          if (eventTime >= duration.value) {
             return
           }
+
+          const remainingDuration = duration.value - eventTime
 
           hasEvents = true
           yield {
             ...event,
-            time: numeric('beats', event.time.value + offset)
+            time: numeric('beats', eventTime),
+            gate: event.gate != null && event.gate.value > remainingDuration
+              ? numeric('beats', remainingDuration)
+              : event.gate
           }
         }
 
@@ -334,7 +340,14 @@ export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): r
     if (event.time.value >= end.value) {
       break
     }
-    events.push(event)
+
+    const remainingDuration = end.value - event.time.value
+    events.push({
+      ...event,
+      gate: event.gate != null && event.gate.value > remainingDuration
+        ? numeric('beats', remainingDuration)
+        : event.gate
+    })
   }
 
   return events
