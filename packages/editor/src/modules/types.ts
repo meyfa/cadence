@@ -36,7 +36,7 @@ export interface Panel {
   readonly closeable: boolean
   readonly Panel: ComponentType<PanelProps>
   readonly Title: ModuleRenderFn<PanelProps, string>
-  readonly Notifications?: ModuleRenderFn<PanelProps, number | null>
+  readonly Notifications?: ModuleRenderFn<PanelProps>
 }
 
 export interface PanelProps {

@@ -28,7 +28,7 @@ export function parseTabDropTarget (id: string): TabDropTargetInfo | undefined {
 
 export interface TabTitleProps {
   readonly TitleComponent: ModuleRenderFn<PanelProps, string>
-  readonly NotificationsComponent: ModuleRenderFn<PanelProps, number | null>
+  readonly NotificationsComponent: ModuleRenderFn<PanelProps>
   readonly tab: Tab
   readonly state: TabTitleState
   readonly closeable: boolean
