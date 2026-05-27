@@ -1,8 +1,10 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useProblems, useRegisterCommand } from '@editor'
+import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@editor'
 import type { FunctionComponent } from 'react'
 import { pluralize } from '../../utilities/format.js'
+import { ProblemsNotifications } from './ProblemsNotifications.js'
 import { ProblemsPanel } from './ProblemsPanel.js'
+import { useProblemCountByKind } from './hooks.js'
 
 const moduleId = 'problems' as ModuleId
 export const problemsPanelId = `${moduleId}.problems` as PanelId
@@ -36,10 +38,7 @@ export const problemsModule: Module = {
       closeable: true,
       Panel: ProblemsPanel,
       Title: () => 'Problems',
-      Notifications: () => {
-        const problems = useProblems()
-        return problems.length > 0 ? problems.length : null
-      }
+      Notifications: ProblemsNotifications
     }
   ],
 
@@ -59,8 +58,21 @@ export const problemsModule: Module = {
         commandId: viewProblemsId,
         position: 'start',
         Label: () => {
-          const problems = useProblems()
-          return problems.length === 0 ? 'No errors' : pluralize(problems.length, 'error')
+          const { error, warning } = useProblemCountByKind()
+
+          if (error === 0 && warning === 0) {
+            return 'No problems'
+          }
+
+          if (warning === 0) {
+            return pluralize(error, 'error')
+          }
+
+          if (error === 0) {
+            return pluralize(warning, 'warning')
+          }
+
+          return `${pluralize(error, 'error')}, ${pluralize(warning, 'warning')}`
         }
       }
     ]

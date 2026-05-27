@@ -44,10 +44,17 @@ html.dark {
 
   /* var(--color-red-300), var(--color-red-800) */
   --color-error-surface: light-dark(oklch(80.8% 0.114 19.571), oklch(44.4% 0.177 26.899));
-  /* var(--color-red-600), var(--color-red-500) */
-  --color-error-frame: light-dark(oklch(57.7% 0.245 27.325), oklch(63.7% 0.237 25.331));
+  /* var(--color-red-600), var(--color-red-400) */
+  --color-error-frame: light-dark(oklch(57.7% 0.245 27.325), oklch(70.4% 0.191 22.216));
   /* var(--color-black), var(--color-white) */
   --color-error-content: light-dark(#000, #fff);
+
+  /* var(--color-yellow-300), var(--color-yellow-800) */
+  --color-warning-surface: light-dark(oklch(90.5% 0.182 98.111), oklch(47.6% 0.114 61.907));
+  /* var(--color-yellow-600), var(--color-yellow-500) */
+  --color-warning-frame: light-dark(oklch(68.1% 0.162 75.834), oklch(79.5% 0.184 86.047));
+  /* var(--color-black), var(--color-white) */
+  --color-warning-content: light-dark(#000, #fff);
 
   --color-dialog-backdrop: light-dark(hsl(210 6% 0% / 28%), hsl(210 6% 16% / 52%));
 }
