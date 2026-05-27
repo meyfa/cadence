@@ -17,7 +17,7 @@ export function createGainInstance (node: GainNode, transport: Transport): Insta
 export function createPanInstance (node: PanNode, transport: Transport): Instance {
   // equal power panning
   const audioNode = transport.ctx.createStereoPanner()
-  audioNode.pan.value = node.pan.value
+  automate(transport, audioNode.pan, node.pan)
   return toInstance(audioNode)
 }
 

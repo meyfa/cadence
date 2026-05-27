@@ -58,6 +58,10 @@ function createProgramWithEffect (effect: Effect): Program {
             id: 400 as ParameterId,
             initial: numeric('db', 0)
           },
+          pan: {
+            id: 500 as ParameterId,
+            initial: numeric(undefined, 0)
+          },
           effects: [effect]
         }
       ],
@@ -144,6 +148,10 @@ describe('lowering.ts', () => {
             gain: {
               id: busGainId,
               initial: numeric('db', -3)
+            },
+            pan: {
+              id: 500 as ParameterId,
+              initial: numeric(undefined, 0)
             },
             effects: []
           } satisfies Bus
@@ -542,41 +550,62 @@ describe('lowering.ts', () => {
       it('should handle pan', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'pan',
-          pan: numeric(undefined, 0.5)
+          pan: {
+            id: 500 as ParameterId,
+            initial: numeric(undefined, 0.5)
+          }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'pan',
-          pan: numeric(undefined, 0.5)
+          pan: {
+            initial: numeric(undefined, 0.5),
+            points: []
+          }
         })
       })
 
       it('should clamp pan to [-1, 1]', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'pan',
-          pan: numeric(undefined, Infinity)
+          pan: {
+            id: 500 as ParameterId,
+            initial: numeric(undefined, Infinity)
+          }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'pan',
-          pan: numeric(undefined, 1)
+          pan: {
+            initial: numeric(undefined, 1),
+            points: []
+          }
         })
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'pan',
-          pan: numeric(undefined, -Infinity)
+          pan: {
+            id: 500 as ParameterId,
+            initial: numeric(undefined, -Infinity)
+          }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'pan',
-          pan: numeric(undefined, -1)
+          pan: {
+            initial: numeric(undefined, -1),
+            points: []
+          }
         })
       })
 
       it('should throw for NaN pan', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'pan',
-          pan: numeric(undefined, Number.NaN)
+          pan: {
+            id: 500 as ParameterId,
+            initial: numeric(undefined, Number.NaN)
+          }
         })), /Invalid pan/)
       })
     })
@@ -1009,6 +1038,10 @@ describe('lowering.ts', () => {
               gain: {
                 id: 201 as ParameterId,
                 initial: numeric('db', -3)
+              },
+              pan: {
+                id: 202 as ParameterId,
+                initial: numeric(undefined, 0)
               },
               effects: []
             } satisfies Bus

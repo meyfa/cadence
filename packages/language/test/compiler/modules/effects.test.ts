@@ -51,7 +51,10 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'pan',
-        pan: numeric(undefined, 0.5)
+        pan: {
+          id: 1,
+          initial: numeric(undefined, 0.5)
+        }
       })
     })
   })
