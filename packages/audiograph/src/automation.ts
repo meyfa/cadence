@@ -1,5 +1,7 @@
-import { beatsToSeconds, type AutomationPoint, type Parameter, type Program } from '@core'
-import { numeric, type Numeric, type Unit } from '@utility'
+import type { AutomationPoint, Parameter, Program } from '@core'
+import { beatsToSeconds } from '@core'
+import type { Numeric, Unit } from '@utility'
+import { numeric } from '@utility'
 import { dbToGain } from './constants.js'
 
 export type Curve = 'step' | 'linear' | 'exponential'
@@ -68,4 +70,16 @@ export const gainTransform: Transform<'db', undefined> = {
         throw new Error()
     }
   }
+}
+
+export const panTransform: Transform<undefined, undefined> = {
+  transformValue: (value) => {
+    if (Number.isNaN(value.value)) {
+      throw new Error(`Invalid pan: ${value.value}`)
+    }
+
+    return numeric(undefined, Math.max(-1, Math.min(1, value.value)))
+  },
+
+  transformCurve: (curve) => curve
 }

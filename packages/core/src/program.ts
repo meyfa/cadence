@@ -124,7 +124,7 @@ export type BusId = Brand<number, 'core.BusId'>
 export interface Bus {
   readonly id: BusId
   readonly name: string
-  readonly pan?: Numeric<undefined>
+  readonly pan: Parameter<undefined>
   readonly gain: Parameter<'db'>
   readonly effects: readonly Effect[]
 }
@@ -145,7 +145,7 @@ export interface GainEffect {
 
 export interface PanEffect {
   readonly type: 'pan'
-  readonly pan: Numeric<undefined>
+  readonly pan: Parameter<undefined>
 }
 
 export interface LowpassEffect {

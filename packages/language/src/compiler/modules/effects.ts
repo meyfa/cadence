@@ -34,7 +34,7 @@ const pan = createEffectConstructor('Places the signal in the stereo field.', [
   { name: 'pan', type: NumberType.with(undefined), required: true }
 ], (context, args) => ({
   type: 'pan',
-  pan: args.pan
+  pan: allocateParameter(context, args.pan)
 }))
 
 const lowpass = createEffectConstructor('Filters out frequencies above the cutoff.', [

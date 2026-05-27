@@ -628,6 +628,10 @@ describe('compiler/types.ts', () => {
         const gainType = BusType.propertyType('gain')
         assert.strictEqual(gainType?.name, 'parameter')
         assert.deepStrictEqual(gainType.generics, { unit: 'db' })
+
+        const panType = BusType.propertyType('pan')
+        assert.strictEqual(panType?.name, 'parameter')
+        assert.deepStrictEqual(panType.generics, { unit: undefined })
       })
     })
 
@@ -636,7 +640,10 @@ describe('compiler/types.ts', () => {
         const busValue = BusType.of({
           id: 1 as any,
           name: 'main',
-          pan: undefined,
+          pan: {
+            id: 3 as ParameterId,
+            initial: numeric(undefined, 0)
+          },
           gain: {
             id: 2 as ParameterId,
             initial: numeric('db', -3)
@@ -646,6 +653,9 @@ describe('compiler/types.ts', () => {
 
         const gainValue = BusType.propertyValue(busValue, 'gain')
         assert.deepStrictEqual(gainValue?.data, busValue.data.gain)
+
+        const panValue = BusType.propertyValue(busValue, 'pan')
+        assert.deepStrictEqual(panValue?.data, busValue.data.pan)
       })
     })
   })

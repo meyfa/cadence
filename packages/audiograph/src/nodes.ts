@@ -37,7 +37,7 @@ export interface GainNode extends AnyNode {
 
 export interface PanNode extends AnyNode {
   readonly type: 'pan'
-  readonly pan: Numeric<undefined>
+  readonly pan: TimeVariant<undefined>
 }
 
 export interface BiquadNode extends AnyNode {

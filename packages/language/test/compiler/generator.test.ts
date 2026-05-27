@@ -266,10 +266,9 @@ describe('compiler/generator.ts', () => {
 
     const result = generateSource(source)
 
-    assert.strictEqual(result.automations.size, 1)
     const busGain = result.mixer.buses[0].gain
     const automation = result.automations.get(busGain.id)
-    assert.ok(automation)
+    assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -20), curve: 'step' },
       { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }

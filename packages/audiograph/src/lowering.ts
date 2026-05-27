@@ -2,7 +2,7 @@ import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Progra
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import { gainTransform, timeVariant, toTimeVariant } from './automation.js'
+import { gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
@@ -88,12 +88,13 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
     appendEffect(effect)
   }
 
-  if (bus.pan != null) {
+  // Optimization: Skip adding a node if the value is constant 0.
+  // TODO: Make this more generic and move into appendEffect?
+  if (bus.pan.initial.value !== 0 || program.automations.has(bus.pan.id)) {
     appendEffect({ type: 'pan', pan: bus.pan })
   }
 
-  // Optimization: Skip adding a node if gain is 0 and is not automated.
-  // TODO: Make this more generic and move into appendEffect?
+  // TODO: see above
   if (bus.gain.initial.value !== 0 || program.automations.has(bus.gain.id)) {
     appendEffect({ type: 'gain', gain: bus.gain })
   }
@@ -161,13 +162,8 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'pan': {
-      if (Number.isNaN(effect.pan.value)) {
-        throw new Error(`Invalid pan: ${effect.pan.value}`)
-      }
-
       return toSubGraph(builder.addNode<PanNode>('pan', {
-        // TODO time variant
-        pan: numeric(undefined, Math.max(-1, Math.min(1, effect.pan.value)))
+        pan: toTimeVariant(effect.pan, program, panTransform)
       }))
     }
 

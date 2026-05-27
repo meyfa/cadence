@@ -274,6 +274,8 @@ export const BusType = makeType<'bus', {}, BusValue>('bus', undefined, {
     switch (name) {
       case 'gain':
         return ParameterType.with('db')
+      case 'pan':
+        return ParameterType.with(undefined)
       default:
         return undefined
     }
@@ -283,6 +285,8 @@ export const BusType = makeType<'bus', {}, BusValue>('bus', undefined, {
     switch (name) {
       case 'gain':
         return ParameterType.of(value.data.gain)
+      case 'pan':
+        return ParameterType.of(value.data.pan)
       default:
         return undefined
     }

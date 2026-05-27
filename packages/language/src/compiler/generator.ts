@@ -286,10 +286,10 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
     return EffectType.cast(resolve(context, effect.expression)).data
   })
 
-  // Gain must always be allocated even if not explicitly set,
-  // as it could still be automated.
+  // These must always be allocated even if not explicitly set,
+  // as they could still be automated.
   const gain = allocateParameter(context.top, properties.gain ?? numeric('db', 0))
-  const pan = properties.pan
+  const pan = allocateParameter(context.top, properties.pan ?? numeric(undefined, 0))
 
   return { id, name, gain, pan, effects }
 }
