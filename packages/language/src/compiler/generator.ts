@@ -40,9 +40,7 @@ export function generate (program: ast.Program, options: GenerateOptions): Progr
   processAssignments(context, assignments)
 
   // Automations in the track may refer to mixer buses, so the mixer must be generated first.
-  const mixer = mixers.length > 0
-    ? generateMixer(context, mixers[0])
-    : { buses: [], routings: [] }
+  const mixer = generateMixer(context, mixers.at(0))
 
   const track = tracks.length > 0
     ? generateTrack(context, tracks[0])
@@ -230,22 +228,23 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   return { name, length, routings }
 }
 
-function generateMixer (context: Context, mixer: ast.MixerStatement): Mixer {
+function generateMixer (context: Context, mixer?: ast.MixerStatement): Mixer {
   const mixerContext = createLocalScope(context)
 
-  const buses = mixer.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId))
-
-  for (const bus of buses) {
-    assert(!mixerContext.resolutions.has(bus.name))
-    const busValue = BusType.of(bus)
-    mixerContext.resolutions.set(bus.name, busValue)
-    context.top.buses.set(bus.name, busValue)
-  }
-
+  const buses = mixer?.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId)) ?? []
   const routings: MixerRouting[] = []
 
-  for (const bus of mixer.buses) {
-    routings.push(...generateBusRoutings(mixerContext, bus, buses))
+  if (mixer != null) {
+    for (const bus of buses) {
+      assert(!mixerContext.resolutions.has(bus.name))
+      const busValue = BusType.of(bus)
+      mixerContext.resolutions.set(bus.name, busValue)
+      context.top.buses.set(bus.name, busValue)
+    }
+
+    for (const bus of mixer.buses) {
+      routings.push(...generateBusRoutings(mixerContext, bus, buses))
+    }
   }
 
   // Implicit output routings for unrouted buses and instruments
