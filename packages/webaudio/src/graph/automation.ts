@@ -41,7 +41,8 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     // If it is still in the past, we need to find the value at time 0
     if (pointTimes[pointIndex] < 0) {
       if (pointIndex + 1 >= points.length) {
-        // Not enough points
+        // Not enough points, but we can at least set the final value
+        param.setValueAtTime(points[pointIndex].value.value, 0)
         return
       }
 
