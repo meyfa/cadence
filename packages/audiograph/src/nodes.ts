@@ -17,6 +17,7 @@ export interface NodeTypeMap {
 
   // sources
   readonly sample: SampleNode
+  readonly oscillator: OscillatorNode
 
   // metering
   readonly gain_meter: GainMeterNode
@@ -66,9 +67,15 @@ export interface ReverbNode extends AnyNode {
 
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
-  readonly sampleUrl: string
   readonly rootNote: MidiNote
+  readonly url: string
   readonly length?: Numeric<'s'>
+}
+
+export interface OscillatorNode extends AnyNode {
+  readonly type: 'oscillator'
+  readonly rootNote: MidiNote
+  readonly shape: 'sine'
 }
 
 // metering

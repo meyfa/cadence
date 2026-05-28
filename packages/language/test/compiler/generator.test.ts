@@ -75,7 +75,9 @@ describe('compiler/generator.ts', () => {
 
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
-    assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'kick.wav')
+
+    const instrument = result.instruments.get(1 as any)
+    assert.strictEqual(instrument?.source.type, 'sample')
   })
 
   it('should support import aliases', () => {
@@ -86,7 +88,9 @@ describe('compiler/generator.ts', () => {
 
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
-    assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'kick.wav')
+
+    const instrument = result.instruments.get(1 as any)
+    assert.strictEqual(instrument?.source.type, 'sample')
   })
 
   it('should support shadowing of imported names', () => {
@@ -362,8 +366,44 @@ describe('compiler/generator.ts', () => {
 
       const result = generateSource(source)
       assert.deepStrictEqual(result.instruments.size, 2)
-      assert.deepStrictEqual(result.instruments.get(1 as any)?.sampleUrl, 'sample1.wav')
-      assert.deepStrictEqual(result.instruments.get(2 as any)?.sampleUrl, 'sample2.wav')
+
+      const instrument1 = result.instruments.get(1 as any)
+      assert.strictEqual(instrument1?.source.type, 'sample')
+      assert.deepStrictEqual(instrument1.source.url, 'sample1.wav')
+
+      const instrument2 = result.instruments.get(2 as any)
+      assert.strictEqual(instrument2?.source.type, 'sample')
+      assert.deepStrictEqual(instrument2.source.url, 'sample2.wav')
+
+      assert.deepStrictEqual(result.automations.size, 2)
+      assert.deepStrictEqual(result.instruments.get(1 as any)?.gain.id, 1 as any)
+      assert.deepStrictEqual(result.instruments.get(2 as any)?.gain.id, 2 as any)
+      assert.deepStrictEqual(result.automations.get(1 as any)?.parameterId, 1 as any)
+      assert.deepStrictEqual(result.automations.get(2 as any)?.parameterId, 2 as any)
+    })
+  })
+
+  describe('instruments.sine', () => {
+    it('should allocate instrument and parameter IDs correctly', () => {
+      const source = [
+        'use "instruments" as *',
+        'inst1 = sine(gain: -6.db)',
+        'inst2 = sine(gain: -12.db)'
+      ].join('\n')
+
+      const result = generateSource(source)
+      assert.deepStrictEqual(result.instruments.size, 2)
+
+      const instrument1 = result.instruments.get(1 as any)
+      assert.strictEqual(instrument1?.source.type, 'oscillator')
+      assert.strictEqual(instrument1.source.shape, 'sine')
+      assert.deepStrictEqual(instrument1.gain.initial, numeric('db', -6))
+
+      const instrument2 = result.instruments.get(2 as any)
+      assert.strictEqual(instrument2?.source.type, 'oscillator')
+      assert.strictEqual(instrument2.source.shape, 'sine')
+      assert.deepStrictEqual(instrument2.gain.initial, numeric('db', -12))
+
       assert.deepStrictEqual(result.automations.size, 2)
       assert.deepStrictEqual(result.instruments.get(1 as any)?.gain.id, 1 as any)
       assert.deepStrictEqual(result.instruments.get(2 as any)?.gain.id, 2 as any)

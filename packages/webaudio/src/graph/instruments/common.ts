@@ -1,11 +1,18 @@
-import type { NoteOptions, SampleNode } from '@audiograph'
+import type { NoteOptions } from '@audiograph'
 import type { MidiNote } from '@core'
+import type { Numeric } from '@utility'
 import { createMultimap } from '@utility'
-import type { AudioFetcher } from '../assets/fetcher.js'
-import type { Transport } from '../transport/transport.js'
-import type { Instance } from './instance.js'
+import type { Transport } from '../../transport/transport.js'
+import type { Instance } from '../instance.js'
 
-export async function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Promise<Instance> {
+export type CreateSource = (note: NoteOptions) => AudioScheduledSourceNode
+
+export interface InstrumentOptions {
+  readonly rootNote: MidiNote
+  readonly length?: Numeric<'s'>
+}
+
+export function createInstrumentInstance (transport: Transport, createSource: CreateSource, options: InstrumentOptions): Instance {
   const { ctx } = transport
 
   // declick
@@ -18,8 +25,6 @@ export async function createSampleInstance (node: SampleNode, transport: Transpo
 
   const output = ctx.createGain()
 
-  const sampleBuffer = await fetcher.fetch(ctx, node.sampleUrl)
-
   const dispose = () => {
     output.disconnect()
     for (const sources of sourcesByMidi.values()) {
@@ -29,27 +34,27 @@ export async function createSampleInstance (node: SampleNode, transport: Transpo
     }
   }
 
-  const triggerNote = (options: NoteOptions) => transport.schedule(options.time, (time) => {
+  const triggerNote = (note: NoteOptions) => transport.schedule(note.time, (time) => {
     if (time < 0) {
       return
     }
 
     const duration = (() => {
-      if (options.duration == null || node.length == null) {
-        return options.duration ?? node.length?.value
+      if (note.duration == null || options.length == null) {
+        return note.duration ?? options.length?.value
       }
 
-      return Math.min(options.duration, node.length.value)
+      return Math.min(note.duration, options.length.value)
     })()
 
     if (duration != null && duration <= 0) {
       return
     }
 
-    const midi = options.pitch ?? node.rootNote
-    const targetGain = Math.max(0, Math.min(1, options.velocity))
+    const midi = note.pitch ?? options.rootNote
+    const targetGain = Math.max(0, Math.min(1, note.velocity))
 
-    const sourceNode = ctx.createBufferSource()
+    const sourceNode = createSource(note)
     const gainNode = ctx.createGain()
 
     const source: ActiveSource = {
@@ -66,9 +71,6 @@ export async function createSampleInstance (node: SampleNode, transport: Transpo
         disposeActiveSource(source)
       }
     }, { once: true })
-
-    sourceNode.buffer = sampleBuffer
-    sourceNode.playbackRate.value = Math.pow(2, (midi - node.rootNote) / 12)
 
     gainNode.gain.setValueAtTime(0, time)
     gainNode.gain.linearRampToValueAtTime(targetGain, time + envelope.attack)
@@ -91,7 +93,7 @@ export async function createSampleInstance (node: SampleNode, transport: Transpo
 }
 
 interface ActiveSource {
-  readonly sourceNode: AudioBufferSourceNode
+  readonly sourceNode: AudioScheduledSourceNode
   readonly gainNode: GainNode
   readonly targetGain: number
   disposed: boolean

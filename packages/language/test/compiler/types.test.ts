@@ -585,13 +585,15 @@ describe('compiler/types.ts', () => {
       it('should return property values', () => {
         const instrumentValue = InstrumentType.of({
           id: 1 as any,
-          sampleUrl: 'sample.wav',
+          rootNote: undefined,
           gain: {
             id: 2 as ParameterId,
             initial: numeric('db', -3)
           },
-          rootNote: undefined,
-          length: undefined
+          source: {
+            type: 'sample',
+            url: 'sample.wav'
+          }
         })
 
         const gainValue = InstrumentType.propertyValue(instrumentValue, 'gain')

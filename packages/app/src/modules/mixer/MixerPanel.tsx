@@ -56,10 +56,17 @@ function getNodeLabel ({ data }: MixerFlowNode): string {
   switch (data.type) {
     case 'output':
       return 'Main Output'
+
     case 'bus':
       return data.object.name
+
     case 'instrument': {
-      return data.object.sampleUrl.split('/').pop() ?? data.object.sampleUrl
+      switch (data.object.source.type) {
+        case 'sample':
+          return data.object.source.url.split('/').pop() ?? data.object.source.url
+        case 'oscillator':
+          return data.object.source.shape
+      }
     }
   }
 }
@@ -247,7 +254,15 @@ const InstrumentNodeInfo: FunctionComponent<{
   return (
     <>
       <div className='font-bold'>(Instrument)</div>
-      <div className='max-w-96'>url: {object.sampleUrl}</div>
+      <div>type: {object.source.type}</div>
+      {object.source.type === 'sample' && (
+        <div className='max-w-96'>url: {object.source.url}</div>
+      )}
+      {object.source.type === 'oscillator' && (
+        <div>shape: {object.source.shape}</div>
+      )}
+      <div>root_note: {object.rootNote ?? 'undefined'}</div>
+      <div>gain: {object.gain.initial.value.toFixed(2)} {object.gain.initial.unit}</div>
     </>
   )
 }

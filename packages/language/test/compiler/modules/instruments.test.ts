@@ -31,13 +31,16 @@ describe('compiler/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         id: 1,
-        sampleUrl: 'https://example.com/kick.wav',
+        rootNote: 'C4',
         gain: {
           id: 1,
           initial: numeric('db', -3)
         },
-        rootNote: 'C4',
-        length: numeric('s', 1.5)
+        source: {
+          type: 'sample',
+          url: 'https://example.com/kick.wav',
+          length: numeric('s', 1.5)
+        }
       })
 
       assert.strictEqual(context.instruments.size, 1)
@@ -55,13 +58,44 @@ describe('compiler/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         id: 1,
-        sampleUrl: 'https://example.com/snare.wav',
+        rootNote: undefined,
         gain: {
           id: 1,
           initial: numeric('db', 0)
         },
-        rootNote: undefined,
-        length: undefined
+        source: {
+          type: 'sample',
+          url: 'https://example.com/snare.wav',
+          length: undefined
+        }
+      })
+
+      assert.strictEqual(context.instruments.size, 1)
+      const instrument = [...context.instruments.values()][0]
+
+      assert.strictEqual(instrument, result.data)
+    })
+  })
+
+  describe('sine', () => {
+    const sine = instruments.exports.get('sine')
+    assert.ok(sine != null && FunctionType.is(sine))
+
+    it('should create oscillator instrument', () => {
+      const context = createFunctionContext()
+
+      const result = sine.data.invoke(context, {})
+
+      assert.deepStrictEqual(result.data, {
+        id: 1,
+        gain: {
+          id: 1,
+          initial: numeric('db', 0)
+        },
+        source: {
+          type: 'oscillator',
+          shape: 'sine'
+        }
       })
 
       assert.strictEqual(context.instruments.size, 1)

@@ -5,7 +5,8 @@ import type { GainMeasurement } from '../worklets/metering/messages.js'
 import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance, createWidthInstance } from './effect.js'
 import type { Instance } from './instance.js'
 import { createGainMeterInstance } from './metering.js'
-import { createSampleInstance } from './sample.js'
+import { createOscillatorInstance } from './instruments/oscillator.js'
+import { createSampleInstance } from './instruments/sample.js'
 
 const factories = Object.freeze({
   identity: createIdentityInstance,
@@ -20,6 +21,7 @@ const factories = Object.freeze({
 
   // sources
   sample: createSampleInstance,
+  oscillator: createOscillatorInstance,
 
   // metering
   gain_meter: createGainMeterInstance

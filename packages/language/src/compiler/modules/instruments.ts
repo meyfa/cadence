@@ -22,11 +22,35 @@ const sample = FunctionType.of({
     const gainParameter = allocateParameter(context, gain ?? UNITY_GAIN)
 
     return allocateInstrument(context, {
-      sampleUrl: url,
       gain: gainParameter,
       // eslint-disable-next-line camelcase
       rootNote: isPitch(root_note) ? root_note : undefined,
-      length
+      source: {
+        type: 'sample',
+        url,
+        length
+      }
+    })
+  }
+})
+
+const sine = FunctionType.of({
+  summary: 'Creates an instrument that produces a sine wave.',
+  arguments: [
+    { name: 'gain', type: NumberType.with('db'), required: false }
+  ],
+
+  returnType: InstrumentType,
+
+  invoke: (context, { gain }) => {
+    const gainParameter = allocateParameter(context, gain ?? UNITY_GAIN)
+
+    return allocateInstrument(context, {
+      gain: gainParameter,
+      source: {
+        type: 'oscillator',
+        shape: 'sine'
+      }
     })
   }
 })
@@ -36,6 +60,7 @@ export const instrumentsModule = ModuleType.of({
   summary: 'Functions for creating and manipulating instruments.',
 
   exports: new Map<string, Value>([
-    ['sample', sample]
+    ['sample', sample],
+    ['sine', sine]
   ])
 })
