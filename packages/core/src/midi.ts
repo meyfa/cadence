@@ -47,3 +47,7 @@ export function convertPitchToMidi (pitch: Pitch): MidiNote {
 
   return midi
 }
+
+export function getMidiFrequency (midi: MidiNote): number {
+  return 440 * Math.pow(2, (midi - 69) / 12)
+}

@@ -85,10 +85,22 @@ export type InstrumentId = Brand<number, 'core.InstrumentId'>
 
 export interface Instrument {
   readonly id: InstrumentId
-  readonly sampleUrl: string
-  readonly gain: Parameter<'db'>
   readonly rootNote?: Pitch
+  readonly gain: Parameter<'db'>
+  readonly source: Source
+}
+
+export type Source = Sample | Oscillator
+
+export interface Sample {
+  readonly type: 'sample'
+  readonly url: string
   readonly length?: Numeric<'s'>
+}
+
+export interface Oscillator {
+  readonly type: 'oscillator'
+  readonly shape: 'sine'
 }
 
 export interface Track {

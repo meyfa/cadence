@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Program, Track } from '@core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MidiNote, MixerRouting, Oscillator, Program, Sample, Track } from '@core'
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
@@ -9,7 +9,7 @@ import { DEFAULT_ROOT_NOTE } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
-import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
+import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, OscillatorNode, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
@@ -121,24 +121,15 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     ? convertPitchToMidi(instrument.rootNote)
     : DEFAULT_ROOT_NOTE
 
-  const length = (() => {
-    if (instrument.length == null) {
-      return undefined
-    }
+  const source = (() => {
+    switch (instrument.source.type) {
+      case 'sample':
+        return createSampleSource(instrument.source, rootNote, builder)
 
-    const value = instrument.length.value
-    if (Number.isNaN(value)) {
-      throw new Error(`Invalid length: ${value}`)
+      case 'oscillator':
+        return createOscillatorSource(instrument.source, rootNote, builder)
     }
-
-    return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
   })()
-
-  const source = builder.addNode<SampleNode>('sample', {
-    sampleUrl: instrument.sampleUrl,
-    rootNote,
-    length
-  })
 
   const gain = builder.addNode<GainNode>('gain', {
     gain: toTimeVariant(instrument.gain, program, gainTransform)
@@ -151,6 +142,27 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     outputs: [gain.id],
     instrument: source.id
   }
+}
+
+function createSampleSource (sample: Sample, rootNote: MidiNote, builder: Builder): Node {
+  const length = (() => {
+    if (sample.length == null) {
+      return undefined
+    }
+
+    const value = sample.length.value
+    if (Number.isNaN(value)) {
+      throw new Error(`Invalid length: ${value}`)
+    }
+
+    return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
+  })()
+
+  return builder.addNode<SampleNode>('sample', { rootNote, url: sample.url, length })
+}
+
+function createOscillatorSource (oscillator: Oscillator, rootNote: MidiNote, builder: Builder): Node {
+  return builder.addNode<OscillatorNode>('oscillator', { rootNote, shape: oscillator.shape })
 }
 
 function createEffect (program: Program, effect: Effect, builder: Builder): SubGraph {

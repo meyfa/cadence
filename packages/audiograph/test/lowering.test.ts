@@ -124,10 +124,13 @@ describe('lowering.ts', () => {
           instrumentId,
           {
             id: instrumentId,
-            sampleUrl: 'foo.wav',
             gain: {
               id: instrumentGainId,
               initial: numeric('db', -6)
+            },
+            source: {
+              type: 'sample',
+              url: 'foo.wav'
             }
           } satisfies Instrument
         ]
@@ -203,7 +206,7 @@ describe('lowering.ts', () => {
         id: 3 as NodeId,
         length: undefined,
         type: 'sample',
-        sampleUrl: 'foo.wav',
+        url: 'foo.wav',
         rootNote: 72 as MidiNote // C5
       } satisfies SampleNode,
       {
@@ -238,10 +241,13 @@ describe('lowering.ts', () => {
           instrumentId,
           {
             id: instrumentId,
-            sampleUrl: 'foo.wav',
             gain: {
               id: instrumentGainId,
               initial: numeric('db', -6)
+            },
+            source: {
+              type: 'sample',
+              url: 'foo.wav'
             }
           } satisfies Instrument
         ]
@@ -325,10 +331,13 @@ describe('lowering.ts', () => {
           instrumentId,
           {
             id: instrumentId,
-            sampleUrl: 'foo.wav',
             gain: {
               id: 200 as ParameterId,
               initial: numeric('db', -6)
+            },
+            source: {
+              type: 'sample',
+              url: 'foo.wav'
             }
           } satisfies Instrument
         ]
@@ -398,10 +407,13 @@ describe('lowering.ts', () => {
   it('should allow negative infinity instrument gain', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
-      sampleUrl: 'foo.wav',
       gain: {
         id: 200 as ParameterId,
         initial: numeric('db', -Infinity)
+      },
+      source: {
+        type: 'sample',
+        url: 'foo.wav'
       }
     })
 
@@ -412,10 +424,13 @@ describe('lowering.ts', () => {
     for (const gain of [Infinity, Number.NaN]) {
       const program = createProgramWithInstrument({
         id: 100 as InstrumentId,
-        sampleUrl: 'foo.wav',
         gain: {
           id: 200 as ParameterId,
           initial: numeric('db', gain)
+        },
+        source: {
+          type: 'sample',
+          url: 'foo.wav'
         }
       })
 
@@ -427,12 +442,15 @@ describe('lowering.ts', () => {
     for (const rootNote of ['C-1' as Pitch, 'G10' as Pitch]) {
       const program = createProgramWithInstrument({
         id: 100 as InstrumentId,
-        sampleUrl: 'foo.wav',
+        rootNote,
         gain: {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
         },
-        rootNote
+        source: {
+          type: 'sample',
+          url: 'foo.wav'
+        }
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid pitch/, `should throw for root note: ${rootNote}`)
@@ -442,19 +460,22 @@ describe('lowering.ts', () => {
   it('should clamp negative sample lengths to zero', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
-      sampleUrl: 'foo.wav',
       gain: {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      length: numeric('s', -1)
+      source: {
+        type: 'sample',
+        url: 'foo.wav',
+        length: numeric('s', -1)
+      }
     })
 
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
-      sampleUrl: 'foo.wav',
+      url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: numeric('s', 0)
     } satisfies SampleNode)
@@ -463,19 +484,22 @@ describe('lowering.ts', () => {
   it('should treat infinite sample length as valid', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
-      sampleUrl: 'foo.wav',
       gain: {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      length: numeric('s', Infinity)
+      source: {
+        type: 'sample',
+        url: 'foo.wav',
+        length: numeric('s', Infinity)
+      }
     })
 
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
-      sampleUrl: 'foo.wav',
+      url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: undefined
     } satisfies SampleNode)
@@ -484,12 +508,15 @@ describe('lowering.ts', () => {
   it('should throw for NaN sample length', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
-      sampleUrl: 'foo.wav',
       gain: {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      length: numeric('s', Number.NaN)
+      source: {
+        type: 'sample',
+        url: 'foo.wav',
+        length: numeric('s', Number.NaN)
+      }
     })
 
     assert.throws(() => createAudioGraph(program), /Invalid length/)
@@ -996,10 +1023,13 @@ describe('lowering.ts', () => {
     it('should not add metering by default', () => {
       const graph = createAudioGraph(createProgramWithInstrument({
         id: 100 as InstrumentId,
-        sampleUrl: 'foo.wav',
         gain: {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
+        },
+        source: {
+          type: 'sample',
+          url: 'foo.wav'
         }
       }))
 
@@ -1017,10 +1047,13 @@ describe('lowering.ts', () => {
             instrumentId,
             {
               id: instrumentId,
-              sampleUrl: 'foo.wav',
               gain: {
                 id: 200 as ParameterId,
                 initial: numeric('db', -6)
+              },
+              source: {
+                type: 'sample',
+                url: 'foo.wav'
               }
             } satisfies Instrument
           ]
@@ -1110,10 +1143,13 @@ describe('lowering.ts', () => {
   it('should throw for invalid metering interval', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
-      sampleUrl: 'foo.wav',
       gain: {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
+      },
+      source: {
+        type: 'sample',
+        url: 'foo.wav'
       }
     })
 
