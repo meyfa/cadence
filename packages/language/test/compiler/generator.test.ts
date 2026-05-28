@@ -275,6 +275,23 @@ describe('compiler/generator.ts', () => {
     ])
   })
 
+  it('should route instruments into the output when no mixer is present', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      ''
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.mixer.routings, [
+      {
+        implicit: true,
+        destination: { type: 'output' },
+        source: { type: 'instrument', id: 1 }
+      }
+    ])
+  })
+
   it('should support buses as sources in mixer', () => {
     const source = [
       'mixer {',
