@@ -100,7 +100,7 @@ export interface Sample {
 
 export interface Oscillator {
   readonly type: 'oscillator'
-  readonly shape: 'sine'
+  readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
 }
 
 export interface Track {
