@@ -75,7 +75,7 @@ export interface SampleNode extends AnyNode {
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
   readonly rootNote: MidiNote
-  readonly shape: 'sine'
+  readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
 }
 
 // metering

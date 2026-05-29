@@ -32,10 +32,7 @@ describe('compiler/modules/instruments.ts', () => {
       assert.deepStrictEqual(result.data, {
         id: 1,
         rootNote: 'C4',
-        gain: {
-          id: 1,
-          initial: numeric('db', -3)
-        },
+        gain: { id: 1, initial: numeric('db', -3) },
         source: {
           type: 'sample',
           url: 'https://example.com/kick.wav',
@@ -43,37 +40,22 @@ describe('compiler/modules/instruments.ts', () => {
         }
       })
 
-      assert.strictEqual(context.instruments.size, 1)
-      const instrument = [...context.instruments.values()][0]
-
-      assert.strictEqual(instrument, result.data)
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
     })
 
     it('should create instrument with default values', () => {
+      const url = 'https://example.com/snare.wav'
+
       const context = createFunctionContext()
 
-      const result = sample.data.invoke(context, {
-        url: 'https://example.com/snare.wav'
-      })
-
+      const result = sample.data.invoke(context, { url })
       assert.deepStrictEqual(result.data, {
         id: 1,
         rootNote: undefined,
-        gain: {
-          id: 1,
-          initial: numeric('db', 0)
-        },
-        source: {
-          type: 'sample',
-          url: 'https://example.com/snare.wav',
-          length: undefined
-        }
+        gain: { id: 1, initial: numeric('db', 0) },
+        source: { type: 'sample', url, length: undefined }
       })
-
-      assert.strictEqual(context.instruments.size, 1)
-      const instrument = [...context.instruments.values()][0]
-
-      assert.strictEqual(instrument, result.data)
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
     })
   })
 
@@ -85,23 +67,63 @@ describe('compiler/modules/instruments.ts', () => {
       const context = createFunctionContext()
 
       const result = sine.data.invoke(context, {})
-
       assert.deepStrictEqual(result.data, {
         id: 1,
-        gain: {
-          id: 1,
-          initial: numeric('db', 0)
-        },
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        }
+        gain: { id: 1, initial: numeric('db', 0) },
+        source: { type: 'oscillator', shape: 'sine' }
       })
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
+    })
+  })
 
-      assert.strictEqual(context.instruments.size, 1)
-      const instrument = [...context.instruments.values()][0]
+  describe('square', () => {
+    const square = instruments.exports.get('square')
+    assert.ok(square != null && FunctionType.is(square))
 
-      assert.strictEqual(instrument, result.data)
+    it('should create oscillator instrument', () => {
+      const context = createFunctionContext()
+
+      const result = square.data.invoke(context, {})
+      assert.deepStrictEqual(result.data, {
+        id: 1,
+        gain: { id: 1, initial: numeric('db', 0) },
+        source: { type: 'oscillator', shape: 'square' }
+      })
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
+    })
+  })
+
+  describe('saw', () => {
+    const saw = instruments.exports.get('saw')
+    assert.ok(saw != null && FunctionType.is(saw))
+
+    it('should create oscillator instrument', () => {
+      const context = createFunctionContext()
+
+      const result = saw.data.invoke(context, {})
+      assert.deepStrictEqual(result.data, {
+        id: 1,
+        gain: { id: 1, initial: numeric('db', 0) },
+        source: { type: 'oscillator', shape: 'saw' }
+      })
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
+    })
+  })
+
+  describe('triangle', () => {
+    const triangle = instruments.exports.get('triangle')
+    assert.ok(triangle != null && FunctionType.is(triangle))
+
+    it('should create oscillator instrument', () => {
+      const context = createFunctionContext()
+
+      const result = triangle.data.invoke(context, {})
+      assert.deepStrictEqual(result.data, {
+        id: 1,
+        gain: { id: 1, initial: numeric('db', 0) },
+        source: { type: 'oscillator', shape: 'triangle' }
+      })
+      assert.deepStrictEqual([...context.instruments.values()], [result.data])
     })
   })
 })
