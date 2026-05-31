@@ -18,6 +18,7 @@ export async function createSampleInstance (node: SampleNode, transport: Transpo
   }
 
   return createInstrumentInstance(transport, createSource, {
+    envelope: node.envelope,
     rootNote: node.rootNote,
     length: node.length
   })

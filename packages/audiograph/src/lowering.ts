@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MidiNote, MixerRouting, Oscillator, Program, Sample, Track } from '@core'
+import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, MixerRouting, Oscillator, Program, Sample, Track } from '@core'
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
@@ -121,13 +121,39 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     ? convertPitchToMidi(instrument.rootNote)
     : DEFAULT_ROOT_NOTE
 
+  const envelope = (() => {
+    const a = instrument.envelope.attack.value
+    const d = instrument.envelope.decay.value
+    const s = instrument.envelope.sustain.value
+    const r = instrument.envelope.release.value
+
+    const clampDuration = (value: number): Numeric<'s'> => {
+      return Number.isFinite(value) && value >= 0
+        ? numeric('s', value)
+        : numeric('s', 0)
+    }
+
+    const clampSustain = (value: number): Numeric<undefined> => {
+      return Number.isNaN(value)
+        ? numeric(undefined, 0)
+        : numeric(undefined, Math.max(0, Math.min(1, s)))
+    }
+
+    return {
+      attack: clampDuration(a),
+      decay: clampDuration(d),
+      sustain: clampSustain(s),
+      release: clampDuration(r)
+    }
+  })()
+
   const source = (() => {
     switch (instrument.source.type) {
       case 'sample':
-        return createSampleSource(instrument.source, rootNote, builder)
+        return createSampleSource(instrument.source, rootNote, envelope, builder)
 
       case 'oscillator':
-        return createOscillatorSource(instrument.source, rootNote, builder)
+        return createOscillatorSource(instrument.source, rootNote, envelope, builder)
     }
   })()
 
@@ -144,7 +170,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   }
 }
 
-function createSampleSource (sample: Sample, rootNote: MidiNote, builder: Builder): Node {
+function createSampleSource (sample: Sample, rootNote: MidiNote, envelope: Envelope, builder: Builder): Node {
   const length = (() => {
     if (sample.length == null) {
       return undefined
@@ -158,11 +184,11 @@ function createSampleSource (sample: Sample, rootNote: MidiNote, builder: Builde
     return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
   })()
 
-  return builder.addNode<SampleNode>('sample', { rootNote, url: sample.url, length })
+  return builder.addNode<SampleNode>('sample', { rootNote, envelope, url: sample.url, length })
 }
 
-function createOscillatorSource (oscillator: Oscillator, rootNote: MidiNote, builder: Builder): Node {
-  return builder.addNode<OscillatorNode>('oscillator', { rootNote, shape: oscillator.shape })
+function createOscillatorSource (oscillator: Oscillator, rootNote: MidiNote, envelope: Envelope, builder: Builder): Node {
+  return builder.addNode<OscillatorNode>('oscillator', { rootNote, envelope, shape: oscillator.shape })
 }
 
 function createEffect (program: Program, effect: Effect, builder: Builder): SubGraph {

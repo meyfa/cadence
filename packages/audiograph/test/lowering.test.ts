@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Pitch, Program, Track } from '@core'
+import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Pitch, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
@@ -8,6 +8,13 @@ import { createEntityKey } from '../src/entities.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
+
+const defaultEnvelope: Envelope = {
+  attack: numeric('s', 0.01),
+  decay: numeric('s', 0.1),
+  sustain: numeric(undefined, 0.8),
+  release: numeric('s', 0.5)
+}
 
 function compareIds (a: Node, b: Node): number {
   return a.id - b.id
@@ -131,7 +138,8 @@ describe('lowering.ts', () => {
             source: {
               type: 'sample',
               url: 'foo.wav'
-            }
+            },
+            envelope: defaultEnvelope
           } satisfies Instrument
         ]
       ]),
@@ -204,8 +212,9 @@ describe('lowering.ts', () => {
       } satisfies GainNode,
       {
         id: 3 as NodeId,
-        length: undefined,
         type: 'sample',
+        envelope: defaultEnvelope,
+        length: undefined,
         url: 'foo.wav',
         rootNote: 72 as MidiNote // C5
       } satisfies SampleNode,
@@ -248,7 +257,8 @@ describe('lowering.ts', () => {
             source: {
               type: 'sample',
               url: 'foo.wav'
-            }
+            },
+            envelope: defaultEnvelope
           } satisfies Instrument
         ]
       ]),
@@ -338,7 +348,8 @@ describe('lowering.ts', () => {
             source: {
               type: 'sample',
               url: 'foo.wav'
-            }
+            },
+            envelope: defaultEnvelope
           } satisfies Instrument
         ]
       ]),
@@ -414,7 +425,8 @@ describe('lowering.ts', () => {
       source: {
         type: 'sample',
         url: 'foo.wav'
-      }
+      },
+      envelope: defaultEnvelope
     })
 
     assert.doesNotThrow(() => createAudioGraph(program))
@@ -431,7 +443,8 @@ describe('lowering.ts', () => {
         source: {
           type: 'sample',
           url: 'foo.wav'
-        }
+        },
+        envelope: defaultEnvelope
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid gain/, `should throw for gain: ${gain}`)
@@ -450,7 +463,8 @@ describe('lowering.ts', () => {
         source: {
           type: 'sample',
           url: 'foo.wav'
-        }
+        },
+        envelope: defaultEnvelope
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid pitch/, `should throw for root note: ${rootNote}`)
@@ -468,13 +482,15 @@ describe('lowering.ts', () => {
         type: 'sample',
         url: 'foo.wav',
         length: numeric('s', -1)
-      }
+      },
+      envelope: defaultEnvelope
     })
 
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
+      envelope: defaultEnvelope,
       url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: numeric('s', 0)
@@ -492,13 +508,15 @@ describe('lowering.ts', () => {
         type: 'sample',
         url: 'foo.wav',
         length: numeric('s', Infinity)
-      }
+      },
+      envelope: defaultEnvelope
     })
 
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
+      envelope: defaultEnvelope,
       url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: undefined
@@ -516,10 +534,89 @@ describe('lowering.ts', () => {
         type: 'sample',
         url: 'foo.wav',
         length: numeric('s', Number.NaN)
-      }
+      },
+      envelope: defaultEnvelope
     })
 
     assert.throws(() => createAudioGraph(program), /Invalid length/)
+  })
+
+  it('should clamp envelope parameters to valid ranges', () => {
+    const createEnvelope = (adsr: [number, number, number, number]): Envelope => ({
+      attack: numeric('s', adsr[0]),
+      decay: numeric('s', adsr[1]),
+      sustain: numeric(undefined, adsr[2]),
+      release: numeric('s', adsr[3])
+    })
+
+    const testCases: Array<{ envelope: Envelope, expected: Envelope }> = [
+      {
+        envelope: createEnvelope([-1, 0, 1, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, -1, 1, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, -1, 0]),
+        expected: createEnvelope([0, 0, 0, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, 2, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, 1, -1]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([Infinity, 0, 1, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, Infinity, 1, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, Number.NaN, 0]),
+        expected: createEnvelope([0, 0, 0, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, Infinity, 0]),
+        expected: createEnvelope([0, 0, 1, 0])
+      },
+      {
+        envelope: createEnvelope([0, 0, 1, Infinity]),
+        expected: createEnvelope([0, 0, 1, 0])
+      }
+    ]
+
+    for (const { envelope, expected } of testCases) {
+      const program = createProgramWithInstrument({
+        id: 100 as InstrumentId,
+        gain: {
+          id: 200 as ParameterId,
+          initial: numeric('db', -6)
+        },
+        source: {
+          type: 'sample',
+          url: 'foo.wav'
+        },
+        envelope
+      })
+
+      const graph = createAudioGraph(program)
+
+      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
+        id: 2 as NodeId,
+        type: 'sample',
+        url: 'foo.wav',
+        rootNote: 72 as MidiNote,
+        length: undefined,
+        envelope: expected
+      } satisfies SampleNode, `test case: ${JSON.stringify(envelope)}`)
+    }
   })
 
   describe('effects', () => {
@@ -1060,7 +1157,8 @@ describe('lowering.ts', () => {
         source: {
           type: 'sample',
           url: 'foo.wav'
-        }
+        },
+        envelope: defaultEnvelope
       }))
 
       assert.strictEqual(graph.meters.size, 0)
@@ -1084,7 +1182,8 @@ describe('lowering.ts', () => {
               source: {
                 type: 'sample',
                 url: 'foo.wav'
-              }
+              },
+              envelope: defaultEnvelope
             } satisfies Instrument
           ]
         ]),
@@ -1180,7 +1279,8 @@ describe('lowering.ts', () => {
       source: {
         type: 'sample',
         url: 'foo.wav'
-      }
+      },
+      envelope: defaultEnvelope
     })
 
     for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {
