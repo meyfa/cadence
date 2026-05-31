@@ -1,28 +1,27 @@
 import type { NoteOptions } from '@audiograph'
-import type { MidiNote } from '@core'
+import type { Envelope, MidiNote } from '@core'
 import type { Numeric } from '@utility'
 import { createMultimap } from '@utility'
 import type { Transport } from '../../transport/transport.js'
 import type { Instance } from '../instance.js'
+import { applyEnvelope } from './envelope.js'
 
 export type CreateSource = (note: NoteOptions) => AudioScheduledSourceNode
 
 export interface InstrumentOptions {
+  readonly envelope: Envelope
   readonly rootNote: MidiNote
   readonly length?: Numeric<'s'>
 }
 
-export function createInstrumentInstance (transport: Transport, createSource: CreateSource, options: InstrumentOptions): Instance {
+export function createInstrumentInstance (
+  transport: Transport,
+  createSource: CreateSource,
+  options: InstrumentOptions
+): Instance {
   const { ctx } = transport
 
-  // declick
-  const envelope = {
-    attack: 0.005,
-    release: 0.005
-  }
-
   const sourcesByMidi = createMultimap<MidiNote, ActiveSource>()
-
   const output = ctx.createGain()
 
   const dispose = () => {
@@ -39,7 +38,7 @@ export function createInstrumentInstance (transport: Transport, createSource: Cr
       return
     }
 
-    const duration = (() => {
+    const holdDuration = (() => {
       if (note.duration == null || options.length == null) {
         return note.duration ?? options.length?.value
       }
@@ -47,20 +46,21 @@ export function createInstrumentInstance (transport: Transport, createSource: Cr
       return Math.min(note.duration, options.length.value)
     })()
 
-    if (duration != null && duration <= 0) {
+    if (holdDuration != null && holdDuration <= 0) {
       return
     }
 
     const midi = note.pitch ?? options.rootNote
-    const targetGain = Math.max(0, Math.min(1, note.velocity))
+    const velocity = Math.max(0, Math.min(1, note.velocity))
 
     const sourceNode = createSource(note)
     const gainNode = ctx.createGain()
 
+    sourceNode.connect(gainNode).connect(output)
+
     const source: ActiveSource = {
       sourceNode,
       gainNode,
-      targetGain,
       disposed: false
     }
     sourcesByMidi.add(midi, source)
@@ -72,20 +72,12 @@ export function createInstrumentInstance (transport: Transport, createSource: Cr
       }
     }, { once: true })
 
-    gainNode.gain.setValueAtTime(0, time)
-    gainNode.gain.linearRampToValueAtTime(targetGain, time + envelope.attack)
+    const { envelope } = options
+    applyEnvelope(envelope, gainNode.gain, { time, velocity, holdDuration })
 
-    sourceNode.connect(gainNode).connect(output)
     sourceNode.start(time)
-
-    if (duration != null) {
-      const releaseStartTime = time + duration
-      const releaseEndTime = releaseStartTime + envelope.release
-
-      gainNode.gain.setValueAtTime(targetGain, releaseStartTime)
-      gainNode.gain.linearRampToValueAtTime(0, releaseEndTime)
-
-      sourceNode.stop(releaseEndTime)
+    if (holdDuration != null) {
+      sourceNode.stop(time + holdDuration + envelope.release.value)
     }
   })
 
@@ -95,7 +87,6 @@ export function createInstrumentInstance (transport: Transport, createSource: Cr
 interface ActiveSource {
   readonly sourceNode: AudioScheduledSourceNode
   readonly gainNode: GainNode
-  readonly targetGain: number
   disposed: boolean
 }
 

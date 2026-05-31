@@ -1,4 +1,4 @@
-import type { Oscillator } from '@core'
+import type { Envelope, Oscillator } from '@core'
 import { isPitch } from '@core'
 import { numeric } from '@utility'
 import { allocateInstrument, allocateParameter } from '../functions.js'
@@ -6,6 +6,13 @@ import type { FunctionValue, Value } from '../types.js'
 import { FunctionType, InstrumentType, ModuleType, NumberType, StringType } from '../types.js'
 
 const UNITY_GAIN = numeric('db', 0)
+
+const ENVELOPE_DECLICK: Envelope = {
+  attack: numeric('s', 0.003),
+  decay: numeric('s', 0),
+  sustain: numeric(undefined, 1),
+  release: numeric('s', 0.003)
+}
 
 const sample = FunctionType.of({
   summary: 'Creates a sample-backed instrument from a URL.',
@@ -30,7 +37,8 @@ const sample = FunctionType.of({
         type: 'sample',
         url,
         length
-      }
+      },
+      envelope: ENVELOPE_DECLICK
     })
   }
 })
@@ -52,7 +60,8 @@ function createOscillatorFunction (shape: Oscillator['shape']): FunctionValue {
         source: {
           type: 'oscillator',
           shape
-        }
+        },
+        envelope: ENVELOPE_DECLICK
       })
     }
   })

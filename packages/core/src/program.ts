@@ -88,6 +88,7 @@ export interface Instrument {
   readonly rootNote?: Pitch
   readonly gain: Parameter<'db'>
   readonly source: Source
+  readonly envelope: Envelope
 }
 
 export type Source = Sample | Oscillator
@@ -101,6 +102,13 @@ export interface Sample {
 export interface Oscillator {
   readonly type: 'oscillator'
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
+}
+
+export interface Envelope {
+  readonly attack: Numeric<'s'>
+  readonly decay: Numeric<'s'>
+  readonly sustain: Numeric<undefined>
+  readonly release: Numeric<'s'>
 }
 
 export interface Track {

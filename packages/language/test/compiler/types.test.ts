@@ -593,6 +593,12 @@ describe('compiler/types.ts', () => {
           source: {
             type: 'sample',
             url: 'sample.wav'
+          },
+          envelope: {
+            attack: numeric('s', 0.01),
+            decay: numeric('s', 0.1),
+            sustain: numeric(undefined, 0.8),
+            release: numeric('s', 0.5)
           }
         })
 

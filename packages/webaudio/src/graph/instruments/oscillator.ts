@@ -23,6 +23,7 @@ export async function createOscillatorInstance (node: OscillatorNode, transport:
   }
 
   return createInstrumentInstance(transport, createSource, {
+    envelope: node.envelope,
     rootNote: node.rootNote,
     length: undefined
   })

@@ -1,4 +1,4 @@
-import type { MidiNote } from '@core'
+import type { Envelope, MidiNote } from '@core'
 import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
 import type { EntityKey } from './entities.js'
@@ -68,6 +68,7 @@ export interface ReverbNode extends AnyNode {
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly rootNote: MidiNote
+  readonly envelope: Envelope
   readonly url: string
   readonly length?: Numeric<'s'>
 }
@@ -75,6 +76,7 @@ export interface SampleNode extends AnyNode {
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
   readonly rootNote: MidiNote
+  readonly envelope: Envelope
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
 }
 
