@@ -641,25 +641,37 @@ describe('lowering.ts', () => {
       it('should handle lowpass', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'lowpass',
-          frequency: numeric('hz', 1000)
+          frequency: {
+            id: 600 as ParameterId,
+            initial: numeric('hz', 1000)
+          }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'biquad',
           filterType: 'lowpass',
-          frequency: numeric('hz', 1000),
+          frequency: {
+            initial: numeric('hz', 1000),
+            points: []
+          },
           rolloffPerOctave: numeric('db', 12)
         })
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'lowpass',
-          frequency: numeric('hz', -100)
+          frequency: {
+            id: 600 as ParameterId,
+            initial: numeric('hz', -100)
+          }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'biquad',
           filterType: 'lowpass',
-          frequency: numeric('hz', -100),
+          frequency: {
+            initial: numeric('hz', 0),
+            points: []
+          },
           rolloffPerOctave: numeric('db', 12)
         })
       })
@@ -668,7 +680,10 @@ describe('lowering.ts', () => {
         for (const frequency of [Infinity, -Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'lowpass',
-            frequency: numeric('hz', frequency)
+            frequency: {
+              id: 600 as ParameterId,
+              initial: numeric('hz', frequency)
+            }
           })), /Invalid frequency/, `should throw for frequency: ${frequency}`)
         }
       })
@@ -678,25 +693,37 @@ describe('lowering.ts', () => {
       it('should handle highpass', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'highpass',
-          frequency: numeric('hz', 500)
+          frequency: {
+            id: 600 as ParameterId,
+            initial: numeric('hz', 500)
+          }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'biquad',
           filterType: 'highpass',
-          frequency: numeric('hz', 500),
+          frequency: {
+            initial: numeric('hz', 500),
+            points: []
+          },
           rolloffPerOctave: numeric('db', 12)
         })
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'highpass',
-          frequency: numeric('hz', -100)
+          frequency: {
+            id: 600 as ParameterId,
+            initial: numeric('hz', -100)
+          }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           id: 2 as NodeId,
           type: 'biquad',
           filterType: 'highpass',
-          frequency: numeric('hz', -100),
+          frequency: {
+            initial: numeric('hz', 0),
+            points: []
+          },
           rolloffPerOctave: numeric('db', 12)
         })
       })
@@ -705,7 +732,10 @@ describe('lowering.ts', () => {
         for (const frequency of [Infinity, -Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'highpass',
-            frequency: numeric('hz', frequency)
+            frequency: {
+              id: 600 as ParameterId,
+              initial: numeric('hz', frequency)
+            }
           })), /Invalid frequency/, `should throw for frequency: ${frequency}`)
         }
       })

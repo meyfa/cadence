@@ -44,7 +44,7 @@ export interface PanNode extends AnyNode {
 export interface BiquadNode extends AnyNode {
   readonly type: 'biquad'
   readonly filterType: 'lowpass' | 'highpass'
-  readonly frequency: Numeric<'hz'>
+  readonly frequency: TimeVariant<'hz'>
   readonly rolloffPerOctave: Numeric<'db'>
 }
 

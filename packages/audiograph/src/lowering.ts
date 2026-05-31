@@ -2,7 +2,7 @@ import type { Bus, BusId, Effect, Instrument, InstrumentId, MidiNote, MixerRouti
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import { gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
+import { frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import { DEFAULT_ROOT_NOTE } from './constants.js'
@@ -180,28 +180,18 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'lowpass': {
-      if (!Number.isFinite(effect.frequency.value)) {
-        throw new Error(`Invalid frequency: ${effect.frequency.value}`)
-      }
-
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'lowpass',
-        // TODO time variant
-        frequency: effect.frequency,
+        frequency: toTimeVariant(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
         rolloffPerOctave: numeric('db', 12)
       }))
     }
 
     case 'highpass': {
-      if (!Number.isFinite(effect.frequency.value)) {
-        throw new Error(`Invalid frequency: ${effect.frequency.value}`)
-      }
-
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'highpass',
-        // TODO time variant
-        frequency: effect.frequency,
+        frequency: toTimeVariant(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
         rolloffPerOctave: numeric('db', 12)
       }))

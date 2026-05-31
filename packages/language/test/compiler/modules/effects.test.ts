@@ -71,7 +71,10 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'lowpass',
-        frequency: numeric('hz', 1000)
+        frequency: {
+          id: 1,
+          initial: numeric('hz', 1000)
+        }
       })
     })
   })
@@ -88,7 +91,10 @@ describe('compiler/modules/effects.ts', () => {
 
       assert.deepStrictEqual(result.data, {
         type: 'highpass',
-        frequency: numeric('hz', 200)
+        frequency: {
+          id: 1,
+          initial: numeric('hz', 200)
+        }
       })
     })
   })

@@ -41,14 +41,14 @@ const lowpass = createEffectConstructor('Filters out frequencies above the cutof
   { name: 'frequency', type: NumberType.with('hz'), required: true }
 ], (context, args) => ({
   type: 'lowpass',
-  frequency: args.frequency
+  frequency: allocateParameter(context, args.frequency)
 }))
 
 const highpass = createEffectConstructor('Filters out frequencies below the cutoff.', [
   { name: 'frequency', type: NumberType.with('hz'), required: true }
 ], (context, args) => ({
   type: 'highpass',
-  frequency: args.frequency
+  frequency: allocateParameter(context, args.frequency)
 }))
 
 const width = createEffectConstructor('Adjusts the stereo width of the signal.', [
