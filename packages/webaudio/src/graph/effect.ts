@@ -24,7 +24,7 @@ export function createPanInstance (node: PanNode, transport: Transport): Instanc
 export function createBiquadInstance (node: BiquadNode, transport: Transport): Instance {
   const audioNode = transport.ctx.createBiquadFilter()
   audioNode.type = node.filterType
-  audioNode.frequency.value = node.frequency.value
+  automate(transport, audioNode.frequency, node.frequency)
   audioNode.Q.value = -node.rolloffPerOctave.value
   return toInstance(audioNode)
 }

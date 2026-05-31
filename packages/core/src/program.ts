@@ -162,12 +162,12 @@ export interface PanEffect {
 
 export interface LowpassEffect {
   readonly type: 'lowpass'
-  readonly frequency: Numeric<'hz'>
+  readonly frequency: Parameter<'hz'>
 }
 
 export interface HighpassEffect {
   readonly type: 'highpass'
-  readonly frequency: Numeric<'hz'>
+  readonly frequency: Parameter<'hz'>
 }
 
 export interface WidthEffect {

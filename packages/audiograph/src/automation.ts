@@ -83,3 +83,19 @@ export const panTransform: Transform<undefined, undefined> = {
 
   transformCurve: (curve) => curve
 }
+
+export const frequencyTransform: Transform<'hz', 'hz'> = {
+  transformValue: (value) => {
+    if (!Number.isFinite(value.value)) {
+      throw new Error(`Invalid frequency: ${value.value}`)
+    }
+
+    if (value.value < 0) {
+      return numeric('hz', 0)
+    }
+
+    return value
+  },
+
+  transformCurve: (curve) => curve
+}
