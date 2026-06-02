@@ -572,7 +572,7 @@ function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess
     return toNumberValue(context.top.options, property, object.data.value)
   }
 
-  return nonNull(object.type.propertyValue(object, property)) as Value
+  return nonNull(object.type.propertyValue(object, property))
 }
 
 function resolveCall (context: Context, expression: ast.Call): Value {

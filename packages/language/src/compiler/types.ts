@@ -5,12 +5,7 @@ import type { FunctionDefinition } from './functions.js'
 import type { ModuleDefinition } from './modules.js'
 import type { PropertySchema } from './schema.js'
 
-export interface AnyValue<D = unknown> {
-  readonly type: Type
-  readonly data: D
-}
-
-export interface Type<T extends string = string, Generics extends object = object, V extends AnyValue = AnyValue> {
+export interface Type<T extends string = string, Generics extends object = object, V extends Value = Value> {
   readonly name: T
   readonly generics?: Generics
 
@@ -18,12 +13,19 @@ export interface Type<T extends string = string, Generics extends object = objec
   equals (other: Type): other is Type<T, Generics, V>
 
   of (data: V['data']): V
-  is (value: AnyValue): value is V
-  cast (value: AnyValue): V
+  is (value: Value): value is V
+  cast (value: Value): V
 
   propertyType(this: Type, name: string): Type | undefined
-  propertyValue(value: V, name: string): AnyValue | undefined
+  propertyValue(value: V, name: string): Value | undefined
 }
+
+export interface Value<D = unknown> {
+  readonly type: Type
+  readonly data: D
+}
+
+export type ValueFor<T extends Type> = ReturnType<T['of']>
 
 // Helpers
 
@@ -31,7 +33,7 @@ function defaultFormat (this: Type): string {
   return this.name
 }
 
-function defaultEquals<T extends string, G extends object, V extends AnyValue> (this: Type<T, G, V>, other: Type): other is Type<T, G, V> {
+function defaultEquals<T extends string, G extends object, V extends Value> (this: Type<T, G, V>, other: Type): other is Type<T, G, V> {
   return other.name === this.name
 }
 
@@ -39,15 +41,15 @@ function defaultPropertyType (this: Type, _name: string): Type | undefined {
   return undefined
 }
 
-function defaultPropertyValue (this: Type, _value: AnyValue, _name: string): AnyValue | undefined {
+function defaultPropertyValue (this: Type, _value: Value, _name: string): Value | undefined {
   return undefined
 }
 
-function makeType<const T extends string, const G extends object, V extends AnyValue> (name: T, generics?: G, overrides?: {
+function makeType<const T extends string, const G extends object, V extends Value> (name: T, generics?: G, overrides?: {
   format?: (this: Type<T, G, V>) => string
   equals?: (this: Type<T, G, V>, other: Type) => other is Type<T, G, V>
   propertyType?: (this: Type<T, G, V>, name: string) => Type | undefined
-  propertyValue?: (this: Type<T, G, V>, value: V, name: string) => AnyValue | undefined
+  propertyValue?: (this: Type<T, G, V>, value: V, name: string) => Value | undefined
 }): Type<T, G, V> {
   return {
     name,
@@ -78,38 +80,23 @@ function makeType<const T extends string, const G extends object, V extends AnyV
 
 // Specific types
 
-export type Value = |
-  ModuleValue |
-  FunctionValue |
-  NumberValue |
-  StringValue |
-  PatternValue |
-  ParameterValue |
-  CurveValue |
-  InstrumentValue |
-  PartValue |
-  EffectValue |
-  BusValue
-
-export type ModuleValue = AnyValue<ModuleDefinition>
-export type FunctionValue<S extends PropertySchema = PropertySchema, R extends Type = Type> = AnyValue<FunctionDefinition<S, R>>
-export type NumberValue<U extends Unit = Unit> = AnyValue<Numeric<U>>
-export type StringValue = AnyValue<string>
-export type PatternValue = AnyValue<Pattern>
-export type ParameterValue<U extends Unit = Unit> = AnyValue<Parameter<U>>
-export type CurveValue<U extends Unit = Unit> = AnyValue<Curve<U>>
-export type InstrumentValue = AnyValue<Instrument>
-export type PartValue = AnyValue<Part>
-export type EffectValue = AnyValue<Effect>
-export type BusValue = AnyValue<Bus>
-
-export type ValueFor<T extends Type> = ReturnType<T['of']>
+export type ModuleValue = Value<ModuleDefinition>
+export type FunctionValue<S extends PropertySchema = PropertySchema, R extends Type = Type> = Value<FunctionDefinition<S, R>>
+export type NumberValue<U extends Unit = Unit> = Value<Numeric<U>>
+export type StringValue = Value<string>
+export type PatternValue = Value<Pattern>
+export type ParameterValue<U extends Unit = Unit> = Value<Parameter<U>>
+export type CurveValue<U extends Unit = Unit> = Value<Curve<U>>
+export type InstrumentValue = Value<Instrument>
+export type PartValue = Value<Part>
+export type EffectValue = Value<Effect>
+export type BusValue = Value<Bus>
 
 function getModulePropertyType (this: Type, name: string): Type | undefined {
   return ModuleType.detail(this).definition?.exports.get(name)?.type
 }
 
-function getModulePropertyValue (this: Type, value: ModuleValue, name: string): AnyValue | undefined {
+function getModulePropertyValue (this: Type, value: ModuleValue, name: string): Value | undefined {
   return value.data.exports.get(name)
 }
 
@@ -255,7 +242,7 @@ export const InstrumentType = makeType<'instrument', {}, InstrumentValue>('instr
     }
   },
 
-  propertyValue (value, name: string): AnyValue | undefined {
+  propertyValue (value, name: string): Value | undefined {
     switch (name) {
       case 'gain':
         return ParameterType.of(value.data.gain)
@@ -281,7 +268,7 @@ export const BusType = makeType<'bus', {}, BusValue>('bus', undefined, {
     }
   },
 
-  propertyValue (value, name: string): AnyValue | undefined {
+  propertyValue (value, name: string): Value | undefined {
     switch (name) {
       case 'gain':
         return ParameterType.of(value.data.gain)

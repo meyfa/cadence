@@ -4,7 +4,7 @@ import { instrumentsModule } from './modules/instruments.js'
 import { patternsModule } from './modules/patterns.js'
 import type { AcceptedType } from './schema.js'
 import type { ModuleValue, Type, Value } from './types.js'
-import { FunctionType } from './types.js'
+import { FunctionType, ModuleType } from './types.js'
 
 export interface ModuleDefinition {
   readonly name: string
@@ -95,11 +95,13 @@ function formatAcceptedType (type: AcceptedType): string {
 }
 
 function getValueSummary (value: Value): string | undefined {
-  const data = value.data
-  if (typeof data !== 'object' || !('summary' in data)) {
-    return undefined
+  if (ModuleType.is(value)) {
+    return value.data.summary
   }
 
-  const summary = (data as { readonly summary?: unknown }).summary
-  return typeof summary === 'string' ? summary : undefined
+  if (FunctionType.is(value)) {
+    return value.data.summary
+  }
+
+  return undefined
 }
