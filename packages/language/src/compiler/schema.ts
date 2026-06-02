@@ -1,5 +1,5 @@
 import type { SourceRange } from '@ast'
-import type { AnyValue, Type, ValueFor } from './types.js'
+import type { Value, Type, ValueFor } from './types.js'
 
 export type Properties = readonly Property[]
 export type AcceptedType = Type | readonly Type[]
@@ -24,9 +24,9 @@ export interface PropertySpec {
 
 type InferPropertyType<T extends AcceptedType> =
   T extends readonly Type[]
-    ? ValueFor<T[number]> extends AnyValue ? ValueFor<T[number]>['data'] : never
+    ? ValueFor<T[number]> extends Value ? ValueFor<T[number]>['data'] : never
     : T extends Type
-      ? ValueFor<T> extends AnyValue ? ValueFor<T>['data'] : never
+      ? ValueFor<T> extends Value ? ValueFor<T>['data'] : never
       : never
 
 export type InferSchema<S extends PropertySchema> = {
