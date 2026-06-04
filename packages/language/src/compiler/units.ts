@@ -1,5 +1,6 @@
 import type { Unit } from '@utility'
-import { NumberType, type NumberValue } from './types.js'
+import type { Value } from '../type-system/types.js'
+import { Numbers } from './type-helpers.js'
 
 interface Constants {
   readonly beatsPerBar: number
@@ -12,7 +13,7 @@ export function isSyntaxUnit (value: string): value is SyntaxUnit {
   return SyntaxUnits.includes(value as SyntaxUnit)
 }
 
-export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefined, value: number): NumberValue {
+export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefined, value: number): Value {
   switch (unit) {
     case undefined:
     case 'bpm':
@@ -20,11 +21,11 @@ export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefine
     case 'hz':
     case 's':
     case 'beats':
-      return NumberType.of({ unit, value })
+      return Numbers.of({ unit, value })
     case 'ms':
-      return NumberType.of({ unit: 's', value: value / 1000 })
+      return Numbers.of({ unit: 's', value: value / 1000 })
     case 'bars':
-      return NumberType.of({ unit: 'beats', value: value * constants.beatsPerBar })
+      return Numbers.of({ unit: 'beats', value: value * constants.beatsPerBar })
   }
 }
 

@@ -1,14 +1,26 @@
 import type { SourceRange } from '@ast'
 import { ast } from '@ast'
 import type { Unit } from '@utility'
+import { FunctionFacet } from '../type-system/base/function.js'
+import { ModuleFacet } from '../type-system/base/module.js'
+import { NumberFacet } from '../type-system/base/number.js'
+import { RecordFacet } from '../type-system/base/record.js'
+import { StringFacet } from '../type-system/base/string.js'
+import { CurveFacet } from '../type-system/domain/curve.js'
+import { EffectFacet } from '../type-system/domain/effect.js'
+import { InstrumentFacet } from '../type-system/domain/instrument.js'
+import { ParameterFacet } from '../type-system/domain/parameter.js'
+import { PartFacet } from '../type-system/domain/part.js'
+import { PatternFacet } from '../type-system/domain/pattern.js'
+import { makeUnion } from '../type-system/factory.js'
+import type { Schema, SchemaItem } from '../type-system/schema.js'
+import type { FacetType, Type, Value } from '../type-system/types.js'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
 import { getStandardModuleNames, getStandardModuleValue } from './modules.js'
 import { checkCyclicRoutings } from './routings.js'
-import type { PropertySchema, PropertySpec } from './schema.js'
-import type { ModuleValue, Type } from './types.js'
-import { BusType, CurveType, EffectType, FunctionType, InstrumentType, ModuleType, NumberType, ParameterType, PartType, PatternType, StringType } from './types.js'
+import { BusType } from './type-helpers.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export function check (program: ast.Program): readonly CompileError[] {
@@ -47,13 +59,13 @@ export function check (program: ast.Program): readonly CompileError[] {
 
 interface Context {
   readonly parent?: Context
-  readonly resolutions: ReadonlyMap<string, Type>
-  readonly buses: ReadonlyMap<string, Type>
+  readonly resolutions: ReadonlyMap<string, FacetType>
+  readonly buses: ReadonlyMap<string, FacetType>
 }
 
 interface MutableContext extends Context {
-  readonly resolutions: Map<string, Type>
-  readonly buses: Map<string, Type>
+  readonly resolutions: Map<string, FacetType>
+  readonly buses: Map<string, FacetType>
 }
 
 interface Checked<TValue> {
@@ -73,7 +85,7 @@ function createLocalScope (parent: Context): MutableContext {
   }
 }
 
-function ensureStandardModule (moduleName: string): ModuleValue {
+function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
   const module = getStandardModuleValue(moduleName)
   if (module == null) {
     throw new Error(`Missing standard library module: ${moduleName}`)
@@ -96,24 +108,25 @@ function recursiveLookup<T> (context: Context, lookup: (context: Context) => T |
   return undefined
 }
 
-function resolve (context: Context, name: string): Type | undefined {
+function resolve (context: Context, name: string): FacetType | undefined {
   return recursiveLookup(context, (ctx) => ctx.resolutions.get(name))
 }
 
-function resolveBus (context: Context, name: string): Type | undefined {
+function resolveBus (context: Context, name: string): FacetType | undefined {
   return recursiveLookup(context, (ctx) => ctx.buses.get(name))
 }
 
-function checkType (options: readonly Type[], actual: Type, range?: SourceRange): readonly CompileError[] {
-  if (!options.some((option) => option.equals(actual))) {
-    const optionsText = options.map((o) => o.format()).join(' or ')
-    return [new CompileError(`Expected type ${optionsText}, got ${actual.format()}`, range)]
+function checkType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?: SourceRange): readonly CompileError[] {
+  if (!expected.is(actual)) {
+    return [
+      new CompileError(`Expected type ${expected.format()}, got ${actual.format()}`, range)
+    ]
   }
 
   return []
 }
 
-function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMap<string, Type>> {
+function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMap<string, FacetType>> {
   const standardLibraryModuleNames = getStandardModuleNames()
 
   const errors: CompileError[] = []
@@ -155,12 +168,12 @@ function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMa
     return { errors }
   }
 
-  const result = new Map<string, Type>()
+  const result = new Map<string, FacetType>()
 
   // defaults must come before aliases to allow aliasing over default imports
   for (const importName of defaults) {
     const module = ensureStandardModule(importName)
-    for (const [name, value] of module.data.exports.entries()) {
+    for (const [name, value] of ModuleFacet.get(module).exports.entries()) {
       result.set(name, value.type)
     }
   }
@@ -224,7 +237,7 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
     seenParts.add(part.name.name)
 
     // Reserve the name in the local scope
-    trackContext.resolutions.set(part.name.name, PartType)
+    trackContext.resolutions.set(part.name.name, PartFacet.type())
 
     errors.push(...checkPart(trackContext, part))
   }
@@ -259,13 +272,13 @@ function checkInstrumentRouting (context: Context, routing: ast.Routing): readon
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
-    errors.push(...checkType([InstrumentType], destination, routing.destination.range))
+    errors.push(...checkType(InstrumentFacet.type(), destination, routing.destination.range))
   }
 
   const sourceCheck = checkExpression(context, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
-    errors.push(...checkType([PatternType], sourceCheck.result, routing.source.range))
+    errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
   }
 
   return errors
@@ -277,18 +290,21 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
   const targetCheck = checkExpression(context, automation.target)
   errors.push(...targetCheck.errors)
   if (targetCheck.result != null) {
-    errors.push(...checkType([ParameterType], targetCheck.result, automation.target.range))
+    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, automation.target.range))
   }
 
   const curveCheck = checkExpression(context, automation.curve)
   errors.push(...curveCheck.errors)
 
   if (curveCheck.result != null) {
-    const curveType = targetCheck.result != null && ParameterType.equals(targetCheck.result)
-      ? CurveType.with(ParameterType.detail(targetCheck.result).unit)
-      : CurveType
+    let curveType = CurveFacet.type()
 
-    errors.push(...checkType([curveType], curveCheck.result, automation.curve.range))
+    if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
+      const parameterType = ParameterFacet.detail(targetCheck.result)
+      curveType = CurveFacet.with(parameterType).type()
+    }
+
+    errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
   }
 
   return errors
@@ -357,7 +373,7 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     errors.push(...sourceCheck.errors)
 
     if (sourceCheck.result != null) {
-      const options = [InstrumentType, BusType] as const
+      const options = makeUnion(InstrumentFacet.type(), BusType)
       errors.push(...checkType(options, sourceCheck.result, source.range))
     }
   }
@@ -368,14 +384,14 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     errors.push(...effectCheck.errors)
 
     if (effectCheck.result != null) {
-      errors.push(...checkType([EffectType], effectCheck.result, effect.expression.range))
+      errors.push(...checkType(EffectFacet.type(), effectCheck.result, effect.expression.range))
     }
   }
 
   return errors
 }
 
-function checkExpression (context: Context, expression: ast.Expression): Checked<Type> {
+function checkExpression (context: Context, expression: ast.Expression): Checked<FacetType> {
   switch (expression.type) {
     case 'Number':
       return checkNumber(context, expression)
@@ -406,11 +422,11 @@ function checkExpression (context: Context, expression: ast.Expression): Checked
   }
 }
 
-function checkNumber (context: Context, number: ast.Number): Checked<Type> {
-  return { errors: [], result: NumberType.with(undefined) }
+function checkNumber (context: Context, number: ast.Number): Checked<FacetType> {
+  return { errors: [], result: NumberFacet.with(undefined).type() }
 }
 
-function checkString (context: Context, string: ast.String): Checked<Type> {
+function checkString (context: Context, string: ast.String): Checked<FacetType> {
   const errors: CompileError[] = []
 
   for (const part of string.parts) {
@@ -419,14 +435,14 @@ function checkString (context: Context, string: ast.String): Checked<Type> {
       if (partCheck.result == null) {
         return { errors: partCheck.errors }
       }
-      errors.push(...checkType([StringType], partCheck.result, part.range))
+      errors.push(...checkType(StringFacet.type(), partCheck.result, part.range))
     }
   }
 
-  return { errors, result: StringType }
+  return { errors, result: StringFacet.type() }
 }
 
-function checkPattern (context: Context, pattern: ast.Pattern): Checked<Type> {
+function checkPattern (context: Context, pattern: ast.Pattern): Checked<FacetType> {
   const errors: CompileError[] = []
 
   for (const item of pattern.children) {
@@ -439,11 +455,11 @@ function checkPattern (context: Context, pattern: ast.Pattern): Checked<Type> {
     errors.push(...itemCheck.errors)
 
     if (itemCheck.result != null) {
-      errors.push(...checkType([PatternType], itemCheck.result, item.range))
+      errors.push(...checkType(PatternFacet.type(), itemCheck.result, item.range))
     }
   }
 
-  return { errors, result: PatternType }
+  return { errors, result: PatternFacet.type() }
 }
 
 function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
@@ -456,7 +472,7 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
       return errors
     }
 
-    errors.push(...checkType([NumberType.with(undefined)], lengthCheck.result, step.length.range))
+    errors.push(...checkType(NumberFacet.with(undefined).type(), lengthCheck.result, step.length.range))
   }
 
   const parametersCheck = checkArgumentList(context, step.parameters, stepSchema, step.range)
@@ -465,7 +481,7 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
   return errors
 }
 
-function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
+function checkCurve (context: Context, curve: ast.Curve): Checked<FacetType> {
   const errors: CompileError[] = []
 
   const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
@@ -506,7 +522,7 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<Type> {
     }
   }
 
-  return { errors, result: CurveType.with(firstUnit) }
+  return { errors, result: CurveFacet.with(firstUnit).type() }
 }
 
 function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
@@ -517,7 +533,7 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
     errors.push(...lengthCheck.errors)
 
     if (lengthCheck.result != null) {
-      errors.push(...checkType([NumberType.with(undefined)], lengthCheck.result, segment.length.range))
+      errors.push(...checkType(NumberFacet.with(undefined).type(), lengthCheck.result, segment.length.range))
     }
   }
 
@@ -545,10 +561,10 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
     errors.push(...pointCheck.errors)
 
     if (pointCheck.result != null) {
-      const typeErrors = checkType([NumberType], pointCheck.result, point.range)
+      const typeErrors = checkType(NumberFacet.type(), pointCheck.result, point.range)
       errors.push(...typeErrors)
       if (typeErrors.length === 0) {
-        units.push(NumberType.detail(pointCheck.result).unit)
+        units.push(NumberFacet.detail(pointCheck.result))
       }
     }
   }
@@ -559,15 +575,15 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
 
   const firstUnit = omittedFirstParameter ? previousUnit : units[0]
 
-  const expected = NumberType.with(firstUnit)
+  const expected = NumberFacet.with(firstUnit).type()
   for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
-    errors.push(...checkType([expected], NumberType.with(units[i]), segment.parameters[i].range))
+    errors.push(...checkType(expected, NumberFacet.with(units[i]).type(), segment.parameters[i].range))
   }
 
   return { errors, result: firstUnit }
 }
 
-function checkIdentifier (context: Context, identifier: ast.Identifier): Checked<Type> {
+function checkIdentifier (context: Context, identifier: ast.Identifier): Checked<FacetType> {
   const valueType = resolve(context, identifier.name)
   if (valueType == null) {
     return { errors: [new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)] }
@@ -576,7 +592,7 @@ function checkIdentifier (context: Context, identifier: ast.Identifier): Checked
   return { errors: [], result: valueType }
 }
 
-function checkUnaryExpression (context: Context, expression: ast.UnaryExpression): Checked<Type> {
+function checkUnaryExpression (context: Context, expression: ast.UnaryExpression): Checked<FacetType> {
   const argumentCheck = checkExpression(context, expression.argument)
 
   if (argumentCheck.result == null) {
@@ -586,7 +602,7 @@ function checkUnaryExpression (context: Context, expression: ast.UnaryExpression
   const { range, operator } = expression
   const argument = argumentCheck.result
 
-  if (!NumberType.equals(argument)) {
+  if (!NumberFacet.is(argument)) {
     return { errors: [new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range)] }
   }
 
@@ -598,7 +614,7 @@ function checkUnaryExpression (context: Context, expression: ast.UnaryExpression
   }
 }
 
-function checkBinaryExpression (context: Context, expression: ast.BinaryExpression): Checked<Type> {
+function checkBinaryExpression (context: Context, expression: ast.BinaryExpression): Checked<FacetType> {
   const leftCheck = checkExpression(context, expression.left)
   const rightCheck = checkExpression(context, expression.right)
 
@@ -624,54 +640,65 @@ function checkBinaryExpression (context: Context, expression: ast.BinaryExpressi
   }
 }
 
-function checkPlus (left: Type, right: Type, range: SourceRange): Checked<Type> {
-  if (StringType.equals(left) && StringType.equals(right)) {
+function checkPlus (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
+  if (StringFacet.is(left) && StringFacet.is(right)) {
     return { errors: [], result: left }
   }
 
-  if (PatternType.equals(left) && PatternType.equals(right)) {
+  if (PatternFacet.is(left) && PatternFacet.is(right)) {
     return { errors: [], result: left }
   }
 
-  if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
-    return { errors: [], result: left }
+  if (NumberFacet.is(left) && NumberFacet.is(right)) {
+    const leftUnit = NumberFacet.detail(left)
+    const rightUnit = NumberFacet.detail(right)
+    if (leftUnit === rightUnit) {
+      return { errors: [], result: left }
+    }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "+": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkMinus (left: Type, right: Type, range: SourceRange): Checked<Type> {
-  if (NumberType.equals(left) && NumberType.equals(right) && left.equals(right)) {
-    return { errors: [], result: left }
+function checkMinus (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
+  if (NumberFacet.is(left) && NumberFacet.is(right)) {
+    const leftUnit = NumberFacet.detail(left)
+    const rightUnit = NumberFacet.detail(right)
+    if (leftUnit === rightUnit) {
+      return { errors: [], result: left }
+    }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "-": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkMultiply (left: Type, right: Type, range: SourceRange): Checked<Type> {
-  if (NumberType.equals(left) && NumberType.equals(right)) {
-    const { unit: leftUnit } = NumberType.detail(left)
-    const { unit: rightUnit } = NumberType.detail(right)
+function checkMultiply (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
+  if (NumberFacet.is(left) && NumberFacet.is(right)) {
+    const leftUnit = NumberFacet.detail(left)
+    const rightUnit = NumberFacet.detail(right)
     if (leftUnit == null || rightUnit == null) {
-      return { errors: [], result: NumberType.with(leftUnit ?? rightUnit) }
+      return { errors: [], result: NumberFacet.with(leftUnit ?? rightUnit).type() }
     }
   }
 
-  if ((PatternType.equals(left) && NumberType.with(undefined).equals(right)) || (NumberType.with(undefined).equals(left) && PatternType.equals(right))) {
-    return { errors: [], result: PatternType }
+  if (
+    (PatternFacet.is(left) && NumberFacet.with(undefined).is(right)) ||
+    (NumberFacet.with(undefined).is(left) && PatternFacet.is(right))
+  ) {
+    return { errors: [], result: PatternFacet.type() }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "*": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type> {
-  if (NumberType.equals(left) && NumberType.equals(right)) {
-    const { unit: leftUnit } = NumberType.detail(left)
-    const { unit: rightUnit } = NumberType.detail(right)
+function checkDivide (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
+  if (NumberFacet.is(left) && NumberFacet.is(right)) {
+    const leftUnit = NumberFacet.detail(left)
+    const rightUnit = NumberFacet.detail(right)
 
     // equal units cancel out
     if (leftUnit === rightUnit) {
-      return { errors: [], result: NumberType.with(undefined) }
+      return { errors: [], result: NumberFacet.with(undefined).type() }
     }
 
     if (rightUnit == null) {
@@ -679,14 +706,14 @@ function checkDivide (left: Type, right: Type, range: SourceRange): Checked<Type
     }
   }
 
-  if (PatternType.equals(left) && NumberType.with(undefined).equals(right)) {
+  if (PatternFacet.is(left) && NumberFacet.with(undefined).is(right)) {
     return { errors: [], result: left }
   }
 
   return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<Type> {
+function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<FacetType> {
   // Special case: "bus" namespace
   if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
     const busName = expression.property.name
@@ -705,57 +732,56 @@ function checkPropertyAccess (context: Context, expression: ast.PropertyAccess):
   const { property } = expression
   const object = objectCheck.result
 
-  if (NumberType.equals(object)) {
+  if (NumberFacet.is(object)) {
     if (!isSyntaxUnit(property.name)) {
       return { errors: [new CompileError(`Unknown unit "${property.name}"`, property.range)] }
     }
 
-    const existingUnit = NumberType.detail(object).unit
+    const existingUnit = NumberFacet.detail(object)
     if (existingUnit != null) {
       return { errors: [new CompileError(`Cannot apply unit "${property.name}" to number with existing unit "${existingUnit}"`, property.range)] }
     }
 
-    return { errors: [], result: NumberType.with(toBaseUnit(property.name)) }
+    return { errors: [], result: NumberFacet.with(toBaseUnit(property.name)).type() }
   }
 
-  const propertyType = object.propertyType(property.name)
-  if (propertyType != null) {
-    return { errors: [], result: propertyType }
-  }
+  if (RecordFacet.is(object)) {
+    const record = RecordFacet.detail(object)
+    if (record[property.name] != null) {
+      return { errors: [], result: record[property.name] }
+    }
 
-  // Improve error messages for modules
-  if (ModuleType.equals(object)) {
-    const moduleName = ModuleType.detail(object).definition?.name ?? '<unknown>'
-    return { errors: [new CompileError(`Module "${moduleName}" has no export named "${property.name}"`, property.range)] }
+    // Improve error messages for modules
+    if (ModuleFacet.is(object)) {
+      const moduleName = ModuleFacet.detail(object).name
+      return { errors: [new CompileError(`Module "${moduleName}" has no export named "${property.name}"`, property.range)] }
+    }
   }
 
   return { errors: [new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range)] }
 }
 
-function checkCall (context: Context, expression: ast.Call): Checked<Type> {
+function checkCall (context: Context, expression: ast.Call): Checked<FacetType> {
   const calleeCheck = checkExpression(context, expression.callee)
   if (calleeCheck.result == null) {
     return { errors: calleeCheck.errors }
   }
 
   const callee = calleeCheck.result
-  if (!FunctionType.equals(calleeCheck.result)) {
+  if (!FunctionFacet.is(calleeCheck.result)) {
     return { errors: [new CompileError(`Cannot call value of type ${callee.format()}`, expression.range)] }
   }
 
-  const { schema, returnType } = FunctionType.detail(callee)
-  if (schema == null || returnType == null) {
-    return { errors: [new CompileError(`Function is missing type information`, expression.range)] }
-  }
+  const { parameters, returnType } = FunctionFacet.detail(callee)
 
-  const { errors } = checkArgumentList(context, expression.arguments, schema, expression.range)
+  const { errors } = checkArgumentList(context, expression.arguments, parameters, expression.range)
   return { errors, result: returnType }
 }
 
 function checkArgumentList (
   context: Context,
   args: ast.ArgumentList,
-  schema: PropertySchema,
+  schema: Schema,
   parentRange: SourceRange,
   kind = 'argument'
 ): Checked<ReadonlyMap<string, Type>> {
@@ -768,10 +794,9 @@ function checkArgumentList (
   // which is not correct.
   const errorArguments = new Set<string>()
 
-  const schemaAsMap = new Map<string, PropertySpec>(schema.map((spec) => [spec.name, spec]))
-  const getSpecTypes = (spec: PropertySpec): readonly Type[] => (Array.isArray(spec.type) ? spec.type : [spec.type]) as readonly Type[]
+  const schemaAsMap = new Map<string, SchemaItem>(schema.map((spec) => [spec.name, spec]))
 
-  const checkArgumentValue = (spec: PropertySpec, value: ast.Expression): void => {
+  const checkArgumentValue = (spec: SchemaItem, value: ast.Expression): void => {
     const expressionCheck = checkExpression(context, value)
     errors.push(...expressionCheck.errors)
 
@@ -780,7 +805,7 @@ function checkArgumentList (
       return
     }
 
-    errors.push(...checkType(getSpecTypes(spec), expressionCheck.result, value.range))
+    errors.push(...checkType(spec.type, expressionCheck.result, value.range))
     result.set(spec.name, expressionCheck.result)
   }
 
