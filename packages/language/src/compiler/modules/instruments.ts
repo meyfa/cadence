@@ -32,7 +32,7 @@ const sample = FunctionType.of({
     return allocateInstrument(context, {
       gain: gainParameter,
       // eslint-disable-next-line camelcase
-      rootNote: isPitch(root_note) ? root_note : undefined,
+      rootNote: root_note != null && isPitch(root_note) ? root_note : undefined,
       source: {
         type: 'sample',
         url,

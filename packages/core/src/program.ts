@@ -49,11 +49,11 @@ export interface Pattern {
   readonly evaluate: () => Iterable<NoteEvent>
 }
 
-export function isPitch (value: unknown): value is Pitch {
+export function isPitch (value: string): value is Pitch {
   return typeof value === 'string' && /^[A-G][#b]?(?:10|[0-9])$/.test(value)
 }
 
-export function isStepValue (value: unknown): value is StepValue {
+export function isStepValue (value: string): value is StepValue {
   return value === '-' || value === 'x' || isPitch(value)
 }
 
