@@ -3,15 +3,27 @@ import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRoutin
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
+import { FunctionFacet } from '../type-system/base/function.js'
+import { ModuleFacet } from '../type-system/base/module.js'
+import { NumberFacet } from '../type-system/base/number.js'
+import { RecordFacet } from '../type-system/base/record.js'
+import { StringFacet } from '../type-system/base/string.js'
+import { BusFacet } from '../type-system/domain/bus.js'
+import { CurveFacet } from '../type-system/domain/curve.js'
+import { EffectFacet } from '../type-system/domain/effect.js'
+import { InstrumentFacet } from '../type-system/domain/instrument.js'
+import { ParameterFacet } from '../type-system/domain/parameter.js'
+import { PartFacet } from '../type-system/domain/part.js'
+import { PatternFacet } from '../type-system/domain/pattern.js'
+import type { InferSchema, Schema } from '../type-system/schema.js'
+import type { Value } from '../type-system/types.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import { allocateParameter } from './functions.js'
 import { getStandardModuleValue } from './modules.js'
-import type { InferSchema, PropertySchema } from './schema.js'
-import type { CurveValue, PatternValue, StringValue, Type, Value } from './types.js'
-import { BusType, CurveType, EffectType, FunctionType, InstrumentType, NumberType, ParameterType, PartType, PatternType, StringType } from './types.js'
+import { BusType, Numbers, Parameters } from './type-helpers.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
 
 export interface GenerateOptions {
@@ -122,11 +134,7 @@ function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<stri
   const getModule = (library: ast.String) => {
     // Checker guarantees this is a simple string
     const name = library.parts.filter((part) => typeof part === 'string').join('')
-
-    const module = getStandardModuleValue(name)
-    assert(module != null)
-
-    return module
+    return nonNull(getStandardModuleValue(name))
   }
 
   const result = new Map<string, Value>()
@@ -135,7 +143,8 @@ function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<stri
 
   for (const statement of imports) {
     if (statement.alias == null) {
-      for (const [name, value] of getModule(statement.library).data.exports) {
+      const { exports } = ModuleFacet.get(getModule(statement.library))
+      for (const [name, value] of exports) {
         result.set(name, value)
       }
     }
@@ -170,7 +179,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
     parts.push(part)
 
     assert(!trackContext.resolutions.has(part.name))
-    trackContext.resolutions.set(part.name, PartType.of(part))
+    trackContext.resolutions.set(part.name, PartFacet.type().of(part))
 
     currentTime = numeric('beats', currentTime.value + part.length.value)
   }
@@ -178,7 +187,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
   const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
-    ? clamped(properties.tempo, options.tempo.minimum, options.tempo.maximum)
+    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
     : numeric('bpm', options.tempo.default)
 
   return { tempo, parts }
@@ -188,39 +197,39 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   const name = part.name.name
   const properties = resolveArgumentList(context, part.properties, partSchema)
 
-  const length = clamped(properties.length, 0, Number.POSITIVE_INFINITY)
+  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
   const endTime = numeric('beats', startTime.value + length.value)
 
   const routings = part.routings.map((routing): InstrumentRouting => {
-    const source = PatternType.cast(resolve(context, routing.source))
-    const instrument = InstrumentType.cast(resolve(context, routing.destination))
+    const source = PatternFacet.get(resolve(context, routing.source))
+    const instrument = InstrumentFacet.get(resolve(context, routing.destination))
 
     return {
       source: {
         type: 'pattern',
-        value: source.data
+        value: source
       },
 
       destination: {
         type: 'instrument',
-        id: instrument.data.id
+        id: instrument.id
       }
     }
   })
 
   for (const automation of part.automations) {
-    const target = ParameterType.cast(resolve(context, automation.target))
-    const curve = CurveType.cast(resolve(context, automation.curve))
+    const target = ParameterFacet.get(resolve(context, automation.target))
+    const curve = CurveFacet.get(resolve(context, automation.curve))
 
-    const rendered = renderCurvePoints(curve.data, startTime, endTime)
-    const existing = context.top.automations.get(target.data.id)
+    const rendered = renderCurvePoints(curve, startTime, endTime)
+    const existing = context.top.automations.get(target.id)
 
     const points = existing == null
       ? rendered
       : [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
 
-    context.top.automations.set(target.data.id, {
-      parameterId: target.data.id,
+    context.top.automations.set(target.id, {
+      parameterId: target.id,
       points
     })
   }
@@ -237,7 +246,10 @@ function generateMixer (context: Context, mixer?: ast.MixerStatement): Mixer {
   if (mixer != null) {
     for (const bus of buses) {
       assert(!mixerContext.resolutions.has(bus.name))
-      const busValue = BusType.of(bus)
+      const busValue = BusType.of(bus, {
+        gain: Parameters.of(bus.gain),
+        pan: Parameters.of(bus.pan)
+      })
       mixerContext.resolutions.set(bus.name, busValue)
       context.top.buses.set(bus.name, busValue)
     }
@@ -282,13 +294,16 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   const properties = resolveArgumentList(context, bus.properties, busSchema)
 
   const effects = bus.effects.map((effect) => {
-    return EffectType.cast(resolve(context, effect.expression)).data
+    return EffectFacet.get(resolve(context, effect.expression))
   })
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
-  const gain = allocateParameter(context.top, properties.gain ?? numeric('db', 0))
-  const pan = allocateParameter(context.top, properties.pan ?? numeric(undefined, 0))
+  const gainData = properties.gain != null ? NumberFacet.get(properties.gain) : numeric('db', 0)
+  const panData = properties.pan != null ? NumberFacet.get(properties.pan) : numeric(undefined, 0)
+
+  const gain = allocateParameter(context.top, gainData)
+  const pan = allocateParameter(context.top, panData)
 
   return { id, name, gain, pan, effects }
 }
@@ -299,7 +314,7 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
   return bus.sources.map((identifier) => {
     const source = resolve(mixerContext, identifier)
 
-    const toRouting = (src: { type: Type['name'], id: InstrumentId | BusId }): MixerRouting => ({
+    const toRouting = (src: { type: 'instrument' | 'bus', id: InstrumentId | BusId }): MixerRouting => ({
       implicit: false,
       source: src.type === 'instrument'
         ? { type: 'instrument', id: src.id as InstrumentId }
@@ -307,12 +322,12 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
       destination: { type: 'bus', id: destination.id }
     })
 
-    if (InstrumentType.is(source)) {
-      return toRouting({ type: InstrumentType.name, id: source.data.id })
+    if (InstrumentFacet.has(source)) {
+      return toRouting({ type: 'instrument', id: InstrumentFacet.get(source).id })
     }
 
-    if (BusType.is(source)) {
-      return toRouting({ type: BusType.name, id: source.data.id })
+    if (BusFacet.has(source)) {
+      return toRouting({ type: 'bus', id: BusFacet.get(source).id })
     }
 
     assert(false)
@@ -354,17 +369,17 @@ function resolve (context: Context, expression: ast.Expression): Value {
   }
 }
 
-function generateString (context: Context, parts: ReadonlyArray<string | ast.Expression>): StringValue {
+function generateString (context: Context, parts: ReadonlyArray<string | ast.Expression>): Value {
   const resolvedParts = parts.map((part) => {
     return typeof part === 'string'
       ? part
-      : StringType.cast(resolve(context, part)).data
+      : StringFacet.get(resolve(context, part))
   })
 
-  return StringType.of(resolvedParts.join(''))
+  return StringFacet.type().of(resolvedParts.join(''))
 }
 
-function generatePattern (context: Context, expression: ast.Pattern): PatternValue {
+function generatePattern (context: Context, expression: ast.Pattern): Value {
   const subdivision = 1
 
   const create = expression.mode === 'serial'
@@ -378,7 +393,7 @@ function generatePattern (context: Context, expression: ast.Pattern): PatternVal
   const resolved = expression.children.map((child) => {
     return child.type === 'Step'
       ? generateStep(context, child)
-      : PatternType.cast(resolve(context, child)).data
+      : PatternFacet.get(resolve(context, child))
   })
 
   const isStep = (item: Step | Pattern): item is Step => 'value' in item
@@ -386,12 +401,12 @@ function generatePattern (context: Context, expression: ast.Pattern): PatternVal
 
   // all steps or empty pattern
   if (stepCount === resolved.length) {
-    return PatternType.of(create(resolved as readonly Step[]))
+    return PatternFacet.type().of(create(resolved as readonly Step[]))
   }
 
   // all sub-patterns
   if (stepCount === 0) {
-    return PatternType.of(combine(resolved as readonly Pattern[]))
+    return PatternFacet.type().of(combine(resolved as readonly Pattern[]))
   }
 
   // general case (mixed steps and sub-patterns)
@@ -399,26 +414,27 @@ function generatePattern (context: Context, expression: ast.Pattern): PatternVal
     return isStep(child) ? create([child]) : child
   })
 
-  return PatternType.of(combine(patterns))
+  return PatternFacet.type().of(combine(patterns))
 }
 
 function generateStep (context: Context, expression: ast.Step): Step {
   const { value } = expression
 
   const length = expression.length != null
-    ? NumberType.with(undefined).cast(resolve(context, expression.length)).data
+    ? NumberFacet.with(undefined).get(resolve(context, expression.length))
     : undefined
 
   const parameters = resolveArgumentList(context, expression.parameters, stepSchema)
+  const gate = parameters.gate != null ? NumberFacet.get(parameters.gate) : undefined
 
   if (length == null) {
-    return { value, ...parameters }
+    return { value, gate }
   }
 
-  return { value, length, ...parameters }
+  return { value, length, gate }
 }
 
-function generateCurve (context: Context, curve: ast.Curve): CurveValue {
+function generateCurve (context: Context, curve: ast.Curve): Value {
   const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
   const otherChildren = curve.children.filter((c) => c.type !== 'CurveSegment')
   assert(segments.length > 0)
@@ -434,11 +450,11 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
 
   for (const segment of segments) {
     const parameters = segment.parameters.map((point) => {
-      return NumberType.cast(resolve(context, point)).data
+      return NumberFacet.get(resolve(context, point))
     })
 
     const length = segment.length != null
-      ? NumberType.with(undefined).cast(resolve(context, segment.length)).data
+      ? NumberFacet.with(undefined).get(resolve(context, segment.length))
       : undefined
 
     const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
@@ -449,7 +465,7 @@ function generateCurve (context: Context, curve: ast.Curve): CurveValue {
     generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
   }
 
-  return CurveType.of(
+  return CurveFacet.type().of(
     createCurve(generatedSegments)
   )
 }
@@ -473,14 +489,15 @@ function computeUnaryExpression (context: Context, expression: ast.UnaryExpressi
 
   switch (expression.operator) {
     case '+':
-      if (NumberType.is(argument)) {
+      if (NumberFacet.has(argument)) {
         return argument
       }
       break
 
     case '-':
-      if (NumberType.is(argument)) {
-        return NumberType.of({ unit: argument.data.unit, value: -argument.data.value })
+      if (NumberFacet.has(argument)) {
+        const numberData = NumberFacet.get(argument)
+        return Numbers.of({ unit: numberData.unit, value: -numberData.value })
       }
       break
   }
@@ -505,54 +522,72 @@ function computeBinaryExpression (context: Context, expression: ast.BinaryExpres
 }
 
 function computePlus (left: Value, right: Value): Value {
-  if (StringType.is(left) && StringType.is(right)) {
-    return StringType.of(left.data + right.data)
+  if (StringFacet.has(left) && StringFacet.has(right)) {
+    const leftData = StringFacet.get(left)
+    const rightData = StringFacet.get(right)
+    return StringFacet.type().of(leftData + rightData)
   }
 
-  if (PatternType.is(left) && PatternType.is(right)) {
-    return PatternType.of(concatPatterns([left.data, right.data]))
+  if (PatternFacet.has(left) && PatternFacet.has(right)) {
+    const leftData = PatternFacet.get(left)
+    const rightData = PatternFacet.get(right)
+    return PatternFacet.type().of(concatPatterns([leftData, rightData]))
   }
 
-  if (NumberType.is(left) && NumberType.is(right)) {
-    return NumberType.of({ unit: left.data.unit, value: left.data.value + right.data.value })
+  if (NumberFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = NumberFacet.get(left)
+    const rightData = NumberFacet.get(right)
+    return Numbers.of({ unit: leftData.unit, value: leftData.value + rightData.value })
   }
 
   assert(false)
 }
 
 function computeMinus (left: Value, right: Value): Value {
-  if (NumberType.is(left) && NumberType.is(right)) {
-    return NumberType.of({ unit: left.data.unit, value: left.data.value - right.data.value })
+  if (NumberFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = NumberFacet.get(left)
+    const rightData = NumberFacet.get(right)
+    return Numbers.of({ unit: leftData.unit, value: leftData.value - rightData.value })
   }
 
   assert(false)
 }
 
 function computeMultiply (left: Value, right: Value): Value {
-  if (NumberType.is(left) && NumberType.is(right)) {
-    return NumberType.of({ unit: left.data.unit ?? right.data.unit, value: left.data.value * right.data.value })
+  if (NumberFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = NumberFacet.get(left)
+    const rightData = NumberFacet.get(right)
+    return Numbers.of({ unit: leftData.unit ?? rightData.unit, value: leftData.value * rightData.value })
   }
 
-  if (PatternType.is(left) && NumberType.is(right)) {
-    return PatternType.of(multiplyPattern(left.data, right.data.value))
+  if (PatternFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = PatternFacet.get(left)
+    const rightData = NumberFacet.get(right)
+    return PatternFacet.type().of(multiplyPattern(leftData, rightData.value))
   }
 
-  if (NumberType.is(left) && PatternType.is(right)) {
-    return PatternType.of(multiplyPattern(right.data, left.data.value))
+  if (NumberFacet.has(left) && PatternFacet.has(right)) {
+    const leftData = NumberFacet.get(left)
+    const rightData = PatternFacet.get(right)
+    return PatternFacet.type().of(multiplyPattern(rightData, leftData.value))
   }
 
   assert(false)
 }
 
 function computeDivide (left: Value, right: Value): Value {
-  if (NumberType.is(left) && NumberType.is(right)) {
+  if (NumberFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = NumberFacet.get(left)
+    const rightData = NumberFacet.get(right)
     // Equal units cancel out
-    const unit = left.data.unit === right.data.unit ? undefined : left.data.unit
-    return NumberType.of({ unit, value: left.data.value / right.data.value })
+    const unit = leftData.unit === rightData.unit ? undefined : leftData.unit
+    return Numbers.of({ unit, value: leftData.value / rightData.value })
   }
 
-  if (PatternType.is(left) && NumberType.is(right)) {
-    return PatternType.of(multiplyPattern(left.data, 1.0 / right.data.value))
+  if (PatternFacet.has(left) && NumberFacet.has(right)) {
+    const leftData = PatternFacet.get(left)
+    const rightData = NumberFacet.get(right)
+    return PatternFacet.type().of(multiplyPattern(leftData, 1.0 / rightData.value))
   }
 
   assert(false)
@@ -567,23 +602,28 @@ function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess
   const object = resolve(context, expression.object)
   const property = expression.property.name
 
-  if (NumberType.is(object)) {
+  if (NumberFacet.has(object)) {
     assert(isSyntaxUnit(property))
-    return toNumberValue(context.top.options, property, object.data.value)
+    const numberData = NumberFacet.get(object)
+    return toNumberValue(context.top.options, property, numberData.value)
   }
 
-  return nonNull(object.type.propertyValue(object, property))
+  if (RecordFacet.has(object)) {
+    return nonNull(RecordFacet.get(object)[property])
+  }
+
+  assert(false)
 }
 
 function resolveCall (context: Context, expression: ast.Call): Value {
-  const func = FunctionType.cast(resolve(context, expression.callee))
-  const args = resolveArgumentList(context, expression.arguments, func.data.arguments)
+  const func = FunctionFacet.get(resolve(context, expression.callee))
+  const args = resolveArgumentList(context, expression.arguments, func.parameters)
 
-  return func.data.invoke(context.top, args)
+  return func.invoke(context.top, args)
 }
 
-function resolveArgumentList<S extends PropertySchema> (context: Context, args: ast.ArgumentList, schema: S): InferSchema<S> {
-  const entries: Array<[string, Value['data']]> = []
+function resolveArgumentList<S extends Schema> (context: Context, args: ast.ArgumentList, schema: S): InferSchema<S> {
+  const entries: Array<[string, Value]> = []
 
   // positionals
   for (let i = 0; i < args.length; ++i) {
@@ -595,7 +635,7 @@ function resolveArgumentList<S extends PropertySchema> (context: Context, args: 
     const param = schema.at(i)
     assert(param != null)
 
-    entries.push([param.name, resolve(context, arg).data])
+    entries.push([param.name, resolve(context, arg)])
   }
 
   // named
@@ -606,7 +646,7 @@ function resolveArgumentList<S extends PropertySchema> (context: Context, args: 
     const param = schema.find((s) => s.name === arg.key.name)
     assert(param != null)
 
-    entries.push([param.name, resolve(context, arg.value).data])
+    entries.push([param.name, resolve(context, arg.value)])
   }
 
   return Object.fromEntries(entries) as InferSchema<S>

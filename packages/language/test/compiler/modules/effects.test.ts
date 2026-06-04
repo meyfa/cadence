@@ -3,7 +3,10 @@ import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { effectsModule } from '../../../src/compiler/modules/effects.js'
-import { FunctionType } from '../../../src/compiler/types.js'
+import { Numbers } from '../../../src/compiler/type-helpers.js'
+import { FunctionFacet } from '../../../src/type-system/base/function.js'
+import { ModuleFacet } from '../../../src/type-system/base/module.js'
+import { EffectFacet } from '../../../src/type-system/domain/effect.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -17,19 +20,20 @@ describe('compiler/modules/effects.ts', () => {
   const beats = (value: number) => numeric('beats', value)
   const seconds = (value: number) => numeric('s', value)
 
-  const effects = effectsModule.data
+  const effects = ModuleFacet.get(effectsModule)
 
   describe('gain', () => {
-    const gain = effects.exports.get('gain')
-    assert.ok(gain != null && FunctionType.is(gain))
+    const gainValue = effects.exports.get('gain')
+    assert.ok(gainValue != null && FunctionFacet.has(gainValue))
+    const gain = FunctionFacet.get(gainValue)
 
     it('should create gain effect', () => {
       const context = createFunctionContext()
-      const result = gain.data.invoke(context, {
-        gain: numeric('db', -6)
+      const result = gain.invoke(context, {
+        gain: Numbers.of(numeric('db', -6))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'gain',
         gain: {
           id: 1,
@@ -40,16 +44,17 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('pan', () => {
-    const pan = effects.exports.get('pan')
-    assert.ok(pan != null && FunctionType.is(pan))
+    const panValue = effects.exports.get('pan')
+    assert.ok(panValue != null && FunctionFacet.has(panValue))
+    const pan = FunctionFacet.get(panValue)
 
     it('should create pan effect', () => {
       const context = createFunctionContext()
-      const result = pan.data.invoke(context, {
-        pan: numeric(undefined, 0.5)
+      const result = pan.invoke(context, {
+        pan: Numbers.of(numeric(undefined, 0.5))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'pan',
         pan: {
           id: 1,
@@ -60,16 +65,17 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('lowpass', () => {
-    const lowpass = effects.exports.get('lowpass')
-    assert.ok(lowpass != null && FunctionType.is(lowpass))
+    const lowpassValue = effects.exports.get('lowpass')
+    assert.ok(lowpassValue != null && FunctionFacet.has(lowpassValue))
+    const lowpass = FunctionFacet.get(lowpassValue)
 
     it('should create lowpass effect', () => {
       const context = createFunctionContext()
-      const result = lowpass.data.invoke(context, {
-        frequency: numeric('hz', 1000)
+      const result = lowpass.invoke(context, {
+        frequency: Numbers.of(numeric('hz', 1000))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'lowpass',
         frequency: {
           id: 1,
@@ -80,16 +86,17 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('highpass', () => {
-    const highpass = effects.exports.get('highpass')
-    assert.ok(highpass != null && FunctionType.is(highpass))
+    const highpassValue = effects.exports.get('highpass')
+    assert.ok(highpassValue != null && FunctionFacet.has(highpassValue))
+    const highpass = FunctionFacet.get(highpassValue)
 
     it('should create highpass effect', () => {
       const context = createFunctionContext()
-      const result = highpass.data.invoke(context, {
-        frequency: numeric('hz', 200)
+      const result = highpass.invoke(context, {
+        frequency: Numbers.of(numeric('hz', 200))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'highpass',
         frequency: {
           id: 1,
@@ -100,16 +107,17 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('width', () => {
-    const width = effects.exports.get('width')
-    assert.ok(width != null && FunctionType.is(width))
+    const widthValue = effects.exports.get('width')
+    assert.ok(widthValue != null && FunctionFacet.has(widthValue))
+    const width = FunctionFacet.get(widthValue)
 
     it('should create width effect', () => {
       const context = createFunctionContext()
-      const result = width.data.invoke(context, {
-        width: numeric(undefined, 0.8)
+      const result = width.invoke(context, {
+        width: Numbers.of(numeric(undefined, 0.8))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'width',
         width: numeric(undefined, 0.8)
       })
@@ -117,19 +125,21 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('delay', () => {
-    const delay = effects.exports.get('delay')
-    assert.ok(delay != null && FunctionType.is(delay))
+    const delayValue = effects.exports.get('delay')
+    assert.ok(delayValue != null && FunctionFacet.has(delayValue))
+    const delay = FunctionFacet.get(delayValue)
 
     it('should create delay effect', () => {
       const context = createFunctionContext()
-      const result = delay.data.invoke(context, {
-        time: beats(0.5),
-        feedback: numeric(undefined, 0.3)
+      const result = delay.invoke(context, {
+        mix: Numbers.of(numeric(undefined, 0.5)),
+        time: Numbers.of(beats(0.5)),
+        feedback: Numbers.of(numeric(undefined, 0.3))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
-        mix: undefined,
+        mix: numeric(undefined, 0.5),
         time: beats(0.5),
         feedback: numeric(undefined, 0.3)
       })
@@ -137,14 +147,15 @@ describe('compiler/modules/effects.ts', () => {
 
     it('should create delay effect with seconds', () => {
       const context = createFunctionContext()
-      const result = delay.data.invoke(context, {
-        time: seconds(1.5),
-        feedback: numeric(undefined, 0.3)
+      const result = delay.invoke(context, {
+        mix: Numbers.of(numeric(undefined, 0.5)),
+        time: Numbers.of(seconds(1.5)),
+        feedback: Numbers.of(numeric(undefined, 0.3))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
-        mix: undefined,
+        mix: numeric(undefined, 0.5),
         time: seconds(1.5),
         feedback: numeric(undefined, 0.3)
       })
@@ -152,17 +163,18 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('reverb', () => {
-    const reverb = effects.exports.get('reverb')
-    assert.ok(reverb != null && FunctionType.is(reverb))
+    const reverbValue = effects.exports.get('reverb')
+    assert.ok(reverbValue != null && FunctionFacet.has(reverbValue))
+    const reverb = FunctionFacet.get(reverbValue)
 
     it('should create reverb effect', () => {
       const context = createFunctionContext()
-      const result = reverb.data.invoke(context, {
-        decay: numeric('s', 2.0),
-        mix: numeric(undefined, 0.4)
+      const result = reverb.invoke(context, {
+        decay: Numbers.of(numeric('s', 2.0)),
+        mix: Numbers.of(numeric(undefined, 0.4))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: numeric('s', 2.0),
         mix: numeric(undefined, 0.4)
@@ -171,12 +183,12 @@ describe('compiler/modules/effects.ts', () => {
 
     it('should create reverb effect with beats', () => {
       const context = createFunctionContext()
-      const result = reverb.data.invoke(context, {
-        decay: beats(2),
-        mix: numeric(undefined, 0.4)
+      const result = reverb.invoke(context, {
+        decay: Numbers.of(beats(2)),
+        mix: Numbers.of(numeric(undefined, 0.4))
       })
 
-      assert.deepStrictEqual(result.data, {
+      assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: beats(2),
         mix: numeric(undefined, 0.4)

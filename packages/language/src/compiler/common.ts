@@ -1,43 +1,43 @@
-import { definePropertySchema } from './schema.js'
-import { NumberType } from './types.js'
+import { NumberFacet } from '../type-system/base/number.js'
+import { makeSchema } from '../type-system/schema.js'
 
-export const trackSchema = definePropertySchema([
+export const trackSchema = makeSchema([
   {
     name: 'tempo',
-    type: NumberType.with('bpm'),
+    type: NumberFacet.with('bpm').type(),
     required: false
   }
 ])
 
-export const partSchema = definePropertySchema([
+export const partSchema = makeSchema([
   {
     name: 'length',
-    type: NumberType.with('beats'),
+    type: NumberFacet.with('beats').type(),
     required: true
   }
 ])
 
-export const mixerSchema = definePropertySchema([
+export const mixerSchema = makeSchema([
   // no properties defined yet
 ])
 
-export const busSchema = definePropertySchema([
+export const busSchema = makeSchema([
   {
     name: 'gain',
-    type: NumberType.with('db'),
+    type: NumberFacet.with('db').type(),
     required: false
   },
   {
     name: 'pan',
-    type: NumberType.with(undefined),
+    type: NumberFacet.with(undefined).type(),
     required: false
   }
 ])
 
-export const stepSchema = definePropertySchema([
+export const stepSchema = makeSchema([
   {
     name: 'gate',
-    type: NumberType.with(undefined),
+    type: NumberFacet.with(undefined).type(),
     required: false
   }
 ])

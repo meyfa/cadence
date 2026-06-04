@@ -1,9 +1,16 @@
 import type { Envelope, Oscillator } from '@core'
 import { isPitch } from '@core'
 import { numeric } from '@utility'
+import { NumberFacet } from '../../type-system/base/number.js'
+import { RecordFacet } from '../../type-system/base/record.js'
+import { StringFacet } from '../../type-system/base/string.js'
+import { InstrumentFacet } from '../../type-system/domain/instrument.js'
+import { ParameterFacet } from '../../type-system/domain/parameter.js'
+import { makeType } from '../../type-system/factory.js'
+import type { Value } from '../../type-system/types.js'
+import type { FunctionContext } from '../functions.js'
 import { allocateInstrument, allocateParameter } from '../functions.js'
-import type { FunctionValue, Value } from '../types.js'
-import { FunctionType, InstrumentType, ModuleType, NumberType, StringType } from '../types.js'
+import { Functions, Modules, Parameters } from '../type-helpers.js'
 
 const UNITY_GAIN = numeric('db', 0)
 
@@ -14,54 +21,80 @@ const ENVELOPE_DECLICK: Envelope = {
   release: numeric('s', 0.003)
 }
 
-const sample = FunctionType.of({
+const SampleInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
+  gain: ParameterFacet.with('db').type()
+}))
+
+const OscillatorInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
+  gain: ParameterFacet.with('db').type()
+}))
+
+const sample = Functions.of({
   summary: 'Creates a sample-backed instrument from a URL.',
-  arguments: [
-    { name: 'url', type: StringType, required: true },
-    { name: 'gain', type: NumberType.with('db'), required: false },
-    { name: 'root_note', type: StringType, required: false },
-    { name: 'length', type: NumberType.with('s'), required: false }
+  parameters: [
+    { name: 'url', type: StringFacet.type(), required: true },
+    { name: 'gain', type: NumberFacet.with('db').type(), required: false },
+    { name: 'root_note', type: StringFacet.type(), required: false },
+    { name: 'length', type: NumberFacet.with('s').type(), required: false }
   ],
 
-  returnType: InstrumentType,
+  returnType: SampleInstrumentType,
 
   // eslint-disable-next-line camelcase
   invoke: (context, { url, gain, root_note, length }) => {
-    const gainParameter = allocateParameter(context, gain ?? UNITY_GAIN)
+    const ctx = context as FunctionContext
 
-    return allocateInstrument(context, {
+    const urlValue = StringFacet.get(url)
+    const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
+    // eslint-disable-next-line camelcase
+    const rootNoteValue = root_note != null ? StringFacet.get(root_note) : undefined
+    const lengthValue = length != null ? NumberFacet.get(length) : undefined
+
+    const gainParameter = allocateParameter(ctx, gainValue)
+
+    const instrument = allocateInstrument(ctx, {
       gain: gainParameter,
-      // eslint-disable-next-line camelcase
-      rootNote: root_note != null && isPitch(root_note) ? root_note : undefined,
+      rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
       source: {
         type: 'sample',
-        url,
-        length
+        url: urlValue,
+        length: lengthValue
       },
       envelope: ENVELOPE_DECLICK
+    })
+
+    return SampleInstrumentType.of(instrument, {
+      gain: Parameters.of(gainParameter)
     })
   }
 })
 
-function createOscillatorFunction (shape: Oscillator['shape']): FunctionValue {
-  return FunctionType.of({
+function createOscillatorFunction (shape: Oscillator['shape']): Value {
+  return Functions.of({
     summary: `Creates an instrument that produces a ${shape} wave.`,
-    arguments: [
-      { name: 'gain', type: NumberType.with('db'), required: false }
+    parameters: [
+      { name: 'gain', type: NumberFacet.with('db').type(), required: false }
     ],
 
-    returnType: InstrumentType,
+    returnType: OscillatorInstrumentType,
 
     invoke: (context, { gain }) => {
-      const gainParameter = allocateParameter(context, gain ?? UNITY_GAIN)
+      const ctx = context as FunctionContext
 
-      return allocateInstrument(context, {
+      const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
+      const gainParameter = allocateParameter(ctx, gainValue)
+
+      const instrument = allocateInstrument(ctx, {
         gain: gainParameter,
         source: {
           type: 'oscillator',
           shape
         },
         envelope: ENVELOPE_DECLICK
+      })
+
+      return OscillatorInstrumentType.of(instrument, {
+        gain: Parameters.of(gainParameter)
       })
     }
   })
@@ -72,7 +105,7 @@ const square = createOscillatorFunction('square')
 const saw = createOscillatorFunction('saw')
 const triangle = createOscillatorFunction('triangle')
 
-export const instrumentsModule = ModuleType.of({
+export const instrumentsModule = Modules.of({
   name: 'instruments',
   summary: 'Functions for creating and manipulating instruments.',
 

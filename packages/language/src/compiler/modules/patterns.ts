@@ -1,56 +1,64 @@
 import { createSerialPattern, loopPattern } from '@core'
 import { numeric } from '@utility'
-import { FunctionType, ModuleType, NumberType, PatternType, Value } from '../types.js'
+import { NumberFacet } from '../../type-system/base/number.js'
+import { PatternFacet } from '../../type-system/domain/pattern.js'
+import type { Value } from '../../type-system/types.js'
+import { Functions, Modules } from '../type-helpers.js'
 
-const loop = FunctionType.of({
+const loop = Functions.of({
   summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.',
-  arguments: [
-    { name: 'pattern', type: PatternType, required: true },
-    { name: 'times', type: NumberType.with(undefined), required: false }
+  parameters: [
+    { name: 'pattern', type: PatternFacet.type(), required: true },
+    { name: 'times', type: NumberFacet.with(undefined).type(), required: false }
   ],
 
-  returnType: PatternType,
+  returnType: PatternFacet.type(),
 
   invoke: (_context, { pattern, times }) => {
+    const patternValue = PatternFacet.get(pattern)
+
     if (times == null) {
-      return PatternType.of(loopPattern(pattern))
+      return PatternFacet.type().of(loopPattern(patternValue))
     }
 
-    const factor = times.value
+    const { value: factor } = NumberFacet.get(times)
     if (factor <= 0 || !Number.isFinite(factor)) {
-      return PatternType.of(createSerialPattern([], 1))
+      return PatternFacet.type().of(createSerialPattern([], 1))
     }
 
-    if (pattern.length == null) {
+    if (patternValue.length == null) {
       // infinite pattern multiplied by finite factor remains infinite
-      return PatternType.of(loopPattern(pattern))
+      return PatternFacet.type().of(loopPattern(patternValue))
     }
 
-    const duration = numeric('beats', pattern.length.value * factor)
+    const duration = numeric('beats', patternValue.length.value * factor)
 
-    return PatternType.of(loopPattern(pattern, duration))
+    return PatternFacet.type().of(loopPattern(patternValue, duration))
   }
 })
 
-const fill = FunctionType.of({
+const fill = Functions.of({
   summary: 'Repeats a pattern until it fills the specified duration. Longer patterns are truncated.',
-  arguments: [
-    { name: 'pattern', type: PatternType, required: true },
-    { name: 'duration', type: NumberType.with('beats'), required: true }
+  parameters: [
+    { name: 'pattern', type: PatternFacet.type(), required: true },
+    { name: 'duration', type: NumberFacet.with('beats').type(), required: true }
   ],
 
-  returnType: PatternType,
+  returnType: PatternFacet.type(),
 
   invoke: (_context, { pattern, duration }) => {
-    if (duration.value <= 0 || !Number.isFinite(duration.value)) {
-      return PatternType.of(createSerialPattern([], 1))
+    const patternValue = PatternFacet.get(pattern)
+    const durationValue = NumberFacet.get(duration)
+
+    if (durationValue.value <= 0 || !Number.isFinite(durationValue.value)) {
+      return PatternFacet.type().of(createSerialPattern([], 1))
     }
 
-    return PatternType.of(loopPattern(pattern, duration))
+    return PatternFacet.type().of(loopPattern(patternValue, durationValue))
   }
 })
 
-export const patternsModule = ModuleType.of({
+export const patternsModule = Modules.of({
   name: 'patterns',
   summary: 'Functions for creating and manipulating patterns.',
 
