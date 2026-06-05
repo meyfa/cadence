@@ -1,88 +1,190 @@
 import type { Effect } from '@core'
 import { NumberFacet } from '../../type-system/base/number.js'
-import { makeUnion } from '../../type-system/factory.js'
-import type { InferSchema, Schema } from '../../type-system/schema.js'
+import { RecordFacet } from '../../type-system/base/record.js'
+import { EffectFacet } from '../../type-system/domain/effect.js'
+import { ParameterFacet } from '../../type-system/domain/parameter.js'
+import { makeType, makeUnion } from '../../type-system/factory.js'
 import type { Value } from '../../type-system/types.js'
 import type { FunctionContext } from '../functions.js'
 import { allocateParameter } from '../functions.js'
-import { Functions, Modules } from '../type-helpers.js'
-import { EffectFacet } from '../../type-system/domain/effect.js'
+import { Functions, Modules, Parameters } from '../type-helpers.js'
 
-// Factory
+// types
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-const createEffectConstructor = <T extends Effect, const S extends Schema>(
-  summary: string,
-  schema: S,
-  create: (context: FunctionContext, args: InferSchema<S>) => T
-) => {
-  return Functions.of({
-    summary,
-    parameters: schema,
-    returnType: EffectFacet.type(),
-    invoke: (context, args) => EffectFacet.type().of(create(context as FunctionContext, args))
-  })
-}
-
-// Effects
-
-const gain = createEffectConstructor('Applies a gain adjustment to the signal.', [
-  { name: 'gain', type: NumberFacet.with('db').type(), required: true }
-], (context, args) => ({
-  type: 'gain',
-  gain: allocateParameter(context, NumberFacet.get(args.gain))
+const GainEffectType = makeType(EffectFacet, RecordFacet.with({
+  gain: ParameterFacet.with('db').type()
 }))
 
-const pan = createEffectConstructor('Places the signal in the stereo field.', [
-  { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
-], (context, args) => ({
-  type: 'pan',
-  pan: allocateParameter(context, NumberFacet.get(args.pan))
+const PanEffectType = makeType(EffectFacet, RecordFacet.with({
+  pan: ParameterFacet.with(undefined).type()
 }))
 
-const lowpass = createEffectConstructor('Filters out frequencies above the cutoff.', [
-  { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
-], (context, args) => ({
-  type: 'lowpass',
-  frequency: allocateParameter(context, NumberFacet.get(args.frequency))
+const LowpassEffectType = makeType(EffectFacet, RecordFacet.with({
+  frequency: ParameterFacet.with('hz').type()
 }))
 
-const highpass = createEffectConstructor('Filters out frequencies below the cutoff.', [
-  { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
-], (context, args) => ({
-  type: 'highpass',
-  frequency: allocateParameter(context, NumberFacet.get(args.frequency))
+const HighpassEffectType = makeType(EffectFacet, RecordFacet.with({
+  frequency: ParameterFacet.with('hz').type()
 }))
 
-const width = createEffectConstructor('Adjusts the stereo width of the signal.', [
-  { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
-], (context, args) => ({
-  type: 'width',
-  width: NumberFacet.get(args.width)
-}))
+const WidthEffectType = makeType(EffectFacet)
+const DelayEffectType = makeType(EffectFacet)
+const ReverbEffectType = makeType(EffectFacet)
 
-const delay = createEffectConstructor('Adds echoes with configurable mix, time, and feedback.', [
-  { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
-  { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
-  { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true }
-], (context, args) => ({
-  type: 'delay',
-  mix: NumberFacet.get(args.mix),
-  time: NumberFacet.get(args.time),
-  feedback: NumberFacet.get(args.feedback)
-}))
+// factories
 
-const reverb = createEffectConstructor('Adds reverberation with configurable mix and decay.', [
-  { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
-  { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true }
-], (context, args) => ({
-  type: 'reverb',
-  mix: NumberFacet.get(args.mix),
-  decay: NumberFacet.get(args.decay)
-}))
+const gain = Functions.of({
+  summary: 'Applies a gain adjustment to the signal.',
+
+  parameters: [
+    { name: 'gain', type: NumberFacet.with('db').type(), required: true }
+  ],
+
+  returnType: GainEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'gain',
+      gain: allocateParameter(context as FunctionContext, NumberFacet.get(args.gain))
+    }
+
+    return GainEffectType.of(effect, {
+      gain: Parameters.of(effect.gain)
+    })
+  }
+})
+
+const pan = Functions.of({
+  summary: 'Places the signal in the stereo field.',
+
+  parameters: [
+    { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
+  ],
+
+  returnType: PanEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'pan',
+      pan: allocateParameter(context as FunctionContext, NumberFacet.get(args.pan))
+    }
+
+    return PanEffectType.of(effect, {
+      pan: Parameters.of(effect.pan)
+    })
+  }
+})
+
+const lowpass = Functions.of({
+  summary: 'Filters out frequencies above the cutoff.',
+
+  parameters: [
+    { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
+  ],
+
+  returnType: LowpassEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'lowpass',
+      frequency: allocateParameter(context as FunctionContext, NumberFacet.get(args.frequency))
+    }
+
+    return LowpassEffectType.of(effect, {
+      frequency: Parameters.of(effect.frequency)
+    })
+  }
+})
+
+const highpass = Functions.of({
+  summary: 'Filters out frequencies below the cutoff.',
+
+  parameters: [
+    { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
+  ],
+
+  returnType: HighpassEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'highpass',
+      frequency: allocateParameter(context as FunctionContext, NumberFacet.get(args.frequency))
+    }
+
+    return HighpassEffectType.of(effect, {
+      frequency: Parameters.of(effect.frequency)
+    })
+  }
+})
+
+const width = Functions.of({
+  summary: 'Adjusts the stereo width of the signal.',
+
+  parameters: [
+    { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
+  ],
+
+  returnType: WidthEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'width',
+      width: NumberFacet.get(args.width)
+    }
+
+    return WidthEffectType.of(effect)
+  }
+})
+
+const delay = Functions.of({
+  summary: 'Adds echoes with configurable mix, time, and feedback.',
+
+  parameters: [
+    { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
+    { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
+    { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true }
+  ],
+
+  returnType: DelayEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'delay',
+      mix: NumberFacet.get(args.mix),
+      time: NumberFacet.get(args.time),
+      feedback: NumberFacet.get(args.feedback)
+    }
+
+    return DelayEffectType.of(effect)
+  }
+})
+
+const reverb = Functions.of({
+  summary: 'Adds reverberation with configurable mix and decay.',
+
+  parameters: [
+    { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
+    { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true }
+  ],
+
+  returnType: ReverbEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'reverb',
+      mix: NumberFacet.get(args.mix),
+      decay: NumberFacet.get(args.decay)
+    }
+
+    return ReverbEffectType.of(effect)
+  }
+})
+
+// module
 
 export const effectsModule = Modules.of({
   name: 'effects',
+
   summary: 'Effect functions for shaping mixer bus audio.',
 
   exports: new Map<string, Value>([

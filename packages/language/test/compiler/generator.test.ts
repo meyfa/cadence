@@ -279,6 +279,36 @@ describe('compiler/generator.ts', () => {
     ])
   })
 
+  it('should automate effect parameters', () => {
+    const source = [
+      'use "effects" as fx',
+      'lp = fx.lowpass(123.hz)',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate lp.frequency as curve[lin(500.hz, 1000.hz)]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus main {',
+      '    effect lp',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    const effect = result.mixer.buses[0].effects[0]
+    assert.strictEqual(effect.type, 'lowpass')
+    assert.deepStrictEqual(effect.frequency.initial, numeric('hz', 123))
+
+    const automation = result.automations.get(effect.frequency.id)
+    assert.ok(automation != null)
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('hz', 500), curve: 'step' },
+      { time: numeric('beats', 16), value: numeric('hz', 1000), curve: 'linear' }
+    ])
+  })
+
   it('should route instruments into the output when no mixer is present', () => {
     const source = [
       'use "instruments" as *',
