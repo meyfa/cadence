@@ -7,6 +7,7 @@ import { Numbers } from '../../../src/compiler/type-helpers.js'
 import { FunctionFacet } from '../../../src/type-system/base/function.js'
 import { ModuleFacet } from '../../../src/type-system/base/module.js'
 import { EffectFacet } from '../../../src/type-system/domain/effect.js'
+import { RecordFacet } from '../../../src/type-system/base/record.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -40,6 +41,8 @@ describe('compiler/modules/effects.ts', () => {
           initial: numeric('db', -6)
         }
       })
+
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['gain'])
     })
   })
 
@@ -61,6 +64,8 @@ describe('compiler/modules/effects.ts', () => {
           initial: numeric(undefined, 0.5)
         }
       })
+
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['pan'])
     })
   })
 
@@ -82,6 +87,8 @@ describe('compiler/modules/effects.ts', () => {
           initial: numeric('hz', 1000)
         }
       })
+
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['frequency'])
     })
   })
 
@@ -103,6 +110,8 @@ describe('compiler/modules/effects.ts', () => {
           initial: numeric('hz', 200)
         }
       })
+
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['frequency'])
     })
   })
 
@@ -121,6 +130,8 @@ describe('compiler/modules/effects.ts', () => {
         type: 'width',
         width: numeric(undefined, 0.8)
       })
+
+      assert.strictEqual(RecordFacet.has(result), false)
     })
   })
 
@@ -143,6 +154,8 @@ describe('compiler/modules/effects.ts', () => {
         time: beats(0.5),
         feedback: numeric(undefined, 0.3)
       })
+
+      assert.strictEqual(RecordFacet.has(result), false)
     })
 
     it('should create delay effect with seconds', () => {
@@ -159,6 +172,8 @@ describe('compiler/modules/effects.ts', () => {
         time: seconds(1.5),
         feedback: numeric(undefined, 0.3)
       })
+
+      assert.strictEqual(RecordFacet.has(result), false)
     })
   })
 
@@ -179,6 +194,8 @@ describe('compiler/modules/effects.ts', () => {
         decay: numeric('s', 2.0),
         mix: numeric(undefined, 0.4)
       })
+
+      assert.strictEqual(RecordFacet.has(result), false)
     })
 
     it('should create reverb effect with beats', () => {
@@ -193,6 +210,8 @@ describe('compiler/modules/effects.ts', () => {
         decay: beats(2),
         mix: numeric(undefined, 0.4)
       })
+
+      assert.strictEqual(RecordFacet.has(result), false)
     })
   })
 })
