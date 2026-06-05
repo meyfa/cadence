@@ -25,8 +25,8 @@ export const Functions = {
 
 export const Modules = {
   of: (value: Module): Value => {
-    const exportTypes: Record<string, FacetType> = {}
-    const exportValues: Record<string, Value> = {}
+    const exportTypes: Record<string, FacetType> = Object.create(null)
+    const exportValues: Record<string, Value> = Object.create(null)
 
     for (const [name, exportValue] of value.exports) {
       exportTypes[name] = exportValue.type

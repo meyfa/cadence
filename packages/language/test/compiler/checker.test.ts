@@ -376,5 +376,26 @@ describe('compiler/checker.ts', () => {
         'Expected type pattern, got number'
       ])
     })
+
+    it('should reject accessing prototype', () => {
+      const source = [
+        'use "instruments" as inst',
+        'module_proto = inst.__proto__',
+        'instrument_proto = inst.sample("piano.wav").__proto__',
+        'module_constructor = inst.constructor',
+        'instrument_constructor = inst.sample("piano.wav").constructor',
+        'module_tostring = inst.toString',
+        'instrument_tostring = inst.sample("piano.wav").toString'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Module "instruments" has no export named "__proto__"',
+        'Type instrument + record(gain) has no property named "__proto__"',
+        'Module "instruments" has no export named "constructor"',
+        'Type instrument + record(gain) has no property named "constructor"',
+        'Module "instruments" has no export named "toString"',
+        'Type instrument + record(gain) has no property named "toString"'
+      ])
+    })
   })
 })

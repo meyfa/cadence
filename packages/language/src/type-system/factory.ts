@@ -1,14 +1,15 @@
 import { isFacetAssignableFromFacet, isFacetAssignableFromType, isTypeAssignableFromType } from './assignability.js'
 import type { DataForFacets, Facet, FacetType, Generics, SpecificFacetDataForValue, Type, UnionType, Value, ValueForType } from './types.js'
 
-export interface FacetOptions {
+export interface FacetOptions<Data = unknown> {
   readonly format?: () => string
+  readonly normalize?: (data: unknown) => Data
 }
 
 export function makeFacet<const Name extends string, Data> (
   name: Name,
   generics: Generics,
-  options?: FacetOptions
+  options?: FacetOptions<Data>
 ): Facet<Name, Data> {
   let cachedType: FacetType<[Facet<Name, Data>]> | undefined = undefined
 
@@ -41,7 +42,9 @@ export function makeFacet<const Name extends string, Data> (
     type: () => {
       cachedType ??= makeType(facet)
       return cachedType
-    }
+    },
+
+    normalize: options?.normalize
   }
 
   return facet
@@ -78,7 +81,10 @@ export function makeType<const Facets extends readonly Facet[]> (
 
     of: (...data: DataForFacets<Facets>): ValueForType<FacetType<Facets>> => {
       const dataMap = new Map<string, unknown>(
-        Array.from(type.facets.entries(), ([name], index) => [name, data[index]])
+        Array.from(type.facets.entries(), ([name, facet], index) => [
+          name,
+          facet.normalize == null ? data[index] : facet.normalize(data[index])
+        ])
       )
 
       return { type, data: dataMap }
