@@ -31,6 +31,8 @@ export interface Facet<Name extends string = string, Data = unknown> {
 
   readonly type: () => FacetType<[Facet<Name, Data>]>
 
+  readonly normalize?: (data: unknown) => Data
+
   // used for type inference of facet data, not actually present at runtime
   readonly [facetDataType]?: Data
 }

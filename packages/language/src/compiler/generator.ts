@@ -609,7 +609,8 @@ function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess
   }
 
   if (RecordFacet.has(object)) {
-    return nonNull(RecordFacet.get(object)[property])
+    const record = RecordFacet.get(object)
+    return nonNull(Object.hasOwn(record, property) ? record[property] : undefined)
   }
 
   assert(false)

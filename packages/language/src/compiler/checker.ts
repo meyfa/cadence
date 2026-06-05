@@ -747,7 +747,7 @@ function checkPropertyAccess (context: Context, expression: ast.PropertyAccess):
 
   if (RecordFacet.is(object)) {
     const record = RecordFacet.detail(object)
-    if (record[property.name] != null) {
+    if (Object.hasOwn(record, property.name)) {
       return { errors: [], result: record[property.name] }
     }
 

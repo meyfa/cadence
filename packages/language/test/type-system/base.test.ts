@@ -134,6 +134,36 @@ describe('type-system/base', () => {
       assert.strictEqual(StringFacet.get(recordData.label), 'lead')
     })
 
+    it('should reject non-plain objects for record fields', () => {
+      assert.throws(
+        () => RecordFacet.with({ __proto__: NumberFacet.type() } as Record<string, any>),
+        /Expected record facet data to use a plain object or null prototype/
+      )
+    })
+
+    it('should not expose object prototype properties', () => {
+      const recordFacet = RecordFacet.with({ gain: NumberFacet.type() })
+      const recordType = recordFacet.type()
+      const recordValue = recordType.of({ gain: NumberFacet.with('db').type().of(numeric('db', -9)) })
+      const recordData = recordFacet.get(recordValue)
+
+      assert.strictEqual(Object.getPrototypeOf(RecordFacet.detail(recordType)), null)
+      assert.strictEqual(Object.getPrototypeOf(recordData), null)
+
+      assert.strictEqual(RecordFacet.detail(recordType).__proto__, undefined)
+      assert.strictEqual((recordData as Record<string, unknown>).constructor, undefined)
+
+      const genericRecordType = RecordFacet.type()
+      const genericRecordValue = genericRecordType.of({ gain: NumberFacet.with('db').type().of(numeric('db', -9)) })
+      const genericRecordData = RecordFacet.get(genericRecordValue)
+
+      assert.strictEqual(Object.getPrototypeOf(RecordFacet.detail(genericRecordType)), null)
+      assert.strictEqual(Object.getPrototypeOf(genericRecordData), null)
+
+      assert.strictEqual(RecordFacet.detail(genericRecordType).__proto__, undefined)
+      assert.strictEqual((genericRecordData as Record<string, unknown>).constructor, undefined)
+    })
+
     it('should compare records based on field assignability', () => {
       const broadRecordFacet = RecordFacet.with({ gain: NumberFacet.type() })
       const narrowRecordFacet = RecordFacet.with({ gain: NumberFacet.with('db').type() })
