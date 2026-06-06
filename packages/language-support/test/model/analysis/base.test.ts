@@ -27,7 +27,7 @@ describe('model/analysis/base.ts', () => {
       'track (tempo: tempo) {',
       '  part intro (4.bars) {',
       '    kick << p.loop([x---])',
-      '    automate kick.gain as curve [hold(-60.db)]',
+      '    automate kick.gain as ~[hold(-60.db)]',
       '  }',
       '}',
       '',

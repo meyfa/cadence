@@ -11,6 +11,7 @@
   stringEscape { "\\" $[.] }
   stringContent { !["\\{] }
 
+  "~["
   "[" "]"
   "<" ">"
   "{" "}"
@@ -95,8 +96,7 @@ step {
 }
 
 Curve {
-  kw<"curve">
-  "["
+  "~["
   (curveSegment | interpolationExpression)*
   "]"
 }

@@ -7,8 +7,7 @@ export const keywords = Object.freeze([
   'mixer',
   'bus',
   'effect',
-  'automate',
-  'curve'
+  'automate'
 ] as const)
 
 export type Keyword = (typeof keywords)[number]

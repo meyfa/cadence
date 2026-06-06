@@ -160,26 +160,26 @@ describe('compiler/checker.ts', () => {
     })
 
     it('should accept lin curves', () => {
-      assertValid('my_curve = curve[lin((-60).db, 0.db)]')
+      assertValid('my_curve = ~[lin((-60).db, 0.db)]')
     })
 
     it('should accept curves with weighted segments', () => {
-      assertValid('my_curve = curve[hold((-60).db):3 lin((-60).db, 0.db):1]')
+      assertValid('my_curve = ~[hold((-60).db):3 lin((-60).db, 0.db):1]')
     })
 
     it('should accept lin curves that omit the start after the first segment', () => {
-      assertValid('my_curve = curve[hold((-60).db):3 lin(0.db):1]')
+      assertValid('my_curve = ~[hold((-60).db):3 lin(0.db):1]')
     })
 
     it('should accept hold curves that omit the value after the first segment', () => {
-      assertValid('my_curve = curve[lin((-60).db, (-30).db):3 hold:1]')
+      assertValid('my_curve = ~[lin((-60).db, (-30).db):3 hold:1]')
     })
 
     it('should accept bus gain automation via explicit namespace', () => {
       const source = [
         'track {',
         '  part intro (4.bars) {',
-        '    automate bus.main.gain as curve[lin((-20).db, 0.db)]',
+        '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
         '  }',
         '}',
         'mixer {',
@@ -280,25 +280,25 @@ describe('compiler/checker.ts', () => {
     })
 
     it('should reject curves with non-numeric parameters', () => {
-      assertErrorMessages('my_curve = curve[hold("not a number")]', [
+      assertErrorMessages('my_curve = ~[hold("not a number")]', [
         'Expected type number, got string'
       ])
     })
 
     it('should reject lin curves that omit the start for the first segment', () => {
-      assertErrorMessages('my_curve = curve[lin(0.db)]', [
+      assertErrorMessages('my_curve = ~[lin(0.db)]', [
         'First curve segment cannot omit its first parameter'
       ])
     })
 
     it('should reject hold curves that omit the value for the first segment', () => {
-      assertErrorMessages('my_curve = curve[hold]', [
+      assertErrorMessages('my_curve = ~[hold]', [
         'First curve segment cannot omit its first parameter'
       ])
     })
 
     it('should reject omitted lin starts when the inherited and explicit units differ', () => {
-      assertErrorMessages('my_curve = curve[hold((-60).db) lin(120.bpm)]', [
+      assertErrorMessages('my_curve = ~[hold((-60).db) lin(120.bpm)]', [
         'Expected type number(db), got number(bpm)'
       ])
     })
@@ -308,7 +308,7 @@ describe('compiler/checker.ts', () => {
         'some_value = ""',
         'track {',
         '  part intro (4.bars) {',
-        '    automate some_value as curve[hold(-60)]',
+        '    automate some_value as ~[hold(-60)]',
         '  }',
         '}'
       ].join('\n')

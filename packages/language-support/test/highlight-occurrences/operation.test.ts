@@ -35,7 +35,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'track (120.bpm) {',
       '  part foo {',
-      '    automate bus.foo.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
       'mixer {',
@@ -75,7 +75,7 @@ describe('highlight-occurrences/operation.ts', () => {
       'synth = sample("...")',
       'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as curve [hold(-60.db):3 lin(0.db):1]',
+      '    automate synth.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
       ''

@@ -74,7 +74,7 @@ describe('language-support.ts', () => {
       'instrument = sample("kick-{tempo}")',
       'track (tempo: 140.bpm) {',
       '  part drums {',
-      '    automate lib.gain as curve [hold(-60.db) lin(-60.db, 0.db)]',
+      '    automate lib.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
       '  }',
       '}',
       'mixer {',

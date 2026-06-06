@@ -332,17 +332,14 @@ const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
   }
 )
 
-const curve_: p.Parser<Token, unknown, ast.Curve> = p.ab(
-  keyword('curve'),
-  combine3(
-    expectLiteral('['),
-    p.many(
-      p.eitherOr(curveSegment_, patternInterpolation_)
-    ),
-    expectLiteral(']')
+const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
+  literal('~['),
+  p.many(
+    p.eitherOr(curveSegment_, patternInterpolation_)
   ),
-  (_curve, [_l, children, _r]) => {
-    return ast.make('Curve', combineSourceRanges(_curve, _r), { children })
+  expectLiteral(']'),
+  (_l, children, _r) => {
+    return ast.make('Curve', combineSourceRanges(_l, _r), { children })
   }
 )
 
