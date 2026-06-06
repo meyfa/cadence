@@ -302,4 +302,28 @@ describe('lexer/lexer.ts', () => {
       ]
     })
   })
+
+  it('should lex curves', () => {
+    const result = lex('~[hold(0.db)]')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: '~[', text: '~[' },
+
+        { name: 'word', text: 'hold' },
+        { name: '(', text: '(' },
+        { name: 'number', text: '0' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'db' },
+        { name: ')', text: ')' },
+
+        { name: ']', text: ']' }
+      ]
+    })
+  })
+
+  it('should not lex curves when tilde and bracket are separated by whitespace', () => {
+    const result = lex('~ [hold(0.db)]')
+    assert.strictEqual(result.complete, false)
+  })
 })

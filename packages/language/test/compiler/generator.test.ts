@@ -131,7 +131,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as curve[lin((-60).db, 0.db)]',
+      '    automate synth.gain as ~[lin((-60).db, 0.db)]',
       '  }',
       '}'
     ].join('\n')
@@ -152,7 +152,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as curve[lin((-60).db, (-30).db) lin((-30).db, 0.db)]',
+      '    automate synth.gain as ~[lin((-60).db, (-30).db) lin((-30).db, 0.db)]',
       '  }',
       '}'
     ].join('\n')
@@ -174,7 +174,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as curve[hold((-60).db):3 lin((-60).db, 0.db):1]',
+      '    automate synth.gain as ~[hold((-60).db):3 lin((-60).db, 0.db):1]',
       '  }',
       '}'
     ].join('\n')
@@ -196,7 +196,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as curve[hold((-60).db):3 lin(0.db):1]',
+      '    automate synth.gain as ~[hold((-60).db):3 lin(0.db):1]',
       '  }',
       '}'
     ].join('\n')
@@ -218,7 +218,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as curve[lin((-60).db, (-30).db):3 hold:1]',
+      '    automate synth.gain as ~[lin((-60).db, (-30).db):3 hold:1]',
       '  }',
       '}'
     ].join('\n')
@@ -240,7 +240,7 @@ describe('compiler/generator.ts', () => {
       'synth = sample("synth.wav")',
       'track {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as curve[hold((-60).db):(-2) lin((-60).db, (-30).db):0 lin((-30).db, 0.db):1]',
+      '    automate synth.gain as ~[hold((-60).db):(-2) lin((-60).db, (-30).db):0 lin((-30).db, 0.db):1]',
       '  }',
       '}'
     ].join('\n')
@@ -260,7 +260,7 @@ describe('compiler/generator.ts', () => {
     const source = [
       'track {',
       '  part intro (4.bars) {',
-      '    automate bus.main.gain as curve[lin((-20).db, 0.db)]',
+      '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
       '  }',
       '}',
       'mixer {',
@@ -285,7 +285,7 @@ describe('compiler/generator.ts', () => {
       'lp = fx.lowpass(123.hz)',
       'track {',
       '  part intro (4.bars) {',
-      '    automate lp.frequency as curve[lin(500.hz, 1000.hz)]',
+      '    automate lp.frequency as ~[lin(500.hz, 1000.hz)]',
       '  }',
       '}',
       'mixer {',

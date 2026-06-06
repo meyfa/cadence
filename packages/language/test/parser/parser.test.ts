@@ -411,7 +411,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse curve expressions', () => {
-    const result = parse(lexSource('foo = curve[hold(0) lin(0, 1)]'))
+    const result = parse(lexSource('foo = ~[hold(0) lin(0, 1)]'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -443,7 +443,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse curve segment lengths', () => {
-    const result = parse(lexSource('foo = curve[hold(0):3 lin(0, 1):1]'))
+    const result = parse(lexSource('foo = ~[hold(0):3 lin(0, 1):1]'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -477,7 +477,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse curve segments without parameters', () => {
-    const result = parse(lexSource('foo = curve[hold hold:2]'))
+    const result = parse(lexSource('foo = ~[hold hold:2]'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
