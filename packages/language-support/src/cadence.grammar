@@ -183,7 +183,8 @@ TrackStatement {
 }
 
 PartStatement {
-  kw<"part"> VariableDefinition
+  kw<"part">
+  VariableDefinition?
   ("(" argumentList? ")")?
   PartBlock[group=Block] {
     "{" (Routing | Automation)* "}"

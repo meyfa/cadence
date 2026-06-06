@@ -178,8 +178,10 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
     const part = generatePart(trackContext, partStatement, currentTime)
     parts.push(part)
 
-    assert(!trackContext.resolutions.has(part.name))
-    trackContext.resolutions.set(part.name, PartFacet.type().of(part))
+    if (part.name != null) {
+      assert(!trackContext.resolutions.has(part.name))
+      trackContext.resolutions.set(part.name, PartFacet.type().of(part))
+    }
 
     currentTime = numeric('beats', currentTime.value + part.length.value)
   }
@@ -194,7 +196,7 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
 }
 
 function generatePart (context: Context, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
-  const name = part.name.name
+  const name = part.name?.name
   const properties = resolveArgumentList(context, part.properties, partSchema)
 
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)

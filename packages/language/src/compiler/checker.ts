@@ -228,16 +228,18 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
   const seenParts = new Set<string>()
 
   for (const part of track.parts) {
-    if (seenParts.has(part.name.name)) {
-      errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
-    } else if (trackContext.resolutions.has(part.name.name)) {
-      errors.push(new CompileError(`Part name "${part.name.name}" conflicts with existing identifier`, part.name.range))
+    if (part.name != null) {
+      if (seenParts.has(part.name.name)) {
+        errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
+      } else if (trackContext.resolutions.has(part.name.name)) {
+        errors.push(new CompileError(`Part name "${part.name.name}" conflicts with existing identifier`, part.name.range))
+      }
+
+      seenParts.add(part.name.name)
+
+      // Reserve the name in the local scope
+      trackContext.resolutions.set(part.name.name, PartFacet.type())
     }
-
-    seenParts.add(part.name.name)
-
-    // Reserve the name in the local scope
-    trackContext.resolutions.set(part.name.name, PartFacet.type())
 
     errors.push(...checkPart(trackContext, part))
   }
