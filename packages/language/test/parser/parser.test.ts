@@ -621,10 +621,30 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should reject unnamed parts', () => {
-    const result = parse(lexSource('track { part (4 bars) {} }'))
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.message, 'Unexpected "("; expected part name')
+  it('should allow unnamed parts', () => {
+    const result = parse(lexSource('track { part (4.bars) {} }'))
+    assert.strictEqual(result.complete, true)
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'TrackStatement',
+        properties: [],
+        parts: [
+          {
+            type: 'PartStatement',
+            name: undefined,
+            properties: [
+              {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 4 },
+                property: { type: 'Identifier', name: 'bars' }
+              }
+            ],
+            routings: [],
+            automations: []
+          }
+        ]
+      }
+    ])
   })
 
   it('should reject unnamed buses', () => {

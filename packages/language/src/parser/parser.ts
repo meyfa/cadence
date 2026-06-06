@@ -542,7 +542,7 @@ const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab
 const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   combine2(
     keyword('part'),
-    expect(identifier_, 'part name')
+    p.option(identifier_, undefined)
   ),
   p.option(
     combine3(

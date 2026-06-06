@@ -317,7 +317,7 @@ const TimelinePart: FunctionComponent<{
         ref={setContainer}
         onClick={openPopover}
       >
-        {part.name}
+        {part.name ?? '(unnamed)'}
 
         <div className='text-content-100'>
           {lengthShort}
@@ -326,7 +326,7 @@ const TimelinePart: FunctionComponent<{
 
       {popoverOpen && (
         <Popover anchor={container} onClose={closePopover}>
-          <div className='font-bold'>{`part.${part.name}`}</div>
+          <div className='font-bold'>{part.name != null ? `part.${part.name}` : '(unnamed part)'}</div>
           <div>length: {lengthLong}</div>
         </Popover>
       )}
