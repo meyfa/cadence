@@ -252,4 +252,27 @@ describe('compiler/modules/effects.ts', () => {
       assert.deepStrictEqual(effect.wet, numeric('db', -3))
     })
   })
+
+  describe('clip', () => {
+    const clipValue = effects.exports.get('clip')
+    assert.ok(clipValue != null && FunctionFacet.has(clipValue))
+    const clip = FunctionFacet.get(clipValue)
+
+    it('should create clip effect', () => {
+      const context = createFunctionContext()
+      const result = clip.invoke(context, {
+        threshold: Numbers.of(numeric(undefined, 0.8))
+      })
+
+      assert.deepStrictEqual(EffectFacet.get(result), {
+        type: 'clip',
+        threshold: {
+          id: 1 as ParameterId,
+          initial: numeric(undefined, 0.8)
+        }
+      })
+
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['threshold'])
+    })
+  })
 })

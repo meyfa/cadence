@@ -9,7 +9,7 @@ import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
-import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, OscillatorNode, PanNode, ReverbNode, SampleNode, WidthNode } from './nodes.js'
+import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, OscillatorNode, PanNode, ReverbNode, SampleNode, WaveShaperNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
@@ -276,6 +276,45 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
       })
 
       return createDryWetMix(reverb, mix, effect.wet, builder)
+    }
+
+    case 'clip': {
+      // The wave shaper curve is not time-variant. Hence, we use two gain nodes to implement the threshold,
+      // one in front of the wave shaper with gain of -threshold, and one after with gain of +threshold to compensate.
+      // If the threshold is -Infinity, we must of course not apply a +Infinity gain, which would be illegal.
+
+      const invert = (value: Numeric<undefined>): Numeric<undefined> => {
+        if (value.value === 0) {
+          throw new Error('Invalid gain')
+        }
+
+        return numeric(undefined, 1 / value.value)
+      }
+
+      const thresholdGain = toTimeVariant(effect.threshold, program, gainTransform)
+
+      const input = builder.addNode<GainNode>('gain', {
+        gain: {
+          initial: invert(thresholdGain.initial),
+          points: thresholdGain.points.map(({ time, value, curve }) => ({ time, value: invert(value), curve }))
+        }
+      })
+
+      const waveShaper = builder.addNode<WaveShaperNode>('wave_shaper', {
+        curve: new Float32Array([-1, 0, 1])
+      })
+
+      const output = builder.addNode<GainNode>('gain', {
+        gain: thresholdGain
+      })
+
+      builder.addEdge(input.id, waveShaper.id)
+      builder.addEdge(waveShaper.id, output.id)
+
+      return {
+        inputs: [input.id],
+        outputs: [output.id]
+      }
     }
   }
 }

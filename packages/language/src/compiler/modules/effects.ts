@@ -38,6 +38,10 @@ const DelayEffectType = makeType(EffectFacet, RecordFacet.with({
 
 const ReverbEffectType = makeType(EffectFacet)
 
+const ClipEffectType = makeType(EffectFacet, RecordFacet.with({
+  threshold: ParameterFacet.with('db').type()
+}))
+
 // factories
 
 const gain = Functions.of({
@@ -193,6 +197,27 @@ const reverb = Functions.of({
   }
 })
 
+const clip = Functions.of({
+  summary: 'Applies hard clipping to the signal at the specified threshold.',
+
+  parameters: [
+    { name: 'threshold', type: NumberFacet.with('db').type(), required: true }
+  ],
+
+  returnType: ClipEffectType,
+
+  invoke: (context, args) => {
+    const effect: Effect = {
+      type: 'clip',
+      threshold: allocateParameter(context as FunctionContext, NumberFacet.get(args.threshold))
+    }
+
+    return ClipEffectType.of(effect, {
+      threshold: Parameters.of(effect.threshold)
+    })
+  }
+})
+
 // module
 
 export const effectsModule = Modules.of({
@@ -207,6 +232,7 @@ export const effectsModule = Modules.of({
     ['highpass', highpass],
     ['width', width],
     ['delay', delay],
-    ['reverb', reverb]
+    ['reverb', reverb],
+    ['clip', clip]
   ])
 })
