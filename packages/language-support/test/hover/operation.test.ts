@@ -72,7 +72,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, delayPosition),
       {
         range: getRangeAt(source, source.indexOf('delay('), 'delay'.length),
-        title: 'delay(mix: number, time: number(beats) | number(s), feedback: number) -> effect',
+        title: 'delay(mix: number, time: number(beats) | number(s), feedback: number, wet?: number(db)) -> effect',
         summary: 'Adds echoes with configurable mix, time, and feedback.'
       }
     )
@@ -81,7 +81,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, reverbPosition),
       {
         range: getRangeAt(source, source.indexOf('reverb('), 'reverb'.length),
-        title: 'reverb(mix: number, decay: number(beats) | number(s)) -> effect',
+        title: 'reverb(mix: number, decay: number(beats) | number(s), wet?: number(db)) -> effect',
         summary: 'Adds reverberation with configurable mix and decay.'
       }
     )

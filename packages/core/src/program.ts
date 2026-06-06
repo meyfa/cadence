@@ -188,12 +188,14 @@ export interface DelayEffect {
   readonly mix: Numeric<undefined>
   readonly time: Numeric<'beats'> | Numeric<'s'>
   readonly feedback: Numeric<undefined>
+  readonly wet: Numeric<'db'>
 }
 
 export interface ReverbEffect {
   readonly type: 'reverb'
   readonly mix: Numeric<undefined>
   readonly decay: Numeric<'beats'> | Numeric<'s'>
+  readonly wet: Numeric<'db'>
 }
 
 export interface MixerRouting {
