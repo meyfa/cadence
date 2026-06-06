@@ -31,7 +31,11 @@ const HighpassEffectType = makeType(EffectFacet, RecordFacet.with({
 }))
 
 const WidthEffectType = makeType(EffectFacet)
-const DelayEffectType = makeType(EffectFacet)
+
+const DelayEffectType = makeType(EffectFacet, RecordFacet.with({
+  feedback: ParameterFacet.with(undefined).type()
+}))
+
 const ReverbEffectType = makeType(EffectFacet)
 
 // factories
@@ -156,11 +160,13 @@ const delay = Functions.of({
       type: 'delay',
       mix: NumberFacet.get(args.mix),
       time: NumberFacet.get(args.time),
-      feedback: NumberFacet.get(args.feedback),
+      feedback: allocateParameter(context as FunctionContext, NumberFacet.get(args.feedback)),
       wet: args.wet != null ? NumberFacet.get(args.wet) : UNITY_GAIN
     }
 
-    return DelayEffectType.of(effect)
+    return DelayEffectType.of(effect, {
+      feedback: Parameters.of(effect.feedback)
+    })
   }
 })
 

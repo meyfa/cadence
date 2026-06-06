@@ -72,7 +72,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, delayPosition),
       {
         range: getRangeAt(source, source.indexOf('delay('), 'delay'.length),
-        title: 'delay(mix: number, time: number(beats) | number(s), feedback: number, wet?: number(db)) -> effect',
+        title: 'delay(mix: number, time: number(beats) | number(s), feedback: number, wet?: number(db)) -> effect + record(feedback)',
         summary: 'Adds echoes with configurable mix, time, and feedback.'
       }
     )

@@ -2,7 +2,7 @@ import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, 
 import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import { frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
+import { feedbackTransform, frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
@@ -235,8 +235,8 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'delay': {
-      if (Number.isNaN(effect.feedback.value)) {
-        throw new Error(`Invalid feedback: ${effect.feedback.value}`)
+      if (Number.isNaN(effect.feedback.initial.value)) {
+        throw new Error(`Invalid feedback: ${effect.feedback.initial.value}`)
       }
 
       if (!Number.isFinite(effect.time.value)) {
@@ -248,12 +248,9 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         time: timeToSeconds(effect.time, program.track.tempo)
       })
 
-      if (effect.feedback.value > 0) {
-        const feedback = numeric(undefined, Math.min(1.0, effect.feedback.value))
-
+      if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
         const feedbackGain = builder.addNode<GainNode>('gain', {
-          // TODO time variant
-          gain: timeVariant(feedback, [])
+          gain: toTimeVariant(effect.feedback, program, feedbackTransform)
         })
 
         builder.addEdge(delayNode.id, feedbackGain.id)

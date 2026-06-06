@@ -1,4 +1,4 @@
-import type { Program } from '@core'
+import type { ParameterId, Program } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -364,7 +364,10 @@ describe('compiler/generator.ts', () => {
       type: 'delay',
       mix: numeric(undefined, 0.25),
       time: numeric('s', 1.5),
-      feedback: numeric(undefined, 0.4),
+      feedback: {
+        id: 1 as ParameterId,
+        initial: numeric(undefined, 0.4)
+      },
       wet: numeric('db', 0)
     })
   })

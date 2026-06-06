@@ -187,7 +187,7 @@ export interface DelayEffect {
   readonly type: 'delay'
   readonly mix: Numeric<undefined>
   readonly time: Numeric<'beats'> | Numeric<'s'>
-  readonly feedback: Numeric<undefined>
+  readonly feedback: Parameter<undefined>
   readonly wet: Numeric<'db'>
 }
 

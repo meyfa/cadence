@@ -1,3 +1,4 @@
+import type { ParameterId } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -6,8 +7,8 @@ import { effectsModule } from '../../../src/compiler/modules/effects.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
 import { FunctionFacet } from '../../../src/type-system/base/function.js'
 import { ModuleFacet } from '../../../src/type-system/base/module.js'
-import { EffectFacet } from '../../../src/type-system/domain/effect.js'
 import { RecordFacet } from '../../../src/type-system/base/record.js'
+import { EffectFacet } from '../../../src/type-system/domain/effect.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -152,11 +153,14 @@ describe('compiler/modules/effects.ts', () => {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: beats(0.5),
-        feedback: numeric(undefined, 0.3),
+        feedback: {
+          id: 1 as ParameterId,
+          initial: numeric(undefined, 0.3)
+        },
         wet: numeric('db', 0)
       })
 
-      assert.strictEqual(RecordFacet.has(result), false)
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['feedback'])
     })
 
     it('should create delay effect with seconds', () => {
@@ -171,11 +175,14 @@ describe('compiler/modules/effects.ts', () => {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: seconds(1.5),
-        feedback: numeric(undefined, 0.3),
+        feedback: {
+          id: 1 as ParameterId,
+          initial: numeric(undefined, 0.3)
+        },
         wet: numeric('db', 0)
       })
 
-      assert.strictEqual(RecordFacet.has(result), false)
+      assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['feedback'])
     })
 
     it('should accept optional wet parameter', () => {
