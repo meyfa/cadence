@@ -7,7 +7,7 @@ import { dbToGain } from '../src/constants.js'
 import { createEntityKey } from '../src/entities.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode } from '../src/nodes.js'
+import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode, WaveShaperNode } from '../src/nodes.js'
 
 const defaultEnvelope: Envelope = {
   attack: numeric('s', 0.01),
@@ -1345,6 +1345,73 @@ describe('lowering.ts', () => {
             decay: numeric('s', 2),
             wet: numeric('db', wet)
           })), /Invalid gain/, `should throw for wet level: ${wet}`)
+        }
+      })
+    })
+
+    describe('clip effect', () => {
+      it('should create gain, wave shaper, and makeup nodes', () => {
+        const threshold = numeric('db', -6)
+
+        const graph = createAudioGraph(createProgramWithEffect({
+          type: 'clip',
+          threshold: {
+            id: 400 as ParameterId,
+            initial: threshold
+          }
+        }))
+
+        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+          // output node
+          {
+            id: 1 as NodeId,
+            type: 'identity'
+          } satisfies IdentityNode,
+          // pre-gain to set the threshold
+          {
+            id: 2 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 1 / dbToGain(threshold.value)),
+              points: []
+            }
+          } satisfies GainNode,
+          // wave shaper
+          {
+            id: 3 as NodeId,
+            type: 'wave_shaper',
+            curve: new Float32Array([-1, 0, 1])
+          } satisfies WaveShaperNode,
+          // makeup gain
+          {
+            id: 4 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, dbToGain(threshold.value)),
+              points: []
+            }
+          } satisfies GainNode
+        ])
+
+        assert.deepStrictEqual(graph.edges, [
+          // pre-gain to wave shaper
+          { from: 2 as NodeId, to: 3 as NodeId },
+          // wave shaper to makeup gain
+          { from: 3 as NodeId, to: 4 as NodeId },
+          // makeup gain to output
+          { from: 4 as NodeId, to: 1 as NodeId }
+        ])
+      })
+
+      it('should throw for invalid clip threshold', () => {
+        for (const threshold of [-Infinity, Infinity, Number.NaN]) {
+          assert.throws(() => createAudioGraph(createProgramWithEffect({
+            type: 'clip',
+            threshold: {
+              id: 400 as ParameterId,
+              initial: numeric('db', threshold)
+            }
+          })), /Invalid gain/, `should throw for threshold: ${threshold}`)
         }
       })
     })

@@ -14,6 +14,7 @@ export interface NodeTypeMap {
   readonly width: WidthNode
   readonly delay: DelayNode
   readonly reverb: ReverbNode
+  readonly wave_shaper: WaveShaperNode
 
   // sources
   readonly sample: SampleNode
@@ -61,6 +62,11 @@ export interface DelayNode extends AnyNode {
 export interface ReverbNode extends AnyNode {
   readonly type: 'reverb'
   readonly decay: Numeric<'s'>
+}
+
+export interface WaveShaperNode extends AnyNode {
+  readonly type: 'wave_shaper'
+  readonly curve: Float32Array<ArrayBuffer>
 }
 
 // sources

@@ -1,4 +1,4 @@
-import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WidthNode } from '@audiograph'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WaveShaperNode, WidthNode } from '@audiograph'
 import type { Transport } from '../transport/transport.js'
 import { automate } from './automation.js'
 import type { Instance } from './instance.js'
@@ -102,6 +102,12 @@ export function createReverbInstance (node: ReverbNode, transport: Transport): I
     decay: node.decay
   })
 
+  return toInstance(audioNode)
+}
+
+export function createWaveShaperInstance (node: WaveShaperNode, transport: Transport): Instance {
+  const audioNode = transport.ctx.createWaveShaper()
+  audioNode.curve = node.curve
   return toInstance(audioNode)
 }
 

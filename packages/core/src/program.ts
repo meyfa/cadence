@@ -156,7 +156,8 @@ export type Effect =
   HighpassEffect |
   WidthEffect |
   DelayEffect |
-  ReverbEffect
+  ReverbEffect |
+  ClipEffect
 
 export interface GainEffect {
   readonly type: 'gain'
@@ -196,6 +197,11 @@ export interface ReverbEffect {
   readonly mix: Numeric<undefined>
   readonly decay: Numeric<'beats'> | Numeric<'s'>
   readonly wet: Numeric<'db'>
+}
+
+export interface ClipEffect {
+  readonly type: 'clip'
+  readonly threshold: Parameter<'db'>
 }
 
 export interface MixerRouting {
