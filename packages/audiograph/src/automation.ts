@@ -84,6 +84,18 @@ export const panTransform: Transform<undefined, undefined> = {
   transformCurve: (curve) => curve
 }
 
+export const feedbackTransform: Transform<undefined, undefined> = {
+  transformValue: (value) => {
+    if (Number.isNaN(value.value)) {
+      throw new Error(`Invalid feedback: ${value.value}`)
+    }
+
+    return numeric(undefined, Math.max(0, Math.min(1, value.value)))
+  },
+
+  transformCurve: (curve) => curve
+}
+
 export const frequencyTransform: Transform<'hz', 'hz'> = {
   transformValue: (value) => {
     if (!Number.isFinite(value.value)) {

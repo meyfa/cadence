@@ -887,7 +887,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, 0.4)
+          },
           wet: numeric('db', 0)
         }))
 
@@ -951,7 +954,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, Infinity),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, 0.4)
+          },
           wet: numeric('db', 0)
         }))
 
@@ -984,7 +990,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, Number.NaN),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, 0.4)
+          },
           wet: numeric('db', 0)
         })), /Invalid mix/)
       })
@@ -995,7 +1004,10 @@ describe('lowering.ts', () => {
             type: 'delay',
             mix: numeric(undefined, 0.25),
             time: numeric('beats', time),
-            feedback: numeric(undefined, 0.4),
+            feedback: {
+              id: 400 as ParameterId,
+              initial: numeric(undefined, 0.4)
+            },
             wet: numeric('db', 0)
           })), /Invalid time/, `should throw for time: ${time}`)
         }
@@ -1006,7 +1018,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, Infinity),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, Infinity)
+          },
           wet: numeric('db', 0)
         }))
 
@@ -1025,7 +1040,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, Number.NaN),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, Number.NaN)
+          },
           wet: numeric('db', 0)
         })), /Invalid feedback/)
       })
@@ -1035,7 +1053,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('s', 1.5),
-          feedback: numeric(undefined, 0.4),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, 0.4)
+          },
           wet: numeric('db', 0)
         }))
 
@@ -1051,7 +1072,10 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4),
+          feedback: {
+            id: 400 as ParameterId,
+            initial: numeric(undefined, 0.4)
+          },
           wet: numeric('db', -6)
         }))
 
@@ -1130,7 +1154,10 @@ describe('lowering.ts', () => {
             type: 'delay',
             mix: numeric(undefined, 0.25),
             time: numeric('beats', 0.5),
-            feedback: numeric(undefined, 0.4),
+            feedback: {
+              id: 400 as ParameterId,
+              initial: numeric(undefined, 0.4)
+            },
             wet: numeric('db', wet)
           })), /Invalid gain/, `should throw for wet level: ${wet}`)
         }
