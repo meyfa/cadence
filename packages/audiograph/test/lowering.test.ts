@@ -887,48 +887,49 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4)
+          feedback: numeric(undefined, 0.4),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
-        // output node
-        {
-          id: 1 as NodeId,
-          type: 'identity'
-        } satisfies IdentityNode,
-        // delay node
-        {
-          id: 2 as NodeId,
-          type: 'delay',
-          time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
-        } satisfies DelayNode,
-        // feedback gain node
-        {
-          id: 3 as NodeId,
-          type: 'gain',
-          gain: {
-            initial: numeric(undefined, 0.4),
-            points: []
-          }
-        } satisfies GainNode,
-        // dry gain node
-        {
-          id: 4 as NodeId,
-          type: 'gain',
-          gain: {
-            initial: numeric(undefined, 1.0),
-            points: []
-          }
-        } satisfies GainNode,
-        // wet gain node
-        {
-          id: 5 as NodeId,
-          type: 'gain',
-          gain: {
-            initial: numeric(undefined, 0.5),
-            points: []
-          }
-        } satisfies GainNode
+          // output node
+          {
+            id: 1 as NodeId,
+            type: 'identity'
+          } satisfies IdentityNode,
+          // delay node
+          {
+            id: 2 as NodeId,
+            type: 'delay',
+            time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+          } satisfies DelayNode,
+          // feedback gain node
+          {
+            id: 3 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 0.4),
+              points: []
+            }
+          } satisfies GainNode,
+          // dry gain node
+          {
+            id: 4 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 1.0),
+              points: []
+            }
+          } satisfies GainNode,
+          // wet gain node
+          {
+            id: 5 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 0.5),
+              points: []
+            }
+          } satisfies GainNode
         ])
 
         assert.deepStrictEqual(graph.edges, [
@@ -938,7 +939,7 @@ describe('lowering.ts', () => {
           { from: 3 as NodeId, to: 2 as NodeId },
           // delay to wet
           { from: 2 as NodeId, to: 5 as NodeId },
-          // input to dry
+          // input to output (dry)
           { from: 4 as NodeId, to: 1 as NodeId },
           // wet to output
           { from: 5 as NodeId, to: 1 as NodeId }
@@ -950,7 +951,8 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, Infinity),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4)
+          feedback: numeric(undefined, 0.4),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
@@ -982,7 +984,8 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, Number.NaN),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, 0.4)
+          feedback: numeric(undefined, 0.4),
+          wet: numeric('db', 0)
         })), /Invalid mix/)
       })
 
@@ -992,7 +995,8 @@ describe('lowering.ts', () => {
             type: 'delay',
             mix: numeric(undefined, 0.25),
             time: numeric('beats', time),
-            feedback: numeric(undefined, 0.4)
+            feedback: numeric(undefined, 0.4),
+            wet: numeric('db', 0)
           })), /Invalid time/, `should throw for time: ${time}`)
         }
       })
@@ -1002,7 +1006,8 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, Infinity)
+          feedback: numeric(undefined, Infinity),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
@@ -1020,7 +1025,8 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('beats', 0.5),
-          feedback: numeric(undefined, Number.NaN)
+          feedback: numeric(undefined, Number.NaN),
+          wet: numeric('db', 0)
         })), /Invalid feedback/)
       })
 
@@ -1029,7 +1035,8 @@ describe('lowering.ts', () => {
           type: 'delay',
           mix: numeric(undefined, 0.25),
           time: numeric('s', 1.5),
-          feedback: numeric(undefined, 0.4)
+          feedback: numeric(undefined, 0.4),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
@@ -1038,6 +1045,96 @@ describe('lowering.ts', () => {
           time: numeric('s', 1.5)
         } satisfies DelayNode)
       })
+
+      it('should add a gain node for non-zero wet level', () => {
+        const graph = createAudioGraph(createProgramWithEffect({
+          type: 'delay',
+          mix: numeric(undefined, 0.25),
+          time: numeric('beats', 0.5),
+          feedback: numeric(undefined, 0.4),
+          wet: numeric('db', -6)
+        }))
+
+        // Note: There already is a wet gain node to handle the mix level,
+        // but it cannot be reused as there may be separate automations for the mix and wet parameters,
+        // which would unnecessarily complicate the calculations.
+        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+          // output node
+          {
+            id: 1 as NodeId,
+            type: 'identity'
+          } satisfies IdentityNode,
+          // delay node
+          {
+            id: 2 as NodeId,
+            type: 'delay',
+            time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+          } satisfies DelayNode,
+          // feedback gain node
+          {
+            id: 3 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 0.4),
+              points: []
+            }
+          } satisfies GainNode,
+          // wet gain node for wet level
+          {
+            id: 4 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, dbToGain(-6)),
+              points: []
+            }
+          } satisfies GainNode,
+          // dry gain node (mix)
+          {
+            id: 5 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 1.0),
+              points: []
+            }
+          } satisfies GainNode,
+          // wet gain node (mix)
+          {
+            id: 6 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 0.5),
+              points: []
+            }
+          } satisfies GainNode
+        ])
+
+        assert.deepStrictEqual(graph.edges, [
+          // delay to feedback
+          { from: 2 as NodeId, to: 3 as NodeId },
+          // feedback to delay
+          { from: 3 as NodeId, to: 2 as NodeId },
+          // delay to wet level
+          { from: 2 as NodeId, to: 4 as NodeId },
+          // wet level to wet mix
+          { from: 4 as NodeId, to: 6 as NodeId },
+          // input to output (dry)
+          { from: 5 as NodeId, to: 1 as NodeId },
+          // wet mix to output
+          { from: 6 as NodeId, to: 1 as NodeId }
+        ])
+      })
+
+      it('should throw for invalid wet level', () => {
+        for (const wet of [Infinity, Number.NaN]) {
+          assert.throws(() => createAudioGraph(createProgramWithEffect({
+            type: 'delay',
+            mix: numeric(undefined, 0.25),
+            time: numeric('beats', 0.5),
+            feedback: numeric(undefined, 0.4),
+            wet: numeric('db', wet)
+          })), /Invalid gain/, `should throw for wet level: ${wet}`)
+        }
+      })
     })
 
     describe('reverb effect', () => {
@@ -1045,7 +1142,8 @@ describe('lowering.ts', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
           mix: numeric(undefined, 0.75),
-          decay: numeric('s', 2)
+          decay: numeric('s', 2),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
@@ -1094,7 +1192,8 @@ describe('lowering.ts', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
           mix: numeric(undefined, 1.5),
-          decay: numeric('s', 2)
+          decay: numeric('s', 2),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
@@ -1116,7 +1215,8 @@ describe('lowering.ts', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'reverb',
           mix: numeric(undefined, Number.NaN),
-          decay: numeric('s', 2)
+          decay: numeric('s', 2),
+          wet: numeric('db', 0)
         })), /Invalid mix/)
       })
 
@@ -1125,7 +1225,8 @@ describe('lowering.ts', () => {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'reverb',
             mix: numeric(undefined, 0.75),
-            decay: numeric('s', decay)
+            decay: numeric('s', decay),
+            wet: numeric('db', 0)
           })), /Invalid decay/, `should throw for decay: ${decay}`)
         }
       })
@@ -1134,7 +1235,8 @@ describe('lowering.ts', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
           mix: numeric(undefined, 0.75),
-          decay: numeric('beats', 2)
+          decay: numeric('beats', 2),
+          wet: numeric('db', 0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
@@ -1142,6 +1244,81 @@ describe('lowering.ts', () => {
           type: 'reverb',
           decay: beatsToSeconds(numeric('beats', 2), numeric('bpm', 120))
         } satisfies ReverbNode)
+      })
+
+      it('should add a gain node for non-zero wet level', () => {
+        const graph = createAudioGraph(createProgramWithEffect({
+          type: 'reverb',
+          mix: numeric(undefined, 0.25),
+          decay: numeric('s', 2),
+          wet: numeric('db', -6)
+        }))
+
+        // Note: There already is a wet gain node to handle the mix level,
+        // but it cannot be reused as there may be separate automations for the mix and wet parameters,
+        // which would unnecessarily complicate the calculations.
+        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+          // output node
+          {
+            id: 1 as NodeId,
+            type: 'identity'
+          } satisfies IdentityNode,
+          // reverb node
+          {
+            id: 2 as NodeId,
+            type: 'reverb',
+            decay: numeric('s', 2)
+          } satisfies ReverbNode,
+          // wet gain node for wet level
+          {
+            id: 3 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, dbToGain(-6)),
+              points: []
+            }
+          } satisfies GainNode,
+          // dry gain node (mix)
+          {
+            id: 4 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 1.0),
+              points: []
+            }
+          } satisfies GainNode,
+          // wet gain node (mix)
+          {
+            id: 5 as NodeId,
+            type: 'gain',
+            gain: {
+              initial: numeric(undefined, 0.5),
+              points: []
+            }
+          } satisfies GainNode
+        ])
+
+        assert.deepStrictEqual(graph.edges, [
+          // reverb to wet
+          { from: 2 as NodeId, to: 3 as NodeId },
+          // wet level to wet mix
+          { from: 3 as NodeId, to: 5 as NodeId },
+          // dry to output
+          { from: 4 as NodeId, to: 1 as NodeId },
+          // wet mix to output
+          { from: 5 as NodeId, to: 1 as NodeId }
+        ])
+      })
+
+      it('should throw for invalid wet level', () => {
+        for (const wet of [Infinity, Number.NaN]) {
+          assert.throws(() => createAudioGraph(createProgramWithEffect({
+            type: 'reverb',
+            mix: numeric(undefined, 0.75),
+            decay: numeric('s', 2),
+            wet: numeric('db', wet)
+          })), /Invalid gain/, `should throw for wet level: ${wet}`)
+        }
       })
     })
   })

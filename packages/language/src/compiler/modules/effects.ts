@@ -1,4 +1,5 @@
 import type { Effect } from '@core'
+import { numeric } from '@utility'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { EffectFacet } from '../../type-system/domain/effect.js'
@@ -8,6 +9,8 @@ import type { Value } from '../../type-system/types.js'
 import type { FunctionContext } from '../functions.js'
 import { allocateParameter } from '../functions.js'
 import { Functions, Modules, Parameters } from '../type-helpers.js'
+
+const UNITY_GAIN = numeric('db', 0)
 
 // types
 
@@ -142,7 +145,8 @@ const delay = Functions.of({
   parameters: [
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
-    { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true }
+    { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true },
+    { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ],
 
   returnType: DelayEffectType,
@@ -152,7 +156,8 @@ const delay = Functions.of({
       type: 'delay',
       mix: NumberFacet.get(args.mix),
       time: NumberFacet.get(args.time),
-      feedback: NumberFacet.get(args.feedback)
+      feedback: NumberFacet.get(args.feedback),
+      wet: args.wet != null ? NumberFacet.get(args.wet) : UNITY_GAIN
     }
 
     return DelayEffectType.of(effect)
@@ -164,7 +169,8 @@ const reverb = Functions.of({
 
   parameters: [
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
-    { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true }
+    { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
+    { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ],
 
   returnType: ReverbEffectType,
@@ -173,7 +179,8 @@ const reverb = Functions.of({
     const effect: Effect = {
       type: 'reverb',
       mix: NumberFacet.get(args.mix),
-      decay: NumberFacet.get(args.decay)
+      decay: NumberFacet.get(args.decay),
+      wet: args.wet != null ? NumberFacet.get(args.wet) : UNITY_GAIN
     }
 
     return ReverbEffectType.of(effect)

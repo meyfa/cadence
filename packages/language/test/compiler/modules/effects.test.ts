@@ -152,7 +152,8 @@ describe('compiler/modules/effects.ts', () => {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: beats(0.5),
-        feedback: numeric(undefined, 0.3)
+        feedback: numeric(undefined, 0.3),
+        wet: numeric('db', 0)
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
@@ -170,10 +171,25 @@ describe('compiler/modules/effects.ts', () => {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: seconds(1.5),
-        feedback: numeric(undefined, 0.3)
+        feedback: numeric(undefined, 0.3),
+        wet: numeric('db', 0)
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
+    })
+
+    it('should accept optional wet parameter', () => {
+      const context = createFunctionContext()
+      const result = delay.invoke(context, {
+        mix: Numbers.of(numeric(undefined, 0.5)),
+        time: Numbers.of(beats(0.5)),
+        feedback: Numbers.of(numeric(undefined, 0.3)),
+        wet: Numbers.of(numeric('db', 3))
+      })
+
+      const effect = EffectFacet.get(result)
+      assert.strictEqual(effect.type, 'delay')
+      assert.deepStrictEqual(effect.wet, numeric('db', 3))
     })
   })
 
@@ -192,7 +208,8 @@ describe('compiler/modules/effects.ts', () => {
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: numeric('s', 2.0),
-        mix: numeric(undefined, 0.4)
+        mix: numeric(undefined, 0.4),
+        wet: numeric('db', 0)
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
@@ -208,10 +225,24 @@ describe('compiler/modules/effects.ts', () => {
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: beats(2),
-        mix: numeric(undefined, 0.4)
+        mix: numeric(undefined, 0.4),
+        wet: numeric('db', 0)
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
+    })
+
+    it('should accept optional wet parameter', () => {
+      const context = createFunctionContext()
+      const result = reverb.invoke(context, {
+        decay: Numbers.of(numeric('s', 2.0)),
+        mix: Numbers.of(numeric(undefined, 0.4)),
+        wet: Numbers.of(numeric('db', -3))
+      })
+
+      const effect = EffectFacet.get(result)
+      assert.strictEqual(effect.type, 'reverb')
+      assert.deepStrictEqual(effect.wet, numeric('db', -3))
     })
   })
 })

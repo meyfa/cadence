@@ -364,7 +364,8 @@ describe('compiler/generator.ts', () => {
       type: 'delay',
       mix: numeric(undefined, 0.25),
       time: numeric('s', 1.5),
-      feedback: numeric(undefined, 0.4)
+      feedback: numeric(undefined, 0.4),
+      wet: numeric('db', 0)
     })
   })
 
@@ -382,7 +383,8 @@ describe('compiler/generator.ts', () => {
     assert.deepStrictEqual(result.mixer.buses[0].effects[0], {
       type: 'reverb',
       mix: numeric(undefined, 0.25),
-      decay: numeric('beats', 2)
+      decay: numeric('beats', 2),
+      wet: numeric('db', 0)
     })
   })
 

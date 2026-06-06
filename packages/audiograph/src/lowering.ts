@@ -5,7 +5,7 @@ import { numeric } from '@utility'
 import { frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
-import { DEFAULT_ROOT_NOTE } from './constants.js'
+import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
@@ -260,7 +260,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         builder.addEdge(feedbackGain.id, delayNode.id)
       }
 
-      return createDryWetMix(delayNode, effect.mix.value, builder)
+      return createDryWetMix(delayNode, effect.mix.value, effect.wet, builder)
     }
 
     case 'reverb': {
@@ -278,12 +278,12 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         decay: timeToSeconds(effect.decay, program.track.tempo)
       })
 
-      return createDryWetMix(reverb, mix, builder)
+      return createDryWetMix(reverb, mix, effect.wet, builder)
     }
   }
 }
 
-function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph {
+function createDryWetMix (effect: Node, mix: number, wetGain: Numeric<'db'>, builder: Builder): SubGraph {
   if (Number.isNaN(mix)) {
     throw new Error(`Invalid mix: ${mix}`)
   }
@@ -292,8 +292,19 @@ function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph
     return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
   }
 
+  const wetLevel = createOptionalGainNode(wetGain, builder)
+
   if (mix >= 1) {
-    return toSubGraph(effect)
+    if (wetLevel == null) {
+      return toSubGraph(effect)
+    }
+
+    builder.addEdge(effect.id, wetLevel.id)
+
+    return {
+      inputs: [effect.id],
+      outputs: [wetLevel.id]
+    }
   }
 
   // dry: 0.0...0.5 -> 100%,   0.75: 50%,         1.0:   0%
@@ -309,12 +320,30 @@ function createDryWetMix (effect: Node, mix: number, builder: Builder): SubGraph
     gain: timeVariant(numeric(undefined, wet), [])
   })
 
-  builder.addEdge(effect.id, wetNode.id)
+  const wetInput = wetLevel ?? effect
+  if (wetLevel != null) {
+    builder.addEdge(effect.id, wetLevel.id)
+  }
+
+  builder.addEdge(wetInput.id, wetNode.id)
 
   return {
     inputs: [dryNode.id, effect.id],
     outputs: [dryNode.id, wetNode.id]
   }
+}
+
+function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): Node | undefined {
+  if (wetGain.value === 0) {
+    return undefined
+  }
+
+  const gain = dbToGain(wetGain.value)
+
+  return builder.addNode<GainNode>('gain', {
+    // TODO time variant
+    gain: timeVariant(numeric(undefined, gain), [])
+  })
 }
 
 function createRoutings (
