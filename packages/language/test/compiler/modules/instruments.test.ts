@@ -5,10 +5,9 @@ import { describe, it } from 'node:test'
 import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { instrumentsModule } from '../../../src/compiler/modules/instruments.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
-import { FunctionFacet } from '../../../src/type-system/base/function.js'
-import { ModuleFacet } from '../../../src/type-system/base/module.js'
 import { StringFacet } from '../../../src/type-system/base/string.js'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
+import { getFunctionExport } from './test-utils.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -18,8 +17,6 @@ function createFunctionContext (): FunctionContext {
 }
 
 describe('compiler/modules/instruments.ts', () => {
-  const instruments = ModuleFacet.get(instrumentsModule)
-
   const declickEnvelope: Envelope = {
     attack: numeric('s', 0.003),
     decay: numeric('s', 0),
@@ -28,9 +25,7 @@ describe('compiler/modules/instruments.ts', () => {
   }
 
   describe('sample', () => {
-    const sampleValue = instruments.exports.get('sample')
-    assert.ok(sampleValue != null && FunctionFacet.has(sampleValue))
-    const sample = FunctionFacet.get(sampleValue)
+    const sample = getFunctionExport(instrumentsModule, 'sample')
 
     it('should create instrument from sample', () => {
       const context = createFunctionContext()
@@ -75,9 +70,7 @@ describe('compiler/modules/instruments.ts', () => {
   })
 
   describe('sine', () => {
-    const sineValue = instruments.exports.get('sine')
-    assert.ok(sineValue != null && FunctionFacet.has(sineValue))
-    const sine = FunctionFacet.get(sineValue)
+    const sine = getFunctionExport(instrumentsModule, 'sine')
 
     it('should create oscillator instrument', () => {
       const context = createFunctionContext()
@@ -94,9 +87,7 @@ describe('compiler/modules/instruments.ts', () => {
   })
 
   describe('square', () => {
-    const squareValue = instruments.exports.get('square')
-    assert.ok(squareValue != null && FunctionFacet.has(squareValue))
-    const square = FunctionFacet.get(squareValue)
+    const square = getFunctionExport(instrumentsModule, 'square')
 
     it('should create oscillator instrument', () => {
       const context = createFunctionContext()
@@ -113,9 +104,7 @@ describe('compiler/modules/instruments.ts', () => {
   })
 
   describe('saw', () => {
-    const sawValue = instruments.exports.get('saw')
-    assert.ok(sawValue != null && FunctionFacet.has(sawValue))
-    const saw = FunctionFacet.get(sawValue)
+    const saw = getFunctionExport(instrumentsModule, 'saw')
 
     it('should create oscillator instrument', () => {
       const context = createFunctionContext()
@@ -132,9 +121,7 @@ describe('compiler/modules/instruments.ts', () => {
   })
 
   describe('triangle', () => {
-    const triangleValue = instruments.exports.get('triangle')
-    assert.ok(triangleValue != null && FunctionFacet.has(triangleValue))
-    const triangle = FunctionFacet.get(triangleValue)
+    const triangle = getFunctionExport(instrumentsModule, 'triangle')
 
     it('should create oscillator instrument', () => {
       const context = createFunctionContext()

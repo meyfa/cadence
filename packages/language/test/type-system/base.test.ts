@@ -66,7 +66,7 @@ describe('type-system/base', () => {
 
       const value = typedType.of(func)
       const loadedFunction = typedFacet.get(value)
-      const result = loadedFunction.invoke(undefined, {
+      const result = loadedFunction.invoke(undefined as never, {
         amount: amountType.of(numeric('db', -6))
       })
 

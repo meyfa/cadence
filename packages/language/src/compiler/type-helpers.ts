@@ -13,7 +13,7 @@ import type { Schema } from '../type-system/schema.js'
 import type { Facet, FacetType, Value } from '../type-system/types.js'
 
 export const Functions = {
-  of: <const S extends Schema, const R extends FacetType> (value: Function<S, R>): Value => {
+  of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
     const type = makeType(FunctionFacet.with({
       parameters: value.parameters,
       returnType: value.returnType

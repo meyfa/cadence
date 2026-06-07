@@ -5,9 +5,8 @@ import { describe, it } from 'node:test'
 import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { patternsModule } from '../../../src/compiler/modules/patterns.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
-import { FunctionFacet } from '../../../src/type-system/base/function.js'
-import { ModuleFacet } from '../../../src/type-system/base/module.js'
 import { PatternFacet } from '../../../src/type-system/domain/pattern.js'
+import { getFunctionExport } from './test-utils.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -20,12 +19,8 @@ describe('compiler/modules/patterns.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
 
-  const patterns = ModuleFacet.get(patternsModule)
-
   describe('loop', () => {
-    const loopValue = patterns.exports.get('loop')
-    assert.ok(loopValue != null && FunctionFacet.has(loopValue))
-    const loop = FunctionFacet.get(loopValue)
+    const loop = getFunctionExport(patternsModule, 'loop')
 
     it('should loop finite patterns infinitely', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
@@ -172,9 +167,7 @@ describe('compiler/modules/patterns.ts', () => {
   })
 
   describe('fill', () => {
-    const fillValue = patterns.exports.get('fill')
-    assert.ok(fillValue != null && FunctionFacet.has(fillValue))
-    const fill = FunctionFacet.get(fillValue)
+    const fill = getFunctionExport(patternsModule, 'fill')
 
     it('should loop finite patterns until the duration is filled', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
