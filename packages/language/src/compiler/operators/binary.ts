@@ -5,16 +5,12 @@ import { StringFacet } from '../../type-system/base/string.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
 import { Numbers } from '../../type-system/helpers.js'
 import type { FacetType, Value } from '../../type-system/types.js'
-import { CompileError } from '../error.js'
+import { fail } from '../assert.js'
 
 export interface BinaryOperation {
   readonly operator: ast.BinaryOperator
   readonly check: (left: FacetType, right: FacetType) => FacetType | undefined
   readonly compute: (left: Value, right: Value) => Value
-}
-
-function fail (): never {
-  throw new CompileError('Internal error in binary operation: incompatible operand types')
 }
 
 const add: BinaryOperation = {

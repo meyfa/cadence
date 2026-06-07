@@ -1,6 +1,7 @@
 import type { AutomationPoint } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
+import { assert, nonNull } from './assert.js'
 
 const SEGMENT_TYPE_HOLD = 'hold'
 const SEGMENT_TYPE_LINEAR = 'lin'
@@ -76,14 +77,8 @@ export function createCurveSegment<U extends Unit> (
   parameters: ReadonlyArray<Numeric<U>>,
   length = numeric(undefined, 1)
 ): CurveSegment<U> {
-  const definition = curveSegmentTypes.get(type)
-  if (definition == null) {
-    throw new Error(`Unknown curve type: ${type}`)
-  }
-
-  if (definition.parameterCount !== parameters.length) {
-    throw new Error('Invalid curve parameters')
-  }
+  const definition = nonNull(curveSegmentTypes.get(type), `Unknown curve segment type: ${type}`)
+  assert(definition.parameterCount === parameters.length, 'Invalid curve parameters')
 
   return definition.create(parameters, length)
 }
@@ -112,10 +107,7 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, timeStart: N
     const segment = segments[i]
     const segmentWeight = segmentWeights[i]
 
-    const definition = getCurveSegmentType(segment.type)
-    if (definition == null) {
-      throw new Error(`Unknown curve segment type: ${segment.type}`)
-    }
+    const definition = nonNull(getCurveSegmentType(segment.type), `Unknown curve segment type: ${segment.type}`)
 
     points.push({
       time: getTimeAtWeight(currentWeight),

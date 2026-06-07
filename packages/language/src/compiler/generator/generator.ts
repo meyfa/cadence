@@ -25,11 +25,11 @@ import type { CheckedProgram } from '../checker/checker.js'
 import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import type { CurveSegment as GeneratedCurveSegment } from '../curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from '../curves.js'
-import { CompileError } from '../error.js'
 import { binaryOperations } from '../operators/binary.js'
 import { unaryOperations } from '../operators/unary.js'
 import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toNumberValue } from '../units.js'
+import { assert, fail, nonNull } from '../assert.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
@@ -46,6 +46,9 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   const assignments = program.children.filter((c) => c.type === 'Assignment')
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
+
+  assert(tracks.length <= 1)
+  assert(mixers.length <= 1)
 
   processAssignments(scope, assignments)
 
@@ -70,28 +73,22 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   }
 }
 
-function assert (condition: boolean): asserts condition {
-  if (!condition) {
-    throw new CompileError('Internal compiler error (should have been caught in semantic analysis)')
-  }
-}
-
-function nonNull<T> (value: T | null | undefined): NonNullable<T> {
-  assert(value != null)
-  return value
-}
-
 function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: number): Numeric<U> {
-  return value.value < minimum || value.value > maximum
-    ? { unit: value.unit, value: Math.min(Math.max(value.value, minimum), maximum) }
-    : value
+  if (value.value >= minimum && value.value <= maximum) {
+    return value
+  }
+
+  return {
+    unit: value.unit,
+    value: Math.min(Math.max(value.value, minimum), maximum)
+  }
 }
 
 function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<string, Value> {
   const getModule = (library: ast.String) => {
-    // Checker guarantees this is a simple string
-    const name = library.parts.filter((part) => typeof part === 'string').join('')
-    return nonNull(getStandardModuleValue(name))
+    assert(library.parts.every((part) => typeof part === 'string'))
+    const module = getStandardModuleValue(library.parts.join(''))
+    return nonNull(module)
   }
 
   const result = new Map<string, Value>()
@@ -181,11 +178,9 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
     const curve = CurveFacet.get(resolve(scope, automation.curve))
 
     const rendered = renderCurvePoints(curve, startTime, endTime)
-    const existing = scope.top.automations.get(target.id)
+    const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
 
-    const points = existing == null
-      ? rendered
-      : [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
+    const points = [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
 
     scope.top.automations.set(target.id, {
       parameterId: target.id,
@@ -292,7 +287,7 @@ function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, destinat
       return toRouting({ type: 'bus', id: BusFacet.get(source).id })
     }
 
-    assert(false)
+    fail()
   })
 }
 
@@ -333,9 +328,11 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
 function generateString (scope: Scope, parts: ReadonlyArray<string | ast.Expression>): Value {
   const resolvedParts = parts.map((part) => {
-    return typeof part === 'string'
-      ? part
-      : StringFacet.get(resolve(scope, part))
+    if (typeof part === 'string') {
+      return part
+    }
+
+    return StringFacet.get(resolve(scope, part))
   })
 
   return StringFacet.type().of(resolvedParts.join(''))
@@ -427,9 +424,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
     generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
   }
 
-  return CurveFacet.type().of(
-    createCurve(generatedSegments)
-  )
+  return CurveFacet.type().of(createCurve(generatedSegments))
 }
 
 function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
@@ -471,7 +466,7 @@ function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): V
     return nonNull(Object.hasOwn(record, property) ? record[property] : undefined)
   }
 
-  assert(false)
+  fail()
 }
 
 function resolveCall (scope: Scope, expression: ast.Call): Value {
