@@ -1,5 +1,5 @@
 import type { Result } from '@language'
-import { compile, lex, parse } from '@language'
+import { check, generate, lex, parse } from '@language'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { demoCode } from '../../src/defaults/demo-code.js'
@@ -19,7 +19,10 @@ describe('defaults/demo-code.ts', () => {
     const parseResult = parse(lexResult.value)
     assert.strictEqual(parseResult.complete, true, getResultError(parseResult))
 
-    const compileResult = compile(parseResult.value, {
+    const checkResult = check(parseResult.value)
+    assert.strictEqual(checkResult.complete, true, getResultError(checkResult))
+
+    const program = generate(checkResult.value, {
       tempo: {
         default: 120,
         minimum: 1,
@@ -27,6 +30,9 @@ describe('defaults/demo-code.ts', () => {
       },
       beatsPerBar: 4
     })
-    assert.strictEqual(compileResult.complete, true, getResultError(compileResult))
+
+    assert.ok(program.track.parts.length > 0, 'Expected at least one part to be generated')
+    assert.ok(program.mixer.buses.length > 0, 'Expected at least one mixer bus to be generated')
+    assert.ok(program.instruments.size > 0, 'Expected at least one instrument to be generated')
   })
 })

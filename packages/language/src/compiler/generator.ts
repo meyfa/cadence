@@ -18,6 +18,7 @@ import { PartFacet } from '../type-system/domain/part.js'
 import { PatternFacet } from '../type-system/domain/pattern.js'
 import type { InferSchema, Schema } from '../type-system/schema.js'
 import type { FacetType, Value } from '../type-system/types.js'
+import type { CheckedProgram } from './checker.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
@@ -42,7 +43,7 @@ export interface GenerateOptions {
  * Generate a runnable program from an AST. This assumes the AST has already been
  * semantically checked and is valid.
  */
-export function generate (program: ast.Program, options: GenerateOptions): Program {
+export function generate (program: CheckedProgram, options: GenerateOptions): Program {
   const top = createGlobalScope(options, processImports(program.imports))
 
   const context = createLocalScope(top)

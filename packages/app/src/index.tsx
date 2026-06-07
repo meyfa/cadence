@@ -1,7 +1,7 @@
 import { CommonProvider, createLocalStorageBackend, DialogHost, ModuleHost, NotificationHost, PersistenceEngine } from '@editor'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
-import type { CompileOptions } from '@language'
+import type { GenerateOptions } from '@language'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
@@ -29,7 +29,7 @@ const modules = [
   playbackModule
 ]
 
-const compileOptions: CompileOptions = {
+const compileOptions: GenerateOptions = {
   beatsPerBar: 4,
   tempo: {
     default: 128,

@@ -1,6 +1,8 @@
 import type { SourceRange } from '@ast'
 import { ast } from '@ast'
-import type { Unit } from '@utility'
+import type { Brand, Unit } from '@utility'
+import { CompoundError } from '../result/errors.js'
+import type { Result } from '../result/result.js'
 import { FunctionFacet } from '../type-system/base/function.js'
 import { ModuleFacet } from '../type-system/base/module.js'
 import { NumberFacet } from '../type-system/base/number.js'
@@ -23,10 +25,23 @@ import { checkCyclicRoutings } from './routings.js'
 import { BusType } from './type-helpers.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
-export function check (program: ast.Program): readonly CompileError[] {
+export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
+export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
+
+const success = (program: CheckedProgram): CheckResult => ({
+  complete: true,
+  value: program
+})
+
+const failure = (errors: readonly CompileError[]): CheckResult => ({
+  complete: false,
+  error: new CompoundError('Program has errors', errors)
+})
+
+export function check (program: ast.Program): CheckResult {
   const importResult = checkImports(program.imports)
   if (importResult.result == null) {
-    return importResult.errors
+    return failure(importResult.errors)
   }
 
   const assignments = program.children.filter((c) => c.type === 'Assignment')
@@ -54,7 +69,7 @@ export function check (program: ast.Program): readonly CompileError[] {
 
   errors.push(...checkTracks(context, tracks))
 
-  return errors
+  return errors.length === 0 ? success(program as CheckedProgram) : failure(errors)
 }
 
 interface Context {

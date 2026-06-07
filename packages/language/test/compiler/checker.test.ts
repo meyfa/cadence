@@ -1,4 +1,3 @@
-import { ast } from '@ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../src/compiler/checker.js'
@@ -7,22 +6,16 @@ import { lex } from '../../src/lexer/lexer.js'
 import { parse } from '../../src/parser/parser.js'
 import { assertResultComplete } from '../test-utils.js'
 
-/**
- * Helper function to lex and parse source code into an AST.
- * This assumes that the lexer and parser are implemented correctly.
- */
-function lexAndParse (source: string): ast.Program {
+function checkSource (source: string): readonly CompileError[] {
   const tokens = lex(source)
   assertResultComplete(tokens)
 
-  const result = parse(tokens.value)
-  assertResultComplete(result)
+  const ast = parse(tokens.value)
+  assertResultComplete(ast)
 
-  return result.value
-}
+  const checkResult = check(ast.value)
 
-function checkSource (source: string): readonly CompileError[] {
-  return check(lexAndParse(source))
+  return checkResult.complete ? [] : checkResult.error.errors
 }
 
 function assertValid (source: string): void {
