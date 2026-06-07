@@ -390,5 +390,27 @@ describe('compiler/checker.ts', () => {
         'Type instrument + record(gain) has no property named "toString"'
       ])
     })
+
+    it('should report errors from inside binary expressions', () => {
+      const source = [
+        'use "patterns" as *',
+        'my_pattern = [x] + fill([x])'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Missing required argument "duration"'
+      ])
+    })
+
+    it('should report errors from inside calls', () => {
+      const source = [
+        'use "patterns" as *',
+        'my_pattern = loop(fill([x]))'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Missing required argument "duration"'
+      ])
+    })
   })
 })
