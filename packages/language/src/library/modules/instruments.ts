@@ -9,6 +9,7 @@ import { InstrumentFacet } from '../../type-system/domain/instrument.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { makeType } from '../../type-system/factory.js'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
+import { makeSchema } from '../../type-system/schema.js'
 import type { Value } from '../../type-system/types.js'
 
 const UNITY_GAIN = numeric('db', 0)
@@ -30,12 +31,13 @@ const OscillatorInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
 
 const sample = Functions.of({
   summary: 'Creates a sample-backed instrument from a URL.',
-  parameters: [
+
+  parameters: makeSchema([
     { name: 'url', type: StringFacet.type(), required: true },
     { name: 'gain', type: NumberFacet.with('db').type(), required: false },
     { name: 'root_note', type: StringFacet.type(), required: false },
     { name: 'length', type: NumberFacet.with('s').type(), required: false }
-  ],
+  ]),
 
   returnType: SampleInstrumentType,
 
@@ -69,9 +71,10 @@ const sample = Functions.of({
 function createOscillatorFunction (shape: Oscillator['shape']): Value {
   return Functions.of({
     summary: `Creates an instrument that produces a ${shape} wave.`,
-    parameters: [
+
+    parameters: makeSchema([
       { name: 'gain', type: NumberFacet.with('db').type(), required: false }
-    ],
+    ]),
 
     returnType: OscillatorInstrumentType,
 

@@ -4,13 +4,15 @@ import { NumberFacet } from '../../type-system/base/number.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
 import { Functions, Modules } from '../../type-system/helpers.js'
 import type { Value } from '../../type-system/types.js'
+import { makeSchema } from '../../type-system/schema.js'
 
 const loop = Functions.of({
   summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.',
-  parameters: [
+
+  parameters: makeSchema([
     { name: 'pattern', type: PatternFacet.type(), required: true },
     { name: 'times', type: NumberFacet.with(undefined).type(), required: false }
-  ],
+  ]),
 
   returnType: PatternFacet.type(),
 
@@ -39,10 +41,11 @@ const loop = Functions.of({
 
 const fill = Functions.of({
   summary: 'Repeats a pattern until it fills the specified duration. Longer patterns are truncated.',
-  parameters: [
+
+  parameters: makeSchema([
     { name: 'pattern', type: PatternFacet.type(), required: true },
     { name: 'duration', type: NumberFacet.with('beats').type(), required: true }
-  ],
+  ]),
 
   returnType: PatternFacet.type(),
 

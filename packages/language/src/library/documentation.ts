@@ -52,7 +52,7 @@ function describeValue (name: string, value: Value): Documentation {
 }
 
 function formatFunctionSignature (name: string, functionValue: Function): string {
-  const parametersText = functionValue.parameters
+  const parametersText = functionValue.parameters.items
     .map((parameter) => `${parameter.name}${parameter.required ? '' : '?'}: ${parameter.type.format()}`)
     .join(', ')
 

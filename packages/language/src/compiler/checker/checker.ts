@@ -720,7 +720,7 @@ function checkArgumentList (
   scope: Scope,
   args: ast.ArgumentList,
   schema: Schema,
-  parentRange: SourceRange,
+  range: SourceRange,
   kind = 'argument'
 ): Checked<ReadonlyMap<string, Type>> {
   const errors: CompileError[] = []
@@ -731,8 +731,6 @@ function checkArgumentList (
   // in addition to reporting the expression's error, we would also report the argument as missing,
   // which is not correct.
   const errorArguments = new Set<string>()
-
-  const schemaAsMap = new Map<string, SchemaItem>(schema.map((spec) => [spec.name, spec]))
 
   const checkArgumentValue = (spec: SchemaItem, value: ast.Expression): void => {
     const expressionCheck = checkExpression(scope, value)
@@ -756,7 +754,7 @@ function checkArgumentList (
       break
     }
 
-    const spec = schema.at(index)
+    const spec = schema.items.at(index)
     if (spec == null) {
       errors.push(new CompileError(`Unknown positional ${kind}`, arg.range))
       continue
@@ -773,7 +771,7 @@ function checkArgumentList (
       continue
     }
 
-    const spec = schemaAsMap.get(arg.key.name)
+    const spec = schema.byName.get(arg.key.name)
     if (spec == null) {
       errors.push(new CompileError(`Unknown ${kind} "${arg.key.name}"`, arg.key.range))
       continue
@@ -787,9 +785,9 @@ function checkArgumentList (
     checkArgumentValue(spec, arg.value)
   }
 
-  for (const spec of schema) {
+  for (const spec of schema.items) {
     if (spec.required && !result.has(spec.name) && !errorArguments.has(spec.name)) {
-      errors.push(new CompileError(`Missing required ${kind} "${spec.name}"`, parentRange))
+      errors.push(new CompileError(`Missing required ${kind} "${spec.name}"`, range))
     }
   }
 

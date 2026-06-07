@@ -487,17 +487,15 @@ function resolveArgumentList<S extends Schema> (scope: Scope, args: ast.Argument
       break
     }
 
-    const param = nonNull(schema.at(i))
-    entries.push([param.name, resolve(scope, arg)])
+    const { name } = nonNull(schema.items.at(i))
+    entries.push([name, resolve(scope, arg)])
   }
 
   // named
   for (let i = entries.length; i < args.length; ++i) {
     const arg = args[i]
-    assert(arg.type === 'Property')
-
-    const param = nonNull(schema.find((s) => s.name === arg.key.name))
-    entries.push([param.name, resolve(scope, arg.value)])
+    assert(arg.type === 'Property' && schema.byName.has(arg.key.name))
+    entries.push([arg.key.name, resolve(scope, arg.value)])
   }
 
   return Object.fromEntries(entries) as InferSchema<S>
