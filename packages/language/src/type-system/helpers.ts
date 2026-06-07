@@ -6,7 +6,6 @@ import type { Module } from './base/module.js'
 import { ModuleFacet } from './base/module.js'
 import { NumberFacet } from './base/number.js'
 import { RecordFacet } from './base/record.js'
-import { BusFacet } from './domain/bus.js'
 import { ParameterFacet } from './domain/parameter.js'
 import { makeType } from './factory.js'
 import type { Schema } from './schema.js'
@@ -54,8 +53,3 @@ export const Parameters = {
     return ParameterFacet.with(value.initial.unit).type().of(value)
   }
 }
-
-export const BusType = makeType(BusFacet, RecordFacet.with({
-  gain: ParameterFacet.with('db').type(),
-  pan: ParameterFacet.with(undefined).type()
-}))
