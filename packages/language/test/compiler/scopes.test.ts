@@ -2,7 +2,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../src/compiler/options.js'
-import { createGlobalScope, createLocalScope, resolveInScope } from '../../src/compiler/scopes.js'
+import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from '../../src/compiler/scopes.js'
 import { Numbers } from '../../src/type-system/helpers.js'
 
 const options: GenerateOptions = {
@@ -56,8 +56,8 @@ describe('compiler/scopes.ts', () => {
       assert.strictEqual(allocated2.id, 1)
 
       assert.deepStrictEqual([...scope.buses], [
-        ['bus0', { ...bus0, id: 0 }],
-        ['bus1', { ...bus1, id: 1 }]
+        [0, { ...bus0, id: 0 }],
+        [1, { ...bus1, id: 1 }]
       ])
     })
 
@@ -142,6 +142,14 @@ describe('compiler/scopes.ts', () => {
       assert.strictEqual(nestedLocalScope.parent, localScope)
       assert.strictEqual(nestedLocalScope.resolutions.get('foo'), undefined)
       assert.strictEqual(nestedLocalScope.resolutions.get('bar'), undefined)
+    })
+  })
+
+  describe('createNamespace()', () => {
+    it('should create a namespace with empty resolutions', () => {
+      const namespace = createNamespace()
+
+      assert.strictEqual(namespace.resolutions.size, 0)
     })
   })
 

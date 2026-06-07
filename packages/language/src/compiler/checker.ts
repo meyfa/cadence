@@ -19,7 +19,7 @@ import { PatternFacet } from '../type-system/domain/pattern.js'
 import { makeType, makeUnion } from '../type-system/factory.js'
 import type { Schema, SchemaItem } from '../type-system/schema.js'
 import type { FacetType, Type, Value } from '../type-system/types.js'
-import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
+import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
 import { checkCyclicRoutings } from './routings.js'
@@ -50,6 +50,7 @@ export function check (program: ast.Program): CheckResult {
 
   const globalScope = createGlobalScope({
     resolutions: importResult.result,
+    namespaces: new Map(),
     buses: new Map()
   })
 
@@ -66,14 +67,26 @@ export function check (program: ast.Program): CheckResult {
 }
 
 interface Context {
+  readonly top: GlobalContext
   readonly parent?: Context
   readonly resolutions: ReadonlyMap<string, FacetType>
-  readonly buses: ReadonlyMap<string, FacetType>
+}
+
+interface GlobalContext extends Context {
+  readonly buses: Map<string, FacetType>
+  readonly namespaces: Map<string, Namespace>
 }
 
 interface MutableContext extends Context {
   readonly resolutions: Map<string, FacetType>
-  readonly buses: Map<string, FacetType>
+}
+
+interface Namespace {
+  readonly resolutions: ReadonlyMap<string, FacetType>
+}
+
+interface MutableNamespace extends Namespace {
+  readonly resolutions: Map<string, FacetType>
 }
 
 interface Checked<TValue> {
@@ -92,15 +105,23 @@ function prependErrors<TValue> (errors: readonly CompileError[], check: Checked<
   }
 }
 
-function createGlobalScope (value: Omit<Context, 'parent'>): Context {
-  return value
+function createGlobalScope (value: Omit<GlobalContext, 'top' | 'parent'>): GlobalContext {
+  const scope = {
+    ...value,
+
+    get top (): GlobalContext {
+      return scope
+    }
+  }
+
+  return scope
 }
 
 function createLocalScope (parent: Context): MutableContext {
   return {
+    top: parent.top,
     parent,
-    resolutions: new Map(),
-    buses: new Map()
+    resolutions: new Map()
   }
 }
 
@@ -129,10 +150,6 @@ function recursiveLookup<T> (context: Context, lookup: (context: Context) => T |
 
 function resolve (context: Context, name: string): FacetType | undefined {
   return recursiveLookup(context, (ctx) => ctx.resolutions.get(name))
-}
-
-function resolveBus (context: Context, name: string): FacetType | undefined {
-  return recursiveLookup(context, (ctx) => ctx.buses.get(name))
 }
 
 function checkType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?: SourceRange): readonly CompileError[] {
@@ -333,7 +350,10 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
   return errors
 }
 
-function checkMixers (context: MutableContext, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
+function checkMixers (scope: MutableContext, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
+  const busNamespace: MutableNamespace = { resolutions: new Map() }
+  scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
+
   const errors: CompileError[] = []
 
   for (const mixer of mixers) {
@@ -341,11 +361,11 @@ function checkMixers (context: MutableContext, mixers: readonly ast.MixerStateme
       errors.push(new CompileError('Multiple mixer definitions', mixer.range))
     }
 
-    const mixerCheck = checkMixer(context, mixer)
+    const mixerCheck = checkMixer(scope, mixer, busNamespace)
     errors.push(...mixerCheck.errors)
 
     for (const [name, type] of mixerCheck.result?.buses.entries() ?? []) {
-      context.buses.set(name, type)
+      scope.top.buses.set(name, type)
     }
   }
 
@@ -356,8 +376,8 @@ interface MixerDetail {
   readonly buses: ReadonlyMap<string, FacetType>
 }
 
-function checkMixer (context: Context, mixer: ast.MixerStatement): Checked<MixerDetail> {
-  const mixerScope = createLocalScope(context)
+function checkMixer (scope: Context, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Checked<MixerDetail> {
+  const mixerScope = createLocalScope(scope)
 
   const errors: CompileError[] = []
 
@@ -369,7 +389,8 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): Checked<Mixer
   const declareBus = (name: string, type: FacetType): void => {
     seenBuses.set(name, type)
     mixerScope.resolutions.set(name, type)
-    mixerScope.buses.set(name, type)
+    mixerScope.top.buses.set(name, type)
+    busNamespace.resolutions.set(name, type)
   }
 
   // Build up the list of buses first
@@ -769,17 +790,17 @@ function checkDivide (left: FacetType, right: FacetType, range: SourceRange): Ch
 function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<FacetType> {
   const errors: CompileError[] = []
 
-  // Special case: "bus" namespace
-  if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-    const busName = expression.property.name
+  if (expression.object.type === 'Identifier') {
+    const namespace = context.top.namespaces.get(expression.object.name)
+    if (namespace != null) {
+      const propertyType = namespace.resolutions.get(expression.property.name)
+      if (propertyType == null) {
+        errors.push(new CompileError(`Namespace "${expression.object.name}" has no member named "${expression.property.name}"`, expression.property.range))
+        return { errors }
+      }
 
-    const busType = resolveBus(context, busName)
-    if (busType == null) {
-      errors.push(new CompileError(`Unknown bus "${busName}"`, expression.property.range))
-      return { errors }
+      return { errors, result: propertyType }
     }
-
-    return { errors, result: busType }
   }
 
   const objectCheck = checkExpression(context, expression.object)

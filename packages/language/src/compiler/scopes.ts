@@ -31,15 +31,24 @@ export interface Scope {
 export interface GlobalScope extends Scope, Context {
   readonly options: GenerateOptions
 
-  // TODO generalize this to avoid the "bus" namespace special-case
-  readonly buses: Map<string, Bus>
-  readonly busValues: Map<string, Value>
+  readonly namespaces: Map<string, Namespace>
 
+  readonly buses: Map<BusId, Bus>
   readonly instruments: Map<InstrumentId, Instrument>
   readonly automations: Map<ParameterId, Automation>
 }
 
 export interface MutableScope extends Scope {
+  readonly resolutions: Map<string, Value>
+}
+
+// namespace
+
+export interface Namespace {
+  readonly resolutions: ReadonlyMap<string, Value>
+}
+
+export interface MutableNamespace extends Namespace {
   readonly resolutions: Map<string, Value>
 }
 
@@ -55,8 +64,8 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
 
     // from GlobalScope
     options,
+    namespaces: new Map(),
     buses: new Map(),
-    busValues: new Map(),
     instruments: new Map(),
     automations: new Map(),
 
@@ -77,6 +86,12 @@ export function createLocalScope (parent: Scope): MutableScope {
   return {
     top: parent.top,
     parent,
+    resolutions: new Map()
+  }
+}
+
+export function createNamespace (): MutableNamespace {
+  return {
     resolutions: new Map()
   }
 }
@@ -103,7 +118,7 @@ function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
   const id = scope.buses.size as BusId
 
   const bus = { ...data, id }
-  scope.buses.set(bus.name, bus)
+  scope.buses.set(id, bus)
 
   return bus
 }

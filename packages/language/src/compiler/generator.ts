@@ -22,13 +22,13 @@ import { Numbers, Parameters } from '../type-system/helpers.js'
 import type { InferSchema, Schema } from '../type-system/schema.js'
 import type { FacetType, Value } from '../type-system/types.js'
 import type { CheckedProgram } from './checker.js'
-import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
+import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
 import type { GenerateOptions } from './options.js'
-import type { GlobalScope, MutableScope, Scope } from './scopes.js'
-import { createGlobalScope, createLocalScope, resolveInScope } from './scopes.js'
+import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
+import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from './scopes.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
 
 /**
@@ -196,8 +196,11 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
 function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   const mixerScope = createLocalScope(scope)
 
-  const buses = mixer?.buses.map((bus) => generateBus(mixerScope, bus)) ?? []
-  const routings = mixer?.buses.flatMap((bus) => generateBusRoutings(mixerScope, bus)) ?? []
+  const namespace = createNamespace()
+  scope.top.namespaces.set(BUS_NAMESPACE, namespace)
+
+  const buses = mixer?.buses.map((bus) => generateBus(mixerScope, bus, namespace)) ?? []
+  const routings = mixer?.buses.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index])) ?? []
 
   // Implicit output routings for unrouted buses and instruments
   const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
@@ -229,7 +232,7 @@ function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   return { buses, routings }
 }
 
-function generateBus (scope: MutableScope, bus: ast.BusStatement): Bus {
+function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): Bus {
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
@@ -260,15 +263,13 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement): Bus {
   assert(!scope.resolutions.has(name))
   scope.resolutions.set(name, value)
 
-  assert(!scope.top.busValues.has(name))
-  scope.top.busValues.set(name, value)
+  assert(!namespace.resolutions.has(name))
+  namespace.resolutions.set(name, value)
 
   return data
 }
 
-function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement): readonly MixerRouting[] {
-  const destination = nonNull(mixerScope.top.buses.get(bus.name.name))
-
+function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, destination: Bus): readonly MixerRouting[] {
   return bus.sources.map((identifier) => {
     const source = resolve(mixerScope, identifier)
 
@@ -542,9 +543,11 @@ function computeDivide (left: Value, right: Value): Value {
 }
 
 function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): Value {
-  // Special case: "bus" namespace
-  if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-    return nonNull(scope.top.busValues.get(expression.property.name))
+  if (expression.object.type === 'Identifier') {
+    const namespace = scope.top.namespaces.get(expression.object.name)
+    if (namespace != null) {
+      return nonNull(namespace.resolutions.get(expression.property.name))
+    }
   }
 
   const object = resolve(scope, expression.object)
