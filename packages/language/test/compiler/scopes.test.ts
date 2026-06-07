@@ -35,51 +35,51 @@ describe('compiler/scopes.ts', () => {
     it('should allocate buses with unique IDs', () => {
       const scope = createGlobalScope(options, new Map())
 
-      const bus1 = {
-        name: 'bus1',
+      const bus0 = {
+        name: 'bus0',
         gain: scope.allocateParameter(numeric('db', 0)),
         pan: scope.allocateParameter(numeric(undefined, 0)),
         effects: []
       } as const
 
-      const bus2 = {
-        name: 'bus2',
+      const bus1 = {
+        name: 'bus1',
         gain: scope.allocateParameter(numeric('db', -3)),
         pan: scope.allocateParameter(numeric(undefined, -0.5)),
         effects: []
       } as const
 
-      const allocated1 = scope.allocateBus(bus1)
-      const allocated2 = scope.allocateBus(bus2)
+      const allocated1 = scope.allocateBus(bus0)
+      const allocated2 = scope.allocateBus(bus1)
 
       assert.strictEqual(allocated1.id, 0)
       assert.strictEqual(allocated2.id, 1)
 
       assert.deepStrictEqual([...scope.buses], [
-        ['bus1', { ...bus1, id: 0 }],
-        ['bus2', { ...bus2, id: 1 }]
+        ['bus0', { ...bus0, id: 0 }],
+        ['bus1', { ...bus1, id: 1 }]
       ])
     })
 
     it('should allocate parameters with unique IDs', () => {
       const scope = createGlobalScope(options, new Map())
 
-      const param1 = scope.allocateParameter(numeric('db', 12))
-      const param2 = scope.allocateParameter(numeric('db', 6))
+      const parameter0 = scope.allocateParameter(numeric('db', 12))
+      const parameter1 = scope.allocateParameter(numeric('db', 6))
 
-      assert.strictEqual(param1.id, 1)
-      assert.strictEqual(param2.id, 2)
+      assert.strictEqual(parameter0.id, 0)
+      assert.strictEqual(parameter1.id, 1)
 
       assert.deepStrictEqual([...scope.automations], [
-        [1, { parameterId: 1, points: [] }],
-        [2, { parameterId: 2, points: [] }]
+        [0, { parameterId: 0, points: [] }],
+        [1, { parameterId: 1, points: [] }]
       ])
     })
 
     it('should allocate instruments with unique IDs', () => {
       const scope = createGlobalScope(options, new Map())
 
-      const instrument1 = {
+      const instrument0 = {
         gain: scope.allocateParameter(numeric('db', -6)),
         source: {
           type: 'oscillator',
@@ -93,7 +93,7 @@ describe('compiler/scopes.ts', () => {
         }
       } as const
 
-      const instrument2 = {
+      const instrument1 = {
         gain: scope.allocateParameter(numeric('db', -3)),
         source: {
           type: 'oscillator',
@@ -107,15 +107,15 @@ describe('compiler/scopes.ts', () => {
         }
       } as const
 
+      const allocated0 = scope.allocateInstrument(instrument0)
       const allocated1 = scope.allocateInstrument(instrument1)
-      const allocated2 = scope.allocateInstrument(instrument2)
 
+      assert.strictEqual(allocated0.id, 0)
       assert.strictEqual(allocated1.id, 1)
-      assert.strictEqual(allocated2.id, 2)
 
       assert.deepStrictEqual([...scope.instruments], [
-        [1, { ...instrument1, id: 1 }],
-        [2, { ...instrument2, id: 2 }]
+        [0, { ...instrument0, id: 0 }],
+        [1, { ...instrument1, id: 1 }]
       ])
     })
   })

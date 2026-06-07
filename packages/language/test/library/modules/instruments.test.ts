@@ -42,10 +42,11 @@ describe('library/modules/instruments.ts', () => {
         length: Numbers.of(numeric('s', 1.5))
       })
 
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
         rootNote: 'C4',
-        gain: { id: 1, initial: numeric('db', -3) },
+        gain: { id: instrument.gain.id, initial: numeric('db', -3) },
         source: {
           type: 'sample',
           url: 'https://example.com/kick.wav',
@@ -54,23 +55,36 @@ describe('library/modules/instruments.ts', () => {
         envelope: declickEnvelope
       })
 
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
 
-    it('should create instrument with default values', () => {
+    it('should use default values', () => {
       const url = 'https://example.com/snare.wav'
 
       const context = createFunctionContext()
 
-      const result = sample.invoke(context, { url: StringFacet.type().of(url) })
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
+      const result = sample.invoke(context, {
+        url: StringFacet.type().of(url)
+      })
+
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
         rootNote: undefined,
-        gain: { id: 1, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         source: { type: 'sample', url, length: undefined },
         envelope: declickEnvelope
       })
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
   })
 
@@ -81,13 +95,19 @@ describe('library/modules/instruments.ts', () => {
       const context = createFunctionContext()
 
       const result = sine.invoke(context, {})
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
-        gain: { id: 1, initial: numeric('db', 0) },
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
+        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         source: { type: 'oscillator', shape: 'sine' },
         envelope: declickEnvelope
       })
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
   })
 
@@ -98,13 +118,19 @@ describe('library/modules/instruments.ts', () => {
       const context = createFunctionContext()
 
       const result = square.invoke(context, {})
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
-        gain: { id: 1, initial: numeric('db', 0) },
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
+        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         source: { type: 'oscillator', shape: 'square' },
         envelope: declickEnvelope
       })
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
   })
 
@@ -115,13 +141,19 @@ describe('library/modules/instruments.ts', () => {
       const context = createFunctionContext()
 
       const result = saw.invoke(context, {})
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
-        gain: { id: 1, initial: numeric('db', 0) },
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
+        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         source: { type: 'oscillator', shape: 'saw' },
         envelope: declickEnvelope
       })
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
   })
 
@@ -132,13 +164,19 @@ describe('library/modules/instruments.ts', () => {
       const context = createFunctionContext()
 
       const result = triangle.invoke(context, {})
-      assert.deepStrictEqual(InstrumentFacet.get(result), {
-        id: 1,
-        gain: { id: 1, initial: numeric('db', 0) },
+      const { id, ...instrument } = InstrumentFacet.get(result)
+
+      assert.deepStrictEqual(instrument, {
+        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         source: { type: 'oscillator', shape: 'triangle' },
         envelope: declickEnvelope
       })
-      assert.deepStrictEqual([...context.instruments.values()], [InstrumentFacet.get(result)])
+
+      assert.deepStrictEqual([...context.instruments], [
+        [id, InstrumentFacet.get(result)]
+      ])
+
+      assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
     })
   })
 })

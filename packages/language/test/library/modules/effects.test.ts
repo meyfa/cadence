@@ -1,13 +1,12 @@
-import type { ParameterId } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GlobalScope } from '../../../src/compiler/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/scopes.js'
-import { Numbers } from '../../../src/type-system/helpers.js'
 import { effectsModule } from '../../../src/library/modules/effects.js'
 import { RecordFacet } from '../../../src/type-system/base/record.js'
 import { EffectFacet } from '../../../src/type-system/domain/effect.js'
+import { Numbers } from '../../../src/type-system/helpers.js'
 import { getFunctionExport } from './test-utils.js'
 
 function createFunctionContext (): GlobalScope {
@@ -30,14 +29,18 @@ describe('library/modules/effects.ts', () => {
     const gain = getFunctionExport(effectsModule, 'gain')
 
     it('should create gain effect', () => {
-      const result = gain.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = gain.invoke(context, {
         gain: Numbers.of(numeric('db', -6))
       })
+
+      const [gainId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'gain',
         gain: {
-          id: 1,
+          id: gainId,
           initial: numeric('db', -6)
         }
       })
@@ -50,14 +53,18 @@ describe('library/modules/effects.ts', () => {
     const pan = getFunctionExport(effectsModule, 'pan')
 
     it('should create pan effect', () => {
-      const result = pan.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = pan.invoke(context, {
         pan: Numbers.of(numeric(undefined, 0.5))
       })
+
+      const [panId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'pan',
         pan: {
-          id: 1,
+          id: panId,
           initial: numeric(undefined, 0.5)
         }
       })
@@ -70,14 +77,18 @@ describe('library/modules/effects.ts', () => {
     const lowpass = getFunctionExport(effectsModule, 'lowpass')
 
     it('should create lowpass effect', () => {
-      const result = lowpass.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = lowpass.invoke(context, {
         frequency: Numbers.of(numeric('hz', 1000))
       })
+
+      const [frequencyId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'lowpass',
         frequency: {
-          id: 1,
+          id: frequencyId,
           initial: numeric('hz', 1000)
         }
       })
@@ -90,14 +101,18 @@ describe('library/modules/effects.ts', () => {
     const highpass = getFunctionExport(effectsModule, 'highpass')
 
     it('should create highpass effect', () => {
-      const result = highpass.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = highpass.invoke(context, {
         frequency: Numbers.of(numeric('hz', 200))
       })
+
+      const [frequencyId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'highpass',
         frequency: {
-          id: 1,
+          id: frequencyId,
           initial: numeric('hz', 200)
         }
       })
@@ -110,7 +125,9 @@ describe('library/modules/effects.ts', () => {
     const width = getFunctionExport(effectsModule, 'width')
 
     it('should create width effect', () => {
-      const result = width.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = width.invoke(context, {
         width: Numbers.of(numeric(undefined, 0.8))
       })
 
@@ -127,18 +144,22 @@ describe('library/modules/effects.ts', () => {
     const delay = getFunctionExport(effectsModule, 'delay')
 
     it('should create delay effect', () => {
-      const result = delay.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = delay.invoke(context, {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(beats(0.5)),
         feedback: Numbers.of(numeric(undefined, 0.3))
       })
+
+      const [feedbackId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: beats(0.5),
         feedback: {
-          id: 1 as ParameterId,
+          id: feedbackId,
           initial: numeric(undefined, 0.3)
         },
         wet: numeric('db', 0)
@@ -148,18 +169,22 @@ describe('library/modules/effects.ts', () => {
     })
 
     it('should create delay effect with seconds', () => {
-      const result = delay.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = delay.invoke(context, {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(seconds(1.5)),
         feedback: Numbers.of(numeric(undefined, 0.3))
       })
+
+      const [feedbackId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
         mix: numeric(undefined, 0.5),
         time: seconds(1.5),
         feedback: {
-          id: 1 as ParameterId,
+          id: feedbackId,
           initial: numeric(undefined, 0.3)
         },
         wet: numeric('db', 0)
@@ -169,7 +194,9 @@ describe('library/modules/effects.ts', () => {
     })
 
     it('should accept optional wet parameter', () => {
-      const result = delay.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = delay.invoke(context, {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(beats(0.5)),
         feedback: Numbers.of(numeric(undefined, 0.3)),
@@ -186,7 +213,9 @@ describe('library/modules/effects.ts', () => {
     const reverb = getFunctionExport(effectsModule, 'reverb')
 
     it('should create reverb effect', () => {
-      const result = reverb.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = reverb.invoke(context, {
         decay: Numbers.of(numeric('s', 2.0)),
         mix: Numbers.of(numeric(undefined, 0.4))
       })
@@ -202,7 +231,9 @@ describe('library/modules/effects.ts', () => {
     })
 
     it('should create reverb effect with beats', () => {
-      const result = reverb.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = reverb.invoke(context, {
         decay: Numbers.of(beats(2)),
         mix: Numbers.of(numeric(undefined, 0.4))
       })
@@ -218,7 +249,9 @@ describe('library/modules/effects.ts', () => {
     })
 
     it('should accept optional wet parameter', () => {
-      const result = reverb.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = reverb.invoke(context, {
         decay: Numbers.of(numeric('s', 2.0)),
         mix: Numbers.of(numeric(undefined, 0.4)),
         wet: Numbers.of(numeric('db', -3))
@@ -234,14 +267,18 @@ describe('library/modules/effects.ts', () => {
     const clip = getFunctionExport(effectsModule, 'clip')
 
     it('should create clip effect', () => {
-      const result = clip.invoke(createFunctionContext(), {
+      const context = createFunctionContext()
+
+      const result = clip.invoke(context, {
         threshold: Numbers.of(numeric(undefined, 0.8))
       })
+
+      const [thresholdId] = context.automations.keys()
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'clip',
         threshold: {
-          id: 1 as ParameterId,
+          id: thresholdId,
           initial: numeric(undefined, 0.8)
         }
       })

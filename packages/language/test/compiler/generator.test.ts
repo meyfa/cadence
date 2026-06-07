@@ -1,4 +1,4 @@
-import type { ParameterId, Program } from '@core'
+import type { Program } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -76,8 +76,9 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
 
-    const instrument = result.instruments.get(1 as any)
-    assert.strictEqual(instrument?.source.type, 'sample')
+    const [instrument] = result.instruments.values()
+    assert.strictEqual(instrument.source.type, 'sample')
+    assert.strictEqual(instrument.source.url, 'kick.wav')
   })
 
   it('should support import aliases', () => {
@@ -89,8 +90,9 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
 
-    const instrument = result.instruments.get(1 as any)
-    assert.strictEqual(instrument?.source.type, 'sample')
+    const [instrument] = result.instruments.values()
+    assert.strictEqual(instrument.source.type, 'sample')
+    assert.strictEqual(instrument.source.url, 'kick.wav')
   })
 
   it('should support shadowing of imported names', () => {
@@ -139,7 +141,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
@@ -160,7 +163,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 8), value: numeric('db', -30), curve: 'linear' },
@@ -182,7 +186,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 24), value: numeric('db', -60), curve: 'step' },
@@ -204,7 +209,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 24), value: numeric('db', -60), curve: 'step' },
@@ -226,7 +232,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 24), value: numeric('db', -30), curve: 'linear' },
@@ -248,7 +255,8 @@ describe('compiler/generator.ts', () => {
     const result = generateSource(source)
 
     assert.strictEqual(result.automations.size, 1)
-    const automation = [...result.automations.values()][0]
+    const [automation] = result.automations.values()
+
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
       { time: numeric('beats', 0), value: numeric('db', -30), curve: 'step' },
@@ -270,8 +278,7 @@ describe('compiler/generator.ts', () => {
 
     const result = generateSource(source)
 
-    const busGain = result.mixer.buses[0].gain
-    const automation = result.automations.get(busGain.id)
+    const automation = result.automations.get(result.mixer.buses[0].gain.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
       { time: numeric('beats', 0), value: numeric('db', -20), curve: 'step' },
@@ -317,11 +324,14 @@ describe('compiler/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
+
+    const [instrument] = result.instruments.values()
+
     assert.deepStrictEqual(result.mixer.routings, [
       {
         implicit: true,
         destination: { type: 'output' },
-        source: { type: 'instrument', id: 1 }
+        source: { type: 'instrument', id: instrument.id }
       }
     ])
   })
@@ -329,22 +339,29 @@ describe('compiler/generator.ts', () => {
   it('should support buses as sources in mixer', () => {
     const source = [
       'mixer {',
-      '  bus bus1 { bus2 }',
-      '  bus bus2 {}',
+      '  bus bus0 { bus1 }',
+      '  bus bus1 {}',
       '}'
     ].join('\n')
 
     const result = generateSource(source)
+
+    const bus0 = result.mixer.buses.find((bus) => bus.name === 'bus0')
+    assert.ok(bus0 != null)
+
+    const bus1 = result.mixer.buses.find((bus) => bus.name === 'bus1')
+    assert.ok(bus1 != null)
+
     assert.deepStrictEqual(result.mixer.routings, [
       {
         implicit: false,
-        destination: { type: 'bus', id: 0 },
-        source: { type: 'bus', id: 1 }
+        destination: { type: 'bus', id: bus0.id },
+        source: { type: 'bus', id: bus1.id }
       },
       {
         implicit: true,
         destination: { type: 'output' },
-        source: { type: 'bus', id: 0 }
+        source: { type: 'bus', id: bus0.id }
       }
     ])
   })
@@ -353,19 +370,23 @@ describe('compiler/generator.ts', () => {
     const source = [
       'use "effects" as fx',
       'mixer {',
-      '  bus bus1 {',
+      '  bus bus0 {',
       '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
       '  }',
       '}'
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.mixer.buses[0].effects[0], {
+
+    const effect = result.mixer.buses[0].effects[0]
+    assert.strictEqual(effect.type, 'delay')
+
+    assert.deepStrictEqual(effect, {
       type: 'delay',
       mix: numeric(undefined, 0.25),
       time: numeric('s', 1.5),
       feedback: {
-        id: 1 as ParameterId,
+        id: effect.feedback.id,
         initial: numeric(undefined, 0.4)
       },
       wet: numeric('db', 0)
@@ -376,7 +397,7 @@ describe('compiler/generator.ts', () => {
     const source = [
       'use "effects" as fx',
       'mixer {',
-      '  bus bus1 {',
+      '  bus bus0 {',
       '    effect fx.reverb(mix: 0.25, decay: 2.beats)',
       '  }',
       '}'
@@ -388,62 +409,6 @@ describe('compiler/generator.ts', () => {
       mix: numeric(undefined, 0.25),
       decay: numeric('beats', 2),
       wet: numeric('db', 0)
-    })
-  })
-
-  describe('instruments.sample', () => {
-    it('should allocate instrument and parameter IDs correctly', () => {
-      const source = [
-        'use "instruments" as *',
-        'inst1 = sample(url: "sample1.wav")',
-        'inst2 = sample(url: "sample2.wav")'
-      ].join('\n')
-
-      const result = generateSource(source)
-      assert.deepStrictEqual(result.instruments.size, 2)
-
-      const instrument1 = result.instruments.get(1 as any)
-      assert.strictEqual(instrument1?.source.type, 'sample')
-      assert.deepStrictEqual(instrument1.source.url, 'sample1.wav')
-
-      const instrument2 = result.instruments.get(2 as any)
-      assert.strictEqual(instrument2?.source.type, 'sample')
-      assert.deepStrictEqual(instrument2.source.url, 'sample2.wav')
-
-      assert.deepStrictEqual(result.automations.size, 2)
-      assert.deepStrictEqual(result.instruments.get(1 as any)?.gain.id, 1 as any)
-      assert.deepStrictEqual(result.instruments.get(2 as any)?.gain.id, 2 as any)
-      assert.deepStrictEqual(result.automations.get(1 as any)?.parameterId, 1 as any)
-      assert.deepStrictEqual(result.automations.get(2 as any)?.parameterId, 2 as any)
-    })
-  })
-
-  describe('instruments.sine', () => {
-    it('should allocate instrument and parameter IDs correctly', () => {
-      const source = [
-        'use "instruments" as *',
-        'inst1 = sine(gain: -6.db)',
-        'inst2 = sine(gain: -12.db)'
-      ].join('\n')
-
-      const result = generateSource(source)
-      assert.deepStrictEqual(result.instruments.size, 2)
-
-      const instrument1 = result.instruments.get(1 as any)
-      assert.strictEqual(instrument1?.source.type, 'oscillator')
-      assert.strictEqual(instrument1.source.shape, 'sine')
-      assert.deepStrictEqual(instrument1.gain.initial, numeric('db', -6))
-
-      const instrument2 = result.instruments.get(2 as any)
-      assert.strictEqual(instrument2?.source.type, 'oscillator')
-      assert.strictEqual(instrument2.source.shape, 'sine')
-      assert.deepStrictEqual(instrument2.gain.initial, numeric('db', -12))
-
-      assert.deepStrictEqual(result.automations.size, 2)
-      assert.deepStrictEqual(result.instruments.get(1 as any)?.gain.id, 1 as any)
-      assert.deepStrictEqual(result.instruments.get(2 as any)?.gain.id, 2 as any)
-      assert.deepStrictEqual(result.automations.get(1 as any)?.parameterId, 1 as any)
-      assert.deepStrictEqual(result.automations.get(2 as any)?.parameterId, 2 as any)
     })
   })
 })

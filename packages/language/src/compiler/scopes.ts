@@ -109,8 +109,7 @@ function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
 }
 
 function allocateParameter<U extends Unit> (scope: GlobalScope, initial: Numeric<U>): Parameter<U> {
-  const currentMaxId = Math.max(0, ...Array.from(scope.automations.keys()))
-  const id = (currentMaxId + 1) as ParameterId
+  const id = scope.automations.size as ParameterId
 
   scope.automations.set(id, {
     parameterId: id,
@@ -121,8 +120,7 @@ function allocateParameter<U extends Unit> (scope: GlobalScope, initial: Numeric
 }
 
 function allocateInstrument (scope: GlobalScope, data: Omit<Instrument, 'id'>): Instrument {
-  const currentMaxId = Math.max(0, ...Array.from(scope.instruments.keys()))
-  const id = (currentMaxId + 1) as InstrumentId
+  const id = scope.instruments.size as InstrumentId
 
   const instrument = { ...data, id }
   scope.instruments.set(instrument.id, instrument)
