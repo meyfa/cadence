@@ -14,7 +14,7 @@ const loop = Functions.of({
 
   returnType: PatternFacet.type(),
 
-  invoke: (_context, { pattern, times }) => {
+  invoke: (context, { pattern, times }) => {
     const patternValue = PatternFacet.get(pattern)
 
     if (times == null) {
@@ -46,7 +46,7 @@ const fill = Functions.of({
 
   returnType: PatternFacet.type(),
 
-  invoke: (_context, { pattern, duration }) => {
+  invoke: (context, { pattern, duration }) => {
     const patternValue = PatternFacet.get(pattern)
     const durationValue = NumberFacet.get(duration)
 

@@ -8,7 +8,7 @@ import { InstrumentFacet } from '../../type-system/domain/instrument.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { makeType } from '../../type-system/factory.js'
 import type { Value } from '../../type-system/types.js'
-import type { FunctionContext } from '../functions.js'
+import type { InstrumentContext, ParameterContext } from '../functions.js'
 import { allocateInstrument, allocateParameter } from '../functions.js'
 import { Functions, Modules, Parameters } from '../type-helpers.js'
 
@@ -41,18 +41,16 @@ const sample = Functions.of({
   returnType: SampleInstrumentType,
 
   // eslint-disable-next-line camelcase
-  invoke: (context, { url, gain, root_note, length }) => {
-    const ctx = context as FunctionContext
-
+  invoke: (context: ParameterContext & InstrumentContext, { url, gain, root_note, length }) => {
     const urlValue = StringFacet.get(url)
     const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
     // eslint-disable-next-line camelcase
     const rootNoteValue = root_note != null ? StringFacet.get(root_note) : undefined
     const lengthValue = length != null ? NumberFacet.get(length) : undefined
 
-    const gainParameter = allocateParameter(ctx, gainValue)
+    const gainParameter = allocateParameter(context, gainValue)
 
-    const instrument = allocateInstrument(ctx, {
+    const instrument = allocateInstrument(context, {
       gain: gainParameter,
       rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
       source: {
@@ -78,13 +76,11 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
     returnType: OscillatorInstrumentType,
 
-    invoke: (context, { gain }) => {
-      const ctx = context as FunctionContext
-
+    invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
       const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
-      const gainParameter = allocateParameter(ctx, gainValue)
+      const gainParameter = allocateParameter(context, gainValue)
 
-      const instrument = allocateInstrument(ctx, {
+      const instrument = allocateInstrument(context, {
         gain: gainParameter,
         source: {
           type: 'oscillator',

@@ -3,6 +3,7 @@ import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRoutin
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
+import type { Function } from '../type-system/base/function.js'
 import { FunctionFacet } from '../type-system/base/function.js'
 import { ModuleFacet } from '../type-system/base/module.js'
 import { NumberFacet } from '../type-system/base/number.js'
@@ -16,11 +17,12 @@ import { ParameterFacet } from '../type-system/domain/parameter.js'
 import { PartFacet } from '../type-system/domain/part.js'
 import { PatternFacet } from '../type-system/domain/pattern.js'
 import type { InferSchema, Schema } from '../type-system/schema.js'
-import type { Value } from '../type-system/types.js'
+import type { FacetType, Value } from '../type-system/types.js'
 import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
+import type { FunctionContext } from './functions.js'
 import { allocateParameter } from './functions.js'
 import { getStandardModuleValue } from './modules.js'
 import { BusType, Numbers, Parameters } from './type-helpers.js'
@@ -619,7 +621,8 @@ function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess
 }
 
 function resolveCall (context: Context, expression: ast.Call): Value {
-  const func = FunctionFacet.get(resolve(context, expression.callee))
+  // cast due to context type
+  const func = FunctionFacet.get(resolve(context, expression.callee)) as Function<Schema, FacetType, FunctionContext>
   const args = resolveArgumentList(context, expression.arguments, func.parameters)
 
   return func.invoke(context.top, args)
@@ -635,9 +638,7 @@ function resolveArgumentList<S extends Schema> (context: Context, args: ast.Argu
       break
     }
 
-    const param = schema.at(i)
-    assert(param != null)
-
+    const param = nonNull(schema.at(i))
     entries.push([param.name, resolve(context, arg)])
   }
 
@@ -646,9 +647,7 @@ function resolveArgumentList<S extends Schema> (context: Context, args: ast.Argu
     const arg = args[i]
     assert(arg.type === 'Property')
 
-    const param = schema.find((s) => s.name === arg.key.name)
-    assert(param != null)
-
+    const param = nonNull(schema.find((s) => s.name === arg.key.name))
     entries.push([param.name, resolve(context, arg.value)])
   }
 

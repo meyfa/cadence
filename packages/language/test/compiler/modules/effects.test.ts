@@ -5,10 +5,9 @@ import { describe, it } from 'node:test'
 import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { effectsModule } from '../../../src/compiler/modules/effects.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
-import { FunctionFacet } from '../../../src/type-system/base/function.js'
-import { ModuleFacet } from '../../../src/type-system/base/module.js'
 import { RecordFacet } from '../../../src/type-system/base/record.js'
 import { EffectFacet } from '../../../src/type-system/domain/effect.js'
+import { getFunctionExport } from './test-utils.js'
 
 function createFunctionContext (): FunctionContext {
   return {
@@ -22,12 +21,8 @@ describe('compiler/modules/effects.ts', () => {
   const beats = (value: number) => numeric('beats', value)
   const seconds = (value: number) => numeric('s', value)
 
-  const effects = ModuleFacet.get(effectsModule)
-
   describe('gain', () => {
-    const gainValue = effects.exports.get('gain')
-    assert.ok(gainValue != null && FunctionFacet.has(gainValue))
-    const gain = FunctionFacet.get(gainValue)
+    const gain = getFunctionExport(effectsModule, 'gain')
 
     it('should create gain effect', () => {
       const context = createFunctionContext()
@@ -48,9 +43,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('pan', () => {
-    const panValue = effects.exports.get('pan')
-    assert.ok(panValue != null && FunctionFacet.has(panValue))
-    const pan = FunctionFacet.get(panValue)
+    const pan = getFunctionExport(effectsModule, 'pan')
 
     it('should create pan effect', () => {
       const context = createFunctionContext()
@@ -71,9 +64,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('lowpass', () => {
-    const lowpassValue = effects.exports.get('lowpass')
-    assert.ok(lowpassValue != null && FunctionFacet.has(lowpassValue))
-    const lowpass = FunctionFacet.get(lowpassValue)
+    const lowpass = getFunctionExport(effectsModule, 'lowpass')
 
     it('should create lowpass effect', () => {
       const context = createFunctionContext()
@@ -94,9 +85,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('highpass', () => {
-    const highpassValue = effects.exports.get('highpass')
-    assert.ok(highpassValue != null && FunctionFacet.has(highpassValue))
-    const highpass = FunctionFacet.get(highpassValue)
+    const highpass = getFunctionExport(effectsModule, 'highpass')
 
     it('should create highpass effect', () => {
       const context = createFunctionContext()
@@ -117,9 +106,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('width', () => {
-    const widthValue = effects.exports.get('width')
-    assert.ok(widthValue != null && FunctionFacet.has(widthValue))
-    const width = FunctionFacet.get(widthValue)
+    const width = getFunctionExport(effectsModule, 'width')
 
     it('should create width effect', () => {
       const context = createFunctionContext()
@@ -137,9 +124,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('delay', () => {
-    const delayValue = effects.exports.get('delay')
-    assert.ok(delayValue != null && FunctionFacet.has(delayValue))
-    const delay = FunctionFacet.get(delayValue)
+    const delay = getFunctionExport(effectsModule, 'delay')
 
     it('should create delay effect', () => {
       const context = createFunctionContext()
@@ -201,9 +186,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('reverb', () => {
-    const reverbValue = effects.exports.get('reverb')
-    assert.ok(reverbValue != null && FunctionFacet.has(reverbValue))
-    const reverb = FunctionFacet.get(reverbValue)
+    const reverb = getFunctionExport(effectsModule, 'reverb')
 
     it('should create reverb effect', () => {
       const context = createFunctionContext()
@@ -254,9 +237,7 @@ describe('compiler/modules/effects.ts', () => {
   })
 
   describe('clip', () => {
-    const clipValue = effects.exports.get('clip')
-    assert.ok(clipValue != null && FunctionFacet.has(clipValue))
-    const clip = FunctionFacet.get(clipValue)
+    const clip = getFunctionExport(effectsModule, 'clip')
 
     it('should create clip effect', () => {
       const context = createFunctionContext()
