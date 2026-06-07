@@ -7,6 +7,7 @@ import { EffectFacet } from '../../type-system/domain/effect.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { makeType, makeUnion } from '../../type-system/factory.js'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
+import { makeSchema } from '../../type-system/schema.js'
 import type { Value } from '../../type-system/types.js'
 
 const UNITY_GAIN = numeric('db', 0)
@@ -46,9 +47,9 @@ const ClipEffectType = makeType(EffectFacet, RecordFacet.with({
 const gain = Functions.of({
   summary: 'Applies a gain adjustment to the signal.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'gain', type: NumberFacet.with('db').type(), required: true }
-  ],
+  ]),
 
   returnType: GainEffectType,
 
@@ -67,9 +68,9 @@ const gain = Functions.of({
 const pan = Functions.of({
   summary: 'Places the signal in the stereo field.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
-  ],
+  ]),
 
   returnType: PanEffectType,
 
@@ -88,9 +89,9 @@ const pan = Functions.of({
 const lowpass = Functions.of({
   summary: 'Filters out frequencies above the cutoff.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
-  ],
+  ]),
 
   returnType: LowpassEffectType,
 
@@ -109,9 +110,9 @@ const lowpass = Functions.of({
 const highpass = Functions.of({
   summary: 'Filters out frequencies below the cutoff.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
-  ],
+  ]),
 
   returnType: HighpassEffectType,
 
@@ -130,9 +131,9 @@ const highpass = Functions.of({
 const width = Functions.of({
   summary: 'Adjusts the stereo width of the signal.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
-  ],
+  ]),
 
   returnType: WidthEffectType,
 
@@ -149,12 +150,12 @@ const width = Functions.of({
 const delay = Functions.of({
   summary: 'Adds echoes with configurable mix, time, and feedback.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
-  ],
+  ]),
 
   returnType: DelayEffectType,
 
@@ -176,11 +177,11 @@ const delay = Functions.of({
 const reverb = Functions.of({
   summary: 'Adds reverberation with configurable mix and decay.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
-  ],
+  ]),
 
   returnType: ReverbEffectType,
 
@@ -199,9 +200,9 @@ const reverb = Functions.of({
 const clip = Functions.of({
   summary: 'Applies hard clipping to the signal at the specified threshold.',
 
-  parameters: [
+  parameters: makeSchema([
     { name: 'threshold', type: NumberFacet.with('db').type(), required: true }
-  ],
+  ]),
 
   returnType: ClipEffectType,
 

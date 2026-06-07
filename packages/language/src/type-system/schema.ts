@@ -1,6 +1,9 @@
 import type { Type, ValueForType } from './types.js'
 
-export type Schema = readonly SchemaItem[]
+export interface Schema<Items extends readonly SchemaItem[] = readonly SchemaItem[]> {
+  readonly items: Items
+  readonly byName: ReadonlyMap<string, SchemaItem>
+}
 
 export interface SchemaItem<T extends Type = Type> {
   readonly name: string
@@ -9,11 +12,19 @@ export interface SchemaItem<T extends Type = Type> {
 }
 
 export type InferSchema<S extends Schema> = {
-  [P in S[number] as P['required'] extends true ? P['name'] : never]: ValueForType<P['type']>
+  [P in S['items'][number] as P['required'] extends true ? P['name'] : never]: ValueForType<P['type']>
 } & {
-  [P in S[number] as P['required'] extends false ? P['name'] : never]?: ValueForType<P['type']>
+  [P in S['items'][number] as P['required'] extends false ? P['name'] : never]?: ValueForType<P['type']>
 }
 
-export function makeSchema<const S extends Schema> (schema: S): S {
-  return schema
+export function makeSchema<const Items extends readonly SchemaItem[]> (items: Items): Schema<Items> {
+  const byName = new Map<string, SchemaItem>(
+    items.map((item) => [item.name, item])
+  )
+
+  if (byName.size !== items.length) {
+    throw new Error('Duplicate item names in schema')
+  }
+
+  return { items, byName }
 }
