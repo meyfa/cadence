@@ -1,5 +1,5 @@
 import { useDebouncedValue, useLatestRef, useProjectSource, useSafeContext } from '@editor'
-import type { CompileOptions } from '@language'
+import type { GenerateOptions } from '@language'
 import { numeric } from '@utility'
 import { createContext, useCallback, useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
 import { compileSource, useCompiler, type CompileResult } from './compiler.js'
@@ -15,7 +15,7 @@ const CompilationContext = createContext<CompilationState | undefined>(undefined
 const COMPILE_DEBOUNCE = numeric('s', 0.25)
 
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
-  compileOptions: CompileOptions
+  compileOptions: GenerateOptions
 }>> = ({ compileOptions, children }) => {
   const compileOptionsRef = useLatestRef(compileOptions)
 

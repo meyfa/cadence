@@ -2,23 +2,23 @@ import type { ParameterId, Program } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { check } from '../../src/compiler/checker.js'
 import { generate } from '../../src/compiler/generator.js'
 import { lex } from '../../src/lexer/lexer.js'
 import { parse } from '../../src/parser/parser.js'
 import { assertResultComplete } from '../test-utils.js'
 
-function lexAndParse (source: string) {
+function generateSource (source: string) {
   const tokens = lex(source)
   assertResultComplete(tokens)
 
-  const result = parse(tokens.value)
-  assertResultComplete(result)
+  const ast = parse(tokens.value)
+  assertResultComplete(ast)
 
-  return result.value
-}
+  const checked = check(ast.value)
+  assertResultComplete(checked)
 
-function generateSource (source: string) {
-  return generate(lexAndParse(source), {
+  return generate(checked.value, {
     tempo: {
       default: 120,
       minimum: 1,

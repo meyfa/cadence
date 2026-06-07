@@ -1,6 +1,7 @@
 import { getProjectFileContent, type ProjectSource } from '@editor'
 import type { Program } from '@core'
-import { compile, CompoundError, lex, parse, RangeError, Result, type CompileOptions } from '@language'
+import type { GenerateOptions } from '@language'
+import { check, CompoundError, generate, lex, parse, RangeError, Result } from '@language'
 import { useMemo } from 'react'
 import { TRACK_FILE_PATH } from '../persistence/constants.js'
 
@@ -47,14 +48,14 @@ function unwrapError (error: UnwrappableError): readonly RangeError[] {
 
 const safeLex = createSafeFunction(lex)
 const safeParse = createSafeFunction(parse)
-const safeCompile = createSafeFunction(compile)
+const safeCheck = createSafeFunction(check)
 
 export interface CompileResult {
   readonly program?: Program
   readonly errors: readonly RangeError[]
 }
 
-export function compileSource (source: ProjectSource, compileOptions: CompileOptions): CompileResult {
+export function compileSource (source: ProjectSource, compileOptions: GenerateOptions): CompileResult {
   const entrypointPath = TRACK_FILE_PATH
   const code = getProjectFileContent(source, entrypointPath) ?? ''
 
@@ -68,17 +69,17 @@ export function compileSource (source: ProjectSource, compileOptions: CompileOpt
     return { errors: unwrapError(parseResult.error) }
   }
 
-  const compileResult = safeCompile(parseResult.value, compileOptions)
-  if (!compileResult.complete) {
-    return { errors: unwrapError(compileResult.error) }
+  const checkResult = safeCheck(parseResult.value)
+  if (!checkResult.complete) {
+    return { errors: unwrapError(checkResult.error) }
   }
 
   return {
-    program: compileResult.value,
+    program: generate(checkResult.value, compileOptions),
     errors: []
   }
 }
 
-export function useCompiler (source: ProjectSource, compileOptions: CompileOptions): CompileResult {
+export function useCompiler (source: ProjectSource, compileOptions: GenerateOptions): CompileResult {
   return useMemo(() => compileSource(source, compileOptions), [source, compileOptions])
 }

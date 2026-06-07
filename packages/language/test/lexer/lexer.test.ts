@@ -2,7 +2,8 @@ import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { LexError } from '../../src/lexer/error.js'
-import { lex, type LexResult } from '../../src/lexer/lexer.js'
+import type { LexResult } from '../../src/lexer/lexer.js'
+import { lex } from '../../src/lexer/lexer.js'
 import type { Result } from '../../src/result/result.js'
 
 type LexResultWithoutMeta = Result<ReadonlyArray<Omit<Token, 'state' | 'offset' | 'len' | 'line' | 'column'>>, LexError>
