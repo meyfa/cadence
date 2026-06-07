@@ -2,11 +2,11 @@ import type { Program } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../src/compiler/checker.js'
-import { generate } from '../../src/compiler/generator.js'
-import { lex } from '../../src/lexer/lexer.js'
-import { parse } from '../../src/parser/parser.js'
-import { assertResultComplete } from '../test-utils.js'
+import { check } from '../../../src/compiler/checker/checker.js'
+import { generate } from '../../../src/compiler/generator/generator.js'
+import { lex } from '../../../src/lexer/lexer.js'
+import { parse } from '../../../src/parser/parser.js'
+import { assertResultComplete } from '../../test-utils.js'
 
 function generateSource (source: string) {
   const tokens = lex(source)
@@ -28,7 +28,7 @@ function generateSource (source: string) {
   })
 }
 
-describe('compiler/generator.ts', () => {
+describe('compiler/generator/generator.ts', () => {
   it('should produce a correct empty program', () => {
     const result = generateSource('')
     assert.deepStrictEqual(result, {

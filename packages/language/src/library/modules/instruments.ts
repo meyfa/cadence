@@ -1,7 +1,7 @@
 import type { Envelope, Oscillator } from '@core'
 import { isPitch } from '@core'
 import { numeric } from '@utility'
-import type { InstrumentContext, ParameterContext } from '../../compiler/scopes.js'
+import type { InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { StringFacet } from '../../type-system/base/string.js'

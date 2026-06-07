@@ -1,10 +1,10 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../src/compiler/checker.js'
-import type { CompileError } from '../../src/compiler/error.js'
-import { lex } from '../../src/lexer/lexer.js'
-import { parse } from '../../src/parser/parser.js'
-import { assertResultComplete } from '../test-utils.js'
+import { check } from '../../../src/compiler/checker/checker.js'
+import type { CompileError } from '../../../src/compiler/error.js'
+import { lex } from '../../../src/lexer/lexer.js'
+import { parse } from '../../../src/parser/parser.js'
+import { assertResultComplete } from '../../test-utils.js'
 
 function checkSource (source: string): readonly CompileError[] {
   const tokens = lex(source)
@@ -29,7 +29,7 @@ function assertErrorMessages (source: string, expectedMessages: string[]): void 
   )
 }
 
-describe('compiler/checker.ts', () => {
+describe('compiler/checker/checker.ts', () => {
   describe('valid', () => {
     it('should accept an empty program', () => {
       assertValid('')

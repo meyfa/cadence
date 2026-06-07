@@ -1,9 +1,9 @@
 import type { SourceRange } from '@ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { checkCyclicRoutings } from '../../src/compiler/routings.js'
+import { checkCyclicRoutings } from '../../../src/compiler/checker/routings.js'
 
-describe('compiler/routings.ts', () => {
+describe('compiler/checker/routings.ts', () => {
   const makeRange = (id: number): SourceRange => ({
     offset: id,
     length: 1,

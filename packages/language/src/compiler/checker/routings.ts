@@ -1,6 +1,6 @@
 import type { SourceRange } from '@ast'
 import { getEmptySourceRange } from '@ast'
-import { CompileError } from './error.js'
+import { CompileError } from '../error.js'
 
 export interface Bus {
   readonly name: string

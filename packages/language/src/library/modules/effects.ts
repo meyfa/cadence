@@ -1,6 +1,6 @@
 import type { Effect } from '@core'
 import { numeric } from '@utility'
-import type { ParameterContext } from '../../compiler/scopes.js'
+import type { ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { EffectFacet } from '../../type-system/domain/effect.js'
