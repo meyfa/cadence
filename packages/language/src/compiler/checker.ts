@@ -88,6 +88,17 @@ interface Checked<TValue> {
   readonly result?: TValue
 }
 
+function prependErrors<TValue> (errors: readonly CompileError[], check: Checked<TValue>): Checked<TValue> {
+  if (errors.length === 0) {
+    return check
+  }
+
+  return {
+    errors: [...errors, ...check.errors],
+    result: check.result
+  }
+}
+
 function createGlobalScope (value: Omit<Context, 'parent'>): Context {
   return value
 }
@@ -447,11 +458,14 @@ function checkString (context: Context, string: ast.String): Checked<FacetType> 
   const errors: CompileError[] = []
 
   for (const part of string.parts) {
-    if (typeof part !== 'string') {
-      const partCheck = checkExpression(context, part)
-      if (partCheck.result == null) {
-        return { errors: partCheck.errors }
-      }
+    if (typeof part === 'string') {
+      continue
+    }
+
+    const partCheck = checkExpression(context, part)
+    errors.push(...partCheck.errors)
+
+    if (partCheck.result != null) {
       errors.push(...checkType(StringFacet.type(), partCheck.result, part.range))
     }
   }
@@ -484,12 +498,11 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
 
   if (step.length != null) {
     const lengthCheck = checkExpression(context, step.length)
-    if (lengthCheck.result == null) {
-      errors.push(...lengthCheck.errors)
-      return errors
-    }
+    errors.push(...lengthCheck.errors)
 
-    errors.push(...checkType(NumberFacet.with(undefined).type(), lengthCheck.result, step.length.range))
+    if (lengthCheck.result != null) {
+      errors.push(...checkType(NumberFacet.with(undefined).type(), lengthCheck.result, step.length.range))
+    }
   }
 
   const parametersCheck = checkArgumentList(context, step.parameters, stepSchema, step.range)
@@ -580,6 +593,7 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
     if (pointCheck.result != null) {
       const typeErrors = checkType(NumberFacet.type(), pointCheck.result, point.range)
       errors.push(...typeErrors)
+
       if (typeErrors.length === 0) {
         units.push(NumberFacet.detail(pointCheck.result))
       }
@@ -612,22 +626,25 @@ function checkIdentifier (context: Context, identifier: ast.Identifier): Checked
 function checkUnaryExpression (context: Context, expression: ast.UnaryExpression): Checked<FacetType> {
   const argumentCheck = checkExpression(context, expression.argument)
 
+  const errors = [...argumentCheck.errors]
+
   if (argumentCheck.result == null) {
-    return { errors: argumentCheck.errors }
+    return { errors }
   }
 
   const { range, operator } = expression
   const argument = argumentCheck.result
 
   if (!NumberFacet.is(argument)) {
-    return { errors: [new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range)] }
+    errors.push(new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range))
+    return { errors }
   }
 
   // TypeScript will error if an operator is not handled
   switch (operator) {
     case '+':
     case '-':
-      return { errors: [], result: argument }
+      return { errors, result: argument }
   }
 }
 
@@ -647,13 +664,13 @@ function checkBinaryExpression (context: Context, expression: ast.BinaryExpressi
 
   switch (operator) {
     case '+':
-      return checkPlus(left, right, range)
+      return prependErrors(errors, checkPlus(left, right, range))
     case '-':
-      return checkMinus(left, right, range)
+      return prependErrors(errors, checkMinus(left, right, range))
     case '*':
-      return checkMultiply(left, right, range)
+      return prependErrors(errors, checkMultiply(left, right, range))
     case '/':
-      return checkDivide(left, right, range)
+      return prependErrors(errors, checkDivide(left, right, range))
   }
 }
 
@@ -731,19 +748,26 @@ function checkDivide (left: FacetType, right: FacetType, range: SourceRange): Ch
 }
 
 function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<FacetType> {
+  const errors: CompileError[] = []
+
   // Special case: "bus" namespace
   if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
     const busName = expression.property.name
+
     const busType = resolveBus(context, busName)
     if (busType == null) {
-      return { errors: [new CompileError(`Unknown bus "${busName}"`, expression.property.range)] }
+      errors.push(new CompileError(`Unknown bus "${busName}"`, expression.property.range))
+      return { errors }
     }
-    return { errors: [], result: busType }
+
+    return { errors, result: busType }
   }
 
   const objectCheck = checkExpression(context, expression.object)
+  errors.push(...objectCheck.errors)
+
   if (objectCheck.result == null) {
-    return { errors: objectCheck.errors }
+    return { errors }
   }
 
   const { property } = expression
@@ -751,47 +775,60 @@ function checkPropertyAccess (context: Context, expression: ast.PropertyAccess):
 
   if (NumberFacet.is(object)) {
     if (!isSyntaxUnit(property.name)) {
-      return { errors: [new CompileError(`Unknown unit "${property.name}"`, property.range)] }
+      errors.push(new CompileError(`Unknown unit "${property.name}"`, property.range))
+      return { errors }
     }
 
     const existingUnit = NumberFacet.detail(object)
     if (existingUnit != null) {
-      return { errors: [new CompileError(`Cannot apply unit "${property.name}" to number with existing unit "${existingUnit}"`, property.range)] }
+      errors.push(new CompileError(`Cannot apply unit "${property.name}" to number with existing unit "${existingUnit}"`, property.range))
+      return { errors }
     }
 
-    return { errors: [], result: NumberFacet.with(toBaseUnit(property.name)).type() }
+    return { errors, result: NumberFacet.with(toBaseUnit(property.name)).type() }
   }
 
   if (RecordFacet.is(object)) {
     const record = RecordFacet.detail(object)
     if (Object.hasOwn(record, property.name)) {
-      return { errors: [], result: record[property.name] }
+      return { errors, result: record[property.name] }
     }
 
     // Improve error messages for modules
     if (ModuleFacet.is(object)) {
       const moduleName = ModuleFacet.detail(object).name
-      return { errors: [new CompileError(`Module "${moduleName}" has no export named "${property.name}"`, property.range)] }
+      errors.push(new CompileError(`Module "${moduleName}" has no export named "${property.name}"`, property.range))
+
+      return { errors }
     }
   }
 
-  return { errors: [new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range)] }
+  errors.push(new CompileError(`Type ${object.format()} has no property named "${property.name}"`, property.range))
+
+  return { errors }
 }
 
 function checkCall (context: Context, expression: ast.Call): Checked<FacetType> {
+  const errors: CompileError[] = []
+
   const calleeCheck = checkExpression(context, expression.callee)
+  errors.push(...calleeCheck.errors)
+
   if (calleeCheck.result == null) {
-    return { errors: calleeCheck.errors }
+    return { errors }
   }
 
   const callee = calleeCheck.result
   if (!FunctionFacet.is(calleeCheck.result)) {
-    return { errors: [new CompileError(`Cannot call value of type ${callee.format()}`, expression.range)] }
+    errors.push(new CompileError(`Cannot call value of type ${callee.format()}`, expression.range))
+    return { errors }
   }
 
   const { parameters, returnType } = FunctionFacet.detail(callee)
 
-  const { errors } = checkArgumentList(context, expression.arguments, parameters, expression.range)
+  const argumentCheck = checkArgumentList(context, expression.arguments, parameters, expression.range)
+  errors.push(...argumentCheck.errors)
+
   return { errors, result: returnType }
 }
 
