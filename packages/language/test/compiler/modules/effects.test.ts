@@ -2,18 +2,23 @@ import type { ParameterId } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { effectsModule } from '../../../src/compiler/modules/effects.js'
+import type { GlobalScope } from '../../../src/compiler/scopes.js'
+import { createGlobalScope } from '../../../src/compiler/scopes.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
 import { RecordFacet } from '../../../src/type-system/base/record.js'
 import { EffectFacet } from '../../../src/type-system/domain/effect.js'
 import { getFunctionExport } from './test-utils.js'
 
-function createFunctionContext (): FunctionContext {
-  return {
-    instruments: new Map(),
-    automations: new Map()
-  }
+function createFunctionContext (): GlobalScope {
+  return createGlobalScope({
+    beatsPerBar: 4,
+    tempo: {
+      default: 120,
+      minimum: 20,
+      maximum: 300
+    }
+  }, new Map())
 }
 
 describe('compiler/modules/effects.ts', () => {
@@ -25,8 +30,7 @@ describe('compiler/modules/effects.ts', () => {
     const gain = getFunctionExport(effectsModule, 'gain')
 
     it('should create gain effect', () => {
-      const context = createFunctionContext()
-      const result = gain.invoke(context, {
+      const result = gain.invoke(createFunctionContext(), {
         gain: Numbers.of(numeric('db', -6))
       })
 
@@ -46,8 +50,7 @@ describe('compiler/modules/effects.ts', () => {
     const pan = getFunctionExport(effectsModule, 'pan')
 
     it('should create pan effect', () => {
-      const context = createFunctionContext()
-      const result = pan.invoke(context, {
+      const result = pan.invoke(createFunctionContext(), {
         pan: Numbers.of(numeric(undefined, 0.5))
       })
 
@@ -67,8 +70,7 @@ describe('compiler/modules/effects.ts', () => {
     const lowpass = getFunctionExport(effectsModule, 'lowpass')
 
     it('should create lowpass effect', () => {
-      const context = createFunctionContext()
-      const result = lowpass.invoke(context, {
+      const result = lowpass.invoke(createFunctionContext(), {
         frequency: Numbers.of(numeric('hz', 1000))
       })
 
@@ -88,8 +90,7 @@ describe('compiler/modules/effects.ts', () => {
     const highpass = getFunctionExport(effectsModule, 'highpass')
 
     it('should create highpass effect', () => {
-      const context = createFunctionContext()
-      const result = highpass.invoke(context, {
+      const result = highpass.invoke(createFunctionContext(), {
         frequency: Numbers.of(numeric('hz', 200))
       })
 
@@ -109,8 +110,7 @@ describe('compiler/modules/effects.ts', () => {
     const width = getFunctionExport(effectsModule, 'width')
 
     it('should create width effect', () => {
-      const context = createFunctionContext()
-      const result = width.invoke(context, {
+      const result = width.invoke(createFunctionContext(), {
         width: Numbers.of(numeric(undefined, 0.8))
       })
 
@@ -127,8 +127,7 @@ describe('compiler/modules/effects.ts', () => {
     const delay = getFunctionExport(effectsModule, 'delay')
 
     it('should create delay effect', () => {
-      const context = createFunctionContext()
-      const result = delay.invoke(context, {
+      const result = delay.invoke(createFunctionContext(), {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(beats(0.5)),
         feedback: Numbers.of(numeric(undefined, 0.3))
@@ -149,8 +148,7 @@ describe('compiler/modules/effects.ts', () => {
     })
 
     it('should create delay effect with seconds', () => {
-      const context = createFunctionContext()
-      const result = delay.invoke(context, {
+      const result = delay.invoke(createFunctionContext(), {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(seconds(1.5)),
         feedback: Numbers.of(numeric(undefined, 0.3))
@@ -171,8 +169,7 @@ describe('compiler/modules/effects.ts', () => {
     })
 
     it('should accept optional wet parameter', () => {
-      const context = createFunctionContext()
-      const result = delay.invoke(context, {
+      const result = delay.invoke(createFunctionContext(), {
         mix: Numbers.of(numeric(undefined, 0.5)),
         time: Numbers.of(beats(0.5)),
         feedback: Numbers.of(numeric(undefined, 0.3)),
@@ -189,8 +186,7 @@ describe('compiler/modules/effects.ts', () => {
     const reverb = getFunctionExport(effectsModule, 'reverb')
 
     it('should create reverb effect', () => {
-      const context = createFunctionContext()
-      const result = reverb.invoke(context, {
+      const result = reverb.invoke(createFunctionContext(), {
         decay: Numbers.of(numeric('s', 2.0)),
         mix: Numbers.of(numeric(undefined, 0.4))
       })
@@ -206,8 +202,7 @@ describe('compiler/modules/effects.ts', () => {
     })
 
     it('should create reverb effect with beats', () => {
-      const context = createFunctionContext()
-      const result = reverb.invoke(context, {
+      const result = reverb.invoke(createFunctionContext(), {
         decay: Numbers.of(beats(2)),
         mix: Numbers.of(numeric(undefined, 0.4))
       })
@@ -223,8 +218,7 @@ describe('compiler/modules/effects.ts', () => {
     })
 
     it('should accept optional wet parameter', () => {
-      const context = createFunctionContext()
-      const result = reverb.invoke(context, {
+      const result = reverb.invoke(createFunctionContext(), {
         decay: Numbers.of(numeric('s', 2.0)),
         mix: Numbers.of(numeric(undefined, 0.4)),
         wet: Numbers.of(numeric('db', -3))
@@ -240,8 +234,7 @@ describe('compiler/modules/effects.ts', () => {
     const clip = getFunctionExport(effectsModule, 'clip')
 
     it('should create clip effect', () => {
-      const context = createFunctionContext()
-      const result = clip.invoke(context, {
+      const result = clip.invoke(createFunctionContext(), {
         threshold: Numbers.of(numeric(undefined, 0.8))
       })
 

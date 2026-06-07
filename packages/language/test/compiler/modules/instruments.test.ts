@@ -2,18 +2,23 @@ import type { Envelope } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { instrumentsModule } from '../../../src/compiler/modules/instruments.js'
+import type { GlobalScope } from '../../../src/compiler/scopes.js'
+import { createGlobalScope } from '../../../src/compiler/scopes.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
 import { StringFacet } from '../../../src/type-system/base/string.js'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { getFunctionExport } from './test-utils.js'
 
-function createFunctionContext (): FunctionContext {
-  return {
-    instruments: new Map(),
-    automations: new Map()
-  }
+function createFunctionContext (): GlobalScope {
+  return createGlobalScope({
+    beatsPerBar: 4,
+    tempo: {
+      default: 120,
+      minimum: 20,
+      maximum: 300
+    }
+  }, new Map())
 }
 
 describe('compiler/modules/instruments.ts', () => {
