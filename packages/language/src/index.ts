@@ -13,5 +13,6 @@ export * from './compiler/error.js'
 export * from './compiler/checker.js'
 export * from './compiler/generator.js'
 
-export type { Documentation } from './compiler/modules.js'
-export { getStandardModuleNames, getStandardModule, getDocumentation } from './compiler/modules.js'
+export type { Documentation } from './library/documentation.js'
+export { getDocumentation } from './library/documentation.js'
+export { getStandardModuleNames, getStandardModule } from './library/modules.js'

@@ -2,10 +2,10 @@ import type { Envelope } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { instrumentsModule } from '../../../src/compiler/modules/instruments.js'
 import type { GlobalScope } from '../../../src/compiler/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/scopes.js'
-import { Numbers } from '../../../src/compiler/type-helpers.js'
+import { Numbers } from '../../../src/type-system/helpers.js'
+import { instrumentsModule } from '../../../src/library/modules/instruments.js'
 import { StringFacet } from '../../../src/type-system/base/string.js'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { getFunctionExport } from './test-utils.js'
@@ -21,7 +21,7 @@ function createFunctionContext (): GlobalScope {
   }, new Map())
 }
 
-describe('compiler/modules/instruments.ts', () => {
+describe('library/modules/instruments.ts', () => {
   const declickEnvelope: Envelope = {
     attack: numeric('s', 0.003),
     decay: numeric('s', 0),

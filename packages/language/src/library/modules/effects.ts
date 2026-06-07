@@ -1,13 +1,13 @@
 import type { Effect } from '@core'
 import { numeric } from '@utility'
+import type { ParameterContext } from '../../compiler/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { EffectFacet } from '../../type-system/domain/effect.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { makeType, makeUnion } from '../../type-system/factory.js'
+import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
 import type { Value } from '../../type-system/types.js'
-import type { ParameterContext } from '../scopes.js'
-import { Functions, Modules, Parameters } from '../type-helpers.js'
 
 const UNITY_GAIN = numeric('db', 0)
 

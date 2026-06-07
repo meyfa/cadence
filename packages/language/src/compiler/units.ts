@@ -1,6 +1,6 @@
 import type { Unit } from '@utility'
 import type { Value } from '../type-system/types.js'
-import { Numbers } from './type-helpers.js'
+import { Numbers } from '../type-system/helpers.js'
 
 interface Constants {
   readonly beatsPerBar: number
