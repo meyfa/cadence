@@ -2,7 +2,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createGlobalScope, createLocalScope, resolveInScope } from '../../src/compiler/scopes.js'
-import { Numbers } from '../../src/compiler/type-helpers.js'
+import { Numbers } from '../../src/type-system/helpers.js'
 
 describe('compiler/scopes.ts', () => {
   describe('createGlobalScope()', () => {

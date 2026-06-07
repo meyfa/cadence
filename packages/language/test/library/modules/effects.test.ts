@@ -2,10 +2,10 @@ import type { ParameterId } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { effectsModule } from '../../../src/compiler/modules/effects.js'
 import type { GlobalScope } from '../../../src/compiler/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/scopes.js'
-import { Numbers } from '../../../src/compiler/type-helpers.js'
+import { Numbers } from '../../../src/type-system/helpers.js'
+import { effectsModule } from '../../../src/library/modules/effects.js'
 import { RecordFacet } from '../../../src/type-system/base/record.js'
 import { EffectFacet } from '../../../src/type-system/domain/effect.js'
 import { getFunctionExport } from './test-utils.js'
@@ -21,7 +21,7 @@ function createFunctionContext (): GlobalScope {
   }, new Map())
 }
 
-describe('compiler/modules/effects.ts', () => {
+describe('library/modules/effects.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
   const seconds = (value: number) => numeric('s', value)

@@ -1,6 +1,7 @@
 import type { SourceRange } from '@ast'
 import { ast } from '@ast'
 import type { Brand, Unit } from '@utility'
+import { getStandardModuleNames, getStandardModuleValue } from '../library/modules.js'
 import { CompoundError } from '../result/errors.js'
 import type { Result } from '../result/result.js'
 import { FunctionFacet } from '../type-system/base/function.js'
@@ -20,9 +21,8 @@ import type { FacetType, Type, Value } from '../type-system/types.js'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
-import { getStandardModuleNames, getStandardModuleValue } from './modules.js'
 import { checkCyclicRoutings } from './routings.js'
-import { BusType } from './type-helpers.js'
+import { BusType } from '../type-system/helpers.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>

@@ -1,11 +1,11 @@
-import { describe, it } from 'node:test'
-import { Modules } from '../../src/compiler/type-helpers.js'
-import { StringFacet } from '../../src/type-system/base/string.js'
-import { ModuleFacet } from '../../src/type-system/base/module.js'
 import assert from 'node:assert'
+import { describe, it } from 'node:test'
+import { ModuleFacet } from '../../src/type-system/base/module.js'
 import { RecordFacet } from '../../src/type-system/base/record.js'
+import { StringFacet } from '../../src/type-system/base/string.js'
+import { Modules } from '../../src/type-system/helpers.js'
 
-describe('compiler/type-helpers.ts', () => {
+describe('type-system/helpers.ts', () => {
   describe('Modules', () => {
     it('should not pollute the prototype with modules that export __proto__', () => {
       const protoValue = StringFacet.type().of('malicious')

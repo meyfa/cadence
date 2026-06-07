@@ -2,8 +2,8 @@ import { createSerialPattern, loopPattern } from '@core'
 import { numeric } from '@utility'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
+import { Functions, Modules } from '../../type-system/helpers.js'
 import type { Value } from '../../type-system/types.js'
-import { Functions, Modules } from '../type-helpers.js'
 
 const loop = Functions.of({
   summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.',

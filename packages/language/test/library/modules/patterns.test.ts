@@ -2,10 +2,10 @@ import { createSerialPattern, loopPattern, renderPatternEvents } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { patternsModule } from '../../../src/compiler/modules/patterns.js'
 import type { GlobalScope } from '../../../src/compiler/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/scopes.js'
-import { Numbers } from '../../../src/compiler/type-helpers.js'
+import { Numbers } from '../../../src/type-system/helpers.js'
+import { patternsModule } from '../../../src/library/modules/patterns.js'
 import { PatternFacet } from '../../../src/type-system/domain/pattern.js'
 import { getFunctionExport } from './test-utils.js'
 
@@ -20,7 +20,7 @@ function createFunctionContext (): GlobalScope {
   }, new Map())
 }
 
-describe('compiler/modules/patterns.ts', () => {
+describe('library/modules/patterns.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
 
