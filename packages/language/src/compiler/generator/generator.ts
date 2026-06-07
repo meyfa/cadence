@@ -1,6 +1,6 @@
 import { ast } from '@ast'
 import type { Bus, BusId, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Step, Track } from '@core'
-import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core'
+import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { getStandardModuleValue } from '../../library/modules.js'
@@ -18,7 +18,7 @@ import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { PartFacet } from '../../type-system/domain/part.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
 import { makeType } from '../../type-system/factory.js'
-import { Numbers, Parameters } from '../../type-system/helpers.js'
+import { Parameters } from '../../type-system/helpers.js'
 import type { InferSchema, Schema } from '../../type-system/schema.js'
 import type { FacetType, Value } from '../../type-system/types.js'
 import type { CheckedProgram } from '../checker/checker.js'
@@ -26,6 +26,8 @@ import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '.
 import type { CurveSegment as GeneratedCurveSegment } from '../curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from '../curves.js'
 import { CompileError } from '../error.js'
+import { binaryOperations } from '../operators/binary.js'
+import { unaryOperations } from '../operators/unary.js'
 import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toNumberValue } from '../units.js'
 import type { GenerateOptions } from './options.js'
@@ -435,112 +437,16 @@ function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {
-  const argument = resolve(scope, expression.argument)
-
-  switch (expression.operator) {
-    case '+':
-      if (NumberFacet.has(argument)) {
-        return argument
-      }
-      break
-
-    case '-':
-      if (NumberFacet.has(argument)) {
-        const numberData = NumberFacet.get(argument)
-        return Numbers.of({ unit: numberData.unit, value: -numberData.value })
-      }
-      break
-  }
-
-  assert(false)
+  return unaryOperations[expression.operator].compute(
+    resolve(scope, expression.argument)
+  )
 }
 
 function computeBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Value {
-  const left = resolve(scope, expression.left)
-  const right = resolve(scope, expression.right)
-
-  switch (expression.operator) {
-    case '+':
-      return computePlus(left, right)
-    case '-':
-      return computeMinus(left, right)
-    case '*':
-      return computeMultiply(left, right)
-    case '/':
-      return computeDivide(left, right)
-  }
-}
-
-function computePlus (left: Value, right: Value): Value {
-  if (StringFacet.has(left) && StringFacet.has(right)) {
-    const leftData = StringFacet.get(left)
-    const rightData = StringFacet.get(right)
-    return StringFacet.type().of(leftData + rightData)
-  }
-
-  if (PatternFacet.has(left) && PatternFacet.has(right)) {
-    const leftData = PatternFacet.get(left)
-    const rightData = PatternFacet.get(right)
-    return PatternFacet.type().of(concatPatterns([leftData, rightData]))
-  }
-
-  if (NumberFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return Numbers.of({ unit: leftData.unit, value: leftData.value + rightData.value })
-  }
-
-  assert(false)
-}
-
-function computeMinus (left: Value, right: Value): Value {
-  if (NumberFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return Numbers.of({ unit: leftData.unit, value: leftData.value - rightData.value })
-  }
-
-  assert(false)
-}
-
-function computeMultiply (left: Value, right: Value): Value {
-  if (NumberFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return Numbers.of({ unit: leftData.unit ?? rightData.unit, value: leftData.value * rightData.value })
-  }
-
-  if (PatternFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = PatternFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return PatternFacet.type().of(multiplyPattern(leftData, rightData.value))
-  }
-
-  if (NumberFacet.has(left) && PatternFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = PatternFacet.get(right)
-    return PatternFacet.type().of(multiplyPattern(rightData, leftData.value))
-  }
-
-  assert(false)
-}
-
-function computeDivide (left: Value, right: Value): Value {
-  if (NumberFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    // Equal units cancel out
-    const unit = leftData.unit === rightData.unit ? undefined : leftData.unit
-    return Numbers.of({ unit, value: leftData.value / rightData.value })
-  }
-
-  if (PatternFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = PatternFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return PatternFacet.type().of(multiplyPattern(leftData, 1.0 / rightData.value))
-  }
-
-  assert(false)
+  return binaryOperations[expression.operator].compute(
+    resolve(scope, expression.left),
+    resolve(scope, expression.right)
+  )
 }
 
 function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): Value {

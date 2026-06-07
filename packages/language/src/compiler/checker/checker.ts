@@ -22,6 +22,8 @@ import type { FacetType, Type, Value } from '../../type-system/types.js'
 import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import { getCurveSegmentType } from '../curves.js'
 import { CompileError } from '../error.js'
+import { binaryOperations } from '../operators/binary.js'
+import { unaryOperations } from '../operators/unary.js'
 import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toBaseUnit } from '../units.js'
 import { checkCyclicRoutings } from './routings.js'
@@ -67,17 +69,6 @@ export function check (program: ast.Program): CheckResult {
 interface Checked<TValue> {
   readonly errors: readonly CompileError[]
   readonly result?: TValue
-}
-
-function prependErrors<TValue> (errors: readonly CompileError[], check: Checked<TValue>): Checked<TValue> {
-  if (errors.length === 0) {
-    return check
-  }
-
-  return {
-    errors: [...errors, ...check.errors],
-    result: check.result
-  }
 }
 
 function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
@@ -601,28 +592,21 @@ function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<Fac
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {
-  const argumentCheck = checkExpression(scope, expression.argument)
+  const operandCheck = checkExpression(scope, expression.argument)
+  const errors = [...operandCheck.errors]
 
-  const errors = [...argumentCheck.errors]
-
-  if (argumentCheck.result == null) {
+  const operand = operandCheck.result
+  if (operand == null) {
     return { errors }
   }
 
-  const { range, operator } = expression
-  const argument = argumentCheck.result
-
-  if (!NumberFacet.is(argument)) {
-    errors.push(new CompileError(`Incompatible operand for "${operator}": ${argument.format()}`, range))
+  const result = unaryOperations[expression.operator].check(operand)
+  if (result == null) {
+    errors.push(new CompileError(`Incompatible operand for "${expression.operator}": ${operand.format()}`, expression.range))
     return { errors }
   }
 
-  // TypeScript will error if an operator is not handled
-  switch (operator) {
-    case '+':
-    case '-':
-      return { errors, result: argument }
-  }
+  return { errors, result }
 }
 
 function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Checked<FacetType> {
@@ -631,97 +615,20 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
 
   const errors = [...leftCheck.errors, ...rightCheck.errors]
 
-  if (leftCheck.result == null || rightCheck.result == null) {
-    return { errors }
-  }
-
-  const { range, operator } = expression
   const left = leftCheck.result
   const right = rightCheck.result
 
-  switch (operator) {
-    case '+':
-      return prependErrors(errors, checkPlus(left, right, range))
-    case '-':
-      return prependErrors(errors, checkMinus(left, right, range))
-    case '*':
-      return prependErrors(errors, checkMultiply(left, right, range))
-    case '/':
-      return prependErrors(errors, checkDivide(left, right, range))
-  }
-}
-
-function checkPlus (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
-  if (StringFacet.is(left) && StringFacet.is(right)) {
-    return { errors: [], result: left }
+  if (left == null || right == null) {
+    return { errors }
   }
 
-  if (PatternFacet.is(left) && PatternFacet.is(right)) {
-    return { errors: [], result: left }
+  const result = binaryOperations[expression.operator].check(left, right)
+  if (result == null) {
+    errors.push(new CompileError(`Incompatible operands for "${expression.operator}": ${left.format()} and ${right.format()}`, expression.range))
+    return { errors }
   }
 
-  if (NumberFacet.is(left) && NumberFacet.is(right)) {
-    const leftUnit = NumberFacet.detail(left)
-    const rightUnit = NumberFacet.detail(right)
-    if (leftUnit === rightUnit) {
-      return { errors: [], result: left }
-    }
-  }
-
-  return { errors: [new CompileError(`Incompatible operands for "+": ${left.format()} and ${right.format()}`, range)] }
-}
-
-function checkMinus (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
-  if (NumberFacet.is(left) && NumberFacet.is(right)) {
-    const leftUnit = NumberFacet.detail(left)
-    const rightUnit = NumberFacet.detail(right)
-    if (leftUnit === rightUnit) {
-      return { errors: [], result: left }
-    }
-  }
-
-  return { errors: [new CompileError(`Incompatible operands for "-": ${left.format()} and ${right.format()}`, range)] }
-}
-
-function checkMultiply (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
-  if (NumberFacet.is(left) && NumberFacet.is(right)) {
-    const leftUnit = NumberFacet.detail(left)
-    const rightUnit = NumberFacet.detail(right)
-    if (leftUnit == null || rightUnit == null) {
-      return { errors: [], result: NumberFacet.with(leftUnit ?? rightUnit).type() }
-    }
-  }
-
-  if (
-    (PatternFacet.is(left) && NumberFacet.with(undefined).is(right)) ||
-    (NumberFacet.with(undefined).is(left) && PatternFacet.is(right))
-  ) {
-    return { errors: [], result: PatternFacet.type() }
-  }
-
-  return { errors: [new CompileError(`Incompatible operands for "*": ${left.format()} and ${right.format()}`, range)] }
-}
-
-function checkDivide (left: FacetType, right: FacetType, range: SourceRange): Checked<FacetType> {
-  if (NumberFacet.is(left) && NumberFacet.is(right)) {
-    const leftUnit = NumberFacet.detail(left)
-    const rightUnit = NumberFacet.detail(right)
-
-    // equal units cancel out
-    if (leftUnit === rightUnit) {
-      return { errors: [], result: NumberFacet.with(undefined).type() }
-    }
-
-    if (rightUnit == null) {
-      return { errors: [], result: left }
-    }
-  }
-
-  if (PatternFacet.is(left) && NumberFacet.with(undefined).is(right)) {
-    return { errors: [], result: left }
-  }
-
-  return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
+  return { errors, result }
 }
 
 function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Checked<FacetType> {
