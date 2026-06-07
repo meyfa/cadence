@@ -1,6 +1,8 @@
 import { NumberFacet } from '../type-system/base/number.js'
 import { makeSchema } from '../type-system/schema.js'
 
+export const BUS_NAMESPACE = 'bus'
+
 export const trackSchema = makeSchema([
   {
     name: 'tempo',
