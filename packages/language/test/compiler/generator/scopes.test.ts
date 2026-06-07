@@ -2,7 +2,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../../src/compiler/generator/options.js'
-import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from '../../../src/compiler/generator/scopes.js'
+import { createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 
 const options: GenerateOptions = {
@@ -150,40 +150,6 @@ describe('compiler/generator/scopes.ts', () => {
       const namespace = createNamespace()
 
       assert.strictEqual(namespace.resolutions.size, 0)
-    })
-  })
-
-  describe('resolveInScope()', () => {
-    it('should resolve names in the current scope and parent scopes', () => {
-      const globalFoo = Numbers.of(numeric('db', 1))
-
-      const localBar = Numbers.of(numeric('db', 2))
-
-      const globalBaz = Numbers.of(numeric('db', 3))
-      const localBaz = Numbers.of(numeric('db', 4))
-
-      const globalScope = createGlobalScope(options, new Map([
-        ['foo', globalFoo],
-        ['baz', globalBaz]
-      ]))
-
-      const localScope = createLocalScope(globalScope)
-      localScope.resolutions.set('bar', localBar)
-      localScope.resolutions.set('baz', localBaz)
-
-      const nestedLocalScope = createLocalScope(localScope)
-
-      assert.strictEqual(resolveInScope(localScope, 'foo'), globalFoo)
-      assert.strictEqual(resolveInScope(localScope, 'bar'), localBar)
-      assert.strictEqual(resolveInScope(localScope, 'baz'), localBaz)
-
-      assert.strictEqual(resolveInScope(nestedLocalScope, 'foo'), globalFoo)
-      assert.strictEqual(resolveInScope(nestedLocalScope, 'bar'), localBar)
-      assert.strictEqual(resolveInScope(nestedLocalScope, 'baz'), localBaz)
-
-      assert.strictEqual(resolveInScope(globalScope, 'foo'), globalFoo)
-      assert.strictEqual(resolveInScope(globalScope, 'bar'), undefined)
-      assert.strictEqual(resolveInScope(globalScope, 'baz'), globalBaz)
     })
   })
 })

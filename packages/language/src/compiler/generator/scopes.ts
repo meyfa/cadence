@@ -96,22 +96,6 @@ export function createNamespace (): MutableNamespace {
   }
 }
 
-// resolution
-
-export function resolveInScope (scope: Scope, name: string): Value | undefined {
-  let current: Scope | undefined = scope
-
-  while (current != null) {
-    const value = current.resolutions.get(name)
-    if (value != null) {
-      return value
-    }
-    current = current.parent
-  }
-
-  return undefined
-}
-
 // out-of-line implementations
 
 function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
