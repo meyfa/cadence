@@ -26,10 +26,11 @@ import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '.
 import type { CurveSegment as GeneratedCurveSegment } from '../curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from '../curves.js'
 import { CompileError } from '../error.js'
+import { resolveInScope } from '../resolution.js'
+import { isSyntaxUnit, toNumberValue } from '../units.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
-import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from './scopes.js'
-import { isSyntaxUnit, toNumberValue } from '../units.js'
+import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been

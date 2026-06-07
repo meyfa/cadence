@@ -22,8 +22,11 @@ import type { FacetType, Type, Value } from '../../type-system/types.js'
 import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import { getCurveSegmentType } from '../curves.js'
 import { CompileError } from '../error.js'
-import { checkCyclicRoutings } from './routings.js'
+import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toBaseUnit } from '../units.js'
+import { checkCyclicRoutings } from './routings.js'
+import type { MutableNamespace, MutableScope, Scope } from './scopes.js'
+import { createGlobalScope, createLocalScope } from './scopes.js'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -48,12 +51,7 @@ export function check (program: ast.Program): CheckResult {
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  const globalScope = createGlobalScope({
-    resolutions: importResult.result,
-    namespaces: new Map(),
-    buses: new Map()
-  })
-
+  const globalScope = createGlobalScope(importResult.result)
   const scope = createLocalScope(globalScope)
 
   const errors: CompileError[] = []
@@ -64,29 +62,6 @@ export function check (program: ast.Program): CheckResult {
   errors.push(...checkTracks(scope, tracks))
 
   return errors.length === 0 ? success(program as CheckedProgram) : failure(errors)
-}
-
-interface Context {
-  readonly top: GlobalContext
-  readonly parent?: Context
-  readonly resolutions: ReadonlyMap<string, FacetType>
-}
-
-interface GlobalContext extends Context {
-  readonly buses: Map<string, FacetType>
-  readonly namespaces: Map<string, Namespace>
-}
-
-interface MutableContext extends Context {
-  readonly resolutions: Map<string, FacetType>
-}
-
-interface Namespace {
-  readonly resolutions: ReadonlyMap<string, FacetType>
-}
-
-interface MutableNamespace extends Namespace {
-  readonly resolutions: Map<string, FacetType>
 }
 
 interface Checked<TValue> {
@@ -105,26 +80,6 @@ function prependErrors<TValue> (errors: readonly CompileError[], check: Checked<
   }
 }
 
-function createGlobalScope (value: Omit<GlobalContext, 'top' | 'parent'>): GlobalContext {
-  const scope = {
-    ...value,
-
-    get top (): GlobalContext {
-      return scope
-    }
-  }
-
-  return scope
-}
-
-function createLocalScope (parent: Context): MutableContext {
-  return {
-    top: parent.top,
-    parent,
-    resolutions: new Map()
-  }
-}
-
 function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
   const module = getStandardModuleValue(moduleName)
   if (module == null) {
@@ -132,24 +87,6 @@ function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
   }
 
   return module
-}
-
-function recursiveLookup<T> (context: Context, lookup: (context: Context) => T | undefined): T | undefined {
-  let current: Context | undefined = context
-
-  while (current != null) {
-    const result = lookup(current)
-    if (result != null) {
-      return result
-    }
-    current = current.parent
-  }
-
-  return undefined
-}
-
-function resolve (context: Context, name: string): FacetType | undefined {
-  return recursiveLookup(context, (ctx) => ctx.resolutions.get(name))
 }
 
 function checkType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?: SourceRange): readonly CompileError[] {
@@ -222,27 +159,27 @@ function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMa
   return { errors, result }
 }
 
-function checkAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): readonly CompileError[] {
+function checkAssignments (scope: MutableScope, assignments: readonly ast.Assignment[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
   for (const assignment of assignments) {
-    const duplicate = context.resolutions.has(assignment.key.name)
+    const duplicate = scope.resolutions.has(assignment.key.name)
     if (duplicate) {
       errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.range))
     }
 
-    const expressionCheck = checkExpression(context, assignment.value)
+    const expressionCheck = checkExpression(scope, assignment.value)
     errors.push(...expressionCheck.errors)
 
     if (!duplicate && expressionCheck.result != null) {
-      context.resolutions.set(assignment.key.name, expressionCheck.result)
+      scope.resolutions.set(assignment.key.name, expressionCheck.result)
     }
   }
 
   return errors
 }
 
-function checkTracks (context: MutableContext, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
+function checkTracks (scope: MutableScope, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
   for (const track of tracks) {
@@ -250,14 +187,14 @@ function checkTracks (context: MutableContext, tracks: readonly ast.TrackStateme
       errors.push(new CompileError('Multiple track definitions', track.range))
     }
 
-    errors.push(...checkTrack(context, track))
+    errors.push(...checkTrack(scope, track))
   }
 
   return errors
 }
 
-function checkTrack (context: MutableContext, track: ast.TrackStatement): readonly CompileError[] {
-  const trackContext = createLocalScope(context)
+function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly CompileError[] {
+  const trackScope = createLocalScope(scope)
 
   const errors: CompileError[] = []
 
@@ -267,53 +204,53 @@ function checkTrack (context: MutableContext, track: ast.TrackStatement): readon
     if (part.name != null) {
       if (seenParts.has(part.name.name)) {
         errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
-      } else if (trackContext.resolutions.has(part.name.name)) {
+      } else if (trackScope.resolutions.has(part.name.name)) {
         errors.push(new CompileError(`Part name "${part.name.name}" conflicts with existing identifier`, part.name.range))
       }
 
       seenParts.add(part.name.name)
 
       // Reserve the name in the local scope
-      trackContext.resolutions.set(part.name.name, PartFacet.type())
+      trackScope.resolutions.set(part.name.name, PartFacet.type())
     }
 
-    errors.push(...checkPart(trackContext, part))
+    errors.push(...checkPart(trackScope, part))
   }
 
-  const propertiesCheck = checkArgumentList(trackContext, track.properties, trackSchema, track.range, 'property')
+  const propertiesCheck = checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   return errors
 }
 
-function checkPart (context: Context, part: ast.PartStatement): readonly CompileError[] {
+function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(context, part.properties, partSchema, part.range, 'property')
+  const propertiesCheck = checkArgumentList(scope, part.properties, partSchema, part.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   for (const routing of part.routings) {
-    errors.push(...checkInstrumentRouting(context, routing))
+    errors.push(...checkInstrumentRouting(scope, routing))
   }
 
   for (const automation of part.automations) {
-    errors.push(...checkAutomation(context, automation))
+    errors.push(...checkAutomation(scope, automation))
   }
 
   return errors
 }
 
-function checkInstrumentRouting (context: Context, routing: ast.Routing): readonly CompileError[] {
+function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const destination = resolve(context, routing.destination.name)
+  const destination = resolveInScope(scope, routing.destination.name)
   if (destination == null) {
     errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
   } else {
     errors.push(...checkType(InstrumentFacet.type(), destination, routing.destination.range))
   }
 
-  const sourceCheck = checkExpression(context, routing.source)
+  const sourceCheck = checkExpression(scope, routing.source)
   errors.push(...sourceCheck.errors)
   if (sourceCheck.result != null) {
     errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
@@ -322,16 +259,16 @@ function checkInstrumentRouting (context: Context, routing: ast.Routing): readon
   return errors
 }
 
-function checkAutomation (context: Context, automation: ast.AutomateStatement): readonly CompileError[] {
+function checkAutomation (scope: Scope, automation: ast.AutomateStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const targetCheck = checkExpression(context, automation.target)
+  const targetCheck = checkExpression(scope, automation.target)
   errors.push(...targetCheck.errors)
   if (targetCheck.result != null) {
     errors.push(...checkType(ParameterFacet.type(), targetCheck.result, automation.target.range))
   }
 
-  const curveCheck = checkExpression(context, automation.curve)
+  const curveCheck = checkExpression(scope, automation.curve)
   errors.push(...curveCheck.errors)
 
   if (curveCheck.result == null) {
@@ -350,7 +287,7 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
   return errors
 }
 
-function checkMixers (scope: MutableContext, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
+function checkMixers (scope: MutableScope, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
   const busNamespace: MutableNamespace = { resolutions: new Map() }
   scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
 
@@ -376,7 +313,7 @@ interface MixerDetail {
   readonly buses: ReadonlyMap<string, FacetType>
 }
 
-function checkMixer (scope: Context, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Checked<MixerDetail> {
+function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Checked<MixerDetail> {
   const mixerScope = createLocalScope(scope)
 
   const errors: CompileError[] = []
@@ -424,15 +361,15 @@ function checkMixer (scope: Context, mixer: ast.MixerStatement, busNamespace: Mu
   return { errors, result: { buses: seenBuses } }
 }
 
-function checkBus (context: Context, bus: ast.BusStatement): Checked<FacetType> {
+function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(context, bus.properties, busSchema, bus.range, 'property')
+  const propertiesCheck = checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property')
   errors.push(...propertiesCheck.errors)
 
   // Sources
   for (const source of bus.sources) {
-    const sourceCheck = checkExpression(context, source)
+    const sourceCheck = checkExpression(scope, source)
     errors.push(...sourceCheck.errors)
 
     if (sourceCheck.result != null) {
@@ -443,7 +380,7 @@ function checkBus (context: Context, bus: ast.BusStatement): Checked<FacetType> 
 
   // Effects
   for (const effect of bus.effects) {
-    const effectCheck = checkExpression(context, effect.expression)
+    const effectCheck = checkExpression(scope, effect.expression)
     errors.push(...effectCheck.errors)
 
     if (effectCheck.result != null) {
@@ -459,42 +396,42 @@ function checkBus (context: Context, bus: ast.BusStatement): Checked<FacetType> 
   return { errors, result: type }
 }
 
-function checkExpression (context: Context, expression: ast.Expression): Checked<FacetType> {
+function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
   switch (expression.type) {
     case 'Number':
-      return checkNumber(context, expression)
+      return checkNumber(scope, expression)
 
     case 'String':
-      return checkString(context, expression)
+      return checkString(scope, expression)
 
     case 'Pattern':
-      return checkPattern(context, expression)
+      return checkPattern(scope, expression)
 
     case 'Curve':
-      return checkCurve(context, expression)
+      return checkCurve(scope, expression)
 
     case 'Identifier':
-      return checkIdentifier(context, expression)
+      return checkIdentifier(scope, expression)
 
     case 'UnaryExpression':
-      return checkUnaryExpression(context, expression)
+      return checkUnaryExpression(scope, expression)
 
     case 'BinaryExpression':
-      return checkBinaryExpression(context, expression)
+      return checkBinaryExpression(scope, expression)
 
     case 'PropertyAccess':
-      return checkPropertyAccess(context, expression)
+      return checkPropertyAccess(scope, expression)
 
     case 'Call':
-      return checkCall(context, expression)
+      return checkCall(scope, expression)
   }
 }
 
-function checkNumber (context: Context, number: ast.Number): Checked<FacetType> {
+function checkNumber (scope: Scope, number: ast.Number): Checked<FacetType> {
   return { errors: [], result: NumberFacet.with(undefined).type() }
 }
 
-function checkString (context: Context, string: ast.String): Checked<FacetType> {
+function checkString (scope: Scope, string: ast.String): Checked<FacetType> {
   const errors: CompileError[] = []
 
   for (const part of string.parts) {
@@ -502,7 +439,7 @@ function checkString (context: Context, string: ast.String): Checked<FacetType> 
       continue
     }
 
-    const partCheck = checkExpression(context, part)
+    const partCheck = checkExpression(scope, part)
     errors.push(...partCheck.errors)
 
     if (partCheck.result != null) {
@@ -513,16 +450,16 @@ function checkString (context: Context, string: ast.String): Checked<FacetType> 
   return { errors, result: StringFacet.type() }
 }
 
-function checkPattern (context: Context, pattern: ast.Pattern): Checked<FacetType> {
+function checkPattern (scope: Scope, pattern: ast.Pattern): Checked<FacetType> {
   const errors: CompileError[] = []
 
   for (const item of pattern.children) {
     if (item.type === 'Step') {
-      errors.push(...checkStep(context, item))
+      errors.push(...checkStep(scope, item))
       continue
     }
 
-    const itemCheck = checkExpression(context, item)
+    const itemCheck = checkExpression(scope, item)
     errors.push(...itemCheck.errors)
 
     if (itemCheck.result != null) {
@@ -533,11 +470,11 @@ function checkPattern (context: Context, pattern: ast.Pattern): Checked<FacetTyp
   return { errors, result: PatternFacet.type() }
 }
 
-function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
+function checkStep (scope: Scope, step: ast.Step): readonly CompileError[] {
   const errors: CompileError[] = []
 
   if (step.length != null) {
-    const lengthCheck = checkExpression(context, step.length)
+    const lengthCheck = checkExpression(scope, step.length)
     errors.push(...lengthCheck.errors)
 
     if (lengthCheck.result != null) {
@@ -545,13 +482,13 @@ function checkStep (context: Context, step: ast.Step): readonly CompileError[] {
     }
   }
 
-  const parametersCheck = checkArgumentList(context, step.parameters, stepSchema, step.range)
+  const parametersCheck = checkArgumentList(scope, step.parameters, stepSchema, step.range)
   errors.push(...parametersCheck.errors)
 
   return errors
 }
 
-function checkCurve (context: Context, curve: ast.Curve): Checked<FacetType> {
+function checkCurve (scope: Scope, curve: ast.Curve): Checked<FacetType> {
   const errors: CompileError[] = []
 
   const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
@@ -571,7 +508,7 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<FacetType> {
   let previousUnit: Unit | undefined
 
   for (let i = 0; i < segments.length; ++i) {
-    const segmentCheck = checkCurveSegment(context, segments[i], i > 0, previousUnit)
+    const segmentCheck = checkCurveSegment(scope, segments[i], i > 0, previousUnit)
     segmentChecks.push(segmentCheck)
     errors.push(...segmentCheck.errors)
 
@@ -595,11 +532,11 @@ function checkCurve (context: Context, curve: ast.Curve): Checked<FacetType> {
   return { errors, result: CurveFacet.with(firstUnit).type() }
 }
 
-function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
+function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
   const errors: CompileError[] = []
 
   if (segment.length != null) {
-    const lengthCheck = checkExpression(context, segment.length)
+    const lengthCheck = checkExpression(scope, segment.length)
     errors.push(...lengthCheck.errors)
 
     if (lengthCheck.result != null) {
@@ -627,7 +564,7 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
   const units: Array<Unit | undefined> = []
 
   for (const point of segment.parameters) {
-    const pointCheck = checkExpression(context, point)
+    const pointCheck = checkExpression(scope, point)
     errors.push(...pointCheck.errors)
 
     if (pointCheck.result != null) {
@@ -654,8 +591,8 @@ function checkCurveSegment (context: Context, segment: ast.CurveSegment, hasPrev
   return { errors, result: firstUnit }
 }
 
-function checkIdentifier (context: Context, identifier: ast.Identifier): Checked<FacetType> {
-  const valueType = resolve(context, identifier.name)
+function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<FacetType> {
+  const valueType = resolveInScope(scope, identifier.name)
   if (valueType == null) {
     return { errors: [new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)] }
   }
@@ -663,8 +600,8 @@ function checkIdentifier (context: Context, identifier: ast.Identifier): Checked
   return { errors: [], result: valueType }
 }
 
-function checkUnaryExpression (context: Context, expression: ast.UnaryExpression): Checked<FacetType> {
-  const argumentCheck = checkExpression(context, expression.argument)
+function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {
+  const argumentCheck = checkExpression(scope, expression.argument)
 
   const errors = [...argumentCheck.errors]
 
@@ -688,9 +625,9 @@ function checkUnaryExpression (context: Context, expression: ast.UnaryExpression
   }
 }
 
-function checkBinaryExpression (context: Context, expression: ast.BinaryExpression): Checked<FacetType> {
-  const leftCheck = checkExpression(context, expression.left)
-  const rightCheck = checkExpression(context, expression.right)
+function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Checked<FacetType> {
+  const leftCheck = checkExpression(scope, expression.left)
+  const rightCheck = checkExpression(scope, expression.right)
 
   const errors = [...leftCheck.errors, ...rightCheck.errors]
 
@@ -787,11 +724,11 @@ function checkDivide (left: FacetType, right: FacetType, range: SourceRange): Ch
   return { errors: [new CompileError(`Incompatible operands for "/": ${left.format()} and ${right.format()}`, range)] }
 }
 
-function checkPropertyAccess (context: Context, expression: ast.PropertyAccess): Checked<FacetType> {
+function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Checked<FacetType> {
   const errors: CompileError[] = []
 
   if (expression.object.type === 'Identifier') {
-    const namespace = context.top.namespaces.get(expression.object.name)
+    const namespace = scope.top.namespaces.get(expression.object.name)
     if (namespace != null) {
       const propertyType = namespace.resolutions.get(expression.property.name)
       if (propertyType == null) {
@@ -803,7 +740,7 @@ function checkPropertyAccess (context: Context, expression: ast.PropertyAccess):
     }
   }
 
-  const objectCheck = checkExpression(context, expression.object)
+  const objectCheck = checkExpression(scope, expression.object)
   errors.push(...objectCheck.errors)
 
   if (objectCheck.result == null) {
@@ -848,10 +785,10 @@ function checkPropertyAccess (context: Context, expression: ast.PropertyAccess):
   return { errors }
 }
 
-function checkCall (context: Context, expression: ast.Call): Checked<FacetType> {
+function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
   const errors: CompileError[] = []
 
-  const calleeCheck = checkExpression(context, expression.callee)
+  const calleeCheck = checkExpression(scope, expression.callee)
   errors.push(...calleeCheck.errors)
 
   if (calleeCheck.result == null) {
@@ -866,14 +803,14 @@ function checkCall (context: Context, expression: ast.Call): Checked<FacetType> 
 
   const { parameters, returnType } = FunctionFacet.detail(callee)
 
-  const argumentCheck = checkArgumentList(context, expression.arguments, parameters, expression.range)
+  const argumentCheck = checkArgumentList(scope, expression.arguments, parameters, expression.range)
   errors.push(...argumentCheck.errors)
 
   return { errors, result: returnType }
 }
 
 function checkArgumentList (
-  context: Context,
+  scope: Scope,
   args: ast.ArgumentList,
   schema: Schema,
   parentRange: SourceRange,
@@ -891,7 +828,7 @@ function checkArgumentList (
   const schemaAsMap = new Map<string, SchemaItem>(schema.map((spec) => [spec.name, spec]))
 
   const checkArgumentValue = (spec: SchemaItem, value: ast.Expression): void => {
-    const expressionCheck = checkExpression(context, value)
+    const expressionCheck = checkExpression(scope, value)
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result == null) {
