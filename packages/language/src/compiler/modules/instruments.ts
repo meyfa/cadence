@@ -8,8 +8,7 @@ import { InstrumentFacet } from '../../type-system/domain/instrument.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { makeType } from '../../type-system/factory.js'
 import type { Value } from '../../type-system/types.js'
-import type { InstrumentContext, ParameterContext } from '../functions.js'
-import { allocateInstrument, allocateParameter } from '../functions.js'
+import type { InstrumentContext, ParameterContext } from '../scopes.js'
 import { Functions, Modules, Parameters } from '../type-helpers.js'
 
 const UNITY_GAIN = numeric('db', 0)
@@ -48,9 +47,9 @@ const sample = Functions.of({
     const rootNoteValue = root_note != null ? StringFacet.get(root_note) : undefined
     const lengthValue = length != null ? NumberFacet.get(length) : undefined
 
-    const gainParameter = allocateParameter(context, gainValue)
+    const gainParameter = context.allocateParameter(gainValue)
 
-    const instrument = allocateInstrument(context, {
+    const instrument = context.allocateInstrument({
       gain: gainParameter,
       rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
       source: {
@@ -78,9 +77,9 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
     invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
       const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
-      const gainParameter = allocateParameter(context, gainValue)
+      const gainParameter = context.allocateParameter(gainValue)
 
-      const instrument = allocateInstrument(context, {
+      const instrument = context.allocateInstrument({
         gain: gainParameter,
         source: {
           type: 'oscillator',

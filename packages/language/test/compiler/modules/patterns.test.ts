@@ -2,17 +2,22 @@ import { createSerialPattern, loopPattern, renderPatternEvents } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { FunctionContext } from '../../../src/compiler/functions.js'
 import { patternsModule } from '../../../src/compiler/modules/patterns.js'
+import type { GlobalScope } from '../../../src/compiler/scopes.js'
+import { createGlobalScope } from '../../../src/compiler/scopes.js'
 import { Numbers } from '../../../src/compiler/type-helpers.js'
 import { PatternFacet } from '../../../src/type-system/domain/pattern.js'
 import { getFunctionExport } from './test-utils.js'
 
-function createFunctionContext (): FunctionContext {
-  return {
-    instruments: new Map(),
-    automations: new Map()
-  }
+function createFunctionContext (): GlobalScope {
+  return createGlobalScope({
+    beatsPerBar: 4,
+    tempo: {
+      default: 120,
+      minimum: 20,
+      maximum: 300
+    }
+  }, new Map())
 }
 
 describe('compiler/modules/patterns.ts', () => {

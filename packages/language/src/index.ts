@@ -8,6 +8,7 @@ export * from './parser/parser.js'
 export * from './parser/error.js'
 export * from './parser/string.js'
 
+export type { GenerateOptions } from './compiler/options.js'
 export * from './compiler/error.js'
 export * from './compiler/checker.js'
 export * from './compiler/generator.js'

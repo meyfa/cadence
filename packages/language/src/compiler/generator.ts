@@ -1,5 +1,5 @@
 import { ast } from '@ast'
-import type { Automation, Bus, BusId, Instrument, InstrumentId, InstrumentRouting, Mixer, MixerRouting, ParameterId, Part, Pattern, Program, Step, Track } from '@core'
+import type { Bus, BusId, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Step, Track } from '@core'
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns, multiplyPattern } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
@@ -23,21 +23,12 @@ import { busSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import type { CurveSegment as GeneratedCurveSegment } from './curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from './curves.js'
 import { CompileError } from './error.js'
-import type { FunctionContext } from './functions.js'
-import { allocateParameter } from './functions.js'
 import { getStandardModuleValue } from './modules.js'
+import type { GenerateOptions } from './options.js'
+import type { GlobalScope, MutableScope, Scope } from './scopes.js'
+import { createGlobalScope, createLocalScope, resolveInScope } from './scopes.js'
 import { BusType, Numbers, Parameters } from './type-helpers.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
-
-export interface GenerateOptions {
-  readonly beatsPerBar: number
-
-  readonly tempo: {
-    readonly default: number
-    readonly minimum: number
-    readonly maximum: number
-  }
-}
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -46,19 +37,19 @@ export interface GenerateOptions {
 export function generate (program: CheckedProgram, options: GenerateOptions): Program {
   const top = createGlobalScope(options, processImports(program.imports))
 
-  const context = createLocalScope(top)
+  const scope = createLocalScope(top)
 
   const assignments = program.children.filter((c) => c.type === 'Assignment')
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  processAssignments(context, assignments)
+  processAssignments(scope, assignments)
 
   // Automations in the track may refer to mixer buses, so the mixer must be generated first.
-  const mixer = generateMixer(context, mixers.at(0))
+  const mixer = generateMixer(scope, mixers.at(0))
 
   const track = tracks.length > 0
-    ? generateTrack(context, tracks[0])
+    ? generateTrack(scope, tracks[0])
     : {
         tempo: numeric('bpm', options.tempo.default),
         parts: []
@@ -72,47 +63,6 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
 
     track,
     mixer
-  }
-}
-
-interface Context {
-  readonly top: TopLevelContext
-  readonly parent?: Context
-
-  readonly resolutions: ReadonlyMap<string, Value>
-}
-
-interface TopLevelContext extends Context {
-  readonly options: GenerateOptions
-  readonly instruments: Map<InstrumentId, Instrument>
-  readonly buses: Map<string, Value>
-  readonly automations: Map<ParameterId, Automation>
-}
-
-interface MutableContext extends Context {
-  readonly resolutions: Map<string, Value>
-}
-
-function createGlobalScope (options: GenerateOptions, initialResolutions: ReadonlyMap<string, Value>): TopLevelContext {
-  const scope: TopLevelContext = {
-    get top () {
-      return scope
-    },
-    options,
-    instruments: new Map(),
-    buses: new Map(),
-    automations: new Map(),
-    resolutions: new Map(initialResolutions)
-  }
-
-  return scope
-}
-
-function createLocalScope (parent: Context): MutableContext {
-  return {
-    top: parent.top,
-    parent,
-    resolutions: new Map()
   }
 }
 
@@ -162,34 +112,34 @@ function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<stri
   return result
 }
 
-function processAssignments (context: MutableContext, assignments: readonly ast.Assignment[]): void {
+function processAssignments (scope: MutableScope, assignments: readonly ast.Assignment[]): void {
   for (const assignment of assignments) {
-    assert(!context.resolutions.has(assignment.key.name))
-    context.resolutions.set(assignment.key.name, resolve(context, assignment.value))
+    assert(!scope.resolutions.has(assignment.key.name))
+    scope.resolutions.set(assignment.key.name, resolve(scope, assignment.value))
   }
 }
 
-function generateTrack (context: Context, track: ast.TrackStatement): Track {
-  const { options } = context.top
+function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
+  const { options } = scope.top
 
-  const trackContext = createLocalScope(context)
+  const trackScope = createLocalScope(scope)
 
   const parts: Part[] = []
 
   let currentTime = numeric('beats', 0)
   for (const partStatement of track.parts) {
-    const part = generatePart(trackContext, partStatement, currentTime)
+    const part = generatePart(trackScope, partStatement, currentTime)
     parts.push(part)
 
     if (part.name != null) {
-      assert(!trackContext.resolutions.has(part.name))
-      trackContext.resolutions.set(part.name, PartFacet.type().of(part))
+      assert(!trackScope.resolutions.has(part.name))
+      trackScope.resolutions.set(part.name, PartFacet.type().of(part))
     }
 
     currentTime = numeric('beats', currentTime.value + part.length.value)
   }
 
-  const properties = resolveArgumentList(trackContext, track.properties, trackSchema)
+  const properties = resolveArgumentList(trackScope, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
     ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
@@ -198,16 +148,16 @@ function generateTrack (context: Context, track: ast.TrackStatement): Track {
   return { tempo, parts }
 }
 
-function generatePart (context: Context, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
+function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
   const name = part.name?.name
-  const properties = resolveArgumentList(context, part.properties, partSchema)
+  const properties = resolveArgumentList(scope, part.properties, partSchema)
 
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
   const endTime = numeric('beats', startTime.value + length.value)
 
   const routings = part.routings.map((routing): InstrumentRouting => {
-    const source = PatternFacet.get(resolve(context, routing.source))
-    const instrument = InstrumentFacet.get(resolve(context, routing.destination))
+    const source = PatternFacet.get(resolve(scope, routing.source))
+    const instrument = InstrumentFacet.get(resolve(scope, routing.destination))
 
     return {
       source: {
@@ -223,17 +173,17 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   })
 
   for (const automation of part.automations) {
-    const target = ParameterFacet.get(resolve(context, automation.target))
-    const curve = CurveFacet.get(resolve(context, automation.curve))
+    const target = ParameterFacet.get(resolve(scope, automation.target))
+    const curve = CurveFacet.get(resolve(scope, automation.curve))
 
     const rendered = renderCurvePoints(curve, startTime, endTime)
-    const existing = context.top.automations.get(target.id)
+    const existing = scope.top.automations.get(target.id)
 
     const points = existing == null
       ? rendered
       : [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
 
-    context.top.automations.set(target.id, {
+    scope.top.automations.set(target.id, {
       parameterId: target.id,
       points
     })
@@ -242,31 +192,31 @@ function generatePart (context: Context, part: ast.PartStatement, startTime: Num
   return { name, length, routings }
 }
 
-function generateMixer (context: Context, mixer?: ast.MixerStatement): Mixer {
-  const mixerContext = createLocalScope(context)
+function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
+  const mixerScope = createLocalScope(scope)
 
-  const buses = mixer?.buses.map((bus, index) => generateBus(mixerContext, bus, index as BusId)) ?? []
+  const buses = mixer?.buses.map((bus, index) => generateBus(mixerScope, bus, index as BusId)) ?? []
   const routings: MixerRouting[] = []
 
   if (mixer != null) {
     for (const bus of buses) {
-      assert(!mixerContext.resolutions.has(bus.name))
+      assert(!mixerScope.resolutions.has(bus.name))
       const busValue = BusType.of(bus, {
         gain: Parameters.of(bus.gain),
         pan: Parameters.of(bus.pan)
       })
-      mixerContext.resolutions.set(bus.name, busValue)
-      context.top.buses.set(bus.name, busValue)
+      mixerScope.resolutions.set(bus.name, busValue)
+      scope.top.buses.set(bus.name, busValue)
     }
 
     for (const bus of mixer.buses) {
-      routings.push(...generateBusRoutings(mixerContext, bus, buses))
+      routings.push(...generateBusRoutings(mixerScope, bus, buses))
     }
   }
 
   // Implicit output routings for unrouted buses and instruments
   const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
-  const unroutedInstruments = new Set<InstrumentId>(context.top.instruments.keys())
+  const unroutedInstruments = new Set<InstrumentId>(scope.top.instruments.keys())
 
   for (const routing of routings) {
     switch (routing.source.type) {
@@ -294,12 +244,12 @@ function generateMixer (context: Context, mixer?: ast.MixerStatement): Mixer {
   return { buses, routings }
 }
 
-function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
+function generateBus (scope: Scope, bus: ast.BusStatement, id: BusId): Bus {
   const name = bus.name.name
-  const properties = resolveArgumentList(context, bus.properties, busSchema)
+  const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
   const effects = bus.effects.map((effect) => {
-    return EffectFacet.get(resolve(context, effect.expression))
+    return EffectFacet.get(resolve(scope, effect.expression))
   })
 
   // These must always be allocated even if not explicitly set,
@@ -307,17 +257,17 @@ function generateBus (context: Context, bus: ast.BusStatement, id: BusId): Bus {
   const gainData = properties.gain != null ? NumberFacet.get(properties.gain) : numeric('db', 0)
   const panData = properties.pan != null ? NumberFacet.get(properties.pan) : numeric(undefined, 0)
 
-  const gain = allocateParameter(context.top, gainData)
-  const pan = allocateParameter(context.top, panData)
+  const gain = scope.top.allocateParameter(gainData)
+  const pan = scope.top.allocateParameter(panData)
 
   return { id, name, gain, pan, effects }
 }
 
-function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
+function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
   const destination = nonNull(buses.find((b) => b.name === bus.name.name))
 
   return bus.sources.map((identifier) => {
-    const source = resolve(mixerContext, identifier)
+    const source = resolve(mixerScope, identifier)
 
     const toRouting = (src: { type: 'instrument' | 'bus', id: InstrumentId | BusId }): MixerRouting => ({
       implicit: false,
@@ -340,51 +290,51 @@ function generateBusRoutings (mixerContext: Context, bus: ast.BusStatement, buse
 }
 
 /**
- * Resolve an expression to a value within the given context. Since this expression (or sub-expressions) may call
- * functions, the context may be updated.
+ * Resolve an expression to a value within the given scope. Since this expression (or sub-expressions) may call
+ * functions, the scope may be updated.
  */
-function resolve (context: Context, expression: ast.Expression): Value {
+function resolve (scope: Scope, expression: ast.Expression): Value {
   switch (expression.type) {
     case 'Number':
-      return toNumberValue(context.top.options, undefined, expression.value)
+      return toNumberValue(scope.top.options, undefined, expression.value)
 
     case 'String':
-      return generateString(context, expression.parts)
+      return generateString(scope, expression.parts)
 
     case 'Pattern':
-      return generatePattern(context, expression)
+      return generatePattern(scope, expression)
 
     case 'Curve':
-      return generateCurve(context, expression)
+      return generateCurve(scope, expression)
 
     case 'Identifier':
-      return resolveIdentifier(context, expression)
+      return resolveIdentifier(scope, expression)
 
     case 'UnaryExpression':
-      return computeUnaryExpression(context, expression)
+      return computeUnaryExpression(scope, expression)
 
     case 'BinaryExpression':
-      return computeBinaryExpression(context, expression)
+      return computeBinaryExpression(scope, expression)
 
     case 'PropertyAccess':
-      return resolvePropertyAccess(context, expression)
+      return resolvePropertyAccess(scope, expression)
 
     case 'Call':
-      return resolveCall(context, expression)
+      return resolveCall(scope, expression)
   }
 }
 
-function generateString (context: Context, parts: ReadonlyArray<string | ast.Expression>): Value {
+function generateString (scope: Scope, parts: ReadonlyArray<string | ast.Expression>): Value {
   const resolvedParts = parts.map((part) => {
     return typeof part === 'string'
       ? part
-      : StringFacet.get(resolve(context, part))
+      : StringFacet.get(resolve(scope, part))
   })
 
   return StringFacet.type().of(resolvedParts.join(''))
 }
 
-function generatePattern (context: Context, expression: ast.Pattern): Value {
+function generatePattern (scope: Scope, expression: ast.Pattern): Value {
   const subdivision = 1
 
   const create = expression.mode === 'serial'
@@ -397,8 +347,8 @@ function generatePattern (context: Context, expression: ast.Pattern): Value {
 
   const resolved = expression.children.map((child) => {
     return child.type === 'Step'
-      ? generateStep(context, child)
-      : PatternFacet.get(resolve(context, child))
+      ? generateStep(scope, child)
+      : PatternFacet.get(resolve(scope, child))
   })
 
   const isStep = (item: Step | Pattern): item is Step => 'value' in item
@@ -422,14 +372,14 @@ function generatePattern (context: Context, expression: ast.Pattern): Value {
   return PatternFacet.type().of(combine(patterns))
 }
 
-function generateStep (context: Context, expression: ast.Step): Step {
+function generateStep (scope: Scope, expression: ast.Step): Step {
   const { value } = expression
 
   const length = expression.length != null
-    ? NumberFacet.with(undefined).get(resolve(context, expression.length))
+    ? NumberFacet.with(undefined).get(resolve(scope, expression.length))
     : undefined
 
-  const parameters = resolveArgumentList(context, expression.parameters, stepSchema)
+  const parameters = resolveArgumentList(scope, expression.parameters, stepSchema)
   const gate = parameters.gate != null ? NumberFacet.get(parameters.gate) : undefined
 
   if (length == null) {
@@ -439,7 +389,7 @@ function generateStep (context: Context, expression: ast.Step): Step {
   return { value, length, gate }
 }
 
-function generateCurve (context: Context, curve: ast.Curve): Value {
+function generateCurve (scope: Scope, curve: ast.Curve): Value {
   const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
   const otherChildren = curve.children.filter((c) => c.type !== 'CurveSegment')
   assert(segments.length > 0)
@@ -455,11 +405,11 @@ function generateCurve (context: Context, curve: ast.Curve): Value {
 
   for (const segment of segments) {
     const parameters = segment.parameters.map((point) => {
-      return NumberFacet.get(resolve(context, point))
+      return NumberFacet.get(resolve(scope, point))
     })
 
     const length = segment.length != null
-      ? NumberFacet.with(undefined).get(resolve(context, segment.length))
+      ? NumberFacet.with(undefined).get(resolve(scope, segment.length))
       : undefined
 
     const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
@@ -475,22 +425,12 @@ function generateCurve (context: Context, curve: ast.Curve): Value {
   )
 }
 
-function resolveIdentifier (context: Context, identifier: ast.Identifier): Value {
-  let current: Context | undefined = context
-
-  while (current != null) {
-    const value = current.resolutions.get(identifier.name)
-    if (value != null) {
-      return value
-    }
-    current = current.parent
-  }
-
-  throw new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)
+function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
+  return nonNull(resolveInScope(scope, identifier.name))
 }
 
-function computeUnaryExpression (context: Context, expression: ast.UnaryExpression): Value {
-  const argument = resolve(context, expression.argument)
+function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {
+  const argument = resolve(scope, expression.argument)
 
   switch (expression.operator) {
     case '+':
@@ -510,9 +450,9 @@ function computeUnaryExpression (context: Context, expression: ast.UnaryExpressi
   assert(false)
 }
 
-function computeBinaryExpression (context: Context, expression: ast.BinaryExpression): Value {
-  const left = resolve(context, expression.left)
-  const right = resolve(context, expression.right)
+function computeBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Value {
+  const left = resolve(scope, expression.left)
+  const right = resolve(scope, expression.right)
 
   switch (expression.operator) {
     case '+':
@@ -598,19 +538,19 @@ function computeDivide (left: Value, right: Value): Value {
   assert(false)
 }
 
-function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess): Value {
+function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): Value {
   // Special case: "bus" namespace
   if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-    return nonNull(context.top.buses.get(expression.property.name))
+    return nonNull(scope.top.buses.get(expression.property.name))
   }
 
-  const object = resolve(context, expression.object)
+  const object = resolve(scope, expression.object)
   const property = expression.property.name
 
   if (NumberFacet.has(object)) {
     assert(isSyntaxUnit(property))
     const numberData = NumberFacet.get(object)
-    return toNumberValue(context.top.options, property, numberData.value)
+    return toNumberValue(scope.top.options, property, numberData.value)
   }
 
   if (RecordFacet.has(object)) {
@@ -621,15 +561,15 @@ function resolvePropertyAccess (context: Context, expression: ast.PropertyAccess
   assert(false)
 }
 
-function resolveCall (context: Context, expression: ast.Call): Value {
+function resolveCall (scope: Scope, expression: ast.Call): Value {
   // cast due to context type
-  const func = FunctionFacet.get(resolve(context, expression.callee)) as Function<Schema, FacetType, FunctionContext>
-  const args = resolveArgumentList(context, expression.arguments, func.parameters)
+  const func = FunctionFacet.get(resolve(scope, expression.callee)) as Function<Schema, FacetType, GlobalScope>
+  const args = resolveArgumentList(scope, expression.arguments, func.parameters)
 
-  return func.invoke(context.top, args)
+  return func.invoke(scope.top, args)
 }
 
-function resolveArgumentList<S extends Schema> (context: Context, args: ast.ArgumentList, schema: S): InferSchema<S> {
+function resolveArgumentList<S extends Schema> (scope: Scope, args: ast.ArgumentList, schema: S): InferSchema<S> {
   const entries: Array<[string, Value]> = []
 
   // positionals
@@ -640,7 +580,7 @@ function resolveArgumentList<S extends Schema> (context: Context, args: ast.Argu
     }
 
     const param = nonNull(schema.at(i))
-    entries.push([param.name, resolve(context, arg)])
+    entries.push([param.name, resolve(scope, arg)])
   }
 
   // named
@@ -649,7 +589,7 @@ function resolveArgumentList<S extends Schema> (context: Context, args: ast.Argu
     assert(arg.type === 'Property')
 
     const param = nonNull(schema.find((s) => s.name === arg.key.name))
-    entries.push([param.name, resolve(context, arg.value)])
+    entries.push([param.name, resolve(scope, arg.value)])
   }
 
   return Object.fromEntries(entries) as InferSchema<S>
