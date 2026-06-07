@@ -1,9 +1,15 @@
-import type { Automation, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
+import type { Automation, Bus, BusId, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
 import type { Numeric, Unit } from '@utility'
-import type { GenerateOptions } from './options.js'
 import type { Value } from '../type-system/types.js'
+import type { GenerateOptions } from './options.js'
 
 // scope aspects
+
+type Context = BusContext & ParameterContext & InstrumentContext
+
+export interface BusContext {
+  readonly allocateBus: (data: Omit<Bus, 'id'>) => Bus
+}
 
 export interface ParameterContext {
   readonly allocateParameter: <U extends Unit>(initial: Numeric<U>) => Parameter<U>
@@ -22,10 +28,13 @@ export interface Scope {
   readonly resolutions: ReadonlyMap<string, Value>
 }
 
-export interface GlobalScope extends Scope, ParameterContext, InstrumentContext {
+export interface GlobalScope extends Scope, Context {
   readonly options: GenerateOptions
 
-  readonly buses: Map<string, Value>
+  // TODO generalize this to avoid the "bus" namespace special-case
+  readonly buses: Map<string, Bus>
+  readonly busValues: Map<string, Value>
+
   readonly instruments: Map<InstrumentId, Instrument>
   readonly automations: Map<ParameterId, Automation>
 }
@@ -46,9 +55,13 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
 
     // from GlobalScope
     options,
-    instruments: new Map(),
     buses: new Map(),
+    busValues: new Map(),
+    instruments: new Map(),
     automations: new Map(),
+
+    // from BusContext
+    allocateBus: (data) => allocateBus(scope, data),
 
     // from ParameterContext
     allocateParameter: (initial) => allocateParameter(scope, initial),
@@ -85,6 +98,15 @@ export function resolveInScope (scope: Scope, name: string): Value | undefined {
 }
 
 // out-of-line implementations
+
+function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
+  const id = scope.buses.size as BusId
+
+  const bus = { ...data, id }
+  scope.buses.set(bus.name, bus)
+
+  return bus
+}
 
 function allocateParameter<U extends Unit> (scope: GlobalScope, initial: Numeric<U>): Parameter<U> {
   const currentMaxId = Math.max(0, ...Array.from(scope.automations.keys()))

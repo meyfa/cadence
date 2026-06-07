@@ -17,6 +17,8 @@ import { InstrumentFacet } from '../type-system/domain/instrument.js'
 import { ParameterFacet } from '../type-system/domain/parameter.js'
 import { PartFacet } from '../type-system/domain/part.js'
 import { PatternFacet } from '../type-system/domain/pattern.js'
+import { makeType } from '../type-system/factory.js'
+import { Numbers, Parameters } from '../type-system/helpers.js'
 import type { InferSchema, Schema } from '../type-system/schema.js'
 import type { FacetType, Value } from '../type-system/types.js'
 import type { CheckedProgram } from './checker.js'
@@ -27,7 +29,6 @@ import { CompileError } from './error.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableScope, Scope } from './scopes.js'
 import { createGlobalScope, createLocalScope, resolveInScope } from './scopes.js'
-import { BusType, Numbers, Parameters } from '../type-system/helpers.js'
 import { isSyntaxUnit, toNumberValue } from './units.js'
 
 /**
@@ -195,24 +196,8 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
 function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   const mixerScope = createLocalScope(scope)
 
-  const buses = mixer?.buses.map((bus, index) => generateBus(mixerScope, bus, index as BusId)) ?? []
-  const routings: MixerRouting[] = []
-
-  if (mixer != null) {
-    for (const bus of buses) {
-      assert(!mixerScope.resolutions.has(bus.name))
-      const busValue = BusType.of(bus, {
-        gain: Parameters.of(bus.gain),
-        pan: Parameters.of(bus.pan)
-      })
-      mixerScope.resolutions.set(bus.name, busValue)
-      scope.top.buses.set(bus.name, busValue)
-    }
-
-    for (const bus of mixer.buses) {
-      routings.push(...generateBusRoutings(mixerScope, bus, buses))
-    }
-  }
+  const buses = mixer?.buses.map((bus) => generateBus(mixerScope, bus)) ?? []
+  const routings = mixer?.buses.flatMap((bus) => generateBusRoutings(mixerScope, bus)) ?? []
 
   // Implicit output routings for unrouted buses and instruments
   const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
@@ -244,7 +229,7 @@ function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   return { buses, routings }
 }
 
-function generateBus (scope: Scope, bus: ast.BusStatement, id: BusId): Bus {
+function generateBus (scope: MutableScope, bus: ast.BusStatement): Bus {
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
@@ -260,11 +245,29 @@ function generateBus (scope: Scope, bus: ast.BusStatement, id: BusId): Bus {
   const gain = scope.top.allocateParameter(gainData)
   const pan = scope.top.allocateParameter(panData)
 
-  return { id, name, gain, pan, effects }
+  const data = scope.top.allocateBus({ name, gain, pan, effects })
+
+  const type = makeType(BusFacet, RecordFacet.with({
+    gain: ParameterFacet.with('db').type(),
+    pan: ParameterFacet.with(undefined).type()
+  }))
+
+  const value = type.of(data, {
+    gain: Parameters.of(gain),
+    pan: Parameters.of(pan)
+  })
+
+  assert(!scope.resolutions.has(name))
+  scope.resolutions.set(name, value)
+
+  assert(!scope.top.busValues.has(name))
+  scope.top.busValues.set(name, value)
+
+  return data
 }
 
-function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, buses: readonly Bus[]): readonly MixerRouting[] {
-  const destination = nonNull(buses.find((b) => b.name === bus.name.name))
+function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement): readonly MixerRouting[] {
+  const destination = nonNull(mixerScope.top.buses.get(bus.name.name))
 
   return bus.sources.map((identifier) => {
     const source = resolve(mixerScope, identifier)
@@ -541,7 +544,7 @@ function computeDivide (left: Value, right: Value): Value {
 function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): Value {
   // Special case: "bus" namespace
   if (expression.object.type === 'Identifier' && expression.object.name === 'bus') {
-    return nonNull(scope.top.buses.get(expression.property.name))
+    return nonNull(scope.top.busValues.get(expression.property.name))
   }
 
   const object = resolve(scope, expression.object)

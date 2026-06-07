@@ -9,20 +9,20 @@ import { ModuleFacet } from '../type-system/base/module.js'
 import { NumberFacet } from '../type-system/base/number.js'
 import { RecordFacet } from '../type-system/base/record.js'
 import { StringFacet } from '../type-system/base/string.js'
+import { BusFacet } from '../type-system/domain/bus.js'
 import { CurveFacet } from '../type-system/domain/curve.js'
 import { EffectFacet } from '../type-system/domain/effect.js'
 import { InstrumentFacet } from '../type-system/domain/instrument.js'
 import { ParameterFacet } from '../type-system/domain/parameter.js'
 import { PartFacet } from '../type-system/domain/part.js'
 import { PatternFacet } from '../type-system/domain/pattern.js'
-import { makeUnion } from '../type-system/factory.js'
+import { makeType, makeUnion } from '../type-system/factory.js'
 import type { Schema, SchemaItem } from '../type-system/schema.js'
 import type { FacetType, Type, Value } from '../type-system/types.js'
 import { busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from './common.js'
 import { getCurveSegmentType } from './curves.js'
 import { CompileError } from './error.js'
 import { checkCyclicRoutings } from './routings.js'
-import { BusType } from '../type-system/helpers.js'
 import { isSyntaxUnit, toBaseUnit } from './units.js'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
@@ -48,26 +48,19 @@ export function check (program: ast.Program): CheckResult {
   const tracks = program.children.filter((c) => c.type === 'TrackStatement')
   const mixers = program.children.filter((c) => c.type === 'MixerStatement')
 
-  const top = createGlobalScope({
+  const globalScope = createGlobalScope({
     resolutions: importResult.result,
     buses: new Map()
   })
 
-  const context = createLocalScope(top)
+  const scope = createLocalScope(globalScope)
 
   const errors: CompileError[] = []
 
-  errors.push(...checkAssignments(context, assignments))
-
-  // Check mixers before tracks so that tracks can reference buses defined in the mixer
-  errors.push(...checkMixers(context, mixers))
-  for (const mixer of mixers) {
-    for (const bus of mixer.buses) {
-      context.buses.set(bus.name.name, BusType)
-    }
-  }
-
-  errors.push(...checkTracks(context, tracks))
+  // Order matters, as assignments and mixers populate the scope
+  errors.push(...checkAssignments(scope, assignments))
+  errors.push(...checkMixers(scope, mixers))
+  errors.push(...checkTracks(scope, tracks))
 
   return errors.length === 0 ? success(program as CheckedProgram) : failure(errors)
 }
@@ -324,60 +317,81 @@ function checkAutomation (context: Context, automation: ast.AutomateStatement): 
   const curveCheck = checkExpression(context, automation.curve)
   errors.push(...curveCheck.errors)
 
-  if (curveCheck.result != null) {
-    let curveType = CurveFacet.type()
-
-    if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
-      const parameterType = ParameterFacet.detail(targetCheck.result)
-      curveType = CurveFacet.with(parameterType).type()
-    }
-
-    errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
+  if (curveCheck.result == null) {
+    return errors
   }
+
+  let curveType = CurveFacet.type()
+
+  if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
+    const parameterType = ParameterFacet.detail(targetCheck.result)
+    curveType = CurveFacet.with(parameterType).type()
+  }
+
+  errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
 
   return errors
 }
 
-function checkMixers (context: Context, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
+function checkMixers (context: MutableContext, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
   const errors: CompileError[] = []
 
   for (const mixer of mixers) {
     if (mixers.length > 1) {
       errors.push(new CompileError('Multiple mixer definitions', mixer.range))
     }
-    errors.push(...checkMixer(context, mixer))
+
+    const mixerCheck = checkMixer(context, mixer)
+    errors.push(...mixerCheck.errors)
+
+    for (const [name, type] of mixerCheck.result?.buses.entries() ?? []) {
+      context.buses.set(name, type)
+    }
   }
 
   return errors
 }
 
-function checkMixer (context: Context, mixer: ast.MixerStatement): readonly CompileError[] {
-  const mixerContext = createLocalScope(context)
+interface MixerDetail {
+  readonly buses: ReadonlyMap<string, FacetType>
+}
+
+function checkMixer (context: Context, mixer: ast.MixerStatement): Checked<MixerDetail> {
+  const mixerScope = createLocalScope(context)
 
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(mixerContext, mixer.properties, mixerSchema, mixer.range, 'property')
+  const propertiesCheck = checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property')
   errors.push(...propertiesCheck.errors)
 
-  const seenBuses = new Set<string>()
+  const seenBuses = new Map<string, FacetType>()
+
+  const declareBus = (name: string, type: FacetType): void => {
+    seenBuses.set(name, type)
+    mixerScope.resolutions.set(name, type)
+    mixerScope.buses.set(name, type)
+  }
 
   // Build up the list of buses first
   for (const bus of mixer.buses) {
     if (seenBuses.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-    } else if (mixerContext.resolutions.has(bus.name.name)) {
+    } else if (mixerScope.resolutions.has(bus.name.name)) {
       errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
     }
 
-    seenBuses.add(bus.name.name)
-
-    mixerContext.resolutions.set(bus.name.name, BusType)
-    mixerContext.buses.set(bus.name.name, BusType)
+    // reserve a generic type first
+    declareBus(bus.name.name, BusFacet.type())
   }
 
   // Now that all buses are known, we can check the routings
   for (const bus of mixer.buses) {
-    errors.push(...checkBus(mixerContext, bus))
+    const busCheck = checkBus(mixerScope, bus)
+    errors.push(...busCheck.errors)
+
+    if (busCheck.result != null) {
+      declareBus(bus.name.name, busCheck.result)
+    }
   }
 
   errors.push(...checkCyclicRoutings(mixer.buses.map((bus) => ({
@@ -386,10 +400,10 @@ function checkMixer (context: Context, mixer: ast.MixerStatement): readonly Comp
     range: bus.name.range
   }))))
 
-  return errors
+  return { errors, result: { buses: seenBuses } }
 }
 
-function checkBus (context: Context, bus: ast.BusStatement): readonly CompileError[] {
+function checkBus (context: Context, bus: ast.BusStatement): Checked<FacetType> {
   const errors: CompileError[] = []
 
   const propertiesCheck = checkArgumentList(context, bus.properties, busSchema, bus.range, 'property')
@@ -401,7 +415,7 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     errors.push(...sourceCheck.errors)
 
     if (sourceCheck.result != null) {
-      const options = makeUnion(InstrumentFacet.type(), BusType)
+      const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
       errors.push(...checkType(options, sourceCheck.result, source.range))
     }
   }
@@ -416,7 +430,12 @@ function checkBus (context: Context, bus: ast.BusStatement): readonly CompileErr
     }
   }
 
-  return errors
+  const type = makeType(BusFacet, RecordFacet.with({
+    gain: ParameterFacet.with('db').type(),
+    pan: ParameterFacet.with(undefined).type()
+  }))
+
+  return { errors, result: type }
 }
 
 function checkExpression (context: Context, expression: ast.Expression): Checked<FacetType> {

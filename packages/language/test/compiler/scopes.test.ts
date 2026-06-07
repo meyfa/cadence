@@ -1,22 +1,23 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { GenerateOptions } from '../../src/compiler/options.js'
 import { createGlobalScope, createLocalScope, resolveInScope } from '../../src/compiler/scopes.js'
 import { Numbers } from '../../src/type-system/helpers.js'
+
+const options: GenerateOptions = {
+  beatsPerBar: 4,
+  tempo: {
+    default: 120,
+    minimum: 20,
+    maximum: 300
+  }
+}
 
 describe('compiler/scopes.ts', () => {
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided options and initial resolutions', () => {
       const foo = Numbers.of(numeric('db', 12))
-
-      const options = {
-        beatsPerBar: 4,
-        tempo: {
-          default: 120,
-          minimum: 20,
-          maximum: 300
-        }
-      }
 
       const result = createGlobalScope(options, new Map([['foo', foo]]))
 
@@ -31,15 +32,37 @@ describe('compiler/scopes.ts', () => {
       assert.strictEqual(result.automations.size, 0)
     })
 
+    it('should allocate buses with unique IDs', () => {
+      const scope = createGlobalScope(options, new Map())
+
+      const bus1 = {
+        name: 'bus1',
+        gain: scope.allocateParameter(numeric('db', 0)),
+        pan: scope.allocateParameter(numeric(undefined, 0)),
+        effects: []
+      } as const
+
+      const bus2 = {
+        name: 'bus2',
+        gain: scope.allocateParameter(numeric('db', -3)),
+        pan: scope.allocateParameter(numeric(undefined, -0.5)),
+        effects: []
+      } as const
+
+      const allocated1 = scope.allocateBus(bus1)
+      const allocated2 = scope.allocateBus(bus2)
+
+      assert.strictEqual(allocated1.id, 0)
+      assert.strictEqual(allocated2.id, 1)
+
+      assert.deepStrictEqual([...scope.buses], [
+        ['bus1', { ...bus1, id: 0 }],
+        ['bus2', { ...bus2, id: 1 }]
+      ])
+    })
+
     it('should allocate parameters with unique IDs', () => {
-      const scope = createGlobalScope({
-        beatsPerBar: 4,
-        tempo: {
-          default: 120,
-          minimum: 20,
-          maximum: 300
-        }
-      }, new Map())
+      const scope = createGlobalScope(options, new Map())
 
       const param1 = scope.allocateParameter(numeric('db', 12))
       const param2 = scope.allocateParameter(numeric('db', 6))
@@ -54,14 +77,7 @@ describe('compiler/scopes.ts', () => {
     })
 
     it('should allocate instruments with unique IDs', () => {
-      const scope = createGlobalScope({
-        beatsPerBar: 4,
-        tempo: {
-          default: 120,
-          minimum: 20,
-          maximum: 300
-        }
-      }, new Map())
+      const scope = createGlobalScope(options, new Map())
 
       const instrument1 = {
         gain: scope.allocateParameter(numeric('db', -6)),
@@ -106,14 +122,7 @@ describe('compiler/scopes.ts', () => {
 
   describe('createLocalScope()', () => {
     it('should create a local scope with the provided parent and empty resolutions', () => {
-      const globalScope = createGlobalScope({
-        beatsPerBar: 4,
-        tempo: {
-          default: 120,
-          minimum: 20,
-          maximum: 300
-        }
-      }, new Map([
+      const globalScope = createGlobalScope(options, new Map([
         ['foo', Numbers.of(numeric('db', 12))]
       ]))
 
@@ -145,14 +154,7 @@ describe('compiler/scopes.ts', () => {
       const globalBaz = Numbers.of(numeric('db', 3))
       const localBaz = Numbers.of(numeric('db', 4))
 
-      const globalScope = createGlobalScope({
-        beatsPerBar: 4,
-        tempo: {
-          default: 120,
-          minimum: 20,
-          maximum: 300
-        }
-      }, new Map([
+      const globalScope = createGlobalScope(options, new Map([
         ['foo', globalFoo],
         ['baz', globalBaz]
       ]))
