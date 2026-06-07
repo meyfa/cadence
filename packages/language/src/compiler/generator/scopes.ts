@@ -1,6 +1,6 @@
 import type { Automation, Bus, BusId, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
 import type { Numeric, Unit } from '@utility'
-import type { Value } from '../type-system/types.js'
+import type { Value } from '../../type-system/types.js'
 import type { GenerateOptions } from './options.js'
 
 // scope aspects

@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import type { GlobalScope } from '../../../src/compiler/scopes.js'
+import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'
 import type { Function } from '../../../src/type-system/base/function.js'
 import { FunctionFacet } from '../../../src/type-system/base/function.js'
 import { ModuleFacet } from '../../../src/type-system/base/module.js'

@@ -1,9 +1,9 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { GenerateOptions } from '../../src/compiler/options.js'
-import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from '../../src/compiler/scopes.js'
-import { Numbers } from '../../src/type-system/helpers.js'
+import type { GenerateOptions } from '../../../src/compiler/generator/options.js'
+import { createGlobalScope, createLocalScope, createNamespace, resolveInScope } from '../../../src/compiler/generator/scopes.js'
+import { Numbers } from '../../../src/type-system/helpers.js'
 
 const options: GenerateOptions = {
   beatsPerBar: 4,
@@ -14,7 +14,7 @@ const options: GenerateOptions = {
   }
 }
 
-describe('compiler/scopes.ts', () => {
+describe('compiler/generator/scopes.ts', () => {
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided options and initial resolutions', () => {
       const foo = Numbers.of(numeric('db', 12))
