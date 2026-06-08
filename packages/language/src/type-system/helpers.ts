@@ -13,10 +13,10 @@ import type { Facet, FacetType, Value } from './types.js'
 
 export const Functions = {
   of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
-    const type = makeType(FunctionFacet.with({
+    const type = FunctionFacet.with({
       parameters: value.parameters,
       returnType: value.returnType
-    }))
+    }).type()
 
     return type.of(value)
   }
