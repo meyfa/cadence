@@ -208,8 +208,7 @@ function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly C
     errors.push(...checkPart(trackScope, part))
   }
 
-  const propertiesCheck = checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property')
-  errors.push(...propertiesCheck.errors)
+  errors.push(...checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property'))
 
   return errors
 }
@@ -217,8 +216,7 @@ function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly C
 function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(scope, part.properties, partSchema, part.range, 'property')
-  errors.push(...propertiesCheck.errors)
+  errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
 
   for (const routing of part.routings) {
     errors.push(...checkInstrumentRouting(scope, routing))
@@ -309,8 +307,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
 
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property')
-  errors.push(...propertiesCheck.errors)
+  errors.push(...checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property'))
 
   const seenBuses = new Map<string, FacetType>()
 
@@ -355,8 +352,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
 function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   const errors: CompileError[] = []
 
-  const propertiesCheck = checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property')
-  errors.push(...propertiesCheck.errors)
+  errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
 
   // Sources
   for (const source of bus.sources) {
@@ -473,8 +469,7 @@ function checkStep (scope: Scope, step: ast.Step): readonly CompileError[] {
     }
   }
 
-  const parametersCheck = checkArgumentList(scope, step.parameters, stepSchema, step.range)
-  errors.push(...parametersCheck.errors)
+  errors.push(...checkArgumentList(scope, step.parameters, stepSchema, step.range))
 
   return errors
 }
@@ -710,8 +705,7 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
 
   const { parameters, returnType } = FunctionFacet.detail(callee)
 
-  const argumentCheck = checkArgumentList(scope, expression.arguments, parameters, expression.range)
-  errors.push(...argumentCheck.errors)
+  errors.push(...checkArgumentList(scope, expression.arguments, parameters, expression.range))
 
   return { errors, result: returnType }
 }
@@ -722,74 +716,60 @@ function checkArgumentList (
   schema: Schema,
   range: SourceRange,
   kind = 'argument'
-): Checked<ReadonlyMap<string, Type>> {
+): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  const result = new Map<string, Type>()
+  const seen = new Set<string>()
+  let namedStarted = false
 
-  // Remember which argument had errors in their expression check. Otherwise,
-  // in addition to reporting the expression's error, we would also report the argument as missing,
-  // which is not correct.
-  const errorArguments = new Set<string>()
+  for (let index = 0; index < args.length; ++index) {
+    const arg = args[index]
 
-  const checkArgumentValue = (spec: SchemaItem, value: ast.Expression): void => {
+    let spec: SchemaItem | undefined
+
+    if (arg.type === 'Property' || namedStarted) {
+      namedStarted = true
+
+      if (arg.type !== 'Property') {
+        errors.push(new CompileError(`Unexpected positional ${kind} after named ${kind}s`, arg.range))
+        continue
+      }
+
+      spec = schema.byName.get(arg.key.name)
+      if (spec == null) {
+        errors.push(new CompileError(`Unknown ${kind} "${arg.key.name}"`, arg.key.range))
+        continue
+      }
+
+      if (seen.has(spec.name)) {
+        errors.push(new CompileError(`Duplicate ${kind} named "${arg.key.name}"`, arg.key.range))
+        continue
+      }
+    } else {
+      spec = schema.items.at(index)
+      if (spec == null) {
+        errors.push(new CompileError(`Unknown positional ${kind}`, arg.range))
+        continue
+      }
+    }
+
+    seen.add(spec.name)
+
+    const value = arg.type === 'Property' ? arg.value : arg
+
     const expressionCheck = checkExpression(scope, value)
     errors.push(...expressionCheck.errors)
 
-    if (expressionCheck.result == null) {
-      errorArguments.add(spec.name)
-      return
+    if (expressionCheck.result != null) {
+      errors.push(...checkType(spec.type, expressionCheck.result, value.range))
     }
-
-    errors.push(...checkType(spec.type, expressionCheck.result, value.range))
-    result.set(spec.name, expressionCheck.result)
-  }
-
-  let index = 0
-
-  // Positional arguments
-  for (; index < args.length; ++index) {
-    const arg = args[index]
-    if (arg.type === 'Property') {
-      break
-    }
-
-    const spec = schema.items.at(index)
-    if (spec == null) {
-      errors.push(new CompileError(`Unknown positional ${kind}`, arg.range))
-      continue
-    }
-
-    checkArgumentValue(spec, arg)
-  }
-
-  // Named arguments
-  for (; index < args.length; ++index) {
-    const arg = args[index]
-    if (arg.type !== 'Property') {
-      errors.push(new CompileError(`Unexpected positional ${kind} after named ${kind}s`, arg.range))
-      continue
-    }
-
-    const spec = schema.byName.get(arg.key.name)
-    if (spec == null) {
-      errors.push(new CompileError(`Unknown ${kind} "${arg.key.name}"`, arg.key.range))
-      continue
-    }
-
-    if (result.has(arg.key.name)) {
-      errors.push(new CompileError(`Duplicate ${kind} named "${arg.key.name}"`, arg.key.range))
-      continue
-    }
-
-    checkArgumentValue(spec, arg.value)
   }
 
   for (const spec of schema.items) {
-    if (spec.required && !result.has(spec.name) && !errorArguments.has(spec.name)) {
+    if (spec.required && !seen.has(spec.name)) {
       errors.push(new CompileError(`Missing required ${kind} "${spec.name}"`, range))
     }
   }
 
-  return { errors, result: errors.length > 0 ? undefined : result }
+  return errors
 }
