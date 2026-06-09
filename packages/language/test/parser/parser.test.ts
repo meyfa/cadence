@@ -568,6 +568,7 @@ describe('parser/parser.ts', () => {
       '  bus mybus(gain: (-3).db) {',
       '    kick snare hihat',
       '    effect fx.pan(0.5)',
+      '    effect lp = fx.lowpass(400.hz)',
       '  }',
       '}'
     ].join('\n')
@@ -602,6 +603,7 @@ describe('parser/parser.ts', () => {
             effects: [
               {
                 type: 'EffectStatement',
+                name: undefined,
                 expression: {
                   type: 'Call',
                   callee: {
@@ -611,6 +613,25 @@ describe('parser/parser.ts', () => {
                   },
                   arguments: [
                     { type: 'Number', value: 0.5 }
+                  ]
+                }
+              },
+              {
+                type: 'EffectStatement',
+                name: { type: 'Identifier', name: 'lp' },
+                expression: {
+                  type: 'Call',
+                  callee: {
+                    type: 'PropertyAccess',
+                    object: { type: 'Identifier', name: 'fx' },
+                    property: { type: 'Identifier', name: 'lowpass' }
+                  },
+                  arguments: [
+                    {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: 400 },
+                      property: { type: 'Identifier', name: 'hz' }
+                    }
                   ]
                 }
               }

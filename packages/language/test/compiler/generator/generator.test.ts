@@ -286,6 +286,35 @@ describe('compiler/generator/generator.ts', () => {
     ])
   })
 
+  it('should automate bus effect parameters via explicit namespace', () => {
+    const source = [
+      'use "effects" as fx',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus main {',
+      '    effect lp = fx.lowpass(123.hz)',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    const effect = result.mixer.buses[0].effects[0]
+    assert.strictEqual(effect.type, 'lowpass')
+    assert.deepStrictEqual(effect.frequency.initial, numeric('hz', 123))
+
+    const automation = result.automations.get(effect.frequency.id)
+    assert.ok(automation != null)
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('beats', 0), value: numeric('hz', 100), curve: 'step' },
+      { time: numeric('beats', 16), value: numeric('hz', 4000), curve: 'linear' }
+    ])
+  })
+
   it('should automate effect parameters', () => {
     const source = [
       'use "effects" as fx',

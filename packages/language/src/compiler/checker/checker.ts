@@ -366,19 +366,49 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   }
 
   // Effects
+  const properties = {
+    gain: ParameterFacet.with('db').type(),
+    pan: ParameterFacet.with(undefined).type()
+  }
+
+  const record: Record<string, FacetType> = Object.create(null)
+  Object.assign(record, properties)
+
   for (const effect of bus.effects) {
     const effectCheck = checkExpression(scope, effect.expression)
     errors.push(...effectCheck.errors)
 
+    let effectType: FacetType | undefined
+
     if (effectCheck.result != null) {
-      errors.push(...checkType(EffectFacet.type(), effectCheck.result, effect.expression.range))
+      const typeErrors = checkType(EffectFacet.type(), effectCheck.result, effect.expression.range)
+      errors.push(...typeErrors)
+
+      if (typeErrors.length === 0) {
+        effectType = effectCheck.result
+      }
+    }
+
+    if (effect.name == null) {
+      continue
+    }
+
+    if (Object.hasOwn(properties, effect.name.name)) {
+      errors.push(new CompileError(`Effect name "${effect.name.name}" conflicts with bus property of the same name`, effect.name.range))
+      continue
+    }
+
+    if (Object.hasOwn(record, effect.name.name)) {
+      errors.push(new CompileError(`Duplicate effect name "${effect.name.name}"`, effect.name.range))
+      continue
+    }
+
+    if (effectType != null) {
+      record[effect.name.name] = effectType
     }
   }
 
-  const type = makeType(BusFacet, RecordFacet.with({
-    gain: ParameterFacet.with('db').type(),
-    pan: ParameterFacet.with(undefined).type()
-  }))
+  const type = makeType(BusFacet, RecordFacet.with(record))
 
   return { errors, result: type }
 }

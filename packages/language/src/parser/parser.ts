@@ -593,11 +593,21 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
   }
 )
 
-const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.ab(
+const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.abc(
   keyword('effect'),
+  p.option(
+    combine2(
+      identifier_,
+      literal('=')
+    ),
+    undefined
+  ),
   expression_,
-  (_effect, expression) => {
+  (_effect, nameAndEq, expression) => {
+    const name = nameAndEq == null ? undefined : nameAndEq[0]
+
     return ast.make('EffectStatement', combineSourceRanges(_effect, expression), {
+      name,
       expression
     })
   }

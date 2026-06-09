@@ -182,6 +182,38 @@ describe('compiler/checker/checker.ts', () => {
 
       assertValid(source)
     })
+
+    it('should accept bus effect automation via explicit namespace', () => {
+      const source = [
+        'use "effects" as fx',
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
+        '  }',
+        '}',
+        'mixer {',
+        '  bus main {',
+        '    effect lp = fx.lowpass(1000.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow named effects to shadow other identifiers', () => {
+      const source = [
+        'use "effects" as fx',
+        'lp = 42',
+        'mixer {',
+        '  bus main {',
+        '    effect lp = fx.lowpass(1000.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
   })
 
   describe('invalid', () => {
@@ -333,6 +365,39 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Duplicate bus named "foo"'
+      ])
+    })
+
+    it('should reject duplicate named effects within the same bus', () => {
+      const source = [
+        'use "effects" as fx',
+        'mixer {',
+        '  bus main {',
+        '    effect lp = fx.lowpass(1000.hz)',
+        '    effect lp = fx.highpass(200.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate effect name "lp"'
+      ])
+    })
+
+    it('should reject named effects that collide with built-in bus fields', () => {
+      const source = [
+        'use "effects" as fx',
+        'mixer {',
+        '  bus main {',
+        '    effect gain = fx.lowpass(1000.hz)',
+        '    effect pan = fx.highpass(200.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Effect name "gain" conflicts with bus property of the same name',
+        'Effect name "pan" conflicts with bus property of the same name'
       ])
     })
 

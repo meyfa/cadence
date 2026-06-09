@@ -209,5 +209,6 @@ BusStatement {
 
 EffectStatement {
   kw<"effect">
+  (VariableDefinition "=")?
   expression
 }
