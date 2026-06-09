@@ -55,6 +55,7 @@ interface BindingLookup {
   readonly namedImports: ReadonlyMap<string, Binding>
   readonly defaultImports: ReadonlyMap<string, Import>
   readonly buses: ReadonlyMap<string, Binding>
+  readonly effectsByBusName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
   readonly byScopeAndName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
   readonly parentScopes: ReadonlyMap<string, string>
 }
@@ -63,7 +64,29 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
   const namedImports = new Map<string, Binding>()
   const defaultImports = new Map<string, Import>()
   const buses = new Map<string, Binding>()
+  const effectsByBusName = new Map<string, Map<string, Binding>>()
   const byScopeAndName = new Map<string, Map<string, Binding>>()
+
+  const busNameByScopeId = new Map<string, string>()
+
+  const busScopes = model.scopes.filter((scope) => scope.kind === 'bus')
+  const getBusScopeIdAt = (offset: number): string | undefined => {
+    let bestScopeId: string | undefined
+    let bestLength = Number.POSITIVE_INFINITY
+
+    for (const scope of busScopes) {
+      const start = scope.range.offset
+      const end = start + scope.range.length
+      if (offset < start || offset > end || scope.range.length >= bestLength) {
+        continue
+      }
+
+      bestScopeId = scope.id
+      bestLength = scope.range.length
+    }
+
+    return bestScopeId
+  }
 
   for (const binding of model.bindings) {
     switch (binding.kind) {
@@ -76,8 +99,29 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
       case 'bus':
         if (!buses.has(binding.name)) {
           buses.set(binding.name, binding)
+
+          const busScopeId = getBusScopeIdAt(binding.range.offset)
+          if (busScopeId != null) {
+            busNameByScopeId.set(busScopeId, binding.name)
+          }
         }
         break
+
+      case 'effect': {
+        const busName = busNameByScopeId.get(binding.scopeId)
+        if (busName != null) {
+          let busEffects = effectsByBusName.get(busName)
+          if (busEffects == null) {
+            busEffects = new Map<string, Binding>()
+            effectsByBusName.set(busName, busEffects)
+          }
+
+          if (!busEffects.has(binding.name)) {
+            busEffects.set(binding.name, binding)
+          }
+        }
+        break
+      }
 
       default:
         break
@@ -89,7 +133,9 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
       byScopeAndName.set(binding.scopeId, scopeMap)
     }
 
-    scopeMap.set(binding.name, binding)
+    if (binding.kind !== 'effect') {
+      scopeMap.set(binding.name, binding)
+    }
   }
 
   for (const imp of model.imports) {
@@ -105,7 +151,7 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
     }
   }
 
-  return { namedImports, defaultImports, buses, byScopeAndName, parentScopes }
+  return { namedImports, defaultImports, buses, effectsByBusName, byScopeAndName, parentScopes }
 }
 
 function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
@@ -125,6 +171,15 @@ function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, loo
 }
 
 function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Binding | undefined {
+  if (isExplicitBusMemberReference(occurrence)) {
+    const busIdentifier = occurrence.previousSibling
+    if (busIdentifier == null) {
+      return undefined
+    }
+
+    return lookup.effectsByBusName.get(busIdentifier.name)?.get(occurrence.name)
+  }
+
   if (isExplicitBusReference(occurrence)) {
     return lookup.buses.get(occurrence.name)
   }
@@ -157,6 +212,14 @@ function isExplicitBusReference (identifier: Identifier): boolean {
   return identifier.previousSibling != null &&
     identifier.previousSibling.name === 'bus' &&
     identifier.previousSibling.previousSibling == null
+}
+
+function isExplicitBusMemberReference (identifier: Identifier): boolean {
+  const objectIdentifier = identifier.previousSibling
+  const namespaceIdentifier = objectIdentifier?.previousSibling
+
+  return namespaceIdentifier?.name === 'bus' &&
+    namespaceIdentifier.previousSibling == null
 }
 
 const importCache = new WeakMap<BindingLookup, Map<string, Import | undefined>>()

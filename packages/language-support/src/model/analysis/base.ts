@@ -96,6 +96,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
+      case 'BusStatement': {
+        const scope = addScope({ kind: 'bus', range, parentId: scopeId })
+        nextScopeId = scope.id
+        break
+      }
+
       case 'Assignment': {
         nextAssignmentHasEquals = false
 
@@ -261,6 +267,9 @@ function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding,
       return context.mixerScopeId != null
         ? { kind: 'bus', scopeId: context.mixerScopeId }
         : undefined
+
+    case 'EffectStatement':
+      return { kind: 'effect', scopeId: context.scopeId }
   }
 
   return undefined

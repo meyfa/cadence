@@ -167,6 +167,41 @@ describe('model/analysis/references.ts', () => {
     assert.strictEqual(binding, undefined)
   })
 
+  it('resolves named effect access of an explicit bus access', () => {
+    const source = [
+      'use "effects" as fx',
+      'track (120.bpm) {',
+      '  part main (4.bars) {',
+      '    automate bus.main.lp.frequency as ~[hold(1000.hz)]',
+      '  }',
+      '}',
+      'mixer {',
+      '  bus main {',
+      '    effect lp = fx.lowpass(1000.hz)',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('bus.main.lp.frequency') + 'bus.main.'.length
+
+    const identifier = model.identifiers.find((item) => item.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'effect')
+    assert.strictEqual(binding.name, 'lp')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('effect lp') + 'effect '.length, 'lp'.length))
+
+    const references = model.bindingReferences.get(binding.id)
+    assert.ok(references != null)
+    assert.ok(references.includes(identifier))
+  })
+
   it('prefers import aliases over assignments with the same name', () => {
     const source = [
       'fx = sample("/samples/fx.wav")',

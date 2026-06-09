@@ -32,7 +32,7 @@ export interface Scope {
   readonly range: SourceRange
 }
 
-export type ScopeKind = 'root' | 'track' | 'mixer'
+export type ScopeKind = 'root' | 'track' | 'mixer' | 'bus'
 
 // identifier
 
@@ -71,7 +71,7 @@ export interface Binding {
   readonly moduleName?: string
 }
 
-export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus'
+export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus' | 'effect'
 
 // import
 

@@ -152,6 +152,7 @@ export interface BusStatement extends ASTNode {
 
 export interface EffectStatement extends ASTNode {
   readonly type: 'EffectStatement'
+  readonly name?: Identifier
   readonly expression: Expression
 }
 

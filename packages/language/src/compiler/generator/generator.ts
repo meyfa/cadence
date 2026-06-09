@@ -234,9 +234,21 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
-  const effects = bus.effects.map((effect) => {
-    return EffectFacet.get(resolve(scope, effect.expression))
-  })
+  const effectValues = bus.effects.map((effect) => resolve(scope, effect.expression))
+  const effects = effectValues.map((value) => EffectFacet.get(value))
+
+  const valueRecord: Record<string, Value> = Object.create(null)
+  const typeRecord: Record<string, FacetType> = Object.create(null)
+
+  for (let i = 0; i < bus.effects.length; ++i) {
+    const effectName = bus.effects[i].name?.name
+    if (effectName == null) {
+      continue
+    }
+
+    valueRecord[effectName] = effectValues[i]
+    typeRecord[effectName] = effectValues[i].type
+  }
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
@@ -244,19 +256,15 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   const panData = properties.pan != null ? NumberFacet.get(properties.pan) : numeric(undefined, 0)
 
   const gain = scope.top.allocateParameter(gainData)
+  valueRecord.gain = Parameters.of(gain)
+  typeRecord.gain = valueRecord.gain.type
+
   const pan = scope.top.allocateParameter(panData)
+  valueRecord.pan = Parameters.of(pan)
+  typeRecord.pan = valueRecord.pan.type
 
   const data = scope.top.allocateBus({ name, gain, pan, effects })
-
-  const type = makeType(BusFacet, RecordFacet.with({
-    gain: ParameterFacet.with('db').type(),
-    pan: ParameterFacet.with(undefined).type()
-  }))
-
-  const value = type.of(data, {
-    gain: Parameters.of(gain),
-    pan: Parameters.of(pan)
-  })
+  const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
 
   assert(!scope.resolutions.has(name))
   scope.resolutions.set(name, value)

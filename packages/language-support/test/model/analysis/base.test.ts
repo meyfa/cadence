@@ -33,6 +33,7 @@ describe('model/analysis/base.ts', () => {
       '',
       'mixer {',
       '  bus drums {',
+      '    effect crush = fx.clip(-6.db)',
       '    kick snare',
       '  }',
       '}',
@@ -62,9 +63,12 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'track', name: 'loop' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'gain' },
-        { kind: 'definition', scope: 'mixer', name: 'drums' },
-        { kind: 'plain', scope: 'mixer', name: 'kick' },
-        { kind: 'plain', scope: 'mixer', name: 'snare' }
+        { kind: 'definition', scope: 'bus', name: 'drums' },
+        { kind: 'definition', scope: 'bus', name: 'crush' },
+        { kind: 'plain', scope: 'bus', name: 'fx' },
+        { kind: 'plain', scope: 'bus', name: 'clip' },
+        { kind: 'plain', scope: 'bus', name: 'kick' },
+        { kind: 'plain', scope: 'bus', name: 'snare' }
       ]
     )
   })
@@ -234,12 +238,24 @@ describe('model/analysis/base.ts', () => {
     const mixerRange = getRangeAt(source, mixerStart, mixerEnd - mixerStart)
     const mixerScopeId = `mixer:${mixerRange.offset}:${mixerRange.length}`
 
+    const drumsBusStart = source.indexOf('bus drums')
+    const drumsBusEnd = source.indexOf('  }', drumsBusStart) + '  }'.length
+    const drumsBusRange = getRangeAt(source, drumsBusStart, drumsBusEnd - drumsBusStart)
+    const drumsBusScopeId = `bus:${drumsBusRange.offset}:${drumsBusRange.length}`
+
+    const delayBusStart = source.indexOf('bus delay')
+    const delayBusEnd = source.indexOf('  }', delayBusStart) + '  }'.length
+    const delayBusRange = getRangeAt(source, delayBusStart, delayBusEnd - delayBusStart)
+    const delayBusScopeId = `bus:${delayBusRange.offset}:${delayBusRange.length}`
+
     assert.deepStrictEqual(
       model.scopes.map(({ id, kind, parentId }) => ({ id, kind, parentId })),
       [
         { id: rootScopeId, kind: 'root', parentId: undefined },
         { id: trackScopeId, kind: 'track', parentId: rootScopeId },
-        { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId }
+        { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId },
+        { id: drumsBusScopeId, kind: 'bus', parentId: mixerScopeId },
+        { id: delayBusScopeId, kind: 'bus', parentId: mixerScopeId }
       ]
     )
 
