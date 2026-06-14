@@ -266,17 +266,17 @@ describe('model/analysis/references.ts', () => {
 
   it('resolves default imports', () => {
     const source = [
-      'use "patterns" as *',
-      'track {',
-      '  part main {',
-      '    kick << loop([x---])',
+      'use "effects" as *',
+      'mixer {',
+      '  bus main {',
+      '    effect lowpass(1000.hz)',
       '  }',
       '}',
       ''
     ].join('\n')
 
     const model = analyzeSource(source)
-    const position = source.indexOf('loop')
+    const position = source.indexOf('lowpass')
 
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
@@ -285,24 +285,22 @@ describe('model/analysis/references.ts', () => {
     assert.strictEqual(resolution?.kind, 'import')
 
     const imp = resolution.import
-    assert.strictEqual(imp.moduleName, 'patterns')
+    assert.strictEqual(imp.moduleName, 'effects')
     assert.strictEqual(imp.alias, undefined)
   })
 
   it('prefers local variables over default imports', () => {
     const source = [
-      'use "patterns" as *',
-      'loop = [x---]',
-      'track {',
-      '  part main {',
-      '    kick << loop',
-      '  }',
+      'use "effects" as *',
+      'gain = -3.db',
+      'mixer {',
+      '  bus main (gain) {}',
       '}',
       ''
     ].join('\n')
 
     const model = analyzeSource(source)
-    const position = source.indexOf('loop')
+    const position = source.indexOf('(gain)') + 1
 
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
@@ -313,13 +311,13 @@ describe('model/analysis/references.ts', () => {
 
   it('does not resolve default imports for property names', () => {
     const source = [
-      'use "patterns" as *',
-      'foo = bar(loop: 4)',
+      'use "effects" as *',
+      'foo = bar(gain: 4)',
       ''
     ].join('\n')
 
     const model = analyzeSource(source)
-    const position = source.indexOf('loop:')
+    const position = source.indexOf('gain:')
 
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
@@ -330,13 +328,13 @@ describe('model/analysis/references.ts', () => {
 
   it('does not resolve default imports for member accesses', () => {
     const source = [
-      'use "patterns" as *',
-      'foo = bar.loop',
+      'use "effects" as *',
+      'foo = bar.gain',
       ''
     ].join('\n')
 
     const model = analyzeSource(source)
-    const position = source.indexOf('bar.loop') + 'bar.'.length
+    const position = source.indexOf('bar.gain') + 'bar.'.length
 
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)

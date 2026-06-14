@@ -18,7 +18,7 @@ describe('model/analysis/base.ts', () => {
   it('builds a sorted list of identifiers', () => {
     const source = [
       'use "instruments" as *',
-      'use "patterns" as p',
+      'use "effects" as fx',
       '',
       'base_path = "/samples"',
       'kick = sample("{base_path}/kick.wav")',
@@ -26,7 +26,7 @@ describe('model/analysis/base.ts', () => {
       '',
       'track (tempo: tempo) {',
       '  part intro (4.bars) {',
-      '    kick << p.loop([x---])',
+      '    kick << [x---].loop()',
       '    automate kick.gain as ~[hold(-60.db)]',
       '  }',
       '}',
@@ -49,7 +49,7 @@ describe('model/analysis/base.ts', () => {
         name
       })),
       [
-        { kind: 'definition', scope: 'root', name: 'p' },
+        { kind: 'definition', scope: 'root', name: 'fx' },
         { kind: 'definition', scope: 'root', name: 'base_path' },
         { kind: 'definition', scope: 'root', name: 'kick' },
         { kind: 'plain', scope: 'root', name: 'sample' },
@@ -59,7 +59,6 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
         { kind: 'plain', scope: 'track', name: 'kick' },
-        { kind: 'plain', scope: 'track', name: 'p' },
         { kind: 'plain', scope: 'track', name: 'loop' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'gain' },
@@ -316,7 +315,7 @@ describe('model/analysis/base.ts', () => {
   it('includes bindings for alias imports', () => {
     const source = [
       'use "effects" as fx',
-      'use "patterns" as *',
+      'use "instruments" as *',
       ''
     ].join('\n')
 
@@ -337,7 +336,7 @@ describe('model/analysis/base.ts', () => {
   it('includes list of imports', () => {
     const source = [
       'use "effects" as fx',
-      'use "patterns" as *',
+      'use "instruments" as *',
       ''
     ].join('\n')
 
@@ -353,8 +352,8 @@ describe('model/analysis/base.ts', () => {
           aliasRange: getRangeAt(source, source.indexOf('as fx') + 'as '.length, 'fx'.length)
         },
         {
-          moduleName: 'patterns',
-          range: getRangeAt(source, source.indexOf('use "patterns" as *'), 'use "patterns" as *'.length),
+          moduleName: 'instruments',
+          range: getRangeAt(source, source.indexOf('use "instruments" as *'), 'use "instruments" as *'.length),
           alias: undefined,
           aliasRange: getRangeAt(source, source.indexOf('as *') + 'as '.length, '*'.length)
         }

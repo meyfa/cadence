@@ -25,14 +25,14 @@ describe('model/analysis/known-values.ts', () => {
   it('resolves known values for identifiers', () => {
     const source = [
       'use "instruments" as *',
-      'use "patterns" as p',
+      'use "effects" as fx',
       '',
       'kick = sample("/samples/kick.wav")',
       'snare = sample("/samples/snare.wav")',
       '',
-      'track {',
-      '  part intro {',
-      '    kick << p.loop([x---])',
+      'mixer {',
+      '  bus {',
+      '    effect fx.gain(-3.db)',
       '  }',
       '}',
       ''
@@ -40,10 +40,10 @@ describe('model/analysis/known-values.ts', () => {
 
     const model = analyzeSource(source)
 
-    const aliasIdentifier = findIdentifierAt(model, source.indexOf('as p') + 'as '.length)
-    assert.strictEqual(aliasIdentifier?.name, 'p')
+    const aliasIdentifier = findIdentifierAt(model, source.indexOf('as fx') + 'as '.length)
+    assert.strictEqual(aliasIdentifier?.name, 'fx')
     assert.deepStrictEqual(model.knownValues.get(aliasIdentifier.id), {
-      moduleName: 'patterns'
+      moduleName: 'effects'
     })
 
     const sampleIdentifier = findIdentifierAt(model, source.indexOf('sample("/samples/kick.wav")'))
@@ -53,17 +53,17 @@ describe('model/analysis/known-values.ts', () => {
       exportName: 'sample'
     })
 
-    const pIdentifier = findIdentifierAt(model, source.indexOf('p.loop'))
-    assert.strictEqual(pIdentifier?.name, 'p')
-    assert.deepStrictEqual(model.knownValues.get(pIdentifier.id), {
-      moduleName: 'patterns'
+    const fxIdentifier = findIdentifierAt(model, source.indexOf('fx.gain'))
+    assert.strictEqual(fxIdentifier?.name, 'fx')
+    assert.deepStrictEqual(model.knownValues.get(fxIdentifier.id), {
+      moduleName: 'effects'
     })
 
-    const loopIdentifier = findIdentifierAt(model, source.indexOf('loop([x---])'))
-    assert.strictEqual(loopIdentifier?.name, 'loop')
-    assert.deepStrictEqual(model.knownValues.get(loopIdentifier.id), {
-      moduleName: 'patterns',
-      exportName: 'loop'
+    const gainIdentifier = findIdentifierAt(model, source.indexOf('gain(-3.db)'))
+    assert.strictEqual(gainIdentifier?.name, 'gain')
+    assert.deepStrictEqual(model.knownValues.get(gainIdentifier.id), {
+      moduleName: 'effects',
+      exportName: 'gain'
     })
   })
 

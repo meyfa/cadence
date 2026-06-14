@@ -3,7 +3,6 @@ export const demoCode = `
 
 // Import some functions from the standard library.
 use "instruments" as *  // sample
-use "patterns" as *     // loop, fill
 use "effects" as fx
 
 sample_collection = "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master"
@@ -18,13 +17,13 @@ clap  = sample("{sample_collection}/808/CP.WAV")
 
 // Define some reusable patterns (step sequences). 'x' is a hit, '-' is a rest.
 // By default, each step is 1 beat long.
-// Use loop(pattern) or loop(pattern, times) to repeat patterns infinitely, or a specific amount.
-kick_pattern  = loop([xxxx])
-snare_pattern = loop([-x])
+// Use pattern.loop() or pattern.loop(times) to repeat patterns infinitely, or a specific amount.
+kick_pattern  = [xxxx].loop()
+snare_pattern = [-x].loop()
 
 // Patterns can also define pitches (note and octave) for melodic instruments.
 // Division and multiplication (/, *) change pattern timing. Here, /4 creates 16th notes.
-arp_intro   = fill([-], 2.bars) + loop([D3:3 D4:3 F4 -] / 4, 4)
+arp_intro   = [-].fill(2.bars) + ([D3:3 D4:3 F4 -] / 4).loop(4)
 arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 
 // Steps can have custom lengths. The hit below is 8 times the default step length.
@@ -45,16 +44,16 @@ track (120.bpm) {
   part main (8.bars) {
     kick  << kick_pattern
     snare << snare_pattern
-    hat   << loop([--x-] / 4)
-    tom   << loop([---- -x-- ---- ---x] / 4)
-    synth << loop(arp_main)
-    clap  << loop(clap_pattern)
+    hat   << ([--x-] / 4).loop()
+    tom   << ([---- -x-- ---- ---x] / 4).loop()
+    synth << arp_main.loop()
+    clap  << clap_pattern.loop()
   }
 
   part outro (4.bars) {
     snare << snare_pattern
-    tom   << loop([---- -x-- ---- ---x] / 4)
-    synth << loop(arp_main)
+    tom   << ([---- -x-- ---- ---x] / 4).loop()
+    synth << arp_main.loop()
     clap  << clap_pattern
   }
 }

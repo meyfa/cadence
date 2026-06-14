@@ -37,7 +37,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept use statements without alias', () => {
       const source = [
-        'use "patterns" as *',
+        'use "instruments" as *',
         'use "effects" as *'
       ].join('\n')
 
@@ -158,6 +158,15 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'some_chord = [<D4 G4>]',
         'my_pattern = [C4 {some_chord + [<E4 A4>]} E4]'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept built-in pattern functions', () => {
+      const source = [
+        'my_pattern = [C4 E4 G4].loop()',
+        'my_filled_pattern = my_pattern.fill(2.bars)'
       ].join('\n')
 
       assertValid(source)
@@ -535,6 +544,18 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject unknown built-in pattern functions', () => {
+      assertErrorMessages('my_pattern = [C4 E4 G4].foobar()', [
+        'Type pattern has no property named "foobar"'
+      ])
+    })
+
+    it('should reject built-in pattern functions used on non-patterns', () => {
+      assertErrorMessages('my_pattern = "-".loop()', [
+        'Type string has no property named "loop"'
+      ])
+    })
+
     it('should reject accessing prototype', () => {
       const source = [
         'use "instruments" as inst',
@@ -558,19 +579,8 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should report errors from inside binary expressions', () => {
       const source = [
-        'use "patterns" as *',
-        'my_pattern = [x] + fill([x])'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Missing required argument "duration"'
-      ])
-    })
-
-    it('should report errors from inside calls', () => {
-      const source = [
-        'use "patterns" as *',
-        'my_pattern = loop(fill([x]))'
+        'use "instruments" as *',
+        'my_pattern = [x] + [x].fill()'
       ].join('\n')
 
       assertErrorMessages(source, [

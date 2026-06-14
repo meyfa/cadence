@@ -9,23 +9,23 @@ const cadenceParser = await getCadenceParser()
 describe('hover/operation.ts', () => {
   it('returns function docs for wildcard-imported symbols', () => {
     const source = [
-      'use "patterns" as *',
-      'track {',
-      '  part main (8.bars) {',
-      '    drum << loop([x:8])',
+      'use "effects" as *',
+      'mixer {',
+      '  bus drum_bus {',
+      '    effect gain(-6.db)',
       '  }',
       '}',
       ''
     ].join('\n')
 
-    const position = source.indexOf('loop(') + 1
+    const position = source.indexOf('gain(') + 1
 
     assert.deepStrictEqual(
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, position),
       {
-        range: getRangeAt(source, source.indexOf('loop('), 'loop'.length),
-        title: 'loop(pattern: pattern, times?: number) -> pattern',
-        summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.'
+        range: getRangeAt(source, source.indexOf('gain('), 'gain'.length),
+        title: 'gain(gain: number(db)) -> effect + record(gain)',
+        summary: 'Applies a gain adjustment to the signal.'
       }
     )
   })
