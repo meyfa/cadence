@@ -343,18 +343,13 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
   }
 )
 
-const value_: p.Parser<Token, unknown, ast.Value> = p.eitherOr(
+const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
   identifier_,
-  p.eitherOr(
-    number_,
-    p.eitherOr(
-      string_,
-      p.eitherOr(
-        serialPattern_,
-        curve_
-      )
-    )
-  )
+  number_,
+  string_,
+  serialPattern_,
+  curve_,
+  p.recursive(() => instrument_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -667,6 +662,20 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
 
     return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
       properties: args,
+      children
+    })
+  }
+)
+
+const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
+  keyword('instrument'),
+  combine3(
+    expectLiteral('{'),
+    p.many(assignment_),
+    expectLiteral('}')
+  ),
+  (_instrument, [_lp, children, _rp]) => {
+    return ast.make('Instrument', combineSourceRanges(_instrument, _rp), {
       children
     })
   }

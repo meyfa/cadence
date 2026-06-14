@@ -71,7 +71,7 @@ describe('language-support.ts', () => {
       'tempo = 128.bpm',
       'mix = 0.5 + 0.25',
       'pattern = [D4:2 - x]',
-      'instrument = sample("kick-{tempo}")',
+      'inst = sample("kick-{tempo}")',
       'track (tempo: 140.bpm) {',
       '  part drums {',
       '    automate lib.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
@@ -79,7 +79,7 @@ describe('language-support.ts', () => {
       '}',
       'mixer {',
       '  bus main {',
-      '    instrument',
+      '    inst',
       '    effect fx.pan(-1)',
       '  }',
       '}',
@@ -88,8 +88,8 @@ describe('language-support.ts', () => {
 
     const spans = getHighlightSpans(source)
 
-    const definitionInstrumentStart = source.indexOf('instrument =')
-    const useInstrumentStart = source.indexOf('    instrument') + '    '.length
+    const definitionInstrumentStart = source.indexOf('inst =')
+    const useInstrumentStart = source.indexOf('    inst') + '    '.length
 
     assertHighlightAt(spans, source, '// comment', source.indexOf('// comment'), 'comment')
     assertHighlightAt(spans, source, 'use', source.indexOf('use'), 'keyword')
@@ -99,7 +99,7 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, ' x', source.indexOf(' x]'), 'pattern')
     assertHighlightAt(spans, source, 'tempo', source.indexOf('tempo ='), 'definition-variable')
     assertHighlightAt(spans, source, 'mix', source.indexOf('mix ='), 'definition-variable')
-    assertHighlightAt(spans, source, 'instrument', definitionInstrumentStart, 'definition-variable')
+    assertHighlightAt(spans, source, 'inst', definitionInstrumentStart, 'definition-variable')
     assertHighlightAt(spans, source, 'lib', source.indexOf('lib', source.indexOf('as lib')), 'definition-variable')
     assertHighlightAt(spans, source, 'tempo', source.indexOf('(tempo:') + 1, 'definition-property')
     assertHighlightAt(spans, source, 'gain', source.indexOf('.gain') + 1, 'property')
@@ -115,7 +115,7 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, '{', source.indexOf('{'), 'brace')
     assertHighlightAt(spans, source, '(', source.indexOf('('), 'paren')
     assertHighlightAt(spans, source, ':', source.indexOf(':2'), 'separator')
-    assertHighlightAt(spans, source, 'instrument', useInstrumentStart, 'variable')
+    assertHighlightAt(spans, source, 'inst', useInstrumentStart, 'variable')
     assertHighlightAt(spans, source, 'fx', source.indexOf('fx.pan'), 'variable')
   })
 

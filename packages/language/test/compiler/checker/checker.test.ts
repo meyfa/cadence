@@ -245,6 +245,16 @@ describe('compiler/checker/checker.ts', () => {
 
       assertValid(source)
     })
+
+    it('should allow valid instrument definitions', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  foo = -6.db',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
   })
 
   describe('invalid', () => {
@@ -585,6 +595,19 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Missing required argument "duration"'
+      ])
+    })
+
+    it('should report errors in instrument definitions', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  foo = 42',
+        '  foo = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "foo" is already defined'
       ])
     })
   })

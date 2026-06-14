@@ -205,6 +205,11 @@ describe('model/analysis/base.ts', () => {
       'kick = sample("/samples/kick.wav")',
       'snare = sample("/samples/snare.wav", gain: -3.db)',
       '',
+      'my_instrument = instrument {',
+      '  foo = 42',
+      '  bar = foo * 2',
+      '}',
+      '',
       'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    kick << [x---]',
@@ -226,6 +231,11 @@ describe('model/analysis/base.ts', () => {
 
     const rootRange = getRangeAt(source, 0, source.length)
     const rootScopeId = `root:${rootRange.offset}:${rootRange.length}`
+
+    const instrumentBlockStart = source.indexOf('{', source.indexOf('my_instrument'))
+    const instrumentBlockEnd = source.indexOf('}', instrumentBlockStart) + 1
+    const instrumentRange = getRangeAt(source, instrumentBlockStart, instrumentBlockEnd - instrumentBlockStart)
+    const instrumentScopeId = `instrument:${instrumentRange.offset}:${instrumentRange.length}`
 
     const trackBlockStart = source.indexOf('{', source.indexOf('track'))
     const trackEnd = source.indexOf('} // end track') + '}'.length
@@ -251,6 +261,7 @@ describe('model/analysis/base.ts', () => {
       model.scopes.map(({ id, kind, parentId }) => ({ id, kind, parentId })),
       [
         { id: rootScopeId, kind: 'root', parentId: undefined },
+        { id: instrumentScopeId, kind: 'instrument', parentId: rootScopeId },
         { id: trackScopeId, kind: 'track', parentId: rootScopeId },
         { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId },
         { id: drumsBusScopeId, kind: 'bus', parentId: mixerScopeId },
@@ -264,6 +275,9 @@ describe('model/analysis/base.ts', () => {
         { kind: 'use-alias', name: 'fx', declaredScopeId: undefined },
         { kind: 'regular', name: 'kick', declaredScopeId: undefined },
         { kind: 'regular', name: 'snare', declaredScopeId: undefined },
+        { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined },
+        { kind: 'regular', name: 'foo', declaredScopeId: undefined },
+        { kind: 'regular', name: 'bar', declaredScopeId: undefined },
         { kind: 'part', name: 'intro', declaredScopeId: undefined },
         { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId },
         { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId }
