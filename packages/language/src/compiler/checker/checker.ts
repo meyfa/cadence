@@ -19,6 +19,7 @@ import { PatternFacet } from '../../type-system/domain/pattern.js'
 import { makeType, makeUnion } from '../../type-system/factory.js'
 import type { Schema, SchemaItem } from '../../type-system/schema.js'
 import type { FacetType, Type, Value } from '../../type-system/types.js'
+import { patternBuiltins } from '../builtins/patterns.js'
 import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import { getCurveSegmentType } from '../curves.js'
 import { CompileError } from '../error.js'
@@ -703,6 +704,13 @@ function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Che
     }
 
     return { errors, result: NumberFacet.with(toBaseUnit(property.name)).type() }
+  }
+
+  if (PatternFacet.is(object)) {
+    const builtin = patternBuiltins.get(property.name)
+    if (builtin != null) {
+      return { errors, result: builtin.type }
+    }
   }
 
   if (RecordFacet.is(object)) {

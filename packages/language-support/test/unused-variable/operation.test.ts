@@ -95,7 +95,7 @@ describe('unused-variable/operation.ts', () => {
 
   it('reports unused named imports', () => {
     const source = [
-      'use "patterns" as patterns',
+      'use "instruments" as instruments',
       'use "effects" as fx',
       '',
       'mixer {',
@@ -110,9 +110,9 @@ describe('unused-variable/operation.ts', () => {
       applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
       [
         {
-          name: 'patterns',
-          message: 'Unused import "patterns"',
-          range: getRangeAt(source, source.indexOf('as patterns') + 'as '.length, 'patterns'.length)
+          name: 'instruments',
+          message: 'Unused import "instruments"',
+          range: getRangeAt(source, source.indexOf('as instruments') + 'as '.length, 'instruments'.length)
         }
       ]
     )
@@ -120,7 +120,7 @@ describe('unused-variable/operation.ts', () => {
 
   it('reports unused default imports', () => {
     const source = [
-      'use "patterns" as *',
+      'use "instruments" as *',
       'use "effects" as *',
       '',
       'mixer {',
@@ -135,8 +135,8 @@ describe('unused-variable/operation.ts', () => {
       applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
       [
         {
-          name: 'patterns',
-          message: 'Unused import from "patterns"',
+          name: 'instruments',
+          message: 'Unused import from "instruments"',
           range: getRangeAt(source, source.indexOf('as *') + 'as '.length, '*'.length)
         }
       ]

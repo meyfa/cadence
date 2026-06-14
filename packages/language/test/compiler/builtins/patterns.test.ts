@@ -1,13 +1,16 @@
+import type { Pattern } from '@core'
 import { createSerialPattern, loopPattern, renderPatternEvents } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { PatternBuiltin } from '../../../src/compiler/builtins/patterns.js'
+import { patternBuiltins } from '../../../src/compiler/builtins/patterns.js'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/generator/scopes.js'
-import { patternsModule } from '../../../src/library/modules/patterns.js'
+import { FunctionFacet } from '../../../src/type-system/base/function.js'
 import { PatternFacet } from '../../../src/type-system/domain/pattern.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
-import { getFunctionExport } from './test-utils.js'
+import type { Facet, Value } from '../../../src/type-system/types.js'
 
 function createFunctionContext (): GlobalScope {
   return createGlobalScope({
@@ -20,12 +23,26 @@ function createFunctionContext (): GlobalScope {
   }, new Map())
 }
 
+function getPatternBuiltin (name: string): PatternBuiltin {
+  const builtin = patternBuiltins.get(name)
+  assert.ok(builtin != null, `Pattern builtin '${name}' not found`)
+
+  return builtin
+}
+
+function invoke (builtin: PatternBuiltin, self: Value<Facet<'pattern', Pattern>>, args: Record<string, Value>): Value {
+  const context = createFunctionContext()
+  const functionValue = builtin.bind(PatternFacet.get(self))
+
+  return FunctionFacet.get(functionValue).invoke(context as never, args)
+}
+
 describe('library/modules/patterns.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
 
   describe('loop', () => {
-    const loop = getFunctionExport(patternsModule, 'loop')
+    const loop = getPatternBuiltin('loop')
 
     it('should loop finite patterns infinitely', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
@@ -34,9 +51,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'G5' }
       ], 4))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, { pattern })
+      const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
       assert.strictEqual(resultPattern.length, undefined)
 
@@ -56,9 +72,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2)))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, { pattern })
+      const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
       assert.strictEqual(resultPattern.length, undefined)
 
@@ -73,9 +88,8 @@ describe('library/modules/patterns.ts', () => {
 
     it('should return empty pattern when looping empty pattern', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([], 4))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, { pattern })
+      const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
       assert.deepStrictEqual(resultPattern.length?.value, 0)
 
@@ -89,10 +103,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, {
-        pattern,
+      const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 3))
       })
       const resultPattern = PatternFacet.get(result)
@@ -116,10 +128,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, {
-        pattern,
+      const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -135,10 +145,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, {
-        pattern,
+      const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, -2))
       })
       const resultPattern = PatternFacet.get(result)
@@ -154,10 +162,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = loop.invoke(context, {
-        pattern,
+      const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 0.5))
       })
       const resultPattern = PatternFacet.get(result)
@@ -172,7 +178,7 @@ describe('library/modules/patterns.ts', () => {
   })
 
   describe('fill', () => {
-    const fill = getFunctionExport(patternsModule, 'fill')
+    const fill = getPatternBuiltin('fill')
 
     it('should loop finite patterns until the duration is filled', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
@@ -180,10 +186,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -204,10 +208,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2)))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -224,10 +226,8 @@ describe('library/modules/patterns.ts', () => {
 
     it('should return empty pattern when filling an empty pattern', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([], 4))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -243,10 +243,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -262,10 +260,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(-2.0))
       })
       const resultPattern = PatternFacet.get(result)
@@ -281,10 +277,8 @@ describe('library/modules/patterns.ts', () => {
         { value: '-' },
         { value: 'C4' }
       ], 2))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(Number.POSITIVE_INFINITY))
       })
       const resultPattern = PatternFacet.get(result)
@@ -299,10 +293,8 @@ describe('library/modules/patterns.ts', () => {
         { value: 'A4', gate: numeric(undefined, 3) },
         { value: 'B4', gate: numeric(undefined, 5) }
       ], 1))
-      const context = createFunctionContext()
 
-      const result = fill.invoke(context, {
-        pattern,
+      const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(4.0))
       })
       const resultPattern = PatternFacet.get(result)

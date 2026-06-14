@@ -148,19 +148,19 @@ describe('highlight-occurrences/operation.ts', () => {
 
   it('highlights occurrences of a default-imported symbol', () => {
     const source = [
-      'use "patterns" as *',
-      'pattern1 = loop([x---])',
-      'pattern2 = loop([x-x-])',
+      'use "instruments" as *',
+      'inst0 = sine(-6.db)',
+      'inst1 = sine(-9.db)',
       ''
     ].join('\n')
 
-    const position = source.indexOf('loop([x---])') + 1
+    const position = source.indexOf('sine') + 1
 
     assert.deepStrictEqual(
       applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
       [
-        getRangeAt(source, source.indexOf('loop([x---])'), 'loop'.length),
-        getRangeAt(source, source.indexOf('loop([x-x-])'), 'loop'.length)
+        getRangeAt(source, source.indexOf('sine(-6.db)'), 'sine'.length),
+        getRangeAt(source, source.indexOf('sine(-9.db)'), 'sine'.length)
       ]
     )
   })

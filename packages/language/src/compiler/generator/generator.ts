@@ -33,6 +33,7 @@ import { assert, fail, nonNull } from '../assert.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
+import { patternBuiltins } from '../builtins/patterns.js'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -470,6 +471,13 @@ function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): V
     assert(isSyntaxUnit(property))
     const numberData = NumberFacet.get(object)
     return toNumberValue(scope.top.options, property, numberData.value)
+  }
+
+  if (PatternFacet.has(object)) {
+    const builtin = patternBuiltins.get(property)
+    if (builtin != null) {
+      return builtin.bind(PatternFacet.get(object))
+    }
   }
 
   if (RecordFacet.has(object)) {

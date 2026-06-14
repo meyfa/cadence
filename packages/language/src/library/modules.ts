@@ -3,10 +3,8 @@ import { ModuleFacet } from '../type-system/base/module.js'
 import type { Value } from '../type-system/types.js'
 import { effectsModule } from './modules/effects.js'
 import { instrumentsModule } from './modules/instruments.js'
-import { patternsModule } from './modules/patterns.js'
 
 const standardLibrary = Object.freeze(new Map([
-  ['patterns', patternsModule],
   ['instruments', instrumentsModule],
   ['effects', effectsModule]
 ]))
