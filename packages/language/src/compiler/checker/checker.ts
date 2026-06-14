@@ -186,12 +186,18 @@ function checkTracks (scope: MutableScope, tracks: readonly ast.TrackStatement[]
 
 function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly CompileError[] {
   const trackScope = createLocalScope(scope)
-
   const errors: CompileError[] = []
+
+  errors.push(...checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property'))
+
+  const assignments = track.children.filter((c) => c.type === 'Assignment')
+  const parts = track.children.filter((c) => c.type === 'PartStatement')
+
+  errors.push(...checkAssignments(trackScope, assignments))
 
   const seenParts = new Set<string>()
 
-  for (const part of track.parts) {
+  for (const part of parts) {
     if (part.name != null) {
       if (seenParts.has(part.name.name)) {
         errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
@@ -207,8 +213,6 @@ function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly C
 
     errors.push(...checkPart(trackScope, part))
   }
-
-  errors.push(...checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property'))
 
   return errors
 }
@@ -304,10 +308,14 @@ interface MixerDetail {
 
 function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Checked<MixerDetail> {
   const mixerScope = createLocalScope(scope)
-
   const errors: CompileError[] = []
 
   errors.push(...checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property'))
+
+  const assignments = mixer.children.filter((c) => c.type === 'Assignment')
+  const buses = mixer.children.filter((c) => c.type === 'BusStatement')
+
+  errors.push(...checkAssignments(mixerScope, assignments))
 
   const seenBuses = new Map<string, FacetType>()
 
@@ -319,7 +327,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
   }
 
   // Build up the list of buses first
-  for (const bus of mixer.buses) {
+  for (const bus of buses) {
     if (seenBuses.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
     } else if (mixerScope.resolutions.has(bus.name.name)) {
@@ -331,7 +339,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
   }
 
   // Now that all buses are known, we can check the routings
-  for (const bus of mixer.buses) {
+  for (const bus of buses) {
     const busCheck = checkBus(mixerScope, bus)
     errors.push(...busCheck.errors)
 
@@ -340,7 +348,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
     }
   }
 
-  errors.push(...checkCyclicRoutings(mixer.buses.map((bus) => ({
+  errors.push(...checkCyclicRoutings(buses.map((bus) => ({
     name: bus.name.name,
     sources: bus.sources.map((s) => s.name),
     range: bus.name.range

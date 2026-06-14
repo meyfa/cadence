@@ -178,7 +178,7 @@ TrackStatement {
   kw<"track">
   ("(" argumentList? ")")?
   TrackBlock[group=Block] {
-    "{" (PartStatement)* "}"
+    "{" (Assignment | PartStatement)* "}"
   }
 }
 
@@ -195,7 +195,7 @@ MixerStatement {
   kw<"mixer">
   ("(" argumentList? ")")?
   MixerBlock[group=Block] {
-    "{" (BusStatement)* "}"
+    "{" (Assignment | BusStatement)* "}"
   }
 }
 

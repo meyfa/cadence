@@ -45,8 +45,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     cursor: TreeCursor,
     parentType: string | undefined,
     scopeId: string,
-    trackScopeId: string | undefined,
-    mixerScopeId: string | undefined,
+    pendingScope: Scope | undefined,
     assignmentHasEquals: boolean,
     previousSibling?: Identifier
   ): Identifier | undefined => {
@@ -59,8 +58,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     const nextParentType = typeName
 
     let nextScopeId = scopeId
-    let nextTrackScopeId = trackScopeId
-    let nextMixerScopeId = mixerScopeId
+    let nextPendingScope = pendingScope
     let nextAssignmentHasEquals = assignmentHasEquals
     let accessChainTail: Identifier | undefined
 
@@ -82,23 +80,31 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
-      case 'TrackStatement': {
+      case 'TrackBlock': {
         const scope = addScope({ kind: 'track', range, parentId: scopeId })
         nextScopeId = scope.id
-        nextTrackScopeId = scope.id
         break
       }
 
-      case 'MixerStatement': {
-        const scope = addScope({ kind: 'mixer', range, parentId: scopeId })
-        nextScopeId = scope.id
-        nextMixerScopeId = scope.id
+      case 'MixerBlock': {
+        nextScopeId = addScope({ kind: 'mixer', range, parentId: scopeId }).id
         break
       }
 
       case 'BusStatement': {
-        const scope = addScope({ kind: 'bus', range, parentId: scopeId })
-        nextScopeId = scope.id
+        const block = cursor.node.getChild('BusBlock')
+        if (block != null) {
+          const blockRange = toSourceRange(document, block.from, block.to)
+          nextPendingScope = addScope({ kind: 'bus', range: blockRange, parentId: scopeId })
+        }
+        break
+      }
+
+      case 'BusBlock': {
+        if (pendingScope?.kind === 'bus') {
+          nextScopeId = pendingScope.id
+          nextPendingScope = undefined
+        }
         break
       }
 
@@ -119,24 +125,39 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'VariableDefinition': {
         const name = document.sliceString(from, to)
 
-        const binding = getDefinitionBinding({
-          parentType,
-          scopeId,
-          trackScopeId: nextTrackScopeId,
-          mixerScopeId: nextMixerScopeId,
-          assignmentHasEquals: nextAssignmentHasEquals
-        })
+        switch (parentType) {
+          case 'Assignment': {
+            if (assignmentHasEquals) {
+              addBinding({ kind: 'regular', scopeId, name, range })
+              addIdentifier({ kind: 'definition', scopeId, name, range })
+              break
+            }
+            // Invalid/incomplete syntax encountered.
+            // We still add an identifier as a best-effort approach to provide some level of functionality.
+            accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
+            break
+          }
 
-        if (binding == null) {
-          // Invalid/incomplete syntax encountered.
-          // We still add an identifier as a best-effort approach to provide some level of functionality.
-          accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
-          break
+          case 'PartStatement': {
+            addBinding({ kind: 'part', scopeId, name, range })
+            addIdentifier({ kind: 'definition', scopeId, name, range })
+            break
+          }
+
+          case 'BusStatement': {
+            if (pendingScope?.kind === 'bus') {
+              addBinding({ kind: 'bus', scopeId, name, range, declaredScopeId: pendingScope.id })
+              addIdentifier({ kind: 'definition', scopeId, name, range })
+            }
+            break
+          }
+
+          case 'EffectStatement': {
+            addBinding({ kind: 'effect', scopeId, name, range })
+            addIdentifier({ kind: 'definition', scopeId, name, range })
+            break
+          }
         }
-
-        addIdentifier({ kind: 'definition', scopeId, name, range })
-        addBinding({ ...binding, name, range })
-
         break
       }
 
@@ -180,8 +201,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           cursor,
           nextParentType,
           nextScopeId,
-          nextTrackScopeId,
-          nextMixerScopeId,
+          nextPendingScope,
           nextAssignmentHasEquals,
           childPreviousSibling
         )
@@ -202,7 +222,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     return accessChainTail
   }
 
-  walk(cursor, undefined, rootScopeId, undefined, undefined, false)
+  walk(cursor, undefined, rootScopeId, undefined, false)
 
   sortByOffset(scopes)
   sortByOffset(identifiers)
@@ -241,38 +261,6 @@ function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): Bi
 
 function importKey (moduleName: string, range: SourceRange): ImportId {
   return `${moduleName}:${range.offset}:${range.length}` as ImportId
-}
-
-interface DefinitionBindingContext {
-  readonly parentType: string | undefined
-  readonly scopeId: string
-  readonly trackScopeId: string | undefined
-  readonly mixerScopeId: string | undefined
-  readonly assignmentHasEquals: boolean
-}
-
-function getDefinitionBinding (context: DefinitionBindingContext): Omit<Binding, 'id' | 'name' | 'range'> | undefined {
-  switch (context.parentType) {
-    case 'Assignment':
-      return context.assignmentHasEquals
-        ? { kind: 'regular', scopeId: context.scopeId }
-        : undefined
-
-    case 'PartStatement':
-      return context.trackScopeId != null
-        ? { kind: 'part', scopeId: context.trackScopeId }
-        : undefined
-
-    case 'BusStatement':
-      return context.mixerScopeId != null
-        ? { kind: 'bus', scopeId: context.mixerScopeId }
-        : undefined
-
-    case 'EffectStatement':
-      return { kind: 'effect', scopeId: context.scopeId }
-  }
-
-  return undefined
 }
 
 function parseUseStatement (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> | undefined {

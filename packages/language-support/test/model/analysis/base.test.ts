@@ -55,15 +55,15 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'sample' },
         { kind: 'plain', scope: 'root', name: 'base_path' },
         { kind: 'definition', scope: 'root', name: 'tempo' },
-        { kind: 'property-name', scope: 'track', name: 'tempo' },
-        { kind: 'plain', scope: 'track', name: 'tempo' },
+        { kind: 'property-name', scope: 'root', name: 'tempo' },
+        { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'p' },
         { kind: 'plain', scope: 'track', name: 'loop' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'gain' },
-        { kind: 'definition', scope: 'bus', name: 'drums' },
+        { kind: 'definition', scope: 'mixer', name: 'drums' },
         { kind: 'definition', scope: 'bus', name: 'crush' },
         { kind: 'plain', scope: 'bus', name: 'fx' },
         { kind: 'plain', scope: 'bus', name: 'clip' },
@@ -228,24 +228,24 @@ describe('model/analysis/base.ts', () => {
     const rootRange = getRangeAt(source, 0, source.length)
     const rootScopeId = `root:${rootRange.offset}:${rootRange.length}`
 
-    const trackStart = source.indexOf('track')
+    const trackBlockStart = source.indexOf('{', source.indexOf('track'))
     const trackEnd = source.indexOf('} // end track') + '}'.length
-    const trackRange = getRangeAt(source, trackStart, trackEnd - trackStart)
+    const trackRange = getRangeAt(source, trackBlockStart, trackEnd - trackBlockStart)
     const trackScopeId = `track:${trackRange.offset}:${trackRange.length}`
 
-    const mixerStart = source.indexOf('mixer')
+    const mixerBlockStart = source.indexOf('{', source.indexOf('mixer'))
     const mixerEnd = source.indexOf('} // end mixer') + '}'.length
-    const mixerRange = getRangeAt(source, mixerStart, mixerEnd - mixerStart)
+    const mixerRange = getRangeAt(source, mixerBlockStart, mixerEnd - mixerBlockStart)
     const mixerScopeId = `mixer:${mixerRange.offset}:${mixerRange.length}`
 
-    const drumsBusStart = source.indexOf('bus drums')
-    const drumsBusEnd = source.indexOf('  }', drumsBusStart) + '  }'.length
-    const drumsBusRange = getRangeAt(source, drumsBusStart, drumsBusEnd - drumsBusStart)
+    const drumsBusBlockStart = source.indexOf('{', source.indexOf('bus drums'))
+    const drumsBusEnd = source.indexOf('  }', source.indexOf('bus drums')) + '  }'.length
+    const drumsBusRange = getRangeAt(source, drumsBusBlockStart, drumsBusEnd - drumsBusBlockStart)
     const drumsBusScopeId = `bus:${drumsBusRange.offset}:${drumsBusRange.length}`
 
-    const delayBusStart = source.indexOf('bus delay')
-    const delayBusEnd = source.indexOf('  }', delayBusStart) + '  }'.length
-    const delayBusRange = getRangeAt(source, delayBusStart, delayBusEnd - delayBusStart)
+    const delayBusBlockStart = source.indexOf('{', source.indexOf('bus delay'))
+    const delayBusEnd = source.indexOf('  }', source.indexOf('bus delay')) + '  }'.length
+    const delayBusRange = getRangeAt(source, delayBusBlockStart, delayBusEnd - delayBusBlockStart)
     const delayBusScopeId = `bus:${delayBusRange.offset}:${delayBusRange.length}`
 
     assert.deepStrictEqual(
@@ -260,14 +260,14 @@ describe('model/analysis/base.ts', () => {
     )
 
     assert.deepStrictEqual(
-      model.bindings.map(({ kind, name }) => ({ kind, name })),
+      model.bindings.map(({ kind, name, declaredScopeId }) => ({ kind, name, declaredScopeId })),
       [
-        { kind: 'use-alias', name: 'fx' },
-        { kind: 'regular', name: 'kick' },
-        { kind: 'regular', name: 'snare' },
-        { kind: 'part', name: 'intro' },
-        { kind: 'bus', name: 'drums' },
-        { kind: 'bus', name: 'delay' }
+        { kind: 'use-alias', name: 'fx', declaredScopeId: undefined },
+        { kind: 'regular', name: 'kick', declaredScopeId: undefined },
+        { kind: 'regular', name: 'snare', declaredScopeId: undefined },
+        { kind: 'part', name: 'intro', declaredScopeId: undefined },
+        { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId },
+        { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId }
       ]
     )
   })

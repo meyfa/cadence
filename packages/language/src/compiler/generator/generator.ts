@@ -123,12 +123,19 @@ function processAssignments (scope: MutableScope, assignments: readonly ast.Assi
 function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
   const { options } = scope.top
 
+  const properties = resolveArgumentList(scope, track.properties, trackSchema)
+
+  const tempo = properties.tempo != null
+    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
+    : numeric('bpm', options.tempo.default)
+
   const trackScope = createLocalScope(scope)
+  processAssignments(trackScope, track.children.filter((c) => c.type === 'Assignment'))
 
   const parts: Part[] = []
 
   let currentTime = numeric('beats', 0)
-  for (const partStatement of track.parts) {
+  for (const partStatement of track.children.filter((c) => c.type === 'PartStatement')) {
     const part = generatePart(trackScope, partStatement, currentTime)
     parts.push(part)
 
@@ -139,12 +146,6 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
 
     currentTime = numeric('beats', currentTime.value + part.length.value)
   }
-
-  const properties = resolveArgumentList(trackScope, track.properties, trackSchema)
-
-  const tempo = properties.tempo != null
-    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
-    : numeric('bpm', options.tempo.default)
 
   return { tempo, parts }
 }
@@ -193,12 +194,14 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
 
 function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   const mixerScope = createLocalScope(scope)
+  processAssignments(mixerScope, mixer?.children.filter((c) => c.type === 'Assignment') ?? [])
 
   const namespace = createNamespace()
   scope.top.namespaces.set(BUS_NAMESPACE, namespace)
 
-  const buses = mixer?.buses.map((bus) => generateBus(mixerScope, bus, namespace)) ?? []
-  const routings = mixer?.buses.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index])) ?? []
+  const busStatements = mixer?.children.filter((c) => c.type === 'BusStatement') ?? []
+  const buses = busStatements.map((bus) => generateBus(mixerScope, bus, namespace))
+  const routings = busStatements.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index]))
 
   // Implicit output routings for unrouted buses and instruments
   const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
