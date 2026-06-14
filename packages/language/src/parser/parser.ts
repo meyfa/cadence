@@ -580,7 +580,9 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
   ),
   combine3(
     expectLiteral('{'),
-    p.many(partStatement_),
+    p.many(
+      p.eitherOr(assignment_, partStatement_)
+    ),
     expectLiteral('}')
   ),
   (_track, callChain, [_lp, children, _rp]) => {
@@ -588,7 +590,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
 
     return ast.make('TrackStatement', combineSourceRanges(_track, _rp), {
       properties: args,
-      parts: children
+      children
     })
   }
 )
@@ -655,7 +657,9 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   ),
   combine3(
     expectLiteral('{'),
-    p.many(busStatement_),
+    p.many(
+      p.eitherOr(assignment_, busStatement_)
+    ),
     expectLiteral('}')
   ),
   (_mixer, callChain, [_lp, children, _rp]) => {
@@ -663,7 +667,7 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
 
     return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
       properties: args,
-      buses: children
+      children
     })
   }
 )

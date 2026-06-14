@@ -69,25 +69,6 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
 
   const busNameByScopeId = new Map<string, string>()
 
-  const busScopes = model.scopes.filter((scope) => scope.kind === 'bus')
-  const getBusScopeIdAt = (offset: number): string | undefined => {
-    let bestScopeId: string | undefined
-    let bestLength = Number.POSITIVE_INFINITY
-
-    for (const scope of busScopes) {
-      const start = scope.range.offset
-      const end = start + scope.range.length
-      if (offset < start || offset > end || scope.range.length >= bestLength) {
-        continue
-      }
-
-      bestScopeId = scope.id
-      bestLength = scope.range.length
-    }
-
-    return bestScopeId
-  }
-
   for (const binding of model.bindings) {
     switch (binding.kind) {
       case 'use-alias':
@@ -100,9 +81,8 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
         if (!buses.has(binding.name)) {
           buses.set(binding.name, binding)
 
-          const busScopeId = getBusScopeIdAt(binding.range.offset)
-          if (busScopeId != null) {
-            busNameByScopeId.set(busScopeId, binding.name)
+          if (binding.declaredScopeId != null) {
+            busNameByScopeId.set(binding.declaredScopeId, binding.name)
           }
         }
         break

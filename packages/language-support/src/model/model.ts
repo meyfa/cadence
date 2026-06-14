@@ -61,7 +61,12 @@ export type BindingId = Brand<string, 'language-support.BindingId'>
 export interface Binding {
   readonly id: BindingId
   readonly kind: BindingKind
+
+  /**
+   * The scope that contains this binding.
+   */
   readonly scopeId: string
+
   readonly name: string
   readonly range: SourceRange
 
@@ -69,6 +74,11 @@ export interface Binding {
    * For use-aliases, this is the module that is being imported.
    */
   readonly moduleName?: string
+
+  /**
+   * The scope declared by this binding, if applicable (e.g. for bus bindings).
+   */
+  readonly declaredScopeId?: string
 }
 
 export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus' | 'effect'

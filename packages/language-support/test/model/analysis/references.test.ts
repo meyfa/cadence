@@ -121,6 +121,45 @@ describe('model/analysis/references.ts', () => {
     assert.strictEqual(binding, undefined)
   })
 
+  it('resolves track parameters declared in the root scope', () => {
+    const source = [
+      'my_tempo = 128.bpm',
+      'track (my_tempo) {}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.lastIndexOf('my_tempo')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'my_tempo')
+  })
+
+  it('does not resolve track parameters to declarations inside the track scope', () => {
+    const source = [
+      'track (my_tempo) {',
+      '  my_tempo = 140.bpm',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('my_tempo')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const binding = model.resolutions.get(identifier.id)
+    assert.strictEqual(binding, undefined)
+  })
+
   it('does not resolve member access', () => {
     const source = [
       'use "effects" as fx',

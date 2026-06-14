@@ -132,6 +132,28 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should allow assignments in track scope to shadow top-level variables', () => {
+      const source = [
+        'foo = 42',
+        'track {',
+        '  foo = 100',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow assignments in mixer scope to shadow top-level variables', () => {
+      const source = [
+        'foo = 42',
+        'mixer {',
+        '  foo = 100',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept a pattern with interpolation', () => {
       const source = [
         'some_chord = [<D4 G4>]',
@@ -273,6 +295,24 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject variable reassignment in nested scopes', () => {
+      const source = [
+        'mixer {',
+        '  bar = 42',
+        '  bar = 100',
+        '}',
+        'track {',
+        '  foo = 42',
+        '  foo = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "bar" is already defined',
+        'Identifier "foo" is already defined'
+      ])
+    })
+
     it('should reject duplicate track blocks', () => {
       const source = [
         'track {}',
@@ -301,6 +341,50 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Duplicate part named "intro"'
+      ])
+    })
+
+    it('should reject conflicting part name and local variable name', () => {
+      const source = [
+        'track {',
+        '  before = 42',
+        '  part before (4.bars) {}',
+        '  part after (4.bars) {}',
+        '  after = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Part name "before" conflicts with existing identifier',
+        'Part name "after" conflicts with existing identifier'
+      ])
+    })
+
+    it('should reject variable usage from within the track scope', () => {
+      const source = [
+        'foo = bar',
+        'track (my_tempo) {',
+        '  my_tempo = 123.bpm',
+        '  bar = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "bar"',
+        'Unknown identifier "my_tempo"'
+      ])
+    })
+
+    it('should reject variable usage from within the mixer scope', () => {
+      const source = [
+        'foo = bar',
+        'mixer {',
+        '  bar = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "bar"'
       ])
     })
 
@@ -365,6 +449,22 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Duplicate bus named "foo"'
+      ])
+    })
+
+    it('should reject conflicting bus name and local variable name', () => {
+      const source = [
+        'mixer {',
+        '  before = 42',
+        '  bus before {}',
+        '  bus after {}',
+        '  after = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Bus name "before" conflicts with existing identifier',
+        'Bus name "after" conflicts with existing identifier'
       ])
     })
 

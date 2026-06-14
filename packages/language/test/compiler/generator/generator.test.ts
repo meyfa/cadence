@@ -67,6 +67,18 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.track.tempo, numeric('bpm', 180))
   })
 
+  it('should use tempo variable from outer scope', () => {
+    const source = [
+      'my_tempo = 90.bpm',
+      'track (tempo: my_tempo) {',
+      '  my_tempo = 150.bpm',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.tempo, numeric('bpm', 90))
+  })
+
   it('should support imported names', () => {
     const source = [
       'use "instruments" as *',
@@ -125,6 +137,44 @@ describe('compiler/generator/generator.ts', () => {
   it('should clamp negative part lengths to 0', () => {
     const result = generateSource('track { part intro (-4.bars) {} }')
     assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 0))
+  })
+
+  it('should support part lengths from variables', () => {
+    const source = [
+      'root_scope = 42.beats',
+      'shadowed = 100.beats',
+      'track {',
+      '  track_scope = root_scope + 1.beats',
+      '  shadowed = 200.beats',
+      '  part part0 (length: root_scope) {}',
+      '  part part1 (length: track_scope) {}',
+      '  part part2 (length: shadowed) {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 42))
+    assert.deepStrictEqual(result.track.parts[1].length, numeric('beats', 43))
+    assert.deepStrictEqual(result.track.parts[2].length, numeric('beats', 200))
+  })
+
+  it('should resolve variables in mixer scope', () => {
+    const source = [
+      'root_scope = -42.db',
+      'shadowed = -100.db',
+      'mixer {',
+      '  mixer_scope = root_scope + 1.db',
+      '  shadowed = -200.db',
+      '  bus bus0 (gain: root_scope) {}',
+      '  bus bus1 (gain: mixer_scope) {}',
+      '  bus bus2 (gain: shadowed) {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.mixer.buses[0].gain.initial, numeric('db', -42))
+    assert.deepStrictEqual(result.mixer.buses[1].gain.initial, numeric('db', -41))
+    assert.deepStrictEqual(result.mixer.buses[2].gain.initial, numeric('db', -200))
   })
 
   it('should generate automation points for a lin curve', () => {

@@ -580,7 +580,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'MixerStatement',
         properties: [],
-        buses: [
+        children: [
           {
             type: 'BusStatement',
             name: { type: 'Identifier', name: 'mybus' },
@@ -649,7 +649,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'TrackStatement',
         properties: [],
-        parts: [
+        children: [
           {
             type: 'PartStatement',
             name: undefined,
@@ -672,5 +672,44 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('mixer { bus {} }'))
     assert.strictEqual(result.complete, false)
     assert.strictEqual(result.error.message, 'Unexpected "{"; expected bus name')
+  })
+
+  it('should allow assignments in track and mixer bodies', () => {
+    const source = [
+      'track {',
+      '  foo = 42',
+      '}',
+      'mixer {',
+      '  bar = 43',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'TrackStatement',
+        properties: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'foo' },
+            value: { type: 'Number', value: 42 }
+          }
+        ]
+      },
+      {
+        type: 'MixerStatement',
+        properties: [],
+        children: [
+          {
+            type: 'Assignment',
+            key: { type: 'Identifier', name: 'bar' },
+            value: { type: 'Number', value: 43 }
+          }
+        ]
+      }
+    ])
   })
 })
