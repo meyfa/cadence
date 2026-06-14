@@ -87,7 +87,8 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'MixerBlock': {
-        nextScopeId = addScope({ kind: 'mixer', range, parentId: scopeId }).id
+        const scope = addScope({ kind: 'mixer', range, parentId: scopeId })
+        nextScopeId = scope.id
         break
       }
 
@@ -105,6 +106,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           nextScopeId = pendingScope.id
           nextPendingScope = undefined
         }
+        break
+      }
+
+      case 'InstrumentBlock': {
+        const scope = addScope({ kind: 'instrument', range, parentId: scopeId })
+        nextScopeId = scope.id
         break
       }
 

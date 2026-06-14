@@ -490,4 +490,20 @@ describe('compiler/generator/generator.ts', () => {
       wet: numeric('db', 0)
     })
   })
+
+  it('should generate silent instruments', () => {
+    const source = [
+      'my_instrument = instrument {',
+      '  foo = -6.db',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.instruments.size, 1)
+
+    const [instrument] = result.instruments.values()
+    assert.strictEqual(instrument.source.type, 'oscillator')
+    assert.strictEqual(instrument.source.shape, 'sine')
+    assert.deepStrictEqual(instrument.gain.initial, numeric('db', -Infinity))
+  })
 })

@@ -321,6 +321,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Curve':
       return generateCurve(scope, expression)
 
+    case 'Instrument':
+      return generateInstrument(scope, expression)
+
     case 'Identifier':
       return resolveIdentifier(scope, expression)
 
@@ -437,6 +440,36 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
   }
 
   return CurveFacet.type().of(createCurve(generatedSegments))
+}
+
+function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
+  const instrumentScope = createLocalScope(scope)
+
+  for (const child of expression.children) {
+    assert(!instrumentScope.resolutions.has(child.key.name))
+    instrumentScope.resolutions.set(child.key.name, resolve(instrumentScope, child.value))
+  }
+
+  // TODO: Change -Infinity to 0 and expose gain on the record,
+  //       once instrument definitions are fully supported.
+  const gainValue = numeric('db', -Infinity)
+  const gainParameter = scope.top.allocateParameter(gainValue)
+
+  const instrument = scope.top.allocateInstrument({
+    gain: gainParameter,
+    source: {
+      type: 'oscillator',
+      shape: 'sine'
+    },
+    envelope: {
+      attack: numeric('s', 0),
+      decay: numeric('s', 0),
+      sustain: numeric(undefined, 1),
+      release: numeric('s', 0)
+    }
+  })
+
+  return InstrumentFacet.type().of(instrument)
 }
 
 function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {

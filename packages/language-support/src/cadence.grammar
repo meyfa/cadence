@@ -111,7 +111,7 @@ argumentList {
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | Curve | Call | VariableName | BusNamespace
+  "(" expression ")" | Number | String | Pattern | Curve | Instrument | Call | VariableName | BusNamespace
 }
 
 Call {
@@ -211,4 +211,11 @@ EffectStatement {
   kw<"effect">
   (VariableDefinition "=")?
   expression
+}
+
+Instrument {
+  kw<"instrument">
+  InstrumentBlock[group=Block] {
+    "{" (Assignment)* "}"
+  }
 }

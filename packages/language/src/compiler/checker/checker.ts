@@ -152,20 +152,22 @@ function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMa
 }
 
 function checkAssignments (scope: MutableScope, assignments: readonly ast.Assignment[]): readonly CompileError[] {
+  return assignments.flatMap((assignment) => checkAssignment(scope, assignment))
+}
+
+function checkAssignment (scope: MutableScope, assignment: ast.Assignment): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  for (const assignment of assignments) {
-    const duplicate = scope.resolutions.has(assignment.key.name)
-    if (duplicate) {
-      errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.range))
-    }
+  const duplicate = scope.resolutions.has(assignment.key.name)
+  if (duplicate) {
+    errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.range))
+  }
 
-    const expressionCheck = checkExpression(scope, assignment.value)
-    errors.push(...expressionCheck.errors)
+  const expressionCheck = checkExpression(scope, assignment.value)
+  errors.push(...expressionCheck.errors)
 
-    if (!duplicate && expressionCheck.result != null) {
-      scope.resolutions.set(assignment.key.name, expressionCheck.result)
-    }
+  if (!duplicate && expressionCheck.result != null) {
+    scope.resolutions.set(assignment.key.name, expressionCheck.result)
   }
 
   return errors
@@ -436,6 +438,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Curve':
       return checkCurve(scope, expression)
 
+    case 'Instrument':
+      return checkInstrument(scope, expression)
+
     case 'Identifier':
       return checkIdentifier(scope, expression)
 
@@ -614,6 +619,17 @@ function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious
   }
 
   return { errors, result: firstUnit }
+}
+
+function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<FacetType> {
+  const instrumentScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  for (const child of expression.children) {
+    errors.push(...checkAssignment(instrumentScope, child))
+  }
+
+  return { errors, result: InstrumentFacet.type() }
 }
 
 function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<FacetType> {

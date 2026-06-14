@@ -712,4 +712,40 @@ describe('parser/parser.ts', () => {
       }
     ])
   })
+
+  it('should parse instrument expressions', () => {
+    const source = [
+      'my_synth = instrument {',
+      '  foo = -6.db',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Assignment',
+        key: { type: 'Identifier', name: 'my_synth' },
+        value: {
+          type: 'Instrument',
+          children: [
+            {
+              type: 'Assignment',
+              key: { type: 'Identifier', name: 'foo' },
+              value: {
+                type: 'UnaryExpression',
+                operator: '-',
+                argument: {
+                  type: 'PropertyAccess',
+                  object: { type: 'Number', value: 6 },
+                  property: { type: 'Identifier', name: 'db' }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ])
+  })
 })
