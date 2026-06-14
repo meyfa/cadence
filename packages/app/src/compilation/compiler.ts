@@ -1,6 +1,6 @@
 import { getProjectFileContent, type ProjectSource } from '@editor'
 import type { Program } from '@core'
-import type { GenerateOptions } from '@language'
+import type { CheckedProgram, GenerateOptions } from '@language'
 import { check, CompoundError, generate, lex, parse, RangeError, Result } from '@language'
 import { useMemo } from 'react'
 import { TRACK_FILE_PATH } from '../persistence/constants.js'
@@ -14,28 +14,32 @@ class CompileHookError extends RangeError {
   }
 }
 
-function createSafeFunction<TArgs extends unknown[], TValue, TError extends UnwrappableError> (
-  fn: (...args: TArgs) => Result<TValue, TError>
+function createSafeFunction<TArgs extends unknown[], TValue> (
+  fn: (...args: TArgs) => Result<TValue, UnwrappableError>
 ): (...args: TArgs) => Result<TValue, UnwrappableError> {
   return (...args) => {
     try {
       return fn(...args)
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Unexpected error in compile hook:', err)
-
-      if (err instanceof RangeError || err instanceof CompoundError) {
-        return { complete: false, error: err }
-      }
-
-      const error = new CompileHookError('Unexpected error during compilation')
-      if (err instanceof Error) {
-        error.cause = err
-      }
-
-      return { complete: false, error }
+    } catch (err: unknown) {
+      return { complete: false, error: handleException(err) }
     }
   }
+}
+
+function handleException (err: unknown): UnwrappableError {
+  // eslint-disable-next-line no-console
+  console.error('Unexpected error in compile hook:', err)
+
+  if (err instanceof RangeError || err instanceof CompoundError) {
+    return err
+  }
+
+  const error = new CompileHookError('Unexpected error during compilation')
+  if (err instanceof Error) {
+    error.cause = err
+  }
+
+  return error
 }
 
 function unwrapError (error: UnwrappableError): readonly RangeError[] {
@@ -49,6 +53,14 @@ function unwrapError (error: UnwrappableError): readonly RangeError[] {
 const safeLex = createSafeFunction(lex)
 const safeParse = createSafeFunction(parse)
 const safeCheck = createSafeFunction(check)
+
+function safeGenerate (program: CheckedProgram, options: GenerateOptions): Result<Program, UnwrappableError> {
+  try {
+    return { complete: true, value: generate(program, options) }
+  } catch (err: unknown) {
+    return { complete: false, error: handleException(err) }
+  }
+}
 
 export interface CompileResult {
   readonly program?: Program
@@ -74,8 +86,13 @@ export function compileSource (source: ProjectSource, compileOptions: GenerateOp
     return { errors: unwrapError(checkResult.error) }
   }
 
+  const generateResult = safeGenerate(checkResult.value, compileOptions)
+  if (!generateResult.complete) {
+    return { errors: unwrapError(generateResult.error) }
+  }
+
   return {
-    program: generate(checkResult.value, compileOptions),
+    program: generateResult.value,
     errors: []
   }
 }
