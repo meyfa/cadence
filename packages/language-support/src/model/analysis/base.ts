@@ -115,6 +115,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
+      case 'VoiceStatement': {
+        const scope = addScope({ kind: 'voice', range, parentId: scopeId })
+        nextScopeId = scope.id
+        break
+      }
+
       case 'Assignment': {
         nextAssignmentHasEquals = false
 
@@ -161,6 +167,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
           case 'EffectStatement': {
             addBinding({ kind: 'effect', scopeId, name, range })
+            addIdentifier({ kind: 'definition', scopeId, name, range })
+            break
+          }
+
+          case 'VoiceStatement': {
+            addBinding({ kind: 'regular', scopeId, name, range })
             addIdentifier({ kind: 'definition', scopeId, name, range })
             break
           }

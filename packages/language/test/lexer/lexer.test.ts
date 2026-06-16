@@ -327,4 +327,35 @@ describe('lexer/lexer.ts', () => {
     const result = lex('~ [hold(0.db)]')
     assert.strictEqual(result.complete, false)
   })
+
+  it('should lex instrument definitions', () => {
+    const source = [
+      'my_synth = instrument {',
+      '  foo = -6.db',
+      '  voice note {}',
+      '}'
+    ].join('\n')
+
+    const result = lex(source)
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'word', text: 'my_synth' },
+        { name: '=', text: '=' },
+        { name: 'word', text: 'instrument' },
+        { name: '{', text: '{' },
+        { name: 'word', text: 'foo' },
+        { name: '=', text: '=' },
+        { name: '-', text: '-' },
+        { name: 'number', text: '6' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'db' },
+        { name: 'word', text: 'voice' },
+        { name: 'word', text: 'note' },
+        { name: '{', text: '{' },
+        { name: '}', text: '}' },
+        { name: '}', text: '}' }
+      ]
+    })
+  })
 })

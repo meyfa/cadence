@@ -24,6 +24,10 @@ describe('model/analysis/base.ts', () => {
       'kick = sample("{base_path}/kick.wav")',
       'tempo = 120.bpm',
       '',
+      'synth = instrument {',
+      '  voice note {}',
+      '}',
+      '',
       'track (tempo: tempo) {',
       '  part intro (4.bars) {',
       '    kick << [x---].loop()',
@@ -55,6 +59,8 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'sample' },
         { kind: 'plain', scope: 'root', name: 'base_path' },
         { kind: 'definition', scope: 'root', name: 'tempo' },
+        { kind: 'definition', scope: 'root', name: 'synth' },
+        { kind: 'definition', scope: 'voice', name: 'note' },
         { kind: 'property-name', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
@@ -208,7 +214,10 @@ describe('model/analysis/base.ts', () => {
       'my_instrument = instrument {',
       '  foo = 42',
       '  bar = foo * 2',
-      '}',
+      '  voice note {',
+      '    baz = bar + 1',
+      '  } // end voice',
+      '} // end instrument',
       '',
       'track (120.bpm) {',
       '  part intro (4.bars) {',
@@ -233,9 +242,14 @@ describe('model/analysis/base.ts', () => {
     const rootScopeId = `root:${rootRange.offset}:${rootRange.length}`
 
     const instrumentBlockStart = source.indexOf('{', source.indexOf('my_instrument'))
-    const instrumentBlockEnd = source.indexOf('}', instrumentBlockStart) + 1
+    const instrumentBlockEnd = source.indexOf('} // end instrument') + '}'.length
     const instrumentRange = getRangeAt(source, instrumentBlockStart, instrumentBlockEnd - instrumentBlockStart)
     const instrumentScopeId = `instrument:${instrumentRange.offset}:${instrumentRange.length}`
+
+    const voiceBlockStart = source.indexOf('voice note')
+    const voiceBlockEnd = source.indexOf('} // end voice') + '}'.length
+    const voiceRange = getRangeAt(source, voiceBlockStart, voiceBlockEnd - voiceBlockStart)
+    const voiceScopeId = `voice:${voiceRange.offset}:${voiceRange.length}`
 
     const trackBlockStart = source.indexOf('{', source.indexOf('track'))
     const trackEnd = source.indexOf('} // end track') + '}'.length
@@ -262,6 +276,7 @@ describe('model/analysis/base.ts', () => {
       [
         { id: rootScopeId, kind: 'root', parentId: undefined },
         { id: instrumentScopeId, kind: 'instrument', parentId: rootScopeId },
+        { id: voiceScopeId, kind: 'voice', parentId: instrumentScopeId },
         { id: trackScopeId, kind: 'track', parentId: rootScopeId },
         { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId },
         { id: drumsBusScopeId, kind: 'bus', parentId: mixerScopeId },
@@ -278,6 +293,8 @@ describe('model/analysis/base.ts', () => {
         { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined },
         { kind: 'regular', name: 'foo', declaredScopeId: undefined },
         { kind: 'regular', name: 'bar', declaredScopeId: undefined },
+        { kind: 'regular', name: 'note', declaredScopeId: undefined },
+        { kind: 'regular', name: 'baz', declaredScopeId: undefined },
         { kind: 'part', name: 'intro', declaredScopeId: undefined },
         { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId },
         { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId }
@@ -288,6 +305,14 @@ describe('model/analysis/base.ts', () => {
   it('includes bindings for definitions', () => {
     const source = [
       'kick = sample("/samples/kick.wav")',
+      '',
+      'synth = instrument {',
+      '  foo = 42',
+      '  voice note {',
+      '    bar = 440.hz',
+      '  }',
+      '}',
+      '',
       'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    kick << [x---]',
@@ -311,6 +336,26 @@ describe('model/analysis/base.ts', () => {
           kind: 'regular',
           name: 'kick',
           range: getRangeAt(source, source.indexOf('kick ='), 'kick'.length)
+        },
+        {
+          kind: 'regular',
+          name: 'synth',
+          range: getRangeAt(source, source.indexOf('synth ='), 'synth'.length)
+        },
+        {
+          kind: 'regular',
+          name: 'foo',
+          range: getRangeAt(source, source.indexOf('foo ='), 'foo'.length)
+        },
+        {
+          kind: 'regular',
+          name: 'note',
+          range: getRangeAt(source, source.indexOf('note'), 'note'.length)
+        },
+        {
+          kind: 'regular',
+          name: 'bar',
+          range: getRangeAt(source, source.indexOf('bar ='), 'bar'.length)
         },
         {
           kind: 'part',

@@ -342,4 +342,44 @@ describe('model/analysis/references.ts', () => {
     const resolution = model.resolutions.get(identifier.id)
     assert.strictEqual(resolution, undefined)
   })
+
+  it('resolves reference to voice note binding', () => {
+    const source = [
+      'my_instrument = instrument {',
+      '  voice my_note {',
+      '    foo = my_note',
+      '  }',
+      '  bar = my_note // invalid reference',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('voice my_note') + 'voice '.length
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'my_note')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, position, 'my_note'.length))
+
+    const assignmentPosition = source.indexOf('foo = my_note') + 'foo = '.length
+    const assignmentIdentifier = model.identifiers.find((identifier) => identifier.range.offset === assignmentPosition)
+    assert.ok(assignmentIdentifier != null)
+
+    const assignmentResolution = model.resolutions.get(assignmentIdentifier.id)
+    assert.deepStrictEqual(assignmentResolution, resolution)
+
+    const invalidReferencePosition = source.indexOf('bar = my_note') + 'bar = '.length
+    const invalidReferenceIdentifier = model.identifiers.find((identifier) => identifier.range.offset === invalidReferencePosition)
+    assert.ok(invalidReferenceIdentifier != null)
+
+    const invalidReferenceResolution = model.resolutions.get(invalidReferenceIdentifier.id)
+    assert.strictEqual(invalidReferenceResolution, undefined)
+  })
 })

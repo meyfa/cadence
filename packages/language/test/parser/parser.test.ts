@@ -717,6 +717,10 @@ describe('parser/parser.ts', () => {
     const source = [
       'my_synth = instrument {',
       '  foo = -6.db',
+      '  voice {',
+      '    bar = 440.hz',
+      '  }',
+      '  voice note {}',
       '}'
     ].join('\n')
 
@@ -742,6 +746,30 @@ describe('parser/parser.ts', () => {
                   property: { type: 'Identifier', name: 'db' }
                 }
               }
+            },
+            {
+              type: 'VoiceStatement',
+              bindings: {
+                note: undefined
+              },
+              children: [
+                {
+                  type: 'Assignment',
+                  key: { type: 'Identifier', name: 'bar' },
+                  value: {
+                    type: 'PropertyAccess',
+                    object: { type: 'Number', value: 440 },
+                    property: { type: 'Identifier', name: 'hz' }
+                  }
+                }
+              ]
+            },
+            {
+              type: 'VoiceStatement',
+              bindings: {
+                note: { type: 'Identifier', name: 'note' }
+              },
+              children: []
             }
           ]
         }

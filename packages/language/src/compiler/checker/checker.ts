@@ -625,11 +625,31 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   const instrumentScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  for (const child of expression.children) {
-    errors.push(...checkAssignment(instrumentScope, child))
+  const assignments = expression.children.filter((c) => c.type === 'Assignment')
+  const voices = expression.children.filter((c) => c.type === 'VoiceStatement')
+
+  errors.push(...checkAssignments(instrumentScope, assignments))
+
+  for (const voice of voices) {
+    errors.push(...checkVoice(instrumentScope, voice))
   }
 
   return { errors, result: InstrumentFacet.type() }
+}
+
+function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileError[] {
+  const voiceScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  if (voice.bindings.note != null) {
+    // TODO: Add note parameters
+    const noteType = RecordFacet.type()
+    voiceScope.resolutions.set(voice.bindings.note.name, noteType)
+  }
+
+  errors.push(...checkAssignments(voiceScope, voice.children))
+
+  return errors
 }
 
 function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<FacetType> {
