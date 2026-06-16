@@ -443,11 +443,21 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 }
 
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
-  const instrumentScope = createLocalScope(scope)
+  const assignments = expression.children.filter((c) => c.type === 'Assignment')
+  const voices = expression.children.filter((c) => c.type === 'VoiceStatement')
 
-  for (const child of expression.children) {
-    assert(!instrumentScope.resolutions.has(child.key.name))
-    instrumentScope.resolutions.set(child.key.name, resolve(instrumentScope, child.value))
+  const instrumentScope = createLocalScope(scope)
+  processAssignments(instrumentScope, assignments)
+
+  for (const voice of voices) {
+    const voiceScope = createLocalScope(instrumentScope)
+
+    if (voice.bindings.note != null) {
+      // TODO: Add note parameters
+      voiceScope.resolutions.set(voice.bindings.note.name, RecordFacet.type().of({}))
+    }
+
+    processAssignments(voiceScope, voice.children)
   }
 
   // TODO: Change -Infinity to 0 and expose gain on the record,

@@ -250,6 +250,13 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'my_instrument = instrument {',
         '  foo = -6.db',
+        '  voice {',
+        '    bar = 440.hz',
+        '  }',
+        '  voice note {}',
+        '  voice note {',
+        '    baz = note',
+        '  }',
         '}'
       ].join('\n')
 
@@ -608,6 +615,50 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "foo" is already defined'
+      ])
+    })
+
+    it('should report errors in voice statements', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice {',
+        '    bar = 440.hz',
+        '    bar = 880.hz',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "bar" is already defined'
+      ])
+    })
+
+    it('should reject accessing note from another voice', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice note {}',
+        '  voice {',
+        '    baz = note',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "note"'
+      ])
+    })
+
+    it('should reject reassignment of the note binding', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice note {',
+        '    note = 440.hz',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "note" is already defined'
       ])
     })
   })

@@ -495,6 +495,12 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'my_instrument = instrument {',
       '  foo = -6.db',
+      '  voice {',
+      '    bar = 440.hz',
+      '  }',
+      '  voice note {',
+      '    baz = note',
+      '  }',
       '}'
     ].join('\n')
 

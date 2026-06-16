@@ -667,11 +667,31 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   }
 )
 
+const voiceStatement_: p.Parser<Token, unknown, ast.VoiceStatement> = p.abc(
+  keyword('voice'),
+  p.option(identifier_, undefined),
+  combine3(
+    literal('{'),
+    p.many(assignment_),
+    expectLiteral('}')
+  ),
+  (_voice, note, [_lp, children, _rp]) => {
+    return ast.make('VoiceStatement', combineSourceRanges(_voice, _rp), {
+      children,
+      bindings: {
+        note
+      }
+    })
+  }
+)
+
 const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
   keyword('instrument'),
   combine3(
     expectLiteral('{'),
-    p.many(assignment_),
+    p.many(
+      p.eitherOr(assignment_, voiceStatement_)
+    ),
     expectLiteral('}')
   ),
   (_instrument, [_lp, children, _rp]) => {

@@ -216,6 +216,14 @@ EffectStatement {
 Instrument {
   kw<"instrument">
   InstrumentBlock[group=Block] {
+    "{" (Assignment | VoiceStatement)* "}"
+  }
+}
+
+VoiceStatement {
+  kw<"voice">
+  VariableDefinition?
+  VoiceBlock[group=Block] {
     "{" (Assignment)* "}"
   }
 }
