@@ -35,6 +35,20 @@ describe('compiler/checker/checker.ts', () => {
       assertValid('')
     })
 
+    it('should accept number literals with valid units', () => {
+      const source = [
+        'foo1 = 120.bpm',
+        'foo2 = -6.db',
+        'foo3 = 440.hz',
+        'foo4 = 2.s',
+        'foo5 = 3.beats',
+        'foo6 = 250.ms',
+        'foo7 = 2.bars'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept use statements without alias', () => {
       const source = [
         'use "instruments" as *',
@@ -265,6 +279,12 @@ describe('compiler/checker/checker.ts', () => {
   })
 
   describe('invalid', () => {
+    it('should reject number literals with invalid units', () => {
+      assertErrorMessages('foo = 120.unknownunit', [
+        'Unknown unit "unknownunit"'
+      ])
+    })
+
     it('should reject imports of unknown libraries', () => {
       assertErrorMessages('use "unknownlib" as *', [
         'Unknown module "unknownlib"'
