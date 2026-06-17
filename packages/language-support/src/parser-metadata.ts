@@ -32,7 +32,7 @@ export const cadenceParserConfig: ParserConfig = {
       VariableName: t.variableName,
 
       PropertyName: t.definition(t.propertyName),
-      MemberAccess: t.propertyName,
+      Member: t.propertyName,
 
       Callee: t.function(t.name)
     }),

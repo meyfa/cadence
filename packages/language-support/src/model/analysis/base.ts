@@ -188,7 +188,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'VariableName':
       case 'Callee':
-      case 'MemberAccess':
+      case 'Member':
       case 'BusNamespace': {
         const name = document.sliceString(from, to)
         accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
@@ -261,7 +261,7 @@ function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
   return type === 'AccessOrCall' ||
     type === 'Callee' ||
     type === 'Call' ||
-    type === 'MemberAccess' ||
+    type === 'Member' ||
     type === 'VariableName' ||
     type === 'BusNamespace'
 }
