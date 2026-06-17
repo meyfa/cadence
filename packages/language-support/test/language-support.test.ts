@@ -138,4 +138,29 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, '<<', source.indexOf('<<'), 'operator')
     assertHighlightAt(spans, source, 'my_pattern', source.indexOf('my_pattern'), 'variable')
   })
+
+  it('higlights units only when used as members', () => {
+    const source = [
+      'bpm = 120',
+      'bars = 4',
+      'part_length = 4.bars',
+      'tempo = 120.bpm',
+      'gain = 0.5.db',
+      'delay = 250.ms'
+    ].join('\n')
+
+    const spans = getHighlightSpans(source)
+
+    assertHighlightAt(spans, source, 'bpm', source.indexOf('bpm ='), 'definition-variable')
+    assertHighlightAt(spans, source, 'bars', source.indexOf('bars ='), 'definition-variable')
+    assertHighlightAt(spans, source, 'part_length', source.indexOf('part_length ='), 'definition-variable')
+    assertHighlightAt(spans, source, 'tempo', source.indexOf('tempo ='), 'definition-variable')
+    assertHighlightAt(spans, source, 'gain', source.indexOf('gain ='), 'definition-variable')
+    assertHighlightAt(spans, source, 'delay', source.indexOf('delay ='), 'definition-variable')
+
+    assertHighlightAt(spans, source, 'bars', source.indexOf('4.bars') + '4.'.length, 'number')
+    assertHighlightAt(spans, source, 'bpm', source.indexOf('120.bpm') + '120.'.length, 'number')
+    assertHighlightAt(spans, source, 'db', source.indexOf('0.5.db') + '0.5.'.length, 'number')
+    assertHighlightAt(spans, source, 'ms', source.indexOf('250.ms') + '250.'.length, 'number')
+  })
 })

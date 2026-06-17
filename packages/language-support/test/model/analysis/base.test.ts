@@ -59,19 +59,23 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'sample' },
         { kind: 'plain', scope: 'root', name: 'base_path' },
         { kind: 'definition', scope: 'root', name: 'tempo' },
+        { kind: 'plain', scope: 'root', name: 'bpm' },
         { kind: 'definition', scope: 'root', name: 'synth' },
         { kind: 'definition', scope: 'voice', name: 'note' },
         { kind: 'property-name', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
+        { kind: 'plain', scope: 'track', name: 'bars' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'loop' },
         { kind: 'plain', scope: 'track', name: 'kick' },
         { kind: 'plain', scope: 'track', name: 'gain' },
+        { kind: 'plain', scope: 'track', name: 'db' },
         { kind: 'definition', scope: 'mixer', name: 'drums' },
         { kind: 'definition', scope: 'bus', name: 'crush' },
         { kind: 'plain', scope: 'bus', name: 'fx' },
         { kind: 'plain', scope: 'bus', name: 'clip' },
+        { kind: 'plain', scope: 'bus', name: 'db' },
         { kind: 'plain', scope: 'bus', name: 'kick' },
         { kind: 'plain', scope: 'bus', name: 'snare' }
       ]
@@ -129,7 +133,8 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        { kind: 'plain', name: 'delay' }
+        { kind: 'plain', name: 'delay' },
+        { kind: 'plain', name: 'beats' }
       ]
     )
   })

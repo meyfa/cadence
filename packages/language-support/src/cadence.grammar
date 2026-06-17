@@ -36,16 +36,16 @@
 @detectDelim
 
 kw<term> { @specialize[@name=keyword]<word, term> }
-unit<term> { @specialize[@name=unit]<word, term> }
+unit<term> { @extend[@name=unit]<word, term> }
 
-Unit {
+Unit[@dynamicPrecedence=1] {
   unit<"bpm"> |
-  unit<"bars"> |
-  unit<"beats"> |
+  unit<"db"> |
+  unit<"hz"> |
   unit<"s"> |
   unit<"ms"> |
-  unit<"hz"> |
-  unit<"db">
+  unit<"bars"> |
+  unit<"beats">
 }
 
 @precedence {
@@ -122,9 +122,8 @@ Call {
 AccessOrCall {
   primary
   (
-    "." Unit |
     "." Call |
-    "." MemberAccess { word }
+    "." Member { Unit | word }
   )*
 }
 
