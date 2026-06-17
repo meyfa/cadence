@@ -44,7 +44,9 @@ Unit[@dynamicPrecedence=1] {
   unit<"hz"> |
   unit<"s"> |
   unit<"ms"> |
+  unit<"bar"> |
   unit<"bars"> |
+  unit<"beat"> |
   unit<"beats">
 }
 

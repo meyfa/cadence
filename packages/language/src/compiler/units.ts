@@ -6,7 +6,18 @@ interface Constants {
   readonly beatsPerBar: number
 }
 
-export const SyntaxUnits = ['bpm', 'bars', 'beats', 's', 'ms', 'hz', 'db'] as const
+export const SyntaxUnits = [
+  'bpm',
+  'db',
+  'hz',
+  's',
+  'ms',
+  'beat',
+  'beats',
+  'bar',
+  'bars'
+] as const
+
 export type SyntaxUnit = typeof SyntaxUnits[number]
 
 export function isSyntaxUnit (value: string): value is SyntaxUnit {
@@ -20,10 +31,13 @@ export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefine
     case 'db':
     case 'hz':
     case 's':
-    case 'beats':
       return Numbers.of({ unit, value })
     case 'ms':
       return Numbers.of({ unit: 's', value: value / 1000 })
+    case 'beat':
+    case 'beats':
+      return Numbers.of({ unit: 'beats', value })
+    case 'bar':
     case 'bars':
       return Numbers.of({ unit: 'beats', value: value * constants.beatsPerBar })
   }
@@ -39,10 +53,13 @@ export function toBaseUnit (unit: SyntaxUnit | undefined): Unit {
     case 'db':
     case 'hz':
     case 's':
-    case 'beats':
       return unit
     case 'ms':
       return 's'
+    case 'beat':
+    case 'beats':
+      return 'beats'
+    case 'bar':
     case 'bars':
       return 'beats'
   }

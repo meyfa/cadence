@@ -158,6 +158,23 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.track.parts[2].length, numeric('beats', 200))
   })
 
+  it('should support units: beat, beats, bar, bars', () => {
+    const source = [
+      'track {',
+      '  part part0 (length: 1.beat) {}',
+      '  part part1 (length: 2.beats) {}',
+      '  part part2 (length: 1.bar) {}',
+      '  part part3 (length: 2.bars) {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 1))
+    assert.deepStrictEqual(result.track.parts[1].length, numeric('beats', 2))
+    assert.deepStrictEqual(result.track.parts[2].length, numeric('beats', 4))
+    assert.deepStrictEqual(result.track.parts[3].length, numeric('beats', 8))
+  })
+
   it('should resolve variables in mixer scope', () => {
     const source = [
       'root_scope = -42.db',
