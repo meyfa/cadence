@@ -60,7 +60,7 @@
     "@lezer/highlight": "1.2.3",
     "@lezer/lr": "1.4.10",
     "@mui/icons-material": "9.1.1",
-    "@mui/material": "9.1.1",
+    "@mui/material": "9.1.2",
     "clsx": "2.1.1",
     "codemirror": "6.0.2",
     "react": "19.2.3",
