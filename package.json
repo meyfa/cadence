@@ -63,7 +63,7 @@
     "@mui/material": "9.1.1",
     "clsx": "2.1.1",
     "codemirror": "6.0.2",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   }
 }
