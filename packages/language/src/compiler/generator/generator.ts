@@ -158,39 +158,49 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
   const endTime = numeric('beats', startTime.value + length.value)
 
-  const routings = part.routings.map((routing): InstrumentRouting => {
-    const source = PatternFacet.get(resolve(scope, routing.source))
-    const instrument = InstrumentFacet.get(resolve(scope, routing.destination))
+  const routings: InstrumentRouting[] = []
 
-    return {
-      source: {
-        type: 'pattern',
-        value: source
-      },
+  for (const child of part.children) {
+    switch (child.type) {
+      case 'Routing':
+        routings.push({
+          source: {
+            type: 'pattern',
+            value: PatternFacet.get(resolve(scope, child.source))
+          },
 
-      destination: {
-        type: 'instrument',
-        id: instrument.id
-      }
+          destination: {
+            type: 'instrument',
+            id: InstrumentFacet.get(resolve(scope, child.destination)).id
+          }
+        })
+        break
+
+      case 'AutomateStatement':
+        generateAutomation(scope, child, startTime, endTime)
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
     }
-  })
-
-  for (const automation of part.automations) {
-    const target = ParameterFacet.get(resolve(scope, automation.target))
-    const curve = CurveFacet.get(resolve(scope, automation.curve))
-
-    const rendered = renderCurvePoints(curve, startTime, endTime)
-    const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
-
-    const points = [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
-
-    scope.top.automations.set(target.id, {
-      parameterId: target.id,
-      points
-    })
   }
 
   return { name, length, routings }
+}
+
+function generateAutomation (scope: Scope, statement: ast.AutomateStatement, startTime: Numeric<'beats'>, endTime: Numeric<'beats'>): void {
+  const target = ParameterFacet.get(resolve(scope, statement.target))
+  const curve = CurveFacet.get(resolve(scope, statement.curve))
+
+  const rendered = renderCurvePoints(curve, startTime, endTime)
+  const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
+
+  const points = [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
+
+  scope.top.automations.set(target.id, {
+    parameterId: target.id,
+    points
+  })
 }
 
 function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {

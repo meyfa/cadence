@@ -642,9 +642,17 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should allow unnamed parts', () => {
-    const result = parse(lexSource('track { part (4.bars) {} }'))
-    assert.strictEqual(result.complete, true)
+  it('should allow named and unnamed parts', () => {
+    const source = [
+      'track {',
+      '  part (4.bars) {}',
+      '  part my_part (2.bars) {}',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
         type: 'TrackStatement',
@@ -660,8 +668,19 @@ describe('parser/parser.ts', () => {
                 property: { type: 'Identifier', name: 'bars' }
               }
             ],
-            routings: [],
-            automations: []
+            children: []
+          },
+          {
+            type: 'PartStatement',
+            name: { type: 'Identifier', name: 'my_part' },
+            properties: [
+              {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 2 },
+                property: { type: 'Identifier', name: 'bars' }
+              }
+            ],
+            children: []
           }
         ]
       }

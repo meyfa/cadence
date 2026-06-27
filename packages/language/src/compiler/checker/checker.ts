@@ -225,12 +225,19 @@ function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileErro
 
   errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
 
-  for (const routing of part.routings) {
-    errors.push(...checkInstrumentRouting(scope, routing))
-  }
+  for (const child of part.children) {
+    switch (child.type) {
+      case 'Routing':
+        errors.push(...checkInstrumentRouting(scope, child))
+        break
 
-  for (const automation of part.automations) {
-    errors.push(...checkAutomation(scope, automation))
+      case 'AutomateStatement':
+        errors.push(...checkAutomation(scope, child))
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
+    }
   }
 
   return errors
