@@ -188,7 +188,7 @@ PartStatement {
   VariableDefinition?
   ("(" argumentList? ")")?
   PartBlock[group=Block] {
-    "{" (Routing | Automation)* "}"
+    "{" (Assignment | Routing | Automation)* "}"
   }
 }
 
@@ -204,7 +204,7 @@ BusStatement {
   kw<"bus"> VariableDefinition
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (VariableName | EffectStatement)* "}"
+    "{" (Assignment | VariableName | EffectStatement)* "}"
   }
 }
 

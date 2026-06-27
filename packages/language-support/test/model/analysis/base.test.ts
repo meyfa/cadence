@@ -66,11 +66,11 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
         { kind: 'plain', scope: 'track', name: 'bars' },
-        { kind: 'plain', scope: 'track', name: 'kick' },
-        { kind: 'plain', scope: 'track', name: 'loop' },
-        { kind: 'plain', scope: 'track', name: 'kick' },
-        { kind: 'plain', scope: 'track', name: 'gain' },
-        { kind: 'plain', scope: 'track', name: 'db' },
+        { kind: 'plain', scope: 'part', name: 'kick' },
+        { kind: 'plain', scope: 'part', name: 'loop' },
+        { kind: 'plain', scope: 'part', name: 'kick' },
+        { kind: 'plain', scope: 'part', name: 'gain' },
+        { kind: 'plain', scope: 'part', name: 'db' },
         { kind: 'definition', scope: 'mixer', name: 'drums' },
         { kind: 'definition', scope: 'bus', name: 'crush' },
         { kind: 'plain', scope: 'bus', name: 'fx' },
@@ -227,7 +227,7 @@ describe('model/analysis/base.ts', () => {
       'track (120.bpm) {',
       '  part intro (4.bars) {',
       '    kick << [x---]',
-      '  }',
+      '  } // end part',
       '} // end track',
       '',
       'mixer {',
@@ -261,6 +261,11 @@ describe('model/analysis/base.ts', () => {
     const trackRange = getRangeAt(source, trackBlockStart, trackEnd - trackBlockStart)
     const trackScopeId = `track:${trackRange.offset}:${trackRange.length}`
 
+    const partBlockStart = source.indexOf('{', source.indexOf('part intro'))
+    const partEnd = source.indexOf('} // end part') + '}'.length
+    const partRange = getRangeAt(source, partBlockStart, partEnd - partBlockStart)
+    const partScopeId = `part:${partRange.offset}:${partRange.length}`
+
     const mixerBlockStart = source.indexOf('{', source.indexOf('mixer'))
     const mixerEnd = source.indexOf('} // end mixer') + '}'.length
     const mixerRange = getRangeAt(source, mixerBlockStart, mixerEnd - mixerBlockStart)
@@ -283,6 +288,7 @@ describe('model/analysis/base.ts', () => {
         { id: instrumentScopeId, kind: 'instrument', parentId: rootScopeId },
         { id: voiceScopeId, kind: 'voice', parentId: instrumentScopeId },
         { id: trackScopeId, kind: 'track', parentId: rootScopeId },
+        { id: partScopeId, kind: 'part', parentId: trackScopeId },
         { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId },
         { id: drumsBusScopeId, kind: 'bus', parentId: mixerScopeId },
         { id: delayBusScopeId, kind: 'bus', parentId: mixerScopeId }

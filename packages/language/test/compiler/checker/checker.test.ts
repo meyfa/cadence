@@ -146,22 +146,25 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
-    it('should allow assignments in track scope to shadow top-level variables', () => {
+    it('should allow scoped assignments to shadow top-level variables', () => {
       const source = [
-        'foo = 42',
+        'shadowed_by_track = 100',
+        'shadowed_by_mixer = 200',
+        'shadowed_by_part = 300',
+        'shadowed_by_bus = 400',
+        '',
         'track {',
-        '  foo = 100',
-        '}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow assignments in mixer scope to shadow top-level variables', () => {
-      const source = [
-        'foo = 42',
+        '  shadowed_by_track = 101',
+        '  part (4.bars) {',
+        '    shadowed_by_part = 301',
+        '  }',
+        '}',
+        '',
         'mixer {',
-        '  foo = 100',
+        '  shadowed_by_mixer = 201',
+        '  bus foo {',
+        '    shadowed_by_bus = 401',
+        '  }',
         '}'
       ].join('\n')
 
@@ -181,6 +184,23 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'my_pattern = [C4 E4 G4].loop()',
         'my_filled_pattern = my_pattern.fill(2.bars)'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow instruments as sources in mixer', () => {
+      const source = [
+        'use "instruments" as *',
+        'kick = sample("kick.wav")',
+        'synth = sample("synth.wav")',
+        'mixer {',
+        '  bus main {',
+        '    kick',
+        '    renamed_synth = synth',
+        '    renamed_synth',
+        '  }',
+        '}'
       ].join('\n')
 
       assertValid(source)
@@ -361,18 +381,31 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject variable reassignment in nested scopes', () => {
       const source = [
         'mixer {',
-        '  bar = 42',
-        '  bar = 100',
+        '  in_mixer = 1',
+        '  in_mixer = 2',
+        '',
+        '  bus main {',
+        '    in_bus = 1',
+        '    in_bus = 2',
+        '  }',
         '}',
+        '',
         'track {',
-        '  foo = 42',
-        '  foo = 100',
+        '  in_track = 1',
+        '  in_track = 2',
+        '',
+        '  part (4.bars) {',
+        '    in_part = 1',
+        '    in_part = 2',
+        '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Identifier "bar" is already defined',
-        'Identifier "foo" is already defined'
+        'Identifier "in_mixer" is already defined',
+        'Identifier "in_bus" is already defined',
+        'Identifier "in_track" is already defined',
+        'Identifier "in_part" is already defined'
       ])
     })
 
@@ -572,6 +605,19 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Unknown identifier "bus1"'
+      ])
+    })
+
+    it('should reject bus referring to itself as a source', () => {
+      const source = [
+        'mixer {',
+        '  bus bus0 { bus0 }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "bus0"',
+        'Cyclic routing: bus0 -> bus0'
       ])
     })
 

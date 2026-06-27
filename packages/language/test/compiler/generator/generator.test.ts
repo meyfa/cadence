@@ -175,6 +175,25 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.track.parts[3].length, numeric('beats', 8))
   })
 
+  it('should resolve variables in track scope', () => {
+    const source = [
+      'root_scope = 8.beats',
+      'shadowed = 100.beats',
+      'track {',
+      '  track_scope = root_scope + 1.beats',
+      '  shadowed = 200.beats',
+      '  part part0 (length: root_scope) {}',
+      '  part part1 (length: track_scope) {}',
+      '  part part2 (length: shadowed) {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.parts[0].length, numeric('beats', 8))
+    assert.deepStrictEqual(result.track.parts[1].length, numeric('beats', 9))
+    assert.deepStrictEqual(result.track.parts[2].length, numeric('beats', 200))
+  })
+
   it('should resolve variables in mixer scope', () => {
     const source = [
       'root_scope = -42.db',
@@ -192,6 +211,44 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.mixer.buses[0].gain.initial, numeric('db', -42))
     assert.deepStrictEqual(result.mixer.buses[1].gain.initial, numeric('db', -41))
     assert.deepStrictEqual(result.mixer.buses[2].gain.initial, numeric('db', -200))
+  })
+
+  it('should resolve variables in part scope', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part intro (4.bars) {',
+      '    my_pattern = [C4 D4]',
+      '    synth << my_pattern',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    const routing = result.track.parts[0].routings[0]
+    assert.strictEqual(routing.source.type, 'pattern')
+    assert.deepStrictEqual([...routing.source.value.evaluate()], [
+      { time: numeric('beats', 0), pitch: 'C4', gate: numeric('beats', 1) },
+      { time: numeric('beats', 1), pitch: 'D4', gate: numeric('beats', 1) }
+    ])
+  })
+
+  it('should resolve variables in bus scope', () => {
+    const source = [
+      'use "effects" as *',
+      'mixer {',
+      '  bus main {',
+      '    my_gain = -20.db',
+      '    effect gain(my_gain)',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    const effect = result.mixer.buses[0].effects[0]
+    assert.strictEqual(effect.type, 'gain')
+    assert.deepStrictEqual(effect.gain.initial, numeric('db', -20))
   })
 
   it('should generate automation points for a lin curve', () => {

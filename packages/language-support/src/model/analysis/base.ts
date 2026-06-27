@@ -30,6 +30,9 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const addBinding = (input: Omit<Binding, 'id'>): Binding => {
     const binding = { ...input, id: bindingKey(input.kind, input.scopeId, input.range) }
     bindings.push(binding)
+
+    addIdentifier({ kind: 'definition', scopeId: input.scopeId, name: input.name, range: input.range })
+
     return binding
   }
 
@@ -71,7 +74,6 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
         const { alias, aliasRange, moduleName } = statement
         if (alias != null) {
-          addIdentifier({ kind: 'definition', scopeId, name: alias, range: aliasRange })
           addBinding({ kind: 'use-alias', scopeId, name: alias, range: aliasRange, moduleName })
         }
 
@@ -82,6 +84,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'TrackBlock': {
         const scope = addScope({ kind: 'track', range, parentId: scopeId })
+        nextScopeId = scope.id
+        break
+      }
+
+      case 'PartBlock': {
+        const scope = addScope({ kind: 'part', range, parentId: scopeId })
         nextScopeId = scope.id
         break
       }
@@ -136,44 +144,44 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'VariableDefinition': {
-        const name = document.sliceString(from, to)
+        // The parser can produce VariableDefinition nodes with trailing whitespace (possibly a bug).
+        // Example (emits "kick " with a trailing space):
+        //     track { part { kick } }
+        const rawName = document.sliceString(from, to)
+        const name = rawName.trimEnd()
+        const nameRange = toSourceRange(document, from, from + name.length)
 
         switch (parentType) {
           case 'Assignment': {
             if (assignmentHasEquals) {
-              addBinding({ kind: 'regular', scopeId, name, range })
-              addIdentifier({ kind: 'definition', scopeId, name, range })
+              addBinding({ kind: 'regular', scopeId, name, range: nameRange })
               break
             }
             // Invalid/incomplete syntax encountered.
             // We still add an identifier as a best-effort approach to provide some level of functionality.
-            accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
+            accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
             break
           }
 
           case 'PartStatement': {
-            addBinding({ kind: 'part', scopeId, name, range })
-            addIdentifier({ kind: 'definition', scopeId, name, range })
+            addBinding({ kind: 'part', scopeId, name, range: nameRange })
             break
           }
 
           case 'BusStatement': {
             if (pendingScope?.kind === 'bus') {
-              addBinding({ kind: 'bus', scopeId, name, range, declaredScopeId: pendingScope.id })
-              addIdentifier({ kind: 'definition', scopeId, name, range })
+              addBinding({ kind: 'bus', scopeId, name, range: nameRange, declaredScopeId: pendingScope.id })
             }
             break
           }
 
           case 'EffectStatement': {
-            addBinding({ kind: 'effect', scopeId, name, range })
-            addIdentifier({ kind: 'definition', scopeId, name, range })
+            addBinding({ kind: 'effect', scopeId, name, range: nameRange })
             break
           }
 
           case 'VoiceStatement': {
-            addBinding({ kind: 'regular', scopeId, name, range })
-            addIdentifier({ kind: 'definition', scopeId, name, range })
+            addBinding({ kind: 'regular', scopeId, name, range: nameRange })
             break
           }
         }

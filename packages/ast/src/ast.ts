@@ -132,7 +132,7 @@ export interface PartStatement extends ASTNode {
   readonly type: 'PartStatement'
   readonly name?: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Routing | AutomateStatement>
+  readonly children: ReadonlyArray<Assignment | Routing | AutomateStatement>
 }
 
 export interface MixerStatement extends ASTNode {
@@ -145,7 +145,7 @@ export interface BusStatement extends ASTNode {
   readonly type: 'BusStatement'
   readonly name: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Identifier | EffectStatement>
+  readonly children: ReadonlyArray<Assignment | Identifier | EffectStatement>
 }
 
 export interface EffectStatement extends ASTNode {
