@@ -60,7 +60,7 @@ export function check (program: ast.Program): CheckResult {
   const errors: CompileError[] = []
 
   // Order matters, as assignments and mixers populate the scope
-  errors.push(...checkAssignments(scope, assignments))
+  errors.push(...assignments.flatMap((assignment) => checkAssignment(scope, assignment)))
   errors.push(...checkMixers(scope, mixers))
   errors.push(...checkTracks(scope, tracks))
 
@@ -151,10 +151,6 @@ function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMa
   return { errors, result }
 }
 
-function checkAssignments (scope: MutableScope, assignments: readonly ast.Assignment[]): readonly CompileError[] {
-  return assignments.flatMap((assignment) => checkAssignment(scope, assignment))
-}
-
 function checkAssignment (scope: MutableScope, assignment: ast.Assignment): readonly CompileError[] {
   const errors: CompileError[] = []
 
@@ -193,28 +189,35 @@ function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly C
 
   errors.push(...checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property'))
 
-  const assignments = track.children.filter((c) => c.type === 'Assignment')
-  const parts = track.children.filter((c) => c.type === 'PartStatement')
-
-  errors.push(...checkAssignments(trackScope, assignments))
-
   const seenParts = new Set<string>()
 
-  for (const part of parts) {
-    if (part.name != null) {
-      if (seenParts.has(part.name.name)) {
-        errors.push(new CompileError(`Duplicate part named "${part.name.name}"`, part.range))
-      } else if (trackScope.resolutions.has(part.name.name)) {
-        errors.push(new CompileError(`Part name "${part.name.name}" conflicts with existing identifier`, part.name.range))
+  for (const child of track.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(trackScope, child))
+        break
+
+      case 'PartStatement': {
+        if (child.name != null) {
+          if (seenParts.has(child.name.name)) {
+            errors.push(new CompileError(`Duplicate part named "${child.name.name}"`, child.range))
+          } else if (trackScope.resolutions.has(child.name.name)) {
+            errors.push(new CompileError(`Part name "${child.name.name}" conflicts with existing identifier`, child.name.range))
+          }
+
+          seenParts.add(child.name.name)
+
+          // Reserve the name in the local scope
+          trackScope.resolutions.set(child.name.name, PartFacet.type())
+        }
+
+        errors.push(...checkPart(trackScope, child))
+        break
       }
 
-      seenParts.add(part.name.name)
-
-      // Reserve the name in the local scope
-      trackScope.resolutions.set(part.name.name, PartFacet.type())
+      default:
+        child satisfies never // exhaustiveness check
     }
-
-    errors.push(...checkPart(trackScope, part))
   }
 
   return errors
@@ -322,40 +325,45 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
 
   errors.push(...checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property'))
 
-  const assignments = mixer.children.filter((c) => c.type === 'Assignment')
-  const buses = mixer.children.filter((c) => c.type === 'BusStatement')
-
-  errors.push(...checkAssignments(mixerScope, assignments))
-
+  const buses: ast.BusStatement[] = []
   const seenBuses = new Map<string, FacetType>()
 
-  const declareBus = (name: string, type: FacetType): void => {
-    seenBuses.set(name, type)
-    mixerScope.resolutions.set(name, type)
-    mixerScope.top.buses.set(name, type)
-    busNamespace.resolutions.set(name, type)
-  }
+  for (const child of mixer.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(mixerScope, child))
+        break
 
-  // Build up the list of buses first
-  for (const bus of buses) {
-    if (seenBuses.has(bus.name.name)) {
-      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-    } else if (mixerScope.resolutions.has(bus.name.name)) {
-      errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
+      case 'BusStatement': {
+        const bus = child
+        buses.push(bus)
+
+        if (seenBuses.has(bus.name.name)) {
+          errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
+        } else if (mixerScope.resolutions.has(bus.name.name)) {
+          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
+        }
+
+        const busCheck = checkBus(mixerScope, bus)
+        errors.push(...busCheck.errors)
+
+        const type = busCheck.result ?? BusFacet.type()
+        seenBuses.set(bus.name.name, type)
+        mixerScope.resolutions.set(bus.name.name, type)
+        mixerScope.top.buses.set(bus.name.name, type)
+        busNamespace.resolutions.set(bus.name.name, type)
+
+        break
+      }
+
+      default:
+        child satisfies never // exhaustiveness check
     }
-
-    // reserve a generic type first
-    declareBus(bus.name.name, BusFacet.type())
   }
 
   // Now that all buses are known, we can check the routings
   for (const bus of buses) {
-    const busCheck = checkBus(mixerScope, bus)
-    errors.push(...busCheck.errors)
-
-    if (busCheck.result != null) {
-      declareBus(bus.name.name, busCheck.result)
-    }
+    errors.push(...checkBusRoutings(mixerScope, bus))
   }
 
   errors.push(...checkCyclicRoutings(buses.map((bus) => ({
@@ -371,17 +379,6 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   const errors: CompileError[] = []
 
   errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
-
-  // Sources
-  for (const source of bus.sources) {
-    const sourceCheck = checkExpression(scope, source)
-    errors.push(...sourceCheck.errors)
-
-    if (sourceCheck.result != null) {
-      const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
-      errors.push(...checkType(options, sourceCheck.result, source.range))
-    }
-  }
 
   // Effects
   const properties = {
@@ -429,6 +426,22 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   const type = makeType(BusFacet, RecordFacet.with(record))
 
   return { errors, result: type }
+}
+
+function checkBusRoutings (scope: Scope, bus: ast.BusStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  for (const source of bus.sources) {
+    const sourceCheck = checkExpression(scope, source)
+    errors.push(...sourceCheck.errors)
+
+    if (sourceCheck.result != null) {
+      const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
+      errors.push(...checkType(options, sourceCheck.result, source.range))
+    }
+  }
+
+  return errors
 }
 
 function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
@@ -632,13 +645,19 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   const instrumentScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  const assignments = expression.children.filter((c) => c.type === 'Assignment')
-  const voices = expression.children.filter((c) => c.type === 'VoiceStatement')
+  for (const child of expression.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(instrumentScope, child))
+        break
 
-  errors.push(...checkAssignments(instrumentScope, assignments))
+      case 'VoiceStatement':
+        errors.push(...checkVoice(instrumentScope, child))
+        break
 
-  for (const voice of voices) {
-    errors.push(...checkVoice(instrumentScope, voice))
+      default:
+        child satisfies never // exhaustiveness check
+    }
   }
 
   return { errors, result: InstrumentFacet.type() }
@@ -654,7 +673,9 @@ function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileE
     voiceScope.resolutions.set(voice.bindings.note.name, noteType)
   }
 
-  errors.push(...checkAssignments(voiceScope, voice.children))
+  for (const child of voice.children) {
+    errors.push(...checkAssignment(voiceScope, child))
+  }
 
   return errors
 }

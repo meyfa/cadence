@@ -51,7 +51,9 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   assert(tracks.length <= 1)
   assert(mixers.length <= 1)
 
-  processAssignments(scope, assignments)
+  for (const assignment of assignments) {
+    processAssignment(scope, assignment)
+  }
 
   // Automations in the track may refer to mixer buses, so the mixer must be generated first.
   const mixer = generateMixer(scope, mixers.at(0))
@@ -114,11 +116,9 @@ function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<stri
   return result
 }
 
-function processAssignments (scope: MutableScope, assignments: readonly ast.Assignment[]): void {
-  for (const assignment of assignments) {
-    assert(!scope.resolutions.has(assignment.key.name))
-    scope.resolutions.set(assignment.key.name, resolve(scope, assignment.value))
-  }
+function processAssignment (scope: MutableScope, assignment: ast.Assignment): void {
+  assert(!scope.resolutions.has(assignment.key.name))
+  scope.resolutions.set(assignment.key.name, resolve(scope, assignment.value))
 }
 
 function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
@@ -131,21 +131,32 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
     : numeric('bpm', options.tempo.default)
 
   const trackScope = createLocalScope(scope)
-  processAssignments(trackScope, track.children.filter((c) => c.type === 'Assignment'))
-
   const parts: Part[] = []
 
   let currentTime = numeric('beats', 0)
-  for (const partStatement of track.children.filter((c) => c.type === 'PartStatement')) {
-    const part = generatePart(trackScope, partStatement, currentTime)
-    parts.push(part)
 
-    if (part.name != null) {
-      assert(!trackScope.resolutions.has(part.name))
-      trackScope.resolutions.set(part.name, PartFacet.type().of(part))
+  for (const child of track.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(trackScope, child)
+        break
+
+      case 'PartStatement': {
+        const part = generatePart(trackScope, child, currentTime)
+        parts.push(part)
+
+        if (part.name != null) {
+          assert(!trackScope.resolutions.has(part.name))
+          trackScope.resolutions.set(part.name, PartFacet.type().of(part))
+        }
+
+        currentTime = numeric('beats', currentTime.value + part.length.value)
+        break
+      }
+
+      default:
+        child satisfies never // exhaustiveness check
     }
-
-    currentTime = numeric('beats', currentTime.value + part.length.value)
   }
 
   return { tempo, parts }
@@ -205,13 +216,29 @@ function generateAutomation (scope: Scope, statement: ast.AutomateStatement, sta
 
 function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
   const mixerScope = createLocalScope(scope)
-  processAssignments(mixerScope, mixer?.children.filter((c) => c.type === 'Assignment') ?? [])
 
   const namespace = createNamespace()
   scope.top.namespaces.set(BUS_NAMESPACE, namespace)
 
-  const busStatements = mixer?.children.filter((c) => c.type === 'BusStatement') ?? []
-  const buses = busStatements.map((bus) => generateBus(mixerScope, bus, namespace))
+  const busStatements: ast.BusStatement[] = []
+  const buses: Bus[] = []
+
+  for (const child of mixer?.children ?? []) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(mixerScope, child)
+        break
+
+      case 'BusStatement':
+        busStatements.push(child)
+        buses.push(generateBus(mixerScope, child, namespace))
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
+    }
+  }
+
   const routings = busStatements.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index]))
 
   // Implicit output routings for unrouted buses and instruments
@@ -453,21 +480,21 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 }
 
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
-  const assignments = expression.children.filter((c) => c.type === 'Assignment')
-  const voices = expression.children.filter((c) => c.type === 'VoiceStatement')
-
   const instrumentScope = createLocalScope(scope)
-  processAssignments(instrumentScope, assignments)
 
-  for (const voice of voices) {
-    const voiceScope = createLocalScope(instrumentScope)
+  for (const child of expression.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(instrumentScope, child)
+        break
 
-    if (voice.bindings.note != null) {
-      // TODO: Add note parameters
-      voiceScope.resolutions.set(voice.bindings.note.name, RecordFacet.type().of({}))
+      case 'VoiceStatement':
+        generateVoice(instrumentScope, child)
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
     }
-
-    processAssignments(voiceScope, voice.children)
   }
 
   // TODO: Change -Infinity to 0 and expose gain on the record,
@@ -490,6 +517,19 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   })
 
   return InstrumentFacet.type().of(instrument)
+}
+
+function generateVoice (instrumentScope: Scope, voice: ast.VoiceStatement): void {
+  const voiceScope = createLocalScope(instrumentScope)
+
+  if (voice.bindings.note != null) {
+    // TODO: Add note parameters
+    voiceScope.resolutions.set(voice.bindings.note.name, RecordFacet.type().of({}))
+  }
+
+  for (const child of voice.children) {
+    processAssignment(voiceScope, child)
+  }
 }
 
 function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
