@@ -292,14 +292,15 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
-  const effectValues = bus.effects.map((effect) => resolve(scope, effect.expression))
+  const effectStatements = bus.children.filter((child) => child.type === 'EffectStatement')
+  const effectValues = effectStatements.map((effect) => resolve(scope, effect.expression))
   const effects = effectValues.map((value) => EffectFacet.get(value))
 
   const valueRecord: Record<string, Value> = Object.create(null)
   const typeRecord: Record<string, FacetType> = Object.create(null)
 
-  for (let i = 0; i < bus.effects.length; ++i) {
-    const effectName = bus.effects[i].name?.name
+  for (let i = 0; i < effectStatements.length; ++i) {
+    const effectName = effectStatements[i].name?.name
     if (effectName == null) {
       continue
     }
@@ -334,7 +335,9 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
 }
 
 function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, destination: Bus): readonly MixerRouting[] {
-  return bus.sources.map((identifier) => {
+  const sources = bus.children.filter((child) => child.type === 'Identifier')
+
+  return sources.map((identifier) => {
     const source = resolve(mixerScope, identifier)
 
     const toRouting = (src: { type: 'instrument' | 'bus', id: InstrumentId | BusId }): MixerRouting => ({

@@ -349,7 +349,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
 
   errors.push(...checkCyclicRoutings(buses.map((bus) => ({
     name: bus.name.name,
-    sources: bus.sources.map((s) => s.name),
+    sources: bus.children.filter((child) => child.type === 'Identifier').map((source) => source.name),
     range: bus.name.range
   }))))
 
@@ -370,7 +370,11 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   const record: Record<string, FacetType> = Object.create(null)
   Object.assign(record, properties)
 
-  for (const effect of bus.effects) {
+  for (const effect of bus.children) {
+    if (effect.type !== 'EffectStatement') {
+      continue
+    }
+
     const effectCheck = checkExpression(scope, effect.expression)
     errors.push(...effectCheck.errors)
 
@@ -412,7 +416,11 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
 function checkBusRoutings (scope: Scope, bus: ast.BusStatement): readonly CompileError[] {
   const errors: CompileError[] = []
 
-  for (const source of bus.sources) {
+  for (const source of bus.children) {
+    if (source.type !== 'Identifier') {
+      continue
+    }
+
     const sourceCheck = checkExpression(scope, source)
     errors.push(...sourceCheck.errors)
 

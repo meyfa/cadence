@@ -633,8 +633,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
     return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
       name,
       properties: args,
-      sources: children.filter((c) => c.type === 'Identifier'),
-      effects: children.filter((c) => c.type === 'EffectStatement')
+      children
     })
   }
 )

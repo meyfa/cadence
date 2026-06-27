@@ -145,8 +145,7 @@ export interface BusStatement extends ASTNode {
   readonly type: 'BusStatement'
   readonly name: Identifier
   readonly properties: ArgumentList
-  readonly sources: readonly Identifier[]
-  readonly effects: readonly EffectStatement[]
+  readonly children: ReadonlyArray<Identifier | EffectStatement>
 }
 
 export interface EffectStatement extends ASTNode {
