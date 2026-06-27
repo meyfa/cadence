@@ -337,17 +337,14 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
         mixerScope.top.buses.set(bus.name.name, type)
         busNamespace.resolutions.set(bus.name.name, type)
 
+        errors.push(...checkBusRoutings(mixerScope, bus))
+
         break
       }
 
       default:
         child satisfies never // exhaustiveness check
     }
-  }
-
-  // Now that all buses are known, we can check the routings
-  for (const bus of buses) {
-    errors.push(...checkBusRoutings(mixerScope, bus))
   }
 
   errors.push(...checkCyclicRoutings(buses.map((bus) => ({

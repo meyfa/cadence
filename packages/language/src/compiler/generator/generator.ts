@@ -234,6 +234,7 @@ function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: M
 
   const busStatements: ast.BusStatement[] = []
   const buses: Bus[] = []
+  const routings: MixerRouting[] = []
 
   for (const child of mixer.children) {
     switch (child.type) {
@@ -244,14 +245,13 @@ function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: M
       case 'BusStatement':
         busStatements.push(child)
         buses.push(generateBus(mixerScope, child, busNamespace))
+        routings.push(...generateBusRoutings(mixerScope, child, nonNull(buses.at(-1))))
         break
 
       default:
         child satisfies never // exhaustiveness check
     }
   }
-
-  const routings = busStatements.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index]))
 
   return { buses, routings }
 }

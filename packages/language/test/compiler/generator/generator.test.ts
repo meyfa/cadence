@@ -455,8 +455,8 @@ describe('compiler/generator/generator.ts', () => {
   it('should support buses as sources in mixer', () => {
     const source = [
       'mixer {',
-      '  bus bus0 { bus1 }',
-      '  bus bus1 {}',
+      '  bus bus0 {}',
+      '  bus bus1 { bus0 }',
       '}'
     ].join('\n')
 
@@ -471,13 +471,13 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.mixer.routings, [
       {
         implicit: false,
-        destination: { type: 'bus', id: bus0.id },
-        source: { type: 'bus', id: bus1.id }
+        destination: { type: 'bus', id: bus1.id },
+        source: { type: 'bus', id: bus0.id }
       },
       {
         implicit: true,
         destination: { type: 'output' },
-        source: { type: 'bus', id: bus0.id }
+        source: { type: 'bus', id: bus1.id }
       }
     ])
   })
