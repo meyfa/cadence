@@ -135,11 +135,11 @@ describe('compiler/checker/checker.ts', () => {
     it('should allow parts and buses to shadow top-level variables', () => {
       const source = [
         'foo = 42',
-        'track {',
-        '  part foo (4.bars) {}',
-        '}',
         'mixer {',
         '  bus foo {}',
+        '}',
+        'track {',
+        '  part foo (4.bars) {}',
         '}'
       ].join('\n')
 
@@ -197,6 +197,23 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept bus references after the mixer declaration', () => {
+      const source = [
+        'mixer {',
+        '  bus foo {}',
+        '  bus bar {}',
+        '}',
+        'foo_gain = bus.foo.gain',
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate bus.bar.pan as ~[lin(-1, 1)]',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept lin curves', () => {
       assertValid('my_curve = ~[lin((-60).db, 0.db)]')
     })
@@ -215,13 +232,13 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept bus gain automation via explicit namespace', () => {
       const source = [
+        'mixer {',
+        '  bus main {}',
+        '}',
         'track {',
         '  part intro (4.bars) {',
         '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
         '  }',
-        '}',
-        'mixer {',
-        '  bus main {}',
         '}'
       ].join('\n')
 
@@ -231,14 +248,14 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept bus effect automation via explicit namespace', () => {
       const source = [
         'use "effects" as fx',
-        'track {',
-        '  part intro (4.bars) {',
-        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
-        '  }',
-        '}',
         'mixer {',
         '  bus main {',
         '    effect lp = fx.lowpass(1000.hz)',
+        '  }',
+        '}',
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
         '  }',
         '}'
       ].join('\n')
@@ -366,7 +383,6 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple track definitions',
         'Multiple track definitions'
       ])
     })
@@ -480,7 +496,6 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple mixer definitions',
         'Multiple mixer definitions'
       ])
     })
@@ -679,6 +694,37 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined'
+      ])
+    })
+
+    it('should enforce ordering in the global scope', () => {
+      const source = [
+        'track (my_tempo) {}',
+        'my_tempo = 120.bpm'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "my_tempo"'
+      ])
+    })
+
+    it('should reject bus references before the mixer declaration', () => {
+      const source = [
+        'foo_gain = bus.foo.gain',
+        'track {',
+        '  part intro (4.bars) {',
+        '    automate bus.bar.pan as ~[lin(-1, 1)]',
+        '  }',
+        '}',
+        'mixer {',
+        '  bus foo {}',
+        '  bus bar {}',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Namespace "bus" has no member named "foo"',
+        'Namespace "bus" has no member named "bar"'
       ])
     })
 

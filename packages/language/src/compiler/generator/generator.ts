@@ -44,26 +44,41 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
 
   const scope = createLocalScope(top)
 
-  const assignments = program.children.filter((c) => c.type === 'Assignment')
-  const tracks = program.children.filter((c) => c.type === 'TrackStatement')
-  const mixers = program.children.filter((c) => c.type === 'MixerStatement')
+  const busNamespace = createNamespace()
+  scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
 
-  assert(tracks.length <= 1)
-  assert(mixers.length <= 1)
+  let mixer: Mixer | undefined
+  let track: Track | undefined
 
-  for (const assignment of assignments) {
-    processAssignment(scope, assignment)
+  for (const child of program.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(scope, child)
+        break
+
+      case 'MixerStatement':
+        assert(mixer == null)
+        mixer = generateMixer(scope, child, busNamespace)
+        break
+
+      case 'TrackStatement':
+        assert(track == null)
+        track = generateTrack(scope, child)
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
+    }
   }
 
-  // Automations in the track may refer to mixer buses, so the mixer must be generated first.
-  const mixer = generateMixer(scope, mixers.at(0))
+  mixer ??= { buses: [], routings: [] }
+  track ??= { tempo: numeric('bpm', options.tempo.default), parts: [] }
 
-  const track = tracks.length > 0
-    ? generateTrack(scope, tracks[0])
-    : {
-        tempo: numeric('bpm', options.tempo.default),
-        parts: []
-      }
+  // Implicit output routings for unrouted buses and instruments
+  mixer = {
+    ...mixer,
+    routings: [...mixer.routings, ...generateImplicitRoutings(scope, mixer)]
+  }
 
   return {
     beatsPerBar: options.beatsPerBar,
@@ -214,16 +229,13 @@ function generateAutomation (scope: Scope, statement: ast.AutomateStatement, sta
   })
 }
 
-function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
+function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Mixer {
   const mixerScope = createLocalScope(scope)
-
-  const namespace = createNamespace()
-  scope.top.namespaces.set(BUS_NAMESPACE, namespace)
 
   const busStatements: ast.BusStatement[] = []
   const buses: Bus[] = []
 
-  for (const child of mixer?.children ?? []) {
+  for (const child of mixer.children) {
     switch (child.type) {
       case 'Assignment':
         processAssignment(mixerScope, child)
@@ -231,7 +243,7 @@ function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
 
       case 'BusStatement':
         busStatements.push(child)
-        buses.push(generateBus(mixerScope, child, namespace))
+        buses.push(generateBus(mixerScope, child, busNamespace))
         break
 
       default:
@@ -241,11 +253,16 @@ function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
 
   const routings = busStatements.flatMap((bus, index) => generateBusRoutings(mixerScope, bus, buses[index]))
 
-  // Implicit output routings for unrouted buses and instruments
-  const unroutedBuses = new Set<BusId>(buses.map((b) => b.id))
+  return { buses, routings }
+}
+
+function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRouting[] {
+  const routings: MixerRouting[] = []
+
+  const unroutedBuses = new Set<BusId>(mixer.buses.map((b) => b.id))
   const unroutedInstruments = new Set<InstrumentId>(scope.top.instruments.keys())
 
-  for (const routing of routings) {
+  for (const routing of mixer.routings) {
     switch (routing.source.type) {
       case 'bus':
         unroutedBuses.delete(routing.source.id)
@@ -268,7 +285,7 @@ function generateMixer (scope: Scope, mixer?: ast.MixerStatement): Mixer {
     createImplicitRouting({ type: 'instrument', id: instrumentId })
   }
 
-  return { buses, routings }
+  return routings
 }
 
 function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): Bus {

@@ -29,6 +29,29 @@ arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 // Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
 
+mixer {
+  // Mixer buses are used to modify groups of instruments.
+  // Buses can receive signals from instruments, but also other buses.
+
+  bus drums (gain: -1.5.db) {
+    kick snare hat tom
+  }
+
+  bus synths (gain: -10.db) {
+    synth
+  }
+
+  // A bus can have zero or more effects, which are applied in order.
+  // input -> effects... -> pan -> gain -> output
+
+  bus clap_delay (gain: 3.db, pan: -0.25) {
+    clap
+
+    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
+    effect fx.reverb(mix: 0.3, decay: 1.s)
+  }
+}
+
 track (120.bpm) {
   // Parts play in sequence. Patterns will trigger notes for their
   // defined length or the length of the part, whichever is shorter.
@@ -55,29 +78,6 @@ track (120.bpm) {
     tom   << ([---- -x-- ---- ---x] / 4).loop()
     synth << arp_main.loop()
     clap  << clap_pattern
-  }
-}
-
-mixer {
-  // Mixer buses are used to modify groups of instruments.
-  // Buses can receive signals from instruments, but also other buses.
-
-  bus drums (gain: -1.5.db) {
-    kick snare hat tom
-  }
-
-  bus synths (gain: -10.db) {
-    synth
-  }
-
-  // A bus can have zero or more effects, which are applied in order.
-  // input -> effects... -> pan -> gain -> output
-
-  bus clap_delay (gain: 3.db, pan: -0.25) {
-    clap
-
-    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
-    effect fx.reverb(mix: 0.3, decay: 1.s)
   }
 }
 `.trimStart()

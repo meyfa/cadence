@@ -333,13 +333,13 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should automate bus gain via explicit namespace', () => {
     const source = [
+      'mixer {',
+      '  bus main {}',
+      '}',
       'track {',
       '  part intro (4.bars) {',
       '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
       '  }',
-      '}',
-      'mixer {',
-      '  bus main {}',
       '}'
     ].join('\n')
 
@@ -356,14 +356,14 @@ describe('compiler/generator/generator.ts', () => {
   it('should automate bus effect parameters via explicit namespace', () => {
     const source = [
       'use "effects" as fx',
-      'track {',
-      '  part intro (4.bars) {',
-      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
-      '  }',
-      '}',
       'mixer {',
       '  bus main {',
       '    effect lp = fx.lowpass(123.hz)',
+      '  }',
+      '}',
+      'track {',
+      '  part intro (4.bars) {',
+      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
       '  }',
       '}'
     ].join('\n')
@@ -417,6 +417,26 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       ''
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    const [instrument] = result.instruments.values()
+
+    assert.deepStrictEqual(result.mixer.routings, [
+      {
+        implicit: true,
+        destination: { type: 'output' },
+        source: { type: 'instrument', id: instrument.id }
+      }
+    ])
+  })
+
+  it('should route instruments into the output when they are declared after the mixer', () => {
+    const source = [
+      'use "instruments" as *',
+      'mixer {}',
+      'synth = sample("synth.wav")'
     ].join('\n')
 
     const result = generateSource(source)
