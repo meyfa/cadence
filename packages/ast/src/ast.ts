@@ -132,8 +132,7 @@ export interface PartStatement extends ASTNode {
   readonly type: 'PartStatement'
   readonly name?: Identifier
   readonly properties: ArgumentList
-  readonly routings: readonly Routing[]
-  readonly automations: readonly AutomateStatement[]
+  readonly children: ReadonlyArray<Routing | AutomateStatement>
 }
 
 export interface MixerStatement extends ASTNode {

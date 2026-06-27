@@ -557,8 +557,7 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
     return ast.make('PartStatement', combineSourceRanges(_part, _rp), {
       name,
       properties: args,
-      routings: children.filter((c) => c.type === 'Routing'),
-      automations: children.filter((c) => c.type === 'AutomateStatement')
+      children
     })
   }
 )
