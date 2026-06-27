@@ -29,7 +29,7 @@ import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toBaseUnit } from '../units.js'
 import { checkCyclicRoutings } from './routings.js'
 import type { MutableNamespace, MutableScope, Scope } from './scopes.js'
-import { createGlobalScope, createLocalScope } from './scopes.js'
+import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -50,19 +50,43 @@ export function check (program: ast.Program): CheckResult {
     return failure(importResult.errors)
   }
 
-  const assignments = program.children.filter((c) => c.type === 'Assignment')
-  const tracks = program.children.filter((c) => c.type === 'TrackStatement')
-  const mixers = program.children.filter((c) => c.type === 'MixerStatement')
-
   const globalScope = createGlobalScope(importResult.result)
   const scope = createLocalScope(globalScope)
 
   const errors: CompileError[] = []
 
-  // Order matters, as assignments and mixers populate the scope
-  errors.push(...assignments.flatMap((assignment) => checkAssignment(scope, assignment)))
-  errors.push(...checkMixers(scope, mixers))
-  errors.push(...checkTracks(scope, tracks))
+  const busNamespace = createNamespace()
+  scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
+
+  let hasTrack = false
+  let hasMixer = false
+
+  for (const child of program.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(scope, child))
+        break
+
+      case 'TrackStatement':
+        if (hasTrack) {
+          errors.push(new CompileError('Multiple track definitions', child.range))
+        }
+        hasTrack = true
+        errors.push(...checkTrack(scope, child))
+        break
+
+      case 'MixerStatement':
+        if (hasMixer) {
+          errors.push(new CompileError('Multiple mixer definitions', child.range))
+        }
+        hasMixer = true
+        errors.push(...checkMixer(scope, child, busNamespace))
+        break
+
+      default:
+        child satisfies never // exhaustiveness check
+    }
+  }
 
   return errors.length === 0 ? success(program as CheckedProgram) : failure(errors)
 }
@@ -164,20 +188,6 @@ function checkAssignment (scope: MutableScope, assignment: ast.Assignment): read
 
   if (!duplicate && expressionCheck.result != null) {
     scope.resolutions.set(assignment.key.name, expressionCheck.result)
-  }
-
-  return errors
-}
-
-function checkTracks (scope: MutableScope, tracks: readonly ast.TrackStatement[]): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  for (const track of tracks) {
-    if (tracks.length > 1) {
-      errors.push(new CompileError('Multiple track definitions', track.range))
-    }
-
-    errors.push(...checkTrack(scope, track))
   }
 
   return errors
@@ -293,33 +303,7 @@ function checkAutomation (scope: Scope, automation: ast.AutomateStatement): read
   return errors
 }
 
-function checkMixers (scope: MutableScope, mixers: readonly ast.MixerStatement[]): readonly CompileError[] {
-  const busNamespace: MutableNamespace = { resolutions: new Map() }
-  scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
-
-  const errors: CompileError[] = []
-
-  for (const mixer of mixers) {
-    if (mixers.length > 1) {
-      errors.push(new CompileError('Multiple mixer definitions', mixer.range))
-    }
-
-    const mixerCheck = checkMixer(scope, mixer, busNamespace)
-    errors.push(...mixerCheck.errors)
-
-    for (const [name, type] of mixerCheck.result?.buses.entries() ?? []) {
-      scope.top.buses.set(name, type)
-    }
-  }
-
-  return errors
-}
-
-interface MixerDetail {
-  readonly buses: ReadonlyMap<string, FacetType>
-}
-
-function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Checked<MixerDetail> {
+function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): readonly CompileError[] {
   const mixerScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
@@ -372,7 +356,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
     range: bus.name.range
   }))))
 
-  return { errors, result: { buses: seenBuses } }
+  return errors
 }
 
 function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
