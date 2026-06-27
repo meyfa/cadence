@@ -595,12 +595,10 @@ describe('parser/parser.ts', () => {
                 }
               }
             ],
-            sources: [
+            children: [
               { type: 'Identifier', name: 'kick' },
               { type: 'Identifier', name: 'snare' },
-              { type: 'Identifier', name: 'hihat' }
-            ],
-            effects: [
+              { type: 'Identifier', name: 'hihat' },
               {
                 type: 'EffectStatement',
                 name: undefined,
