@@ -547,7 +547,10 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   combine3(
     literal('{'),
     p.many(
-      p.eitherOr(routing_, automateStatement_)
+      p.eitherOr(
+        assignment_,
+        p.eitherOr(routing_, automateStatement_)
+      )
     ),
     expectLiteral('}')
   ),
@@ -624,7 +627,12 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
   ),
   combine3(
     expectLiteral('{'),
-    p.many(p.eitherOr(identifier_, effectStatement_)),
+    p.many(
+      p.eitherOr(
+        assignment_,
+        p.eitherOr(identifier_, effectStatement_)
+      )
+    ),
     expectLiteral('}')
   ),
   ([_bus, name], callChain, [_lp, children, _rp]) => {

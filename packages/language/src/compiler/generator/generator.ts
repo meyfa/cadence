@@ -1,5 +1,5 @@
 import { ast } from '@ast'
-import type { Bus, BusId, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Step, Track } from '@core'
+import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Step, Track } from '@core'
 import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
@@ -178,6 +178,8 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
 }
 
 function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
+  const partScope = createLocalScope(scope)
+
   const name = part.name?.name
   const properties = resolveArgumentList(scope, part.properties, partSchema)
 
@@ -188,22 +190,26 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
 
   for (const child of part.children) {
     switch (child.type) {
+      case 'Assignment':
+        processAssignment(partScope, child)
+        break
+
       case 'Routing':
         routings.push({
           source: {
             type: 'pattern',
-            value: PatternFacet.get(resolve(scope, child.source))
+            value: PatternFacet.get(resolve(partScope, child.source))
           },
 
           destination: {
             type: 'instrument',
-            id: InstrumentFacet.get(resolve(scope, child.destination)).id
+            id: InstrumentFacet.get(resolve(partScope, child.destination)).id
           }
         })
         break
 
       case 'AutomateStatement':
-        generateAutomation(scope, child, startTime, endTime)
+        generateAutomation(partScope, child, startTime, endTime)
         break
 
       default:
@@ -242,11 +248,13 @@ function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: M
         processAssignment(mixerScope, child)
         break
 
-      case 'BusStatement':
+      case 'BusStatement': {
         busStatements.push(child)
-        buses.push(generateBus(mixerScope, child, busNamespace))
-        routings.push(...generateBusRoutings(mixerScope, child, nonNull(buses.at(-1))))
+        const generated = generateBus(mixerScope, child, busNamespace)
+        buses.push(generated.bus)
+        routings.push(...generated.routings)
         break
+      }
 
       default:
         child satisfies never // exhaustiveness check
@@ -288,25 +296,59 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
   return routings
 }
 
-function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): Bus {
+interface BusGenerationResult {
+  readonly bus: Bus
+  readonly routings: readonly MixerRouting[]
+}
+
+function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): BusGenerationResult {
+  const busScope = createLocalScope(scope)
+
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
-
-  const effectStatements = bus.children.filter((child) => child.type === 'EffectStatement')
-  const effectValues = effectStatements.map((effect) => resolve(scope, effect.expression))
-  const effects = effectValues.map((value) => EffectFacet.get(value))
 
   const valueRecord: Record<string, Value> = Object.create(null)
   const typeRecord: Record<string, FacetType> = Object.create(null)
 
-  for (let i = 0; i < effectStatements.length; ++i) {
-    const effectName = effectStatements[i].name?.name
-    if (effectName == null) {
-      continue
-    }
+  const sources: Array<MixerRouting['source']> = []
+  const effects: Effect[] = []
 
-    valueRecord[effectName] = effectValues[i]
-    typeRecord[effectName] = effectValues[i].type
+  for (const child of bus.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(busScope, child)
+        break
+
+      case 'Identifier': {
+        const source = resolve(busScope, child)
+
+        if (InstrumentFacet.has(source)) {
+          sources.push({ type: 'instrument', id: InstrumentFacet.get(source).id })
+        } else if (BusFacet.has(source)) {
+          sources.push({ type: 'bus', id: BusFacet.get(source).id })
+        } else {
+          fail()
+        }
+
+        break
+      }
+
+      case 'EffectStatement': {
+        const effectValue = resolve(busScope, child.expression)
+        effects.push(EffectFacet.get(effectValue))
+
+        const effectName = child.name?.name
+        if (effectName != null) {
+          valueRecord[effectName] = effectValue
+          typeRecord[effectName] = effectValue.type
+        }
+
+        break
+      }
+
+      default:
+        child satisfies never // exhaustiveness check
+    }
   }
 
   // These must always be allocated even if not explicitly set,
@@ -331,33 +373,14 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   assert(!namespace.resolutions.has(name))
   namespace.resolutions.set(name, value)
 
-  return data
-}
+  const destination = { type: 'bus', id: data.id } as const
+  const routings = sources.map((source) => ({
+    implicit: false,
+    source,
+    destination
+  }))
 
-function generateBusRoutings (mixerScope: Scope, bus: ast.BusStatement, destination: Bus): readonly MixerRouting[] {
-  const sources = bus.children.filter((child) => child.type === 'Identifier')
-
-  return sources.map((identifier) => {
-    const source = resolve(mixerScope, identifier)
-
-    const toRouting = (src: { type: 'instrument' | 'bus', id: InstrumentId | BusId }): MixerRouting => ({
-      implicit: false,
-      source: src.type === 'instrument'
-        ? { type: 'instrument', id: src.id as InstrumentId }
-        : { type: 'bus', id: src.id as BusId },
-      destination: { type: 'bus', id: destination.id }
-    })
-
-    if (InstrumentFacet.has(source)) {
-      return toRouting({ type: 'instrument', id: InstrumentFacet.get(source).id })
-    }
-
-    if (BusFacet.has(source)) {
-      return toRouting({ type: 'bus', id: BusFacet.get(source).id })
-    }
-
-    fail()
-  })
+  return { bus: data, routings }
 }
 
 /**
