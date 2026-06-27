@@ -402,7 +402,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Part name "before" conflicts with existing identifier',
-        'Part name "after" conflicts with existing identifier'
+        'Identifier "after" is already defined'
       ])
     })
 
@@ -510,7 +510,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Bus name "before" conflicts with existing identifier',
-        'Bus name "after" conflicts with existing identifier'
+        'Identifier "after" is already defined'
       ])
     })
 
@@ -679,6 +679,34 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined'
+      ])
+    })
+
+    it('should enforce ordering within mixer', () => {
+      const source = [
+        'mixer {',
+        '  bus bus0 (gain: level) {}',
+        '  level = -6.db',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "level"'
+      ])
+    })
+
+    it('should enforce ordering within instrument definitions', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice {',
+        '    bar = foo',
+        '  }',
+        '  foo = -6.db',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown identifier "foo"'
       ])
     })
   })
