@@ -534,7 +534,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         break
 
       case 'VoiceStatement':
-        generateVoice(instrumentScope, child)
+        // TODO: voice instantiation needs to happen at runtime, not compile time
         break
 
       default:
@@ -562,19 +562,6 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   })
 
   return InstrumentFacet.type().of(instrument)
-}
-
-function generateVoice (instrumentScope: Scope, voice: ast.VoiceStatement): void {
-  const voiceScope = createLocalScope(instrumentScope)
-
-  if (voice.bindings.note != null) {
-    // TODO: Add note parameters
-    voiceScope.resolutions.set(voice.bindings.note.name, RecordFacet.type().of({}))
-  }
-
-  for (const child of voice.children) {
-    processAssignment(voiceScope, child)
-  }
 }
 
 function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {

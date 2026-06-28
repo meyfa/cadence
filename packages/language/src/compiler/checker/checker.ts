@@ -657,13 +657,17 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   return { errors, result: InstrumentFacet.type() }
 }
 
+const noteType = RecordFacet.with({
+  frequency: NumberFacet.with('hz').type(),
+  gate: NumberFacet.with('beats').type(),
+  velocity: NumberFacet.with(undefined).type()
+}).type()
+
 function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileError[] {
   const voiceScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
   if (voice.bindings.note != null) {
-    // TODO: Add note parameters
-    const noteType = RecordFacet.type()
     voiceScope.resolutions.set(voice.bindings.note.name, noteType)
   }
 

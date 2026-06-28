@@ -594,6 +594,9 @@ describe('compiler/generator/generator.ts', () => {
       '  }',
       '  voice note {',
       '    baz = note',
+      '    note_frequency = note.frequency',
+      '    note_gate = note.gate',
+      '    note_velocity = note.velocity',
       '  }',
       '}'
     ].join('\n')
