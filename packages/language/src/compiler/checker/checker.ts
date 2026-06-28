@@ -19,6 +19,7 @@ import { PatternFacet } from '../../type-system/domain/pattern.js'
 import { makeType, makeUnion } from '../../type-system/factory.js'
 import type { Schema, SchemaItem } from '../../type-system/schema.js'
 import type { FacetType, Type, Value } from '../../type-system/types.js'
+import { assertNever } from '../assert.js'
 import { patternBuiltins } from '../builtins/patterns.js'
 import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import { getCurveSegmentType } from '../curves.js'
@@ -84,7 +85,7 @@ export function check (program: ast.Program): CheckResult {
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -226,7 +227,7 @@ function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly C
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -254,7 +255,7 @@ function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileErro
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -346,7 +347,7 @@ function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: Muta
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -428,7 +429,7 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -649,7 +650,7 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
