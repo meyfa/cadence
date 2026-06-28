@@ -6,6 +6,7 @@ import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern
 describe('pattern.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
+  const unitless = (value: number) => numeric(undefined, value)
 
   describe('createSerialPattern()', () => {
     it('should create a finite pattern with the correct length and events', () => {
@@ -16,8 +17,8 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(2), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -35,8 +36,8 @@ describe('pattern.ts', () => {
       ], 2)
       assert.strictEqual(pattern.length?.value, 1.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(1), gate: beats(0.5), velocity: unitless(1) }
       ])
     })
 
@@ -48,8 +49,8 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(2) },
-        { time: beats(3), gate: beats(0.5) }
+        { time: beats(0), gate: beats(2), velocity: unitless(1) },
+        { time: beats(3), gate: beats(0.5), velocity: unitless(1) }
       ])
     })
 
@@ -61,7 +62,7 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { pitch: 'C3', time: beats(0), gate: beats(1) }
+        { pitch: 'C3', time: beats(0), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -73,8 +74,8 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(2), gate: beats(0.25) }
+        { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(2), gate: beats(0.25), velocity: unitless(1) }
       ])
     })
 
@@ -86,8 +87,32 @@ describe('pattern.ts', () => {
       ], 1)
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(1.5) },
-        { time: beats(3), gate: beats(0.1) }
+        { time: beats(0), gate: beats(1.5), velocity: unitless(1) },
+        { time: beats(3), gate: beats(0.1), velocity: unitless(1) }
+      ])
+    })
+
+    it('should handle custom lengths, gates, and velocities', () => {
+      const pattern = createSerialPattern([
+        {
+          value: 'x',
+          length: numeric(undefined, 2),
+          gate: numeric(undefined, 1.5),
+          velocity: numeric(undefined, 0.8)
+        },
+        { value: '-' },
+        {
+          value: 'A#6',
+          length: numeric(undefined, 0.5),
+          gate: numeric(undefined, 0.1),
+          velocity: numeric(undefined, 0.5)
+        }
+      ], 1)
+
+      assert.strictEqual(pattern.length?.value, 3.5)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { time: beats(0), gate: beats(1.5), velocity: unitless(0.8) },
+        { time: beats(3), gate: beats(0.1), pitch: 'A#6', velocity: unitless(0.5) }
       ])
     })
   })
@@ -107,8 +132,8 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(0), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(0), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -120,8 +145,8 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(2) },
-        { time: beats(0), gate: beats(0.5) }
+        { time: beats(0), gate: beats(2), velocity: unitless(1) },
+        { time: beats(0), gate: beats(0.5), velocity: unitless(1) }
       ])
     })
 
@@ -133,8 +158,8 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(0), gate: beats(0.25) }
+        { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(0), gate: beats(0.25), velocity: unitless(1) }
       ])
     })
 
@@ -146,8 +171,32 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(1.5) },
-        { time: beats(0), gate: beats(0.1) }
+        { time: beats(0), gate: beats(1.5), velocity: unitless(1) },
+        { time: beats(0), gate: beats(0.1), velocity: unitless(1) }
+      ])
+    })
+
+    it('should handle custom lengths, gates, and velocities', () => {
+      const pattern = createParallelPattern([
+        {
+          value: 'x',
+          length: numeric(undefined, 2),
+          gate: numeric(undefined, 1.5),
+          velocity: numeric(undefined, 0.8)
+        },
+        { value: '-' },
+        {
+          value: 'x',
+          length: numeric(undefined, 0.5),
+          gate: numeric(undefined, 0.1),
+          velocity: numeric(undefined, 0.5)
+        }
+      ])
+
+      assert.strictEqual(pattern.length?.value, 2)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { time: beats(0), gate: beats(1.5), velocity: unitless(0.8) },
+        { time: beats(0), gate: beats(0.1), velocity: unitless(0.5) }
       ])
     })
   })
@@ -168,13 +217,13 @@ describe('pattern.ts', () => {
     it('should concatenate two finite patterns correctly', () => {
       const concatenated = concatPatterns([
         createSerialPattern([{ value: 'x' }, { value: '-' }], 1),
-        createSerialPattern([{ value: '-' }, { value: 'x' }, { value: 'x' }], 2)
+        createSerialPattern([{ value: '-' }, { value: 'x' }, { value: 'x', velocity: unitless(0.5) }], 2)
       ])
       assert.strictEqual(concatenated.length?.value, 3.5)
       assert.deepStrictEqual([...concatenated.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(2.5), gate: beats(0.5) },
-        { time: beats(3), gate: beats(0.5) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2.5), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(3), gate: beats(0.5), velocity: unitless(0.5) }
       ])
     })
 
@@ -216,12 +265,12 @@ describe('pattern.ts', () => {
     it('should combine multiple patterns correctly', () => {
       const parallel = mergePatterns([
         createSerialPattern([{ value: 'x' }, { value: '-' }], 1),
-        createSerialPattern([{ value: '-' }, { value: 'x' }], 1)
+        createSerialPattern([{ value: '-' }, { value: 'x', velocity: unitless(0.5) }], 1)
       ])
       assert.strictEqual(parallel.length?.value, 2)
       assert.deepStrictEqual([...parallel.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(1), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(1), gate: beats(1), velocity: unitless(0.5) }
       ])
     })
 
@@ -232,9 +281,9 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(parallel.length?.value, 3)
       assert.deepStrictEqual([...parallel.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(1), gate: beats(1) },
-        { time: beats(2), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(1), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -253,10 +302,10 @@ describe('pattern.ts', () => {
       }
 
       assert.deepStrictEqual(evaluated, [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(1), gate: beats(1) },
-        { time: beats(2), gate: beats(1) },
-        { time: beats(4), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(1), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) },
+        { time: beats(4), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -269,20 +318,24 @@ describe('pattern.ts', () => {
       ])
       assert.strictEqual(parallel.length?.value, 3)
       assert.deepStrictEqual([...parallel.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(0), gate: beats(0.25) },
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(0.25), gate: beats(0.25) },
-        { time: beats(0.5), gate: beats(0.5) },
-        { time: beats(2), gate: beats(1) },
-        { time: beats(2), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(0), gate: beats(0.25), velocity: unitless(1) },
+        { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(0.25), gate: beats(0.25), velocity: unitless(1) },
+        { time: beats(0.5), gate: beats(0.5), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) }
       ])
     })
   })
 
   describe('loopPattern()', () => {
     it('should create an infinite pattern when no duration is provided', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }, { value: '-' }], 2)
+      const pattern = createSerialPattern([
+        { value: 'x', velocity: unitless(0.75) },
+        { value: '-' },
+        { value: '-' }
+      ], 2)
       const looped = loopPattern(pattern)
 
       assert.strictEqual(looped.length, undefined)
@@ -295,10 +348,10 @@ describe('pattern.ts', () => {
       }
 
       assert.deepStrictEqual(evaluated, [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1.5), gate: beats(0.5) },
-        { time: beats(3), gate: beats(0.5) },
-        { time: beats(4.5), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: unitless(0.75) },
+        { time: beats(1.5), gate: beats(0.5), velocity: unitless(0.75) },
+        { time: beats(3), gate: beats(0.5), velocity: unitless(0.75) },
+        { time: beats(4.5), gate: beats(0.5), velocity: unitless(0.75) }
       ])
     })
 
@@ -310,9 +363,9 @@ describe('pattern.ts', () => {
 
       const evaluated = [...looped.evaluate()]
       assert.deepStrictEqual(evaluated, [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(2), gate: beats(1) },
-        { time: beats(4), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(1) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) },
+        { time: beats(4), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
@@ -325,10 +378,10 @@ describe('pattern.ts', () => {
 
       assert.strictEqual(looped.length?.value, 4)
       assert.deepStrictEqual([...looped.evaluate()], [
-        { time: beats(0), gate: beats(3), pitch: 'A4' },
-        { time: beats(1), gate: beats(3), pitch: 'B4' },
-        { time: beats(2), gate: beats(2), pitch: 'A4' },
-        { time: beats(3), gate: beats(1), pitch: 'B4' }
+        { time: beats(0), gate: beats(3), pitch: 'A4', velocity: unitless(1) },
+        { time: beats(1), gate: beats(3), pitch: 'B4', velocity: unitless(1) },
+        { time: beats(2), gate: beats(2), pitch: 'A4', velocity: unitless(1) },
+        { time: beats(3), gate: beats(1), pitch: 'B4', velocity: unitless(1) }
       ])
     })
 
@@ -368,34 +421,37 @@ describe('pattern.ts', () => {
 
     it('should keep pattern the same for factor of 1', () => {
       const pattern = createSerialPattern([
-        { value: 'x' },
+        { value: 'x', velocity: unitless(0.75) },
         { value: '-' },
         { value: 'x' }
       ], 1)
       const multiplied = multiplyPattern(pattern, 1)
       assert.strictEqual(multiplied.length?.value, 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: beats(0), gate: beats(1) },
-        { time: beats(2), gate: beats(1) }
+        { time: beats(0), gate: beats(1), velocity: unitless(0.75) },
+        { time: beats(2), gate: beats(1), velocity: unitless(1) }
       ])
     })
 
     it('should multiply the length and timing of events by the given factor', () => {
       const pattern = createSerialPattern([
-        { value: 'x' },
+        { value: 'x', velocity: unitless(0.75) },
         { value: '-' },
         { value: 'x' }
       ], 1)
       const multiplied = multiplyPattern(pattern, 3)
       assert.strictEqual(multiplied.length?.value, 9)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: beats(0), gate: beats(3) },
-        { time: beats(6), gate: beats(3) }
+        { time: beats(0), gate: beats(3), velocity: unitless(0.75) },
+        { time: beats(6), gate: beats(3), velocity: unitless(1) }
       ])
     })
 
     it('should keep infinite patterns infinite', () => {
-      const pattern = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1))
+      const pattern = loopPattern(createSerialPattern([
+        { value: 'x', velocity: unitless(0.75) },
+        { value: '-' }
+      ], 1))
       const multiplied = multiplyPattern(pattern, 4)
       assert.strictEqual(multiplied.length, undefined)
 
@@ -407,10 +463,10 @@ describe('pattern.ts', () => {
       }
 
       assert.deepStrictEqual(evaluated, [
-        { time: beats(0), gate: beats(4) },
-        { time: beats(8), gate: beats(4) },
-        { time: beats(16), gate: beats(4) },
-        { time: beats(24), gate: beats(4) }
+        { time: beats(0), gate: beats(4), velocity: unitless(0.75) },
+        { time: beats(8), gate: beats(4), velocity: unitless(0.75) },
+        { time: beats(16), gate: beats(4), velocity: unitless(0.75) },
+        { time: beats(24), gate: beats(4), velocity: unitless(0.75) }
       ])
     })
 
@@ -440,15 +496,20 @@ describe('pattern.ts', () => {
       const multiplied = multiplyPattern(pattern, 1 / 3)
       assert.strictEqual(multiplied.length?.value, 4 / 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
-        { time: beats(0), gate: beats(1 / 3) },
-        { time: beats(1), gate: beats(1 / 3) }
+        { time: beats(0), gate: beats(1 / 3), velocity: unitless(1) },
+        { time: beats(1), gate: beats(1 / 3), velocity: unitless(1) }
       ])
     })
   })
 
   describe('renderPatternEvents()', () => {
     it('should render the correct number of events from a finite pattern', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }, { value: 'x' }], 1)
+      const pattern = createSerialPattern([
+        { value: 'x' },
+        { value: '-' },
+        { value: 'x', velocity: unitless(0.5) },
+        { value: 'x' }
+      ], 1)
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(0)),
         []
@@ -456,22 +517,22 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(1)),
         [
-          { time: beats(0), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) }
         ]
       )
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(3)),
         [
-          { time: beats(0), gate: beats(1) },
-          { time: beats(2), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) },
+          { time: beats(2), gate: beats(1), velocity: unitless(0.5) }
         ]
       )
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(4)),
         [
-          { time: beats(0), gate: beats(1) },
-          { time: beats(2), gate: beats(1) },
-          { time: beats(3), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) },
+          { time: beats(2), gate: beats(1), velocity: unitless(0.5) },
+          { time: beats(3), gate: beats(1), velocity: unitless(1) }
         ]
       )
     })
@@ -484,7 +545,7 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual(
         renderPatternEvents(createSerialPattern([{ value: 'x' }, { value: '-' }], 1), beats(8)),
         [
-          { time: beats(0), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) }
         ]
       )
     })
@@ -493,7 +554,7 @@ describe('pattern.ts', () => {
       const pattern = createSerialPattern([
         { value: 'x' },
         { value: '-' },
-        { value: 'x' },
+        { value: 'x', velocity: unitless(0.5) },
         { value: 'x' },
         { value: '-' },
         { value: 'x' }
@@ -501,14 +562,14 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(3)),
         [
-          { time: beats(0), gate: beats(1) },
-          { time: beats(2), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) },
+          { time: beats(2), gate: beats(1), velocity: unitless(0.5) }
         ]
       )
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(2)),
         [
-          { time: beats(0), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(1) }
         ]
       )
     })
@@ -522,14 +583,17 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(2)),
         [
-          { time: beats(0), gate: beats(2), pitch: 'A4' },
-          { time: beats(1), gate: beats(1), pitch: 'B4' }
+          { time: beats(0), gate: beats(2), pitch: 'A4', velocity: unitless(1) },
+          { time: beats(1), gate: beats(1), pitch: 'B4', velocity: unitless(1) }
         ]
       )
     })
 
     it('should render events from an infinite pattern', () => {
-      const pattern = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1))
+      const pattern = loopPattern(createSerialPattern([
+        { value: 'x', velocity: unitless(0.5) },
+        { value: '-' }
+      ], 1))
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(0)),
         []
@@ -537,14 +601,14 @@ describe('pattern.ts', () => {
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(1)),
         [
-          { time: beats(0), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(0.5) }
         ]
       )
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(3)),
         [
-          { time: beats(0), gate: beats(1) },
-          { time: beats(2), gate: beats(1) }
+          { time: beats(0), gate: beats(1), velocity: unitless(0.5) },
+          { time: beats(2), gate: beats(1), velocity: unitless(0.5) }
         ]
       )
     })

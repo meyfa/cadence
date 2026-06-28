@@ -229,8 +229,8 @@ describe('compiler/generator/generator.ts', () => {
     const routing = result.track.parts[0].routings[0]
     assert.strictEqual(routing.source.type, 'pattern')
     assert.deepStrictEqual([...routing.source.value.evaluate()], [
-      { time: numeric('beats', 0), pitch: 'C4', gate: numeric('beats', 1) },
-      { time: numeric('beats', 1), pitch: 'D4', gate: numeric('beats', 1) }
+      { time: numeric('beats', 0), pitch: 'C4', gate: numeric('beats', 1), velocity: numeric(undefined, 1) },
+      { time: numeric('beats', 1), pitch: 'D4', gate: numeric('beats', 1), velocity: numeric(undefined, 1) }
     ])
   })
 
@@ -249,6 +249,48 @@ describe('compiler/generator/generator.ts', () => {
     const effect = result.mixer.buses[0].effects[0]
     assert.strictEqual(effect.type, 'gain')
     assert.deepStrictEqual(effect.gain.initial, numeric('db', -20))
+  })
+
+  it('should generate instrument routings for patterns', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part (4.bars) {',
+      '    synth << [C4(0.5):2 D4(1, vel: 0.75) -]',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    const routing = result.track.parts[0].routings[0]
+    assert.strictEqual(routing.source.type, 'pattern')
+    assert.deepStrictEqual([...routing.source.value.evaluate()], [
+      { time: numeric('beats', 0), pitch: 'C4', gate: numeric('beats', 0.5), velocity: numeric(undefined, 1) },
+      { time: numeric('beats', 2), pitch: 'D4', gate: numeric('beats', 1), velocity: numeric(undefined, 0.75) }
+    ])
+  })
+
+  it('should clamp step velocity to [0, 1]', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track {',
+      '  part (4.bars) {',
+      '    synth << [C4(vel: 1.5):2 D4(vel: -0.5)]',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    const routing = result.track.parts[0].routings[0]
+    assert.strictEqual(routing.source.type, 'pattern')
+    assert.deepStrictEqual([...routing.source.value.evaluate()], [
+      { time: numeric('beats', 0), pitch: 'C4', gate: numeric('beats', 2), velocity: numeric(undefined, 1) },
+      { time: numeric('beats', 2), pitch: 'D4', gate: numeric('beats', 1), velocity: numeric(undefined, 0) }
+    ])
   })
 
   it('should generate automation points for a lin curve', () => {

@@ -3,6 +3,7 @@ import { numeric } from '@utility'
 import type { NoteEvent, Pattern, Step } from './program.js'
 
 const zeroBeats = numeric('beats', 0)
+const defaultVelocity = numeric(undefined, 1)
 
 const emptyPattern: Pattern = {
   length: zeroBeats,
@@ -49,8 +50,13 @@ function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLen
 
   const stepGate = baseLength * (step.gate?.value ?? step.length?.value ?? 1)
   const gate = numeric('beats', stepGate)
+  const velocity = step.velocity ?? defaultVelocity
 
-  events.push(step.value === 'x' ? { time, gate } : { time, gate, pitch: step.value })
+  events.push(
+    step.value === 'x'
+      ? { time, gate, velocity }
+      : { time, gate, pitch: step.value, velocity }
+  )
 }
 
 /**

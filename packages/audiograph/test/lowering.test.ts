@@ -366,7 +366,10 @@ describe('lowering.ts', () => {
               {
                 source: {
                   type: 'pattern',
-                  value: createSerialPattern([{ value: 'C4' }, { value: 'E4' }], 1)
+                  value: createSerialPattern([
+                    { value: 'C4' },
+                    { value: 'E4', velocity: numeric(undefined, 0.75) }
+                  ], 1)
                 },
                 destination: {
                   type: 'instrument',
@@ -376,13 +379,16 @@ describe('lowering.ts', () => {
             ]
           },
           {
-            name: 'Part 1',
+            name: 'Part 2',
             length: numeric('beats', 4),
             routings: [
               {
                 source: {
                   type: 'pattern',
-                  value: createSerialPattern([{ value: 'G4' }, { value: 'B4' }], 1)
+                  value: createSerialPattern([
+                    { value: 'G4' },
+                    { value: 'B4' }
+                  ], 1)
                 },
                 destination: {
                   type: 'instrument',
@@ -407,7 +413,7 @@ describe('lowering.ts', () => {
         2 as NodeId,
         [
           { time: 0, pitch: 60, velocity: 1.0, duration: 0.5 },
-          { time: 0.5, pitch: 64, velocity: 1.0, duration: 0.5 },
+          { time: 0.5, pitch: 64, velocity: 0.75, duration: 0.5 },
           { time: 2, pitch: 67, velocity: 1.0, duration: 0.5 },
           { time: 2.5, pitch: 71, velocity: 1.0, duration: 0.5 }
         ]

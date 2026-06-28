@@ -41,5 +41,10 @@ export const stepSchema = makeSchema([
     name: 'gate',
     type: NumberFacet.with(undefined).type(),
     required: false
+  },
+  {
+    name: 'vel',
+    type: NumberFacet.with(undefined).type(),
+    required: false
   }
 ])
