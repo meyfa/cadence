@@ -18,6 +18,11 @@ export interface Step {
    * If undefined, the gate is equal to the step's length.
    */
   readonly gate?: Numeric<undefined>
+
+  /**
+   * The velocity of the step, in the range [0, 1]. Defaults to 1.
+   */
+  readonly velocity?: Numeric<undefined>
 }
 
 export interface NoteEvent {
@@ -33,6 +38,11 @@ export interface NoteEvent {
    * The pitch associated with the event. If undefined, indicates that the instrument's default pitch should be used.
    */
   readonly pitch?: Pitch
+
+  /**
+   * The velocity of the note event, in the range [0, 1].
+   */
+  readonly velocity: Numeric<undefined>
 }
 
 export interface Pattern {

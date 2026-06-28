@@ -46,7 +46,7 @@ describe('library/modules/patterns.ts', () => {
 
     it('should loop finite patterns infinitely', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
+        { value: 'x', velocity: numeric(undefined, 0.5) },
         { value: '-' },
         { value: '-' },
         { value: 'G5' }
@@ -59,10 +59,10 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.25) },
-        { time: beats(0.75), gate: beats(0.25), pitch: 'G5' },
-        { time: beats(1), gate: beats(0.25) },
-        { time: beats(1.75), gate: beats(0.25), pitch: 'G5' }
+        { time: beats(0), gate: beats(0.25), velocity: numeric(undefined, 0.5) },
+        { time: beats(0.75), gate: beats(0.25), pitch: 'G5', velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(0.25), velocity: numeric(undefined, 0.5) },
+        { time: beats(1.75), gate: beats(0.25), pitch: 'G5', velocity: numeric(undefined, 1) }
       ])
     })
 
@@ -80,9 +80,9 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
-        { time: beats(1.5), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: numeric(undefined, 1) }
       ])
     })
 
@@ -113,12 +113,12 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
-        { time: beats(1.5), gate: beats(0.5) },
-        { time: beats(2.5), gate: beats(0.5), pitch: 'C4' },
-        { time: beats(3.0), gate: beats(0.5) },
-        { time: beats(4.0), gate: beats(0.5), pitch: 'C4' }
+        { time: beats(0), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(2.5), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 1) },
+        { time: beats(3.0), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(4.0), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 1) }
       ])
     })
 
@@ -172,7 +172,7 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: numeric(undefined, 1) }
       ])
     })
   })
@@ -184,7 +184,7 @@ describe('library/modules/patterns.ts', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
         { value: 'x' },
         { value: '-' },
-        { value: 'C4' }
+        { value: 'C4', velocity: numeric(undefined, 0.5) }
       ], 2))
 
       const result = invoke(fill, pattern, {
@@ -196,9 +196,9 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
-        { time: beats(1.5), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 0.5) },
+        { time: beats(1.5), gate: beats(0.5), velocity: numeric(undefined, 1) }
       ])
     })
 
@@ -218,9 +218,9 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4' },
-        { time: beats(1.5), gate: beats(0.5) }
+        { time: beats(0), gate: beats(0.5), velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: numeric(undefined, 1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: numeric(undefined, 1) }
       ])
     })
 
@@ -291,7 +291,7 @@ describe('library/modules/patterns.ts', () => {
     it('should trim notes with gate that extends beyond the duration', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
         { value: 'A4', gate: numeric(undefined, 3) },
-        { value: 'B4', gate: numeric(undefined, 5) }
+        { value: 'B4', gate: numeric(undefined, 5), velocity: numeric(undefined, 0.5) }
       ], 1))
 
       const result = invoke(fill, pattern, {
@@ -303,10 +303,10 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(4.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(3.0), pitch: 'A4' },
-        { time: beats(1), gate: beats(3.0), pitch: 'B4' },
-        { time: beats(2), gate: beats(2.0), pitch: 'A4' },
-        { time: beats(3), gate: beats(1.0), pitch: 'B4' }
+        { time: beats(0), gate: beats(3.0), pitch: 'A4', velocity: numeric(undefined, 1) },
+        { time: beats(1), gate: beats(3.0), pitch: 'B4', velocity: numeric(undefined, 0.5) },
+        { time: beats(2), gate: beats(2.0), pitch: 'A4', velocity: numeric(undefined, 1) },
+        { time: beats(3), gate: beats(1.0), pitch: 'B4', velocity: numeric(undefined, 0.5) }
       ])
     })
   })

@@ -431,8 +431,7 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
       const events: readonly NoteOptions[] = renderPatternEvents(routing.source.value, part.length).map((event) => ({
         time: (offsetBeats + event.time.value) * timePerBeat,
         pitch: event.pitch != null ? convertPitchToMidi(event.pitch) : undefined,
-        // TODO custom velocity
-        velocity: 1.0,
+        velocity: event.velocity.value,
         duration: event.gate != null ? event.gate.value * timePerBeat : undefined
       }))
 

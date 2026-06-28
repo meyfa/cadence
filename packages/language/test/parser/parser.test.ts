@@ -269,7 +269,31 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should parse a pattern with named arguments', () => {
+  it('should parse a pattern with gate and velocity', () => {
+    const result = parse(lexSource('pattern = [C4(2.0, 0.75):1.5-]'))
+    assertResultComplete(result)
+
+    const gate = { type: 'Number', value: 2.0 }
+    const velocity = { type: 'Number', value: 0.75 }
+    const length = { type: 'Number', value: 1.5 }
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Assignment',
+        key: { type: 'Identifier', name: 'pattern' },
+        value: {
+          type: 'Pattern',
+          mode: 'serial',
+          children: [
+            { type: 'Step', value: 'C4', length, parameters: [gate, velocity] },
+            { type: 'Step', value: '-', parameters: [] }
+          ]
+        }
+      }
+    ])
+  })
+
+  it('should parse a pattern with a single named parameter', () => {
     const result = parse(lexSource('pattern = [C4(gate: 2.0):1.5-]'))
     assertResultComplete(result)
 
@@ -286,6 +310,42 @@ describe('parser/parser.ts', () => {
               value: 'C4',
               length: { type: 'Number', value: 1.5 },
               parameters: [
+                {
+                  type: 'Property',
+                  key: { type: 'Identifier', name: 'gate' },
+                  value: { type: 'Number', value: 2.0 }
+                }
+              ]
+            },
+            { type: 'Step', value: '-', parameters: [] }
+          ]
+        }
+      }
+    ])
+  })
+
+  it('should parse a pattern with multiple named parameters', () => {
+    const result = parse(lexSource('pattern = [C4(vel: 0.75, gate: 2.0):1.5-]'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Assignment',
+        key: { type: 'Identifier', name: 'pattern' },
+        value: {
+          type: 'Pattern',
+          mode: 'serial',
+          children: [
+            {
+              type: 'Step',
+              value: 'C4',
+              length: { type: 'Number', value: 1.5 },
+              parameters: [
+                {
+                  type: 'Property',
+                  key: { type: 'Identifier', name: 'vel' },
+                  value: { type: 'Number', value: 0.75 }
+                },
                 {
                   type: 'Property',
                   key: { type: 'Identifier', name: 'gate' },

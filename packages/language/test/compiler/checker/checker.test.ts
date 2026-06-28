@@ -171,6 +171,14 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept patterns with step arguments', () => {
+      const source = [
+        'my_pattern = [x C4(1.5):2 G4(vel: 0.75) A#4(0.5, 0.75) G4(gate: 0.5, vel: 0.75) -:3]'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept a pattern with interpolation', () => {
       const source = [
         'some_chord = [<D4 G4>]',
@@ -483,6 +491,28 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Unknown identifier "bar"'
+      ])
+    })
+
+    it('should reject patterns with step arguments of the wrong type', () => {
+      assertErrorMessages('my_pattern = [C4:"foo"]', [
+        'Expected type number, got string'
+      ])
+
+      assertErrorMessages('my_pattern = [C4("foo")]', [
+        'Expected type number, got string'
+      ])
+
+      assertErrorMessages('my_pattern = [C4(gate: "foo")]', [
+        'Expected type number, got string'
+      ])
+
+      assertErrorMessages('my_pattern = [C4(vel: "foo")]', [
+        'Expected type number, got string'
+      ])
+
+      assertErrorMessages('my_pattern = [C4(0.5, "foo")]', [
+        'Expected type number, got string'
       ])
     })
 

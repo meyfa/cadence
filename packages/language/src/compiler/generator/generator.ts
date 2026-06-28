@@ -482,12 +482,15 @@ function generateStep (scope: Scope, expression: ast.Step): Step {
 
   const parameters = resolveArgumentList(scope, expression.parameters, stepSchema)
   const gate = parameters.gate != null ? NumberFacet.get(parameters.gate) : undefined
+  const velocity = parameters.vel != null
+    ? clamped(NumberFacet.get(parameters.vel), 0, 1)
+    : undefined
 
   if (length == null) {
-    return { value, gate }
+    return { value, gate, velocity }
   }
 
-  return { value, length, gate }
+  return { value, length, gate, velocity }
 }
 
 function generateCurve (scope: Scope, curve: ast.Curve): Value {
