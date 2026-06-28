@@ -21,6 +21,8 @@ import { makeType } from '../../type-system/factory.js'
 import { Parameters } from '../../type-system/helpers.js'
 import type { InferSchema, Schema } from '../../type-system/schema.js'
 import type { FacetType, Value } from '../../type-system/types.js'
+import { assert, assertNever, fail, nonNull } from '../assert.js'
+import { patternBuiltins } from '../builtins/patterns.js'
 import type { CheckedProgram } from '../checker/checker.js'
 import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '../common.js'
 import type { CurveSegment as GeneratedCurveSegment } from '../curves.js'
@@ -29,11 +31,9 @@ import { binaryOperations } from '../operators/binary.js'
 import { unaryOperations } from '../operators/unary.js'
 import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toNumberValue } from '../units.js'
-import { assert, fail, nonNull } from '../assert.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
-import { patternBuiltins } from '../builtins/patterns.js'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -67,7 +67,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -170,7 +170,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -213,7 +213,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -257,7 +257,7 @@ function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: M
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -278,6 +278,8 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
       case 'instrument':
         unroutedInstruments.delete(routing.source.id)
         break
+      default:
+        assertNever(routing.source)
     }
   }
 
@@ -347,7 +349,7 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
       }
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
@@ -536,7 +538,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         break
 
       default:
-        child satisfies never // exhaustiveness check
+        assertNever(child)
     }
   }
 
