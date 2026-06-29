@@ -8,6 +8,7 @@ import { createAudioGraphBuilder } from './builder.js'
 import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
+import { applyEnvelope } from './envelope.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
 import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, OscillatorNode, PanNode, ReverbNode, SampleNode, WaveShaperNode, WidthNode } from './nodes.js'
 
@@ -184,11 +185,20 @@ function createSampleSource (sample: Sample, rootNote: MidiNote, envelope: Envel
     return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
   })()
 
-  return builder.addNode<SampleNode>('sample', { rootNote, envelope, url: sample.url, length })
+  return builder.addNode<SampleNode>('sample', {
+    rootNote,
+    envelope: (note) => applyEnvelope(envelope, note),
+    url: sample.url,
+    length
+  })
 }
 
 function createOscillatorSource (oscillator: Oscillator, rootNote: MidiNote, envelope: Envelope, builder: Builder): Node {
-  return builder.addNode<OscillatorNode>('oscillator', { rootNote, envelope, shape: oscillator.shape })
+  return builder.addNode<OscillatorNode>('oscillator', {
+    rootNote,
+    envelope: (note) => applyEnvelope(envelope, note),
+    shape: oscillator.shape
+  })
 }
 
 function createEffect (program: Program, effect: Effect, builder: Builder): SubGraph {

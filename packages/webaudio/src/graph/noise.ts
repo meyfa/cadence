@@ -1,4 +1,5 @@
-import { mulberry32, xmur3, type Numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { mulberry32, xmur3 } from '@utility'
 
 type CreateAudioBuffer = (options: AudioBufferOptions) => AudioBuffer
 

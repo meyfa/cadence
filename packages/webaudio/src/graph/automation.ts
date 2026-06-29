@@ -80,6 +80,36 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
   })
 }
 
+export function applyAutomationPoints<U extends Unit> (time: number, transport: Transport, param: AudioParam, source: TimeVariant<U>): void {
+  param.value = source.initial.value
+
+  const points = source.points
+  if (points.length === 0) {
+    return
+  }
+
+  let previousTime = time
+  let previousValue = source.initial.value
+
+  param.setValueAtTime(previousValue, previousTime)
+
+  for (const point of points) {
+    const pointTime = time + point.time.value
+    const { value: { value }, curve } = point
+
+    scheduleToPoint(transport, param, {
+      curve,
+      time: pointTime,
+      value,
+      previousTime,
+      previousValue
+    })
+
+    previousTime = pointTime
+    previousValue = value
+  }
+}
+
 function evaluateCurve (curve: Curve, t: number, startValue: number, endValue: number): number {
   if (t <= 0) {
     return startValue
