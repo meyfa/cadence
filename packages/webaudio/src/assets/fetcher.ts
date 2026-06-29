@@ -1,5 +1,6 @@
 import type { Numeric } from '@utility'
-import { createAssetCache, type AssetCache } from './cache.js'
+import type { AssetCache } from './cache.js'
+import { createAssetCache } from './cache.js'
 
 export interface CacheLimits {
   readonly arrayBuffer: Numeric<'bytes'>

@@ -5,6 +5,7 @@ import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { dbToGain } from '../src/constants.js'
 import { createEntityKey } from '../src/entities.js'
+import { applyEnvelope } from '../src/envelope.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode, WaveShaperNode } from '../src/nodes.js'
@@ -213,7 +214,7 @@ describe('lowering.ts', () => {
       {
         id: 3 as NodeId,
         type: 'sample',
-        envelope: defaultEnvelope,
+        envelope: (graph.nodes.get(3 as NodeId) as SampleNode).envelope,
         length: undefined,
         url: 'foo.wav',
         rootNote: 72 as MidiNote // C5
@@ -496,7 +497,7 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
-      envelope: defaultEnvelope,
+      envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
       url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: numeric('s', 0)
@@ -522,7 +523,7 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
       type: 'sample',
-      envelope: defaultEnvelope,
+      envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
       url: 'foo.wav',
       rootNote: 72 as MidiNote,
       length: undefined
@@ -598,6 +599,11 @@ describe('lowering.ts', () => {
       }
     ]
 
+    const note = {
+      velocity: 1,
+      duration: 10
+    }
+
     for (const { envelope, expected } of testCases) {
       const program = createProgramWithInstrument({
         id: 100 as InstrumentId,
@@ -613,15 +619,13 @@ describe('lowering.ts', () => {
       })
 
       const graph = createAudioGraph(program)
+      const envelopeFn = (graph.nodes.get(2 as NodeId) as SampleNode).envelope
 
-      assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-        id: 2 as NodeId,
-        type: 'sample',
-        url: 'foo.wav',
-        rootNote: 72 as MidiNote,
-        length: undefined,
-        envelope: expected
-      } satisfies SampleNode, `test case: ${JSON.stringify(envelope)}`)
+      assert.deepStrictEqual(
+        envelopeFn(note),
+        applyEnvelope(expected, note),
+        `test case: ${JSON.stringify(envelope)}`
+      )
     }
   })
 

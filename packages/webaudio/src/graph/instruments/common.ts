@@ -1,15 +1,15 @@
-import type { NoteOptions } from '@audiograph'
-import type { Envelope, MidiNote } from '@core'
+import type { NoteOptions, TimeVariant } from '@audiograph'
+import type { MidiNote } from '@core'
 import type { Numeric } from '@utility'
 import { createMultimap } from '@utility'
 import type { Transport } from '../../transport/transport.js'
+import { applyAutomationPoints } from '../automation.js'
 import type { Instance } from '../instance.js'
-import { applyEnvelope } from './envelope.js'
 
 export type CreateSource = (note: NoteOptions) => AudioScheduledSourceNode
 
 export interface InstrumentOptions {
-  readonly envelope: Envelope
+  readonly envelope: (note: Pick<NoteOptions, 'duration' | 'velocity'>) => TimeVariant<undefined>
   readonly rootNote: MidiNote
   readonly length?: Numeric<'s'>
 }
@@ -46,10 +46,6 @@ export function createInstrumentInstance (
       return Math.min(note.duration, options.length.value)
     })()
 
-    if (holdDuration != null && holdDuration <= 0) {
-      return
-    }
-
     const midi = note.pitch ?? options.rootNote
     const velocity = Math.max(0, Math.min(1, note.velocity))
 
@@ -73,11 +69,15 @@ export function createInstrumentInstance (
     }, { once: true })
 
     const { envelope } = options
-    applyEnvelope(envelope, gainNode.gain, { time, velocity, holdDuration })
+
+    const noteEnvelope = envelope({ velocity, duration: holdDuration })
+    applyAutomationPoints(time, transport, gainNode.gain, noteEnvelope)
 
     sourceNode.start(time)
-    if (holdDuration != null) {
-      sourceNode.stop(time + holdDuration + envelope.release.value)
+
+    const lastPoint = noteEnvelope.points.at(-1)
+    if (holdDuration != null && lastPoint != null) {
+      sourceNode.stop(time + lastPoint.time.value)
     }
   })
 
