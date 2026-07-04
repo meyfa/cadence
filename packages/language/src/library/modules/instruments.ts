@@ -38,8 +38,8 @@ const sample = Functions.of({
     { name: 'root_note', type: StringFacet.type(), required: false },
     { name: 'length', type: NumberFacet.with('s').type(), required: false }
   ]),
-
   returnType: SampleInstrumentType,
+  effects: { blocking: true },
 
   // eslint-disable-next-line camelcase
   invoke: (context: ParameterContext & InstrumentContext, { url, gain, root_note, length }) => {
@@ -75,8 +75,8 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
     parameters: makeSchema([
       { name: 'gain', type: NumberFacet.with('db').type(), required: false }
     ]),
-
     returnType: OscillatorInstrumentType,
+    effects: { blocking: true },
 
     invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
       const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN

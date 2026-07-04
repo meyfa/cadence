@@ -1,3 +1,4 @@
+import type { Effects } from '../../type-system/base/function.js'
 import type { FacetType } from '../../type-system/types.js'
 
 // scope types
@@ -6,6 +7,7 @@ export interface Scope {
   readonly top: GlobalScope
   readonly parent?: Scope
   readonly resolutions: ReadonlyMap<string, FacetType>
+  readonly allowedEffects: Effects
 }
 
 export interface GlobalScope extends Scope {
@@ -35,7 +37,12 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
     get top (): GlobalScope {
       return scope
     },
+
     resolutions: new Map(initialResolutions),
+
+    allowedEffects: {
+      blocking: true
+    },
 
     // from GlobalScope
     namespaces: new Map(),
@@ -45,11 +52,12 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
   return scope
 }
 
-export function createLocalScope (parent: Scope): MutableScope {
+export function createLocalScope (parent: Scope, overrideEffects?: Effects): MutableScope {
   return {
     top: parent.top,
     parent,
-    resolutions: new Map()
+    resolutions: new Map(),
+    allowedEffects: overrideEffects ?? parent.allowedEffects
   }
 }
 

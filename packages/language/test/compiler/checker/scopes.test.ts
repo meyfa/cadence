@@ -12,8 +12,8 @@ describe('compiler/checker/scopes.ts', () => {
 
       assert.strictEqual(result.top, result)
       assert.strictEqual(result.parent, undefined)
-
       assert.strictEqual(result.resolutions.get('foo'), foo)
+      assert.deepStrictEqual(result.allowedEffects, { blocking: true })
 
       assert.strictEqual(result.buses.size, 0)
       assert.strictEqual(result.namespaces.size, 0)
@@ -31,6 +31,7 @@ describe('compiler/checker/scopes.ts', () => {
       assert.strictEqual(localScope.top, globalScope)
       assert.strictEqual(localScope.parent, globalScope)
       assert.strictEqual(localScope.resolutions.get('foo'), undefined)
+      assert.deepStrictEqual(localScope.allowedEffects, globalScope.allowedEffects)
 
       const bar = NumberFacet.with(undefined).type()
       localScope.resolutions.set('bar', bar)
@@ -42,6 +43,18 @@ describe('compiler/checker/scopes.ts', () => {
       assert.strictEqual(nestedLocalScope.parent, localScope)
       assert.strictEqual(nestedLocalScope.resolutions.get('foo'), undefined)
       assert.strictEqual(nestedLocalScope.resolutions.get('bar'), undefined)
+    })
+
+    it('can override allowedEffects', () => {
+      const globalScope = createGlobalScope(new Map([
+        ['foo', NumberFacet.with('db').type()]
+      ]))
+
+      const localScopeWithoutOverride = createLocalScope(globalScope)
+      assert.deepStrictEqual(localScopeWithoutOverride.allowedEffects, { blocking: true })
+
+      const localScopeWithOverride = createLocalScope(globalScope, { blocking: false })
+      assert.deepStrictEqual(localScopeWithOverride.allowedEffects, { blocking: false })
     })
   })
 

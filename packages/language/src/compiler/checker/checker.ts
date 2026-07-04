@@ -636,8 +636,13 @@ function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious
 }
 
 function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<FacetType> {
-  const instrumentScope = createLocalScope(scope)
   const errors: CompileError[] = []
+
+  if (!scope.allowedEffects.blocking) {
+    errors.push(new CompileError('Cannot construct an instrument in a realtime context', expression.range))
+  }
+
+  const instrumentScope = createLocalScope(scope)
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -664,7 +669,7 @@ const noteType = RecordFacet.with({
 }).type()
 
 function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileError[] {
-  const voiceScope = createLocalScope(scope)
+  const voiceScope = createLocalScope(scope, { blocking: false })
   const errors: CompileError[] = []
 
   if (voice.bindings.note != null) {
@@ -811,9 +816,17 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
     return { errors }
   }
 
-  const { parameters, returnType } = FunctionFacet.detail(callee)
+  const { parameters, returnType, effects } = FunctionFacet.detail(callee)
 
   errors.push(...checkArgumentList(scope, expression.arguments, parameters, expression.range))
+
+  if (!scope.allowedEffects.blocking && effects.blocking) {
+    const functionName = tryGetFunctionName(expression.callee)
+    const message = functionName != null
+      ? `Function "${functionName}" may block and cannot be called from a realtime context`
+      : `Function may block and cannot be called from a realtime context`
+    errors.push(new CompileError(message, expression.range))
+  }
 
   return { errors, result: returnType }
 }
@@ -880,4 +893,16 @@ function checkArgumentList (
   }
 
   return errors
+}
+
+function tryGetFunctionName (callee: ast.Expression): string | undefined {
+  if (callee.type === 'Identifier') {
+    return callee.name
+  }
+
+  if (callee.type === 'PropertyAccess') {
+    return callee.property.name
+  }
+
+  return undefined
 }

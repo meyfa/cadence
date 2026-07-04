@@ -25,7 +25,8 @@ describe('hover/operation.ts', () => {
       {
         range: getRangeAt(source, source.indexOf('gain('), 'gain'.length),
         title: 'gain(gain: number(db)) -> effect + record(gain)',
-        summary: 'Applies a gain adjustment to the signal.'
+        summary: 'Applies a gain adjustment to the signal.',
+        annotations: ['may block']
       }
     )
   })
@@ -73,7 +74,8 @@ describe('hover/operation.ts', () => {
       {
         range: getRangeAt(source, source.indexOf('delay('), 'delay'.length),
         title: 'delay(mix: number, time: number(beats) | number(s), feedback: number, wet?: number(db)) -> effect + record(feedback)',
-        summary: 'Adds echoes with configurable mix, time, and feedback.'
+        summary: 'Adds echoes with configurable mix, time, and feedback.',
+        annotations: ['may block']
       }
     )
 
@@ -82,7 +84,8 @@ describe('hover/operation.ts', () => {
       {
         range: getRangeAt(source, source.indexOf('reverb('), 'reverb'.length),
         title: 'reverb(mix: number, decay: number(beats) | number(s), wet?: number(db)) -> effect',
-        summary: 'Adds reverberation with configurable mix and decay.'
+        summary: 'Adds reverberation with configurable mix and decay.',
+        annotations: ['may block']
       }
     )
   })

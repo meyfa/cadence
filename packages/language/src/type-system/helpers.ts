@@ -15,7 +15,8 @@ export const Functions = {
   of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
     const type = FunctionFacet.with({
       parameters: value.parameters,
-      returnType: value.returnType
+      returnType: value.returnType,
+      effects: value.effects
     }).type()
 
     return type.of(value)

@@ -19,8 +19,8 @@ const loopDeclaration = {
   parameters: makeSchema([
     { name: 'times', type: NumberFacet.with(undefined).type(), required: false }
   ]),
-
-  returnType: PatternFacet.type()
+  returnType: PatternFacet.type(),
+  effects: { blocking: false }
 } as const
 
 const loop: PatternBuiltin = {
@@ -57,8 +57,8 @@ const fillDeclaration = {
   parameters: makeSchema([
     { name: 'duration', type: NumberFacet.with('beats').type(), required: true }
   ]),
-
-  returnType: PatternFacet.type()
+  returnType: PatternFacet.type(),
+  effects: { blocking: false }
 } as const
 
 const fill: PatternBuiltin = {

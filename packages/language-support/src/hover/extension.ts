@@ -19,6 +19,16 @@ const theme = EditorView.baseTheme({
   '.cm-cadence-hoverSummary': {
     marginTop: '0.35rem',
     whiteSpace: 'pre-wrap'
+  },
+  '.cm-cadence-hoverAnnotation': {
+    display: 'inline-block',
+    marginTop: '0.35rem',
+    marginRight: '0.25rem',
+    fontSize: '0.8em',
+    padding: '2px 4px',
+    borderRadius: '2px',
+    backgroundColor: 'color-mix(in srgb, currentColor, transparent 80%)',
+    fontFamily: 'monospace'
   }
 })
 
@@ -43,6 +53,12 @@ const tooltip = hoverTooltip((view, position) => {
       const summary = dom.appendChild(document.createElement('div'))
       summary.className = 'cm-cadence-hoverSummary'
       summary.textContent = info.summary
+    }
+
+    for (const annotation of info.annotations ?? []) {
+      const annotationElement = dom.appendChild(document.createElement('div'))
+      annotationElement.className = 'cm-cadence-hoverAnnotation'
+      annotationElement.textContent = annotation
     }
 
     return { dom }
