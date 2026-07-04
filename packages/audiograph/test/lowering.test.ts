@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Pitch, Program, Track } from '@core'
+import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Pitch, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
@@ -8,7 +8,7 @@ import { createEntityKey } from '../src/entities.js'
 import { applyEnvelope } from '../src/envelope.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { DelayNode, GainNode, IdentityNode, Node, ReverbNode, SampleNode, WaveShaperNode } from '../src/nodes.js'
+import type { DelayNode, GainNode, IdentityNode, Node, OscillatorNode, ReverbNode, SampleNode, WaveShaperNode } from '../src/nodes.js'
 
 const defaultEnvelope: Envelope = {
   attack: numeric('s', 0.01),
@@ -21,11 +21,17 @@ function compareIds (a: Node, b: Node): number {
   return a.id - b.id
 }
 
-function createProgramWithInstrument (instrument: Instrument): Program {
+function createProgramWithInstrument (instrument: Instrument, asset?: Asset): Program {
+  const assets = new Map<AssetId, Asset>()
+  if (asset != null) {
+    assets.set(asset.id, asset)
+  }
+
   return {
     beatsPerBar: 4,
     instruments: new Map([[instrument.id, instrument]]),
     automations: new Map(),
+    assets,
     track: {
       tempo: numeric('bpm', 120),
       parts: []
@@ -53,6 +59,7 @@ function createProgramWithEffect (effect: Effect): Program {
     beatsPerBar: 4,
     instruments: new Map(),
     automations: new Map(),
+    assets: new Map(),
     track: {
       tempo: numeric('bpm', 120),
       parts: []
@@ -95,6 +102,7 @@ describe('lowering.ts', () => {
       beatsPerBar: 4,
       instruments: new Map(),
       automations: new Map(),
+      assets: new Map(),
       track: {
         tempo: numeric('bpm', 120),
         parts: []
@@ -118,6 +126,45 @@ describe('lowering.ts', () => {
     assert.strictEqual(graph.noteEvents.size, 0)
   })
 
+  it('should include assets in the graph', () => {
+    const assetId = 100 as AssetId
+
+    const program: Program = {
+      beatsPerBar: 4,
+      instruments: new Map(),
+      automations: new Map(),
+      assets: new Map([
+        [
+          assetId,
+          {
+            id: assetId,
+            url: 'foo.wav'
+          }
+        ]
+      ]),
+      track: {
+        tempo: numeric('bpm', 120),
+        parts: []
+      },
+      mixer: {
+        buses: [],
+        routings: []
+      }
+    }
+
+    const graph = createAudioGraph(program)
+
+    assert.deepStrictEqual([...graph.assets.entries()], [
+      [
+        assetId,
+        {
+          id: assetId,
+          url: 'foo.wav'
+        }
+      ]
+    ])
+  })
+
   it('should lower a program with one instrument and one bus', () => {
     const instrumentId = 100 as InstrumentId
     const instrumentGainId = 200 as ParameterId
@@ -137,8 +184,8 @@ describe('lowering.ts', () => {
               initial: numeric('db', -6)
             },
             source: {
-              type: 'sample',
-              url: 'foo.wav'
+              type: 'oscillator',
+              shape: 'sine'
             },
             envelope: defaultEnvelope
           } satisfies Instrument
@@ -146,6 +193,7 @@ describe('lowering.ts', () => {
       ]),
 
       automations: new Map(),
+      assets: new Map(),
 
       track: {
         tempo: numeric('bpm', 120),
@@ -213,12 +261,11 @@ describe('lowering.ts', () => {
       } satisfies GainNode,
       {
         id: 3 as NodeId,
-        type: 'sample',
-        envelope: (graph.nodes.get(3 as NodeId) as SampleNode).envelope,
-        length: undefined,
-        url: 'foo.wav',
+        type: 'oscillator',
+        envelope: (graph.nodes.get(3 as NodeId) as OscillatorNode).envelope,
+        shape: 'sine',
         rootNote: 72 as MidiNote // C5
-      } satisfies SampleNode,
+      } satisfies OscillatorNode,
       {
         id: 4 as NodeId,
         type: 'gain',
@@ -256,8 +303,8 @@ describe('lowering.ts', () => {
               initial: numeric('db', -6)
             },
             source: {
-              type: 'sample',
-              url: 'foo.wav'
+              type: 'oscillator',
+              shape: 'sine'
             },
             envelope: defaultEnvelope
           } satisfies Instrument
@@ -285,6 +332,8 @@ describe('lowering.ts', () => {
           }
         ]
       ]),
+
+      assets: new Map(),
 
       track: {
         tempo: numeric('bpm', 120),
@@ -347,8 +396,8 @@ describe('lowering.ts', () => {
               initial: numeric('db', -6)
             },
             source: {
-              type: 'sample',
-              url: 'foo.wav'
+              type: 'oscillator',
+              shape: 'sine'
             },
             envelope: defaultEnvelope
           } satisfies Instrument
@@ -356,6 +405,7 @@ describe('lowering.ts', () => {
       ]),
 
       automations: new Map(),
+      assets: new Map(),
 
       track: {
         tempo: numeric('bpm', 120),
@@ -430,8 +480,8 @@ describe('lowering.ts', () => {
         initial: numeric('db', -Infinity)
       },
       source: {
-        type: 'sample',
-        url: 'foo.wav'
+        type: 'oscillator',
+        shape: 'sine'
       },
       envelope: defaultEnvelope
     })
@@ -448,8 +498,8 @@ describe('lowering.ts', () => {
           initial: numeric('db', gain)
         },
         source: {
-          type: 'sample',
-          url: 'foo.wav'
+          type: 'oscillator',
+          shape: 'sine'
         },
         envelope: defaultEnvelope
       })
@@ -468,8 +518,8 @@ describe('lowering.ts', () => {
           initial: numeric('db', -6)
         },
         source: {
-          type: 'sample',
-          url: 'foo.wav'
+          type: 'oscillator',
+          shape: 'sine'
         },
         envelope: defaultEnvelope
       })
@@ -487,10 +537,13 @@ describe('lowering.ts', () => {
       },
       source: {
         type: 'sample',
-        url: 'foo.wav',
+        assetId: 300 as AssetId,
         length: numeric('s', -1)
       },
       envelope: defaultEnvelope
+    }, {
+      id: 300 as AssetId,
+      url: 'foo.wav'
     })
 
     const graph = createAudioGraph(program)
@@ -498,7 +551,7 @@ describe('lowering.ts', () => {
       id: 2 as NodeId,
       type: 'sample',
       envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
-      url: 'foo.wav',
+      assetId: 300 as AssetId,
       rootNote: 72 as MidiNote,
       length: numeric('s', 0)
     } satisfies SampleNode)
@@ -513,10 +566,13 @@ describe('lowering.ts', () => {
       },
       source: {
         type: 'sample',
-        url: 'foo.wav',
+        assetId: 300 as AssetId,
         length: numeric('s', Infinity)
       },
       envelope: defaultEnvelope
+    }, {
+      id: 300 as AssetId,
+      url: 'foo.wav'
     })
 
     const graph = createAudioGraph(program)
@@ -524,7 +580,7 @@ describe('lowering.ts', () => {
       id: 2 as NodeId,
       type: 'sample',
       envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
-      url: 'foo.wav',
+      assetId: 300 as AssetId,
       rootNote: 72 as MidiNote,
       length: undefined
     } satisfies SampleNode)
@@ -539,10 +595,13 @@ describe('lowering.ts', () => {
       },
       source: {
         type: 'sample',
-        url: 'foo.wav',
+        assetId: 300 as AssetId,
         length: numeric('s', Number.NaN)
       },
       envelope: defaultEnvelope
+    }, {
+      id: 300 as AssetId,
+      url: 'foo.wav'
     })
 
     assert.throws(() => createAudioGraph(program), /Invalid length/)
@@ -612,8 +671,8 @@ describe('lowering.ts', () => {
           initial: numeric('db', -6)
         },
         source: {
-          type: 'sample',
-          url: 'foo.wav'
+          type: 'oscillator',
+          shape: 'sine'
         },
         envelope
       })
@@ -1436,8 +1495,8 @@ describe('lowering.ts', () => {
           initial: numeric('db', -6)
         },
         source: {
-          type: 'sample',
-          url: 'foo.wav'
+          type: 'oscillator',
+          shape: 'sine'
         },
         envelope: defaultEnvelope
       }))
@@ -1461,14 +1520,15 @@ describe('lowering.ts', () => {
                 initial: numeric('db', -6)
               },
               source: {
-                type: 'sample',
-                url: 'foo.wav'
+                type: 'oscillator',
+                shape: 'sine'
               },
               envelope: defaultEnvelope
             } satisfies Instrument
           ]
         ]),
         automations: new Map(),
+        assets: new Map(),
         track: {
           tempo: numeric('bpm', 120),
           parts: []
@@ -1558,8 +1618,8 @@ describe('lowering.ts', () => {
         initial: numeric('db', -6)
       },
       source: {
-        type: 'sample',
-        url: 'foo.wav'
+        type: 'oscillator',
+        shape: 'sine'
       },
       envelope: defaultEnvelope
     })

@@ -1,15 +1,14 @@
 import type { GainMeterNode } from '@audiograph'
 import type { UnsubscribeFn } from '@utility'
-import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
 import { createGainMeter } from '../worklets/metering/factory.js'
-import type { MeterCallbacks } from './factory.js'
+import type { Assets, MeterCallbacks } from './factory.js'
 import type { Instance } from './instance.js'
 
 export async function createGainMeterInstance (
   node: GainMeterNode,
   transport: Transport,
-  fetcher: AudioFetcher,
+  assets: Assets,
   meterCallbacks?: MeterCallbacks
 ): Promise<Instance> {
   const instance = await createGainMeter(transport.ctx, {

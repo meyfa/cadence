@@ -1,5 +1,5 @@
 import { createEntityKey } from '@audiograph'
-import type { Bus, Instrument } from '@core'
+import type { Bus, Instrument, Program } from '@core'
 import type { PanelProps } from '@editor'
 import { useNonNullValue, useService } from '@editor'
 import { Flowchart } from '@flowchart'
@@ -41,6 +41,8 @@ const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   }
 }
 
+const MISSING_ASSET_URL = '<missing asset>'
+
 function getNodeTypeLabel (type: MixerFlowNode['data']['type']): string {
   switch (type) {
     case 'output':
@@ -62,13 +64,25 @@ function getNodeLabel ({ data }: MixerFlowNode): string {
 
     case 'instrument': {
       switch (data.object.source.type) {
-        case 'sample':
-          return data.object.source.url.split('/').pop() ?? data.object.source.url
-        case 'oscillator':
+        case 'sample': {
+          const url = getSampleUrl(data.program, data.object)
+          return url?.split('/').pop() ?? url ?? MISSING_ASSET_URL
+        }
+
+        case 'oscillator': {
           return data.object.source.shape
+        }
       }
     }
   }
+}
+
+function getSampleUrl (program: Program, instrument: Instrument): string | undefined {
+  if (instrument.source.type !== 'sample') {
+    return undefined
+  }
+
+  return program.assets.get(instrument.source.assetId)?.url
 }
 
 export const MixerPanel: FunctionComponent<PanelProps> = () => {
@@ -220,7 +234,7 @@ const MixerNode: FunctionComponent<{
         <Popover anchor={container} onClose={closePopover}>
           {node.data.type === 'output' && (<OutputNodeInfo />)}
           {node.data.type === 'bus' && (<BusNodeInfo object={node.data.object} />)}
-          {node.data.type === 'instrument' && (<InstrumentNodeInfo object={node.data.object} />)}
+          {node.data.type === 'instrument' && (<InstrumentNodeInfo object={node.data.object} program={node.data.program} />)}
         </Popover>
       )}
     </>
@@ -250,13 +264,16 @@ const BusNodeInfo: FunctionComponent<{
 
 const InstrumentNodeInfo: FunctionComponent<{
   object: Instrument
-}> = ({ object }) => {
+  program: Program
+}> = ({ object, program }) => {
+  const sampleUrl = getSampleUrl(program, object) ?? MISSING_ASSET_URL
+
   return (
     <>
       <div className='font-bold'>(Instrument)</div>
       <div>type: {object.source.type}</div>
       {object.source.type === 'sample' && (
-        <div className='max-w-96'>url: {object.source.url}</div>
+        <div className='max-w-96'>url: {sampleUrl}</div>
       )}
       {object.source.type === 'oscillator' && (
         <div>shape: {object.source.shape}</div>

@@ -1,4 +1,4 @@
-import type { Envelope } from '@core'
+import type { Envelope, Instrument } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -42,21 +42,25 @@ describe('library/modules/instruments.ts', () => {
         length: Numbers.of(numeric('s', 1.5))
       })
 
-      const { id, ...instrument } = InstrumentFacet.get(result)
+      const [asset] = context.assets.values()
+      assert.strictEqual(asset.url, 'https://example.com/kick.wav')
+
+      const instrument = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        id: instrument.id,
         rootNote: 'C4',
         gain: { id: instrument.gain.id, initial: numeric('db', -3) },
         source: {
           type: 'sample',
-          url: 'https://example.com/kick.wav',
+          assetId: asset.id,
           length: numeric('s', 1.5)
         },
         envelope: declickEnvelope
-      })
+      } satisfies Instrument)
 
       assert.deepStrictEqual([...context.instruments], [
-        [id, InstrumentFacet.get(result)]
+        [instrument.id, InstrumentFacet.get(result)]
       ])
 
       assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
@@ -71,12 +75,19 @@ describe('library/modules/instruments.ts', () => {
         url: StringFacet.type().of(url)
       })
 
+      const [asset] = context.assets.values()
+      assert.strictEqual(asset.url, url)
+
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
         rootNote: undefined,
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: { type: 'sample', url, length: undefined },
+        source: {
+          type: 'sample',
+          assetId: asset.id,
+          length: undefined
+        },
         envelope: declickEnvelope
       })
 

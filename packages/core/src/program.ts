@@ -91,6 +91,13 @@ export interface AutomationPoint<U extends Unit = Unit> {
   readonly curve: 'linear' | 'step'
 }
 
+export type AssetId = Brand<number, 'core.AssetId'>
+
+export interface Asset {
+  readonly id: AssetId
+  readonly url: string
+}
+
 export type InstrumentId = Brand<number, 'core.InstrumentId'>
 
 export interface Instrument {
@@ -105,7 +112,7 @@ export type Source = Sample | Oscillator
 
 export interface Sample {
   readonly type: 'sample'
-  readonly url: string
+  readonly assetId: AssetId
   readonly length?: Numeric<'s'>
 }
 
@@ -240,6 +247,7 @@ export interface Program {
 
   readonly instruments: ReadonlyMap<InstrumentId, Instrument>
   readonly automations: ReadonlyMap<ParameterId, Automation>
+  readonly assets: ReadonlyMap<AssetId, Asset>
 
   readonly track: Track
   readonly mixer: Mixer

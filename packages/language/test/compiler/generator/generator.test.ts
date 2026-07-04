@@ -35,6 +35,7 @@ describe('compiler/generator/generator.ts', () => {
       beatsPerBar: 4,
       instruments: new Map(),
       automations: new Map(),
+      assets: new Map(),
       track: {
         tempo: numeric('bpm', 120),
         parts: []
@@ -88,9 +89,12 @@ describe('compiler/generator/generator.ts', () => {
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
 
+    const [asset] = result.assets.values()
+    assert.strictEqual(asset.url, 'kick.wav')
+
     const [instrument] = result.instruments.values()
     assert.strictEqual(instrument.source.type, 'sample')
-    assert.strictEqual(instrument.source.url, 'kick.wav')
+    assert.strictEqual(instrument.source.assetId, asset.id)
   })
 
   it('should support import aliases', () => {
@@ -102,9 +106,12 @@ describe('compiler/generator/generator.ts', () => {
     const result = generateSource(source)
     assert.deepStrictEqual(result.instruments.size, 1)
 
+    const [asset] = result.assets.values()
+    assert.strictEqual(asset.url, 'kick.wav')
+
     const [instrument] = result.instruments.values()
     assert.strictEqual(instrument.source.type, 'sample')
-    assert.strictEqual(instrument.source.url, 'kick.wav')
+    assert.strictEqual(instrument.source.assetId, asset.id)
   })
 
   it('should support shadowing of imported names', () => {

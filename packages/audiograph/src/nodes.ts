@@ -1,4 +1,4 @@
-import type { MidiNote } from '@core'
+import type { AssetId, MidiNote } from '@core'
 import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
 import type { EntityKey } from './entities.js'
@@ -78,7 +78,7 @@ export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly rootNote: MidiNote
   readonly envelope: (note: Pick<NoteOptions, 'duration' | 'velocity'>) => TimeVariant<undefined>
-  readonly url: string
+  readonly assetId: AssetId
   readonly length?: Numeric<'s'>
 }
 

@@ -30,6 +30,7 @@ describe('compiler/generator/scopes.ts', () => {
       assert.strictEqual(result.buses.size, 0)
       assert.strictEqual(result.instruments.size, 0)
       assert.strictEqual(result.automations.size, 0)
+      assert.strictEqual(result.assets.size, 0)
     })
 
     it('should allocate buses with unique IDs', () => {
@@ -116,6 +117,29 @@ describe('compiler/generator/scopes.ts', () => {
       assert.deepStrictEqual([...scope.instruments], [
         [0, { ...instrument0, id: 0 }],
         [1, { ...instrument1, id: 1 }]
+      ])
+    })
+
+    it('should allocate assets with unique IDs', () => {
+      const scope = createGlobalScope(options, new Map())
+
+      const asset0 = {
+        url: 'foo.wav'
+      } as const
+
+      const asset1 = {
+        url: 'bar.wav'
+      } as const
+
+      const allocated0 = scope.allocateAsset(asset0)
+      const allocated1 = scope.allocateAsset(asset1)
+
+      assert.strictEqual(allocated0.id, 0)
+      assert.strictEqual(allocated1.id, 1)
+
+      assert.deepStrictEqual([...scope.assets], [
+        [0, { ...asset0, id: 0 }],
+        [1, { ...asset1, id: 1 }]
       ])
     })
   })

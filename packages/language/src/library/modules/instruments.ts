@@ -1,7 +1,7 @@
 import type { Envelope, Oscillator } from '@core'
 import { isPitch } from '@core'
 import { numeric } from '@utility'
-import type { InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
+import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { StringFacet } from '../../type-system/base/string.js'
@@ -42,7 +42,7 @@ const sample = Functions.of({
   effects: { blocking: true },
 
   // eslint-disable-next-line camelcase
-  invoke: (context: ParameterContext & InstrumentContext, { url, gain, root_note, length }) => {
+  invoke: (context: ParameterContext & InstrumentContext & AssetContext, { url, gain, root_note, length }) => {
     const urlValue = StringFacet.get(url)
     const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
     // eslint-disable-next-line camelcase
@@ -51,12 +51,16 @@ const sample = Functions.of({
 
     const gainParameter = context.allocateParameter(gainValue)
 
+    const asset = context.allocateAsset({
+      url: urlValue
+    })
+
     const instrument = context.allocateInstrument({
       gain: gainParameter,
       rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
       source: {
         type: 'sample',
-        url: urlValue,
+        assetId: asset.id,
         length: lengthValue
       },
       envelope: ENVELOPE_DECLICK

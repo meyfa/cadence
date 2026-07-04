@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useState, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { computeLayout } from '../layout.js'
 import { getMarkerKey, getMarkerPath } from '../markers.js'
 import { getEdgeStyle } from '../style.js'
-import { FlowEdgeId, type FlowEdge, type FlowEdgeStyle, type FlowNode, type FlowNodeComponent, type FlowNodeId, type Marker } from '../types.js'
+import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeComponent, FlowNodeId, Marker } from '../types.js'
 import { FlowchartEdge } from './FlowchartEdge.js'
 
 const LAYOUT_OPTIONS = Object.freeze({
