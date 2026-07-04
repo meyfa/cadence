@@ -9,12 +9,15 @@ type MixerObject = Bus | Instrument
 type MixerNodeData = {
   readonly type: 'output'
   readonly object?: undefined
+  readonly program: Program
 } | {
   readonly type: 'bus'
   readonly object: Bus
+  readonly program: Program
 } | {
   readonly type: 'instrument'
   readonly object: Instrument
+  readonly program: Program
 }
 
 interface MixerEdgeData {}
@@ -69,12 +72,12 @@ function createNodes (program: Program, options: MixerFlowchartOptions): Nodes {
     data
   })
 
-  const output = createNode({ type: 'output' })
+  const output = createNode({ type: 'output', program })
   all.push(output)
 
   for (const type of mixerObjectTypes) {
     for (const [objectId, object] of getObjectsOfType(program, type)) {
-      const node = createNode({ type, object } as any)
+      const node = createNode({ type, object, program } as any)
       all.push(node)
       byObject[type].set(objectId, node)
     }

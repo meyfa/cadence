@@ -1,14 +1,17 @@
 import type { SampleNode } from '@audiograph'
-import type { AudioFetcher } from '../../assets/fetcher.js'
 import type { Transport } from '../../transport/transport.js'
+import type { Assets } from '../factory.js'
 import type { Instance } from '../instance.js'
 import type { CreateSource } from './common.js'
 import { createInstrumentInstance } from './common.js'
 
-export async function createSampleInstance (node: SampleNode, transport: Transport, fetcher: AudioFetcher): Promise<Instance> {
+export async function createSampleInstance (node: SampleNode, transport: Transport, assets: Assets): Promise<Instance> {
   const { ctx } = transport
 
-  const sampleBuffer = await fetcher.fetch(ctx, node.url)
+  const sampleBuffer = assets.samples.get(node.assetId)
+  if (!sampleBuffer) {
+    throw new Error(`Asset not found: ${node.assetId}`)
+  }
 
   const createSource: CreateSource = (note) => {
     const sourceNode = ctx.createBufferSource()

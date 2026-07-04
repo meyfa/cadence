@@ -1,11 +1,11 @@
-import type { Automation, Bus, BusId, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
+import type { Asset, AssetId, Automation, Bus, BusId, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
 import type { Numeric, Unit } from '@utility'
 import type { Value } from '../../type-system/types.js'
 import type { GenerateOptions } from './options.js'
 
 // scope aspects
 
-type Context = BusContext & ParameterContext & InstrumentContext
+type Context = BusContext & ParameterContext & InstrumentContext & AssetContext
 
 export interface BusContext {
   readonly allocateBus: (data: Omit<Bus, 'id'>) => Bus
@@ -17,6 +17,10 @@ export interface ParameterContext {
 
 export interface InstrumentContext {
   readonly allocateInstrument: (data: Omit<Instrument, 'id'>) => Instrument
+}
+
+export interface AssetContext {
+  readonly allocateAsset: (data: Omit<Asset, 'id'>) => Asset
 }
 
 // scope types
@@ -36,6 +40,7 @@ export interface GlobalScope extends Scope, Context {
   readonly buses: Map<BusId, Bus>
   readonly instruments: Map<InstrumentId, Instrument>
   readonly automations: Map<ParameterId, Automation>
+  readonly assets: Map<AssetId, Asset>
 }
 
 export interface MutableScope extends Scope {
@@ -68,6 +73,7 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
     buses: new Map(),
     instruments: new Map(),
     automations: new Map(),
+    assets: new Map(),
 
     // from BusContext
     allocateBus: (data) => allocateBus(scope, data),
@@ -76,7 +82,10 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
     allocateParameter: (initial) => allocateParameter(scope, initial),
 
     // from InstrumentContext
-    allocateInstrument: (data) => allocateInstrument(scope, data)
+    allocateInstrument: (data) => allocateInstrument(scope, data),
+
+    // from AssetContext
+    allocateAsset: (data) => allocateAsset(scope, data)
   }
 
   return scope
@@ -125,4 +134,13 @@ function allocateInstrument (scope: GlobalScope, data: Omit<Instrument, 'id'>): 
   scope.instruments.set(instrument.id, instrument)
 
   return instrument
+}
+
+function allocateAsset (scope: GlobalScope, data: Omit<Asset, 'id'>): Asset {
+  const id = scope.assets.size as AssetId
+
+  const asset = { ...data, id }
+  scope.assets.set(asset.id, asset)
+
+  return asset
 }

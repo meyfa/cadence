@@ -1,4 +1,4 @@
-import type { MidiNote } from '@core'
+import type { Asset, AssetId, MidiNote } from '@core'
 import type { Brand, Numeric } from '@utility'
 import type { EntityKey } from './entities.js'
 
@@ -9,6 +9,8 @@ export interface AudioGraph<TNode = AnyNode> {
 
   readonly tempo: Numeric<'bpm'>
   readonly length: Numeric<'beats'>
+
+  readonly assets: ReadonlyMap<AssetId, Asset>
 
   readonly noteEvents: ReadonlyMap<NodeId, readonly NoteOptions[]>
 

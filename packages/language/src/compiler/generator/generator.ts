@@ -85,6 +85,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
 
     instruments: top.instruments,
     automations: top.automations,
+    assets: top.assets,
 
     track,
     mixer

@@ -35,6 +35,10 @@ export function createAudioGraph (program: Program, options?: AudioGraphOptions)
   const output = builder.addNode<IdentityNode>('identity', {})
   builder.setOutput(output.id)
 
+  for (const asset of program.assets.values()) {
+    builder.addAsset(asset)
+  }
+
   const busSubgraphs = new Map<BusId, SubGraph>()
   const instrumentSubgraphs = new Map<InstrumentId, SubGraph>()
   const instruments = new Map<InstrumentId, NodeId>()
@@ -188,7 +192,7 @@ function createSampleSource (sample: Sample, rootNote: MidiNote, envelope: Envel
   return builder.addNode<SampleNode>('sample', {
     rootNote,
     envelope: (note) => applyEnvelope(envelope, note),
-    url: sample.url,
+    assetId: sample.assetId,
     length
   })
 }

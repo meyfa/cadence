@@ -15,12 +15,43 @@ export async function createWebAudioGraph (
   fetcher: AudioFetcher,
   meterCallbacks?: MeterCallbacks
 ): Promise<WebAudioGraph> {
-  const instances = new Map<NodeId, Instance>()
   let disposed = false
 
-  const promises = new Map<NodeId, Promise<void>>()
+  const assets = {
+    samples: new Map()
+  }
+
+  const assetPromisesByUrl = new Map<string, Promise<AudioBuffer>>()
+
+  for (const asset of graph.assets.values()) {
+    const promise = assetPromisesByUrl.get(asset.url)
+
+    if (promise == null) {
+      assetPromisesByUrl.set(asset.url, fetcher.fetch(transport.ctx, asset.url).then((buffer) => {
+        assets.samples.set(asset.id, buffer)
+        return buffer
+      }))
+      continue
+    }
+
+    assetPromisesByUrl.set(asset.url, promise.then((buffer) => {
+      assets.samples.set(asset.id, buffer)
+      return buffer
+    }))
+  }
+
+  try {
+    await Promise.all(assetPromisesByUrl.values())
+  } catch (err: unknown) {
+    disposed = true
+    throw err
+  }
+
+  const instances = new Map<NodeId, Instance>()
+  const instancePromises = new Map<NodeId, Promise<void>>()
+
   for (const node of graph.nodes.values()) {
-    const promise = createNodeInstance(node, transport, fetcher, meterCallbacks).then((instance) => {
+    const promise = createNodeInstance(node, transport, assets, meterCallbacks).then((instance) => {
       if (disposed) {
         instance.dispose()
         return
@@ -29,11 +60,11 @@ export async function createWebAudioGraph (
       instances.set(node.id, instance)
     })
 
-    promises.set(node.id, promise)
+    instancePromises.set(node.id, promise)
   }
 
   try {
-    await Promise.all(promises.values())
+    await Promise.all(instancePromises.values())
   } catch (err: unknown) {
     disposed = true
     instances.forEach((instance) => instance.dispose())
