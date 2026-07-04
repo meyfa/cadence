@@ -1,5 +1,5 @@
 import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, MixerRouting, Oscillator, Program, Sample, Track } from '@core'
-import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, renderPatternEvents, timeToSeconds } from '@core'
+import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, getMidiFrequency, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import { feedbackTransform, frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
@@ -10,7 +10,7 @@ import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import { applyEnvelope } from './envelope.js'
 import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
-import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, Node, OscillatorNode, PanNode, ReverbNode, SampleNode, WaveShaperNode, WidthNode } from './nodes.js'
+import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, WaveShaperNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
 
@@ -152,13 +152,13 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     }
   })()
 
-  const source = (() => {
+  const instrumentNode = (() => {
     switch (instrument.source.type) {
       case 'sample':
-        return createSampleSource(instrument.source, rootNote, envelope, builder)
+        return createSampleInstrumentNode(instrument.source, envelope, rootNote, builder)
 
       case 'oscillator':
-        return createOscillatorSource(instrument.source, rootNote, envelope, builder)
+        return createOscillatorInstrumentNode(instrument.source, envelope, rootNote, builder)
     }
   })()
 
@@ -166,16 +166,23 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     gain: toTimeVariant(instrument.gain, program, gainTransform)
   })
 
-  builder.addEdge(source.id, gain.id)
+  builder.addEdge(instrumentNode.id, gain.id)
 
   return {
-    inputs: [source.id],
+    inputs: [instrumentNode.id],
     outputs: [gain.id],
-    instrument: source.id
+    instrument: instrumentNode.id
   }
 }
 
-function createSampleSource (sample: Sample, rootNote: MidiNote, envelope: Envelope, builder: Builder): Node {
+function createSampleInstrumentNode (
+  sample: Sample,
+  envelope: Envelope,
+  rootNote: MidiNote,
+  builder: Builder
+): InstrumentNode {
+  const { assetId } = sample
+
   const length = (() => {
     if (sample.length == null) {
       return undefined
@@ -189,19 +196,60 @@ function createSampleSource (sample: Sample, rootNote: MidiNote, envelope: Envel
     return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
   })()
 
-  return builder.addNode<SampleNode>('sample', {
-    rootNote,
-    envelope: (note) => applyEnvelope(envelope, note),
-    assetId: sample.assetId,
-    length
+  return builder.addNode<InstrumentNode>('instrument', {
+    trigger: (note) => {
+      const holdDuration = (() => {
+        if (note.duration == null || length == null) {
+          return note.duration ?? length?.value
+        }
+        return Math.min(note.duration, length.value)
+      })()
+
+      const gainCurve = applyEnvelope(envelope, { ...note, duration: holdDuration })
+      const duration = holdDuration != null
+        ? gainCurve.points.at(-1)?.time
+        : undefined
+
+      const playbackRate = Math.pow(2, ((note.pitch ?? rootNote) - rootNote) / 12)
+
+      return {
+        id: -1 as NodeId, // TODO: avoid invalid id
+        type: 'sample',
+        gainCurve,
+        duration,
+        assetId,
+        playbackRate
+      }
+    }
   })
 }
 
-function createOscillatorSource (oscillator: Oscillator, rootNote: MidiNote, envelope: Envelope, builder: Builder): Node {
-  return builder.addNode<OscillatorNode>('oscillator', {
-    rootNote,
-    envelope: (note) => applyEnvelope(envelope, note),
-    shape: oscillator.shape
+function createOscillatorInstrumentNode (
+  oscillator: Oscillator,
+  envelope: Envelope,
+  rootNote: MidiNote,
+  builder: Builder
+): InstrumentNode {
+  const { shape } = oscillator
+
+  return builder.addNode<InstrumentNode>('instrument', {
+    trigger: (note) => {
+      const gainCurve = applyEnvelope(envelope, note)
+      const duration = note.duration != null
+        ? gainCurve.points.at(-1)?.time
+        : undefined
+
+      const frequency = numeric('hz', getMidiFrequency(note.pitch ?? rootNote))
+
+      return {
+        id: -1 as NodeId, // TODO: avoid invalid id
+        type: 'oscillator',
+        gainCurve,
+        duration,
+        shape,
+        frequency
+      }
+    }
   })
 }
 

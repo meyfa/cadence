@@ -51,7 +51,9 @@ export async function createWebAudioGraph (
   const instancePromises = new Map<NodeId, Promise<void>>()
 
   for (const node of graph.nodes.values()) {
-    const promise = createNodeInstance(node, transport, assets, meterCallbacks).then((instance) => {
+    const promise = Promise.resolve().then(() => {
+      return createNodeInstance(node, transport, assets, meterCallbacks)
+    }).then((instance) => {
       if (disposed) {
         instance.dispose()
         return
@@ -76,7 +78,6 @@ export async function createWebAudioGraph (
 
   return {
     dispose: () => {
-      disposed = true
       instances.forEach((instance) => instance.dispose())
     }
   }

@@ -111,7 +111,7 @@ export function createWaveShaperInstance (node: WaveShaperNode, transport: Trans
   return toInstance(audioNode)
 }
 
-function toInstance (node: AudioNode, loaded = Promise.resolve()): Instance {
+function toInstance (node: AudioNode): Instance {
   return {
     input: node,
     output: node,
