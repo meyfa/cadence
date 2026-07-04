@@ -3,12 +3,13 @@ import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { timeVariant } from '../src/automation.js'
 import { dbToGain } from '../src/constants.js'
 import { createEntityKey } from '../src/entities.js'
 import { applyEnvelope } from '../src/envelope.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { DelayNode, GainNode, IdentityNode, Node, OscillatorNode, ReverbNode, SampleNode, WaveShaperNode } from '../src/nodes.js'
+import type { DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, ReverbNode, SourceNode, WaveShaperNode } from '../src/nodes.js'
 
 const defaultEnvelope: Envelope = {
   attack: numeric('s', 0.01),
@@ -261,11 +262,9 @@ describe('lowering.ts', () => {
       } satisfies GainNode,
       {
         id: 3 as NodeId,
-        type: 'oscillator',
-        envelope: (graph.nodes.get(3 as NodeId) as OscillatorNode).envelope,
-        shape: 'sine',
-        rootNote: 72 as MidiNote // C5
-      } satisfies OscillatorNode,
+        type: 'instrument',
+        trigger: (graph.nodes.get(3 as NodeId) as InstrumentNode).trigger
+      } satisfies InstrumentNode,
       {
         id: 4 as NodeId,
         type: 'gain',
@@ -284,6 +283,22 @@ describe('lowering.ts', () => {
 
     assert.deepStrictEqual(graph.outputIds, [1 as NodeId])
     assert.deepStrictEqual(graph.noteEvents.size, 0)
+
+    const instrumentNode = graph.nodes.get(3 as NodeId) as InstrumentNode
+    const voice = instrumentNode.trigger({
+      pitch: 69 as MidiNote,
+      velocity: 1.0,
+      duration: 0.5
+    })
+
+    assert.deepStrictEqual(voice, {
+      id: -1 as NodeId,
+      type: 'oscillator',
+      shape: 'sine',
+      frequency: numeric('hz', 440),
+      duration: numeric('s', 1.0), // 0.5s for the note + 0.5s for the release
+      gainCurve: (voice as OscillatorNode).gainCurve
+    } satisfies SourceNode)
   })
 
   it('should automate instrument gain', () => {
@@ -549,12 +564,20 @@ describe('lowering.ts', () => {
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
-      type: 'sample',
-      envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
-      assetId: 300 as AssetId,
-      rootNote: 72 as MidiNote,
-      length: numeric('s', 0)
-    } satisfies SampleNode)
+      type: 'instrument',
+      trigger: (graph.nodes.get(2 as NodeId) as InstrumentNode).trigger
+    } satisfies InstrumentNode)
+
+    const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+    const { gainCurve } = instrumentNode.trigger({
+      pitch: 60 as MidiNote,
+      velocity: 1.0,
+      duration: 0.5
+    })
+
+    assert.deepStrictEqual(gainCurve, timeVariant(numeric(undefined, 0), [
+      { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' }
+    ]))
   })
 
   it('should treat infinite sample length as valid', () => {
@@ -578,12 +601,9 @@ describe('lowering.ts', () => {
     const graph = createAudioGraph(program)
     assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
       id: 2 as NodeId,
-      type: 'sample',
-      envelope: (graph.nodes.get(2 as NodeId) as SampleNode).envelope,
-      assetId: 300 as AssetId,
-      rootNote: 72 as MidiNote,
-      length: undefined
-    } satisfies SampleNode)
+      type: 'instrument',
+      trigger: (graph.nodes.get(2 as NodeId) as InstrumentNode).trigger
+    } satisfies InstrumentNode)
   })
 
   it('should throw for NaN sample length', () => {
@@ -678,13 +698,11 @@ describe('lowering.ts', () => {
       })
 
       const graph = createAudioGraph(program)
-      const envelopeFn = (graph.nodes.get(2 as NodeId) as SampleNode).envelope
 
-      assert.deepStrictEqual(
-        envelopeFn(note),
-        applyEnvelope(expected, note),
-        `test case: ${JSON.stringify(envelope)}`
-      )
+      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+      const voice = instrumentNode.trigger(note)
+
+      assert.deepStrictEqual(voice.gainCurve, applyEnvelope(expected, note), `test case: ${JSON.stringify(envelope)}`)
     }
   })
 

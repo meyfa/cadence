@@ -1,9 +1,6 @@
 import type { OscillatorNode } from '@audiograph'
-import { getMidiFrequency } from '@core'
 import type { Transport } from '../../transport/transport.js'
 import type { Instance } from '../instance.js'
-import type { CreateSource } from './common.js'
-import { createInstrumentInstance } from './common.js'
 
 const oscillatorTypeMap: Record<OscillatorNode['shape'], OscillatorType> = {
   sine: 'sine',
@@ -12,19 +9,25 @@ const oscillatorTypeMap: Record<OscillatorNode['shape'], OscillatorType> = {
   triangle: 'triangle'
 }
 
-export async function createOscillatorInstance (node: OscillatorNode, transport: Transport): Promise<Instance> {
-  const { ctx } = transport
+export function createOscillatorInstance (node: OscillatorNode, transport: Transport): Instance {
+  const audioNode = createOscillatorSource(node, transport)
 
-  const createSource: CreateSource = (note) => {
-    const oscillator = ctx.createOscillator()
-    oscillator.type = oscillatorTypeMap[node.shape]
-    oscillator.frequency.value = getMidiFrequency(note.pitch ?? node.rootNote)
-    return oscillator
+  return {
+    input: audioNode,
+    output: audioNode,
+    dispose: () => {
+      audioNode.disconnect()
+    }
   }
+}
 
-  return createInstrumentInstance(transport, createSource, {
-    envelope: node.envelope,
-    rootNote: node.rootNote,
-    length: undefined
-  })
+export function createOscillatorSource (
+  node: OscillatorNode,
+  transport: Transport
+): AudioScheduledSourceNode {
+  const oscillator = transport.ctx.createOscillator()
+  oscillator.type = oscillatorTypeMap[node.shape]
+  oscillator.frequency.value = node.frequency.value
+
+  return oscillator
 }

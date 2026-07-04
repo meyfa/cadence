@@ -1,4 +1,4 @@
-import type { AssetId, MidiNote } from '@core'
+import type { AssetId } from '@core'
 import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
 import type { EntityKey } from './entities.js'
@@ -16,6 +16,9 @@ export interface NodeTypeMap {
   readonly delay: DelayNode
   readonly reverb: ReverbNode
   readonly wave_shaper: WaveShaperNode
+
+  // instrument
+  readonly instrument: InstrumentNode
 
   // sources
   readonly sample: SampleNode
@@ -72,21 +75,31 @@ export interface WaveShaperNode extends AnyNode {
   readonly curve: Float32Array<ArrayBuffer>
 }
 
+// instrument
+
+export interface InstrumentNode extends AnyNode {
+  readonly type: 'instrument'
+  readonly trigger: (note: Omit<NoteOptions, 'time'>) => SourceNode
+}
+
 // sources
+
+export type SourceNode = SampleNode | OscillatorNode
 
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
-  readonly rootNote: MidiNote
-  readonly envelope: (note: Pick<NoteOptions, 'duration' | 'velocity'>) => TimeVariant<undefined>
+  readonly gainCurve: TimeVariant<undefined>
+  readonly duration?: Numeric<'s'>
   readonly assetId: AssetId
-  readonly length?: Numeric<'s'>
+  readonly playbackRate: number
 }
 
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
-  readonly rootNote: MidiNote
-  readonly envelope: (note: Pick<NoteOptions, 'duration' | 'velocity'>) => TimeVariant<undefined>
+  readonly gainCurve: TimeVariant<undefined>
+  readonly duration: Numeric<'s'> | undefined
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
+  readonly frequency: Numeric<'hz'>
 }
 
 // metering
