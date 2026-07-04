@@ -792,6 +792,35 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject blocking effects in non-blocking contexts', () => {
+      const source = [
+        'use "instruments" as *',
+        'my_instrument = instrument {',
+        '  voice {',
+        '    foo = sample("piano.wav")',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Function "sample" may block and cannot be called from a realtime context'
+      ])
+    })
+
+    it('should reject instrument expressions in non-blocking contexts', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice {',
+        '    foo = instrument {}',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Cannot construct an instrument in a realtime context'
+      ])
+    })
+
     it('should enforce ordering in the global scope', () => {
       const source = [
         'track (my_tempo) {}',

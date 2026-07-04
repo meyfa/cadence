@@ -2,9 +2,14 @@ import { makeFacet } from '../factory.js'
 import type { InferSchema, Schema } from '../schema.js'
 import type { CustomComparable, FacetType, ValueForType } from '../types.js'
 
+export interface Effects {
+  readonly blocking: boolean
+}
+
 export interface Function<S extends Schema = Schema, R extends FacetType = FacetType, Context = never> {
   readonly parameters: S
   readonly returnType: R
+  readonly effects: Effects
   readonly invoke: (context: Context, args: InferSchema<S>) => ValueForType<R>
 
   // documentation
@@ -14,6 +19,7 @@ export interface Function<S extends Schema = Schema, R extends FacetType = Facet
 interface FunctionSpec<S extends Schema = Schema, R extends FacetType = FacetType> {
   readonly parameters: S
   readonly returnType: R
+  readonly effects: Effects
 }
 
 interface FunctionSpecGeneric extends CustomComparable {

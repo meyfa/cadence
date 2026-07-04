@@ -8,6 +8,7 @@ import { getStandardModule } from './modules.js'
 export interface Documentation {
   readonly title: string
   readonly summary?: string
+  readonly annotations?: string[]
 }
 
 export function getDocumentation (moduleName: string, exportName?: string): Documentation | undefined {
@@ -39,9 +40,15 @@ function describeValue (name: string, value: Value): Documentation {
   if (FunctionFacet.has(value)) {
     const functionValue = FunctionFacet.get(value)
 
+    const annotations = []
+    if (functionValue.effects.blocking) {
+      annotations.push('may block')
+    }
+
     return {
       title: formatFunctionSignature(name, functionValue),
-      summary: functionValue.summary
+      summary: functionValue.summary,
+      annotations
     }
   }
 

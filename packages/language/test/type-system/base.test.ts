@@ -49,17 +49,19 @@ describe('type-system/base', () => {
     it('should preserve function specs through with() and detail()', () => {
       const amountType = NumberFacet.with('db').type()
       const returnType = StringFacet.type()
+      const effects = { blocking: true }
       const schema = makeSchema([
         { name: 'amount', type: amountType, required: true },
         { name: 'label', type: returnType, required: false }
       ])
-      const spec = { parameters: schema, returnType }
+      const spec = { parameters: schema, returnType, effects }
       const typedFacet = FunctionFacet.with(spec)
       const typedType = typedFacet.type()
 
       const func: Function<typeof schema, typeof returnType> = {
         parameters: schema,
         returnType,
+        effects,
         invoke: (_context, args) => args.label ?? returnType.of('fallback'),
         summary: 'demo function'
       }
@@ -76,7 +78,7 @@ describe('type-system/base', () => {
       assert.strictEqual(typedFacet.format(), 'function')
       assert.strictEqual(typedFacet.is(FunctionFacet.with(spec)), true)
 
-      const identicalShapeSpec = { parameters: schema, returnType }
+      const identicalShapeSpec = { parameters: schema, returnType, effects }
       assert.strictEqual(typedFacet.is(FunctionFacet.with(identicalShapeSpec)), false)
 
       assert.strictEqual(FunctionFacet.detail(typedType), spec)

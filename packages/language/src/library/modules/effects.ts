@@ -50,8 +50,8 @@ const gain = Functions.of({
   parameters: makeSchema([
     { name: 'gain', type: NumberFacet.with('db').type(), required: true }
   ]),
-
   returnType: GainEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -71,8 +71,8 @@ const pan = Functions.of({
   parameters: makeSchema([
     { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
   ]),
-
   returnType: PanEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -92,8 +92,8 @@ const lowpass = Functions.of({
   parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
-
   returnType: LowpassEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -113,8 +113,8 @@ const highpass = Functions.of({
   parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
-
   returnType: HighpassEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -134,8 +134,8 @@ const width = Functions.of({
   parameters: makeSchema([
     { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
   ]),
-
   returnType: WidthEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -156,8 +156,8 @@ const delay = Functions.of({
     { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
-
   returnType: DelayEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -182,8 +182,8 @@ const reverb = Functions.of({
     { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
-
   returnType: ReverbEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
@@ -203,8 +203,8 @@ const clip = Functions.of({
   parameters: makeSchema([
     { name: 'threshold', type: NumberFacet.with('db').type(), required: true }
   ]),
-
   returnType: ClipEffectType,
+  effects: { blocking: true },
 
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
