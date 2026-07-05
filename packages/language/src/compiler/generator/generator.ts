@@ -437,10 +437,8 @@ function generateString (scope: Scope, parts: ReadonlyArray<string | ast.Express
 }
 
 function generatePattern (scope: Scope, expression: ast.Pattern): Value {
-  const subdivision = 1
-
   const create = expression.mode === 'serial'
-    ? (steps: readonly Step[]) => createSerialPattern(steps, subdivision)
+    ? (steps: readonly Step[]) => createSerialPattern(steps)
     : (steps: readonly Step[]) => createParallelPattern(steps)
 
   const combine = expression.mode === 'serial'

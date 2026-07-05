@@ -27,7 +27,7 @@ const pattern: Pattern = createSerialPattern([
   { value: 'C4' },
   { value: '-', length: numeric(undefined, 1) },
   { value: 'E4', gate: numeric(undefined, 0.5) }
-], 4)
+])
 
 const effect: Effect = {
   type: 'gain',

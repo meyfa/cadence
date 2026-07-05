@@ -38,7 +38,7 @@ const loop: PatternBuiltin = {
 
       const { value: factor } = NumberFacet.get(times)
       if (factor <= 0 || !Number.isFinite(factor)) {
-        return PatternFacet.type().of(createSerialPattern([], 1))
+        return PatternFacet.type().of(createSerialPattern([]))
       }
 
       if (pattern.length == null) {
@@ -73,7 +73,7 @@ const fill: PatternBuiltin = {
       const durationValue = NumberFacet.get(duration)
 
       if (durationValue.value <= 0 || !Number.isFinite(durationValue.value)) {
-        return PatternFacet.type().of(createSerialPattern([], 1))
+        return PatternFacet.type().of(createSerialPattern([]))
       }
 
       return PatternFacet.type().of(loopPattern(pattern, durationValue))
