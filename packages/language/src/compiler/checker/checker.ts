@@ -556,7 +556,7 @@ function checkCurve (scope: Scope, curve: ast.Curve): Checked<FacetType> {
     segmentChecks.push(segmentCheck)
     errors.push(...segmentCheck.errors)
 
-    if (segmentCheck.errors.length === 0) {
+    if (segmentCheck.result != null) {
       previousUnit = segmentCheck.result
     }
   }
@@ -621,7 +621,7 @@ function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious
     }
   }
 
-  if (errors.length > 0) {
+  if (!omittedFirstParameter && units.length === 0) {
     return { errors }
   }
 
