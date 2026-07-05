@@ -234,7 +234,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         'track {',
         '  part intro (4.bars) {',
-        '    automate bus.bar.pan as ~[lin(-1, 1)]',
+        '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
         '}'
       ].join('\n')
@@ -242,20 +242,24 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
-    it('should accept lin curves', () => {
-      assertValid('my_curve = ~[lin((-60).db, 0.db)]')
+    it('should accept curves with beat and bar length units', () => {
+      assertValid('my_curve = ~[lin((-60).db, 0.db):4.bars lin(0.db, -60.db):16.beats]')
     })
 
-    it('should accept curves with weighted segments', () => {
-      assertValid('my_curve = ~[hold((-60).db):3 lin((-60).db, 0.db):1]')
+    it('should accept curves with second length units', () => {
+      assertValid('my_curve = ~[hold((-60).db):3.s lin((-60).db, 0.db):1.0.s]')
+    })
+
+    it('should accept curves with mixed length units', () => {
+      assertValid('my_curve = ~[hold((-60).db):1.bar lin(0.db, -60.db):1.s]')
     })
 
     it('should accept lin curves that omit the start after the first segment', () => {
-      assertValid('my_curve = ~[hold((-60).db):3 lin(0.db):1]')
+      assertValid('my_curve = ~[hold((-60).db):1.bar lin(0.db):1.bar]')
     })
 
     it('should accept hold curves that omit the value after the first segment', () => {
-      assertValid('my_curve = ~[lin((-60).db, (-30).db):3 hold:1]')
+      assertValid('my_curve = ~[lin((-60).db, (-30).db):1.bar hold:1.bar]')
     })
 
     it('should accept bus gain automation via explicit namespace', () => {
@@ -265,7 +269,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         'track {',
         '  part intro (4.bars) {',
-        '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
+        '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
         '  }',
         '}'
       ].join('\n')
@@ -283,7 +287,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         'track {',
         '  part intro (4.bars) {',
-        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
+        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
         '  }',
         '}'
       ].join('\n')
@@ -517,25 +521,31 @@ describe('compiler/checker/checker.ts', () => {
     })
 
     it('should reject curves with non-numeric parameters', () => {
-      assertErrorMessages('my_curve = ~[hold("not a number")]', [
+      assertErrorMessages('my_curve = ~[hold("not a number"):1.bar]', [
         'Expected type number, got string'
       ])
     })
 
     it('should reject lin curves that omit the start for the first segment', () => {
-      assertErrorMessages('my_curve = ~[lin(0.db)]', [
+      assertErrorMessages('my_curve = ~[lin(0.db):1.bar]', [
         'First curve segment cannot omit its first parameter'
       ])
     })
 
     it('should reject hold curves that omit the value for the first segment', () => {
-      assertErrorMessages('my_curve = ~[hold]', [
+      assertErrorMessages('my_curve = ~[hold:1.bar]', [
         'First curve segment cannot omit its first parameter'
       ])
     })
 
+    it('should reject curves when the units differ between segments', () => {
+      assertErrorMessages('my_curve = ~[hold(0.db):1.bar hold(100.hz):1.bar]', [
+        'Curve segments must have the same unit'
+      ])
+    })
+
     it('should reject omitted lin starts when the inherited and explicit units differ', () => {
-      assertErrorMessages('my_curve = ~[hold((-60).db) lin(120.bpm)]', [
+      assertErrorMessages('my_curve = ~[hold((-60).db):1.bar lin(120.bpm):1.bar]', [
         'Expected type number(db), got number(bpm)'
       ])
     })
@@ -544,8 +554,14 @@ describe('compiler/checker/checker.ts', () => {
       // If the first segment is entirely discarded by the compiler, then
       // the second would emit a second error: 'Expected type number, got number(hz)',
       // which is obviously not correct.
-      assertErrorMessages('my_curve = ~[lin(10.hz, 20.hz):unknown lin(30.hz)]', [
+      assertErrorMessages('my_curve = ~[lin(10.hz, 20.hz):unknown lin(30.hz):1.bar]', [
         'Unknown identifier "unknown"'
+      ])
+    })
+
+    it('should reject curves with invalid length units', () => {
+      assertErrorMessages('my_curve = ~[hold((-60).db):42]', [
+        'Expected type number(beats) | number(s), got number'
       ])
     })
 
@@ -554,7 +570,7 @@ describe('compiler/checker/checker.ts', () => {
         'some_value = ""',
         'track {',
         '  part intro (4.bars) {',
-        '    automate some_value as ~[hold(-60)]',
+        '    automate some_value as ~[hold(-60):1.bar]',
         '  }',
         '}'
       ].join('\n')
@@ -846,7 +862,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         'track {',
         '  part intro (4.bars) {',
-        '    automate bus.bar.pan as ~[lin(-1, 1)]',
+        '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
         '}',
         'mixer {',

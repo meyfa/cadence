@@ -102,13 +102,13 @@ describe('type-system/domain', () => {
         segments: [
           {
             type: 'hold',
-            length: numeric(undefined, 1),
+            length: numeric('beats', 1),
             unit: 'db',
             value: numeric('db', -6)
           },
           {
             type: 'lin',
-            length: numeric(undefined, 2),
+            length: numeric('beats', 2),
             unit: 'db',
             start: numeric('db', -6),
             end: numeric('db', 0)

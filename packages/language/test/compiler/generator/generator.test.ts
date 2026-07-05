@@ -304,9 +304,9 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as ~[lin((-60).db, 0.db)]',
+      '    automate synth.gain as ~[lin((-60).db, 0.db):2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -317,18 +317,18 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' }
     ])
   })
 
-  it('should allocate equal time to multiple curve segments', () => {
+  it('should handle multiple curve segments', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as ~[lin((-60).db, (-30).db) lin((-30).db, 0.db)]',
+      '    automate synth.gain as ~[lin(-60.db, -30.db):2.bars lin(-30.db, 0.db):1.bar]',
       '  }',
       '}'
     ].join('\n')
@@ -339,19 +339,19 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 8), value: numeric('db', -30), curve: 'linear' },
-      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 4), value: numeric('db', -30), curve: 'linear' },
+      { time: numeric('s', 6), value: numeric('db', 0), curve: 'linear' }
     ])
   })
 
-  it('should allocate curve time by segment length weights', () => {
+  it('should clip curve lengths to the part length', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as ~[hold((-60).db):3 lin((-60).db, 0.db):1]',
+      '    automate synth.gain as ~[hold(-60.db):5.bars lin(-60.db, 0.db):6.bars hold:2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -362,9 +362,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 24), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 32), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 10), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 16), value: numeric('db', -30), curve: 'linear' }
     ])
   })
 
@@ -372,9 +372,9 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as ~[hold((-60).db):3 lin(0.db):1]',
+      '    automate synth.gain as ~[hold((-60).db):6.bars lin(0.db):2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -385,9 +385,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 24), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 32), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 12), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 16), value: numeric('db', 0), curve: 'linear' }
     ])
   })
 
@@ -395,9 +395,9 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (8.bars) {',
-      '    automate synth.gain as ~[lin((-60).db, (-30).db):3 hold:1]',
+      '    automate synth.gain as ~[lin((-60).db, (-30).db):6.bars hold:2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -408,19 +408,19 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 24), value: numeric('db', -30), curve: 'linear' },
-      { time: numeric('beats', 32), value: numeric('db', -30), curve: 'step' }
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 12), value: numeric('db', -30), curve: 'linear' },
+      { time: numeric('s', 16), value: numeric('db', -30), curve: 'step' }
     ])
   })
 
-  it('should clamp non-positive curve segment lengths and step zero-length segments', () => {
+  it('should clamp non-positive curve segment lengths and skip zero-length segments', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate synth.gain as ~[hold((-60).db):(-2) lin((-60).db, (-30).db):0 lin((-30).db, 0.db):1]',
+      '    automate synth.gain as ~[hold((-60).db):(-2.beats) lin((-60).db, (-30).db):0.s lin((-30).db, 0.db):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -431,9 +431,82 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('beats', 0), value: numeric('db', -30), curve: 'step' },
-      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -30), curve: 'step' },
+      { time: numeric('s', 8), value: numeric('db', 0), curve: 'linear' }
+    ])
+  })
+
+  it('should combine automations from multiple parts', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track (120.bpm) {',
+      '  part intro (8.beats) {',
+      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '  }',
+      '  part outro (8.beats) {',
+      '    automate synth.gain as ~[lin(-15.db, -30.db):8.beats]',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    assert.strictEqual(result.automations.size, 1)
+    const [automation] = result.automations.values()
+
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' },
+      { time: numeric('s', 4), value: numeric('db', -15), curve: 'step' },
+      { time: numeric('s', 8), value: numeric('db', -30), curve: 'linear' }
+    ])
+  })
+
+  it('should let later automations override earlier ones in the same part', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track (120.bpm) {',
+      '  part intro (8.beats) {',
+      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '    automate synth.gain as ~[hold(-15.db):8.beats]',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    assert.strictEqual(result.automations.size, 1)
+    const [automation] = result.automations.values()
+
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('s', 0), value: numeric('db', -15), curve: 'step' },
+      { time: numeric('s', 4), value: numeric('db', -15), curve: 'step' }
+    ])
+  })
+
+  it('should resume earlier automations after a later overlap ends', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'track (120.bpm) {',
+      '  part intro (8.beats) {',
+      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '    automate synth.gain as ~[hold(-15.db):4.beats]',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    assert.strictEqual(result.automations.size, 1)
+    const [automation] = result.automations.values()
+
+    assert.deepStrictEqual(automation.points, [
+      { time: numeric('s', 0), value: numeric('db', -15), curve: 'step' },
+      { time: numeric('s', 2), value: numeric('db', -30), curve: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' }
     ])
   })
 
@@ -442,9 +515,9 @@ describe('compiler/generator/generator.ts', () => {
       'mixer {',
       '  bus main {}',
       '}',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate bus.main.gain as ~[lin((-20).db, 0.db)]',
+      '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -454,8 +527,8 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(result.mixer.buses[0].gain.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('db', -20), curve: 'step' },
-      { time: numeric('beats', 16), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -20), curve: 'step' },
+      { time: numeric('s', 8), value: numeric('db', 0), curve: 'linear' }
     ])
   })
 
@@ -467,9 +540,9 @@ describe('compiler/generator/generator.ts', () => {
       '    effect lp = fx.lowpass(123.hz)',
       '  }',
       '}',
-      'track {',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
+      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -483,18 +556,18 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('hz', 100), curve: 'step' },
-      { time: numeric('beats', 16), value: numeric('hz', 4000), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('hz', 100), curve: 'step' },
+      { time: numeric('s', 8), value: numeric('hz', 4000), curve: 'linear' }
     ])
   })
 
   it('should automate effect parameters', () => {
     const source = [
       'use "effects" as fx',
-      'lp = fx.lowpass(123.hz)',
-      'track {',
+      'lp = fx.lowpass(200.hz)',
+      'track (120.bpm) {',
       '  part intro (4.bars) {',
-      '    automate lp.frequency as ~[lin(500.hz, 1000.hz)]',
+      '    automate lp.frequency as ~[lin(500.hz, 1000.hz):4.bars]',
       '  }',
       '}',
       'mixer {',
@@ -508,13 +581,13 @@ describe('compiler/generator/generator.ts', () => {
 
     const effect = result.mixer.buses[0].effects[0]
     assert.strictEqual(effect.type, 'lowpass')
-    assert.deepStrictEqual(effect.frequency.initial, numeric('hz', 123))
+    assert.deepStrictEqual(effect.frequency.initial, numeric('hz', 200))
 
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('beats', 0), value: numeric('hz', 500), curve: 'step' },
-      { time: numeric('beats', 16), value: numeric('hz', 1000), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('hz', 500), curve: 'step' },
+      { time: numeric('s', 8), value: numeric('hz', 1000), curve: 'linear' }
     ])
   })
 

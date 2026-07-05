@@ -334,12 +334,12 @@ describe('lowering.ts', () => {
             type: 'gain',
             points: [
               {
-                time: numeric('beats', 1),
+                time: numeric('s', 0.5),
                 value: numeric('db', -3),
                 curve: 'linear'
               },
               {
-                time: numeric('beats', 2),
+                time: numeric('s', 1),
                 value: numeric('db', -12),
                 curve: 'step'
               }

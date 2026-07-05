@@ -61,7 +61,7 @@ track (120.bpm) {
     snare << snare_pattern
     synth << arp_intro
 
-    automate synth.gain as ~[hold(-60.db):3 lin(0.db):1]
+    automate synth.gain as ~[hold(-60.db):2.bars lin(0.db):2.bars]
   }
 
   part main (8.bars) {
