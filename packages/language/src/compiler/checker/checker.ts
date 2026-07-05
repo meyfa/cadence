@@ -576,16 +576,19 @@ function checkCurve (scope: Scope, curve: ast.Curve): Checked<FacetType> {
   return { errors, result: CurveFacet.with(firstUnit).type() }
 }
 
+const curveSegmentLengthType = makeUnion(
+  NumberFacet.with('beats').type(),
+  NumberFacet.with('s').type()
+)
+
 function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
   const errors: CompileError[] = []
 
-  if (segment.length != null) {
-    const lengthCheck = checkExpression(scope, segment.length)
-    errors.push(...lengthCheck.errors)
+  const lengthCheck = checkExpression(scope, segment.length)
+  errors.push(...lengthCheck.errors)
 
-    if (lengthCheck.result != null) {
-      errors.push(...checkType(NumberFacet.with(undefined).type(), lengthCheck.result, segment.length.range))
-    }
+  if (lengthCheck.result != null) {
+    errors.push(...checkType(curveSegmentLengthType, lengthCheck.result, segment.length.range))
   }
 
   const expectedParameters = getCurveSegmentType(segment.curveType)?.parameterCount

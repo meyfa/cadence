@@ -1,5 +1,4 @@
 import type { AutomationPoint, Parameter, Program } from '@core'
-import { beatsToSeconds } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { dbToGain } from './constants.js'
@@ -41,7 +40,7 @@ export function toTimeVariant<FromUnit extends Unit, ToUnit extends Unit = FromU
   return {
     initial: transform.transformValue(initial),
     points: points.map((point) => ({
-      time: beatsToSeconds(point.time, program.track.tempo),
+      time: point.time,
       value: transform.transformValue(point.value),
       curve: transform.transformCurve(point.curve)
     }))

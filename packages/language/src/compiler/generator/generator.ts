@@ -11,6 +11,7 @@ import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { StringFacet } from '../../type-system/base/string.js'
 import { BusFacet } from '../../type-system/domain/bus.js'
+import type { CurveSegment } from '../../type-system/domain/curve.js'
 import { CurveFacet } from '../../type-system/domain/curve.js'
 import { EffectFacet } from '../../type-system/domain/effect.js'
 import { InstrumentFacet } from '../../type-system/domain/instrument.js'
@@ -25,8 +26,8 @@ import { assert, assertNever, fail, nonNull } from '../assert.js'
 import { patternBuiltins } from '../builtins/patterns.js'
 import type { CheckedProgram } from '../checker/checker.js'
 import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '../common.js'
-import type { CurveSegment as GeneratedCurveSegment } from '../curves.js'
-import { createCurve, createCurveSegment, getCurveSegmentType, renderCurvePoints } from '../curves.js'
+import type { RenderCurveOptions } from '../curves.js'
+import { createCurve, createCurveSegment, getCurveSegmentType, mergeCurvePoints, renderCurvePoints } from '../curves.js'
 import { binaryOperations } from '../operators/binary.js'
 import { unaryOperations } from '../operators/unary.js'
 import { resolveInScope } from '../resolution.js'
@@ -158,7 +159,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
         break
 
       case 'PartStatement': {
-        const part = generatePart(trackScope, child, currentTime)
+        const part = generatePart(trackScope, child, currentTime, tempo)
         parts.push(part)
 
         if (part.name != null) {
@@ -178,14 +179,12 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
   return { tempo, parts }
 }
 
-function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>): Part {
+function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
   const partScope = createLocalScope(scope)
 
   const name = part.name?.name
   const properties = resolveArgumentList(scope, part.properties, partSchema)
-
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
-  const endTime = numeric('beats', startTime.value + length.value)
 
   const routings: InstrumentRouting[] = []
 
@@ -210,7 +209,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
         break
 
       case 'AutomateStatement':
-        generateAutomation(partScope, child, startTime, endTime)
+        generateAutomation(partScope, child, { offset: startTime, limit: length, tempo })
         break
 
       default:
@@ -221,14 +220,14 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
   return { name, length, routings }
 }
 
-function generateAutomation (scope: Scope, statement: ast.AutomateStatement, startTime: Numeric<'beats'>, endTime: Numeric<'beats'>): void {
+function generateAutomation (scope: Scope, statement: ast.AutomateStatement, options: RenderCurveOptions): void {
   const target = ParameterFacet.get(resolve(scope, statement.target))
   const curve = CurveFacet.get(resolve(scope, statement.curve))
 
-  const rendered = renderCurvePoints(curve, startTime, endTime)
+  const rendered = renderCurvePoints(curve, options)
   const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
 
-  const points = [...existing.points, ...rendered].sort((a, b) => a.time.value - b.time.value)
+  const points = mergeCurvePoints(existing.points, rendered)
 
   scope.top.automations.set(target.id, {
     parameterId: target.id,
@@ -498,7 +497,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
   assert(segments.length > 0)
   assert(otherChildren.length === 0)
 
-  const generatedSegments: Array<GeneratedCurveSegment<Unit>> = []
+  const generatedSegments: Array<CurveSegment<Unit>> = []
 
   const getPreviousSegmentEnd = (): Numeric<Unit> => {
     const previous = nonNull(generatedSegments.at(-1))
@@ -511,9 +510,11 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
       return NumberFacet.get(resolve(scope, point))
     })
 
-    const length = segment.length != null
-      ? NumberFacet.with(undefined).get(resolve(scope, segment.length))
-      : undefined
+    const length = (() => {
+      const value = NumberFacet.get(resolve(scope, segment.length))
+      assert(value.unit === 'beats' || value.unit === 's')
+      return value as Numeric<'beats'> | Numeric<'s'>
+    })()
 
     const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
     const resolvedParameters = parameters.length < parameterCount

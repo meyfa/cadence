@@ -94,7 +94,7 @@ parallelPattern {
 }
 
 step {
-  (word | "-") ("(" argumentList? ")")? (":" primary)?
+  (word | "-") ("(" argumentList? ")")? (":" AccessOrCall)?
 }
 
 Curve {
@@ -104,7 +104,7 @@ Curve {
 }
 
 curveSegment {
-  CurveType { word } ("(" argumentList? ")")? (":" primary)?
+  CurveType { word } ("(" argumentList? ")")? (":" AccessOrCall)?
 }
 
 argumentList {

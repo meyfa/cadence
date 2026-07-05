@@ -2,6 +2,8 @@ import type { Numeric, Unit } from '@utility'
 import { makeFacet } from '../factory.js'
 import type { Facet, FacetType } from '../types.js'
 
+export type CurveDuration = Numeric<'beats'> | Numeric<'s'>
+
 export interface Curve<U extends Unit> {
   readonly unit: U
   readonly segments: ReadonlyArray<CurveSegment<U>>
@@ -11,14 +13,14 @@ export type CurveSegment<U extends Unit> = HoldCurveSegment<U> | LinearCurveSegm
 
 export interface HoldCurveSegment<U extends Unit> {
   readonly type: 'hold'
-  readonly length: Numeric<undefined>
+  readonly length: CurveDuration
   readonly unit: U
   readonly value: Numeric<U>
 }
 
 export interface LinearCurveSegment<U extends Unit> {
   readonly type: 'lin'
-  readonly length: Numeric<undefined>
+  readonly length: CurveDuration
   readonly unit: U
   readonly start: Numeric<U>
   readonly end: Numeric<U>

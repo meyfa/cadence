@@ -5,6 +5,8 @@ export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 export type Pitch = `${Note}${Octave}`
 export type StepValue = '-' | 'x' | Pitch
 
+// Patterns
+
 export interface Step {
   readonly value: StepValue
 
@@ -81,7 +83,7 @@ export interface Automation<U extends Unit = Unit> {
 }
 
 export interface AutomationPoint<U extends Unit = Unit> {
-  readonly time: Numeric<'beats'>
+  readonly time: Numeric<'s'>
   readonly value: Numeric<U>
 
   /**

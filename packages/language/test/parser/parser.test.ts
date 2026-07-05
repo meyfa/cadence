@@ -471,39 +471,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse curve expressions', () => {
-    const result = parse(lexSource('foo = ~[hold(0) lin(0, 1)]'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'Curve',
-          children: [
-            {
-              type: 'CurveSegment',
-              curveType: 'hold',
-              parameters: [
-                { type: 'Number', value: 0 }
-              ]
-            },
-            {
-              type: 'CurveSegment',
-              curveType: 'lin',
-              parameters: [
-                { type: 'Number', value: 0 },
-                { type: 'Number', value: 1 }
-              ]
-            }
-          ]
-        }
-      }
-    ])
-  })
-
-  it('should parse curve segment lengths', () => {
-    const result = parse(lexSource('foo = ~[hold(0):3 lin(0, 1):1]'))
+    const result = parse(lexSource('foo = ~[hold(0):1.bar lin(0, 1):2.beats]'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -519,7 +487,11 @@ describe('parser/parser.ts', () => {
               parameters: [
                 { type: 'Number', value: 0 }
               ],
-              length: { type: 'Number', value: 3 }
+              length: {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 1 },
+                property: { type: 'Identifier', name: 'bar' }
+              }
             },
             {
               type: 'CurveSegment',
@@ -528,7 +500,11 @@ describe('parser/parser.ts', () => {
                 { type: 'Number', value: 0 },
                 { type: 'Number', value: 1 }
               ],
-              length: { type: 'Number', value: 1 }
+              length: {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 2 },
+                property: { type: 'Identifier', name: 'beats' }
+              }
             }
           ]
         }
@@ -537,7 +513,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse curve segments without parameters', () => {
-    const result = parse(lexSource('foo = ~[hold hold:2]'))
+    const result = parse(lexSource('foo = ~[hold:1.bar hold:2.bars]'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -550,18 +526,33 @@ describe('parser/parser.ts', () => {
             {
               type: 'CurveSegment',
               curveType: 'hold',
-              parameters: []
+              parameters: [],
+              length: {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 1 },
+                property: { type: 'Identifier', name: 'bar' }
+              }
             },
             {
               type: 'CurveSegment',
               curveType: 'hold',
               parameters: [],
-              length: { type: 'Number', value: 2 }
+              length: {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 2 },
+                property: { type: 'Identifier', name: 'bars' }
+              }
             }
           ]
         }
       }
     ])
+  })
+
+  it('should reject curve segments that omit the length', () => {
+    const result = parse(lexSource('foo = ~[hold(0) lin(1, 2):1.bar]'))
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.message, 'Curve segment "hold" is missing a length')
   })
 
   it('should parse property access with function calls', () => {

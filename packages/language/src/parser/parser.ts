@@ -193,7 +193,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
     combine2(
       literal(':'),
       // Require parantheses around complex length expressions
-      p.recursive(() => primary_)
+      p.recursive(() => accessOrCall_)
     ),
     undefined
   ),
@@ -308,27 +308,21 @@ const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
     p.option(
       combine2(
         literal(':'),
-        p.recursive(() => primary_)
+        p.recursive(() => accessOrCall_)
       ),
       undefined
     )
   ),
   (curveTypeToken, [callTail, curveLength]) => {
+    if (curveLength == null) {
+      throw new ParseError(`Curve segment "${curveTypeToken.text}" is missing a length`, getSourceRange(curveTypeToken))
+    }
+
     const curveType = curveTypeToken.text
     const parameters = callTail == null ? [] : callTail[1]
-    const length = curveLength?.[1]
+    const length = curveLength[1]
 
-    const range = length != null
-      ? combineSourceRanges(curveTypeToken, length)
-      : callTail == null
-        ? getSourceRange(curveTypeToken)
-        : combineSourceRanges(curveTypeToken, callTail[2])
-
-    return ast.make('CurveSegment', range, {
-      curveType,
-      parameters,
-      ...(length == null ? {} : { length })
-    })
+    return ast.make('CurveSegment', combineSourceRanges(curveTypeToken, length), { curveType, parameters, length })
   }
 )
 
