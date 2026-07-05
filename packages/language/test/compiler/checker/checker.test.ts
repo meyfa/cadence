@@ -540,6 +540,15 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should use segment unit if only the segment length is invalid', () => {
+      // If the first segment is entirely discarded by the compiler, then
+      // the second would emit a second error: 'Expected type number, got number(hz)',
+      // which is obviously not correct.
+      assertErrorMessages('my_curve = ~[lin(10.hz, 20.hz):unknown lin(30.hz)]', [
+        'Unknown identifier "unknown"'
+      ])
+    })
+
     it('should reject automations that target non-parameters', () => {
       const source = [
         'some_value = ""',
