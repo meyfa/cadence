@@ -14,7 +14,7 @@ describe('pattern.ts', () => {
         { value: 'x' },
         { value: '-' },
         { value: 'x' }
-      ], 1)
+      ])
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
         { time: beats(0), gate: beats(1), velocity: unitless(1) },
@@ -23,22 +23,9 @@ describe('pattern.ts', () => {
     })
 
     it('should create an empty pattern when given an empty array', () => {
-      const pattern = createSerialPattern([], 1)
+      const pattern = createSerialPattern([])
       assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
-    })
-
-    it('should adapt to subdivision', () => {
-      const pattern = createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'x' }
-      ], 2)
-      assert.strictEqual(pattern.length?.value, 1.5)
-      assert.deepStrictEqual([...pattern.evaluate()], [
-        { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
-        { time: beats(1), gate: beats(0.5), velocity: unitless(1) }
-      ])
     })
 
     it('should handle steps with custom lengths', () => {
@@ -46,7 +33,7 @@ describe('pattern.ts', () => {
         { value: 'x', length: numeric(undefined, 2) },
         { value: '-' },
         { value: 'x', length: numeric(undefined, 0.5) }
-      ], 1)
+      ])
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
         { time: beats(0), gate: beats(2), velocity: unitless(1) },
@@ -59,7 +46,7 @@ describe('pattern.ts', () => {
         { value: 'C1', length: numeric(undefined, 0) },
         { value: 'C2', length: numeric(undefined, -1) },
         { value: 'C3' }
-      ], 1)
+      ])
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
         { pitch: 'C3', time: beats(0), gate: beats(1), velocity: unitless(1) }
@@ -71,7 +58,7 @@ describe('pattern.ts', () => {
         { value: 'x', gate: numeric(undefined, 0.5) },
         { value: '-' },
         { value: 'x', gate: numeric(undefined, 0.25) }
-      ], 1)
+      ])
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
         { time: beats(0), gate: beats(0.5), velocity: unitless(1) },
@@ -84,7 +71,7 @@ describe('pattern.ts', () => {
         { value: 'x', length: numeric(undefined, 2), gate: numeric(undefined, 1.5) },
         { value: '-' },
         { value: 'x', length: numeric(undefined, 0.5), gate: numeric(undefined, 0.1) }
-      ], 1)
+      ])
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
         { time: beats(0), gate: beats(1.5), velocity: unitless(1) },
@@ -107,7 +94,7 @@ describe('pattern.ts', () => {
           gate: numeric(undefined, 0.1),
           velocity: numeric(undefined, 0.5)
         }
-      ], 1)
+      ])
 
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -209,15 +196,19 @@ describe('pattern.ts', () => {
     })
 
     it('should return the same pattern when given a single pattern', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const concatenated = concatPatterns([pattern])
       assert.strictEqual(concatenated, pattern)
     })
 
     it('should concatenate two finite patterns correctly', () => {
       const concatenated = concatPatterns([
-        createSerialPattern([{ value: 'x' }, { value: '-' }], 1),
-        createSerialPattern([{ value: '-' }, { value: 'x' }, { value: 'x', velocity: unitless(0.5) }], 2)
+        createSerialPattern([{ value: 'x' }, { value: '-' }]),
+        createSerialPattern([
+          { value: '-', length: numeric(undefined, 0.5) },
+          { value: 'x', length: numeric(undefined, 0.5) },
+          { value: 'x', length: numeric(undefined, 0.5), velocity: unitless(0.5) }
+        ])
       ])
       assert.strictEqual(concatenated.length?.value, 3.5)
       assert.deepStrictEqual([...concatenated.evaluate()], [
@@ -228,22 +219,22 @@ describe('pattern.ts', () => {
     })
 
     it('should return the second pattern if the first is empty', () => {
-      const first = createSerialPattern([], 1)
-      const second = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const first = createSerialPattern([])
+      const second = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const concatenated = concatPatterns([first, second])
       assert.strictEqual(concatenated, second)
     })
 
     it('should return the first pattern if the second is empty', () => {
-      const first = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
-      const second = createSerialPattern([], 1)
+      const first = createSerialPattern([{ value: 'x' }, { value: '-' }])
+      const second = createSerialPattern([])
       const concatenated = concatPatterns([first, second])
       assert.strictEqual(concatenated, first)
     })
 
     it('should return the first pattern if it is infinite', () => {
-      const first = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1))
-      const second = createSerialPattern([{ value: '-' }, { value: 'x' }], 1)
+      const first = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }]))
+      const second = createSerialPattern([{ value: '-' }, { value: 'x' }])
       const concatenated = concatPatterns([first, second])
       assert.strictEqual(concatenated, first)
     })
@@ -257,15 +248,15 @@ describe('pattern.ts', () => {
     })
 
     it('should return the same pattern when given a single pattern', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const parallel = mergePatterns([pattern])
       assert.strictEqual(parallel, pattern)
     })
 
     it('should combine multiple patterns correctly', () => {
       const parallel = mergePatterns([
-        createSerialPattern([{ value: 'x' }, { value: '-' }], 1),
-        createSerialPattern([{ value: '-' }, { value: 'x', velocity: unitless(0.5) }], 1)
+        createSerialPattern([{ value: 'x' }, { value: '-' }]),
+        createSerialPattern([{ value: '-' }, { value: 'x', velocity: unitless(0.5) }])
       ])
       assert.strictEqual(parallel.length?.value, 2)
       assert.deepStrictEqual([...parallel.evaluate()], [
@@ -276,8 +267,8 @@ describe('pattern.ts', () => {
 
     it('should handle patterns of different lengths', () => {
       const parallel = mergePatterns([
-        createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }], 1),
-        createSerialPattern([{ value: '-' }, { value: 'x' }], 1)
+        createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }]),
+        createSerialPattern([{ value: '-' }, { value: 'x' }])
       ])
       assert.strictEqual(parallel.length?.value, 3)
       assert.deepStrictEqual([...parallel.evaluate()], [
@@ -289,8 +280,8 @@ describe('pattern.ts', () => {
 
     it('should handle infinite patterns', () => {
       const parallel = mergePatterns([
-        loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1)),
-        createSerialPattern([{ value: '-' }, { value: 'x' }], 1)
+        loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }])),
+        createSerialPattern([{ value: '-' }, { value: 'x' }])
       ])
       assert.strictEqual(parallel.length, undefined)
 
@@ -311,10 +302,16 @@ describe('pattern.ts', () => {
 
     it('should produce steps in the correct order', () => {
       const parallel = mergePatterns([
-        createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }], 1),
-        createSerialPattern([{ value: '-' }, { value: '-' }, { value: 'x' }], 1),
-        createSerialPattern([{ value: 'x' }, { value: 'x' }], 4),
-        createSerialPattern([{ value: 'x' }, { value: 'x' }], 2)
+        createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }]),
+        createSerialPattern([{ value: '-' }, { value: '-' }, { value: 'x' }]),
+        createSerialPattern([
+          { value: 'x', length: numeric(undefined, 0.25) },
+          { value: 'x', length: numeric(undefined, 0.25) }
+        ]),
+        createSerialPattern([
+          { value: 'x', length: numeric(undefined, 0.5) },
+          { value: 'x', length: numeric(undefined, 0.5) }
+        ])
       ])
       assert.strictEqual(parallel.length?.value, 3)
       assert.deepStrictEqual([...parallel.evaluate()], [
@@ -332,10 +329,10 @@ describe('pattern.ts', () => {
   describe('loopPattern()', () => {
     it('should create an infinite pattern when no duration is provided', () => {
       const pattern = createSerialPattern([
-        { value: 'x', velocity: unitless(0.75) },
-        { value: '-' },
-        { value: '-' }
-      ], 2)
+        { value: 'x', velocity: unitless(0.75), length: numeric(undefined, 0.5) },
+        { value: '-', length: numeric(undefined, 0.5) },
+        { value: '-', length: numeric(undefined, 0.5) }
+      ])
       const looped = loopPattern(pattern)
 
       assert.strictEqual(looped.length, undefined)
@@ -356,7 +353,7 @@ describe('pattern.ts', () => {
     })
 
     it('should loop a finite pattern to a specific length', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const looped = loopPattern(pattern, beats(5))
 
       assert.strictEqual(looped.length?.value, 5)
@@ -373,7 +370,7 @@ describe('pattern.ts', () => {
       const pattern = createSerialPattern([
         { value: 'A4', gate: numeric(undefined, 3) },
         { value: 'B4', gate: numeric(undefined, 5) }
-      ], 1)
+      ])
       const looped = loopPattern(pattern, beats(4))
 
       assert.strictEqual(looped.length?.value, 4)
@@ -386,19 +383,19 @@ describe('pattern.ts', () => {
     })
 
     it('should return the same pattern if it is infinite and no duration is provided', () => {
-      const pattern = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }], 1))
+      const pattern = loopPattern(createSerialPattern([{ value: 'x' }, { value: '-' }]))
       const looped = loopPattern(pattern)
       assert.strictEqual(looped, pattern)
     })
 
     it('should return empty pattern when looping an empty pattern', () => {
-      const pattern = loopPattern(createSerialPattern([], 1), beats(10))
+      const pattern = loopPattern(createSerialPattern([]), beats(10))
       assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
     })
 
     it('should return empty pattern when looping an empty pattern infinitely', () => {
-      const pattern = loopPattern(createSerialPattern([], 1))
+      const pattern = loopPattern(createSerialPattern([]))
       assert.strictEqual(pattern.length?.value, 0)
       assert.deepStrictEqual([...pattern.evaluate()], [])
     })
@@ -406,14 +403,14 @@ describe('pattern.ts', () => {
 
   describe('multiplyPattern()', () => {
     it('should return an empty pattern when multiplied by 0', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const multiplied = multiplyPattern(pattern, 0)
       assert.strictEqual(multiplied.length?.value, 0)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should return an empty pattern when multiplied by a negative number', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
       const multiplied = multiplyPattern(pattern, -1)
       assert.strictEqual(multiplied.length?.value, 0)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
@@ -424,7 +421,7 @@ describe('pattern.ts', () => {
         { value: 'x', velocity: unitless(0.75) },
         { value: '-' },
         { value: 'x' }
-      ], 1)
+      ])
       const multiplied = multiplyPattern(pattern, 1)
       assert.strictEqual(multiplied.length?.value, 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
@@ -438,7 +435,7 @@ describe('pattern.ts', () => {
         { value: 'x', velocity: unitless(0.75) },
         { value: '-' },
         { value: 'x' }
-      ], 1)
+      ])
       const multiplied = multiplyPattern(pattern, 3)
       assert.strictEqual(multiplied.length?.value, 9)
       assert.deepStrictEqual([...multiplied.evaluate()], [
@@ -451,7 +448,7 @@ describe('pattern.ts', () => {
       const pattern = loopPattern(createSerialPattern([
         { value: 'x', velocity: unitless(0.75) },
         { value: '-' }
-      ], 1))
+      ]))
       const multiplied = multiplyPattern(pattern, 4)
       assert.strictEqual(multiplied.length, undefined)
 
@@ -471,28 +468,28 @@ describe('pattern.ts', () => {
     })
 
     it('should return an empty pattern when multiplying an empty pattern', () => {
-      const pattern = createSerialPattern([], 1)
+      const pattern = createSerialPattern([])
       const multiplied = multiplyPattern(pattern, 5)
       assert.strictEqual(multiplied.length?.value, 0)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should handle non-empty patterns with no events', () => {
-      const pattern = createSerialPattern([{ value: '-' }, { value: '-' }, { value: '-' }], 1)
+      const pattern = createSerialPattern([{ value: '-' }, { value: '-' }, { value: '-' }])
       const multiplied = multiplyPattern(pattern, 2)
       assert.strictEqual(multiplied.length?.value, 6)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should handle infinite patterns with no events', () => {
-      const pattern = loopPattern(createSerialPattern([{ value: '-' }, { value: '-' }, { value: '-' }], 1))
+      const pattern = loopPattern(createSerialPattern([{ value: '-' }, { value: '-' }, { value: '-' }]))
       const multiplied = multiplyPattern(pattern, 2)
       assert.strictEqual(multiplied.length, undefined)
       assert.deepStrictEqual([...multiplied.evaluate()], [])
     })
 
     it('should handle fractional factors', () => {
-      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }, { value: '-' }, { value: 'x' }], 1)
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }, { value: '-' }, { value: 'x' }])
       const multiplied = multiplyPattern(pattern, 1 / 3)
       assert.strictEqual(multiplied.length?.value, 4 / 3)
       assert.deepStrictEqual([...multiplied.evaluate()], [
@@ -509,7 +506,7 @@ describe('pattern.ts', () => {
         { value: '-' },
         { value: 'x', velocity: unitless(0.5) },
         { value: 'x' }
-      ], 1)
+      ])
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(0)),
         []
@@ -539,11 +536,11 @@ describe('pattern.ts', () => {
 
     it('should not produce additional events', () => {
       assert.deepStrictEqual(
-        renderPatternEvents(createSerialPattern([], 1), beats(2)),
+        renderPatternEvents(createSerialPattern([]), beats(2)),
         []
       )
       assert.deepStrictEqual(
-        renderPatternEvents(createSerialPattern([{ value: 'x' }, { value: '-' }], 1), beats(8)),
+        renderPatternEvents(createSerialPattern([{ value: 'x' }, { value: '-' }]), beats(8)),
         [
           { time: beats(0), gate: beats(1), velocity: unitless(1) }
         ]
@@ -558,7 +555,7 @@ describe('pattern.ts', () => {
         { value: 'x' },
         { value: '-' },
         { value: 'x' }
-      ], 1)
+      ])
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(3)),
         [
@@ -578,7 +575,7 @@ describe('pattern.ts', () => {
       const pattern = createSerialPattern([
         { value: 'A4', gate: numeric(undefined, 3) },
         { value: 'B4', gate: numeric(undefined, 5) }
-      ], 1)
+      ])
 
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(2)),
@@ -593,7 +590,7 @@ describe('pattern.ts', () => {
       const pattern = loopPattern(createSerialPattern([
         { value: 'x', velocity: unitless(0.5) },
         { value: '-' }
-      ], 1))
+      ]))
       assert.deepStrictEqual(
         renderPatternEvents(pattern, beats(0)),
         []

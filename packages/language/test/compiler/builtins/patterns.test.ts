@@ -40,17 +40,19 @@ function invoke (builtin: PatternBuiltin, self: Value<Facet<'pattern', Pattern>>
 describe('library/modules/patterns.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
+  const half = numeric(undefined, 0.5)
+  const quarter = numeric(undefined, 0.25)
 
   describe('loop', () => {
     const loop = getPatternBuiltin('loop')
 
     it('should loop finite patterns infinitely', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', velocity: numeric(undefined, 0.5) },
-        { value: '-' },
-        { value: '-' },
-        { value: 'G5' }
-      ], 4))
+        { value: 'x', velocity: numeric(undefined, 0.5), length: quarter },
+        { value: '-', length: quarter },
+        { value: '-', length: quarter },
+        { value: 'G5', length: quarter }
+      ]))
 
       const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
@@ -68,10 +70,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should keep infinite patterns infinite', () => {
       const pattern = PatternFacet.type().of(loopPattern(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2)))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ])))
 
       const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
@@ -87,7 +89,7 @@ describe('library/modules/patterns.ts', () => {
     })
 
     it('should return empty pattern when looping empty pattern', () => {
-      const pattern = PatternFacet.type().of(createSerialPattern([], 4))
+      const pattern = PatternFacet.type().of(createSerialPattern([]))
 
       const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
@@ -99,10 +101,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should support times parameter', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 3))
@@ -124,10 +126,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should support times parameter of zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 0))
@@ -141,10 +143,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat negative times parameter as zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, -2))
@@ -158,10 +160,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should support fractional times parameter', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(numeric(undefined, 0.5))
@@ -182,10 +184,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should loop finite patterns until the duration is filled', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4', velocity: numeric(undefined, 0.5) }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', velocity: numeric(undefined, 0.5), length: half }
+      ]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
@@ -204,10 +206,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should truncate infinite patterns to the requested duration', () => {
       const pattern = PatternFacet.type().of(loopPattern(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2)))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ])))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
@@ -225,7 +227,7 @@ describe('library/modules/patterns.ts', () => {
     })
 
     it('should return empty pattern when filling an empty pattern', () => {
-      const pattern = PatternFacet.type().of(createSerialPattern([], 4))
+      const pattern = PatternFacet.type().of(createSerialPattern([]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(2.0))
@@ -239,10 +241,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should return empty pattern when duration is zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(0))
@@ -256,10 +258,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat negative duration as empty', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(-2.0))
@@ -273,10 +275,10 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat non-finite duration as empty', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x' },
-        { value: '-' },
-        { value: 'C4' }
-      ], 2))
+        { value: 'x', length: half },
+        { value: '-', length: half },
+        { value: 'C4', length: half }
+      ]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(Number.POSITIVE_INFINITY))
@@ -292,7 +294,7 @@ describe('library/modules/patterns.ts', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
         { value: 'A4', gate: numeric(undefined, 3) },
         { value: 'B4', gate: numeric(undefined, 5), velocity: numeric(undefined, 0.5) }
-      ], 1))
+      ]))
 
       const result = invoke(fill, pattern, {
         duration: Numbers.of(beats(4.0))

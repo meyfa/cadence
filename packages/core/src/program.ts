@@ -9,13 +9,12 @@ export interface Step {
   readonly value: StepValue
 
   /**
-   * The duration of the step relative to the pattern's subdivision. Defaults to 1.
+    * The duration of the step. Defaults to 1.
    */
   readonly length?: Numeric<undefined>
 
   /**
-   * The gate (duration) of the step relative to the pattern's subdivision.
-   * If undefined, the gate is equal to the step's length.
+    * The gate (duration) of the step. If undefined, the gate is equal to the step's length.
    */
   readonly gate?: Numeric<undefined>
 

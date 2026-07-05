@@ -41,14 +41,14 @@ function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
   return numeric('beats', max)
 }
 
-function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLength = 1.0): void {
+function pushStepEvent (events: NoteEvent[], step: Step, offset: number): void {
   if (step.value === '-') {
     return
   }
 
   const time = numeric('beats', offset)
 
-  const stepGate = baseLength * (step.gate?.value ?? step.length?.value ?? 1)
+  const stepGate = step.gate?.value ?? step.length?.value ?? 1
   const gate = numeric('beats', stepGate)
   const velocity = step.velocity ?? defaultVelocity
 
@@ -60,27 +60,23 @@ function pushStepEvent (events: NoteEvent[], step: Step, offset: number, baseLen
 }
 
 /**
- * Create a pattern with equally spaced steps based on the provided subdivision.
- * For example, assuming a 4/4 time signature, a subdivision of 1 would create quarter notes,
- * while a subdivision of 4 would create sixteenth notes.
+ * Create a pattern with equally spaced steps, where each step is 1 beat long.
  */
-export function createSerialPattern (steps: readonly Step[], subdivision: number): Pattern {
-  if (steps.length === 0 || !isPositiveFiniteNumber(subdivision)) {
+export function createSerialPattern (steps: readonly Step[]): Pattern {
+  if (steps.length === 0) {
     return emptyPattern
   }
-
-  const defaultStepLength = 1 / subdivision
 
   const events: NoteEvent[] = []
   let offset = 0
 
   for (const step of steps) {
-    const stepLength = defaultStepLength * (step.length?.value ?? 1)
+    const stepLength = step.length?.value ?? 1
     if (!isPositiveFiniteNumber(stepLength)) {
       continue
     }
 
-    pushStepEvent(events, step, offset, defaultStepLength)
+    pushStepEvent(events, step, offset)
     offset += stepLength
   }
 

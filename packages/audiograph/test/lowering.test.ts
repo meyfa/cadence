@@ -435,7 +435,7 @@ describe('lowering.ts', () => {
                   value: createSerialPattern([
                     { value: 'C4' },
                     { value: 'E4', velocity: numeric(undefined, 0.75) }
-                  ], 1)
+                  ])
                 },
                 destination: {
                   type: 'instrument',
@@ -454,7 +454,7 @@ describe('lowering.ts', () => {
                   value: createSerialPattern([
                     { value: 'G4' },
                     { value: 'B4' }
-                  ], 1)
+                  ])
                 },
                 destination: {
                   type: 'instrument',
