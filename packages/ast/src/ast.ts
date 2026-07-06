@@ -167,10 +167,20 @@ export interface Instrument extends ASTNode {
 
 export interface VoiceStatement extends ASTNode {
   readonly type: 'VoiceStatement'
-  readonly children: readonly Assignment[]
+  readonly children: ReadonlyArray<Assignment | EnvelopeStatement | OutputStatement>
   readonly bindings: {
     readonly note?: Identifier
   }
+}
+
+export interface EnvelopeStatement extends ASTNode {
+  readonly type: 'EnvelopeStatement'
+  readonly expression: Expression
+}
+
+export interface OutputStatement extends ASTNode {
+  readonly type: 'OutputStatement'
+  readonly expression: Expression
 }
 
 // Root Type
@@ -229,6 +239,8 @@ export interface NodeByType {
 
   Instrument: Instrument
   VoiceStatement: VoiceStatement
+  EnvelopeStatement: EnvelopeStatement
+  OutputStatement: OutputStatement
 
   Program: Program
 }

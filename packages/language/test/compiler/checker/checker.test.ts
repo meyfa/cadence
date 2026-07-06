@@ -311,10 +311,14 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should allow valid instrument definitions', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  foo = -6.db',
         '  voice {',
         '    bar = 440.hz',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(bar)',
         '  }',
         '  voice note {}',
         '  voice note {',
@@ -322,6 +326,9 @@ describe('compiler/checker/checker.ts', () => {
         '    note_frequency = note.frequency',
         '    note_gate = note.gate',
         '    note_velocity = note.velocity',
+        '',
+        '    envelope ~[lin(-60.db, 0.db):30.ms lin(-10.db):note_gate lin(-60.db):10.ms]',
+        '    output src.saw(note_frequency)',
         '  }',
         '}'
       ].join('\n')
@@ -775,16 +782,38 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should report errors in voice statements', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice {',
         '    bar = 440.hz',
         '    bar = 880.hz',
+        '    output src.sine(440)',
         '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Identifier "bar" is already defined'
+        'Identifier "bar" is already defined',
+        'Expected type number(hz), got number'
+      ])
+    })
+
+    it('should report switched output and envelope values', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'my_instrument = instrument {',
+        '  voice {',
+        '    output ~[lin(0.db, -60.db):100.ms]',
+        '    envelope src.sine(440.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Expected type source, got curve(db)',
+        'Expected type curve(db), got source'
       ])
     })
 
@@ -814,6 +843,38 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined'
+      ])
+    })
+
+    it('should reject multiple outputs in a voice', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'my_instrument = instrument {',
+        '  voice {',
+        '    output src.sine(440.hz)',
+        '    output src.sine(880.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Multiple output statements in a voice'
+      ])
+    })
+
+    it('should reject multiple envelopes in a voice', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  voice {',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    envelope ~[lin(-60.db, 0.db):100.ms]',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Multiple envelope statements in a voice'
       ])
     })
 

@@ -225,6 +225,16 @@ VoiceStatement {
   kw<"voice">
   VariableDefinition?
   VoiceBlock[group=Block] {
-    "{" (Assignment)* "}"
+    "{" (Assignment | EnvelopeStatement | OutputStatement)* "}"
   }
+}
+
+EnvelopeStatement {
+  kw<"envelope">
+  expression
+}
+
+OutputStatement {
+  kw<"output">
+  expression
 }

@@ -16,6 +16,7 @@ import { InstrumentFacet } from '../../type-system/domain/instrument.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { PartFacet } from '../../type-system/domain/part.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
+import { SourceFacet } from '../../type-system/domain/source.js'
 import { makeType, makeUnion } from '../../type-system/factory.js'
 import type { Schema, SchemaItem } from '../../type-system/schema.js'
 import type { FacetType, Type, Value } from '../../type-system/types.js'
@@ -679,8 +680,52 @@ function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileE
     voiceScope.resolutions.set(voice.bindings.note.name, noteType)
   }
 
+  let hasEnvelope = false
+  let hasOutput = false
+
   for (const child of voice.children) {
-    errors.push(...checkAssignment(voiceScope, child))
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(voiceScope, child))
+        break
+
+      case 'EnvelopeStatement': {
+        if (hasEnvelope) {
+          errors.push(new CompileError('Multiple envelope statements in a voice', child.range))
+        }
+
+        hasEnvelope = true
+
+        const expressionCheck = checkExpression(voiceScope, child.expression)
+        errors.push(...expressionCheck.errors)
+
+        if (expressionCheck.result != null) {
+          errors.push(...checkType(CurveFacet.with('db').type(), expressionCheck.result, child.expression.range))
+        }
+
+        break
+      }
+
+      case 'OutputStatement': {
+        if (hasOutput) {
+          errors.push(new CompileError('Multiple output statements in a voice', child.range))
+        }
+
+        hasOutput = true
+
+        const expressionCheck = checkExpression(voiceScope, child.expression)
+        errors.push(...expressionCheck.errors)
+
+        if (expressionCheck.result != null) {
+          errors.push(...checkType(SourceFacet.type(), expressionCheck.result, child.expression.range))
+        }
+
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
   }
 
   return errors
