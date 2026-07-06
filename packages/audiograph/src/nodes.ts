@@ -79,7 +79,7 @@ export interface WaveShaperNode extends AnyNode {
 
 export interface InstrumentNode extends AnyNode {
   readonly type: 'instrument'
-  readonly trigger: (note: Omit<NoteOptions, 'time'>) => SourceNode
+  readonly trigger: (note: Omit<NoteOptions, 'time'>) => readonly SourceNode[]
 }
 
 // sources

@@ -212,14 +212,16 @@ function createSampleInstrumentNode (
 
       const playbackRate = Math.pow(2, ((note.pitch ?? rootNote) - rootNote) / 12)
 
-      return {
-        id: -1 as NodeId, // TODO: avoid invalid id
-        type: 'sample',
-        gainCurve,
-        duration,
-        assetId,
-        playbackRate
-      }
+      return [
+        {
+          id: -1 as NodeId, // TODO: avoid invalid id
+          type: 'sample',
+          gainCurve,
+          duration,
+          assetId,
+          playbackRate
+        }
+      ]
     }
   })
 }
@@ -241,14 +243,16 @@ function createOscillatorInstrumentNode (
 
       const frequency = numeric('hz', getMidiFrequency(note.pitch ?? rootNote))
 
-      return {
-        id: -1 as NodeId, // TODO: avoid invalid id
-        type: 'oscillator',
-        gainCurve,
-        duration,
-        shape,
-        frequency
-      }
+      return [
+        {
+          id: -1 as NodeId, // TODO: avoid invalid id
+          type: 'oscillator',
+          gainCurve,
+          duration,
+          shape,
+          frequency
+        }
+      ]
     }
   })
 }

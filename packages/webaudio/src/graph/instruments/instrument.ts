@@ -28,33 +28,34 @@ export function createInstrumentInstance (
       return
     }
 
-    const source = node.trigger(note)
-    const sourceNode = createSourceNode(source, transport, assets)
-    const gainNode = ctx.createGain()
+    for (const source of node.trigger(note)) {
+      const sourceNode = createSourceNode(source, transport, assets)
+      const gainNode = ctx.createGain()
 
-    sourceNode.connect(gainNode).connect(output)
+      sourceNode.connect(gainNode).connect(output)
 
-    applyAutomationPoints(time, transport, gainNode.gain, source.gainCurve)
+      applyAutomationPoints(time, transport, gainNode.gain, source.gainCurve)
 
-    const activeSource: ActiveSource = {
-      sourceNode,
-      gainNode,
-      disposed: false
-    }
-    sources.add(activeSource)
-
-    sourceNode.start(time)
-
-    if (source.duration != null) {
-      sourceNode.stop(time + source.duration.value)
-    }
-
-    sourceNode.addEventListener('ended', () => {
-      if (!activeSource.disposed) {
-        sources.delete(activeSource)
-        disposeActiveSource(activeSource)
+      const activeSource: ActiveSource = {
+        sourceNode,
+        gainNode,
+        disposed: false
       }
-    }, { once: true })
+      sources.add(activeSource)
+
+      sourceNode.start(time)
+
+      if (source.duration != null) {
+        sourceNode.stop(time + source.duration.value)
+      }
+
+      sourceNode.addEventListener('ended', () => {
+        if (!activeSource.disposed) {
+          sources.delete(activeSource)
+          disposeActiveSource(activeSource)
+        }
+      }, { once: true })
+    }
   })
 
   return { dispose, output, triggerNote }
