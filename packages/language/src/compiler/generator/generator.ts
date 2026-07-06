@@ -552,16 +552,20 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
 
   const instrument = scope.top.allocateInstrument({
     gain: gainParameter,
-    source: {
-      type: 'oscillator',
-      shape: 'sine'
-    },
-    envelope: {
-      attack: numeric('s', 0),
-      decay: numeric('s', 0),
-      sustain: numeric(undefined, 1),
-      release: numeric('s', 0)
-    }
+    trigger: () => [
+      {
+        envelope: {
+          attack: numeric('s', 0),
+          decay: numeric('s', 0),
+          sustain: numeric(undefined, 1),
+          release: numeric('s', 0)
+        },
+        source: {
+          type: 'oscillator',
+          shape: 'sine'
+        }
+      }
+    ]
   })
 
   return InstrumentFacet.type().of(instrument)

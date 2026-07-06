@@ -51,13 +51,19 @@ describe('library/modules/instruments.ts', () => {
         id: instrument.id,
         rootNote: 'C4',
         gain: { id: instrument.gain.id, initial: numeric('db', -3) },
-        source: {
-          type: 'sample',
-          assetId: asset.id,
-          length: numeric('s', 1.5)
-        },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       } satisfies Instrument)
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'sample',
+            assetId: asset.id,
+            length: numeric('s', 1.5)
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [instrument.id, InstrumentFacet.get(result)]
@@ -83,13 +89,19 @@ describe('library/modules/instruments.ts', () => {
       assert.deepStrictEqual(instrument, {
         rootNote: undefined,
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: {
-          type: 'sample',
-          assetId: asset.id,
-          length: undefined
-        },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       })
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'sample',
+            assetId: asset.id,
+            length: undefined
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [id, InstrumentFacet.get(result)]
@@ -110,9 +122,18 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: { type: 'oscillator', shape: 'sine' },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       })
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'sine'
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [id, InstrumentFacet.get(result)]
@@ -133,9 +154,18 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: { type: 'oscillator', shape: 'square' },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       })
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'square'
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [id, InstrumentFacet.get(result)]
@@ -156,9 +186,18 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: { type: 'oscillator', shape: 'saw' },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       })
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'saw'
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [id, InstrumentFacet.get(result)]
@@ -179,9 +218,18 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
-        source: { type: 'oscillator', shape: 'triangle' },
-        envelope: declickEnvelope
+        trigger: instrument.trigger
       })
+
+      assert.deepStrictEqual(instrument.trigger(), [
+        {
+          envelope: declickEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'triangle'
+          }
+        }
+      ])
 
       assert.deepStrictEqual([...context.instruments], [
         [id, InstrumentFacet.get(result)]

@@ -41,8 +41,6 @@ const FLOWCHART_OPTIONS: MixerFlowchartOptions = {
   }
 }
 
-const MISSING_ASSET_URL = '<missing asset>'
-
 function getNodeTypeLabel (type: MixerFlowNode['data']['type']): string {
   switch (type) {
     case 'output':
@@ -54,7 +52,7 @@ function getNodeTypeLabel (type: MixerFlowNode['data']['type']): string {
   }
 }
 
-function getNodeLabel ({ data }: MixerFlowNode): string {
+function getNodeLabel ({ data }: MixerFlowNode): string | undefined {
   switch (data.type) {
     case 'output':
       return 'Main Output'
@@ -62,27 +60,9 @@ function getNodeLabel ({ data }: MixerFlowNode): string {
     case 'bus':
       return data.object.name
 
-    case 'instrument': {
-      switch (data.object.source.type) {
-        case 'sample': {
-          const url = getSampleUrl(data.program, data.object)
-          return url?.split('/').pop() ?? url ?? MISSING_ASSET_URL
-        }
-
-        case 'oscillator': {
-          return data.object.source.shape
-        }
-      }
-    }
+    case 'instrument':
+      return undefined // TODO: Find a way to describe the instrument
   }
-}
-
-function getSampleUrl (program: Program, instrument: Instrument): string | undefined {
-  if (instrument.source.type !== 'sample') {
-    return undefined
-  }
-
-  return program.assets.get(instrument.source.assetId)?.url
 }
 
 export const MixerPanel: FunctionComponent<PanelProps> = () => {
@@ -265,21 +245,10 @@ const BusNodeInfo: FunctionComponent<{
 const InstrumentNodeInfo: FunctionComponent<{
   object: Instrument
   program: Program
-}> = ({ object, program }) => {
-  const sampleUrl = getSampleUrl(program, object) ?? MISSING_ASSET_URL
-
+}> = () => {
   return (
     <>
       <div className='font-bold'>(Instrument)</div>
-      <div>type: {object.source.type}</div>
-      {object.source.type === 'sample' && (
-        <div className='max-w-96'>url: {sampleUrl}</div>
-      )}
-      {object.source.type === 'oscillator' && (
-        <div>shape: {object.source.shape}</div>
-      )}
-      <div>root_note: {object.rootNote ?? 'undefined'}</div>
-      <div>gain: {object.gain.initial.value.toFixed(2)} {object.gain.initial.unit}</div>
     </>
   )
 }

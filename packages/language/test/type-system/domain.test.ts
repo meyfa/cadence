@@ -38,16 +38,20 @@ const instrument: Instrument = {
   id: 1 as InstrumentId,
   rootNote: 'C4',
   gain: gainParameter,
-  source: {
-    type: 'oscillator',
-    shape: 'triangle'
-  },
-  envelope: {
-    attack: numeric('s', 0.01),
-    decay: numeric('s', 0.2),
-    sustain: numeric(undefined, 0.8),
-    release: numeric('s', 0.3)
-  }
+  trigger: () => [
+    {
+      envelope: {
+        attack: numeric('s', 0.01),
+        decay: numeric('s', 0.2),
+        sustain: numeric(undefined, 0.8),
+        release: numeric('s', 0.3)
+      },
+      source: {
+        type: 'oscillator',
+        shape: 'triangle'
+      }
+    }
+  ]
 }
 
 const part: Part = {
