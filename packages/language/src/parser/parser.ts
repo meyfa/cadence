@@ -667,12 +667,30 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   }
 )
 
+const outputStatement_: p.Parser<Token, unknown, ast.OutputStatement> = p.ab(
+  keyword('output'),
+  expression_,
+  (_output, expression) => {
+    return ast.make('OutputStatement', combineSourceRanges(_output, expression), { expression })
+  }
+)
+
+const envelopeStatement_: p.Parser<Token, unknown, ast.EnvelopeStatement> = p.ab(
+  keyword('envelope'),
+  expression_,
+  (_envelope, expression) => {
+    return ast.make('EnvelopeStatement', combineSourceRanges(_envelope, expression), { expression })
+  }
+)
+
 const voiceStatement_: p.Parser<Token, unknown, ast.VoiceStatement> = p.abc(
   keyword('voice'),
   p.option(identifier_, undefined),
   combine3(
     literal('{'),
-    p.many(assignment_),
+    p.many(
+      p.eitherOr(assignment_, p.eitherOr(outputStatement_, envelopeStatement_))
+    ),
     expectLiteral('}')
   ),
   (_voice, note, [_lp, children, _rp]) => {
