@@ -93,8 +93,10 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    assert.strictEqual(instrument.source.type, 'sample')
-    assert.strictEqual(instrument.source.assetId, asset.id)
+    const voices = instrument.trigger()
+    assert.strictEqual(voices.length, 1)
+    assert.strictEqual(voices[0].source.type, 'sample')
+    assert.strictEqual(voices[0].source.assetId, asset.id)
   })
 
   it('should support import aliases', () => {
@@ -110,8 +112,10 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    assert.strictEqual(instrument.source.type, 'sample')
-    assert.strictEqual(instrument.source.assetId, asset.id)
+    const voices = instrument.trigger()
+    assert.strictEqual(voices.length, 1)
+    assert.strictEqual(voices[0].source.type, 'sample')
+    assert.strictEqual(voices[0].source.assetId, asset.id)
   })
 
   it('should support shadowing of imported names', () => {
@@ -727,8 +731,10 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    assert.strictEqual(instrument.source.type, 'oscillator')
-    assert.strictEqual(instrument.source.shape, 'sine')
+    const voices = instrument.trigger()
+    assert.strictEqual(voices.length, 1)
+    assert.strictEqual(voices[0].source.type, 'oscillator')
+    assert.strictEqual(voices[0].source.shape, 'sine')
     assert.deepStrictEqual(instrument.gain.initial, numeric('db', -Infinity))
   })
 })

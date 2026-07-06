@@ -1,3 +1,4 @@
+import type { Instrument } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -82,31 +83,39 @@ describe('compiler/generator/scopes.ts', () => {
 
       const instrument0 = {
         gain: scope.allocateParameter(numeric('db', -6)),
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        },
-        envelope: {
-          attack: numeric('s', 0.1),
-          decay: numeric('s', 0.2),
-          sustain: numeric(undefined, 0.5),
-          release: numeric('s', 0.5)
-        }
-      } as const
+        trigger: () => [
+          {
+            source: {
+              type: 'oscillator',
+              shape: 'sine'
+            },
+            envelope: {
+              attack: numeric('s', 0.1),
+              decay: numeric('s', 0.2),
+              sustain: numeric(undefined, 0.5),
+              release: numeric('s', 0.5)
+            }
+          }
+        ]
+      } satisfies Omit<Instrument, 'id'>
 
       const instrument1 = {
         gain: scope.allocateParameter(numeric('db', -3)),
-        source: {
-          type: 'oscillator',
-          shape: 'square'
-        },
-        envelope: {
-          attack: numeric('s', 0.01),
-          decay: numeric('s', 0.1),
-          sustain: numeric(undefined, 0.8),
-          release: numeric('s', 0.3)
-        }
-      } as const
+        trigger: () => [
+          {
+            source: {
+              type: 'oscillator',
+              shape: 'square'
+            },
+            envelope: {
+              attack: numeric('s', 0.01),
+              decay: numeric('s', 0.1),
+              sustain: numeric(undefined, 0.8),
+              release: numeric('s', 0.3)
+            }
+          }
+        ]
+      } satisfies Omit<Instrument, 'id'>
 
       const allocated0 = scope.allocateInstrument(instrument0)
       const allocated1 = scope.allocateInstrument(instrument1)

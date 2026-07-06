@@ -184,11 +184,15 @@ describe('lowering.ts', () => {
               id: instrumentGainId,
               initial: numeric('db', -6)
             },
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            },
-            envelope: defaultEnvelope
+            trigger: () => [
+              {
+                envelope: defaultEnvelope,
+                source: {
+                  type: 'oscillator',
+                  shape: 'sine'
+                }
+              }
+            ]
           } satisfies Instrument
         ]
       ]),
@@ -320,11 +324,15 @@ describe('lowering.ts', () => {
               id: instrumentGainId,
               initial: numeric('db', -6)
             },
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            },
-            envelope: defaultEnvelope
+            trigger: () => [
+              {
+                envelope: defaultEnvelope,
+                source: {
+                  type: 'oscillator',
+                  shape: 'sine'
+                }
+              }
+            ]
           } satisfies Instrument
         ]
       ]),
@@ -413,11 +421,15 @@ describe('lowering.ts', () => {
               id: 200 as ParameterId,
               initial: numeric('db', -6)
             },
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            },
-            envelope: defaultEnvelope
+            trigger: () => [
+              {
+                envelope: defaultEnvelope,
+                source: {
+                  type: 'oscillator',
+                  shape: 'sine'
+                }
+              }
+            ]
           } satisfies Instrument
         ]
       ]),
@@ -497,11 +509,15 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -Infinity)
       },
-      source: {
-        type: 'oscillator',
-        shape: 'sine'
-      },
-      envelope: defaultEnvelope
+      trigger: () => [
+        {
+          envelope: defaultEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'sine'
+          }
+        }
+      ]
     })
 
     assert.doesNotThrow(() => createAudioGraph(program))
@@ -515,11 +531,15 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', gain)
         },
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        },
-        envelope: defaultEnvelope
+        trigger: () => [
+          {
+            envelope: defaultEnvelope,
+            source: {
+              type: 'oscillator',
+              shape: 'sine'
+            }
+          }
+        ]
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid gain/, `should throw for gain: ${gain}`)
@@ -535,11 +555,15 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
         },
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        },
-        envelope: defaultEnvelope
+        trigger: () => [
+          {
+            envelope: defaultEnvelope,
+            source: {
+              type: 'oscillator',
+              shape: 'sine'
+            }
+          }
+        ]
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid pitch/, `should throw for root note: ${rootNote}`)
@@ -553,12 +577,16 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      source: {
-        type: 'sample',
-        assetId: 300 as AssetId,
-        length: numeric('s', -1)
-      },
-      envelope: defaultEnvelope
+      trigger: () => [
+        {
+          envelope: defaultEnvelope,
+          source: {
+            type: 'sample',
+            assetId: 300 as AssetId,
+            length: numeric('s', -1)
+          }
+        }
+      ]
     }, {
       id: 300 as AssetId,
       url: 'foo.wav'
@@ -593,12 +621,16 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      source: {
-        type: 'sample',
-        assetId: 300 as AssetId,
-        length: numeric('s', Infinity)
-      },
-      envelope: defaultEnvelope
+      trigger: () => [
+        {
+          envelope: defaultEnvelope,
+          source: {
+            type: 'sample',
+            assetId: 300 as AssetId,
+            length: numeric('s', Infinity)
+          }
+        }
+      ]
     }, {
       id: 300 as AssetId,
       url: 'foo.wav'
@@ -619,18 +651,31 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      source: {
-        type: 'sample',
-        assetId: 300 as AssetId,
-        length: numeric('s', Number.NaN)
-      },
-      envelope: defaultEnvelope
+      trigger: () => [
+        {
+          envelope: defaultEnvelope,
+          source: {
+            type: 'sample',
+            assetId: 300 as AssetId,
+            length: numeric('s', Number.NaN)
+          }
+        }
+      ]
     }, {
       id: 300 as AssetId,
       url: 'foo.wav'
     })
 
-    assert.throws(() => createAudioGraph(program), /Invalid length/)
+    const graph = createAudioGraph(program)
+
+    assert.throws(() => {
+      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+      instrumentNode.trigger({
+        pitch: 60 as MidiNote,
+        velocity: 1.0,
+        duration: 0.5
+      })
+    }, /Invalid length/)
   })
 
   it('should clamp envelope parameters to valid ranges', () => {
@@ -696,11 +741,15 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
         },
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        },
-        envelope
+        trigger: () => [
+          {
+            envelope,
+            source: {
+              type: 'oscillator',
+              shape: 'sine'
+            }
+          }
+        ]
       })
 
       const graph = createAudioGraph(program)
@@ -1521,11 +1570,15 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
         },
-        source: {
-          type: 'oscillator',
-          shape: 'sine'
-        },
-        envelope: defaultEnvelope
+        trigger: () => [
+          {
+            envelope: defaultEnvelope,
+            source: {
+              type: 'oscillator',
+              shape: 'sine'
+            }
+          }
+        ]
       }))
 
       assert.strictEqual(graph.meters.size, 0)
@@ -1546,11 +1599,15 @@ describe('lowering.ts', () => {
                 id: 200 as ParameterId,
                 initial: numeric('db', -6)
               },
-              source: {
-                type: 'oscillator',
-                shape: 'sine'
-              },
-              envelope: defaultEnvelope
+              trigger: () => [
+                {
+                  envelope: defaultEnvelope,
+                  source: {
+                    type: 'oscillator',
+                    shape: 'sine'
+                  }
+                }
+              ]
             } satisfies Instrument
           ]
         ]),
@@ -1644,11 +1701,15 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      source: {
-        type: 'oscillator',
-        shape: 'sine'
-      },
-      envelope: defaultEnvelope
+      trigger: () => [
+        {
+          envelope: defaultEnvelope,
+          source: {
+            type: 'oscillator',
+            shape: 'sine'
+          }
+        }
+      ]
     })
 
     for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {

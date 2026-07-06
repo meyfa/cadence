@@ -105,6 +105,10 @@ export interface Instrument {
   readonly id: InstrumentId
   readonly rootNote?: Pitch
   readonly gain: Parameter<'db'>
+  readonly trigger: () => readonly Voice[]
+}
+
+export interface Voice {
   readonly source: Source
   readonly envelope: Envelope
 }

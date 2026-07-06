@@ -58,12 +58,16 @@ const sample = Functions.of({
     const instrument = context.allocateInstrument({
       gain: gainParameter,
       rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
-      source: {
-        type: 'sample',
-        assetId: asset.id,
-        length: lengthValue
-      },
-      envelope: ENVELOPE_DECLICK
+      trigger: () => [
+        {
+          envelope: ENVELOPE_DECLICK,
+          source: {
+            type: 'sample',
+            assetId: asset.id,
+            length: lengthValue
+          }
+        }
+      ]
     })
 
     return SampleInstrumentType.of(instrument, {
@@ -88,11 +92,15 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
       const instrument = context.allocateInstrument({
         gain: gainParameter,
-        source: {
-          type: 'oscillator',
-          shape
-        },
-        envelope: ENVELOPE_DECLICK
+        trigger: () => [
+          {
+            envelope: ENVELOPE_DECLICK,
+            source: {
+              type: 'oscillator',
+              shape
+            }
+          }
+        ]
       })
 
       return OscillatorInstrumentType.of(instrument, {
