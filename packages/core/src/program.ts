@@ -108,7 +108,6 @@ export type InstrumentId = Brand<number, 'core.InstrumentId'>
 
 export interface Instrument {
   readonly id: InstrumentId
-  readonly rootNote?: Pitch
   readonly gain: Parameter<'db'>
   readonly trigger: (note: NoteData) => readonly Voice[]
 }
@@ -124,11 +123,13 @@ export interface Sample {
   readonly type: 'sample'
   readonly assetId: AssetId
   readonly length?: Numeric<'s'>
+  readonly playbackRate: Numeric<undefined>
 }
 
 export interface Oscillator {
   readonly type: 'oscillator'
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
+  readonly frequency: Numeric<'hz'>
 }
 
 export interface Envelope {

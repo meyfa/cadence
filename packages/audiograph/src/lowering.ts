@@ -1,11 +1,11 @@
-import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, MixerRouting, NoteData, Oscillator, Program, Sample, Track, Voice } from '@core'
-import { calculateTotalLength, convertPitchToMidi, getMidiFrequency, renderPatternEvents, timeToSeconds } from '@core'
+import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MixerRouting, NoteData, Oscillator, Program, Sample, Track, Voice } from '@core'
+import { calculateTotalLength, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import { feedbackTransform, frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
-import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
+import { dbToGain } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import { applyEnvelope } from './envelope.js'
@@ -122,13 +122,9 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
 }
 
 function createInstrument (program: Program, instrument: Instrument, builder: Builder): SubGraph {
-  const rootNote = instrument.rootNote != null
-    ? convertPitchToMidi(instrument.rootNote)
-    : DEFAULT_ROOT_NOTE
-
   const instrumentNode = builder.addNode<InstrumentNode>('instrument', {
     trigger: (note) => {
-      return instrument.trigger(note).map((voice) => createSourceNode(program, voice, rootNote, note))
+      return instrument.trigger(note).map((voice) => createSourceNode(program, voice, note))
     }
   })
 
@@ -145,7 +141,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   }
 }
 
-function createSourceNode (program: Program, voice: Voice, rootNote: MidiNote, note: NoteData): SourceNode {
+function createSourceNode (program: Program, voice: Voice, note: NoteData): SourceNode {
   const envelope = (() => {
     const a = voice.envelope.attack.value
     const d = voice.envelope.decay.value
@@ -174,15 +170,15 @@ function createSourceNode (program: Program, voice: Voice, rootNote: MidiNote, n
 
   switch (voice.source.type) {
     case 'sample':
-      return createSampleSourceNode(program, voice.source, envelope, rootNote, note)
+      return createSampleSourceNode(program, voice.source, envelope, note)
 
     case 'oscillator':
-      return createOscillatorSourceNode(program, voice.source, envelope, rootNote, note)
+      return createOscillatorSourceNode(program, voice.source, envelope, note)
   }
 }
 
-function createSampleSourceNode (program: Program, sample: Sample, envelope: Envelope, rootNote: MidiNote, note: NoteData): SourceNode {
-  const { assetId } = sample
+function createSampleSourceNode (program: Program, sample: Sample, envelope: Envelope, note: NoteData): SourceNode {
+  const { assetId, playbackRate } = sample
 
   const length = (() => {
     if (sample.length == null) {
@@ -208,8 +204,9 @@ function createSampleSourceNode (program: Program, sample: Sample, envelope: Env
   const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
   const duration = gate != null ? gainCurve.points.at(-1)?.time : undefined
 
-  const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNote
-  const playbackRate = Math.pow(2, (midiNote - rootNote) / 12)
+  if (playbackRate.value <= 0 || !Number.isFinite(playbackRate.value)) {
+    throw new Error(`Invalid playback rate`)
+  }
 
   return {
     id: -1 as NodeId, // TODO: avoid invalid id
@@ -221,15 +218,16 @@ function createSampleSourceNode (program: Program, sample: Sample, envelope: Env
   }
 }
 
-function createOscillatorSourceNode (program: Program, oscillator: Oscillator, envelope: Envelope, rootNote: MidiNote, note: NoteData): SourceNode {
-  const { shape } = oscillator
+function createOscillatorSourceNode (program: Program, oscillator: Oscillator, envelope: Envelope, note: NoteData): SourceNode {
+  const { shape, frequency } = oscillator
 
   const gate = note.gate != null ? timeToSeconds(note.gate, program.track.tempo) : undefined
   const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
   const duration = note.gate != null ? gainCurve.points.at(-1)?.time : undefined
 
-  const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNote
-  const frequency = numeric('hz', getMidiFrequency(midiNote))
+  if (frequency.value <= 0 || !Number.isFinite(frequency.value)) {
+    throw new Error(`Invalid frequency: ${frequency.value}`)
+  }
 
   return {
     id: -1 as NodeId, // TODO: avoid invalid id

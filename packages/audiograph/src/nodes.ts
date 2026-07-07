@@ -91,7 +91,7 @@ export interface SampleNode extends AnyNode {
   readonly gainCurve: TimeVariant<undefined>
   readonly duration?: Numeric<'s'>
   readonly assetId: AssetId
-  readonly playbackRate: number
+  readonly playbackRate: Numeric<undefined>
 }
 
 export interface OscillatorNode extends AnyNode {
