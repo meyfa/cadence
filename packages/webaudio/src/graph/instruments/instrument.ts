@@ -1,4 +1,7 @@
-import type { InstrumentNode, NoteOptions, SourceNode } from '@audiograph'
+import type { InstrumentNode, SourceNode } from '@audiograph'
+import type { NoteEvent } from '@core'
+import { timeToSeconds } from '@core'
+import type { Numeric } from '@utility'
 import type { Transport } from '../../transport/transport.js'
 import { applyAutomationPoints } from '../automation.js'
 import type { Assets } from '../factory.js'
@@ -16,14 +19,19 @@ export function createInstrumentInstance (
   const sources = new Set<ActiveSource>()
   const output = ctx.createGain()
 
-  const dispose = () => {
+  const dispose: Instance['dispose'] = () => {
     output.disconnect()
     for (const source of sources) {
       disposeActiveSource(source)
     }
   }
 
-  const triggerNote = (note: NoteOptions) => transport.schedule(note.time, (time) => {
+  const scheduleAtNote = (note: NoteEvent, tempo: Numeric<'bpm'>, callback: (time: number) => void) => {
+    const time = timeToSeconds(note.time, tempo).value
+    transport.schedule(time, callback)
+  }
+
+  const triggerNote: Instance['triggerNote'] = (note, tempo) => scheduleAtNote(note, tempo, (time) => {
     if (time < 0) {
       return
     }

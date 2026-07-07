@@ -26,24 +26,29 @@ export interface Step {
   readonly velocity?: Numeric<undefined>
 }
 
-export interface NoteEvent {
-  readonly time: Numeric<'beats'>
-
+export interface NoteData {
   /**
-   * The gate (duration) of the note event in beats. If undefined, the note is never released (held indefinitely),
+   * The gate (duration) of the note in beats. If undefined, the note is never released (held indefinitely),
    * and may or may not be cut off by subsequent notes depending on the instrument's behavior.
    */
   readonly gate?: Numeric<'beats'>
 
   /**
-   * The pitch associated with the event. If undefined, indicates that the instrument's default pitch should be used.
+   * The pitch associated with the note. If undefined, indicates that the instrument's default pitch should be used.
    */
   readonly pitch?: Pitch
 
   /**
-   * The velocity of the note event, in the range [0, 1].
+   * The velocity of the note, in the range [0, 1].
    */
   readonly velocity: Numeric<undefined>
+}
+
+export interface NoteEvent extends NoteData {
+  /**
+   * The time at which the note event occurs.
+   */
+  readonly time: Numeric<'beats'>
 }
 
 export interface Pattern {
@@ -105,7 +110,7 @@ export interface Instrument {
   readonly id: InstrumentId
   readonly rootNote?: Pitch
   readonly gain: Parameter<'db'>
-  readonly trigger: () => readonly Voice[]
+  readonly trigger: (note: NoteData) => readonly Voice[]
 }
 
 export interface Voice {

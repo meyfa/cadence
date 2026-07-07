@@ -1,5 +1,5 @@
-import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@core'
-import { beatsToSeconds, calculateTotalLength, convertPitchToMidi, getMidiFrequency, renderPatternEvents, timeToSeconds } from '@core'
+import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MidiNote, MixerRouting, NoteData, Oscillator, Program, Sample, Track, Voice } from '@core'
+import { calculateTotalLength, convertPitchToMidi, getMidiFrequency, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import { feedbackTransform, frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
@@ -9,7 +9,7 @@ import { dbToGain, DEFAULT_ROOT_NOTE } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
 import { applyEnvelope } from './envelope.js'
-import type { AnyNode, AudioGraph, NodeId, NoteOptions } from './graph.js'
+import type { AnyNode, AudioGraph, NodeId } from './graph.js'
 import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
@@ -128,7 +128,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
 
   const instrumentNode = builder.addNode<InstrumentNode>('instrument', {
     trigger: (note) => {
-      return instrument.trigger().map((voice) => createSourceNode(voice, rootNote, note))
+      return instrument.trigger(note).map((voice) => createSourceNode(program, voice, rootNote, note))
     }
   })
 
@@ -145,7 +145,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   }
 }
 
-function createSourceNode (voice: Voice, rootNote: MidiNote, note: Omit<NoteOptions, 'time'>): SourceNode {
+function createSourceNode (program: Program, voice: Voice, rootNote: MidiNote, note: NoteData): SourceNode {
   const envelope = (() => {
     const a = voice.envelope.attack.value
     const d = voice.envelope.decay.value
@@ -174,14 +174,14 @@ function createSourceNode (voice: Voice, rootNote: MidiNote, note: Omit<NoteOpti
 
   switch (voice.source.type) {
     case 'sample':
-      return createSampleSourceNode(voice.source, envelope, rootNote, note)
+      return createSampleSourceNode(program, voice.source, envelope, rootNote, note)
 
     case 'oscillator':
-      return createOscillatorSourceNode(voice.source, envelope, rootNote, note)
+      return createOscillatorSourceNode(program, voice.source, envelope, rootNote, note)
   }
 }
 
-function createSampleSourceNode (sample: Sample, envelope: Envelope, rootNote: MidiNote, note: Omit<NoteOptions, 'time'>): SourceNode {
+function createSampleSourceNode (program: Program, sample: Sample, envelope: Envelope, rootNote: MidiNote, note: NoteData): SourceNode {
   const { assetId } = sample
 
   const length = (() => {
@@ -197,19 +197,19 @@ function createSampleSourceNode (sample: Sample, envelope: Envelope, rootNote: M
     return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
   })()
 
-  const holdDuration = (() => {
-    if (note.duration == null || length == null) {
-      return note.duration ?? length?.value
+  const gate: Numeric<'s'> | undefined = (() => {
+    if (note.gate == null) {
+      return length
     }
-    return Math.min(note.duration, length.value)
+    const gateSeconds = timeToSeconds(note.gate, program.track.tempo)
+    return length == null ? gateSeconds : numeric('s', Math.min(gateSeconds.value, length.value))
   })()
 
-  const gainCurve = applyEnvelope(envelope, { ...note, duration: holdDuration })
-  const duration = holdDuration != null
-    ? gainCurve.points.at(-1)?.time
-    : undefined
+  const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
+  const duration = gate != null ? gainCurve.points.at(-1)?.time : undefined
 
-  const playbackRate = Math.pow(2, ((note.pitch ?? rootNote) - rootNote) / 12)
+  const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNote
+  const playbackRate = Math.pow(2, (midiNote - rootNote) / 12)
 
   return {
     id: -1 as NodeId, // TODO: avoid invalid id
@@ -221,15 +221,15 @@ function createSampleSourceNode (sample: Sample, envelope: Envelope, rootNote: M
   }
 }
 
-function createOscillatorSourceNode (oscillator: Oscillator, envelope: Envelope, rootNote: MidiNote, note: Omit<NoteOptions, 'time'>): SourceNode {
+function createOscillatorSourceNode (program: Program, oscillator: Oscillator, envelope: Envelope, rootNote: MidiNote, note: NoteData): SourceNode {
   const { shape } = oscillator
 
-  const gainCurve = applyEnvelope(envelope, note)
-  const duration = note.duration != null
-    ? gainCurve.points.at(-1)?.time
-    : undefined
+  const gate = note.gate != null ? timeToSeconds(note.gate, program.track.tempo) : undefined
+  const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
+  const duration = note.gate != null ? gainCurve.points.at(-1)?.time : undefined
 
-  const frequency = numeric('hz', getMidiFrequency(note.pitch ?? rootNote))
+  const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNote
+  const frequency = numeric('hz', getMidiFrequency(midiNote))
 
   return {
     id: -1 as NodeId, // TODO: avoid invalid id
@@ -467,8 +467,6 @@ function createRoutings (
 }
 
 function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, NodeId>, builder: Builder): void {
-  const timePerBeat = beatsToSeconds(numeric('beats', 1), track.tempo).value
-
   let offsetBeats = 0
 
   for (const part of track.parts) {
@@ -478,11 +476,9 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
         continue
       }
 
-      const events: readonly NoteOptions[] = renderPatternEvents(routing.source.value, part.length).map((event) => ({
-        time: (offsetBeats + event.time.value) * timePerBeat,
-        pitch: event.pitch != null ? convertPitchToMidi(event.pitch) : undefined,
-        velocity: event.velocity.value,
-        duration: event.gate != null ? event.gate.value * timePerBeat : undefined
+      const events = renderPatternEvents(routing.source.value, part.length).map((event) => ({
+        ...event,
+        time: numeric('beats', event.time.value + offsetBeats)
       }))
 
       builder.addNoteEvents(nodeId, events)

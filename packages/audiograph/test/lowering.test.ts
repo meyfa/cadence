@@ -1,4 +1,4 @@
-import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MidiNote, MixerRouting, ParameterId, Pitch, Program, Track } from '@core'
+import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Pitch, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
@@ -290,9 +290,9 @@ describe('lowering.ts', () => {
 
     const instrumentNode = graph.nodes.get(3 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
-      pitch: 69 as MidiNote,
-      velocity: 1.0,
-      duration: 0.5
+      pitch: 'A4',
+      velocity: numeric(undefined, 1),
+      gate: numeric('beats', 1)
     })
 
     assert.strictEqual(voices.length, 1)
@@ -493,10 +493,10 @@ describe('lowering.ts', () => {
       [
         2 as NodeId,
         [
-          { time: 0, pitch: 60, velocity: 1.0, duration: 0.5 },
-          { time: 0.5, pitch: 64, velocity: 0.75, duration: 0.5 },
-          { time: 2, pitch: 67, velocity: 1.0, duration: 0.5 },
-          { time: 2.5, pitch: 71, velocity: 1.0, duration: 0.5 }
+          { time: numeric('beats', 0), pitch: 'C4', velocity: numeric(undefined, 1), gate: numeric('beats', 1) },
+          { time: numeric('beats', 1), pitch: 'E4', velocity: numeric(undefined, 0.75), gate: numeric('beats', 1) },
+          { time: numeric('beats', 4), pitch: 'G4', velocity: numeric(undefined, 1), gate: numeric('beats', 1) },
+          { time: numeric('beats', 5), pitch: 'B4', velocity: numeric(undefined, 1), gate: numeric('beats', 1) }
         ]
       ]
     ])
@@ -601,9 +601,9 @@ describe('lowering.ts', () => {
 
     const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
-      pitch: 60 as MidiNote,
-      velocity: 1.0,
-      duration: 0.5
+      pitch: 'C4',
+      velocity: numeric(undefined, 1),
+      gate: numeric('beats', 1)
     })
 
     assert.strictEqual(voices.length, 1)
@@ -671,9 +671,9 @@ describe('lowering.ts', () => {
     assert.throws(() => {
       const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
       instrumentNode.trigger({
-        pitch: 60 as MidiNote,
-        velocity: 1.0,
-        duration: 0.5
+        pitch: 'C4',
+        velocity: numeric(undefined, 1),
+        gate: numeric('beats', 1)
       })
     }, /Invalid length/)
   })
@@ -729,9 +729,10 @@ describe('lowering.ts', () => {
       }
     ]
 
-    const note = {
-      velocity: 1,
-      duration: 10
+    const note: NoteData = {
+      pitch: 'C4',
+      velocity: numeric(undefined, 1),
+      gate: numeric('beats', 16)
     }
 
     for (const { envelope, expected } of testCases) {
@@ -760,7 +761,10 @@ describe('lowering.ts', () => {
       assert.strictEqual(voices.length, 1)
       const [voice] = voices
 
-      assert.deepStrictEqual(voice.gainCurve, applyEnvelope(expected, note), `test case: ${JSON.stringify(envelope)}`)
+      assert.deepStrictEqual(voice.gainCurve, applyEnvelope(expected, {
+        velocity: note.velocity,
+        gate: beatsToSeconds(note.gate ?? numeric('beats', 0), program.track.tempo)
+      }), `test case: ${JSON.stringify(envelope)}`)
     }
   })
 

@@ -1,7 +1,8 @@
-import type { Asset, AssetId } from '@core'
+import type { Asset, AssetId, NoteEvent } from '@core'
+import { isPitch } from '@core'
 import type { Numeric } from '@utility'
 import type { EntityKey } from './entities.js'
-import type { AnyNode, AudioGraph, Edge, Meters, NodeId, NoteOptions } from './graph.js'
+import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => T
@@ -11,7 +12,7 @@ export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
 
   readonly addAsset: (asset: Asset) => void
 
-  readonly addNoteEvents: (nodeId: NodeId, events: readonly NoteOptions[]) => void
+  readonly addNoteEvents: (nodeId: NodeId, events: readonly NoteEvent[]) => void
 
   readonly addMeters: (key: EntityKey, meters: Meters) => void
 
@@ -34,7 +35,7 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   const edges: Edge[] = []
   const outputIds: NodeId[] = []
   const assets = new Map<AssetId, Asset>()
-  const noteEvents = new Map<NodeId, readonly NoteOptions[]>()
+  const noteEvents = new Map<NodeId, readonly NoteEvent[]>()
   const meters = new Map<EntityKey, Meters>()
 
   let nextId = 1 as NodeId
@@ -107,24 +108,24 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   }
 }
 
-function validateNoteEvent (event: NoteOptions): void {
-  if (!Number.isFinite(event.time) || event.time < 0) {
+function validateNoteEvent (event: NoteEvent): void {
+  if (!Number.isFinite(event.time.value) || event.time.value < 0) {
     throw invalidNoteEvent(event)
   }
 
-  if (event.pitch != null && (!Number.isFinite(event.pitch) || event.pitch < 0 || event.pitch > 127)) {
+  if (event.pitch != null && !isPitch(event.pitch)) {
     throw invalidNoteEvent(event)
   }
 
-  if (!Number.isFinite(event.velocity) || event.velocity < 0 || event.velocity > 1) {
+  if (!Number.isFinite(event.velocity.value) || event.velocity.value < 0 || event.velocity.value > 1) {
     throw invalidNoteEvent(event)
   }
 
-  if (event.duration != null && (!Number.isFinite(event.duration) || event.duration < 0)) {
+  if (event.gate?.value != null && (!Number.isFinite(event.gate.value) || event.gate.value < 0)) {
     throw invalidNoteEvent(event)
   }
 }
 
-function invalidNoteEvent (event: NoteOptions): Error {
+function invalidNoteEvent (event: NoteEvent): Error {
   return new Error(`Invalid note event: ${JSON.stringify(event)}`)
 }

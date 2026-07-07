@@ -1,4 +1,4 @@
-import type { BusId, InstrumentId, MidiNote } from '@core'
+import type { BusId, InstrumentId } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -9,6 +9,8 @@ import type { NodeId } from '../src/graph.js'
 describe('builder.ts', () => {
   const tempo = numeric('bpm', 120)
   const length = numeric('beats', 16)
+  const beats = (value: number) => numeric('beats', value)
+  const scalar = (value: number) => numeric(undefined, value)
 
   it('should maintain tempo and length', () => {
     const builder = createAudioGraphBuilder({ tempo, length })
@@ -107,18 +109,18 @@ describe('builder.ts', () => {
 
     const node1 = builder.addNode('sampler', { url: 'foo.wav' })
     builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 0.8 },
-      { time: 1, pitch: 61 as MidiNote, velocity: 0.8 },
-      { time: 2, pitch: 62 as MidiNote, velocity: 0.8 }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8) },
+      { time: beats(1), pitch: 'C#4', velocity: scalar(0.8) },
+      { time: beats(2), pitch: 'D4', velocity: scalar(0.8) }
     ])
 
     const graph = builder.graph()
 
     assert.strictEqual(graph.noteEvents.size, 1)
     assert.deepStrictEqual(graph.noteEvents.get(node1.id), [
-      { time: 0, pitch: 60, velocity: 0.8 },
-      { time: 1, pitch: 61, velocity: 0.8 },
-      { time: 2, pitch: 62, velocity: 0.8 }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8) },
+      { time: beats(1), pitch: 'C#4', velocity: scalar(0.8) },
+      { time: beats(2), pitch: 'D4', velocity: scalar(0.8) }
     ])
   })
 
@@ -127,19 +129,19 @@ describe('builder.ts', () => {
 
     const node1 = builder.addNode('sampler', { url: 'foo.wav' })
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: -1, pitch: 60 as MidiNote, velocity: 0.8 }
+      { time: beats(-1), pitch: 'C4', velocity: scalar(0.8) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: Infinity, pitch: 60 as MidiNote, velocity: 0.8 }
+      { time: beats(Infinity), pitch: 'C4', velocity: scalar(0.8) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: -Infinity, pitch: 60 as MidiNote, velocity: 0.8 }
+      { time: beats(-Infinity), pitch: 'C4', velocity: scalar(0.8) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: Number.NaN, pitch: 60 as MidiNote, velocity: 0.8 }
+      { time: beats(Number.NaN), pitch: 'C4', velocity: scalar(0.8) }
     ]))
   })
 
@@ -148,15 +150,15 @@ describe('builder.ts', () => {
 
     const node1 = builder.addNode('sampler', { url: 'foo.wav' })
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: -0.1 }
+      { time: beats(0), pitch: 'C4', velocity: scalar(-0.1) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 1.1 }
+      { time: beats(0), pitch: 'C4', velocity: scalar(1.1) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: Number.NaN }
+      { time: beats(0), pitch: 'C4', velocity: scalar(Number.NaN) }
     ]))
   })
 
@@ -165,32 +167,32 @@ describe('builder.ts', () => {
 
     const node1 = builder.addNode('sampler', { url: 'foo.wav' })
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: -1 as MidiNote, velocity: 0.8 }
+      { time: beats(0), pitch: 'H4' as never, velocity: scalar(0.8) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 128 as MidiNote, velocity: 0.8 }
+      { time: beats(0), pitch: 'C#11' as never, velocity: scalar(0.8) }
     ]))
   })
 
-  it('should throw for note events with invalid duration', () => {
+  it('should throw for note events with invalid gate', () => {
     const builder = createAudioGraphBuilder({ tempo, length })
 
     const node1 = builder.addNode('sampler', { url: 'foo.wav' })
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: -1 }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8), gate: beats(-1) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: Infinity }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8), gate: beats(Infinity) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: -Infinity }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8), gate: beats(-Infinity) }
     ]))
 
     assert.throws(() => builder.addNoteEvents(node1.id, [
-      { time: 0, pitch: 60 as MidiNote, velocity: 0.8, duration: Number.NaN }
+      { time: beats(0), pitch: 'C4', velocity: scalar(0.8), gate: beats(Number.NaN) }
     ]))
   })
 
