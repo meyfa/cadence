@@ -83,38 +83,12 @@ describe('compiler/generator/scopes.ts', () => {
 
       const instrument0 = {
         gain: scope.allocateParameter(numeric('db', -6)),
-        trigger: () => [
-          {
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            },
-            envelope: {
-              attack: numeric('s', 0.1),
-              decay: numeric('s', 0.2),
-              sustain: numeric(undefined, 0.5),
-              release: numeric('s', 0.5)
-            }
-          }
-        ]
+        trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
       const instrument1 = {
         gain: scope.allocateParameter(numeric('db', -3)),
-        trigger: () => [
-          {
-            source: {
-              type: 'oscillator',
-              shape: 'square'
-            },
-            envelope: {
-              attack: numeric('s', 0.01),
-              decay: numeric('s', 0.1),
-              sustain: numeric(undefined, 0.8),
-              release: numeric('s', 0.3)
-            }
-          }
-        ]
+        trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
       const allocated0 = scope.allocateInstrument(instrument0)

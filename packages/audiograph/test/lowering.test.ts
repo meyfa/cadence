@@ -1,4 +1,4 @@
-import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Pitch, Program, Track } from '@core'
+import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
@@ -189,7 +189,8 @@ describe('lowering.ts', () => {
                 envelope: defaultEnvelope,
                 source: {
                   type: 'oscillator',
-                  shape: 'sine'
+                  shape: 'sine',
+                  frequency: numeric('hz', 440)
                 }
               }
             ]
@@ -324,15 +325,7 @@ describe('lowering.ts', () => {
               id: instrumentGainId,
               initial: numeric('db', -6)
             },
-            trigger: () => [
-              {
-                envelope: defaultEnvelope,
-                source: {
-                  type: 'oscillator',
-                  shape: 'sine'
-                }
-              }
-            ]
+            trigger: () => []
           } satisfies Instrument
         ]
       ]),
@@ -421,15 +414,7 @@ describe('lowering.ts', () => {
               id: 200 as ParameterId,
               initial: numeric('db', -6)
             },
-            trigger: () => [
-              {
-                envelope: defaultEnvelope,
-                source: {
-                  type: 'oscillator',
-                  shape: 'sine'
-                }
-              }
-            ]
+            trigger: () => []
           } satisfies Instrument
         ]
       ]),
@@ -509,15 +494,7 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -Infinity)
       },
-      trigger: () => [
-        {
-          envelope: defaultEnvelope,
-          source: {
-            type: 'oscillator',
-            shape: 'sine'
-          }
-        }
-      ]
+      trigger: () => []
     })
 
     assert.doesNotThrow(() => createAudioGraph(program))
@@ -531,42 +508,10 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', gain)
         },
-        trigger: () => [
-          {
-            envelope: defaultEnvelope,
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            }
-          }
-        ]
+        trigger: () => []
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid gain/, `should throw for gain: ${gain}`)
-    }
-  })
-
-  it('should throw for invalid instrument root note', () => {
-    for (const rootNote of ['C-1' as Pitch, 'G11' as Pitch]) {
-      const program = createProgramWithInstrument({
-        id: 100 as InstrumentId,
-        rootNote,
-        gain: {
-          id: 200 as ParameterId,
-          initial: numeric('db', -6)
-        },
-        trigger: () => [
-          {
-            envelope: defaultEnvelope,
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            }
-          }
-        ]
-      })
-
-      assert.throws(() => createAudioGraph(program), /Invalid pitch/, `should throw for root note: ${rootNote}`)
     }
   })
 
@@ -583,7 +528,8 @@ describe('lowering.ts', () => {
           source: {
             type: 'sample',
             assetId: 300 as AssetId,
-            length: numeric('s', -1)
+            length: numeric('s', -1),
+            playbackRate: numeric(undefined, 1)
           }
         }
       ]
@@ -614,6 +560,76 @@ describe('lowering.ts', () => {
     ]))
   })
 
+  it('should throw for invalid sample playback rate', () => {
+    for (const playbackRate of [0, -1, Infinity, -Infinity, Number.NaN]) {
+      const program = createProgramWithInstrument({
+        id: 100 as InstrumentId,
+        gain: {
+          id: 200 as ParameterId,
+          initial: numeric('db', -6)
+        },
+        trigger: () => [
+          {
+            envelope: defaultEnvelope,
+            source: {
+              type: 'sample',
+              assetId: 300 as AssetId,
+              length: numeric('s', -1),
+              playbackRate: numeric(undefined, playbackRate)
+            }
+          }
+        ]
+      }, {
+        id: 300 as AssetId,
+        url: 'foo.wav'
+      })
+
+      const graph = createAudioGraph(program)
+      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+
+      assert.throws(() => {
+        instrumentNode.trigger({
+          pitch: 'C4',
+          velocity: numeric(undefined, 1),
+          gate: numeric('beats', 1)
+        })
+      }, /Invalid playback rate/, `should throw for playback rate: ${playbackRate}`)
+    }
+  })
+
+  it('should throw for invalid oscillator frequency', () => {
+    for (const frequency of [0, -1, Infinity, -Infinity, Number.NaN]) {
+      const program = createProgramWithInstrument({
+        id: 100 as InstrumentId,
+        gain: {
+          id: 200 as ParameterId,
+          initial: numeric('db', -6)
+        },
+        trigger: () => [
+          {
+            envelope: defaultEnvelope,
+            source: {
+              type: 'oscillator',
+              shape: 'sine',
+              frequency: numeric('hz', frequency)
+            }
+          }
+        ]
+      })
+
+      const graph = createAudioGraph(program)
+      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+
+      assert.throws(() => {
+        instrumentNode.trigger({
+          pitch: 'C4',
+          velocity: numeric(undefined, 1),
+          gate: numeric('beats', 1)
+        })
+      }, /Invalid frequency/, `should throw for frequency: ${frequency}`)
+    }
+  })
+
   it('should treat infinite sample length as valid', () => {
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
@@ -627,7 +643,8 @@ describe('lowering.ts', () => {
           source: {
             type: 'sample',
             assetId: 300 as AssetId,
-            length: numeric('s', Infinity)
+            length: numeric('s', Infinity),
+            playbackRate: numeric(undefined, 1)
           }
         }
       ]
@@ -642,6 +659,21 @@ describe('lowering.ts', () => {
       type: 'instrument',
       trigger: (graph.nodes.get(2 as NodeId) as InstrumentNode).trigger
     } satisfies InstrumentNode)
+
+    const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+    const voices = instrumentNode.trigger({
+      pitch: 'C4',
+      velocity: numeric(undefined, 1),
+      gate: numeric('beats', 1)
+    })
+
+    assert.strictEqual(voices.length, 1)
+    const [voice] = voices
+
+    assert.deepStrictEqual(voice.gainCurve, applyEnvelope(defaultEnvelope, {
+      velocity: numeric(undefined, 1),
+      gate: beatsToSeconds(numeric('beats', 1), program.track.tempo)
+    }))
   })
 
   it('should throw for NaN sample length', () => {
@@ -657,7 +689,8 @@ describe('lowering.ts', () => {
           source: {
             type: 'sample',
             assetId: 300 as AssetId,
-            length: numeric('s', Number.NaN)
+            length: numeric('s', Number.NaN),
+            playbackRate: numeric(undefined, 1)
           }
         }
       ]
@@ -747,7 +780,8 @@ describe('lowering.ts', () => {
             envelope,
             source: {
               type: 'oscillator',
-              shape: 'sine'
+              shape: 'sine',
+              frequency: numeric('hz', 440)
             }
           }
         ]
@@ -1574,15 +1608,7 @@ describe('lowering.ts', () => {
           id: 200 as ParameterId,
           initial: numeric('db', -6)
         },
-        trigger: () => [
-          {
-            envelope: defaultEnvelope,
-            source: {
-              type: 'oscillator',
-              shape: 'sine'
-            }
-          }
-        ]
+        trigger: () => []
       }))
 
       assert.strictEqual(graph.meters.size, 0)
@@ -1603,15 +1629,7 @@ describe('lowering.ts', () => {
                 id: 200 as ParameterId,
                 initial: numeric('db', -6)
               },
-              trigger: () => [
-                {
-                  envelope: defaultEnvelope,
-                  source: {
-                    type: 'oscillator',
-                    shape: 'sine'
-                  }
-                }
-              ]
+              trigger: () => []
             } satisfies Instrument
           ]
         ]),
@@ -1705,15 +1723,7 @@ describe('lowering.ts', () => {
         id: 200 as ParameterId,
         initial: numeric('db', -6)
       },
-      trigger: () => [
-        {
-          envelope: defaultEnvelope,
-          source: {
-            type: 'oscillator',
-            shape: 'sine'
-          }
-        }
-      ]
+      trigger: () => []
     })
 
     for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {

@@ -16,13 +16,10 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
     effects: { blocking: false },
 
     invoke: (context, { frequency }) => {
-      const frequencyValue = NumberFacet.get(frequency)
-
-      void frequencyValue // TODO: Use frequency value to create an oscillator source
-
       return SourceFacet.type().of({
         type: 'oscillator',
-        shape
+        shape,
+        frequency: NumberFacet.get(frequency)
       })
     }
   })

@@ -49,7 +49,6 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         id: instrument.id,
-        rootNote: 'C4',
         gain: { id: instrument.gain.id, initial: numeric('db', -3) },
         trigger: instrument.trigger
       } satisfies Instrument)
@@ -60,7 +59,8 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'sample',
             assetId: asset.id,
-            length: numeric('s', 1.5)
+            length: numeric('s', 1.5),
+            playbackRate: numeric(undefined, 1)
           }
         }
       ])
@@ -87,7 +87,6 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        rootNote: undefined,
         gain: { id: instrument.gain.id, initial: numeric('db', 0) },
         trigger: instrument.trigger
       })
@@ -98,7 +97,8 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'sample',
             assetId: asset.id,
-            length: undefined
+            length: undefined,
+            playbackRate: numeric(undefined, 1)
           }
         }
       ])
@@ -125,12 +125,13 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
             type: 'oscillator',
-            shape: 'sine'
+            shape: 'sine',
+            frequency: numeric('hz', 440)
           }
         }
       ])
@@ -157,12 +158,13 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
             type: 'oscillator',
-            shape: 'square'
+            shape: 'square',
+            frequency: numeric('hz', 440)
           }
         }
       ])
@@ -189,12 +191,13 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
             type: 'oscillator',
-            shape: 'saw'
+            shape: 'saw',
+            frequency: numeric('hz', 440)
           }
         }
       ])
@@ -221,12 +224,13 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
             type: 'oscillator',
-            shape: 'triangle'
+            shape: 'triangle',
+            frequency: numeric('hz', 440)
           }
         }
       ])

@@ -562,7 +562,8 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         },
         source: {
           type: 'oscillator',
-          shape: 'sine'
+          shape: 'sine',
+          frequency: numeric('hz', 440)
         }
       }
     ]

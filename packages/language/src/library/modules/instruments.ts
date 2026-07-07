@@ -1,5 +1,5 @@
 import type { Envelope, Oscillator } from '@core'
-import { isPitch } from '@core'
+import { convertPitchToMidi, getMidiFrequency, isPitch } from '@core'
 import { numeric } from '@utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
@@ -11,6 +11,8 @@ import { makeType } from '../../type-system/factory.js'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
 import { makeSchema } from '../../type-system/schema.js'
 import type { Value } from '../../type-system/types.js'
+
+const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
 const UNITY_GAIN = numeric('db', 0)
 
@@ -45,8 +47,11 @@ const sample = Functions.of({
   invoke: (context: ParameterContext & InstrumentContext & AssetContext, { url, gain, root_note, length }) => {
     const urlValue = StringFacet.get(url)
     const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
+    const rootNote = (() => {
     // eslint-disable-next-line camelcase
-    const rootNoteValue = root_note != null ? StringFacet.get(root_note) : undefined
+      const string = root_note != null ? StringFacet.get(root_note) : undefined
+      return string != null && isPitch(string) ? string : undefined
+    })()
     const lengthValue = length != null ? NumberFacet.get(length) : undefined
 
     const gainParameter = context.allocateParameter(gainValue)
@@ -55,19 +60,26 @@ const sample = Functions.of({
       url: urlValue
     })
 
+    const rootNoteMidi = rootNote != null ? convertPitchToMidi(rootNote) : DEFAULT_ROOT_NOTE
+
     const instrument = context.allocateInstrument({
       gain: gainParameter,
-      rootNote: rootNoteValue != null && isPitch(rootNoteValue) ? rootNoteValue : undefined,
-      trigger: () => [
-        {
-          envelope: ENVELOPE_DECLICK,
-          source: {
-            type: 'sample',
-            assetId: asset.id,
-            length: lengthValue
+      trigger: (note) => {
+        const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNoteMidi
+        const playbackRate = Math.pow(2, (midiNote - rootNoteMidi) / 12)
+
+        return [
+          {
+            envelope: ENVELOPE_DECLICK,
+            source: {
+              type: 'sample',
+              assetId: asset.id,
+              length: lengthValue,
+              playbackRate: numeric(undefined, playbackRate)
+            }
           }
-        }
-      ]
+        ]
+      }
     })
 
     return SampleInstrumentType.of(instrument, {
@@ -92,15 +104,21 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
       const instrument = context.allocateInstrument({
         gain: gainParameter,
-        trigger: () => [
-          {
-            envelope: ENVELOPE_DECLICK,
-            source: {
-              type: 'oscillator',
-              shape
+        trigger: (note) => {
+          const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
+          const frequency = numeric('hz', getMidiFrequency(midiNote))
+
+          return [
+            {
+              envelope: ENVELOPE_DECLICK,
+              source: {
+                type: 'oscillator',
+                shape,
+                frequency
+              }
             }
-          }
-        ]
+          ]
+        }
       })
 
       return OscillatorInstrumentType.of(instrument, {
