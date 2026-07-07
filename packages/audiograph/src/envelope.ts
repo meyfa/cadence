@@ -1,11 +1,12 @@
 import type { TimeVariant, TimeVariantPoint } from './automation.js'
 import { timeVariant } from './automation.js'
 import type { Envelope } from '@core'
+import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 
 export interface EnvelopeOptions {
-  readonly velocity: number
-  readonly duration?: number
+  readonly velocity: Numeric<undefined>
+  readonly gate?: Numeric<'s'>
 }
 
 const ZERO_GAIN = numeric(undefined, 0)
@@ -18,15 +19,15 @@ export function applyEnvelope (envelope: Envelope, options: EnvelopeOptions): Ti
     startTime: 0,
     startValue: 0,
     endTime: envelope.attack.value,
-    endValue: options.velocity
+    endValue: options.velocity.value
   })
 
   // decay (peak -> sustain)
   applySegment(points, options, {
     startTime: envelope.attack.value,
-    startValue: options.velocity,
+    startValue: options.velocity.value,
     endTime: envelope.attack.value + envelope.decay.value,
-    endValue: envelope.sustain.value * options.velocity
+    endValue: envelope.sustain.value * options.velocity.value
   })
 
   // hold and release (sustain -> silence)
@@ -41,10 +42,10 @@ function applySegment (points: Array<TimeVariantPoint<undefined>>, options: Enve
   readonly endTime: number
   readonly endValue: number
 }): void {
-  const { duration } = options
+  const { gate } = options
   const { startTime, startValue, endTime, endValue } = segment
 
-  if (duration != null && duration <= startTime) {
+  if (gate != null && gate.value <= startTime) {
     return
   }
 
@@ -59,10 +60,10 @@ function applySegment (points: Array<TimeVariantPoint<undefined>>, options: Enve
     points.push({ time: numeric('s', startTime), value: numeric(undefined, startValue), curve: 'step' })
   }
 
-  if (duration != null && duration < endTime) {
-    const t = (duration - startTime) / (endTime - startTime)
+  if (gate != null && gate.value < endTime) {
+    const t = (gate.value - startTime) / (endTime - startTime)
     const holdValue = startValue + t * (endValue - startValue)
-    points.push({ time: numeric('s', duration), value: numeric(undefined, holdValue), curve: 'linear' })
+    points.push({ time: gate, value: numeric(undefined, holdValue), curve: 'linear' })
     return
   }
 
@@ -70,8 +71,8 @@ function applySegment (points: Array<TimeVariantPoint<undefined>>, options: Enve
 }
 
 function applyRelease (points: Array<TimeVariantPoint<undefined>>, envelope: Envelope, options: EnvelopeOptions): void {
-  const { duration } = options
-  if (duration == null) {
+  const { gate } = options
+  if (gate == null) {
     return
   }
 
@@ -79,16 +80,16 @@ function applyRelease (points: Array<TimeVariantPoint<undefined>>, envelope: Env
   const release = envelope.release.value
 
   if (lastPoint == null || release <= 0) {
-    points.push({ time: numeric('s', duration), value: ZERO_GAIN, curve: 'step' })
+    points.push({ time: gate, value: ZERO_GAIN, curve: 'step' })
     return
   }
 
-  const releaseStartTime = duration
+  const releaseStartTime = gate
   const releaseStartValue = lastPoint.value.value
 
-  if (releaseStartTime > lastPoint.time.value) {
-    points.push({ time: numeric('s', releaseStartTime), value: numeric(undefined, releaseStartValue), curve: 'step' })
+  if (releaseStartTime.value > lastPoint.time.value) {
+    points.push({ time: releaseStartTime, value: numeric(undefined, releaseStartValue), curve: 'step' })
   }
 
-  points.push({ time: numeric('s', releaseStartTime + release), value: ZERO_GAIN, curve: 'linear' })
+  points.push({ time: numeric('s', releaseStartTime.value + release), value: ZERO_GAIN, curve: 'linear' })
 }

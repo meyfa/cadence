@@ -1,4 +1,5 @@
-import type { NoteOptions } from '@audiograph'
+import type { NoteEvent } from '@core'
+import type { Numeric } from '@utility'
 
 export interface Instance {
   readonly dispose: () => void
@@ -6,5 +7,5 @@ export interface Instance {
   readonly input?: AudioNode
   readonly output?: AudioNode
 
-  readonly triggerNote?: (options: NoteOptions) => void
+  readonly triggerNote?: (note: NoteEvent, tempo: Numeric<'bpm'>) => void
 }

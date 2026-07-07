@@ -93,7 +93,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger()
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -112,7 +112,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger()
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -731,7 +731,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger()
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'oscillator')
     assert.strictEqual(voices[0].source.shape, 'sine')

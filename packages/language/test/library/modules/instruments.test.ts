@@ -54,7 +54,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       } satisfies Instrument)
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
@@ -92,7 +92,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
@@ -125,7 +125,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
@@ -157,7 +157,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
@@ -189,7 +189,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {
@@ -221,7 +221,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger(), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
         {
           envelope: declickEnvelope,
           source: {

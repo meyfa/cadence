@@ -1,8 +1,8 @@
-import type { AssetId } from '@core'
+import type { AssetId, NoteData } from '@core'
 import type { Numeric } from '@utility'
 import type { TimeVariant } from './automation.js'
 import type { EntityKey } from './entities.js'
-import type { AnyNode, NoteOptions } from './graph.js'
+import type { AnyNode } from './graph.js'
 
 export interface NodeTypeMap {
   // utility
@@ -79,7 +79,7 @@ export interface WaveShaperNode extends AnyNode {
 
 export interface InstrumentNode extends AnyNode {
   readonly type: 'instrument'
-  readonly trigger: (note: Omit<NoteOptions, 'time'>) => readonly SourceNode[]
+  readonly trigger: (note: NoteData) => readonly SourceNode[]
 }
 
 // sources

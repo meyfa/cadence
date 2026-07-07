@@ -17,7 +17,7 @@ describe('envelope.ts', () => {
   describe('applyEnvelope()', () => {
     it('emits attack and decay without release when hold duration is absent', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: 0.5, release: 3 }), {
-        velocity: 1
+        velocity: numeric(undefined, 1)
       })
 
       assert.deepStrictEqual(result, {
@@ -32,7 +32,7 @@ describe('envelope.ts', () => {
 
     it('handles zero-length attack by setting the peak immediately before decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 0, decay: 2, sustain: 0.5, release: 3 }), {
-        velocity: 1
+        velocity: numeric(undefined, 1)
       })
 
       assert.deepStrictEqual(result, {
@@ -46,7 +46,7 @@ describe('envelope.ts', () => {
 
     it('handles zero-length decay by setting the sustain level immediately after attack', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 0, sustain: 0.5, release: 3 }), {
-        velocity: 1
+        velocity: numeric(undefined, 1)
       })
 
       assert.deepStrictEqual(result, {
@@ -61,8 +61,8 @@ describe('envelope.ts', () => {
 
     it('starts release from the current attack level when the note ends during attack', () => {
       const result = applyEnvelope(createEnvelope({ attack: 4, decay: 2, sustain: 0.5, release: 1 }), {
-        velocity: 1,
-        duration: 1
+        velocity: numeric(undefined, 1),
+        gate: numeric('s', 1)
       })
 
       assert.deepStrictEqual(result, {
@@ -77,8 +77,8 @@ describe('envelope.ts', () => {
 
     it('starts release from the current decay level when the note ends during decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: 0.5, release: 1 }), {
-        velocity: 1,
-        duration: 2
+        velocity: numeric(undefined, 1),
+        gate: numeric('s', 2)
       })
 
       assert.deepStrictEqual(result, {
@@ -94,8 +94,8 @@ describe('envelope.ts', () => {
 
     it('starts release from sustain when the note ends after decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: 0.5, release: 4 }), {
-        velocity: 0.8,
-        duration: 5
+        velocity: numeric(undefined, 0.8),
+        gate: numeric('s', 5)
       })
 
       assert.deepStrictEqual(result, {
@@ -112,8 +112,8 @@ describe('envelope.ts', () => {
 
     it('handles zero-length release by setting the value to 0 immediately after hold duration', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: 0.5, release: 0 }), {
-        velocity: 1,
-        duration: 5
+        velocity: numeric(undefined, 1),
+        gate: numeric('s', 5)
       })
 
       assert.deepStrictEqual(result, {
