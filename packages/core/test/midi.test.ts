@@ -13,6 +13,18 @@ describe('midi.ts', () => {
       assert.strictEqual(convertPitchToMidi('A4'), 69)
       assert.strictEqual(convertPitchToMidi('C5'), 72)
     })
+
+    it('supports octaves from 0 to 10', () => {
+      assert.strictEqual(convertPitchToMidi('Cb0'), 11)
+      assert.strictEqual(convertPitchToMidi('C0'), 12)
+
+      assert.strictEqual(convertPitchToMidi('G9'), 127)
+      assert.strictEqual(convertPitchToMidi('G#9'), 128)
+      assert.strictEqual(convertPitchToMidi('Ab9'), 128)
+
+      assert.strictEqual(convertPitchToMidi('B10'), 143)
+      assert.strictEqual(convertPitchToMidi('B#10'), 144)
+    })
   })
 
   describe('getMidiFrequency()', () => {

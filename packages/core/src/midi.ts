@@ -1,6 +1,14 @@
 import type { Brand } from '@utility'
 import type { Pitch } from './program.js'
 
+// Note: Actual MIDI supports 0-127 (C-1 through G9), but for syntactical
+// simplicity, we instead support the range resulting from:
+//
+// "any note letter" + "any accidental" + "any octave from 0 to 10".
+//
+// This results in the range Cb0 (=B-1, MIDI 11) through B#10 (=C11, MIDI 144),
+// which has some overlap with MIDI, but is neither a subset nor a superset.
+
 export type MidiNote = Brand<number, 'core.MidiNote'>
 
 const pitchToMidi = new Map<Pitch, MidiNote>()
@@ -32,9 +40,7 @@ for (let octave = 0; octave <= 10; ++octave) {
 
       // Standard MIDI note numbers use C-1 = 0, hence the +1 octave offset.
       const midi = (octave + 1) * 12 + semitoneOffset + accidentalOffset
-      if (midi >= 0 && midi <= 127) {
-        pitchToMidi.set(pitch, midi as MidiNote)
-      }
+      pitchToMidi.set(pitch, midi as MidiNote)
     }
   }
 }

@@ -547,7 +547,7 @@ describe('lowering.ts', () => {
   })
 
   it('should throw for invalid instrument root note', () => {
-    for (const rootNote of ['C-1' as Pitch, 'G10' as Pitch]) {
+    for (const rootNote of ['C-1' as Pitch, 'G11' as Pitch]) {
       const program = createProgramWithInstrument({
         id: 100 as InstrumentId,
         rootNote,
