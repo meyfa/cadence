@@ -1,9 +1,12 @@
 import type { AudioGraph, Node } from '@audiograph'
-import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize, type AIFFEncodingOptions, type AIFFFormat, type AudioBufferTransform, type WAVEncodingOptions, type WAVFormat } from '@codecs'
-import { beatsToSeconds, calculateTotalLength, type Program } from '@core'
-import { numeric, type Numeric } from '@utility'
+import type { AIFFEncodingOptions, AIFFFormat, AudioBufferTransform, WAVEncodingOptions, WAVFormat } from '@codecs'
+import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize } from '@codecs'
+import type { Program } from '@core'
+import { beatsToSeconds, calculateTotalLength } from '@core'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
 import { createAudioRenderer } from '@webaudio'
-import { type Option } from '../../components/dropdown/Dropdown.js'
+import type { Option } from '../../components/dropdown/Dropdown.js'
 import { saveFile } from '../../utilities/files.js'
 
 const ASSET_LOAD_TIMEOUT = numeric('s', 30)

@@ -1,7 +1,9 @@
 import { useSafeContext } from '@editor'
 import { numeric } from '@utility'
-import { createAudioEngine, type AudioEngine, type AudioEngineOptions } from '@webaudio'
-import { createContext, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { AudioEngine, AudioEngineOptions } from '@webaudio'
+import { createAudioEngine } from '@webaudio'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { createContext } from 'react'
 import { isLikelyMobile, isLowMemoryDevice } from '../../utilities/features.js'
 import { defaultOutputGain } from './persistence.js'
 

@@ -1,6 +1,8 @@
-import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import type { Dispatch, FunctionComponent, PropsWithChildren, SetStateAction } from 'react'
+import { createContext, useReducer } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
-import { createProjectSourceState, type ProjectSource } from '../model.js'
+import type { ProjectSource } from '../model.js'
+import { createProjectSourceState } from '../model.js'
 
 const initialState = createProjectSourceState()
 

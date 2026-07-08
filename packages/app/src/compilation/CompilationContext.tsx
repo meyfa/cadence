@@ -1,8 +1,10 @@
 import { useDebouncedValue, useLatestRef, useProjectSource, useSafeContext } from '@editor'
 import type { GenerateOptions } from '@language'
 import { numeric } from '@utility'
-import { createContext, useCallback, useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
-import { compileSource, useCompiler, type CompileResult } from './compiler.js'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { createContext, useCallback, useMemo } from 'react'
+import type { CompileResult } from './compiler.js'
+import { compileSource, useCompiler } from './compiler.js'
 
 export interface CompilationState {
   readonly loading: boolean

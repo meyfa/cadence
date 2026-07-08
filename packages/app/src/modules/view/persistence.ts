@@ -1,8 +1,10 @@
 import type { PersistenceDomain } from '@editor'
 import { usePersistentBinding } from '@editor'
-import { enums, type, type Struct } from 'superstruct'
-import { applyThemeSetting, useThemeSetting, type ThemeSetting } from '../../theme.js'
 import { useRef } from 'react'
+import type { Struct } from 'superstruct'
+import { enums, type } from 'superstruct'
+import type { ThemeSetting } from '../../theme.js'
+import { applyThemeSetting, useThemeSetting } from '../../theme.js'
 
 export const defaultThemeSetting: ThemeSetting = 'dark'
 

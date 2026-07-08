@@ -1,6 +1,7 @@
 import { Select } from '@headlessui/react'
 import clsx from 'clsx'
-import { useCallback, type ChangeEvent, type FunctionComponent } from 'react'
+import type { ChangeEvent, FunctionComponent } from 'react'
+import { useCallback } from 'react'
 
 export interface Option {
   readonly label: string

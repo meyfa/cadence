@@ -1,7 +1,9 @@
 import type { PersistenceDomain } from '@editor'
 import { useObservable, usePersistentBinding } from '@editor'
-import { numeric, type Numeric } from '@utility'
-import { type, type Struct } from 'superstruct'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
+import type { Struct } from 'superstruct'
+import { type } from 'superstruct'
 import { validateNumeric } from '../../utilities/validation.js'
 import { useAudioEngine } from './provider.js'
 

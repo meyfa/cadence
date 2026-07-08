@@ -1,6 +1,7 @@
 import { useGlobalEscapePress, useGlobalMouseUp } from '@editor'
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
-import { useCallback, useRef, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 export const Popover: FunctionComponent<PropsWithChildren<{

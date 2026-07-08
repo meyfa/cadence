@@ -1,6 +1,7 @@
-import { useModules, type FooterInsert } from '@editor'
-import { useCommandRegistry } from '@editor'
-import { useMemo, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { FooterInsert } from '@editor'
+import { useCommandRegistry, useModules } from '@editor'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { useMemo } from 'react'
 
 export const Footer: FunctionComponent = () => {
   const { getCommandById } = useCommandRegistry()

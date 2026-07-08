@@ -1,5 +1,6 @@
 import { TabPanel } from '@headlessui/react'
-import { useEffect, useRef, type ComponentType, type FunctionComponent } from 'react'
+import type { ComponentType, FunctionComponent } from 'react'
+import { useEffect, useRef } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import type { PanelId } from '../../modules/types.js'
 import { updateFocusedTab } from '../algorithms/mutate.js'

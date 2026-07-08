@@ -1,11 +1,12 @@
+import { useDroppable } from '@dnd-kit/core'
 import { useSortable } from '@dnd-kit/sortable'
 import { Tab as HUITab } from '@headlessui/react'
-import { useDroppable } from '@dnd-kit/core'
-import React, { useCallback, type ComponentType, type FunctionComponent } from 'react'
+import type { ComponentType, FunctionComponent } from 'react'
+import React, { useCallback } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
 import type { ModuleRenderFn, PanelId, PanelProps } from '../../modules/types.js'
 import type { Tab, TabId } from '../types.js'
 import { usePanelById } from './panel-lookup.js'
-import { ErrorBoundary } from 'react-error-boundary'
 
 const MOUSE_BUTTON_MIDDLE = 1
 

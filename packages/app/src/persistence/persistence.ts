@@ -1,6 +1,7 @@
-import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch, type DockLayout, type PersistenceDomain, type ProjectSource } from '@editor'
+import type { DockLayout, PersistenceDomain, ProjectSource } from '@editor'
+import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch } from '@editor'
 import { useCallback, useMemo } from 'react'
-import { record, string, type as structType } from 'superstruct'
+import { record, string, type } from 'superstruct'
 import { defaultLayout } from '../defaults/default-layout.js'
 import { demoCode } from '../defaults/demo-code.js'
 import { TRACK_FILE_PATH } from './constants.js'
@@ -14,7 +15,7 @@ const layoutDomain: PersistenceDomain<DockLayout> = {
   areEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b)
 }
 
-const sourceStateSchema = structType({
+const sourceStateSchema = type({
   files: record(string(), string())
 })
 

@@ -1,6 +1,8 @@
-import { DndContext, DragOverlay, MouseSensor, pointerWithin, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragOverEvent, type DragStartEvent, type Modifier } from '@dnd-kit/core'
+import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
+import { DndContext, DragOverlay, MouseSensor, pointerWithin, useSensor, useSensors } from '@dnd-kit/core'
 import { getEventCoordinates } from '@dnd-kit/utilities'
-import { useCallback, useState, type ComponentType, type FunctionComponent } from 'react'
+import type { ComponentType, FunctionComponent } from 'react'
+import { useCallback, useState } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import { findPaneById, findPaneByTabId } from '../algorithms/find.js'
 import { moveTabBetweenPanes, moveTabIntoPane, moveTabToPaneEnd, moveTabToSplit } from '../algorithms/mutate.js'
@@ -9,7 +11,8 @@ import type { LayoutDispatch } from './LayoutContext.js'
 import { LayoutNodeView } from './LayoutNodeView.js'
 import { PanelErrorBoundary } from './PanelErrorBoundary.js'
 import { parsePaneNodeDropTarget } from './PaneNodeView.js'
-import { PanelTabTitle, parseTabDropTarget, type TabTitleProps } from './TabTitle.js'
+import type { TabTitleProps } from './TabTitle.js'
+import { PanelTabTitle, parseTabDropTarget } from './TabTitle.js'
 
 const DRAGGED_TAB_OPACITY = 0.6
 

@@ -1,5 +1,7 @@
-import { useModules, type HeaderInsert } from '@editor'
-import { useMemo, type FunctionComponent, type ReactNode } from 'react'
+import type { HeaderInsert } from '@editor'
+import { useModules } from '@editor'
+import type { FunctionComponent, ReactNode } from 'react'
+import { useMemo } from 'react'
 import { MainMenu } from '../commands/MainMenu.js'
 
 export const Header: FunctionComponent<{

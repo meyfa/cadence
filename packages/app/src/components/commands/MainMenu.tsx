@@ -3,7 +3,8 @@ import { useAppMenus, useCommandRegistry } from '@editor'
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
-import { Fragment, useCallback, useLayoutEffect, useMemo, useState, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { FunctionComponent, PropsWithChildren } from 'react'
+import { Fragment, useCallback, useLayoutEffect, useMemo, useState } from 'react'
 import { ShortcutKeys } from './ShortcutKeys.js'
 
 export const MainMenu: FunctionComponent = () => {
