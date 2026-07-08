@@ -1,9 +1,9 @@
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../src/pattern.js'
+import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../../src/pattern/functions.js'
 
-describe('pattern.ts', () => {
+describe('pattern/functions.ts', () => {
   // helper to create Numeric<'beats'>
   const beats = (value: number) => numeric('beats', value)
   const unitless = (value: number) => numeric(undefined, value)

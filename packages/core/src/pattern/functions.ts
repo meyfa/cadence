@@ -1,6 +1,6 @@
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import type { NoteEvent, Pattern, Step } from './program.js'
+import type { NoteEvent, Pattern, Step } from './types.js'
 
 const zeroBeats = numeric('beats', 0)
 const defaultVelocity = numeric(undefined, 1)
