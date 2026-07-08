@@ -1,6 +1,6 @@
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import type { Program } from './program.js'
+import type { Program } from './program/program.js'
 
 export interface BeatRange {
   readonly start: Numeric<'beats'>
