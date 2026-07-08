@@ -1,5 +1,7 @@
-import { type KeyboardShortcut, parseKeyboardShortcut } from '@editor'
-import { type FunctionComponent, Fragment } from 'react'
+import type { KeyboardShortcut } from '@editor'
+import { parseKeyboardShortcut } from '@editor'
+import type { FunctionComponent } from 'react'
+import { Fragment } from 'react'
 
 export const ShortcutKeys: FunctionComponent<{
   shortcut: KeyboardShortcut

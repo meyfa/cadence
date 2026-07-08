@@ -1,4 +1,5 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type DependencyList, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { DependencyList, FunctionComponent, PropsWithChildren } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { MenuSpec } from '../menus.js'
 

@@ -1,11 +1,14 @@
 import { numeric } from '@utility'
-import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FunctionComponent } from 'react'
-import { Group, Panel, Separator, useGroupRef, type Layout } from 'react-resizable-panels'
+import type { CSSProperties, FunctionComponent } from 'react'
+import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { Layout } from 'react-resizable-panels'
+import { Group, Panel, Separator, useGroupRef } from 'react-resizable-panels'
 import { useChangeOrigin } from '../../hooks/change-origin.js'
 import { transformNode } from '../algorithms/mutate.js'
 import type { SplitNode, SplitOrientation } from '../types.js'
 import type { DockLayoutStyles } from './DockLayoutView.js'
-import { LayoutNodeView, type LayoutNodeViewProps } from './LayoutNodeView.js'
+import type { LayoutNodeViewProps } from './LayoutNodeView.js'
+import { LayoutNodeView } from './LayoutNodeView.js'
 
 // The interval during which layout changes are considered part of the same change stack.
 const CHANGE_STACK_WINDOW = numeric('s', 0.05)

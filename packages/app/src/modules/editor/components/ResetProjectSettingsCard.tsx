@@ -1,4 +1,5 @@
-import { useCommandRegistry, type CommandId } from '@editor'
+import type { CommandId } from '@editor'
+import { useCommandRegistry } from '@editor'
 import { RestartAltOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Button } from '../../../components/button/Button.js'

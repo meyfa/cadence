@@ -1,4 +1,5 @@
-import { useModules, type PanelProps } from '@editor'
+import type { PanelProps } from '@editor'
+import { useModules } from '@editor'
 import { GitHub } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Card } from '../../components/card/Card.js'

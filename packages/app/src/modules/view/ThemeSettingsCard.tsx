@@ -2,7 +2,8 @@ import type { FunctionComponent } from 'react'
 import { Card } from '../../components/card/Card.js'
 import { Radio } from '../../components/radio/Radio.js'
 import { RadioGroup } from '../../components/radio/RadioGroup.js'
-import { applyThemeSetting, useSystemTheme, useThemeSetting, type ThemeSetting } from '../../theme.js'
+import type { ThemeSetting } from '../../theme.js'
+import { applyThemeSetting, useSystemTheme, useThemeSetting } from '../../theme.js'
 
 export const ThemeSettingsCard: FunctionComponent = () => {
   const themeSetting = useThemeSetting()

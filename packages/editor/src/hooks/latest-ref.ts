@@ -1,4 +1,5 @@
-import { useRef, type RefObject } from 'react'
+import type { RefObject } from 'react'
+import { useRef } from 'react'
 
 /**
  * A hook that returns a ref object always containing the latest value provided as an argument.

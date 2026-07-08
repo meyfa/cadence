@@ -1,7 +1,8 @@
 import { useGlobalEscapePress, useGlobalMouseUp } from '@editor'
 import { Adjust } from '@mui/icons-material'
 import clsx from 'clsx'
-import React, { FunctionComponent, PropsWithChildren, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import React, { FunctionComponent, PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import './Slider.css'
 
 export const Slider: FunctionComponent<PropsWithChildren<{

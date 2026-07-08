@@ -1,5 +1,6 @@
 import { numeric } from '@utility'
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '../hooks/latest-ref.js'
 import { usePersistenceContext } from './components/PersistenceContext.js'
 import type { PersistenceDomain, PersistenceEvent } from './types.js'

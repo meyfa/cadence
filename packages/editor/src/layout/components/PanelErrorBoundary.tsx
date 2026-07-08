@@ -1,5 +1,6 @@
 import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
-import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
+import type { FallbackProps } from 'react-error-boundary'
+import { ErrorBoundary } from 'react-error-boundary'
 
 export const PanelErrorBoundary: FunctionComponent<PropsWithChildren<{
   FallbackComponent: ComponentType<FallbackProps>

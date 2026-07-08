@@ -1,5 +1,6 @@
 import type { Unit } from '@utility'
-import { literal, number, object, string, type Struct, type StructError } from 'superstruct'
+import type { Struct, StructError } from 'superstruct'
+import { literal, number, object, string } from 'superstruct'
 
 export type StructValidation<T> = [StructError, undefined] | [undefined, T]
 

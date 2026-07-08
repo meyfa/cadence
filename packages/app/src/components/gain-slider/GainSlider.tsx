@@ -1,4 +1,5 @@
-import { numeric, type Numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../slider/Slider.js'

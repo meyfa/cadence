@@ -1,5 +1,6 @@
 import { randomId } from '@utility'
-import { createContext, useCallback, useMemo, useState, type ComponentType, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
+import { createContext, useCallback, useMemo, useState } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { DialogComponentProps, DialogId, DialogService } from '../types.js'
 

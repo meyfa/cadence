@@ -1,4 +1,5 @@
-import { createContext, useReducer, type Dispatch, type FunctionComponent, type PropsWithChildren, type SetStateAction } from 'react'
+import type { Dispatch, FunctionComponent, PropsWithChildren, SetStateAction } from 'react'
+import { createContext, useReducer } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { DockLayout } from '../types.js'
 

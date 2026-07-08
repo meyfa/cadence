@@ -1,8 +1,9 @@
 import { randomId } from '@utility'
-import { createContext, useCallback, useMemo, useState, type ComponentType, type FunctionComponent, type PropsWithChildren } from 'react'
+import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
+import { createContext, useCallback, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { NotificationComponentProps, NotificationId, NotificationOptions, NotificationService } from '../types.js'
-import { createPortal } from 'react-dom'
 
 interface NotificationEntry<P extends NotificationComponentProps = NotificationComponentProps> {
   readonly id: NotificationId

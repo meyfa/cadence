@@ -3,7 +3,8 @@ import type { Extension } from '@codemirror/state'
 import type { EditorView, ViewUpdate } from '@codemirror/view'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 import { useLatestRef } from '../../hooks/latest-ref.js'
-import { createCadenceEditor, type CadenceEditorHandle } from '../handle.js'
+import type { CadenceEditorHandle } from '../handle.js'
+import { createCadenceEditor } from '../handle.js'
 import type { EditorLocation } from '../types.js'
 
 export const Editor: FunctionComponent<{
