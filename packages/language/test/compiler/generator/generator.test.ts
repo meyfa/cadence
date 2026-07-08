@@ -321,8 +321,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -343,9 +343,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 4), value: numeric('db', -30), curve: 'linear' },
-      { time: numeric('s', 6), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 4), value: numeric('db', -30), shape: 'linear' },
+      { time: numeric('s', 6), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -366,9 +366,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 10), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 16), value: numeric('db', -30), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 10), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 16), value: numeric('db', -30), shape: 'linear' }
     ])
   })
 
@@ -389,9 +389,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 12), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 16), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 12), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 16), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -412,9 +412,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 12), value: numeric('db', -30), curve: 'linear' },
-      { time: numeric('s', 16), value: numeric('db', -30), curve: 'step' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 12), value: numeric('db', -30), shape: 'linear' },
+      { time: numeric('s', 16), value: numeric('db', -30), shape: 'step' }
     ])
   })
 
@@ -435,8 +435,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -30), curve: 'step' },
-      { time: numeric('s', 8), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -30), shape: 'step' },
+      { time: numeric('s', 8), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -460,10 +460,10 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -60), curve: 'step' },
-      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' },
-      { time: numeric('s', 4), value: numeric('db', -15), curve: 'step' },
-      { time: numeric('s', 8), value: numeric('db', -30), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), shape: 'linear' },
+      { time: numeric('s', 4), value: numeric('db', -15), shape: 'step' },
+      { time: numeric('s', 8), value: numeric('db', -30), shape: 'linear' }
     ])
   })
 
@@ -485,8 +485,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -15), curve: 'step' },
-      { time: numeric('s', 4), value: numeric('db', -15), curve: 'step' }
+      { time: numeric('s', 0), value: numeric('db', -15), shape: 'step' },
+      { time: numeric('s', 4), value: numeric('db', -15), shape: 'step' }
     ])
   })
 
@@ -508,9 +508,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -15), curve: 'step' },
-      { time: numeric('s', 2), value: numeric('db', -30), curve: 'step' },
-      { time: numeric('s', 4), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -15), shape: 'step' },
+      { time: numeric('s', 2), value: numeric('db', -30), shape: 'step' },
+      { time: numeric('s', 4), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -531,8 +531,8 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(result.mixer.buses[0].gain.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('db', -20), curve: 'step' },
-      { time: numeric('s', 8), value: numeric('db', 0), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('db', -20), shape: 'step' },
+      { time: numeric('s', 8), value: numeric('db', 0), shape: 'linear' }
     ])
   })
 
@@ -560,8 +560,8 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('hz', 100), curve: 'step' },
-      { time: numeric('s', 8), value: numeric('hz', 4000), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('hz', 100), shape: 'step' },
+      { time: numeric('s', 8), value: numeric('hz', 4000), shape: 'linear' }
     ])
   })
 
@@ -590,8 +590,8 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: numeric('s', 0), value: numeric('hz', 500), curve: 'step' },
-      { time: numeric('s', 8), value: numeric('hz', 1000), curve: 'linear' }
+      { time: numeric('s', 0), value: numeric('hz', 500), shape: 'step' },
+      { time: numeric('s', 8), value: numeric('hz', 1000), shape: 'linear' }
     ])
   })
 

@@ -228,11 +228,7 @@ function generateAutomation (scope: Scope, statement: ast.AutomateStatement, opt
   const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
 
   const points = mergeCurvePoints(existing.points, rendered)
-
-  scope.top.automations.set(target.id, {
-    parameterId: target.id,
-    points
-  })
+  scope.top.automations.set(target.id, { ...existing, points })
 }
 
 function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Mixer {

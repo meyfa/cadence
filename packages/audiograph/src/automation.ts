@@ -1,48 +1,27 @@
-import type { AutomationPoint, Parameter, Program } from '@core'
+import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { dbToGain } from './constants.js'
 
-export type Curve = 'step' | 'linear' | 'exponential'
-
-export interface TimeVariant<U extends Unit> {
-  readonly initial: Numeric<U>
-  readonly points: ReadonlyArray<TimeVariantPoint<U>>
-}
-
-export interface TimeVariantPoint<U extends Unit> {
-  readonly time: Numeric<'s'>
-  readonly value: Numeric<U>
-
-  /**
-   * The curve from the previous point, or from the initial value, to this point.
-   */
-  readonly curve: Curve
-}
-
-export function timeVariant<const U extends Unit> (initial: Numeric<U>, points: ReadonlyArray<TimeVariantPoint<U>>): TimeVariant<U> {
-  return { initial, points }
-}
-
 export interface Transform<FromUnit extends Unit, ToUnit extends Unit> {
   readonly transformValue: (value: Numeric<FromUnit>) => Numeric<ToUnit>
-  readonly transformCurve: (curve: Curve) => Curve
+  readonly transformCurveShape: (curve: CurveShape) => CurveShape
 }
 
-export function toTimeVariant<FromUnit extends Unit, ToUnit extends Unit = FromUnit> (
+export function computeParameterCurve<FromUnit extends Unit, ToUnit extends Unit = FromUnit> (
   parameter: Parameter<FromUnit>,
   program: Program,
   transform: Transform<FromUnit, ToUnit>
-): TimeVariant<ToUnit> {
+): Curve<'s', ToUnit> {
   const initial = parameter.initial
-  const points = (program.automations.get(parameter.id)?.points ?? []) as ReadonlyArray<AutomationPoint<FromUnit>>
+  const points = (program.automations.get(parameter.id)?.points ?? []) as ReadonlyArray<CurvePoint<'s', FromUnit>>
 
   return {
     initial: transform.transformValue(initial),
     points: points.map((point) => ({
       time: point.time,
       value: transform.transformValue(point.value),
-      curve: transform.transformCurve(point.curve)
+      shape: transform.transformCurveShape(point.shape)
     }))
   }
 }
@@ -50,7 +29,7 @@ export function toTimeVariant<FromUnit extends Unit, ToUnit extends Unit = FromU
 export function identityTransform<U extends Unit> (): Transform<U, U> {
   return {
     transformValue: (value) => value,
-    transformCurve: (curve) => curve
+    transformCurveShape: (curve) => curve
   }
 }
 
@@ -59,7 +38,7 @@ export const gainTransform: Transform<'db', undefined> = {
     return numeric(undefined, dbToGain(value.value))
   },
 
-  transformCurve: (curve) => {
+  transformCurveShape: (curve) => {
     switch (curve) {
       case 'step':
         return 'step'
@@ -80,7 +59,7 @@ export const panTransform: Transform<undefined, undefined> = {
     return numeric(undefined, Math.max(-1, Math.min(1, value.value)))
   },
 
-  transformCurve: (curve) => curve
+  transformCurveShape: (curve) => curve
 }
 
 export const feedbackTransform: Transform<undefined, undefined> = {
@@ -92,7 +71,7 @@ export const feedbackTransform: Transform<undefined, undefined> = {
     return numeric(undefined, Math.max(0, Math.min(1, value.value)))
   },
 
-  transformCurve: (curve) => curve
+  transformCurveShape: (curve) => curve
 }
 
 export const frequencyTransform: Transform<'hz', 'hz'> = {
@@ -108,5 +87,5 @@ export const frequencyTransform: Transform<'hz', 'hz'> = {
     return value
   },
 
-  transformCurve: (curve) => curve
+  transformCurveShape: (curve) => curve
 }

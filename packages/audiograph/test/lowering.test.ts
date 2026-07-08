@@ -3,7 +3,6 @@ import { beatsToSeconds, createSerialPattern } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { timeVariant } from '../src/automation.js'
 import { dbToGain } from '../src/constants.js'
 import { createEntityKey } from '../src/entities.js'
 import { applyEnvelope } from '../src/envelope.js'
@@ -334,18 +333,17 @@ describe('lowering.ts', () => {
         [
           instrumentGainId,
           {
-            parameterId: instrumentGainId,
-            type: 'gain',
+            initial: numeric('db', -6),
             points: [
               {
                 time: numeric('s', 0.5),
                 value: numeric('db', -3),
-                curve: 'linear'
+                shape: 'linear'
               },
               {
                 time: numeric('s', 1),
                 value: numeric('db', -12),
-                curve: 'step'
+                shape: 'step'
               }
             ]
           }
@@ -387,12 +385,12 @@ describe('lowering.ts', () => {
           {
             time: numeric('s', 0.5),
             value: numeric(undefined, dbToGain(-3)),
-            curve: 'exponential'
+            shape: 'exponential'
           },
           {
             time: numeric('s', 1),
             value: numeric(undefined, dbToGain(-12)),
-            curve: 'step'
+            shape: 'step'
           }
         ]
       }
@@ -555,9 +553,12 @@ describe('lowering.ts', () => {
     assert.strictEqual(voices.length, 1)
     const [voice] = voices
 
-    assert.deepStrictEqual(voice.gainCurve, timeVariant(numeric(undefined, 0), [
-      { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' }
-    ]))
+    assert.deepStrictEqual(voice.gainCurve, {
+      initial: numeric(undefined, 0),
+      points: [
+        { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' }
+      ]
+    })
   })
 
   it('should throw for invalid sample playback rate', () => {

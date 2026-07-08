@@ -1,8 +1,8 @@
-import type { Curve, TimeVariant } from '@audiograph'
+import type { Curve, CurveShape } from '@core'
 import type { Unit } from '@utility'
 import type { Transport } from '../transport/transport.js'
 
-export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: TimeVariant<U>): void {
+export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
   param.value = source.initial.value
 
   const points = source.points
@@ -53,7 +53,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
       const nextPointTime = pointTimes[pointIndex + 1]
 
       const t = (0 - pointTime) / (nextPointTime - pointTime)
-      const value = evaluateCurve(nextPoint.curve, t, point.value.value, nextPoint.value.value)
+      const value = evaluateCurve(nextPoint.shape, t, point.value.value, nextPoint.value.value)
 
       param.setValueAtTime(value, 0)
       previousValue = value
@@ -64,10 +64,10 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     // Schedule remaining points (guaranteed to be in the future)
     for (let i = pointIndex; i < points.length; ++i) {
       const pointTime = pointTimes[i]
-      const { value: { value }, curve } = points[i]
+      const { value: { value }, shape } = points[i]
 
       scheduleToPoint(transport, param, {
-        curve,
+        shape,
         time: pointTime,
         value,
         previousTime,
@@ -80,7 +80,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
   })
 }
 
-export function applyAutomationPoints<U extends Unit> (time: number, transport: Transport, param: AudioParam, source: TimeVariant<U>): void {
+export function applyAutomationPoints<U extends Unit> (time: number, transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
   param.value = source.initial.value
 
   const points = source.points
@@ -95,10 +95,10 @@ export function applyAutomationPoints<U extends Unit> (time: number, transport: 
 
   for (const point of points) {
     const pointTime = time + point.time.value
-    const { value: { value }, curve } = point
+    const { value: { value }, shape: shape } = point
 
     scheduleToPoint(transport, param, {
-      curve,
+      shape,
       time: pointTime,
       value,
       previousTime,
@@ -110,7 +110,7 @@ export function applyAutomationPoints<U extends Unit> (time: number, transport: 
   }
 }
 
-function evaluateCurve (curve: Curve, t: number, startValue: number, endValue: number): number {
+function evaluateCurve (shape: CurveShape, t: number, startValue: number, endValue: number): number {
   if (t <= 0) {
     return startValue
   }
@@ -119,7 +119,7 @@ function evaluateCurve (curve: Curve, t: number, startValue: number, endValue: n
     return endValue
   }
 
-  switch (curve) {
+  switch (shape) {
     case 'step':
       return startValue
 
@@ -149,21 +149,21 @@ function scheduleToPoint (
   transport: Transport,
   param: AudioParam,
   options: {
-    readonly curve: Curve
+    readonly shape: CurveShape
     readonly time: number
     readonly value: number
     readonly previousTime: number
     readonly previousValue: number
   }
 ): void {
-  const { curve, time, value, previousTime, previousValue } = options
+  const { shape, time, value, previousTime, previousValue } = options
 
   if (time === previousTime) {
     param.setValueAtTime(value, time)
     return
   }
 
-  switch (curve) {
+  switch (shape) {
     case 'step':
       param.setValueAtTime(value, time)
       return

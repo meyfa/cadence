@@ -2,7 +2,7 @@ import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MixerRouti
 import { calculateTotalLength, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import { feedbackTransform, frequencyTransform, gainTransform, panTransform, timeVariant, toTimeVariant } from './automation.js'
+import { feedbackTransform, frequencyTransform, gainTransform, panTransform, computeParameterCurve } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import { dbToGain } from './constants.js'
@@ -129,7 +129,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   })
 
   const gain = builder.addNode<GainNode>('gain', {
-    gain: toTimeVariant(instrument.gain, program, gainTransform)
+    gain: computeParameterCurve(instrument.gain, program, gainTransform)
   })
 
   builder.addEdge(instrumentNode.id, gain.id)
@@ -243,20 +243,20 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
   switch (effect.type) {
     case 'gain': {
       return toSubGraph(builder.addNode<GainNode>('gain', {
-        gain: toTimeVariant(effect.gain, program, gainTransform)
+        gain: computeParameterCurve(effect.gain, program, gainTransform)
       }))
     }
 
     case 'pan': {
       return toSubGraph(builder.addNode<PanNode>('pan', {
-        pan: toTimeVariant(effect.pan, program, panTransform)
+        pan: computeParameterCurve(effect.pan, program, panTransform)
       }))
     }
 
     case 'lowpass': {
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'lowpass',
-        frequency: toTimeVariant(effect.frequency, program, frequencyTransform),
+        frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
         rolloffPerOctave: numeric('db', 12)
       }))
@@ -265,7 +265,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     case 'highpass': {
       return toSubGraph(builder.addNode<BiquadNode>('biquad', {
         filterType: 'highpass',
-        frequency: toTimeVariant(effect.frequency, program, frequencyTransform),
+        frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
         rolloffPerOctave: numeric('db', 12)
       }))
@@ -298,7 +298,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
         const feedbackGain = builder.addNode<GainNode>('gain', {
-          gain: toTimeVariant(effect.feedback, program, feedbackTransform)
+          gain: computeParameterCurve(effect.feedback, program, feedbackTransform)
         })
 
         builder.addEdge(delayNode.id, feedbackGain.id)
@@ -339,12 +339,12 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         return numeric(undefined, 1 / value.value)
       }
 
-      const thresholdGain = toTimeVariant(effect.threshold, program, gainTransform)
+      const thresholdGain = computeParameterCurve(effect.threshold, program, gainTransform)
 
       const input = builder.addNode<GainNode>('gain', {
         gain: {
           initial: invert(thresholdGain.initial),
-          points: thresholdGain.points.map(({ time, value, curve }) => ({ time, value: invert(value), curve }))
+          points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: invert(value), shape }))
         }
       })
 
@@ -396,12 +396,12 @@ function createDryWetMix (effect: Node, mix: number, wetGain: Numeric<'db'>, bui
 
   const dry = Math.max(0, Math.min(1, (1 - mix) * 2))
   const dryNode = builder.addNode<GainNode>('gain', {
-    gain: timeVariant(numeric(undefined, dry), [])
+    gain: { initial: numeric(undefined, dry), points: [] }
   })
 
   const wet = Math.max(0, Math.min(1, mix * 2))
   const wetNode = builder.addNode<GainNode>('gain', {
-    gain: timeVariant(numeric(undefined, wet), [])
+    gain: { initial: numeric(undefined, wet), points: [] }
   })
 
   const wetInput = wetLevel ?? effect
@@ -426,7 +426,7 @@ function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): Node
 
   return builder.addNode<GainNode>('gain', {
     // TODO time variant
-    gain: timeVariant(numeric(undefined, gain), [])
+    gain: { initial: numeric(undefined, gain), points: [] }
   })
 }
 

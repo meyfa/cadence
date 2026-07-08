@@ -1,4 +1,4 @@
-import type { Envelope } from '@core'
+import type { Curve, Envelope } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -23,11 +23,11 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 1), curve: 'linear' },
-          { time: numeric('s', 3), value: numeric(undefined, 0.5), curve: 'linear' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 1), shape: 'linear' },
+          { time: numeric('s', 3), value: numeric(undefined, 0.5), shape: 'linear' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('handles zero-length attack by setting the peak immediately before decay', () => {
@@ -38,10 +38,10 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 1), curve: 'step' },
-          { time: numeric('s', 2), value: numeric(undefined, 0.5), curve: 'linear' }
+          { time: numeric('s', 0), value: numeric(undefined, 1), shape: 'step' },
+          { time: numeric('s', 2), value: numeric(undefined, 0.5), shape: 'linear' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('handles zero-length decay by setting the sustain level immediately after attack', () => {
@@ -52,11 +52,11 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 1), curve: 'linear' },
-          { time: numeric('s', 1), value: numeric(undefined, 0.5), curve: 'step' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 1), shape: 'linear' },
+          { time: numeric('s', 1), value: numeric(undefined, 0.5), shape: 'step' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('starts release from the current attack level when the note ends during attack', () => {
@@ -68,11 +68,11 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 0.25), curve: 'linear' },
-          { time: numeric('s', 2), value: numeric(undefined, 0), curve: 'linear' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 0.25), shape: 'linear' },
+          { time: numeric('s', 2), value: numeric(undefined, 0), shape: 'linear' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('starts release from the current decay level when the note ends during decay', () => {
@@ -84,12 +84,12 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 1), curve: 'linear' },
-          { time: numeric('s', 2), value: numeric(undefined, 0.75), curve: 'linear' },
-          { time: numeric('s', 3), value: numeric(undefined, 0), curve: 'linear' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 1), shape: 'linear' },
+          { time: numeric('s', 2), value: numeric(undefined, 0.75), shape: 'linear' },
+          { time: numeric('s', 3), value: numeric(undefined, 0), shape: 'linear' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('starts release from sustain when the note ends after decay', () => {
@@ -101,13 +101,13 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 0.8), curve: 'linear' },
-          { time: numeric('s', 3), value: numeric(undefined, 0.4), curve: 'linear' },
-          { time: numeric('s', 5), value: numeric(undefined, 0.4), curve: 'step' },
-          { time: numeric('s', 9), value: numeric(undefined, 0), curve: 'linear' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 0.8), shape: 'linear' },
+          { time: numeric('s', 3), value: numeric(undefined, 0.4), shape: 'linear' },
+          { time: numeric('s', 5), value: numeric(undefined, 0.4), shape: 'step' },
+          { time: numeric('s', 9), value: numeric(undefined, 0), shape: 'linear' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
 
     it('handles zero-length release by setting the value to 0 immediately after hold duration', () => {
@@ -119,12 +119,12 @@ describe('envelope.ts', () => {
       assert.deepStrictEqual(result, {
         initial: numeric(undefined, 0),
         points: [
-          { time: numeric('s', 0), value: numeric(undefined, 0), curve: 'step' },
-          { time: numeric('s', 1), value: numeric(undefined, 1), curve: 'linear' },
-          { time: numeric('s', 3), value: numeric(undefined, 0.5), curve: 'linear' },
-          { time: numeric('s', 5), value: numeric(undefined, 0), curve: 'step' }
+          { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' },
+          { time: numeric('s', 1), value: numeric(undefined, 1), shape: 'linear' },
+          { time: numeric('s', 3), value: numeric(undefined, 0.5), shape: 'linear' },
+          { time: numeric('s', 5), value: numeric(undefined, 0), shape: 'step' }
         ]
-      })
+      } satisfies Curve<'s', undefined>)
     })
   })
 })
