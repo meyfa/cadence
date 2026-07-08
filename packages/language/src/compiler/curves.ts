@@ -1,4 +1,4 @@
-import type { AutomationPoint } from '@core'
+import type { CurvePoint, CurveShape } from '@core'
 import { timeToSeconds } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
@@ -18,7 +18,7 @@ export interface CurveSegmentType {
   readonly create: <U extends Unit>(parameters: ReadonlyArray<Numeric<U>>, length: CurveDuration) => CurveSegment<U>
   readonly start: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
   readonly end: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
-  readonly endCurve: AutomationPoint<any>['curve']
+  readonly endShape: CurveShape
 }
 
 const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
@@ -31,7 +31,7 @@ const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
     },
     start: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
     end: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
-    endCurve: 'step'
+    endShape: 'step'
   }],
 
   [SEGMENT_TYPE_LINEAR, {
@@ -43,7 +43,7 @@ const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
     },
     start: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).start,
     end: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).end,
-    endCurve: 'linear'
+    endShape: 'linear'
   }]
 ])
 
@@ -73,13 +73,13 @@ export interface RenderCurveOptions {
   readonly tempo: Numeric<'bpm'>
 }
 
-export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: RenderCurveOptions): ReadonlyArray<AutomationPoint<U>> {
+export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: RenderCurveOptions): ReadonlyArray<CurvePoint<'s', U>> {
   const segments = curve.segments
   if (segments.length === 0 || (options.limit != null && options.limit.value <= 0)) {
     return []
   }
 
-  const points: Array<AutomationPoint<U>> = []
+  const points: Array<CurvePoint<'s', U>> = []
 
   const offsetSeconds = timeToSeconds(options.offset, options.tempo)
   let currentTime: Numeric<'s'> = offsetSeconds
@@ -97,11 +97,11 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
     points.push({
       time: startTime,
       value: definition.start(segment),
-      curve: 'step'
+      shape: 'step'
     }, {
       time: endTime,
       value: definition.end(segment),
-      curve: segmentLength.value <= 0 ? 'step' : definition.endCurve
+      shape: segmentLength.value <= 0 ? 'step' : definition.endShape
     })
 
     currentTime = endTime
@@ -120,34 +120,38 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
   return simplifiedPoints
 }
 
-function interpolatePoint<U extends Unit> (start: AutomationPoint<U>, end: AutomationPoint<U>, time: Numeric<'s'>): AutomationPoint<U> {
+function interpolatePoint<U extends Unit> (start: CurvePoint<'s', U>, end: CurvePoint<'s', U>, time: Numeric<'s'>): CurvePoint<'s', U> {
   assert(time.value >= start.time.value && time.value <= end.time.value)
 
   const deltaTime = end.time.value - start.time.value
   if (deltaTime < TIME_EPSILON) {
-    return { time, value: start.value, curve: 'step' }
+    return { time, value: start.value, shape: 'step' }
   }
 
   const t = (time.value - start.time.value) / deltaTime
 
-  switch (end.curve) {
+  switch (end.shape) {
     case 'step':
-      return { time, value: start.value, curve: 'step' }
+      return { time, value: start.value, shape: 'step' }
 
     case 'linear': {
       const value = {
         unit: start.value.unit,
         value: start.value.value + t * (end.value.value - start.value.value)
       }
-      return { time, value, curve: 'linear' }
+      return { time, value, shape: 'linear' }
     }
+
+    case 'exponential':
+      // TODO implement
+      throw new Error('Not implemented')
   }
 }
 
 export function mergeCurvePoints<U extends Unit> (
-  first: ReadonlyArray<AutomationPoint<U>>,
-  second: ReadonlyArray<AutomationPoint<U>>
-): ReadonlyArray<AutomationPoint<U>> {
+  first: ReadonlyArray<CurvePoint<'s', U>>,
+  second: ReadonlyArray<CurvePoint<'s', U>>
+): ReadonlyArray<CurvePoint<'s', U>> {
   if (first.length === 0) {
     return second
   }
@@ -169,10 +173,10 @@ export function mergeCurvePoints<U extends Unit> (
 }
 
 function takePointsBefore<U extends Unit> (
-  points: ReadonlyArray<AutomationPoint<U>>,
+  points: ReadonlyArray<CurvePoint<'s', U>>,
   time: Numeric<'s'>
-): ReadonlyArray<AutomationPoint<U>> {
-  const result: Array<AutomationPoint<U>> = []
+): ReadonlyArray<CurvePoint<'s', U>> {
+  const result: Array<CurvePoint<'s', U>> = []
 
   for (let i = 0; i < points.length; ++i) {
     const point = points[i]
@@ -203,9 +207,9 @@ function takePointsBefore<U extends Unit> (
 }
 
 function takePointsAfter<U extends Unit> (
-  points: ReadonlyArray<AutomationPoint<U>>,
+  points: ReadonlyArray<CurvePoint<'s', U>>,
   time: Numeric<'s'>
-): ReadonlyArray<AutomationPoint<U>> {
+): ReadonlyArray<CurvePoint<'s', U>> {
   for (let i = 0; i < points.length; ++i) {
     const point = points[i]
 
@@ -238,8 +242,8 @@ function compareTimes (left: Numeric<'s'>, right: Numeric<'s'>): number {
   return difference < 0 ? -1 : 1
 }
 
-function simplifyCurvePoints<U extends Unit> (points: ReadonlyArray<AutomationPoint<U>>): ReadonlyArray<AutomationPoint<U>> {
-  const simplified: Array<AutomationPoint<U>> = []
+function simplifyCurvePoints<U extends Unit> (points: ReadonlyArray<CurvePoint<'s', U>>): ReadonlyArray<CurvePoint<'s', U>> {
+  const simplified: Array<CurvePoint<'s', U>> = []
 
   for (const point of points) {
     const previous = simplified.at(-1)
@@ -256,11 +260,11 @@ function simplifyCurvePoints<U extends Unit> (points: ReadonlyArray<AutomationPo
     // not first, same time, different values: the point should be emitted as a step
 
     // repetitive step points should be avoided
-    if (previous.curve === 'step') {
+    if (previous.shape === 'step') {
       simplified.pop()
     }
 
-    simplified.push({ ...point, curve: 'step' })
+    simplified.push({ ...point, shape: 'step' })
   }
 
   return simplified

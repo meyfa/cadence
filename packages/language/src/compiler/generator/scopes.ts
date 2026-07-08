@@ -1,4 +1,4 @@
-import type { Asset, AssetId, Automation, Bus, BusId, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
+import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
 import type { Numeric, Unit } from '@utility'
 import type { Value } from '../../type-system/types.js'
 import type { GenerateOptions } from './options.js'
@@ -39,7 +39,7 @@ export interface GlobalScope extends Scope, Context {
 
   readonly buses: Map<BusId, Bus>
   readonly instruments: Map<InstrumentId, Instrument>
-  readonly automations: Map<ParameterId, Automation>
+  readonly automations: Map<ParameterId, Curve<'s', Unit>>
   readonly assets: Map<AssetId, Asset>
 }
 
@@ -118,11 +118,7 @@ function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
 
 function allocateParameter<U extends Unit> (scope: GlobalScope, initial: Numeric<U>): Parameter<U> {
   const id = scope.automations.size as ParameterId
-
-  scope.automations.set(id, {
-    parameterId: id,
-    points: []
-  })
+  scope.automations.set(id, { initial, points: [] })
 
   return { id, initial }
 }

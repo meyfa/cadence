@@ -73,8 +73,8 @@ describe('compiler/generator/scopes.ts', () => {
       assert.strictEqual(parameter1.id, 1)
 
       assert.deepStrictEqual([...scope.automations], [
-        [0, { parameterId: 0, points: [] }],
-        [1, { parameterId: 1, points: [] }]
+        [0, { initial: numeric('db', 12), points: [] }],
+        [1, { initial: numeric('db', 6), points: [] }]
       ])
     })
 

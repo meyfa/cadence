@@ -1,6 +1,8 @@
 export * from './pattern/types.js'
 export * from './pattern/functions.js'
 
+export type * from './curve/types.js'
+
 export type * from './program/assets.js'
 export type * from './program/automations.js'
 export type * from './program/effects.js'

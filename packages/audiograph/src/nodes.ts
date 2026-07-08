@@ -1,6 +1,5 @@
-import type { AssetId, NoteData } from '@core'
+import type { AssetId, Curve, NoteData } from '@core'
 import type { Numeric } from '@utility'
-import type { TimeVariant } from './automation.js'
 import type { EntityKey } from './entities.js'
 import type { AnyNode } from './graph.js'
 
@@ -40,18 +39,18 @@ export interface IdentityNode extends AnyNode {
 
 export interface GainNode extends AnyNode {
   readonly type: 'gain'
-  readonly gain: TimeVariant<undefined>
+  readonly gain: Curve<'s', undefined>
 }
 
 export interface PanNode extends AnyNode {
   readonly type: 'pan'
-  readonly pan: TimeVariant<undefined>
+  readonly pan: Curve<'s', undefined>
 }
 
 export interface BiquadNode extends AnyNode {
   readonly type: 'biquad'
   readonly filterType: 'lowpass' | 'highpass'
-  readonly frequency: TimeVariant<'hz'>
+  readonly frequency: Curve<'s', 'hz'>
   readonly rolloffPerOctave: Numeric<'db'>
 }
 
@@ -88,7 +87,7 @@ export type SourceNode = SampleNode | OscillatorNode
 
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
-  readonly gainCurve: TimeVariant<undefined>
+  readonly gainCurve: Curve<'s', undefined>
   readonly duration?: Numeric<'s'>
   readonly assetId: AssetId
   readonly playbackRate: Numeric<undefined>
@@ -96,7 +95,7 @@ export interface SampleNode extends AnyNode {
 
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
-  readonly gainCurve: TimeVariant<undefined>
+  readonly gainCurve: Curve<'s', undefined>
   readonly duration: Numeric<'s'> | undefined
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
   readonly frequency: Numeric<'hz'>
