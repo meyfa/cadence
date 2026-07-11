@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { MidiNote } from '../src/midi.js'
-import { convertPitchToMidi, getMidiFrequency } from '../src/midi.js'
+import type { MidiNote } from '../../src/conversion/midi.js'
+import { convertPitchToMidi, getMidiFrequency } from '../../src/conversion/midi.js'
 
 describe('midi.ts', () => {
   describe('convertPitchToMidi()', () => {

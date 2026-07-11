@@ -8,6 +8,8 @@ import { lex } from '../../../src/lexer/lexer.js'
 import { parse } from '../../../src/parser/parser.js'
 import { assertResultComplete } from '../../test-utils.js'
 
+const DEFAULT_TEMPO = numeric('bpm', 120)
+
 function generateSource (source: string) {
   const tokens = lex(source)
   assertResultComplete(tokens)
@@ -20,7 +22,7 @@ function generateSource (source: string) {
 
   return generate(checked.value, {
     tempo: {
-      default: 120,
+      default: DEFAULT_TEMPO.value,
       minimum: 1,
       maximum: 300
     },
@@ -93,7 +95,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -112,7 +114,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -731,7 +733,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: numeric(undefined, 1) })
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'oscillator')
     assert.strictEqual(voices[0].source.shape, 'sine')

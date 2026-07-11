@@ -1,4 +1,5 @@
 import type { Brand, Numeric } from '@utility'
+import type { Curve } from '../curve/types.js'
 import type { NoteData } from '../pattern/types.js'
 import type { AssetId } from './assets.js'
 import type { Parameter } from './automations.js'
@@ -8,12 +9,13 @@ export type InstrumentId = Brand<number, 'core.InstrumentId'>
 export interface Instrument {
   readonly id: InstrumentId
   readonly gain: Parameter<'db'>
-  readonly trigger: (note: NoteData) => readonly Voice[]
+  readonly trigger: (note: NoteData, tempo: Numeric<'bpm'>) => readonly Voice[]
 }
 
-export interface Voice {
-  readonly source: Source
-  readonly envelope: Envelope
+export interface Voice<S extends Source = Source> {
+  readonly source: S
+  readonly envelope: Curve<'s', 'db'>
+  readonly duration?: Numeric<'s'>
 }
 
 export type Source = Sample | Oscillator
@@ -29,11 +31,4 @@ export interface Oscillator {
   readonly type: 'oscillator'
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
   readonly frequency: Numeric<'hz'>
-}
-
-export interface Envelope {
-  readonly attack: Numeric<'s'>
-  readonly decay: Numeric<'s'>
-  readonly sustain: Numeric<undefined>
-  readonly release: Numeric<'s'>
 }

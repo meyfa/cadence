@@ -1,14 +1,12 @@
-import type { Bus, BusId, Effect, Envelope, Instrument, InstrumentId, MixerRouting, NoteData, Oscillator, Program, Sample, Track, Voice } from '@core'
-import { calculateTotalLength, renderPatternEvents, timeToSeconds } from '@core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@core'
+import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
-import { feedbackTransform, frequencyTransform, gainTransform, panTransform, computeParameterCurve } from './automation.js'
+import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
-import { dbToGain } from './constants.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
-import { applyEnvelope } from './envelope.js'
 import type { AnyNode, AudioGraph, NodeId } from './graph.js'
 import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from './nodes.js'
 
@@ -124,7 +122,15 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
 function createInstrument (program: Program, instrument: Instrument, builder: Builder): SubGraph {
   const instrumentNode = builder.addNode<InstrumentNode>('instrument', {
     trigger: (note) => {
-      return instrument.trigger(note).map((voice) => createSourceNode(program, voice, note))
+      const result: SourceNode[] = []
+
+      for (const voice of instrument.trigger(note, program.track.tempo)) {
+        if (voice.duration == null || voice.duration.value > 0) {
+          result.push(createSourceNode(voice))
+        }
+      }
+
+      return result
     }
   })
 
@@ -141,68 +147,18 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   }
 }
 
-function createSourceNode (program: Program, voice: Voice, note: NoteData): SourceNode {
-  const envelope = (() => {
-    const a = voice.envelope.attack.value
-    const d = voice.envelope.decay.value
-    const s = voice.envelope.sustain.value
-    const r = voice.envelope.release.value
-
-    const clampDuration = (value: number): Numeric<'s'> => {
-      return Number.isFinite(value) && value >= 0
-        ? numeric('s', value)
-        : numeric('s', 0)
-    }
-
-    const clampSustain = (value: number): Numeric<undefined> => {
-      return Number.isNaN(value)
-        ? numeric(undefined, 0)
-        : numeric(undefined, Math.max(0, Math.min(1, s)))
-    }
-
-    return {
-      attack: clampDuration(a),
-      decay: clampDuration(d),
-      sustain: clampSustain(s),
-      release: clampDuration(r)
-    }
-  })()
-
+function createSourceNode (voice: Voice): SourceNode {
   switch (voice.source.type) {
     case 'sample':
-      return createSampleSourceNode(program, voice.source, envelope, note)
+      return createSampleSourceNode(voice as Voice<Sample>)
 
     case 'oscillator':
-      return createOscillatorSourceNode(program, voice.source, envelope, note)
+      return createOscillatorSourceNode(voice as Voice<Oscillator>)
   }
 }
 
-function createSampleSourceNode (program: Program, sample: Sample, envelope: Envelope, note: NoteData): SourceNode {
-  const { assetId, playbackRate } = sample
-
-  const length = (() => {
-    if (sample.length == null) {
-      return undefined
-    }
-
-    const value = sample.length.value
-    if (Number.isNaN(value)) {
-      throw new Error(`Invalid length: ${value}`)
-    }
-
-    return value < 0 ? numeric('s', 0) : !Number.isFinite(value) ? undefined : numeric('s', value)
-  })()
-
-  const gate: Numeric<'s'> | undefined = (() => {
-    if (note.gate == null) {
-      return length
-    }
-    const gateSeconds = timeToSeconds(note.gate, program.track.tempo)
-    return length == null ? gateSeconds : numeric('s', Math.min(gateSeconds.value, length.value))
-  })()
-
-  const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
-  const duration = gate != null ? gainCurve.points.at(-1)?.time : undefined
+function createSampleSourceNode (voice: Voice<Sample>): SourceNode {
+  const { assetId, playbackRate } = voice.source
 
   if (playbackRate.value <= 0 || !Number.isFinite(playbackRate.value)) {
     throw new Error(`Invalid playback rate`)
@@ -211,19 +167,15 @@ function createSampleSourceNode (program: Program, sample: Sample, envelope: Env
   return {
     id: -1 as NodeId, // TODO: avoid invalid id
     type: 'sample',
-    gainCurve,
-    duration,
+    gainCurve: transformCurve(voice.envelope, gainTransform),
+    duration: voice.duration,
     assetId,
     playbackRate
   }
 }
 
-function createOscillatorSourceNode (program: Program, oscillator: Oscillator, envelope: Envelope, note: NoteData): SourceNode {
-  const { shape, frequency } = oscillator
-
-  const gate = note.gate != null ? timeToSeconds(note.gate, program.track.tempo) : undefined
-  const gainCurve = applyEnvelope(envelope, { velocity: note.velocity, gate })
-  const duration = note.gate != null ? gainCurve.points.at(-1)?.time : undefined
+function createOscillatorSourceNode (voice: Voice<Oscillator>): SourceNode {
+  const { shape, frequency } = voice.source
 
   if (frequency.value <= 0 || !Number.isFinite(frequency.value)) {
     throw new Error(`Invalid frequency: ${frequency.value}`)
@@ -232,8 +184,8 @@ function createOscillatorSourceNode (program: Program, oscillator: Oscillator, e
   return {
     id: -1 as NodeId, // TODO: avoid invalid id
     type: 'oscillator',
-    gainCurve,
-    duration,
+    gainCurve: transformCurve(voice.envelope, gainTransform),
+    duration: voice.duration,
     shape,
     frequency
   }

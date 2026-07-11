@@ -1,20 +1,25 @@
-import type { Asset, AssetId, Bus, BusId, Effect, Envelope, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
-import { beatsToSeconds, createSerialPattern } from '@core'
-import { numeric } from '@utility'
+import type { Asset, AssetId, Bus, BusId, Curve, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
+import { beatsToSeconds, createSerialPattern, dbToGain } from '@core'
+import { numeric, type Numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { dbToGain } from '../src/constants.js'
+import { gainTransform, transformCurve } from '../src/automation.js'
 import { createEntityKey } from '../src/entities.js'
-import { applyEnvelope } from '../src/envelope.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, ReverbNode, SourceNode, WaveShaperNode } from '../src/nodes.js'
 
-const defaultEnvelope: Envelope = {
-  attack: numeric('s', 0.01),
-  decay: numeric('s', 0.1),
-  sustain: numeric(undefined, 0.8),
-  release: numeric('s', 0.5)
+const SIMPLE_CURVE: Curve<'s', 'db'> = {
+  initial: numeric('db', -Infinity),
+  points: [
+    { time: numeric('s', 0), value: numeric('db', -60), shape: 'step' },
+    { time: numeric('s', 0.5), value: numeric('db', 0), shape: 'linear' },
+    { time: numeric('s', 1), value: numeric('db', -6), shape: 'step' }
+  ]
+}
+
+function toGainCurve (curve: Curve<'s', 'db'>): Curve<'s', undefined> {
+  return transformCurve(curve, gainTransform)
 }
 
 function compareIds (a: Node, b: Node): number {
@@ -185,12 +190,13 @@ describe('lowering.ts', () => {
             },
             trigger: () => [
               {
-                envelope: defaultEnvelope,
+                envelope: SIMPLE_CURVE,
                 source: {
                   type: 'oscillator',
                   shape: 'sine',
                   frequency: numeric('hz', 440)
-                }
+                },
+                duration: numeric('s', 1)
               }
             ]
           } satisfies Instrument
@@ -513,7 +519,72 @@ describe('lowering.ts', () => {
     }
   })
 
-  it('should clamp negative sample lengths to zero', () => {
+  it('should lower dB curves into gain space', () => {
+    const testCases: Array<Curve<'s', 'db'>> = [
+      {
+        initial: numeric('db', -Infinity),
+        points: [
+          { time: numeric('s', 0), value: numeric('db', 0), shape: 'step' }
+        ]
+      },
+      {
+        initial: numeric('db', -12),
+        points: [
+          { time: numeric('s', 0.25), value: numeric('db', -6), shape: 'linear' },
+          { time: numeric('s', 0.5), value: numeric('db', -18), shape: 'step' }
+        ]
+      },
+      SIMPLE_CURVE
+    ]
+
+    const note: NoteData = {
+      pitch: 'C4',
+      velocity: numeric(undefined, 1),
+      gate: numeric('beats', 16)
+    }
+
+    for (const curve of testCases) {
+      const program = createProgramWithInstrument({
+        id: 100 as InstrumentId,
+        gain: {
+          id: 200 as ParameterId,
+          initial: numeric('db', -6)
+        },
+        trigger: () => [
+          {
+            envelope: curve,
+            source: {
+              type: 'oscillator',
+              shape: 'sine',
+              frequency: numeric('hz', 440)
+            }
+          }
+        ]
+      })
+
+      const graph = createAudioGraph(program)
+
+      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
+      const voices = instrumentNode.trigger(note)
+
+      assert.strictEqual(voices.length, 1)
+      const [voice] = voices
+
+      assert.deepStrictEqual(voice.gainCurve, toGainCurve(curve), `test case: ${JSON.stringify(curve)}`)
+    }
+  })
+
+  it('should skip voices with negative or zero duration', () => {
+    const makeVoice = (frequency: Numeric<'hz'>, duration: Numeric<'s'> | undefined) => ({
+      envelope: SIMPLE_CURVE,
+      source: {
+        type: 'oscillator',
+        shape: 'sine',
+        frequency
+      },
+      duration
+    } as const)
+
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
       gain: {
@@ -521,27 +592,14 @@ describe('lowering.ts', () => {
         initial: numeric('db', -6)
       },
       trigger: () => [
-        {
-          envelope: defaultEnvelope,
-          source: {
-            type: 'sample',
-            assetId: 300 as AssetId,
-            length: numeric('s', -1),
-            playbackRate: numeric(undefined, 1)
-          }
-        }
+        makeVoice(numeric('hz', 100), numeric('s', -1)),
+        makeVoice(numeric('hz', 200), numeric('s', 0)),
+        makeVoice(numeric('hz', 300), numeric('s', 1)),
+        makeVoice(numeric('hz', 400), undefined)
       ]
-    }, {
-      id: 300 as AssetId,
-      url: 'foo.wav'
     })
 
     const graph = createAudioGraph(program)
-    assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-      id: 2 as NodeId,
-      type: 'instrument',
-      trigger: (graph.nodes.get(2 as NodeId) as InstrumentNode).trigger
-    } satisfies InstrumentNode)
 
     const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
@@ -550,15 +608,10 @@ describe('lowering.ts', () => {
       gate: numeric('beats', 1)
     })
 
-    assert.strictEqual(voices.length, 1)
-    const [voice] = voices
-
-    assert.deepStrictEqual(voice.gainCurve, {
-      initial: numeric(undefined, 0),
-      points: [
-        { time: numeric('s', 0), value: numeric(undefined, 0), shape: 'step' }
-      ]
-    })
+    assert.deepStrictEqual(
+      voices.map((voice) => voice.type === 'oscillator' ? voice.frequency : undefined),
+      [numeric('hz', 300), numeric('hz', 400)]
+    )
   })
 
   it('should throw for invalid sample playback rate', () => {
@@ -571,7 +624,7 @@ describe('lowering.ts', () => {
         },
         trigger: () => [
           {
-            envelope: defaultEnvelope,
+            envelope: SIMPLE_CURVE,
             source: {
               type: 'sample',
               assetId: 300 as AssetId,
@@ -608,7 +661,7 @@ describe('lowering.ts', () => {
         },
         trigger: () => [
           {
-            envelope: defaultEnvelope,
+            envelope: SIMPLE_CURVE,
             source: {
               type: 'oscillator',
               shape: 'sine',
@@ -628,178 +681,6 @@ describe('lowering.ts', () => {
           gate: numeric('beats', 1)
         })
       }, /Invalid frequency/, `should throw for frequency: ${frequency}`)
-    }
-  })
-
-  it('should treat infinite sample length as valid', () => {
-    const program = createProgramWithInstrument({
-      id: 100 as InstrumentId,
-      gain: {
-        id: 200 as ParameterId,
-        initial: numeric('db', -6)
-      },
-      trigger: () => [
-        {
-          envelope: defaultEnvelope,
-          source: {
-            type: 'sample',
-            assetId: 300 as AssetId,
-            length: numeric('s', Infinity),
-            playbackRate: numeric(undefined, 1)
-          }
-        }
-      ]
-    }, {
-      id: 300 as AssetId,
-      url: 'foo.wav'
-    })
-
-    const graph = createAudioGraph(program)
-    assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-      id: 2 as NodeId,
-      type: 'instrument',
-      trigger: (graph.nodes.get(2 as NodeId) as InstrumentNode).trigger
-    } satisfies InstrumentNode)
-
-    const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
-    const voices = instrumentNode.trigger({
-      pitch: 'C4',
-      velocity: numeric(undefined, 1),
-      gate: numeric('beats', 1)
-    })
-
-    assert.strictEqual(voices.length, 1)
-    const [voice] = voices
-
-    assert.deepStrictEqual(voice.gainCurve, applyEnvelope(defaultEnvelope, {
-      velocity: numeric(undefined, 1),
-      gate: beatsToSeconds(numeric('beats', 1), program.track.tempo)
-    }))
-  })
-
-  it('should throw for NaN sample length', () => {
-    const program = createProgramWithInstrument({
-      id: 100 as InstrumentId,
-      gain: {
-        id: 200 as ParameterId,
-        initial: numeric('db', -6)
-      },
-      trigger: () => [
-        {
-          envelope: defaultEnvelope,
-          source: {
-            type: 'sample',
-            assetId: 300 as AssetId,
-            length: numeric('s', Number.NaN),
-            playbackRate: numeric(undefined, 1)
-          }
-        }
-      ]
-    }, {
-      id: 300 as AssetId,
-      url: 'foo.wav'
-    })
-
-    const graph = createAudioGraph(program)
-
-    assert.throws(() => {
-      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
-      instrumentNode.trigger({
-        pitch: 'C4',
-        velocity: numeric(undefined, 1),
-        gate: numeric('beats', 1)
-      })
-    }, /Invalid length/)
-  })
-
-  it('should clamp envelope parameters to valid ranges', () => {
-    const createEnvelope = (adsr: [number, number, number, number]): Envelope => ({
-      attack: numeric('s', adsr[0]),
-      decay: numeric('s', adsr[1]),
-      sustain: numeric(undefined, adsr[2]),
-      release: numeric('s', adsr[3])
-    })
-
-    const testCases: Array<{ envelope: Envelope, expected: Envelope }> = [
-      {
-        envelope: createEnvelope([-1, 0, 1, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, -1, 1, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, -1, 0]),
-        expected: createEnvelope([0, 0, 0, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, 2, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, 1, -1]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([Infinity, 0, 1, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, Infinity, 1, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, Number.NaN, 0]),
-        expected: createEnvelope([0, 0, 0, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, Infinity, 0]),
-        expected: createEnvelope([0, 0, 1, 0])
-      },
-      {
-        envelope: createEnvelope([0, 0, 1, Infinity]),
-        expected: createEnvelope([0, 0, 1, 0])
-      }
-    ]
-
-    const note: NoteData = {
-      pitch: 'C4',
-      velocity: numeric(undefined, 1),
-      gate: numeric('beats', 16)
-    }
-
-    for (const { envelope, expected } of testCases) {
-      const program = createProgramWithInstrument({
-        id: 100 as InstrumentId,
-        gain: {
-          id: 200 as ParameterId,
-          initial: numeric('db', -6)
-        },
-        trigger: () => [
-          {
-            envelope,
-            source: {
-              type: 'oscillator',
-              shape: 'sine',
-              frequency: numeric('hz', 440)
-            }
-          }
-        ]
-      })
-
-      const graph = createAudioGraph(program)
-
-      const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
-      const voices = instrumentNode.trigger(note)
-
-      assert.strictEqual(voices.length, 1)
-      const [voice] = voices
-
-      assert.deepStrictEqual(voice.gainCurve, applyEnvelope(expected, {
-        velocity: note.velocity,
-        gate: beatsToSeconds(note.gate ?? numeric('beats', 0), program.track.tempo)
-      }), `test case: ${JSON.stringify(envelope)}`)
     }
   })
 
