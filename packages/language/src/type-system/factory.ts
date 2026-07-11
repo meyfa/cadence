@@ -33,7 +33,7 @@ export function makeFacet<const Name extends string, Data> (
 
     get: <const V extends Value>(value: V): SpecificFacetDataForValue<V, Name, Data> => {
       if (!isFacetAssignableFromType(facet, value.type)) {
-        throw new Error(`Value is not assignable to facet ${facet.name}`)
+        throw new Error(`Value is not assignable to facet: ${facet.format()}`)
       }
 
       return value.data.get(facet.name) as SpecificFacetDataForValue<V, Name, Data>

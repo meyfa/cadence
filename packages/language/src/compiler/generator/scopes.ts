@@ -99,6 +99,14 @@ export function createLocalScope (parent: Scope): MutableScope {
   }
 }
 
+export function cloneScope (scope: Scope): MutableScope {
+  return {
+    top: scope.top,
+    parent: scope.parent,
+    resolutions: new Map(scope.resolutions)
+  }
+}
+
 export function createNamespace (): MutableNamespace {
   return {
     resolutions: new Map()

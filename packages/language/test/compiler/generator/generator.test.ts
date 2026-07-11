@@ -1,4 +1,5 @@
 import type { Program } from '@core'
+import { convertPitchToMidi, getMidiFrequency } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -734,9 +735,49 @@ describe('compiler/generator/generator.ts', () => {
 
     const [instrument] = result.instruments.values()
     const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voices.length, 1)
-    assert.strictEqual(voices[0].source.type, 'oscillator')
-    assert.strictEqual(voices[0].source.shape, 'sine')
-    assert.deepStrictEqual(instrument.gain.initial, numeric('db', -Infinity))
+    assert.strictEqual(voices.length, 0)
+  })
+
+  it('should generate instruments with voices', () => {
+    const source = [
+      'use "sources" as src',
+      'my_instrument = instrument {',
+      '  voice {',
+      '    envelope ~[lin(0.db, -60.db):1.beat]',
+      '    output src.sine(440.hz)',
+      '  }',
+      '  voice note {',
+      '    envelope ~[lin(0.db, -60.db):1.beat]',
+      '    output src.sine(note.frequency)',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.instruments.size, 1)
+
+    const pitch = 'C5' as const
+    const pitchFrequency = getMidiFrequency(convertPitchToMidi(pitch))
+
+    const [instrument] = result.instruments.values()
+    const voices = instrument.trigger({ velocity: numeric(undefined, 1), pitch }, DEFAULT_TEMPO)
+    assert.strictEqual(voices.length, 2)
+
+    const [voice0, voice1] = voices
+    assert.deepStrictEqual(voice0.envelope.points, [
+      { time: numeric('s', 0), value: numeric('db', 0), shape: 'step' },
+      { time: numeric('s', 0.5), value: numeric('db', -60), shape: 'linear' }
+    ])
+    assert.strictEqual(voice0.source.type, 'oscillator')
+    assert.strictEqual(voice0.source.shape, 'sine')
+    assert.deepStrictEqual(voice0.source.frequency, numeric('hz', 440))
+
+    assert.deepStrictEqual(voice1.envelope.points, [
+      { time: numeric('s', 0), value: numeric('db', 0), shape: 'step' },
+      { time: numeric('s', 0.5), value: numeric('db', -60), shape: 'linear' }
+    ])
+    assert.strictEqual(voice1.source.type, 'oscillator')
+    assert.strictEqual(voice1.source.shape, 'sine')
+    assert.deepStrictEqual(voice1.source.frequency, numeric('hz', pitchFrequency))
   })
 })

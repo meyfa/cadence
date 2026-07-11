@@ -1,5 +1,9 @@
+import { convertPitchToMidi } from '@core'
 import { NumberFacet } from '../type-system/base/number.js'
+import { RecordFacet } from '../type-system/base/record.js'
 import { makeSchema } from '../type-system/schema.js'
+
+export const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
 export const BUS_NAMESPACE = 'bus'
 
@@ -48,3 +52,11 @@ export const stepSchema = makeSchema([
     required: false
   }
 ])
+
+export const noteType = RecordFacet.with({
+  frequency: NumberFacet.with('hz').type(),
+  gate: NumberFacet.with('beats').type(),
+  velocity: NumberFacet.with(undefined).type()
+}).type()
+
+export type NoteValue = ReturnType<typeof noteType.of>

@@ -10,6 +10,8 @@ import { ParameterFacet } from './domain/parameter.js'
 import { makeType } from './factory.js'
 import type { Schema } from './schema.js'
 import type { Facet, FacetType, Value } from './types.js'
+import type { Curve } from './domain/curve.js'
+import { CurveFacet } from './domain/curve.js'
 
 export const Functions = {
   of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
@@ -52,5 +54,11 @@ export const Numbers = {
 export const Parameters = {
   of: <const U extends Unit> (value: Parameter<U>): Value<Facet<'parameter', Parameter<U>>> => {
     return ParameterFacet.with(value.initial.unit).type().of(value)
+  }
+}
+
+export const Curves = {
+  of: <const U extends Unit> (value: Curve<U>): Value<Facet<'curve', Curve<U>>> => {
+    return CurveFacet.with(value.unit).type().of(value)
   }
 }
