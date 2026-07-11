@@ -139,8 +139,8 @@ describe('type-system', () => {
       assert.strictEqual(numberFacet.get(pairValue), 42)
       assert.deepStrictEqual(decibelFacet.get(decibelValue), numeric('db', 42))
 
-      assert.throws(() => stringFacet.get(decibelValue), /Value is not assignable to facet string/)
-      assert.throws(() => decibelFacet.get(broadNumericValue), /Value is not assignable to facet numeric/)
+      assert.throws(() => stringFacet.get(decibelValue), /Value is not assignable to facet: string/)
+      assert.throws(() => decibelFacet.get(broadNumericValue), /Value is not assignable to facet: numeric/)
     })
 
     it('should narrow values through has()', () => {

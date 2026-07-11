@@ -22,7 +22,7 @@ import type { Schema, SchemaItem } from '../../type-system/schema.js'
 import type { FacetType, Type, Value } from '../../type-system/types.js'
 import { assertNever } from '../assert.js'
 import { patternBuiltins } from '../builtins/patterns.js'
-import { BUS_NAMESPACE, busSchema, mixerSchema, partSchema, stepSchema, trackSchema } from '../common.js'
+import { BUS_NAMESPACE, busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.js'
 import { getCurveSegmentType } from '../curves.js'
 import { CompileError } from '../error.js'
 import { binaryOperations } from '../operators/binary.js'
@@ -665,12 +665,6 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
 
   return { errors, result: InstrumentFacet.type() }
 }
-
-const noteType = RecordFacet.with({
-  frequency: NumberFacet.with('hz').type(),
-  gate: NumberFacet.with('beats').type(),
-  velocity: NumberFacet.with(undefined).type()
-}).type()
 
 function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileError[] {
   const voiceScope = createLocalScope(scope, { blocking: false })

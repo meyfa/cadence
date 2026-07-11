@@ -3,7 +3,7 @@ import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../../src/compiler/generator/options.js'
-import { createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.js'
+import { createGlobalScope, cloneScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 
 const options: GenerateOptions = {
@@ -149,6 +149,39 @@ describe('compiler/generator/scopes.ts', () => {
       assert.strictEqual(nestedLocalScope.parent, localScope)
       assert.strictEqual(nestedLocalScope.resolutions.get('foo'), undefined)
       assert.strictEqual(nestedLocalScope.resolutions.get('bar'), undefined)
+    })
+  })
+
+  describe('cloneScope()', () => {
+    it('should create a new scope with the same top and parent, and a copy of the resolutions', () => {
+      const globalScope = createGlobalScope(options, new Map([
+        ['foo', Numbers.of(numeric('db', 12))]
+      ]))
+
+      const localScope = createLocalScope(globalScope)
+      localScope.resolutions.set('bar', Numbers.of(numeric('db', 6)))
+
+      const clonedScope = cloneScope(localScope)
+
+      assert.strictEqual(clonedScope.top, globalScope)
+      assert.strictEqual(clonedScope.parent, globalScope)
+      assert.strictEqual(clonedScope.resolutions.has('foo'), false)
+      assert.strictEqual(clonedScope.resolutions.has('bar'), true)
+    })
+
+    it('should not be affected by changes to the original scope after cloning', () => {
+      const globalScope = createGlobalScope(options, new Map([
+        ['foo', Numbers.of(numeric('db', 12))]
+      ]))
+
+      const localScope = createLocalScope(globalScope)
+      localScope.resolutions.set('bar', Numbers.of(numeric('db', 6)))
+
+      const clonedScope = cloneScope(localScope)
+
+      localScope.resolutions.set('baz', Numbers.of(numeric('db', 3)))
+
+      assert.strictEqual(clonedScope.resolutions.get('baz'), undefined)
     })
   })
 

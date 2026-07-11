@@ -1,6 +1,6 @@
 import { ast } from '@ast'
-import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Step, Track } from '@core'
-import { concatPatterns, createParallelPattern, createSerialPattern, mergePatterns } from '@core'
+import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Source, Step, Track, Voice } from '@core'
+import { concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
 import { getStandardModuleValue } from '../../library/modules.js'
@@ -11,21 +11,23 @@ import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
 import { StringFacet } from '../../type-system/base/string.js'
 import { BusFacet } from '../../type-system/domain/bus.js'
-import type { CurveSegment } from '../../type-system/domain/curve.js'
+import type { Curve, CurveSegment } from '../../type-system/domain/curve.js'
 import { CurveFacet } from '../../type-system/domain/curve.js'
 import { EffectFacet } from '../../type-system/domain/effect.js'
 import { InstrumentFacet } from '../../type-system/domain/instrument.js'
 import { ParameterFacet } from '../../type-system/domain/parameter.js'
 import { PartFacet } from '../../type-system/domain/part.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
+import { SourceFacet } from '../../type-system/domain/source.js'
 import { makeType } from '../../type-system/factory.js'
-import { Parameters } from '../../type-system/helpers.js'
+import { Curves, Numbers, Parameters } from '../../type-system/helpers.js'
 import type { InferSchema, Schema } from '../../type-system/schema.js'
 import type { FacetType, Value } from '../../type-system/types.js'
 import { assert, assertNever, fail, nonNull } from '../assert.js'
 import { patternBuiltins } from '../builtins/patterns.js'
 import type { CheckedProgram } from '../checker/checker.js'
-import { BUS_NAMESPACE, busSchema, partSchema, stepSchema, trackSchema } from '../common.js'
+import type { NoteValue } from '../common.js'
+import { BUS_NAMESPACE, busSchema, DEFAULT_ROOT_NOTE, noteType, partSchema, stepSchema, trackSchema } from '../common.js'
 import type { RenderCurveOptions } from '../curves.js'
 import { createCurve, createCurveSegment, getCurveSegmentType, mergeCurvePoints, renderCurvePoints } from '../curves.js'
 import { binaryOperations } from '../operators/binary.js'
@@ -34,7 +36,7 @@ import { resolveInScope } from '../resolution.js'
 import { isSyntaxUnit, toNumberValue } from '../units.js'
 import type { GenerateOptions } from './options.js'
 import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.js'
-import { createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
+import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.js'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -419,6 +421,10 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
   }
 }
 
+function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
+  return nonNull(resolveInScope(scope, identifier.name))
+}
+
 function generateString (scope: Scope, parts: ReadonlyArray<string | ast.Expression>): Value {
   const resolvedParts = parts.map((part) => {
     if (typeof part === 'string') {
@@ -520,11 +526,13 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
     generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
   }
 
-  return CurveFacet.type().of(createCurve(generatedSegments))
+  return Curves.of(createCurve(generatedSegments))
 }
 
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
+
+  const voiceConstructors: Array<(note: NoteValue, tempo: Numeric<'bpm'>) => readonly Voice[]> = []
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -532,8 +540,66 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         processAssignment(instrumentScope, child)
         break
 
-      case 'VoiceStatement':
-        // TODO: voice instantiation needs to happen at runtime, not compile time
+      case 'VoiceStatement': {
+        const frozenScope = cloneScope(instrumentScope)
+        voiceConstructors.push((note, tempo) => generateVoice(frozenScope, child, note, tempo))
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  const gainParameter = scope.top.allocateParameter(numeric('db', 0))
+
+  const instrument = scope.top.allocateInstrument({
+    gain: gainParameter,
+    trigger: (note, tempo) => {
+      if (voiceConstructors.length === 0) {
+        return []
+      }
+
+      const gate = Numbers.of(note.gate ?? numeric('beats', 0))
+      const frequency = Numbers.of(
+        numeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
+      )
+      const velocity = Numbers.of(note.velocity)
+
+      const noteBinding = noteType.of({ gate, frequency, velocity })
+
+      return voiceConstructors.flatMap((create) => create(noteBinding, tempo))
+    }
+  })
+
+  return InstrumentFacet.type().of(instrument)
+}
+
+function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: Numeric<'bpm'>): readonly Voice[] {
+  const voiceScope = createLocalScope(scope)
+
+  if (voice.bindings.note != null) {
+    assert(!voiceScope.resolutions.has(voice.bindings.note.name))
+    voiceScope.resolutions.set(voice.bindings.note.name, note)
+  }
+
+  let envelopeValue: Curve<'db'> | undefined
+  let outputValue: Source | undefined
+
+  for (const child of voice.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(voiceScope, child)
+        break
+
+      case 'EnvelopeStatement':
+        assert(envelopeValue == null)
+        envelopeValue = CurveFacet.with('db').get(resolve(voiceScope, child.expression))
+        break
+
+      case 'OutputStatement':
+        assert(outputValue == null)
+        outputValue = SourceFacet.get(resolve(voiceScope, child.expression))
         break
 
       default:
@@ -541,33 +607,25 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
     }
   }
 
-  // TODO: Change -Infinity to 0 and expose gain on the record,
-  //       once instrument definitions are fully supported.
-  const gainValue = numeric('db', -Infinity)
-  const gainParameter = scope.top.allocateParameter(gainValue)
+  if (outputValue == null || envelopeValue == null) {
+    return []
+  }
 
-  const instrument = scope.top.allocateInstrument({
-    gain: gainParameter,
-    trigger: () => [
-      {
-        envelope: {
-          initial: numeric('db', -Infinity),
-          points: []
-        },
-        source: {
-          type: 'oscillator',
-          shape: 'sine',
-          frequency: numeric('hz', 440)
-        }
-      }
-    ]
-  })
+  const envelope = {
+    initial: numeric('db', -Infinity),
+    points: renderCurvePoints(envelopeValue, {
+      offset: numeric('beats', 0),
+      tempo
+    })
+  }
 
-  return InstrumentFacet.type().of(instrument)
-}
-
-function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
-  return nonNull(resolveInScope(scope, identifier.name))
+  return [
+    {
+      envelope,
+      source: outputValue,
+      duration: envelope.points.at(-1)?.time
+    }
+  ]
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {
