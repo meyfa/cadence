@@ -1,5 +1,4 @@
 import type { AudioGraph, Node } from '@audiograph'
-import type { BeatRange } from '@core'
 import { beatsToSeconds, dbToGain } from '@core'
 import type { Numeric, Observable } from '@utility'
 import { DisposeStack, MutableObservable, numeric } from '@utility'
@@ -7,6 +6,7 @@ import type { AudioFetcher } from '../assets/fetcher.js'
 import type { MeterCallbacks } from '../graph/factory.js'
 import { createWebAudioGraph } from '../graph/graph.js'
 import { createOnlineTransport } from '../transport/transport.js'
+import type { BeatRange } from './types.js'
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
@@ -35,13 +35,13 @@ export function createAudioSession (
   const transport = createOnlineTransport()
   disposeStack.pushDisposable(transport)
 
-  transport.output.gain.value = dbToGain(outputGain.get().value)
+  transport.output.gain.value = dbToGain(outputGain.get()).value
 
-  disposeStack.push(outputGain.subscribe(({ value }) => {
+  disposeStack.push(outputGain.subscribe((value) => {
     const gain = transport.output.gain
     const currentTime = transport.ctx.currentTime
     gain.setValueAtTime(gain.value, currentTime)
-    gain.linearRampToValueAtTime(dbToGain(value), currentTime + 0.05)
+    gain.linearRampToValueAtTime(dbToGain(value).value, currentTime + 0.05)
   }))
 
   const ended = new MutableObservable(false)

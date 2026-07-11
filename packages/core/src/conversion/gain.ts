@@ -1,15 +1,18 @@
-export function dbToGain (db: number): number {
-  if (Number.isNaN(db) || (db > 0 && !Number.isFinite(db))) {
-    throw new Error(`Invalid gain: ${db}`)
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
+
+export function dbToGain ({ value }: Numeric<'db'>): Numeric<undefined> {
+  if (Number.isNaN(value) || (value > 0 && !Number.isFinite(value))) {
+    throw new Error(`Invalid gain: ${value}`)
   }
 
-  return Math.pow(10, db / 20)
+  return numeric(undefined, Math.pow(10, value / 20))
 }
 
-export function gainToDb (gain: number): number {
-  if (gain <= 0) {
-    return -Infinity
+export function gainToDb ({ value }: Numeric<undefined>): Numeric<'db'> {
+  if (value <= 0) {
+    return numeric('db', -Infinity)
   }
 
-  return 20 * Math.log10(gain)
+  return numeric('db', 20 * Math.log10(value))
 }

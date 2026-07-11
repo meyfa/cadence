@@ -1,6 +1,6 @@
-import type { BeatRange } from '@core'
 import type { PanelProps } from '@editor'
 import { useNonNullValue, useObservable } from '@editor'
+import type { BeatRange } from '@webaudio'
 import type { FunctionComponent } from 'react'
 import { useCallback } from 'react'
 import { useCompilationState } from '../../../compilation/CompilationContext.js'

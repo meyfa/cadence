@@ -1,6 +1,7 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern, dbToGain } from '@core'
-import { numeric, type Numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { gainTransform, transformCurve } from '../src/automation.js'
@@ -266,7 +267,7 @@ describe('lowering.ts', () => {
         id: 2 as NodeId,
         type: 'gain',
         gain: {
-          initial: numeric(undefined, dbToGain(-3)),
+          initial: dbToGain(numeric('db', -3)),
           points: []
         }
       } satisfies GainNode,
@@ -279,7 +280,7 @@ describe('lowering.ts', () => {
         id: 4 as NodeId,
         type: 'gain',
         gain: {
-          initial: numeric(undefined, dbToGain(-6)),
+          initial: dbToGain(numeric('db', -6)),
           points: []
         }
       } satisfies GainNode
@@ -386,16 +387,16 @@ describe('lowering.ts', () => {
       id: 3 as NodeId,
       type: 'gain',
       gain: {
-        initial: numeric(undefined, dbToGain(-6)),
+        initial: dbToGain(numeric('db', -6)),
         points: [
           {
             time: numeric('s', 0.5),
-            value: numeric(undefined, dbToGain(-3)),
+            value: dbToGain(numeric('db', -3)),
             shape: 'exponential'
           },
           {
             time: numeric('s', 1),
-            value: numeric(undefined, dbToGain(-12)),
+            value: dbToGain(numeric('db', -12)),
             shape: 'step'
           }
         ]
@@ -698,7 +699,7 @@ describe('lowering.ts', () => {
           id: 2 as NodeId,
           type: 'gain',
           gain: {
-            initial: numeric(undefined, dbToGain(-3)),
+            initial: dbToGain(numeric('db', -3)),
             points: []
           }
         })
@@ -1173,7 +1174,7 @@ describe('lowering.ts', () => {
             id: 4 as NodeId,
             type: 'gain',
             gain: {
-              initial: numeric(undefined, dbToGain(-6)),
+              initial: dbToGain(numeric('db', -6)),
               points: []
             }
           } satisfies GainNode,
@@ -1366,7 +1367,7 @@ describe('lowering.ts', () => {
             id: 3 as NodeId,
             type: 'gain',
             gain: {
-              initial: numeric(undefined, dbToGain(-6)),
+              initial: dbToGain(numeric('db', -6)),
               points: []
             }
           } satisfies GainNode,
@@ -1437,7 +1438,7 @@ describe('lowering.ts', () => {
             id: 2 as NodeId,
             type: 'gain',
             gain: {
-              initial: numeric(undefined, 1 / dbToGain(threshold.value)),
+              initial: numeric(undefined, 1 / dbToGain(threshold).value),
               points: []
             }
           } satisfies GainNode,
@@ -1452,7 +1453,7 @@ describe('lowering.ts', () => {
             id: 4 as NodeId,
             type: 'gain',
             gain: {
-              initial: numeric(undefined, dbToGain(threshold.value)),
+              initial: dbToGain(threshold),
               points: []
             }
           } satisfies GainNode

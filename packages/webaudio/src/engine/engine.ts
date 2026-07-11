@@ -1,5 +1,4 @@
 import type { AudioGraph, EntityKey, Node } from '@audiograph'
-import type { BeatRange } from '@core'
 import type { Numeric, Observable, Observer, UnsubscribeFn } from '@utility'
 import { DisposeStack, MutableObservable, numeric } from '@utility'
 import type { CacheLimits } from '../assets/fetcher.js'
@@ -8,6 +7,7 @@ import type { MeterCallbacks } from '../graph/factory.js'
 import type { GainMeasurement } from './engine.js'
 import type { AudioSession } from './session.js'
 import { createAudioSession } from './session.js'
+import type { BeatRange } from './types.js'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>

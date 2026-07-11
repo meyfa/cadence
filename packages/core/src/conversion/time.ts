@@ -2,11 +2,6 @@ import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import type { Program } from '../program/program.js'
 
-export interface BeatRange {
-  readonly start: Numeric<'beats'>
-  readonly end?: Numeric<'beats'>
-}
-
 export function beatsToSeconds (
   beats: Numeric<'beats'>,
   tempo: Numeric<'bpm'>

@@ -374,11 +374,11 @@ function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): Node
     return undefined
   }
 
-  const gain = dbToGain(wetGain.value)
+  const gain = dbToGain(wetGain)
 
   return builder.addNode<GainNode>('gain', {
     // TODO time variant
-    gain: { initial: numeric(undefined, gain), points: [] }
+    gain: { initial: gain, points: [] }
   })
 }
 

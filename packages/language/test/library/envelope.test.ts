@@ -120,9 +120,10 @@ describe('envelope.ts', () => {
         velocity: numeric(undefined, 0.75)
       })
 
-      const startLevel = numeric('db', gainToDb(0.75) + RELATIVE_SILENCE.value)
-      const velocityLevel = numeric('db', gainToDb(0.75))
-      const sustainLevel = numeric('db', gainToDb(0.75) - 6)
+      const velocityLevel = gainToDb(numeric(undefined, 0.75))
+
+      const startLevel = numeric('db', velocityLevel.value + RELATIVE_SILENCE.value)
+      const sustainLevel = numeric('db', velocityLevel.value - 6)
       const releaseEndValue = numeric('db', sustainLevel.value + RELATIVE_SILENCE.value)
 
       assert.deepStrictEqual(result, {
