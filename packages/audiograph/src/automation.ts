@@ -1,7 +1,7 @@
 import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@core'
+import { dbToGain } from '@core'
 import type { Numeric, Unit } from '@utility'
 import { numeric } from '@utility'
-import { dbToGain } from './constants.js'
 
 export interface Transform<FromUnit extends Unit, ToUnit extends Unit> {
   readonly transformValue: (value: Numeric<FromUnit>) => Numeric<ToUnit>
@@ -19,6 +19,20 @@ export function computeParameterCurve<FromUnit extends Unit, ToUnit extends Unit
   return {
     initial: transform.transformValue(initial),
     points: points.map((point) => ({
+      time: point.time,
+      value: transform.transformValue(point.value),
+      shape: transform.transformCurveShape(point.shape)
+    }))
+  }
+}
+
+export function transformCurve<FromUnit extends Unit, ToUnit extends Unit> (
+  curve: Curve<'s', FromUnit>,
+  transform: Transform<FromUnit, ToUnit>
+): Curve<'s', ToUnit> {
+  return {
+    initial: transform.transformValue(curve.initial),
+    points: curve.points.map((point) => ({
       time: point.time,
       value: transform.transformValue(point.value),
       shape: transform.transformCurveShape(point.shape)

@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { dbToGain } from '../src/constants.js'
+import { dbToGain } from '../../src/conversion/gain.js'
 
-describe('constants.ts', () => {
+describe('conversion/gain.ts', () => {
   describe('dbToGain', () => {
     it('should convert decibels to gain correctly', () => {
       assert.strictEqual(dbToGain(0), 1)

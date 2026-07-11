@@ -1,20 +1,23 @@
-import type { Envelope, Instrument } from '@core'
+import type { Instrument } from '@core'
 import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'
 import { createGlobalScope } from '../../../src/compiler/generator/scopes.js'
+import { applyEnvelope } from '../../../src/library/envelope.js'
 import { instrumentsModule } from '../../../src/library/modules/instruments.js'
 import { StringFacet } from '../../../src/type-system/base/string.js'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 import { getFunctionExport } from './test-utils.js'
 
+const DEFAULT_TEMPO = numeric('bpm', 120)
+
 function createFunctionContext (): GlobalScope {
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
-      default: 120,
+      default: DEFAULT_TEMPO.value,
       minimum: 20,
       maximum: 300
     }
@@ -22,12 +25,15 @@ function createFunctionContext (): GlobalScope {
 }
 
 describe('library/modules/instruments.ts', () => {
-  const declickEnvelope: Envelope = {
+  const declickEnvelope = () => applyEnvelope({
     attack: numeric('s', 0.003),
     decay: numeric('s', 0),
-    sustain: numeric(undefined, 1),
+    sustain: numeric('db', 0),
     release: numeric('s', 0.003)
-  }
+  }, {
+    velocity: numeric(undefined, 1),
+    gate: numeric('s', 1.5)
+  })
 
   describe('sample', () => {
     const sample = getFunctionExport(instrumentsModule, 'sample')
@@ -53,9 +59,10 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       } satisfies Instrument)
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: declickEnvelope(),
+          duration: numeric('s', 1.503),
           source: {
             type: 'sample',
             assetId: asset.id,
@@ -91,9 +98,18 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: applyEnvelope({
+            attack: numeric('s', 0.003),
+            decay: numeric('s', 0),
+            sustain: numeric('db', 0),
+            release: numeric('s', 0.003)
+          }, {
+            gate: undefined,
+            velocity: numeric(undefined, 1)
+          }),
+          duration: undefined,
           source: {
             type: 'sample',
             assetId: asset.id,
@@ -108,6 +124,22 @@ describe('library/modules/instruments.ts', () => {
       ])
 
       assert.deepStrictEqual([...context.automations.keys()], [instrument.gain.id])
+    })
+
+    it('should not produce voices if length is invalid', () => {
+      for (const length of [0, -1, -Infinity, Infinity, Number.NaN]) {
+        const context = createFunctionContext()
+
+        const result = sample.invoke(context, {
+          url: StringFacet.type().of('https://example.com/kick.wav'),
+          length: Numbers.of(numeric('s', length))
+        })
+
+        const instrument = InstrumentFacet.get(result)
+        const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
+
+        assert.strictEqual(voices.length, 0)
+      }
     })
   })
 
@@ -125,9 +157,18 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: applyEnvelope({
+            attack: numeric('s', 0.003),
+            decay: numeric('s', 0),
+            sustain: numeric('db', 0),
+            release: numeric('s', 0.003)
+          }, {
+            gate: undefined,
+            velocity: numeric(undefined, 1)
+          }),
+          duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'sine',
@@ -158,9 +199,18 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: applyEnvelope({
+            attack: numeric('s', 0.003),
+            decay: numeric('s', 0),
+            sustain: numeric('db', 0),
+            release: numeric('s', 0.003)
+          }, {
+            gate: undefined,
+            velocity: numeric(undefined, 1)
+          }),
+          duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'square',
@@ -191,9 +241,18 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: applyEnvelope({
+            attack: numeric('s', 0.003),
+            decay: numeric('s', 0),
+            sustain: numeric('db', 0),
+            release: numeric('s', 0.003)
+          }, {
+            gate: undefined,
+            velocity: numeric(undefined, 1)
+          }),
+          duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'saw',
@@ -224,9 +283,18 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
-          envelope: declickEnvelope,
+          envelope: applyEnvelope({
+            attack: numeric('s', 0.003),
+            decay: numeric('s', 0),
+            sustain: numeric('db', 0),
+            release: numeric('s', 0.003)
+          }, {
+            gate: undefined,
+            velocity: numeric(undefined, 1)
+          }),
+          duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'triangle',

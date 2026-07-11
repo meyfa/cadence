@@ -1,5 +1,6 @@
-import type { Envelope, Oscillator } from '@core'
-import { convertPitchToMidi, getMidiFrequency, isPitch } from '@core'
+import type { Oscillator } from '@core'
+import { convertPitchToMidi, getMidiFrequency, isPitch, timeToSeconds } from '@core'
+import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
@@ -11,6 +12,8 @@ import { makeType } from '../../type-system/factory.js'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
 import { makeSchema } from '../../type-system/schema.js'
 import type { Value } from '../../type-system/types.js'
+import type { Envelope } from '../envelope.js'
+import { applyEnvelope } from '../envelope.js'
 
 const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
@@ -19,7 +22,7 @@ const UNITY_GAIN = numeric('db', 0)
 const ENVELOPE_DECLICK: Envelope = {
   attack: numeric('s', 0.003),
   decay: numeric('s', 0),
-  sustain: numeric(undefined, 1),
+  sustain: numeric('db', 0),
   release: numeric('s', 0.003)
 }
 
@@ -48,7 +51,7 @@ const sample = Functions.of({
     const urlValue = StringFacet.get(url)
     const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
     const rootNote = (() => {
-    // eslint-disable-next-line camelcase
+      // eslint-disable-next-line camelcase
       const string = root_note != null ? StringFacet.get(root_note) : undefined
       return string != null && isPitch(string) ? string : undefined
     })()
@@ -62,21 +65,40 @@ const sample = Functions.of({
 
     const rootNoteMidi = rootNote != null ? convertPitchToMidi(rootNote) : DEFAULT_ROOT_NOTE
 
+    const invalidLength = lengthValue != null && (!Number.isFinite(lengthValue.value) || lengthValue.value <= 0)
+
     const instrument = context.allocateInstrument({
       gain: gainParameter,
-      trigger: (note) => {
+
+      trigger: (note, tempo) => {
+        if (invalidLength) {
+          return []
+        }
+
         const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNoteMidi
-        const playbackRate = Math.pow(2, (midiNote - rootNoteMidi) / 12)
+        const playbackRate = numeric(undefined, Math.pow(2, (midiNote - rootNoteMidi) / 12))
+
+        const gate: Numeric<'s'> | undefined = (() => {
+          if (note.gate == null) {
+            return lengthValue
+          }
+          const gateSeconds = timeToSeconds(note.gate, tempo)
+          return lengthValue == null ? gateSeconds : numeric('s', Math.min(gateSeconds.value, lengthValue.value))
+        })()
+
+        const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
+        const duration = gate != null ? envelope.points.at(-1)?.time : undefined
 
         return [
           {
-            envelope: ENVELOPE_DECLICK,
+            envelope,
             source: {
               type: 'sample',
               assetId: asset.id,
               length: lengthValue,
-              playbackRate: numeric(undefined, playbackRate)
-            }
+              playbackRate
+            },
+            duration
           }
         ]
       }
@@ -104,18 +126,24 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
       const instrument = context.allocateInstrument({
         gain: gainParameter,
-        trigger: (note) => {
+
+        trigger: (note, tempo) => {
           const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
           const frequency = numeric('hz', getMidiFrequency(midiNote))
 
+          const gate = note.gate != null ? timeToSeconds(note.gate, tempo) : undefined
+          const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
+          const duration = gate != null ? envelope.points.at(-1)?.time : undefined
+
           return [
             {
-              envelope: ENVELOPE_DECLICK,
+              envelope,
               source: {
                 type: 'oscillator',
                 shape,
                 frequency
-              }
+              },
+              duration
             }
           ]
         }

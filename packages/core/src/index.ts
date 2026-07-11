@@ -11,5 +11,6 @@ export type * from './program/mixer.js'
 export type * from './program/program.js'
 export type * from './program/track.js'
 
-export * from './midi.js'
-export * from './time.js'
+export * from './conversion/gain.js'
+export * from './conversion/midi.js'
+export * from './conversion/time.js'

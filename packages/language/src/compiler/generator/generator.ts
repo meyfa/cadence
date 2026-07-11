@@ -551,10 +551,8 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
     trigger: () => [
       {
         envelope: {
-          attack: numeric('s', 0),
-          decay: numeric('s', 0),
-          sustain: numeric(undefined, 1),
-          release: numeric('s', 0)
+          initial: numeric('db', -Infinity),
+          points: []
         },
         source: {
           type: 'oscillator',
