@@ -20,7 +20,7 @@ const RELATIVE_SILENCE_DB = numeric('db', -60)
 
 export function applyEnvelope (envelope: Envelope, options: EnvelopeOptions): Curve<'s', 'db'> {
   const points: Array<CurvePoint<'s', 'db'>> = []
-  const velocityDb = numeric('db', gainToDb(options.velocity.value))
+  const velocityDb = gainToDb(options.velocity)
 
   const startTime = numeric('s', 0)
   const startValue = NEGATIVE_INFINITY_DB
