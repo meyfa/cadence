@@ -239,7 +239,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const delayNodeId = builder.addNode<DelayNode>('delay', {
         // TODO time variant
-        time: timeToSeconds(effect.time, program.track.tempo.value).value
+        time: timeToSeconds(effect.time, program.track.tempo.value)
       })
 
       if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
@@ -266,7 +266,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const reverbId = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
-        decay: timeToSeconds(effect.decay, program.track.tempo.value).value
+        decay: timeToSeconds(effect.decay, program.track.tempo.value)
       })
 
       return createDryWetMix(reverbId, mix, effect.wet.value, builder)

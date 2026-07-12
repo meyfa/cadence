@@ -27,7 +27,7 @@ export function createInstrumentInstance (
   }
 
   const scheduleAtNote = (note: NoteEvent, tempo: Numeric<'bpm'>, callback: (time: number) => void) => {
-    const time = timeToSeconds(note.time, tempo).value
+    const time = timeToSeconds(note.time, tempo)
     transport.schedule(time, callback)
   }
 

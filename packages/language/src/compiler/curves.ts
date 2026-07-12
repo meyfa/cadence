@@ -82,17 +82,17 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
   const points: Array<CurvePoint<'s', U>> = []
 
   const offsetSeconds = timeToSeconds(options.offset, options.tempo.value)
-  let currentTime: RuntimeNumeric<'s'> = offsetSeconds
+  let currentTime = offsetSeconds
 
   for (const segment of segments) {
     const segmentLength = segment.length.value > 0
       ? timeToSeconds(segment.length, options.tempo.value)
-      : ZERO_SECONDS
+      : ZERO_SECONDS.value
 
     const definition = nonNull(getCurveSegmentType(segment.type), `Unknown curve segment type: ${segment.type}`)
 
-    const startTime = currentTime
-    const endTime = runtimeNumeric('s', currentTime.value + segmentLength.value)
+    const startTime = runtimeNumeric('s', currentTime)
+    const endTime = runtimeNumeric('s', currentTime + segmentLength)
 
     points.push({
       time: startTime,
@@ -101,19 +101,19 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
     }, {
       time: endTime,
       value: definition.end(segment),
-      shape: segmentLength.value <= 0 ? 'step' : definition.endShape
+      shape: segmentLength <= 0 ? 'step' : definition.endShape
     })
 
-    currentTime = endTime
+    currentTime = endTime.value
   }
 
   const simplifiedPoints = simplifyCurvePoints(points)
 
   const endTime = options.limit != null
-    ? runtimeNumeric('s', offsetSeconds.value + timeToSeconds(options.limit, options.tempo.value).value)
+    ? runtimeNumeric('s', offsetSeconds + timeToSeconds(options.limit, options.tempo.value))
     : undefined
 
-  if (endTime != null && currentTime.value > endTime.value) {
+  if (endTime != null && currentTime > endTime.value) {
     return takePointsBefore(simplifiedPoints, endTime)
   }
 

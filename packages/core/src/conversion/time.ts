@@ -1,5 +1,4 @@
 import type { Numeric, RuntimeNumeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import type { Program } from '../program/program.js'
 
 export function beatsToSeconds (
@@ -12,8 +11,8 @@ export function beatsToSeconds (
 export function timeToSeconds (
   time: RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>,
   tempo: Numeric<'bpm'>
-): RuntimeNumeric<'s'> {
-  return time.unit === 's' ? time : runtimeNumeric('s', beatsToSeconds(time.value, tempo))
+): Numeric<'s'> {
+  return time.unit === 's' ? time.value : beatsToSeconds(time.value, tempo)
 }
 
 export function calculateTotalLength (program: Program): Numeric<'beats'> {
