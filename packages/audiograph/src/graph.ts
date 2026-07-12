@@ -20,7 +20,6 @@ export interface AudioGraph<TNode = AnyNode> {
 export type NodeId = Brand<number, 'audiograph.NodeId'>
 
 export interface AnyNode {
-  readonly id: NodeId
   readonly type: string
 }
 

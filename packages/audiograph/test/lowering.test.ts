@@ -8,7 +8,7 @@ import { gainTransform, transformCurve } from '../src/automation.js'
 import { createEntityKey } from '../src/entities.js'
 import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
-import type { DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, ReverbNode, SourceNode, WaveShaperNode } from '../src/nodes.js'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from '../src/nodes.js'
 
 const SIMPLE_CURVE: Curve<'s', 'db'> = {
   initial: numeric('db', -Infinity),
@@ -23,8 +23,8 @@ function toGainCurve (curve: Curve<'s', 'db'>): Curve<'s', undefined> {
   return transformCurve(curve, gainTransform)
 }
 
-function compareIds (a: Node, b: Node): number {
-  return a.id - b.id
+function compareIds (a: readonly [NodeId, Node], b: readonly [NodeId, Node]): number {
+  return a[0] - b[0]
 }
 
 function createProgramWithInstrument (instrument: Instrument, asset?: Asset): Program {
@@ -258,32 +258,40 @@ describe('lowering.ts', () => {
 
     const graph = createAudioGraph(program)
 
-    assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
-      {
-        id: 1 as NodeId,
-        type: 'identity'
-      } satisfies IdentityNode,
-      {
-        id: 2 as NodeId,
-        type: 'gain',
-        gain: {
-          initial: dbToGain(numeric('db', -3)),
-          points: []
-        }
-      } satisfies GainNode,
-      {
-        id: 3 as NodeId,
-        type: 'instrument',
-        trigger: (graph.nodes.get(3 as NodeId) as InstrumentNode).trigger
-      } satisfies InstrumentNode,
-      {
-        id: 4 as NodeId,
-        type: 'gain',
-        gain: {
-          initial: dbToGain(numeric('db', -6)),
-          points: []
-        }
-      } satisfies GainNode
+    assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
+      [
+        1,
+        {
+          type: 'identity'
+        } satisfies IdentityNode
+      ],
+      [
+        2,
+        {
+          type: 'gain',
+          gain: {
+            initial: dbToGain(numeric('db', -3)),
+            points: []
+          }
+        } satisfies GainNode
+      ],
+      [
+        3,
+        {
+          type: 'instrument',
+          trigger: (graph.nodes.get(3 as NodeId) as InstrumentNode).trigger
+        } satisfies InstrumentNode
+      ],
+      [
+        4,
+        {
+          type: 'gain',
+          gain: {
+            initial: dbToGain(numeric('db', -6)),
+            points: []
+          }
+        } satisfies GainNode
+      ]
     ])
 
     assert.deepStrictEqual(graph.edges, [
@@ -306,7 +314,6 @@ describe('lowering.ts', () => {
     const [voice] = voices
 
     assert.deepStrictEqual(voice, {
-      id: -1 as NodeId,
       type: 'oscillator',
       shape: 'sine',
       frequency: numeric('hz', 440),
@@ -384,7 +391,6 @@ describe('lowering.ts', () => {
     const graph = createAudioGraph(program)
 
     assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
-      id: 3 as NodeId,
       type: 'gain',
       gain: {
         initial: dbToGain(numeric('db', -6)),
@@ -696,13 +702,12 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'gain',
           gain: {
             initial: dbToGain(numeric('db', -3)),
             points: []
           }
-        })
+        } satisfies GainNode)
       })
 
       it('should allow negative infinity gain', () => {
@@ -714,13 +719,12 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'gain',
           gain: {
             initial: numeric(undefined, 0),
             points: []
           }
-        })
+        } satisfies GainNode)
       })
 
       it('should throw for invalid gain', () => {
@@ -746,13 +750,12 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'pan',
           pan: {
             initial: numeric(undefined, 0.5),
             points: []
           }
-        })
+        } satisfies PanNode)
       })
 
       it('should clamp pan to [-1, 1]', () => {
@@ -764,13 +767,12 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'pan',
           pan: {
             initial: numeric(undefined, 1),
             points: []
           }
-        })
+        } satisfies PanNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'pan',
@@ -780,13 +782,12 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'pan',
           pan: {
             initial: numeric(undefined, -1),
             points: []
           }
-        })
+        } satisfies PanNode)
       })
 
       it('should throw for NaN pan', () => {
@@ -810,7 +811,6 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'biquad',
           filterType: 'lowpass',
           frequency: {
@@ -818,7 +818,7 @@ describe('lowering.ts', () => {
             points: []
           },
           rolloffPerOctave: numeric('db', 12)
-        })
+        } satisfies BiquadNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'lowpass',
@@ -828,7 +828,6 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'biquad',
           filterType: 'lowpass',
           frequency: {
@@ -836,7 +835,7 @@ describe('lowering.ts', () => {
             points: []
           },
           rolloffPerOctave: numeric('db', 12)
-        })
+        } satisfies BiquadNode)
       })
 
       it('should throw for invalid lowpass frequency', () => {
@@ -862,7 +861,6 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'biquad',
           filterType: 'highpass',
           frequency: {
@@ -870,7 +868,7 @@ describe('lowering.ts', () => {
             points: []
           },
           rolloffPerOctave: numeric('db', 12)
-        })
+        } satisfies BiquadNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'highpass',
@@ -880,7 +878,6 @@ describe('lowering.ts', () => {
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'biquad',
           filterType: 'highpass',
           frequency: {
@@ -888,7 +885,7 @@ describe('lowering.ts', () => {
             points: []
           },
           rolloffPerOctave: numeric('db', 12)
-        })
+        } satisfies BiquadNode)
       })
 
       it('should throw for invalid highpass frequency', () => {
@@ -911,10 +908,9 @@ describe('lowering.ts', () => {
           width: numeric(undefined, 0.75)
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'width',
           width: numeric(undefined, 0.75)
-        })
+        } satisfies WidthNode)
       })
 
       it('should clamp width to [0, 1]', () => {
@@ -923,20 +919,18 @@ describe('lowering.ts', () => {
           width: numeric(undefined, Infinity)
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'width',
           width: numeric(undefined, 1)
-        })
+        } satisfies WidthNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'width',
           width: numeric(undefined, -Infinity)
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'width',
           width: numeric(undefined, 0)
-        })
+        } satisfies WidthNode)
       })
 
       it('should throw for NaN width', () => {
@@ -960,45 +954,55 @@ describe('lowering.ts', () => {
           wet: numeric('db', 0)
         }))
 
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // delay node
-          {
-            id: 2 as NodeId,
-            type: 'delay',
-            time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
-          } satisfies DelayNode,
+          [
+            2,
+            {
+              type: 'delay',
+              time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+            } satisfies DelayNode
+          ],
           // feedback gain node
-          {
-            id: 3 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.4),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            3,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.4),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // dry gain node
-          {
-            id: 4 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 1.0),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            4,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 1.0),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wet gain node
-          {
-            id: 5 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.5),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            5,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.5),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
 
         assert.deepStrictEqual(graph.edges, [
@@ -1027,27 +1031,33 @@ describe('lowering.ts', () => {
           wet: numeric('db', 0)
         }))
 
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // delay node
-          {
-            id: 2 as NodeId,
-            type: 'delay',
-            time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
-          } satisfies DelayNode,
+          [
+            2,
+            {
+              type: 'delay',
+              time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+            } satisfies DelayNode
+          ],
           // feedback gain node
-          {
-            id: 3 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.4),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            3,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.4),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
       })
 
@@ -1092,7 +1102,6 @@ describe('lowering.ts', () => {
         }))
 
         assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
-          id: 3 as NodeId,
           type: 'gain',
           gain: {
             initial: numeric(undefined, 1),
@@ -1127,7 +1136,6 @@ describe('lowering.ts', () => {
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'delay',
           time: numeric('s', 1.5)
         } satisfies DelayNode)
@@ -1148,54 +1156,66 @@ describe('lowering.ts', () => {
         // Note: There already is a wet gain node to handle the mix level,
         // but it cannot be reused as there may be separate automations for the mix and wet parameters,
         // which would unnecessarily complicate the calculations.
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // delay node
-          {
-            id: 2 as NodeId,
-            type: 'delay',
-            time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
-          } satisfies DelayNode,
+          [
+            2,
+            {
+              type: 'delay',
+              time: beatsToSeconds(numeric('beats', 0.5), numeric('bpm', 120))
+            } satisfies DelayNode
+          ],
           // feedback gain node
-          {
-            id: 3 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.4),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            3,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.4),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wet gain node for wet level
-          {
-            id: 4 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: dbToGain(numeric('db', -6)),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            4,
+            {
+              type: 'gain',
+              gain: {
+                initial: dbToGain(numeric('db', -6)),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // dry gain node (mix)
-          {
-            id: 5 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 1.0),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            5,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 1.0),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wet gain node (mix)
-          {
-            id: 6 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.5),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            6,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.5),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
 
         assert.deepStrictEqual(graph.edges, [
@@ -1239,36 +1259,44 @@ describe('lowering.ts', () => {
           wet: numeric('db', 0)
         }))
 
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // reverb node
-          {
-            id: 2 as NodeId,
-            type: 'reverb',
-            decay: numeric('s', 2)
-          } satisfies ReverbNode,
+          [
+            2,
+            {
+              type: 'reverb',
+              decay: numeric('s', 2)
+            } satisfies ReverbNode
+          ],
           // dry gain node
-          {
-            id: 3 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.5),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            3,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.5),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wet gain node
-          {
-            id: 4 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 1.0),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            4,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 1.0),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
 
         assert.deepStrictEqual(graph.edges, [
@@ -1289,18 +1317,22 @@ describe('lowering.ts', () => {
           wet: numeric('db', 0)
         }))
 
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // reverb node
-          {
-            id: 2 as NodeId,
-            type: 'reverb',
-            decay: numeric('s', 2)
-          } satisfies ReverbNode
+          [
+            2,
+            {
+              type: 'reverb',
+              decay: numeric('s', 2)
+            } satisfies ReverbNode
+          ]
         ])
       })
 
@@ -1333,7 +1365,6 @@ describe('lowering.ts', () => {
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
-          id: 2 as NodeId,
           type: 'reverb',
           decay: beatsToSeconds(numeric('beats', 2), numeric('bpm', 120))
         } satisfies ReverbNode)
@@ -1350,45 +1381,55 @@ describe('lowering.ts', () => {
         // Note: There already is a wet gain node to handle the mix level,
         // but it cannot be reused as there may be separate automations for the mix and wet parameters,
         // which would unnecessarily complicate the calculations.
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // reverb node
-          {
-            id: 2 as NodeId,
-            type: 'reverb',
-            decay: numeric('s', 2)
-          } satisfies ReverbNode,
+          [
+            2,
+            {
+              type: 'reverb',
+              decay: numeric('s', 2)
+            } satisfies ReverbNode
+          ],
           // wet gain node for wet level
-          {
-            id: 3 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: dbToGain(numeric('db', -6)),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            3,
+            {
+              type: 'gain',
+              gain: {
+                initial: dbToGain(numeric('db', -6)),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // dry gain node (mix)
-          {
-            id: 4 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 1.0),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            4,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 1.0),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wet gain node (mix)
-          {
-            id: 5 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 0.5),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            5,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 0.5),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
 
         assert.deepStrictEqual(graph.edges, [
@@ -1427,36 +1468,44 @@ describe('lowering.ts', () => {
           }
         }))
 
-        assert.deepStrictEqual([...graph.nodes.values()].sort(compareIds), [
+        assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
           // output node
-          {
-            id: 1 as NodeId,
-            type: 'identity'
-          } satisfies IdentityNode,
+          [
+            1,
+            {
+              type: 'identity'
+            } satisfies IdentityNode
+          ],
           // pre-gain to set the threshold
-          {
-            id: 2 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: numeric(undefined, 1 / dbToGain(threshold).value),
-              points: []
-            }
-          } satisfies GainNode,
+          [
+            2,
+            {
+              type: 'gain',
+              gain: {
+                initial: numeric(undefined, 1 / dbToGain(threshold).value),
+                points: []
+              }
+            } satisfies GainNode
+          ],
           // wave shaper
-          {
-            id: 3 as NodeId,
-            type: 'wave_shaper',
-            curve: new Float32Array([-1, 0, 1])
-          } satisfies WaveShaperNode,
+          [
+            3,
+            {
+              type: 'wave_shaper',
+              curve: new Float32Array([-1, 0, 1])
+            } satisfies WaveShaperNode
+          ],
           // makeup gain
-          {
-            id: 4 as NodeId,
-            type: 'gain',
-            gain: {
-              initial: dbToGain(threshold),
-              points: []
-            }
-          } satisfies GainNode
+          [
+            4,
+            {
+              type: 'gain',
+              gain: {
+                initial: dbToGain(threshold),
+                points: []
+              }
+            } satisfies GainNode
+          ]
         ])
 
         assert.deepStrictEqual(graph.edges, [
