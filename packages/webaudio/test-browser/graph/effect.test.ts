@@ -1,4 +1,3 @@
-import type { NodeId } from '@audiograph'
 import type { Numeric } from '@utility'
 import { numeric } from '@utility'
 import { describe, expect, it } from 'vitest'
@@ -31,14 +30,8 @@ async function renderWidth (options: {
   readonly output: AudioBuffer
 }> {
   const { width, inputChannels, fill } = options
-
   const { ctx, transport } = createTestTransport()
-
-  const instance = createWidthInstance({
-    id: 42 as NodeId,
-    type: 'width',
-    width
-  }, transport)
+  const instance = createWidthInstance({ type: 'width', width }, transport)
 
   try {
     const input = ctx.createBuffer(inputChannels, length, sampleRate)
@@ -80,11 +73,7 @@ async function renderDelay (options: {
     schedule: (_time, onSchedule) => onSchedule(0)
   }
 
-  const instance = createDelayInstance({
-    id: 42 as NodeId,
-    type: 'delay',
-    time
-  }, transport)
+  const instance = createDelayInstance({ type: 'delay', time }, transport)
 
   try {
     const source = ctx.createBufferSource()

@@ -5,7 +5,7 @@ import type { EntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
-  readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => T
+  readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => NodeId
   readonly addEdge: (from: NodeId, to: NodeId) => void
   readonly addEdges: (from: readonly NodeId[], to: readonly NodeId[]) => void
   readonly setOutput: (nodeId: NodeId) => void
@@ -40,11 +40,11 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
 
   let nextId = 1 as NodeId
 
-  const addNode: AudioGraphBuilder<TNode>['addNode'] = <T extends TNode>(type: T['type'], node: Omit<T, 'id' | 'type'>): T => {
+  const addNode: AudioGraphBuilder<TNode>['addNode'] = <T extends TNode>(type: T['type'], node: Omit<T, 'id' | 'type'>): NodeId => {
     const id = nextId++ as NodeId
-    const newNode = { ...node, id, type } as T
+    const newNode = { ...node, type } as T
     nodes.set(id, newNode)
-    return newNode
+    return id
   }
 
   const addEdge: AudioGraphBuilder<TNode>['addEdge'] = (from, to) => {

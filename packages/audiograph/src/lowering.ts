@@ -7,7 +7,7 @@ import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
 import type { EntityKey } from './entities.js'
 import { createEntityKey } from './entities.js'
-import type { AnyNode, AudioGraph, NodeId } from './graph.js'
+import type { AudioGraph, NodeId } from './graph.js'
 import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from './nodes.js'
 
 type Builder = AudioGraphBuilder<Node>
@@ -30,8 +30,8 @@ export function createAudioGraph (program: Program, options?: AudioGraphOptions)
     length: calculateTotalLength(program)
   })
 
-  const output = builder.addNode<IdentityNode>('identity', {})
-  builder.setOutput(output.id)
+  const outputId = builder.addNode<IdentityNode>('identity', {})
+  builder.setOutput(outputId)
 
   for (const asset of program.assets.values()) {
     builder.addAsset(asset)
@@ -53,12 +53,12 @@ export function createAudioGraph (program: Program, options?: AudioGraphOptions)
     }
   }
 
-  createRoutings(program, busSubgraphs, instrumentSubgraphs, output.id, builder)
+  createRoutings(program, busSubgraphs, instrumentSubgraphs, outputId, builder)
 
   createNoteEvents(program.track, instruments, builder)
 
   if (options?.metering != null) {
-    createMeteringNodes(busSubgraphs, instrumentSubgraphs, output.id, builder, options.metering)
+    createMeteringNodes(busSubgraphs, instrumentSubgraphs, outputId, builder, options.metering)
   }
 
   return builder.graph()
@@ -70,10 +70,10 @@ interface SubGraph {
   readonly instrument?: NodeId
 }
 
-function toSubGraph (node: AnyNode): SubGraph {
+function toSubGraph (nodeId: NodeId): SubGraph {
   return {
-    inputs: [node.id],
-    outputs: [node.id]
+    inputs: [nodeId],
+    outputs: [nodeId]
   }
 }
 
@@ -106,11 +106,7 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
   const last = effectSubgraphs.at(-1)
 
   if (first == null || last == null) {
-    const throughNode = builder.addNode<IdentityNode>('identity', {})
-    return {
-      inputs: [throughNode.id],
-      outputs: [throughNode.id]
-    }
+    return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
   }
 
   return {
@@ -120,7 +116,7 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
 }
 
 function createInstrument (program: Program, instrument: Instrument, builder: Builder): SubGraph {
-  const instrumentNode = builder.addNode<InstrumentNode>('instrument', {
+  const instrumentNodeId = builder.addNode<InstrumentNode>('instrument', {
     trigger: (note) => {
       const result: SourceNode[] = []
 
@@ -134,16 +130,16 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     }
   })
 
-  const gain = builder.addNode<GainNode>('gain', {
+  const gainId = builder.addNode<GainNode>('gain', {
     gain: computeParameterCurve(instrument.gain, program, gainTransform)
   })
 
-  builder.addEdge(instrumentNode.id, gain.id)
+  builder.addEdge(instrumentNodeId, gainId)
 
   return {
-    inputs: [instrumentNode.id],
-    outputs: [gain.id],
-    instrument: instrumentNode.id
+    inputs: [instrumentNodeId],
+    outputs: [gainId],
+    instrument: instrumentNodeId
   }
 }
 
@@ -165,7 +161,6 @@ function createSampleSourceNode (voice: Voice<Sample>): SourceNode {
   }
 
   return {
-    id: -1 as NodeId, // TODO: avoid invalid id
     type: 'sample',
     gainCurve: transformCurve(voice.envelope, gainTransform),
     duration: voice.duration,
@@ -182,7 +177,6 @@ function createOscillatorSourceNode (voice: Voice<Oscillator>): SourceNode {
   }
 
   return {
-    id: -1 as NodeId, // TODO: avoid invalid id
     type: 'oscillator',
     gainCurve: transformCurve(voice.envelope, gainTransform),
     duration: voice.duration,
@@ -243,21 +237,21 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         throw new Error(`Invalid time: ${effect.time.value}`)
       }
 
-      const delayNode = builder.addNode<DelayNode>('delay', {
+      const delayNodeId = builder.addNode<DelayNode>('delay', {
         // TODO time variant
         time: timeToSeconds(effect.time, program.track.tempo)
       })
 
       if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
-        const feedbackGain = builder.addNode<GainNode>('gain', {
+        const feedbackGainId = builder.addNode<GainNode>('gain', {
           gain: computeParameterCurve(effect.feedback, program, feedbackTransform)
         })
 
-        builder.addEdge(delayNode.id, feedbackGain.id)
-        builder.addEdge(feedbackGain.id, delayNode.id)
+        builder.addEdge(delayNodeId, feedbackGainId)
+        builder.addEdge(feedbackGainId, delayNodeId)
       }
 
-      return createDryWetMix(delayNode, effect.mix.value, effect.wet, builder)
+      return createDryWetMix(delayNodeId, effect.mix.value, effect.wet, builder)
     }
 
     case 'reverb': {
@@ -270,12 +264,12 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
       }
 
-      const reverb = builder.addNode<ReverbNode>('reverb', {
+      const reverbId = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
         decay: timeToSeconds(effect.decay, program.track.tempo)
       })
 
-      return createDryWetMix(reverb, mix, effect.wet, builder)
+      return createDryWetMix(reverbId, mix, effect.wet, builder)
     }
 
     case 'clip': {
@@ -293,33 +287,33 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const thresholdGain = computeParameterCurve(effect.threshold, program, gainTransform)
 
-      const input = builder.addNode<GainNode>('gain', {
+      const inputId = builder.addNode<GainNode>('gain', {
         gain: {
           initial: invert(thresholdGain.initial),
           points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: invert(value), shape }))
         }
       })
 
-      const waveShaper = builder.addNode<WaveShaperNode>('wave_shaper', {
+      const waveShaperId = builder.addNode<WaveShaperNode>('wave_shaper', {
         curve: new Float32Array([-1, 0, 1])
       })
 
-      const output = builder.addNode<GainNode>('gain', {
+      const outputId = builder.addNode<GainNode>('gain', {
         gain: thresholdGain
       })
 
-      builder.addEdge(input.id, waveShaper.id)
-      builder.addEdge(waveShaper.id, output.id)
+      builder.addEdge(inputId, waveShaperId)
+      builder.addEdge(waveShaperId, outputId)
 
       return {
-        inputs: [input.id],
-        outputs: [output.id]
+        inputs: [inputId],
+        outputs: [outputId]
       }
     }
   }
 }
 
-function createDryWetMix (effect: Node, mix: number, wetGain: Numeric<'db'>, builder: Builder): SubGraph {
+function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>, builder: Builder): SubGraph {
   if (Number.isNaN(mix)) {
     throw new Error(`Invalid mix: ${mix}`)
   }
@@ -328,18 +322,18 @@ function createDryWetMix (effect: Node, mix: number, wetGain: Numeric<'db'>, bui
     return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
   }
 
-  const wetLevel = createOptionalGainNode(wetGain, builder)
+  const wetLevelId = createOptionalGainNode(wetGain, builder)
 
   if (mix >= 1) {
-    if (wetLevel == null) {
-      return toSubGraph(effect)
+    if (wetLevelId == null) {
+      return toSubGraph(effectId)
     }
 
-    builder.addEdge(effect.id, wetLevel.id)
+    builder.addEdge(effectId, wetLevelId)
 
     return {
-      inputs: [effect.id],
-      outputs: [wetLevel.id]
+      inputs: [effectId],
+      outputs: [wetLevelId]
     }
   }
 
@@ -347,29 +341,29 @@ function createDryWetMix (effect: Node, mix: number, wetGain: Numeric<'db'>, bui
   // wet:       0.0 ->   0%,   0.25: 50%,   0.5...1.0: 100%
 
   const dry = Math.max(0, Math.min(1, (1 - mix) * 2))
-  const dryNode = builder.addNode<GainNode>('gain', {
+  const dryNodeId = builder.addNode<GainNode>('gain', {
     gain: { initial: numeric(undefined, dry), points: [] }
   })
 
   const wet = Math.max(0, Math.min(1, mix * 2))
-  const wetNode = builder.addNode<GainNode>('gain', {
+  const wetNodeId = builder.addNode<GainNode>('gain', {
     gain: { initial: numeric(undefined, wet), points: [] }
   })
 
-  const wetInput = wetLevel ?? effect
-  if (wetLevel != null) {
-    builder.addEdge(effect.id, wetLevel.id)
+  const wetInputId = wetLevelId ?? effectId
+  if (wetLevelId != null) {
+    builder.addEdge(effectId, wetLevelId)
   }
 
-  builder.addEdge(wetInput.id, wetNode.id)
+  builder.addEdge(wetInputId, wetNodeId)
 
   return {
-    inputs: [dryNode.id, effect.id],
-    outputs: [dryNode.id, wetNode.id]
+    inputs: [dryNodeId, effectId],
+    outputs: [dryNodeId, wetNodeId]
   }
 }
 
-function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): Node | undefined {
+function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): NodeId | undefined {
   if (wetGain.value === 0) {
     return undefined
   }
@@ -451,16 +445,13 @@ function createMeteringNodes (
   }
 
   const createMeters = (key: EntityKey, sources: readonly NodeId[]): void => {
-    const gainMeter = builder.addNode<GainMeterNode>('gain_meter', {
+    const gainMeterId = builder.addNode<GainMeterNode>('gain_meter', {
       key,
       interval: options.interval
     })
 
-    builder.addMeters(key, {
-      gainMeterId: gainMeter.id
-    })
-
-    builder.addEdges(sources, [gainMeter.id])
+    builder.addMeters(key, { gainMeterId })
+    builder.addEdges(sources, [gainMeterId])
   }
 
   {

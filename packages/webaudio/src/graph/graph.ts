@@ -50,7 +50,7 @@ export async function createWebAudioGraph (
   const instances = new Map<NodeId, Instance>()
   const instancePromises = new Map<NodeId, Promise<void>>()
 
-  for (const node of graph.nodes.values()) {
+  for (const [nodeId, node] of graph.nodes) {
     const promise = Promise.resolve().then(() => {
       return createNodeInstance(node, transport, assets, meterCallbacks)
     }).then((instance) => {
@@ -59,10 +59,10 @@ export async function createWebAudioGraph (
         return
       }
 
-      instances.set(node.id, instance)
+      instances.set(nodeId, instance)
     })
 
-    instancePromises.set(node.id, promise)
+    instancePromises.set(nodeId, promise)
   }
 
   try {
