@@ -1,11 +1,11 @@
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '../hooks/latest-ref.js'
 import { usePersistenceContext } from './components/PersistenceContext.js'
 import type { PersistenceDomain, PersistenceEvent } from './types.js'
 
-const STORAGE_DEBOUNCE = runtimeNumeric('s', 0.25)
+const STORAGE_DEBOUNCE = 0.25 as Numeric<'s'>
 
 export interface UsePersistentBindingOptions {
   readonly onConflict?: PersistentStateConflictPolicy
@@ -118,7 +118,7 @@ export function usePersistentBinding<T> (
             setMeta((prevMeta) => ({ ...prevMeta, error: castError(err) }))
           }
         })
-    }, STORAGE_DEBOUNCE.value * 1000)
+    }, STORAGE_DEBOUNCE * 1000)
 
     return () => {
       cancelled = true

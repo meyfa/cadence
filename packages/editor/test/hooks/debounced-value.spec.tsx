@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import { describe, expect, it, vi } from 'vitest'
 import { useDebouncedValue } from '../../src/hooks/debounced-value.js'
 
@@ -9,7 +9,7 @@ describe('hooks/debounced-value.ts', () => {
 
     try {
       const { result, rerender } = renderHook(({ value }) => {
-        return useDebouncedValue(value, runtimeNumeric('s', 0.25))
+        return useDebouncedValue(value, 0.25 as Numeric<'s'>)
       }, {
         initialProps: { value: 'alpha' }
       })
