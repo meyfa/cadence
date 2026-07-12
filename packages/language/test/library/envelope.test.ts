@@ -29,7 +29,7 @@ describe('envelope.ts', () => {
     it('emits attack and decay without release when hold duration is absent', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: -6, release: 3 }), {
         gate: undefined,
-        velocity: runtimeNumeric(undefined, 1)
+        velocity: 1 as Numeric<undefined>
       })
 
       assert.deepStrictEqual(result, {
@@ -45,7 +45,7 @@ describe('envelope.ts', () => {
     it('handles zero-length attack by setting the peak immediately before decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 0, decay: 2, sustain: -6, release: 3 }), {
         gate: undefined,
-        velocity: runtimeNumeric(undefined, 1)
+        velocity: 1 as Numeric<undefined>
       })
 
       assert.deepStrictEqual(result, {
@@ -60,7 +60,7 @@ describe('envelope.ts', () => {
     it('handles zero-length decay by setting the sustain level immediately after attack', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 0, sustain: -6, release: 3 }), {
         gate: undefined,
-        velocity: runtimeNumeric(undefined, 1)
+        velocity: 1 as Numeric<undefined>
       })
 
       assert.deepStrictEqual(result, {
@@ -75,8 +75,8 @@ describe('envelope.ts', () => {
 
     it('starts release from the current attack level when the note ends during attack', () => {
       const result = applyEnvelope(createEnvelope({ attack: 4, decay: 2, sustain: -6, release: 1 }), {
-        gate: runtimeNumeric('s', 1),
-        velocity: runtimeNumeric(undefined, 1)
+        gate: 1 as Numeric<'s'>,
+        velocity: 1 as Numeric<undefined>
       })
 
       const attackLevel = interpolateDb(RELATIVE_SILENCE.value, 0, 4, 1)
@@ -95,8 +95,8 @@ describe('envelope.ts', () => {
 
     it('starts release from the current decay level when the note ends during decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: -6, release: 1 }), {
-        gate: runtimeNumeric('s', 2),
-        velocity: runtimeNumeric(undefined, 1)
+        gate: 2 as Numeric<'s'>,
+        velocity: 1 as Numeric<undefined>
       })
 
       const decayLevel = interpolateDb(0, -6, 2, 1)
@@ -116,8 +116,8 @@ describe('envelope.ts', () => {
 
     it('starts release from sustain when the note ends after decay', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: -6, release: 4 }), {
-        gate: runtimeNumeric('s', 5),
-        velocity: runtimeNumeric(undefined, 0.75)
+        gate: 5 as Numeric<'s'>,
+        velocity: 0.75 as Numeric<undefined>
       })
 
       const velocityLevel = runtimeNumeric('db', gainToDb(0.75 as Numeric<undefined>))
@@ -141,8 +141,8 @@ describe('envelope.ts', () => {
 
     it('handles zero-length release by setting the value to 0 immediately after hold duration', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: -6, release: 0 }), {
-        gate: runtimeNumeric('s', 5),
-        velocity: runtimeNumeric(undefined, 1)
+        gate: 5 as Numeric<'s'>,
+        velocity: 1 as Numeric<undefined>
       })
 
       assert.deepStrictEqual(result, {

@@ -1,5 +1,6 @@
 import type { Program } from '@core'
 import { convertPitchToMidi, getMidiFrequency } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -32,6 +33,9 @@ function generateSource (source: string) {
 }
 
 describe('compiler/generator/generator.ts', () => {
+  const beats = (value: number) => value as Numeric<'beats'>
+  const scalar = (value: number) => value as Numeric<undefined>
+
   it('should produce a correct empty program', () => {
     const result = generateSource('')
     assert.deepStrictEqual(result, {
@@ -96,7 +100,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -115,7 +119,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -243,8 +247,8 @@ describe('compiler/generator/generator.ts', () => {
     const routing = result.track.parts[0].routings[0]
     assert.strictEqual(routing.source.type, 'pattern')
     assert.deepStrictEqual([...routing.source.value.evaluate()], [
-      { time: runtimeNumeric('beats', 0), pitch: 'C4', gate: runtimeNumeric('beats', 1), velocity: runtimeNumeric(undefined, 1) },
-      { time: runtimeNumeric('beats', 1), pitch: 'D4', gate: runtimeNumeric('beats', 1), velocity: runtimeNumeric(undefined, 1) }
+      { time: beats(0), pitch: 'C4', gate: beats(1), velocity: scalar(1) },
+      { time: beats(1), pitch: 'D4', gate: beats(1), velocity: scalar(1) }
     ])
   })
 
@@ -281,8 +285,8 @@ describe('compiler/generator/generator.ts', () => {
     const routing = result.track.parts[0].routings[0]
     assert.strictEqual(routing.source.type, 'pattern')
     assert.deepStrictEqual([...routing.source.value.evaluate()], [
-      { time: runtimeNumeric('beats', 0), pitch: 'C4', gate: runtimeNumeric('beats', 0.5), velocity: runtimeNumeric(undefined, 1) },
-      { time: runtimeNumeric('beats', 2), pitch: 'D4', gate: runtimeNumeric('beats', 1), velocity: runtimeNumeric(undefined, 0.75) }
+      { time: beats(0), pitch: 'C4', gate: beats(0.5), velocity: scalar(1) },
+      { time: beats(2), pitch: 'D4', gate: beats(1), velocity: scalar(0.75) }
     ])
   })
 
@@ -302,8 +306,8 @@ describe('compiler/generator/generator.ts', () => {
     const routing = result.track.parts[0].routings[0]
     assert.strictEqual(routing.source.type, 'pattern')
     assert.deepStrictEqual([...routing.source.value.evaluate()], [
-      { time: runtimeNumeric('beats', 0), pitch: 'C4', gate: runtimeNumeric('beats', 2), velocity: runtimeNumeric(undefined, 1) },
-      { time: runtimeNumeric('beats', 2), pitch: 'D4', gate: runtimeNumeric('beats', 1), velocity: runtimeNumeric(undefined, 0) }
+      { time: beats(0), pitch: 'C4', gate: beats(2), velocity: scalar(1) },
+      { time: beats(2), pitch: 'D4', gate: beats(1), velocity: scalar(0) }
     ])
   })
 
@@ -734,7 +738,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 0)
   })
 
@@ -760,7 +764,7 @@ describe('compiler/generator/generator.ts', () => {
     const pitchFrequency = getMidiFrequency(convertPitchToMidi(pitch))
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1), pitch }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined>, pitch }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 2)
 
     const [voice0, voice1] = voices

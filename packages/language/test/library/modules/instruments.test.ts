@@ -1,4 +1,5 @@
 import type { Instrument } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -31,8 +32,8 @@ describe('library/modules/instruments.ts', () => {
     sustain: runtimeNumeric('db', 0),
     release: runtimeNumeric('s', 0.003)
   }, {
-    velocity: runtimeNumeric(undefined, 1),
-    gate: runtimeNumeric('s', 1.5)
+    velocity: 1 as Numeric<undefined>,
+    gate: 1.5 as Numeric<'s'>
   })
 
   describe('sample', () => {
@@ -59,7 +60,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       } satisfies Instrument)
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: declickEnvelope(),
           duration: runtimeNumeric('s', 1.503),
@@ -98,7 +99,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
             attack: runtimeNumeric('s', 0.003),
@@ -107,7 +108,7 @@ describe('library/modules/instruments.ts', () => {
             release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: runtimeNumeric(undefined, 1)
+            velocity: 1 as Numeric<undefined>
           }),
           duration: undefined,
           source: {
@@ -136,7 +137,7 @@ describe('library/modules/instruments.ts', () => {
         })
 
         const instrument = InstrumentFacet.get(result)
-        const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO)
+        const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
 
         assert.strictEqual(voices.length, 0)
       }
@@ -157,7 +158,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
             attack: runtimeNumeric('s', 0.003),
@@ -166,7 +167,7 @@ describe('library/modules/instruments.ts', () => {
             release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: runtimeNumeric(undefined, 1)
+            velocity: 1 as Numeric<undefined>
           }),
           duration: undefined,
           source: {
@@ -199,7 +200,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
             attack: runtimeNumeric('s', 0.003),
@@ -208,7 +209,7 @@ describe('library/modules/instruments.ts', () => {
             release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: runtimeNumeric(undefined, 1)
+            velocity: 1 as Numeric<undefined>
           }),
           duration: undefined,
           source: {
@@ -241,7 +242,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
             attack: runtimeNumeric('s', 0.003),
@@ -250,7 +251,7 @@ describe('library/modules/instruments.ts', () => {
             release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: runtimeNumeric(undefined, 1)
+            velocity: 1 as Numeric<undefined>
           }),
           duration: undefined,
           source: {
@@ -283,7 +284,7 @@ describe('library/modules/instruments.ts', () => {
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
             attack: runtimeNumeric('s', 0.003),
@@ -292,7 +293,7 @@ describe('library/modules/instruments.ts', () => {
             release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: runtimeNumeric(undefined, 1)
+            velocity: 1 as Numeric<undefined>
           }),
           duration: undefined,
           source: {

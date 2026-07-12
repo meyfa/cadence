@@ -109,7 +109,7 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
 }
 
 function validateNoteEvent (event: NoteEvent): void {
-  if (!Number.isFinite(event.time.value) || event.time.value < 0) {
+  if (!Number.isFinite(event.time) || event.time < 0) {
     throw invalidNoteEvent(event)
   }
 
@@ -117,11 +117,11 @@ function validateNoteEvent (event: NoteEvent): void {
     throw invalidNoteEvent(event)
   }
 
-  if (!Number.isFinite(event.velocity.value) || event.velocity.value < 0 || event.velocity.value > 1) {
+  if (!Number.isFinite(event.velocity) || event.velocity < 0 || event.velocity > 1) {
     throw invalidNoteEvent(event)
   }
 
-  if (event.gate?.value != null && (!Number.isFinite(event.gate.value) || event.gate.value < 0)) {
+  if (event.gate != null && (!Number.isFinite(event.gate) || event.gate < 0)) {
     throw invalidNoteEvent(event)
   }
 }

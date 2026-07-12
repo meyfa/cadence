@@ -1,6 +1,6 @@
 import type { InstrumentNode, SourceNode } from '@audiograph'
 import type { NoteEvent } from '@core'
-import { timeToSeconds } from '@core'
+import { beatsToSeconds } from '@core'
 import type { Numeric } from '@utility'
 import type { Transport } from '../../transport/transport.js'
 import { applyAutomationPoints } from '../automation.js'
@@ -27,7 +27,7 @@ export function createInstrumentInstance (
   }
 
   const scheduleAtNote = (note: NoteEvent, tempo: Numeric<'bpm'>, callback: (time: number) => void) => {
-    const time = timeToSeconds(note.time, tempo)
+    const time = beatsToSeconds(note.time, tempo)
     transport.schedule(time, callback)
   }
 

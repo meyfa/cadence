@@ -1,4 +1,4 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
 export type Note = `${'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'}${'' | '#' | 'b'}`
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
@@ -13,17 +13,17 @@ export interface Step {
   /**
     * The duration of the step. Defaults to 1.
    */
-  readonly length?: RuntimeNumeric<undefined>
+  readonly length?: Numeric<'beats'>
 
   /**
     * The gate (duration) of the step. If undefined, the gate is equal to the step's length.
    */
-  readonly gate?: RuntimeNumeric<undefined>
+  readonly gate?: Numeric<'beats'>
 
   /**
    * The velocity of the step, in the range [0, 1]. Defaults to 1.
    */
-  readonly velocity?: RuntimeNumeric<undefined>
+  readonly velocity?: Numeric<undefined>
 }
 
 export interface NoteData {
@@ -31,7 +31,7 @@ export interface NoteData {
    * The gate (duration) of the note in beats. If undefined, the note is never released (held indefinitely),
    * and may or may not be cut off by subsequent notes depending on the instrument's behavior.
    */
-  readonly gate?: RuntimeNumeric<'beats'>
+  readonly gate?: Numeric<'beats'>
 
   /**
    * The pitch associated with the note. If undefined, indicates that the instrument's default pitch should be used.
@@ -41,14 +41,14 @@ export interface NoteData {
   /**
    * The velocity of the note, in the range [0, 1].
    */
-  readonly velocity: RuntimeNumeric<undefined>
+  readonly velocity: Numeric<undefined>
 }
 
 export interface NoteEvent extends NoteData {
   /**
    * The time at which the note event occurs.
    */
-  readonly time: RuntimeNumeric<'beats'>
+  readonly time: Numeric<'beats'>
 }
 
 export interface Pattern {
@@ -56,7 +56,7 @@ export interface Pattern {
    * The length of the pattern. This may be any non-negative value (not necessarily an integer).
    * If undefined, the pattern is infinite.
    */
-  readonly length?: RuntimeNumeric<'beats'>
+  readonly length?: Numeric<'beats'>
 
   /**
    * Obtain all note events in the pattern, starting at time 0 and increasing monotonically.

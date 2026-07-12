@@ -1,6 +1,5 @@
 import type { BusId, InstrumentId } from '@core'
 import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'
@@ -10,8 +9,8 @@ import type { NodeId } from '../src/graph.js'
 describe('builder.ts', () => {
   const tempo = 120 as Numeric<'bpm'>
   const length = 16 as Numeric<'beats'>
-  const beats = (value: number) => runtimeNumeric('beats', value)
-  const scalar = (value: number) => runtimeNumeric(undefined, value)
+  const beats = (value: number) => value as Numeric<'beats'>
+  const scalar = (value: number) => value as Numeric<undefined>
 
   it('should maintain tempo and length', () => {
     const builder = createAudioGraphBuilder({ tempo, length })

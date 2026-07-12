@@ -1,5 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, Parameter, ParameterId, Part, Pattern } from '@core'
 import { createSerialPattern } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -25,8 +26,8 @@ const panParameter: Parameter<undefined> = {
 
 const pattern: Pattern = createSerialPattern([
   { value: 'C4' },
-  { value: '-', length: runtimeNumeric(undefined, 1) },
-  { value: 'E4', gate: runtimeNumeric(undefined, 0.5) }
+  { value: '-', length: 1 as Numeric<'beats'> },
+  { value: 'E4', gate: 0.5 as Numeric<'beats'> }
 ])
 
 const effect: Effect = {
