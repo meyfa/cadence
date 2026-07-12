@@ -42,7 +42,8 @@ describe('library/modules/effects.ts', () => {
         type: 'gain',
         gain: {
           id: gainId,
-          initial: runtimeNumeric('db', -6)
+          unit: 'db',
+          initial: -6
         }
       })
 
@@ -66,7 +67,8 @@ describe('library/modules/effects.ts', () => {
         type: 'pan',
         pan: {
           id: panId,
-          initial: runtimeNumeric(undefined, 0.5)
+          unit: undefined,
+          initial: 0.5
         }
       })
 
@@ -90,7 +92,8 @@ describe('library/modules/effects.ts', () => {
         type: 'lowpass',
         frequency: {
           id: frequencyId,
-          initial: runtimeNumeric('hz', 1000)
+          unit: 'hz',
+          initial: 1000
         }
       })
 
@@ -114,7 +117,8 @@ describe('library/modules/effects.ts', () => {
         type: 'highpass',
         frequency: {
           id: frequencyId,
-          initial: runtimeNumeric('hz', 200)
+          unit: 'hz',
+          initial: 200
         }
       })
 
@@ -134,7 +138,7 @@ describe('library/modules/effects.ts', () => {
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'width',
-        width: runtimeNumeric(undefined, 0.8)
+        width: 0.8
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
@@ -157,13 +161,14 @@ describe('library/modules/effects.ts', () => {
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
-        mix: runtimeNumeric(undefined, 0.5),
+        mix: 0.5,
         time: beats(0.5),
         feedback: {
           id: feedbackId,
-          initial: runtimeNumeric(undefined, 0.3)
+          unit: undefined,
+          initial: 0.3
         },
-        wet: runtimeNumeric('db', 0)
+        wet: 0
       })
 
       assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['feedback'])
@@ -182,13 +187,14 @@ describe('library/modules/effects.ts', () => {
 
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'delay',
-        mix: runtimeNumeric(undefined, 0.5),
+        mix: 0.5,
         time: seconds(1.5),
         feedback: {
           id: feedbackId,
-          initial: runtimeNumeric(undefined, 0.3)
+          unit: undefined,
+          initial: 0.3
         },
-        wet: runtimeNumeric('db', 0)
+        wet: 0
       })
 
       assert.deepStrictEqual(Object.keys(RecordFacet.get(result)), ['feedback'])
@@ -206,7 +212,7 @@ describe('library/modules/effects.ts', () => {
 
       const effect = EffectFacet.get(result)
       assert.strictEqual(effect.type, 'delay')
-      assert.deepStrictEqual(effect.wet, runtimeNumeric('db', 3))
+      assert.strictEqual(effect.wet, 3)
     })
   })
 
@@ -224,8 +230,8 @@ describe('library/modules/effects.ts', () => {
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: runtimeNumeric('s', 2.0),
-        mix: runtimeNumeric(undefined, 0.4),
-        wet: runtimeNumeric('db', 0)
+        mix: 0.4,
+        wet: 0
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
@@ -242,8 +248,8 @@ describe('library/modules/effects.ts', () => {
       assert.deepStrictEqual(EffectFacet.get(result), {
         type: 'reverb',
         decay: beats(2),
-        mix: runtimeNumeric(undefined, 0.4),
-        wet: runtimeNumeric('db', 0)
+        mix: 0.4,
+        wet: 0
       })
 
       assert.strictEqual(RecordFacet.has(result), false)
@@ -260,7 +266,7 @@ describe('library/modules/effects.ts', () => {
 
       const effect = EffectFacet.get(result)
       assert.strictEqual(effect.type, 'reverb')
-      assert.deepStrictEqual(effect.wet, runtimeNumeric('db', -3))
+      assert.strictEqual(effect.wet, -3)
     })
   })
 
@@ -271,7 +277,7 @@ describe('library/modules/effects.ts', () => {
       const context = createFunctionContext()
 
       const result = clip.invoke(context, {
-        threshold: Numbers.of(runtimeNumeric(undefined, 0.8))
+        threshold: Numbers.of(runtimeNumeric('db', -6))
       })
 
       const [thresholdId] = context.automations.keys()
@@ -280,7 +286,8 @@ describe('library/modules/effects.ts', () => {
         type: 'clip',
         threshold: {
           id: thresholdId,
-          initial: runtimeNumeric(undefined, 0.8)
+          unit: 'db',
+          initial: -6
         }
       })
 

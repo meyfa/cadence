@@ -3,7 +3,7 @@ import type { Numeric, Unit } from '@utility'
 import type { Transport } from '../transport/transport.js'
 
 export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
-  param.value = source.initial.value
+  param.value = source.initial
 
   const points = source.points
   if (points.length === 0) {
@@ -11,10 +11,10 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
   }
 
   transport.schedule(0 as Numeric<'s'>, (time) => {
-    param.setValueAtTime(source.initial.value, 0)
+    param.setValueAtTime(source.initial, 0)
 
     // Precompute point times
-    const pointTimes = points.map((point) => time + point.time.value)
+    const pointTimes = points.map((point) => time + point.time)
 
     let pointIndex = 0
 
@@ -28,12 +28,12 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     }
 
     let previousTime = 0
-    let previousValue = source.initial.value
+    let previousValue = source.initial
 
     // If the next point is precisely at time 0, set the value immediately
     if (pointTimes[pointIndex] === 0) {
       const point = points[pointIndex]
-      previousValue = point.value.value
+      previousValue = point.value
       param.setValueAtTime(previousValue, pointTimes[pointIndex])
       ++pointIndex
     }
@@ -42,7 +42,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     if (pointTimes[pointIndex] < 0) {
       if (pointIndex + 1 >= points.length) {
         // Not enough points, but we can at least set the final value
-        param.setValueAtTime(points[pointIndex].value.value, 0)
+        param.setValueAtTime(points[pointIndex].value, 0)
         return
       }
 
@@ -53,7 +53,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
       const nextPointTime = pointTimes[pointIndex + 1]
 
       const t = (0 - pointTime) / (nextPointTime - pointTime)
-      const value = evaluateCurve(nextPoint.shape, t, point.value.value, nextPoint.value.value)
+      const value = evaluateCurve(nextPoint.shape, t, point.value, nextPoint.value)
 
       param.setValueAtTime(value, 0)
       previousValue = value
@@ -64,7 +64,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     // Schedule remaining points (guaranteed to be in the future)
     for (let i = pointIndex; i < points.length; ++i) {
       const pointTime = pointTimes[i]
-      const { value: { value }, shape } = points[i]
+      const { value, shape } = points[i]
 
       scheduleToPoint(transport, param, {
         shape,
@@ -81,7 +81,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
 }
 
 export function applyAutomationPoints<U extends Unit> (time: number, transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
-  param.value = source.initial.value
+  param.value = source.initial
 
   const points = source.points
   if (points.length === 0) {
@@ -89,13 +89,13 @@ export function applyAutomationPoints<U extends Unit> (time: number, transport: 
   }
 
   let previousTime = time
-  let previousValue = source.initial.value
+  let previousValue = source.initial
 
   param.setValueAtTime(previousValue, previousTime)
 
   for (const point of points) {
-    const pointTime = time + point.time.value
-    const { value: { value }, shape: shape } = point
+    const pointTime = time + point.time
+    const { value, shape: shape } = point
 
     scheduleToPoint(transport, param, {
       shape,

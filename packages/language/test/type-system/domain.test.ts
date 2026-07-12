@@ -16,12 +16,14 @@ import { expectTypeEquals } from '../test-utils.js'
 
 const gainParameter: Parameter<'db'> = {
   id: 1 as ParameterId,
-  initial: runtimeNumeric('db', -6)
+  unit: 'db',
+  initial: -6 as Numeric<'db'>
 }
 
 const panParameter: Parameter<undefined> = {
   id: 2 as ParameterId,
-  initial: runtimeNumeric(undefined, 0.25)
+  unit: undefined,
+  initial: 0.25 as Numeric<undefined>
 }
 
 const pattern: Pattern = createSerialPattern([
@@ -80,8 +82,7 @@ describe('type-system/domain', () => {
       assert.strictEqual(ParameterFacet.has(decibelValue), true)
       assert.strictEqual(decibelFacet.has(genericValue), false)
       assert.strictEqual(ParameterFacet.detail(decibelType), 'db')
-      assert.strictEqual(parameterData.initial.unit, 'db')
-      assert.strictEqual(parameterData.initial.value, -6)
+      assert.strictEqual(parameterData.initial, -6)
       assert.throws(() => ParameterFacet.detail(ParameterFacet.type()), /Invalid generics for parameter facet/)
     })
   })

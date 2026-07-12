@@ -1,10 +1,9 @@
 import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@core'
 import { dbToGain } from '@core'
-import type { RuntimeNumeric, Unit } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { Numeric, Unit } from '@utility'
 
 export interface Transform<FromUnit extends Unit, ToUnit extends Unit> {
-  readonly transformValue: (value: RuntimeNumeric<FromUnit>) => RuntimeNumeric<ToUnit>
+  readonly transformValue: (value: Numeric<FromUnit>) => Numeric<ToUnit>
   readonly transformCurveShape: (curve: CurveShape) => CurveShape
 }
 
@@ -49,7 +48,7 @@ export function identityTransform<U extends Unit> (): Transform<U, U> {
 
 export const gainTransform: Transform<'db', undefined> = {
   transformValue: (value) => {
-    return runtimeNumeric(undefined, dbToGain(value.value))
+    return dbToGain(value)
   },
 
   transformCurveShape: (curve) => {
@@ -66,11 +65,11 @@ export const gainTransform: Transform<'db', undefined> = {
 
 export const panTransform: Transform<undefined, undefined> = {
   transformValue: (value) => {
-    if (Number.isNaN(value.value)) {
-      throw new Error(`Invalid pan: ${value.value}`)
+    if (Number.isNaN(value)) {
+      throw new Error(`Invalid pan: ${value}`)
     }
 
-    return runtimeNumeric(undefined, Math.max(-1, Math.min(1, value.value)))
+    return Math.max(-1, Math.min(1, value)) as Numeric<undefined>
   },
 
   transformCurveShape: (curve) => curve
@@ -78,11 +77,11 @@ export const panTransform: Transform<undefined, undefined> = {
 
 export const feedbackTransform: Transform<undefined, undefined> = {
   transformValue: (value) => {
-    if (Number.isNaN(value.value)) {
-      throw new Error(`Invalid feedback: ${value.value}`)
+    if (Number.isNaN(value)) {
+      throw new Error(`Invalid feedback: ${value}`)
     }
 
-    return runtimeNumeric(undefined, Math.max(0, Math.min(1, value.value)))
+    return Math.max(0, Math.min(1, value)) as Numeric<undefined>
   },
 
   transformCurveShape: (curve) => curve
@@ -90,12 +89,12 @@ export const feedbackTransform: Transform<undefined, undefined> = {
 
 export const frequencyTransform: Transform<'hz', 'hz'> = {
   transformValue: (value) => {
-    if (!Number.isFinite(value.value)) {
-      throw new Error(`Invalid frequency: ${value.value}`)
+    if (!Number.isFinite(value)) {
+      throw new Error(`Invalid frequency: ${value}`)
     }
 
-    if (value.value < 0) {
-      return runtimeNumeric('hz', 0)
+    if (value < 0) {
+      return 0 as Numeric<'hz'>
     }
 
     return value

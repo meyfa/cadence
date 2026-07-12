@@ -10,12 +10,19 @@ import type { NodeId } from '../src/graph.js'
 import { createAudioGraph } from '../src/lowering.js'
 import type { BiquadNode, DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from '../src/nodes.js'
 
+const scalar = (value: number) => value as Numeric<undefined>
+const beats = (value: number) => value as Numeric<'beats'>
+const seconds = (value: number) => value as Numeric<'s'>
+const db = (value: number) => value as Numeric<'db'>
+const hz = (value: number) => value as Numeric<'hz'>
+const bpm = (value: number) => value as Numeric<'bpm'>
+
 const SIMPLE_CURVE: Curve<'s', 'db'> = {
-  initial: runtimeNumeric('db', -Infinity),
+  initial: db(-Infinity),
   points: [
-    { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-    { time: runtimeNumeric('s', 0.5), value: runtimeNumeric('db', 0), shape: 'linear' },
-    { time: runtimeNumeric('s', 1), value: runtimeNumeric('db', -6), shape: 'step' }
+    { time: seconds(0), value: db(-60), shape: 'step' },
+    { time: seconds(0.5), value: db(0), shape: 'linear' },
+    { time: seconds(1), value: db(-6), shape: 'step' }
   ]
 }
 
@@ -39,7 +46,7 @@ function createProgramWithInstrument (instrument: Instrument, asset?: Asset): Pr
     automations: new Map(),
     assets,
     track: {
-      tempo: 120 as Numeric<'bpm'>,
+      tempo: bpm(120),
       parts: []
     },
     mixer: {
@@ -67,7 +74,7 @@ function createProgramWithEffect (effect: Effect): Program {
     automations: new Map(),
     assets: new Map(),
     track: {
-      tempo: 120 as Numeric<'bpm'>,
+      tempo: bpm(120),
       parts: []
     },
     mixer: {
@@ -77,11 +84,13 @@ function createProgramWithEffect (effect: Effect): Program {
           name: 'Bus 1',
           gain: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric('db', 0)
+            unit: 'db',
+            initial: db(0)
           },
           pan: {
             id: 500 as ParameterId,
-            initial: runtimeNumeric(undefined, 0)
+            unit: undefined,
+            initial: scalar(0)
           },
           effects: [effect]
         }
@@ -102,9 +111,6 @@ function createProgramWithEffect (effect: Effect): Program {
   }
 }
 
-const beats = (value: number) => value as Numeric<'beats'>
-const scalar = (value: number) => value as Numeric<undefined>
-
 describe('lowering.ts', () => {
   it('should lower empty program correctly', () => {
     const program: Program = {
@@ -113,7 +119,7 @@ describe('lowering.ts', () => {
       automations: new Map(),
       assets: new Map(),
       track: {
-        tempo: 120 as Numeric<'bpm'>,
+        tempo: bpm(120),
         parts: []
       },
       mixer: {
@@ -152,7 +158,7 @@ describe('lowering.ts', () => {
         ]
       ]),
       track: {
-        tempo: 120 as Numeric<'bpm'>,
+        tempo: bpm(120),
         parts: []
       },
       mixer: {
@@ -190,7 +196,8 @@ describe('lowering.ts', () => {
             id: instrumentId,
             gain: {
               id: instrumentGainId,
-              initial: runtimeNumeric('db', -6)
+              unit: 'db',
+              initial: db(-6)
             },
             trigger: () => [
               {
@@ -198,9 +205,9 @@ describe('lowering.ts', () => {
                 source: {
                   type: 'oscillator',
                   shape: 'sine',
-                  frequency: 440 as Numeric<'hz'>
+                  frequency: hz(440)
                 },
-                duration: 1 as Numeric<'s'>
+                duration: seconds(1)
               }
             ]
           } satisfies Instrument
@@ -211,7 +218,7 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: 120 as Numeric<'bpm'>,
+        tempo: bpm(120),
         parts: []
       } satisfies Track,
 
@@ -222,11 +229,13 @@ describe('lowering.ts', () => {
             name: 'Bus 1',
             gain: {
               id: busGainId,
-              initial: runtimeNumeric('db', -3)
+              unit: 'db',
+              initial: db(-3)
             },
             pan: {
               id: 500 as ParameterId,
-              initial: runtimeNumeric(undefined, 0)
+              unit: undefined,
+              initial: scalar(0)
             },
             effects: []
           } satisfies Bus
@@ -273,7 +282,7 @@ describe('lowering.ts', () => {
         {
           type: 'gain',
           gain: {
-            initial: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
+            initial: dbToGain(db(-3)),
             points: []
           }
         } satisfies GainNode
@@ -290,7 +299,7 @@ describe('lowering.ts', () => {
         {
           type: 'gain',
           gain: {
-            initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
+            initial: dbToGain(db(-6)),
             points: []
           }
         } satisfies GainNode
@@ -309,8 +318,8 @@ describe('lowering.ts', () => {
     const instrumentNode = graph.nodes.get(3 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
       pitch: 'A4',
-      velocity: 1 as Numeric<undefined>,
-      gate: 1 as Numeric<'beats'>
+      velocity: scalar(1),
+      gate: beats(1)
     })
 
     assert.strictEqual(voices.length, 1)
@@ -319,8 +328,8 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual(voice, {
       type: 'oscillator',
       shape: 'sine',
-      frequency: 440 as Numeric<'hz'>,
-      duration: 1 as Numeric<'s'>, // 0.5s for the note + 0.5s for the release
+      frequency: hz(440),
+      duration: seconds(1), // 0.5s for the note + 0.5s for the release
       gainCurve: (voice as OscillatorNode).gainCurve
     } satisfies SourceNode)
   })
@@ -339,7 +348,8 @@ describe('lowering.ts', () => {
             id: instrumentId,
             gain: {
               id: instrumentGainId,
-              initial: runtimeNumeric('db', -6)
+              unit: 'db',
+              initial: db(-6)
             },
             trigger: () => []
           } satisfies Instrument
@@ -350,16 +360,17 @@ describe('lowering.ts', () => {
         [
           instrumentGainId,
           {
-            initial: runtimeNumeric('db', -6),
+            unit: 'db',
+            initial: db(-6),
             points: [
               {
-                time: runtimeNumeric('s', 0.5),
-                value: runtimeNumeric('db', -3),
+                time: seconds(0.5),
+                value: db(-3),
                 shape: 'linear'
               },
               {
-                time: runtimeNumeric('s', 1),
-                value: runtimeNumeric('db', -12),
+                time: seconds(1),
+                value: db(-12),
                 shape: 'step'
               }
             ]
@@ -370,7 +381,7 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: 120 as Numeric<'bpm'>,
+        tempo: bpm(120),
         parts: []
       } satisfies Track,
 
@@ -396,16 +407,16 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
       type: 'gain',
       gain: {
-        initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
+        initial: dbToGain(db(-6)),
         points: [
           {
-            time: runtimeNumeric('s', 0.5),
-            value: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
+            time: seconds(0.5),
+            value: dbToGain(db(-3)),
             shape: 'exponential'
           },
           {
-            time: runtimeNumeric('s', 1),
-            value: runtimeNumeric(undefined, dbToGain(-12 as Numeric<'db'>)),
+            time: seconds(1),
+            value: dbToGain(db(-12)),
             shape: 'step'
           }
         ]
@@ -426,7 +437,8 @@ describe('lowering.ts', () => {
             id: instrumentId,
             gain: {
               id: 200 as ParameterId,
-              initial: runtimeNumeric('db', -6)
+              unit: 'db',
+              initial: db(-6)
             },
             trigger: () => []
           } satisfies Instrument
@@ -437,18 +449,18 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: 120 as Numeric<'bpm'>,
+        tempo: bpm(120),
         parts: [
           {
             name: 'Part 1',
-            length: 4 as Numeric<'beats'>,
+            length: beats(4),
             routings: [
               {
                 source: {
                   type: 'pattern',
                   value: createSerialPattern([
                     { value: 'C4' },
-                    { value: 'E4', velocity: 0.75 as Numeric<undefined> }
+                    { value: 'E4', velocity: scalar(0.75) }
                   ])
                 },
                 destination: {
@@ -460,7 +472,7 @@ describe('lowering.ts', () => {
           },
           {
             name: 'Part 2',
-            length: 4 as Numeric<'beats'>,
+            length: beats(4),
             routings: [
               {
                 source: {
@@ -506,7 +518,8 @@ describe('lowering.ts', () => {
       id: 100 as InstrumentId,
       gain: {
         id: 200 as ParameterId,
-        initial: runtimeNumeric('db', -Infinity)
+        unit: 'db',
+        initial: db(-Infinity)
       },
       trigger: () => []
     })
@@ -520,7 +533,8 @@ describe('lowering.ts', () => {
         id: 100 as InstrumentId,
         gain: {
           id: 200 as ParameterId,
-          initial: runtimeNumeric('db', gain)
+          unit: 'db',
+          initial: db(gain)
         },
         trigger: () => []
       })
@@ -532,16 +546,16 @@ describe('lowering.ts', () => {
   it('should lower dB curves into gain space', () => {
     const testCases: Array<Curve<'s', 'db'>> = [
       {
-        initial: runtimeNumeric('db', -Infinity),
+        initial: db(-Infinity),
         points: [
-          { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', 0), shape: 'step' }
+          { time: seconds(0), value: db(0), shape: 'step' }
         ]
       },
       {
-        initial: runtimeNumeric('db', -12),
+        initial: db(-12),
         points: [
-          { time: runtimeNumeric('s', 0.25), value: runtimeNumeric('db', -6), shape: 'linear' },
-          { time: runtimeNumeric('s', 0.5), value: runtimeNumeric('db', -18), shape: 'step' }
+          { time: seconds(0.25), value: db(-6), shape: 'linear' },
+          { time: seconds(0.5), value: db(-18), shape: 'step' }
         ]
       },
       SIMPLE_CURVE
@@ -549,8 +563,8 @@ describe('lowering.ts', () => {
 
     const note: NoteData = {
       pitch: 'C4',
-      velocity: 1 as Numeric<undefined>,
-      gate: 16 as Numeric<'beats'>
+      velocity: scalar(1),
+      gate: beats(16)
     }
 
     for (const curve of testCases) {
@@ -558,7 +572,8 @@ describe('lowering.ts', () => {
         id: 100 as InstrumentId,
         gain: {
           id: 200 as ParameterId,
-          initial: runtimeNumeric('db', -6)
+          unit: 'db',
+          initial: db(-6)
         },
         trigger: () => [
           {
@@ -566,7 +581,7 @@ describe('lowering.ts', () => {
             source: {
               type: 'oscillator',
               shape: 'sine',
-              frequency: 440 as Numeric<'hz'>
+              frequency: hz(440)
             }
           }
         ]
@@ -599,13 +614,14 @@ describe('lowering.ts', () => {
       id: 100 as InstrumentId,
       gain: {
         id: 200 as ParameterId,
-        initial: runtimeNumeric('db', -6)
+        unit: 'db',
+        initial: db(-6)
       },
       trigger: () => [
-        makeVoice(100 as Numeric<'hz'>, -1 as Numeric<'s'>),
-        makeVoice(200 as Numeric<'hz'>, 0 as Numeric<'s'>),
-        makeVoice(300 as Numeric<'hz'>, 1 as Numeric<'s'>),
-        makeVoice(400 as Numeric<'hz'>, undefined)
+        makeVoice(hz(100), seconds(-1)),
+        makeVoice(hz(200), seconds(0)),
+        makeVoice(hz(300), seconds(1)),
+        makeVoice(hz(400), undefined)
       ]
     })
 
@@ -614,8 +630,8 @@ describe('lowering.ts', () => {
     const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
       pitch: 'C4',
-      velocity: 1 as Numeric<undefined>,
-      gate: 1 as Numeric<'beats'>
+      velocity: scalar(1),
+      gate: beats(1)
     })
 
     assert.deepStrictEqual(
@@ -630,7 +646,8 @@ describe('lowering.ts', () => {
         id: 100 as InstrumentId,
         gain: {
           id: 200 as ParameterId,
-          initial: runtimeNumeric('db', -6)
+          unit: 'db',
+          initial: db(-6)
         },
         trigger: () => [
           {
@@ -638,8 +655,8 @@ describe('lowering.ts', () => {
             source: {
               type: 'sample',
               assetId: 300 as AssetId,
-              length: -1 as Numeric<'s'>,
-              playbackRate: playbackRate as Numeric<undefined>
+              length: seconds(-1),
+              playbackRate: scalar(playbackRate)
             }
           }
         ]
@@ -654,8 +671,8 @@ describe('lowering.ts', () => {
       assert.throws(() => {
         instrumentNode.trigger({
           pitch: 'C4',
-          velocity: 1 as Numeric<undefined>,
-          gate: 1 as Numeric<'beats'>
+          velocity: scalar(1),
+          gate: beats(1)
         })
       }, /Invalid playback rate/, `should throw for playback rate: ${playbackRate}`)
     }
@@ -667,7 +684,8 @@ describe('lowering.ts', () => {
         id: 100 as InstrumentId,
         gain: {
           id: 200 as ParameterId,
-          initial: runtimeNumeric('db', -6)
+          unit: 'db',
+          initial: db(-6)
         },
         trigger: () => [
           {
@@ -675,7 +693,7 @@ describe('lowering.ts', () => {
             source: {
               type: 'oscillator',
               shape: 'sine',
-              frequency: frequency as Numeric<'hz'>
+              frequency: hz(frequency)
             }
           }
         ]
@@ -687,8 +705,8 @@ describe('lowering.ts', () => {
       assert.throws(() => {
         instrumentNode.trigger({
           pitch: 'C4',
-          velocity: 1 as Numeric<undefined>,
-          gate: 1 as Numeric<'beats'>
+          velocity: scalar(1),
+          gate: beats(1)
         })
       }, /Invalid frequency/, `should throw for frequency: ${frequency}`)
     }
@@ -701,13 +719,14 @@ describe('lowering.ts', () => {
           type: 'gain',
           gain: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric('db', -3)
+            unit: 'db',
+            initial: db(-3)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'gain',
           gain: {
-            initial: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
+            initial: dbToGain(db(-3)),
             points: []
           }
         } satisfies GainNode)
@@ -718,13 +737,14 @@ describe('lowering.ts', () => {
           type: 'gain',
           gain: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric('db', -Infinity)
+            unit: 'db',
+            initial: db(-Infinity)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'gain',
           gain: {
-            initial: runtimeNumeric(undefined, 0),
+            initial: scalar(0),
             points: []
           }
         } satisfies GainNode)
@@ -736,7 +756,8 @@ describe('lowering.ts', () => {
             type: 'gain',
             gain: {
               id: 400 as ParameterId,
-              initial: runtimeNumeric('db', gain)
+              unit: 'db',
+              initial: db(gain)
             }
           })), /Invalid gain/, `should throw for gain: ${gain}`)
         }
@@ -749,13 +770,14 @@ describe('lowering.ts', () => {
           type: 'pan',
           pan: {
             id: 500 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.5)
+            unit: undefined,
+            initial: scalar(0.5)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'pan',
           pan: {
-            initial: runtimeNumeric(undefined, 0.5),
+            initial: scalar(0.5),
             points: []
           }
         } satisfies PanNode)
@@ -766,13 +788,14 @@ describe('lowering.ts', () => {
           type: 'pan',
           pan: {
             id: 500 as ParameterId,
-            initial: runtimeNumeric(undefined, Infinity)
+            unit: undefined,
+            initial: scalar(Infinity)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'pan',
           pan: {
-            initial: runtimeNumeric(undefined, 1),
+            initial: scalar(1),
             points: []
           }
         } satisfies PanNode)
@@ -781,13 +804,14 @@ describe('lowering.ts', () => {
           type: 'pan',
           pan: {
             id: 500 as ParameterId,
-            initial: runtimeNumeric(undefined, -Infinity)
+            unit: undefined,
+            initial: scalar(-Infinity)
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           type: 'pan',
           pan: {
-            initial: runtimeNumeric(undefined, -1),
+            initial: scalar(-1),
             points: []
           }
         } satisfies PanNode)
@@ -798,7 +822,8 @@ describe('lowering.ts', () => {
           type: 'pan',
           pan: {
             id: 500 as ParameterId,
-            initial: runtimeNumeric(undefined, Number.NaN)
+            unit: undefined,
+            initial: scalar(Number.NaN)
           }
         })), /Invalid pan/)
       })
@@ -810,34 +835,36 @@ describe('lowering.ts', () => {
           type: 'lowpass',
           frequency: {
             id: 600 as ParameterId,
-            initial: runtimeNumeric('hz', 1000)
+            unit: 'hz',
+            initial: hz(1000)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'biquad',
           filterType: 'lowpass',
           frequency: {
-            initial: runtimeNumeric('hz', 1000),
+            initial: hz(1000),
             points: []
           },
-          rolloffPerOctave: 12 as Numeric<'db'>
+          rolloffPerOctave: db(12)
         } satisfies BiquadNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'lowpass',
           frequency: {
             id: 600 as ParameterId,
-            initial: runtimeNumeric('hz', -100)
+            unit: 'hz',
+            initial: hz(-100)
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           type: 'biquad',
           filterType: 'lowpass',
           frequency: {
-            initial: runtimeNumeric('hz', 0),
+            initial: hz(0),
             points: []
           },
-          rolloffPerOctave: 12 as Numeric<'db'>
+          rolloffPerOctave: db(12)
         } satisfies BiquadNode)
       })
 
@@ -847,7 +874,8 @@ describe('lowering.ts', () => {
             type: 'lowpass',
             frequency: {
               id: 600 as ParameterId,
-              initial: runtimeNumeric('hz', frequency)
+              unit: 'hz',
+              initial: hz(frequency)
             }
           })), /Invalid frequency/, `should throw for frequency: ${frequency}`)
         }
@@ -860,34 +888,36 @@ describe('lowering.ts', () => {
           type: 'highpass',
           frequency: {
             id: 600 as ParameterId,
-            initial: runtimeNumeric('hz', 500)
+            unit: 'hz',
+            initial: hz(500)
           }
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'biquad',
           filterType: 'highpass',
           frequency: {
-            initial: runtimeNumeric('hz', 500),
+            initial: hz(500),
             points: []
           },
-          rolloffPerOctave: 12 as Numeric<'db'>
+          rolloffPerOctave: db(12)
         } satisfies BiquadNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'highpass',
           frequency: {
             id: 600 as ParameterId,
-            initial: runtimeNumeric('hz', -100)
+            unit: 'hz',
+            initial: hz(-100)
           }
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           type: 'biquad',
           filterType: 'highpass',
           frequency: {
-            initial: runtimeNumeric('hz', 0),
+            initial: hz(0),
             points: []
           },
-          rolloffPerOctave: 12 as Numeric<'db'>
+          rolloffPerOctave: db(12)
         } satisfies BiquadNode)
       })
 
@@ -897,7 +927,8 @@ describe('lowering.ts', () => {
             type: 'highpass',
             frequency: {
               id: 600 as ParameterId,
-              initial: runtimeNumeric('hz', frequency)
+              unit: 'hz',
+              initial: hz(frequency)
             }
           })), /Invalid frequency/, `should throw for frequency: ${frequency}`)
         }
@@ -908,38 +939,38 @@ describe('lowering.ts', () => {
       it('should handle width', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'width',
-          width: runtimeNumeric(undefined, 0.75)
+          width: scalar(0.75)
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'width',
-          width: 0.75 as Numeric<undefined>
+          width: scalar(0.75)
         } satisfies WidthNode)
       })
 
       it('should clamp width to [0, 1]', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'width',
-          width: runtimeNumeric(undefined, Infinity)
+          width: scalar(Infinity)
         }))
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'width',
-          width: 1 as Numeric<undefined>
+          width: scalar(1)
         } satisfies WidthNode)
 
         const graph2 = createAudioGraph(createProgramWithEffect({
           type: 'width',
-          width: runtimeNumeric(undefined, -Infinity)
+          width: scalar(-Infinity)
         }))
         assert.deepStrictEqual(graph2.nodes.get(2 as NodeId), {
           type: 'width',
-          width: 0 as Numeric<undefined>
+          width: scalar(0)
         } satisfies WidthNode)
       })
 
       it('should throw for NaN width', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'width',
-          width: runtimeNumeric(undefined, Number.NaN)
+          width: scalar(Number.NaN)
         })), /Invalid width/)
       })
     })
@@ -948,13 +979,14 @@ describe('lowering.ts', () => {
       it('should handle delay', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.4)
+            unit: undefined,
+            initial: scalar(0.4)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
@@ -970,7 +1002,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>)
+              time: beatsToSeconds(beats(0.5), bpm(120))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -979,7 +1011,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.4),
+                initial: scalar(0.4),
                 points: []
               }
             } satisfies GainNode
@@ -990,7 +1022,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1.0),
+                initial: scalar(1.0),
                 points: []
               }
             } satisfies GainNode
@@ -1001,7 +1033,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.5),
+                initial: scalar(0.5),
                 points: []
               }
             } satisfies GainNode
@@ -1025,13 +1057,14 @@ describe('lowering.ts', () => {
       it('should clamp delay mix to [0, 1]', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, Infinity),
+          mix: scalar(Infinity),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.4)
+            unit: undefined,
+            initial: scalar(0.4)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
@@ -1047,7 +1080,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>)
+              time: beatsToSeconds(beats(0.5), bpm(120))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -1056,7 +1089,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.4),
+                initial: scalar(0.4),
                 points: []
               }
             } satisfies GainNode
@@ -1067,13 +1100,14 @@ describe('lowering.ts', () => {
       it('should throw for NaN delay mix', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, Number.NaN),
+          mix: scalar(Number.NaN),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.4)
+            unit: undefined,
+            initial: scalar(0.4)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         })), /Invalid mix/)
       })
 
@@ -1081,13 +1115,14 @@ describe('lowering.ts', () => {
         for (const time of [Infinity, -Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'delay',
-            mix: runtimeNumeric(undefined, 0.25),
+            mix: scalar(0.25),
             time: runtimeNumeric('beats', time),
             feedback: {
               id: 400 as ParameterId,
-              initial: runtimeNumeric(undefined, 0.4)
+              unit: undefined,
+              initial: scalar(0.4)
             },
-            wet: runtimeNumeric('db', 0)
+            wet: db(0)
           })), /Invalid time/, `should throw for time: ${time}`)
         }
       })
@@ -1095,19 +1130,20 @@ describe('lowering.ts', () => {
       it('should clamp delay feedback to [0, 1]', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, Infinity)
+            unit: undefined,
+            initial: scalar(Infinity)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
           type: 'gain',
           gain: {
-            initial: runtimeNumeric(undefined, 1),
+            initial: scalar(1),
             points: []
           }
         } satisfies GainNode)
@@ -1116,44 +1152,47 @@ describe('lowering.ts', () => {
       it('should throw for NaN delay feedback', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, Number.NaN)
+            unit: undefined,
+            initial: scalar(Number.NaN)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         })), /Invalid feedback/)
       })
 
       it('should handle delay specified in seconds', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           time: runtimeNumeric('s', 1.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.4)
+            unit: undefined,
+            initial: scalar(0.4)
           },
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'delay',
-          time: 1.5 as Numeric<'s'>
+          time: seconds(1.5)
         } satisfies DelayNode)
       })
 
       it('should add a gain node for non-zero wet level', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'delay',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           time: runtimeNumeric('beats', 0.5),
           feedback: {
             id: 400 as ParameterId,
-            initial: runtimeNumeric(undefined, 0.4)
+            unit: undefined,
+            initial: scalar(0.4)
           },
-          wet: runtimeNumeric('db', -6)
+          wet: db(-6)
         }))
 
         // Note: There already is a wet gain node to handle the mix level,
@@ -1172,7 +1211,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>)
+              time: beatsToSeconds(beats(0.5), bpm(120))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -1181,7 +1220,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.4),
+                initial: scalar(0.4),
                 points: []
               }
             } satisfies GainNode
@@ -1192,7 +1231,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
+                initial: dbToGain(db(-6)),
                 points: []
               }
             } satisfies GainNode
@@ -1203,7 +1242,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1.0),
+                initial: scalar(1.0),
                 points: []
               }
             } satisfies GainNode
@@ -1214,7 +1253,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.5),
+                initial: scalar(0.5),
                 points: []
               }
             } satisfies GainNode
@@ -1241,13 +1280,14 @@ describe('lowering.ts', () => {
         for (const wet of [Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'delay',
-            mix: runtimeNumeric(undefined, 0.25),
+            mix: scalar(0.25),
             time: runtimeNumeric('beats', 0.5),
             feedback: {
               id: 400 as ParameterId,
-              initial: runtimeNumeric(undefined, 0.4)
+              unit: undefined,
+              initial: scalar(0.4)
             },
-            wet: runtimeNumeric('db', wet)
+            wet: db(wet)
           })), /Invalid gain/, `should throw for wet level: ${wet}`)
         }
       })
@@ -1257,9 +1297,9 @@ describe('lowering.ts', () => {
       it('should handle reverb', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
-          mix: runtimeNumeric(undefined, 0.75),
+          mix: scalar(0.75),
           decay: runtimeNumeric('s', 2),
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
@@ -1275,7 +1315,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'reverb',
-              decay: 2 as Numeric<'s'>
+              decay: seconds(2)
             } satisfies ReverbNode
           ],
           // dry gain node
@@ -1284,7 +1324,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.5),
+                initial: scalar(0.5),
                 points: []
               }
             } satisfies GainNode
@@ -1295,7 +1335,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1.0),
+                initial: scalar(1.0),
                 points: []
               }
             } satisfies GainNode
@@ -1315,9 +1355,9 @@ describe('lowering.ts', () => {
       it('should clamp reverb mix to [0, 1]', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
-          mix: runtimeNumeric(undefined, 1.5),
+          mix: scalar(1.5),
           decay: runtimeNumeric('s', 2),
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual([...graph.nodes].sort(compareIds), [
@@ -1333,7 +1373,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'reverb',
-              decay: 2 as Numeric<'s'>
+              decay: seconds(2)
             } satisfies ReverbNode
           ]
         ])
@@ -1342,9 +1382,9 @@ describe('lowering.ts', () => {
       it('should throw for NaN reverb mix', () => {
         assert.throws(() => createAudioGraph(createProgramWithEffect({
           type: 'reverb',
-          mix: runtimeNumeric(undefined, Number.NaN),
+          mix: scalar(Number.NaN),
           decay: runtimeNumeric('s', 2),
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         })), /Invalid mix/)
       })
 
@@ -1352,9 +1392,9 @@ describe('lowering.ts', () => {
         for (const decay of [Infinity, -Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'reverb',
-            mix: runtimeNumeric(undefined, 0.75),
+            mix: scalar(0.75),
             decay: runtimeNumeric('s', decay),
-            wet: runtimeNumeric('db', 0)
+            wet: db(0)
           })), /Invalid decay/, `should throw for decay: ${decay}`)
         }
       })
@@ -1362,23 +1402,23 @@ describe('lowering.ts', () => {
       it('should handle reverb specified in beats', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
-          mix: runtimeNumeric(undefined, 0.75),
+          mix: scalar(0.75),
           decay: runtimeNumeric('beats', 2),
-          wet: runtimeNumeric('db', 0)
+          wet: db(0)
         }))
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'reverb',
-          decay: beatsToSeconds(2 as Numeric<'beats'>, 120 as Numeric<'bpm'>)
+          decay: beatsToSeconds(beats(2), bpm(120))
         } satisfies ReverbNode)
       })
 
       it('should add a gain node for non-zero wet level', () => {
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'reverb',
-          mix: runtimeNumeric(undefined, 0.25),
+          mix: scalar(0.25),
           decay: runtimeNumeric('s', 2),
-          wet: runtimeNumeric('db', -6)
+          wet: db(-6)
         }))
 
         // Note: There already is a wet gain node to handle the mix level,
@@ -1397,7 +1437,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'reverb',
-              decay: 2 as Numeric<'s'>
+              decay: seconds(2)
             } satisfies ReverbNode
           ],
           // wet gain node for wet level
@@ -1406,7 +1446,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
+                initial: dbToGain(db(-6)),
                 points: []
               }
             } satisfies GainNode
@@ -1417,7 +1457,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1.0),
+                initial: scalar(1.0),
                 points: []
               }
             } satisfies GainNode
@@ -1428,7 +1468,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 0.5),
+                initial: scalar(0.5),
                 points: []
               }
             } satisfies GainNode
@@ -1451,9 +1491,9 @@ describe('lowering.ts', () => {
         for (const wet of [Infinity, Number.NaN]) {
           assert.throws(() => createAudioGraph(createProgramWithEffect({
             type: 'reverb',
-            mix: runtimeNumeric(undefined, 0.75),
+            mix: scalar(0.75),
             decay: runtimeNumeric('s', 2),
-            wet: runtimeNumeric('db', wet)
+            wet: db(wet)
           })), /Invalid gain/, `should throw for wet level: ${wet}`)
         }
       })
@@ -1461,12 +1501,13 @@ describe('lowering.ts', () => {
 
     describe('clip effect', () => {
       it('should create gain, wave shaper, and makeup nodes', () => {
-        const threshold = runtimeNumeric('db', -6)
+        const threshold = db(-6)
 
         const graph = createAudioGraph(createProgramWithEffect({
           type: 'clip',
           threshold: {
             id: 400 as ParameterId,
+            unit: 'db',
             initial: threshold
           }
         }))
@@ -1485,7 +1526,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1 / dbToGain(threshold.value)),
+                initial: scalar(1 / dbToGain(threshold)),
                 points: []
               }
             } satisfies GainNode
@@ -1504,7 +1545,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, dbToGain(threshold.value)),
+                initial: dbToGain(threshold),
                 points: []
               }
             } satisfies GainNode
@@ -1527,7 +1568,8 @@ describe('lowering.ts', () => {
             type: 'clip',
             threshold: {
               id: 400 as ParameterId,
-              initial: runtimeNumeric('db', threshold)
+              unit: 'db',
+              initial: db(threshold)
             }
           })), /Invalid gain/, `should throw for threshold: ${threshold}`)
         }
@@ -1541,7 +1583,8 @@ describe('lowering.ts', () => {
         id: 100 as InstrumentId,
         gain: {
           id: 200 as ParameterId,
-          initial: runtimeNumeric('db', -6)
+          unit: 'db',
+          initial: db(-6)
         },
         trigger: () => []
       }))
@@ -1562,7 +1605,8 @@ describe('lowering.ts', () => {
               id: instrumentId,
               gain: {
                 id: 200 as ParameterId,
-                initial: runtimeNumeric('db', -6)
+                unit: 'db',
+                initial: db(-6)
               },
               trigger: () => []
             } satisfies Instrument
@@ -1571,7 +1615,7 @@ describe('lowering.ts', () => {
         automations: new Map(),
         assets: new Map(),
         track: {
-          tempo: 120 as Numeric<'bpm'>,
+          tempo: bpm(120),
           parts: []
         },
         mixer: {
@@ -1581,11 +1625,13 @@ describe('lowering.ts', () => {
               name: 'Bus 1',
               gain: {
                 id: 201 as ParameterId,
-                initial: runtimeNumeric('db', -3)
+                unit: 'db',
+                initial: db(-3)
               },
               pan: {
                 id: 202 as ParameterId,
-                initial: runtimeNumeric(undefined, 0)
+                unit: undefined,
+                initial: scalar(0)
               },
               effects: []
             } satisfies Bus
@@ -1616,7 +1662,7 @@ describe('lowering.ts', () => {
         }
       }
 
-      const interval = 0.123 as Numeric<'s'>
+      const interval = seconds(0.123)
 
       const graph = createAudioGraph(program, {
         metering: { interval }
@@ -1656,7 +1702,8 @@ describe('lowering.ts', () => {
       id: 100 as InstrumentId,
       gain: {
         id: 200 as ParameterId,
-        initial: runtimeNumeric('db', -6)
+        unit: 'db',
+        initial: db(-6)
       },
       trigger: () => []
     })
@@ -1664,7 +1711,7 @@ describe('lowering.ts', () => {
     for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {
       const options = {
         metering: {
-          interval: interval as Numeric<'s'>
+          interval: seconds(interval)
         }
       }
 
