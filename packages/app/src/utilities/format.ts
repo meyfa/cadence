@@ -5,9 +5,9 @@ export function pluralize (count: number, singular: string, plural = singular.at
 }
 
 export function formatDuration (duration: Numeric<'s'>): string {
-  const sign = duration.value < 0 ? '-' : ''
+  const sign = duration < 0 ? '-' : ''
 
-  const millis = Math.round(Math.abs(duration.value) * 1000)
+  const millis = Math.round(Math.abs(duration) * 1000)
 
   const hours = Math.floor(millis / (60 * 60 * 1000))
   const minutes = Math.floor((millis % (60 * 60 * 1000)) / (60 * 1000))
@@ -36,8 +36,8 @@ interface BeatDurationParts {
 }
 
 function getBeatDurationParts (duration: Numeric<'beats'>, beatsPerBar: number): BeatDurationParts {
-  const sign = Math.sign(duration.value)
-  let remainingBeats = Math.abs(duration.value)
+  const sign = Math.sign(duration)
+  let remainingBeats = Math.abs(duration)
 
   const bars = Math.floor(remainingBeats / beatsPerBar)
   remainingBeats -= bars * beatsPerBar
@@ -73,9 +73,7 @@ export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerB
   return `${sign < 0 ? '-' : ''}${parts.join(' ')}`
 }
 
-export function formatBytes (bytes: Numeric<'bytes'>): string {
-  let { value } = bytes
-
+export function formatBytes (value: Numeric<'bytes'>): string {
   if (value < 1024) {
     return `${value} B`
   }
@@ -84,7 +82,7 @@ export function formatBytes (bytes: Numeric<'bytes'>): string {
   let unitIndex = -1
 
   do {
-    value /= 1024
+    value = (value / 1024) as Numeric<'bytes'>
     ++unitIndex
   } while (value >= 1024 && unitIndex < units.length - 1)
 

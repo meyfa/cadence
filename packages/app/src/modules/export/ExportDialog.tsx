@@ -1,7 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import { AIFFFormat, createLeadingSilenceTransform, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
@@ -69,14 +69,14 @@ export const ExportDialog: FunctionComponent<{
 
     return computeExportMetrics(program, {
       sampleRate,
-      leadingSilence: numeric('s', Number.parseFloat(leadingSilence)),
+      leadingSilence: Number.parseFloat(leadingSilence) as Numeric<'s'>,
       type,
       wavFormat,
       aiffFormat
     })
   }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat])
 
-  const exceedsMaxDuration = metrics != null && metrics.duration.value > MAX_EXPORT_DURATION.value
+  const exceedsMaxDuration = metrics != null && metrics.duration > MAX_EXPORT_DURATION
 
   const onExport = useCallback(() => {
     if (program == null || exceedsMaxDuration) {
@@ -88,7 +88,7 @@ export const ExportDialog: FunctionComponent<{
     const format = type === 'wav' ? wavFormat : aiffFormat
 
     const transforms = [
-      createLeadingSilenceTransform(numeric('s', Number.parseFloat(leadingSilence)))
+      createLeadingSilenceTransform(Number.parseFloat(leadingSilence) as Numeric<'s'>)
     ]
 
     const token = ++tokenRef.current

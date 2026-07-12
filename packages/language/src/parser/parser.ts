@@ -403,7 +403,7 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     p.eitherOr(literal('+'), literal('-')),
     p.recursive(() => unaryExpression_),
     (op, expr) => {
-      // If it's a numeric literal, fold the unary operator directly
+      // If it's a runtimeNumeric literal, fold the unary operator directly
       if (expr.type === 'Number') {
         return ast.make('Number', combineSourceRanges(op, expr), {
           value: op.text === '+' ? expr.value : -expr.value

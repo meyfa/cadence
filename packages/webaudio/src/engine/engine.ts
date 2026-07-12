@@ -1,6 +1,6 @@
 import type { AudioGraph, EntityKey, Node } from '@audiograph'
 import type { Numeric, Observable, Observer, UnsubscribeFn } from '@utility'
-import { DisposeStack, MutableObservable, numeric } from '@utility'
+import { DisposeStack, MutableObservable } from '@utility'
 import type { CacheLimits } from '../assets/fetcher.js'
 import { createAudioFetcher } from '../assets/fetcher.js'
 import type { MeterCallbacks } from '../graph/factory.js'
@@ -41,7 +41,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   })
 
   const playing = new MutableObservable(false)
-  const range = new MutableObservable({ start: numeric('beats', 0) })
+  const range = new MutableObservable<BeatRange>({ start: 0 as Numeric<'beats'> })
   const position = new MutableObservable(range.get().start)
   const errors = new MutableObservable<readonly Error[]>([])
 

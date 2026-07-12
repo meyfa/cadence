@@ -6,11 +6,11 @@ import type { AudioBufferTransform } from '../common/types.js'
 const identity: AudioBufferTransform = (input) => input
 
 export function createLeadingSilenceTransform (duration: Numeric<'s'>): AudioBufferTransform {
-  if (duration.value < 0) {
+  if (duration < 0) {
     throw new Error('Duration must be non-negative.')
   }
 
-  if (duration.value === 0) {
+  if (duration === 0) {
     return identity
   }
 
@@ -18,7 +18,7 @@ export function createLeadingSilenceTransform (duration: Numeric<'s'>): AudioBuf
     const silence = new ConstantAudioBuffer({
       sampleRate: input.sampleRate,
       numberOfChannels: input.numberOfChannels,
-      length: Math.ceil(duration.value * input.sampleRate),
+      length: Math.ceil(duration * input.sampleRate),
       value: 0
     })
 

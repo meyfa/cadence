@@ -1,19 +1,19 @@
-import type { Numeric, Unit } from '@utility'
+import type { RuntimeNumeric, Unit } from '@utility'
 import { makeFacet } from '../factory.js'
 import type { Facet, FacetType } from '../types.js'
 
 const FACET_NAME = 'number'
 
-const cache = new Map<Unit, Facet<typeof FACET_NAME, Numeric<Unit>>>()
+const cache = new Map<Unit, Facet<typeof FACET_NAME, RuntimeNumeric<Unit>>>()
 
 export const NumberFacet = {
-  ...makeFacet<typeof FACET_NAME, Numeric<Unit>>(FACET_NAME, {}),
+  ...makeFacet<typeof FACET_NAME, RuntimeNumeric<Unit>>(FACET_NAME, {}),
 
   with: <const U extends Unit> (unit: U) => {
-    let cached = cache.get(unit) as Facet<typeof FACET_NAME, Numeric<U>> | undefined
+    let cached = cache.get(unit) as Facet<typeof FACET_NAME, RuntimeNumeric<U>> | undefined
 
     if (cached == null) {
-      cached = makeFacet<typeof FACET_NAME, Numeric<U>>(FACET_NAME, { unit }, {
+      cached = makeFacet<typeof FACET_NAME, RuntimeNumeric<U>>(FACET_NAME, { unit }, {
         format: () => unit == null ? FACET_NAME : `${FACET_NAME}(${unit})`
       })
       cache.set(unit, cached)

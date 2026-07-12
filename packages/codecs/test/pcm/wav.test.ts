@@ -1,4 +1,3 @@
-import { numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
@@ -12,10 +11,10 @@ describe('pcm/wav.ts', () => {
       length: 441_000 // 10 seconds at 44.1kHz
     }
 
-    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm16' }), numeric('bytes', 44 + 441_000 * 2 * 2))
-    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm24' }), numeric('bytes', 44 + 441_000 * 2 * 3))
-    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'pcm32' }), numeric('bytes', 44 + 441_000 * 2 * 4))
-    assert.deepStrictEqual(estimateWAVSize(stereo10s, { format: 'float32' }), numeric('bytes', 44 + 441_000 * 2 * 4))
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm16' }), 44 + 441_000 * 2 * 2)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm24' }), 44 + 441_000 * 2 * 3)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'pcm32' }), 44 + 441_000 * 2 * 4)
+    assert.strictEqual(estimateWAVSize(stereo10s, { format: 'float32' }), 44 + 441_000 * 2 * 4)
   })
 
   it('encodes pcm16 correctly', () => {

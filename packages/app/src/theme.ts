@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { useEffect, useState } from 'react'
 
 const DARK_THEME = 'dark'
@@ -13,7 +13,7 @@ export type Theme = typeof themes[number]
 export const themeSettings = Object.freeze([DARK_THEME, LIGHT_THEME, SYSTEM_THEME] as const)
 export type ThemeSetting = typeof themeSettings[number]
 
-const THEME_TRANSITION_DURATION = numeric('s', 0.2)
+const THEME_TRANSITION_DURATION = runtimeNumeric('s', 0.2)
 
 const prefersLightColorScheme = window.matchMedia('(prefers-color-scheme: light)')
 prefersLightColorScheme.addEventListener('change', () => updateEffectiveTheme())

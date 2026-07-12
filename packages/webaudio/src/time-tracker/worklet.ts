@@ -1,4 +1,5 @@
-import { MutableObservable, numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { MutableObservable } from '@utility'
 import { createTimeMeter } from '../worklets/metering/factory.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
@@ -9,15 +10,15 @@ export async function createWorkletTimeTracker (
 ): Promise<TimeTracker> {
   const { updateInterval, offsetTime } = options
 
-  const interval = Math.max(1, Math.floor(updateInterval.value * ctx.sampleRate))
+  const interval = Math.max(1, Math.floor(updateInterval * ctx.sampleRate))
   const instance = await createTimeMeter(ctx, { interval })
 
   input.connect(instance.node)
 
-  const time = new MutableObservable(numeric('s', 0))
+  const time = new MutableObservable(0 as Numeric<'s'>)
   const unsubscribe = instance.measurements.subscribe((measurement) => {
     if (measurement != null) {
-      time.set(numeric('s', measurement.time - offsetTime.value))
+      time.set((measurement.time - offsetTime) as Numeric<'s'>)
     }
   })
 

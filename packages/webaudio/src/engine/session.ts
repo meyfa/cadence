@@ -1,7 +1,7 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { beatsToSeconds, dbToGain } from '@core'
 import type { Numeric, Observable } from '@utility'
-import { DisposeStack, MutableObservable, numeric } from '@utility'
+import { DisposeStack, MutableObservable } from '@utility'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { MeterCallbacks } from '../graph/factory.js'
 import { createWebAudioGraph } from '../graph/graph.js'
@@ -30,18 +30,18 @@ export function createAudioSession (
   const endTime = beatsToSeconds(endPosition, graph.tempo)
 
   // Whether nothing should be played at all because the start is after the end
-  const endImmediately = endPosition.value <= 0 || range.start.value >= endPosition.value
+  const endImmediately = endPosition <= 0 || range.start >= endPosition
 
   const transport = createOnlineTransport()
   disposeStack.pushDisposable(transport)
 
-  transport.output.gain.value = dbToGain(outputGain.get()).value
+  transport.output.gain.value = dbToGain(outputGain.get())
 
   disposeStack.push(outputGain.subscribe((value) => {
     const gain = transport.output.gain
     const currentTime = transport.ctx.currentTime
     gain.setValueAtTime(gain.value, currentTime)
-    gain.linearRampToValueAtTime(dbToGain(value).value, currentTime + 0.05)
+    gain.linearRampToValueAtTime(dbToGain(value), currentTime + 0.05)
   }))
 
   const ended = new MutableObservable(false)
@@ -78,15 +78,15 @@ export function createAudioSession (
         if (!disposed) {
           ended.set(true)
         }
-      }, (endTime.value - startTime.value) * 1000)
+      }, (endTime - startTime) * 1000)
 
       disposeStack.push(() => clearTimeout(endTimeout))
 
       // Track position based on render-thread time updates.
       disposeStack.push(transport.time.subscribe((time) => {
         if (!disposed) {
-          const clamped = Math.max(startTime.value, time.value)
-          position.set(numeric('beats', clamped * graph.tempo.value / 60))
+          const clamped = Math.max(startTime, time)
+          position.set((clamped * graph.tempo / 60) as Numeric<'beats'>)
         }
       }))
     }).catch((err: unknown) => {

@@ -1,6 +1,6 @@
 import type { Pattern } from '@core'
 import { createSerialPattern, loopPattern } from '@core'
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { FunctionFacet } from '../../type-system/base/function.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
@@ -46,7 +46,7 @@ const loop: PatternBuiltin = {
         return PatternFacet.type().of(loopPattern(pattern))
       }
 
-      const duration = numeric('beats', pattern.length.value * factor)
+      const duration = runtimeNumeric('beats', pattern.length.value * factor)
 
       return PatternFacet.type().of(loopPattern(pattern, duration))
     }

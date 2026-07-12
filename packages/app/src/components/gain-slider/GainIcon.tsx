@@ -5,11 +5,11 @@ import type { FunctionComponent } from 'react'
 export const GainIcon: FunctionComponent<{
   gain: Numeric<'db'>
 }> = ({ gain }) => {
-  if (gain.value < -48) {
+  if (gain < -48) {
     return <VolumeOffOutlined />
   }
 
-  if (gain.value < -18) {
+  if (gain < -18) {
     return <VolumeDownOutlined />
   }
 

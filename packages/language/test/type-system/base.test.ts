@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { Function } from '../../src/type-system/base/function.js'
@@ -26,13 +26,13 @@ describe('type-system/base', () => {
 
   describe('NumberFacet', () => {
     it('should support unit-specific facets and detail()', () => {
-      const genericValue = NumberFacet.type().of(numeric('db', -3))
+      const genericValue = NumberFacet.type().of(runtimeNumeric('db', -3))
       const decibelFacet = NumberFacet.with('db')
       const decibelType = decibelFacet.type()
-      const decibelValue = decibelType.of(numeric('db', -3))
+      const decibelValue = decibelType.of(runtimeNumeric('db', -3))
       const specificData = decibelFacet.get(decibelValue)
 
-      expectTypeEquals<Numeric<'db'>, typeof specificData>()
+      expectTypeEquals<RuntimeNumeric<'db'>, typeof specificData>()
       assert.strictEqual(NumberFacet.format(), 'number')
       assert.strictEqual(NumberFacet.with(undefined).format(), 'number')
       assert.strictEqual(decibelFacet.format(), 'number(db)')
@@ -69,7 +69,7 @@ describe('type-system/base', () => {
       const value = typedType.of(func)
       const loadedFunction = typedFacet.get(value)
       const result = loadedFunction.invoke(undefined as never, {
-        amount: amountType.of(numeric('db', -6))
+        amount: amountType.of(runtimeNumeric('db', -6))
       })
 
       expectTypeEquals<Function<typeof schema, typeof returnType>, typeof loadedFunction>()
@@ -118,7 +118,7 @@ describe('type-system/base', () => {
       const recordFacet = RecordFacet.with({ gain: gainType, label: labelType })
       const recordType = recordFacet.type()
       const recordValue = recordType.of({
-        gain: gainType.of(numeric('db', -9)),
+        gain: gainType.of(runtimeNumeric('db', -9)),
         label: labelType.of('lead')
       })
       const recordData = recordFacet.get(recordValue)
@@ -146,7 +146,7 @@ describe('type-system/base', () => {
     it('should not expose object prototype properties', () => {
       const recordFacet = RecordFacet.with({ gain: NumberFacet.type() })
       const recordType = recordFacet.type()
-      const recordValue = recordType.of({ gain: NumberFacet.with('db').type().of(numeric('db', -9)) })
+      const recordValue = recordType.of({ gain: NumberFacet.with('db').type().of(runtimeNumeric('db', -9)) })
       const recordData = recordFacet.get(recordValue)
 
       assert.strictEqual(Object.getPrototypeOf(RecordFacet.detail(recordType)), null)
@@ -156,7 +156,7 @@ describe('type-system/base', () => {
       assert.strictEqual((recordData as Record<string, unknown>).constructor, undefined)
 
       const genericRecordType = RecordFacet.type()
-      const genericRecordValue = genericRecordType.of({ gain: NumberFacet.with('db').type().of(numeric('db', -9)) })
+      const genericRecordValue = genericRecordType.of({ gain: NumberFacet.with('db').type().of(runtimeNumeric('db', -9)) })
       const genericRecordData = RecordFacet.get(genericRecordValue)
 
       assert.strictEqual(Object.getPrototypeOf(RecordFacet.detail(genericRecordType)), null)

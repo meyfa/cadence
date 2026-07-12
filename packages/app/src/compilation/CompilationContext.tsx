@@ -1,6 +1,6 @@
 import { useDebouncedValue, useLatestRef, useProjectSource, useSafeContext } from '@editor'
 import type { GenerateOptions } from '@language'
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useMemo } from 'react'
 import type { CompileResult } from './compiler.js'
@@ -14,7 +14,7 @@ export interface CompilationState {
 
 const CompilationContext = createContext<CompilationState | undefined>(undefined)
 
-const COMPILE_DEBOUNCE = numeric('s', 0.25)
+const COMPILE_DEBOUNCE = 0.25 as Numeric<'s'>
 
 export const CompilationProvider: FunctionComponent<PropsWithChildren<{
   compileOptions: GenerateOptions

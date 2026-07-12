@@ -3,7 +3,6 @@ import { calculateTotalLength } from '@core'
 import { useGlobalMouseMove, useGlobalMouseUp } from '@editor'
 import { Warning } from '@mui/icons-material'
 import type { Numeric } from '@utility'
-import { numeric } from '@utility'
 import type { BeatRange } from '@webaudio'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
@@ -56,8 +55,8 @@ export const Timeline: FunctionComponent<{
     setBeatWidth((prev) => Math.min(TIMELINE_ZOOM_MAX, Math.max(TIMELINE_ZOOM_MIN, prev - delta)))
   }, [])
 
-  const isRangeSelection = selection.end != null && selection.end.value > selection.start.value
-  const showSelection = trackLength.value > 0 && (isRangeSelection || selection.start.value > 0)
+  const isRangeSelection = selection.end != null && selection.end > selection.start
+  const showSelection = trackLength > 0 && (isRangeSelection || selection.start > 0)
 
   return (
     <div className='h-full' onWheel={onWheel}>
@@ -103,7 +102,7 @@ export const Timeline: FunctionComponent<{
           <div
             className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-100 pointer-events-none'
             style={{
-              left: `${(playbackPosition.value / trackLength.value) * 100}%`
+              left: `${(playbackPosition / trackLength) * 100}%`
             }}
           />
         )}
@@ -119,7 +118,7 @@ const TimeRuler: FunctionComponent<{
   selection: BeatRange
   onSelect: (range: BeatRange) => void
 }> = ({ beatsPerBar, trackLength, beatWidth, selection, onSelect }) => {
-  const totalBeats = Math.ceil(trackLength.value)
+  const totalBeats = Math.ceil(trackLength)
 
   const limited = totalBeats > RENDERING_LIMIT_BEATS
 
@@ -175,9 +174,9 @@ const TimeRuler: FunctionComponent<{
     const positionInBeats = positionInPixels / beatWidth
 
     const snappedIndex = Math.round(positionInBeats / granularityBeats) * granularityBeats
-    const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength.value))
+    const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength))
 
-    return numeric('beats', clampedIndex)
+    return clampedIndex as Numeric<'beats'>
   }, [beatsPerBar, beatWidth, trackLength])
 
   const updateSelection = useCallback((event: MouseEvent | React.MouseEvent) => {
@@ -186,14 +185,14 @@ const TimeRuler: FunctionComponent<{
       return
     }
 
-    if (selectionStart.value === position.value) {
+    if (selectionStart === position) {
       onSelect({ start: position })
       return
     }
 
     onSelect({
-      start: position.value < selectionStart.value ? position : selectionStart,
-      end: position.value >= selectionStart.value ? position : selectionStart
+      start: position < selectionStart ? position : selectionStart,
+      end: position >= selectionStart ? position : selectionStart
     })
   }, [onSelect, selectionStart, computeTimeFromEvent])
 
@@ -229,12 +228,12 @@ const TimeRuler: FunctionComponent<{
       ref={timelineRef}
       onMouseDown={onMouseDown}
     >
-      {trackLength.value > 0 && selection.end != null && (
+      {trackLength > 0 && selection.end != null && (
         <div
           className='absolute top-0 h-[calc(100%+0.5rem)] bg-accent-100 opacity-40 pointer-events-none -z-10'
           style={{
-            left: `${(selection.start.value / trackLength.value) * 100}%`,
-            width: `${((selection.end.value - selection.start.value) / trackLength.value) * 100}%`
+            left: `${(selection.start / trackLength) * 100}%`,
+            width: `${((selection.end - selection.start) / trackLength) * 100}%`
           }}
         />
       )}
@@ -289,8 +288,8 @@ const TimelinePart: FunctionComponent<{
 
   const [lengthShort, lengthLong] = useMemo(() => {
     return [
-      formatBeatDuration(part.length, beatsPerBar),
-      formatBeatDurationAsWords(part.length, beatsPerBar)
+      formatBeatDuration(part.length.value, beatsPerBar),
+      formatBeatDurationAsWords(part.length.value, beatsPerBar)
     ]
   }, [part, beatsPerBar])
 
@@ -357,7 +356,7 @@ const TimelineMarker: FunctionComponent<{
         dimmed ? 'text-content-50' : 'text-content-100'
       )}
       style={{
-        left: `${(position.value / trackLength.value) * 100}%`
+        left: `${(position / trackLength) * 100}%`
       }}
     >
       <svg className='w-5 h-2.5 -ml-2.5' viewBox='0 0 16 8' fill='none' xmlns='http://www.w3.org/2000/svg'>

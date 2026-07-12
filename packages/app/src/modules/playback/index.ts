@@ -2,7 +2,7 @@ import type { AudioGraphOptions } from '@audiograph'
 import { createAudioGraph } from '@audiograph'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@editor'
 import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand, useRegisterService } from '@editor'
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
@@ -15,11 +15,11 @@ import { PlaybackProvider, useAudioEngine } from './provider.js'
 import { METERING_SERVICE_ID, MeteringService } from './services/metering.js'
 
 const PLAYBACK_ERROR_MESSAGE = 'Cannot play: Program contains errors.'
-const PLAYBACK_ERROR_TIMEOUT = numeric('s', 5)
+const PLAYBACK_ERROR_TIMEOUT = 5 as Numeric<'s'>
 
 const AUDIO_GRAPH_OPTIONS: AudioGraphOptions = {
   metering: {
-    interval: numeric('s', 0.1)
+    interval: 0.1 as Numeric<'s'>
   }
 }
 

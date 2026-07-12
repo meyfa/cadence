@@ -23,12 +23,12 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
   readonly tempo: Numeric<'bpm'>
   readonly length: Numeric<'beats'>
 }): AudioGraphBuilder<TNode> {
-  if (!Number.isFinite(meta.tempo.value) || meta.tempo.value <= 0) {
-    throw new Error(`Invalid tempo: ${meta.tempo.value}`)
+  if (!Number.isFinite(meta.tempo) || meta.tempo <= 0) {
+    throw new Error(`Invalid tempo: ${meta.tempo}`)
   }
 
-  if (!Number.isFinite(meta.length.value) || meta.length.value < 0) {
-    throw new Error(`Invalid length: ${meta.length.value}`)
+  if (!Number.isFinite(meta.length) || meta.length < 0) {
+    throw new Error(`Invalid length: ${meta.length}`)
   }
 
   const nodes = new Map<NodeId, TNode>()

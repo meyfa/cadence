@@ -32,7 +32,7 @@ export function useChangeOrigin<T extends string> (windowDuration: Numeric<'s'>)
       pendingResetRef.current = setTimeout(() => {
         originRef.current = undefined
         pendingResetRef.current = undefined
-      }, windowDuration.value * 1000)
+      }, windowDuration * 1000)
     }
 
     scheduleReset()

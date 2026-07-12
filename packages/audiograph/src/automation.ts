@@ -1,10 +1,10 @@
 import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@core'
 import { dbToGain } from '@core'
-import type { Numeric, Unit } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric, Unit } from '@utility'
+import { runtimeNumeric } from '@utility'
 
 export interface Transform<FromUnit extends Unit, ToUnit extends Unit> {
-  readonly transformValue: (value: Numeric<FromUnit>) => Numeric<ToUnit>
+  readonly transformValue: (value: RuntimeNumeric<FromUnit>) => RuntimeNumeric<ToUnit>
   readonly transformCurveShape: (curve: CurveShape) => CurveShape
 }
 
@@ -49,7 +49,7 @@ export function identityTransform<U extends Unit> (): Transform<U, U> {
 
 export const gainTransform: Transform<'db', undefined> = {
   transformValue: (value) => {
-    return dbToGain(value)
+    return runtimeNumeric(undefined, dbToGain(value.value))
   },
 
   transformCurveShape: (curve) => {
@@ -70,7 +70,7 @@ export const panTransform: Transform<undefined, undefined> = {
       throw new Error(`Invalid pan: ${value.value}`)
     }
 
-    return numeric(undefined, Math.max(-1, Math.min(1, value.value)))
+    return runtimeNumeric(undefined, Math.max(-1, Math.min(1, value.value)))
   },
 
   transformCurveShape: (curve) => curve
@@ -82,7 +82,7 @@ export const feedbackTransform: Transform<undefined, undefined> = {
       throw new Error(`Invalid feedback: ${value.value}`)
     }
 
-    return numeric(undefined, Math.max(0, Math.min(1, value.value)))
+    return runtimeNumeric(undefined, Math.max(0, Math.min(1, value.value)))
   },
 
   transformCurveShape: (curve) => curve
@@ -95,7 +95,7 @@ export const frequencyTransform: Transform<'hz', 'hz'> = {
     }
 
     if (value.value < 0) {
-      return numeric('hz', 0)
+      return runtimeNumeric('hz', 0)
     }
 
     return value

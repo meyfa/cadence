@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createImmediateScheduler, createRealtimeScheduler } from '../../src/transport/scheduler.js'
@@ -9,14 +9,14 @@ type ClearInterval = typeof globalThis.clearInterval
 describe('transport/scheduler.ts', () => {
   describe('createRealtimeScheduler', () => {
     it('runs callbacks shortly before their target time', () => {
-      let nowSeconds = 10
+      let nowSeconds = 10 as Numeric<'s'>
 
       let intervalCallback: (() => void) | undefined
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: 0.01 as Numeric<'s'>,
+        scheduleAheadTime: 0.05 as Numeric<'s'>,
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -30,25 +30,25 @@ describe('transport/scheduler.ts', () => {
         }
       })
 
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
 
       let called = false
       let callNow: number | undefined
       let targetTime: number | undefined
 
-      scheduler.schedule(1, (time) => {
+      scheduler.schedule(1 as Numeric<'s'>, (time) => {
         called = true
         callNow = nowSeconds
         targetTime = time
       })
 
       // Not yet within the schedule-ahead window
-      nowSeconds = 10.9
+      nowSeconds = 10.9 as Numeric<'s'>
       intervalCallback?.()
       assert.strictEqual(called, false)
 
       // Enter the window: transportNow=0.96, threshold=1.01 -> event time 1 runs
-      nowSeconds = 10.96
+      nowSeconds = 10.96 as Numeric<'s'>
       intervalCallback?.()
 
       assert.strictEqual(called, true)
@@ -57,12 +57,12 @@ describe('transport/scheduler.ts', () => {
     })
 
     it('executes past events immediately on start', () => {
-      const nowSeconds = 10
+      const nowSeconds = 10 as Numeric<'s'>
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: 0.01 as Numeric<'s'>,
+        scheduleAheadTime: 0.05 as Numeric<'s'>,
 
         timers: {
           setInterval: (() => 1) as unknown as SetInterval,
@@ -73,26 +73,26 @@ describe('transport/scheduler.ts', () => {
       let called = false
       let targetTime = undefined
 
-      scheduler.schedule(-0.5, (time) => {
+      scheduler.schedule(-0.5 as Numeric<'s'>, (time) => {
         called = true
         targetTime = time
       })
 
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
 
       assert.strictEqual(called, true)
       assert.strictEqual(targetTime, 9.5)
     })
 
     it('preserves chronological callback order', () => {
-      let nowSeconds = 10
+      let nowSeconds = 10 as Numeric<'s'>
 
       let intervalCallback: (() => void) | undefined
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: 0.01 as Numeric<'s'>,
+        scheduleAheadTime: 0.05 as Numeric<'s'>,
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -108,27 +108,27 @@ describe('transport/scheduler.ts', () => {
 
       // Schedule out of order before start
       const calls: number[] = []
-      scheduler.schedule(2, (time) => calls.push(time))
-      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.schedule(2 as Numeric<'s'>, (time) => calls.push(time))
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
 
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
 
       // Move time until both are within the window
-      nowSeconds = 11.96 // transportNow=1.96 -> threshold=2.01
+      nowSeconds = 11.96 as Numeric<'s'> // transportNow=1.96 -> threshold=2.01
       intervalCallback?.()
 
       assert.deepStrictEqual(calls, [11, 12])
     })
 
     it('preserves chronological callback order for events scheduled after start', () => {
-      let nowSeconds = 10
+      let nowSeconds = 10 as Numeric<'s'>
 
       let intervalCallback: (() => void) | undefined
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: 0.01 as Numeric<'s'>,
+        scheduleAheadTime: 0.05 as Numeric<'s'>,
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -144,25 +144,25 @@ describe('transport/scheduler.ts', () => {
 
       const calls: number[] = []
 
-      scheduler.start(10)
-      scheduler.schedule(2, (time) => calls.push(time))
-      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.start(10 as Numeric<'s'>)
+      scheduler.schedule(2 as Numeric<'s'>, (time) => calls.push(time))
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
 
-      nowSeconds = 11.96
+      nowSeconds = 11.96 as Numeric<'s'>
       intervalCallback?.()
 
       assert.deepStrictEqual(calls, [11, 12])
     })
 
     it('does not run callbacks after stop', () => {
-      let nowSeconds = 10
+      let nowSeconds = 10 as Numeric<'s'>
 
       let intervalCallback: (() => void) | undefined
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: 0.01 as Numeric<'s'>,
+        scheduleAheadTime: 0.05 as Numeric<'s'>,
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -178,11 +178,11 @@ describe('transport/scheduler.ts', () => {
 
       const calls: number[] = []
 
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
       scheduler.stop()
 
-      nowSeconds = 10.96
-      scheduler.schedule(1, (time) => calls.push(time))
+      nowSeconds = 10.96 as Numeric<'s'>
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
       scheduler.flush()
       intervalCallback?.()
 
@@ -195,10 +195,10 @@ describe('transport/scheduler.ts', () => {
       const scheduler = createImmediateScheduler()
 
       const calls: number[] = []
-      scheduler.schedule(2, (time) => calls.push(time))
-      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.schedule(2 as Numeric<'s'>, (time) => calls.push(time))
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
 
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
 
       assert.deepStrictEqual(calls, [11, 12])
     })
@@ -207,10 +207,10 @@ describe('transport/scheduler.ts', () => {
       const scheduler = createImmediateScheduler()
 
       const calls: number[] = []
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
 
-      scheduler.schedule(2, (time) => calls.push(time))
-      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.schedule(2 as Numeric<'s'>, (time) => calls.push(time))
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
 
       assert.deepStrictEqual(calls, [12, 11])
     })
@@ -219,10 +219,10 @@ describe('transport/scheduler.ts', () => {
       const scheduler = createImmediateScheduler()
 
       const calls: number[] = []
-      scheduler.start(10)
+      scheduler.start(10 as Numeric<'s'>)
       scheduler.stop()
 
-      scheduler.schedule(1, (time) => calls.push(time))
+      scheduler.schedule(1 as Numeric<'s'>, (time) => calls.push(time))
       scheduler.flush()
 
       assert.deepStrictEqual(calls, [])

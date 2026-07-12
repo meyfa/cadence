@@ -1,6 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, Parameter, ParameterId, Part, Pattern } from '@core'
 import { createSerialPattern } from '@core'
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { BusFacet } from '../../src/type-system/domain/bus.js'
@@ -15,18 +15,18 @@ import { expectTypeEquals } from '../test-utils.js'
 
 const gainParameter: Parameter<'db'> = {
   id: 1 as ParameterId,
-  initial: numeric('db', -6)
+  initial: runtimeNumeric('db', -6)
 }
 
 const panParameter: Parameter<undefined> = {
   id: 2 as ParameterId,
-  initial: numeric(undefined, 0.25)
+  initial: runtimeNumeric(undefined, 0.25)
 }
 
 const pattern: Pattern = createSerialPattern([
   { value: 'C4' },
-  { value: '-', length: numeric(undefined, 1) },
-  { value: 'E4', gate: numeric(undefined, 0.5) }
+  { value: '-', length: runtimeNumeric(undefined, 1) },
+  { value: 'E4', gate: runtimeNumeric(undefined, 0.5) }
 ])
 
 const effect: Effect = {
@@ -42,7 +42,7 @@ const instrument: Instrument = {
 
 const part: Part = {
   name: 'intro',
-  length: numeric('beats', 4),
+  length: runtimeNumeric('beats', 4),
   routings: [{
     source: {
       type: 'pattern',
@@ -92,16 +92,16 @@ describe('type-system/domain', () => {
         segments: [
           {
             type: 'hold',
-            length: numeric('beats', 1),
+            length: runtimeNumeric('beats', 1),
             unit: 'db',
-            value: numeric('db', -6)
+            value: runtimeNumeric('db', -6)
           },
           {
             type: 'lin',
-            length: numeric('beats', 2),
+            length: runtimeNumeric('beats', 2),
             unit: 'db',
-            start: numeric('db', -6),
-            end: numeric('db', 0)
+            start: runtimeNumeric('db', -6),
+            end: runtimeNumeric('db', 0)
           }
         ]
       }

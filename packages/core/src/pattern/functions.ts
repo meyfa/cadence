@@ -1,9 +1,9 @@
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { NoteEvent, Pattern, Step } from './types.js'
 
-const zeroBeats = numeric('beats', 0)
-const defaultVelocity = numeric(undefined, 1)
+const zeroBeats = runtimeNumeric('beats', 0)
+const defaultVelocity = runtimeNumeric(undefined, 1)
 
 const emptyPattern: Pattern = {
   length: zeroBeats,
@@ -25,7 +25,7 @@ function getSumOfLengths (patterns: readonly Pattern[]): Pattern['length'] {
     sum += pattern.length.value
   }
 
-  return numeric('beats', sum)
+  return runtimeNumeric('beats', sum)
 }
 
 function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
@@ -38,7 +38,7 @@ function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
     max = Math.max(max, pattern.length.value)
   }
 
-  return numeric('beats', max)
+  return runtimeNumeric('beats', max)
 }
 
 function pushStepEvent (events: NoteEvent[], step: Step, offset: number): void {
@@ -46,10 +46,10 @@ function pushStepEvent (events: NoteEvent[], step: Step, offset: number): void {
     return
   }
 
-  const time = numeric('beats', offset)
+  const time = runtimeNumeric('beats', offset)
 
   const stepGate = step.gate?.value ?? step.length?.value ?? 1
-  const gate = numeric('beats', stepGate)
+  const gate = runtimeNumeric('beats', stepGate)
   const velocity = step.velocity ?? defaultVelocity
 
   events.push(
@@ -81,7 +81,7 @@ export function createSerialPattern (steps: readonly Step[]): Pattern {
   }
 
   return {
-    length: numeric('beats', offset),
+    length: runtimeNumeric('beats', offset),
     evaluate: () => events
   }
 }
@@ -109,7 +109,7 @@ export function createParallelPattern (steps: readonly Step[]): Pattern {
   }
 
   return {
-    length: numeric('beats', maxLength),
+    length: runtimeNumeric('beats', maxLength),
     evaluate: () => events
   }
 }
@@ -149,7 +149,7 @@ export function concatPatterns (patterns: readonly Pattern[]): Pattern {
         for (const event of pattern.evaluate()) {
           yield {
             ...event,
-            time: numeric('beats', event.time.value + offset)
+            time: runtimeNumeric('beats', event.time.value + offset)
           }
         }
       }
@@ -211,7 +211,7 @@ export function mergePatterns (patterns: readonly Pattern[]): Pattern {
  * - Patterns that are longer than the specified duration will be truncated.
  * - Patterns that are shorter than the specified duration will be repeated (and possibly truncated) to fit.
  */
-export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pattern {
+export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'>): Pattern {
   const patternLength = pattern.length?.value
 
   // Looping an empty pattern always results in an empty pattern
@@ -238,7 +238,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
             hasEvents = true
             yield {
               ...event,
-              time: numeric('beats', event.time.value + offset)
+              time: runtimeNumeric('beats', event.time.value + offset)
             }
           }
 
@@ -272,9 +272,9 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
           hasEvents = true
           yield {
             ...event,
-            time: numeric('beats', eventTime),
+            time: runtimeNumeric('beats', eventTime),
             gate: event.gate != null && event.gate.value > remainingDuration
-              ? numeric('beats', remainingDuration)
+              ? runtimeNumeric('beats', remainingDuration)
               : event.gate
           }
         }
@@ -287,7 +287,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
 }
 
 /**
- * Multiply a pattern by a numeric factor, keeping the sequence of events the same but adjusting their timing.
+ * Multiply a pattern by a runtimeNumeric factor, keeping the sequence of events the same but adjusting their timing.
  *
  * For example, multiplying a pattern of length 2 by 3 will produce a pattern of length 6 where each event occurs
  * at three times the original time.
@@ -312,15 +312,15 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
 
   return {
     // infinite pattern remains infinite, otherwise scale length
-    length: pattern.length != null ? numeric('beats', pattern.length.value * times) : undefined,
+    length: pattern.length != null ? runtimeNumeric('beats', pattern.length.value * times) : undefined,
 
     evaluate: function* () {
       for (const event of pattern.evaluate()) {
         yield {
           ...event,
-          time: numeric('beats', event.time.value * times),
+          time: runtimeNumeric('beats', event.time.value * times),
           gate: event.gate != null
-            ? numeric('beats', event.gate.value * times)
+            ? runtimeNumeric('beats', event.gate.value * times)
             : undefined
         }
       }
@@ -332,7 +332,7 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
  * Render a pattern to up to a specific time. Longer patterns will be truncated,
  * while shorter patterns will stay as-is (no additional events are produced).
  */
-export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): readonly NoteEvent[] {
+export function renderPatternEvents (pattern: Pattern, end: RuntimeNumeric<'beats'>): readonly NoteEvent[] {
   if (!isPositiveFiniteNumber(end.value)) {
     return []
   }
@@ -348,7 +348,7 @@ export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): r
     events.push({
       ...event,
       gate: event.gate != null && event.gate.value > remainingDuration
-        ? numeric('beats', remainingDuration)
+        ? runtimeNumeric('beats', remainingDuration)
         : event.gate
     })
   }

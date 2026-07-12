@@ -1,5 +1,5 @@
 import type { Curve, CurveShape } from '@core'
-import type { Unit } from '@utility'
+import type { Numeric, Unit } from '@utility'
 import type { Transport } from '../transport/transport.js'
 
 export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
@@ -10,7 +10,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     return
   }
 
-  transport.schedule(0, (time) => {
+  transport.schedule(0 as Numeric<'s'>, (time) => {
     param.setValueAtTime(source.initial.value, 0)
 
     // Precompute point times
@@ -110,7 +110,7 @@ export function applyAutomationPoints<U extends Unit> (time: number, transport: 
   }
 }
 
-function evaluateCurve (shape: CurveShape, t: number, startValue: number, endValue: number): number {
+function evaluateCurve<const U extends Unit> (shape: CurveShape, t: number, startValue: Numeric<U>, endValue: Numeric<U>): Numeric<U> {
   if (t <= 0) {
     return startValue
   }
@@ -124,7 +124,7 @@ function evaluateCurve (shape: CurveShape, t: number, startValue: number, endVal
       return startValue
 
     case 'linear':
-      return (1 - t) * startValue + t * endValue
+      return ((1 - t) * startValue + t * endValue) as Numeric<U>
 
     case 'exponential': {
       // Exponential interpolation is multiplicative / log-linear:
@@ -140,7 +140,7 @@ function evaluateCurve (shape: CurveShape, t: number, startValue: number, endVal
       const safeStart = startValue > 0 ? startValue : Number.EPSILON
       const safeEnd = endValue > 0 ? endValue : Number.EPSILON
 
-      return Math.exp((1 - t) * Math.log(safeStart) + t * Math.log(safeEnd))
+      return (Math.exp((1 - t) * Math.log(safeStart) + t * Math.log(safeEnd))) as Numeric<U>
     }
   }
 }

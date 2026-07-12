@@ -16,7 +16,7 @@ export function generateReverbImpulseResponse (options: {
   const { sampleRate, numberOfChannels, decay, createBuffer } = options
 
   // buffer length must be non-zero
-  const length = Math.max(1, Math.floor(sampleRate * decay.value))
+  const length = Math.max(1, Math.floor(sampleRate * decay))
 
   const noise = createNoiseBuffer({ numberOfChannels, sampleRate, createBuffer })
   const ir = createBuffer({ length, numberOfChannels, sampleRate })

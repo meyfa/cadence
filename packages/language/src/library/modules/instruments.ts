@@ -1,7 +1,7 @@
 import type { Oscillator } from '@core'
 import { convertPitchToMidi, getMidiFrequency, isPitch, timeToSeconds } from '@core'
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
@@ -17,13 +17,13 @@ import { applyEnvelope } from '../envelope.js'
 
 const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
-const UNITY_GAIN = numeric('db', 0)
+const UNITY_GAIN = runtimeNumeric('db', 0)
 
 const ENVELOPE_DECLICK: Envelope = {
-  attack: numeric('s', 0.003),
-  decay: numeric('s', 0),
-  sustain: numeric('db', 0),
-  release: numeric('s', 0.003)
+  attack: runtimeNumeric('s', 0.003),
+  decay: runtimeNumeric('s', 0),
+  sustain: runtimeNumeric('db', 0),
+  release: runtimeNumeric('s', 0.003)
 }
 
 const SampleInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
@@ -76,14 +76,14 @@ const sample = Functions.of({
         }
 
         const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNoteMidi
-        const playbackRate = numeric(undefined, Math.pow(2, (midiNote - rootNoteMidi) / 12))
+        const playbackRate = runtimeNumeric(undefined, Math.pow(2, (midiNote - rootNoteMidi) / 12))
 
-        const gate: Numeric<'s'> | undefined = (() => {
+        const gate: RuntimeNumeric<'s'> | undefined = (() => {
           if (note.gate == null) {
             return lengthValue
           }
-          const gateSeconds = timeToSeconds(note.gate, tempo)
-          return lengthValue == null ? gateSeconds : numeric('s', Math.min(gateSeconds.value, lengthValue.value))
+          const gateSeconds = timeToSeconds(note.gate, tempo.value)
+          return runtimeNumeric('s', lengthValue == null ? gateSeconds : Math.min(gateSeconds, lengthValue.value))
         })()
 
         const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
@@ -129,9 +129,9 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
         trigger: (note, tempo) => {
           const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
-          const frequency = numeric('hz', getMidiFrequency(midiNote))
+          const frequency = runtimeNumeric('hz', getMidiFrequency(midiNote))
 
-          const gate = note.gate != null ? timeToSeconds(note.gate, tempo) : undefined
+          const gate = note.gate != null ? runtimeNumeric('s', timeToSeconds(note.gate, tempo.value)) : undefined
           const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
           const duration = gate != null ? envelope.points.at(-1)?.time : undefined
 

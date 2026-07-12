@@ -1,5 +1,4 @@
 import type { Numeric } from '@utility'
-import { numeric } from '@utility'
 import type { AudioBufferLike, AudioDescription } from '../common/types.js'
 import type { FloatSampleBits, PCMFormat, PCMSampleBits } from './pcm-io.js'
 import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE } from './pcm-io.js'
@@ -30,7 +29,7 @@ export function estimateWAVSize (audio: AudioDescription, options: WAVEncodingOp
   // headers size (RIFF chunk + fmt subchunk + data subchunk)
   const headersSize = 44
 
-  return numeric('bytes', headersSize + dataSize)
+  return (headersSize + dataSize) as Numeric<'bytes'>
 }
 
 /**

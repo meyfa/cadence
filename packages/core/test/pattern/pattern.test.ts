@@ -1,12 +1,12 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../../src/pattern/functions.js'
 
 describe('pattern/functions.ts', () => {
-  // helper to create Numeric<'beats'>
-  const beats = (value: number) => numeric('beats', value)
-  const unitless = (value: number) => numeric(undefined, value)
+  // helper to create RuntimeNumeric<'beats'>
+  const beats = (value: number) => runtimeNumeric('beats', value)
+  const unitless = (value: number) => runtimeNumeric(undefined, value)
 
   describe('createSerialPattern()', () => {
     it('should create a finite pattern with the correct length and events', () => {
@@ -30,9 +30,9 @@ describe('pattern/functions.ts', () => {
 
     it('should handle steps with custom lengths', () => {
       const pattern = createSerialPattern([
-        { value: 'x', length: numeric(undefined, 2) },
+        { value: 'x', length: runtimeNumeric(undefined, 2) },
         { value: '-' },
-        { value: 'x', length: numeric(undefined, 0.5) }
+        { value: 'x', length: runtimeNumeric(undefined, 0.5) }
       ])
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -43,8 +43,8 @@ describe('pattern/functions.ts', () => {
 
     it('should skip steps with non-positive lengths', () => {
       const pattern = createSerialPattern([
-        { value: 'C1', length: numeric(undefined, 0) },
-        { value: 'C2', length: numeric(undefined, -1) },
+        { value: 'C1', length: runtimeNumeric(undefined, 0) },
+        { value: 'C2', length: runtimeNumeric(undefined, -1) },
         { value: 'C3' }
       ])
       assert.strictEqual(pattern.length?.value, 1)
@@ -55,9 +55,9 @@ describe('pattern/functions.ts', () => {
 
     it('should handle steps with custom gates', () => {
       const pattern = createSerialPattern([
-        { value: 'x', gate: numeric(undefined, 0.5) },
+        { value: 'x', gate: runtimeNumeric(undefined, 0.5) },
         { value: '-' },
-        { value: 'x', gate: numeric(undefined, 0.25) }
+        { value: 'x', gate: runtimeNumeric(undefined, 0.25) }
       ])
       assert.strictEqual(pattern.length?.value, 3)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -68,9 +68,9 @@ describe('pattern/functions.ts', () => {
 
     it('should handle steps with both custom lengths and gates', () => {
       const pattern = createSerialPattern([
-        { value: 'x', length: numeric(undefined, 2), gate: numeric(undefined, 1.5) },
+        { value: 'x', length: runtimeNumeric(undefined, 2), gate: runtimeNumeric(undefined, 1.5) },
         { value: '-' },
-        { value: 'x', length: numeric(undefined, 0.5), gate: numeric(undefined, 0.1) }
+        { value: 'x', length: runtimeNumeric(undefined, 0.5), gate: runtimeNumeric(undefined, 0.1) }
       ])
       assert.strictEqual(pattern.length?.value, 3.5)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -83,16 +83,16 @@ describe('pattern/functions.ts', () => {
       const pattern = createSerialPattern([
         {
           value: 'x',
-          length: numeric(undefined, 2),
-          gate: numeric(undefined, 1.5),
-          velocity: numeric(undefined, 0.8)
+          length: runtimeNumeric(undefined, 2),
+          gate: runtimeNumeric(undefined, 1.5),
+          velocity: runtimeNumeric(undefined, 0.8)
         },
         { value: '-' },
         {
           value: 'A#6',
-          length: numeric(undefined, 0.5),
-          gate: numeric(undefined, 0.1),
-          velocity: numeric(undefined, 0.5)
+          length: runtimeNumeric(undefined, 0.5),
+          gate: runtimeNumeric(undefined, 0.1),
+          velocity: runtimeNumeric(undefined, 0.5)
         }
       ])
 
@@ -126,9 +126,9 @@ describe('pattern/functions.ts', () => {
 
     it('should use the maximum step length as the pattern length', () => {
       const pattern = createParallelPattern([
-        { value: 'x', length: numeric(undefined, 2) },
+        { value: 'x', length: runtimeNumeric(undefined, 2) },
         { value: '-' },
-        { value: 'x', length: numeric(undefined, 0.5) }
+        { value: 'x', length: runtimeNumeric(undefined, 0.5) }
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -139,9 +139,9 @@ describe('pattern/functions.ts', () => {
 
     it('should handle steps with custom gates', () => {
       const pattern = createParallelPattern([
-        { value: 'x', gate: numeric(undefined, 0.5) },
+        { value: 'x', gate: runtimeNumeric(undefined, 0.5) },
         { value: '-' },
-        { value: 'x', gate: numeric(undefined, 0.25) }
+        { value: 'x', gate: runtimeNumeric(undefined, 0.25) }
       ])
       assert.strictEqual(pattern.length?.value, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -152,9 +152,9 @@ describe('pattern/functions.ts', () => {
 
     it('should handle steps with both custom lengths and gates', () => {
       const pattern = createParallelPattern([
-        { value: 'x', length: numeric(undefined, 2), gate: numeric(undefined, 1.5) },
+        { value: 'x', length: runtimeNumeric(undefined, 2), gate: runtimeNumeric(undefined, 1.5) },
         { value: '-' },
-        { value: 'x', length: numeric(undefined, 0.5), gate: numeric(undefined, 0.1) }
+        { value: 'x', length: runtimeNumeric(undefined, 0.5), gate: runtimeNumeric(undefined, 0.1) }
       ])
       assert.strictEqual(pattern.length?.value, 2)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -167,16 +167,16 @@ describe('pattern/functions.ts', () => {
       const pattern = createParallelPattern([
         {
           value: 'x',
-          length: numeric(undefined, 2),
-          gate: numeric(undefined, 1.5),
-          velocity: numeric(undefined, 0.8)
+          length: runtimeNumeric(undefined, 2),
+          gate: runtimeNumeric(undefined, 1.5),
+          velocity: runtimeNumeric(undefined, 0.8)
         },
         { value: '-' },
         {
           value: 'x',
-          length: numeric(undefined, 0.5),
-          gate: numeric(undefined, 0.1),
-          velocity: numeric(undefined, 0.5)
+          length: runtimeNumeric(undefined, 0.5),
+          gate: runtimeNumeric(undefined, 0.1),
+          velocity: runtimeNumeric(undefined, 0.5)
         }
       ])
 
@@ -205,9 +205,9 @@ describe('pattern/functions.ts', () => {
       const concatenated = concatPatterns([
         createSerialPattern([{ value: 'x' }, { value: '-' }]),
         createSerialPattern([
-          { value: '-', length: numeric(undefined, 0.5) },
-          { value: 'x', length: numeric(undefined, 0.5) },
-          { value: 'x', length: numeric(undefined, 0.5), velocity: unitless(0.5) }
+          { value: '-', length: runtimeNumeric(undefined, 0.5) },
+          { value: 'x', length: runtimeNumeric(undefined, 0.5) },
+          { value: 'x', length: runtimeNumeric(undefined, 0.5), velocity: unitless(0.5) }
         ])
       ])
       assert.strictEqual(concatenated.length?.value, 3.5)
@@ -305,12 +305,12 @@ describe('pattern/functions.ts', () => {
         createSerialPattern([{ value: 'x' }, { value: '-' }, { value: 'x' }]),
         createSerialPattern([{ value: '-' }, { value: '-' }, { value: 'x' }]),
         createSerialPattern([
-          { value: 'x', length: numeric(undefined, 0.25) },
-          { value: 'x', length: numeric(undefined, 0.25) }
+          { value: 'x', length: runtimeNumeric(undefined, 0.25) },
+          { value: 'x', length: runtimeNumeric(undefined, 0.25) }
         ]),
         createSerialPattern([
-          { value: 'x', length: numeric(undefined, 0.5) },
-          { value: 'x', length: numeric(undefined, 0.5) }
+          { value: 'x', length: runtimeNumeric(undefined, 0.5) },
+          { value: 'x', length: runtimeNumeric(undefined, 0.5) }
         ])
       ])
       assert.strictEqual(parallel.length?.value, 3)
@@ -329,9 +329,9 @@ describe('pattern/functions.ts', () => {
   describe('loopPattern()', () => {
     it('should create an infinite pattern when no duration is provided', () => {
       const pattern = createSerialPattern([
-        { value: 'x', velocity: unitless(0.75), length: numeric(undefined, 0.5) },
-        { value: '-', length: numeric(undefined, 0.5) },
-        { value: '-', length: numeric(undefined, 0.5) }
+        { value: 'x', velocity: unitless(0.75), length: runtimeNumeric(undefined, 0.5) },
+        { value: '-', length: runtimeNumeric(undefined, 0.5) },
+        { value: '-', length: runtimeNumeric(undefined, 0.5) }
       ])
       const looped = loopPattern(pattern)
 
@@ -368,8 +368,8 @@ describe('pattern/functions.ts', () => {
 
     it('should trim gates that extend beyond the target duration', () => {
       const pattern = createSerialPattern([
-        { value: 'A4', gate: numeric(undefined, 3) },
-        { value: 'B4', gate: numeric(undefined, 5) }
+        { value: 'A4', gate: runtimeNumeric(undefined, 3) },
+        { value: 'B4', gate: runtimeNumeric(undefined, 5) }
       ])
       const looped = loopPattern(pattern, beats(4))
 
@@ -573,8 +573,8 @@ describe('pattern/functions.ts', () => {
 
     it('should trim gates that extend beyond the render end', () => {
       const pattern = createSerialPattern([
-        { value: 'A4', gate: numeric(undefined, 3) },
-        { value: 'B4', gate: numeric(undefined, 5) }
+        { value: 'A4', gate: runtimeNumeric(undefined, 3) },
+        { value: 'B4', gate: runtimeNumeric(undefined, 5) }
       ])
 
       assert.deepStrictEqual(

@@ -4,14 +4,13 @@ import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFS
 import type { Program } from '@core'
 import { beatsToSeconds, calculateTotalLength } from '@core'
 import type { Numeric } from '@utility'
-import { numeric } from '@utility'
 import { createAudioRenderer } from '@webaudio'
 import type { Option } from '../../components/dropdown/Dropdown.js'
 import { saveFile } from '../../utilities/files.js'
 
-const ASSET_LOAD_TIMEOUT = numeric('s', 30)
+const ASSET_LOAD_TIMEOUT = 30 as Numeric<'s'>
 
-export const MAX_EXPORT_DURATION = numeric('s', 60 * 60) // 1 hour
+export const MAX_EXPORT_DURATION = (60 * 60) as Numeric<'s'> // 1 hour
 export const RENDER_CHANNELS = 2 // stereo
 
 export type FileType = 'wav' | 'aiff'
@@ -86,8 +85,8 @@ export async function renderAndSave<TEncodingOptions> (
   const renderer = createAudioRenderer({
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
-      arrayBuffer: numeric('bytes', 0),
-      audioBuffer: numeric('bytes', 0)
+      arrayBuffer: 0 as Numeric<'bytes'>,
+      audioBuffer: 0 as Numeric<'bytes'>
     }
   })
 
@@ -125,7 +124,7 @@ export function computeExportMetrics (program: Program, options: {
   readonly aiffFormat: AIFFFormat
 }): ExportMetrics {
   const trackLength = computeTrackDuration(program)
-  const duration = numeric('s', trackLength.value + options.leadingSilence.value)
+  const duration = (trackLength + options.leadingSilence) as Numeric<'s'>
 
   const fileSize = estimateFileSize({ ...options, duration })
 
@@ -134,7 +133,7 @@ export function computeExportMetrics (program: Program, options: {
 
 function computeTrackDuration (program: Program): Numeric<'s'> {
   const lengthInBeats = calculateTotalLength(program)
-  return beatsToSeconds(lengthInBeats, program.track.tempo)
+  return beatsToSeconds(lengthInBeats, program.track.tempo.value)
 }
 
 function estimateFileSize (options: {
@@ -150,7 +149,7 @@ function estimateFileSize (options: {
   const format = type === 'wav' ? wavFormat : aiffFormat
 
   const description: AudioDescription = {
-    length: Math.ceil(duration.value * Number.parseInt(sampleRate, 10)),
+    length: Math.ceil(duration * Number.parseInt(sampleRate, 10)),
     numberOfChannels: RENDER_CHANNELS
   }
 

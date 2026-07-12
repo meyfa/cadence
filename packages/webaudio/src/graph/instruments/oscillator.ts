@@ -27,7 +27,7 @@ export function createOscillatorSource (
 ): AudioScheduledSourceNode {
   const oscillator = transport.ctx.createOscillator()
   oscillator.type = oscillatorTypeMap[node.shape]
-  oscillator.frequency.value = node.frequency.value
+  oscillator.frequency.value = node.frequency
 
   return oscillator
 }

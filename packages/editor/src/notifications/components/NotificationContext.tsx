@@ -36,7 +36,7 @@ export const NotificationProvider: FunctionComponent<PropsWithChildren> = ({ chi
     setEntries((entries) => [{ id, kind, component, props }, ...entries] as NotificationEntry[])
 
     const timeoutHandle = options?.timeout != null
-      ? setTimeout(() => closeNotification(id), options.timeout.value * 1000)
+      ? setTimeout(() => closeNotification(id), options.timeout * 1000)
       : undefined
 
     return () => {

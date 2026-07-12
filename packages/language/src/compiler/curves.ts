@@ -1,23 +1,23 @@
 import type { CurvePoint, CurveShape } from '@core'
 import { timeToSeconds } from '@core'
-import type { Numeric, Unit } from '@utility'
-import { numeric } from '@utility'
+import type { Numeric, RuntimeNumeric, Unit } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { Curve, CurveDuration, CurveSegment, HoldCurveSegment, LinearCurveSegment } from '../type-system/domain/curve.js'
 import { assert, nonNull } from './assert.js'
 
 const SEGMENT_TYPE_HOLD = 'hold'
 const SEGMENT_TYPE_LINEAR = 'lin'
 
-const ZERO_SECONDS = numeric('s', 0)
+const ZERO_SECONDS = runtimeNumeric('s', 0)
 
 const TIME_EPSILON = 1e-6 // 1 microsecond, which is less than 1 sample at 96 kHz
 
 export interface CurveSegmentType {
   readonly type: CurveSegment<any>['type']
   readonly parameterCount: number
-  readonly create: <U extends Unit>(parameters: ReadonlyArray<Numeric<U>>, length: CurveDuration) => CurveSegment<U>
-  readonly start: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
-  readonly end: <U extends Unit>(segment: CurveSegment<U>) => Numeric<U>
+  readonly create: <U extends Unit>(parameters: ReadonlyArray<RuntimeNumeric<U>>, length: CurveDuration) => CurveSegment<U>
+  readonly start: <U extends Unit>(segment: CurveSegment<U>) => RuntimeNumeric<U>
+  readonly end: <U extends Unit>(segment: CurveSegment<U>) => RuntimeNumeric<U>
   readonly endShape: CurveShape
 }
 
@@ -58,7 +58,7 @@ export function createCurve<U extends Unit> (segments: ReadonlyArray<CurveSegmen
 
 export function createCurveSegment<U extends Unit> (
   type: string,
-  parameters: ReadonlyArray<Numeric<U>>,
+  parameters: ReadonlyArray<RuntimeNumeric<U>>,
   length: CurveDuration
 ): CurveSegment<U> {
   const definition = nonNull(curveSegmentTypes.get(type), `Unknown curve segment type: ${type}`)
@@ -70,7 +70,7 @@ export function createCurveSegment<U extends Unit> (
 export interface RenderCurveOptions {
   readonly offset: CurveDuration
   readonly limit?: CurveDuration
-  readonly tempo: Numeric<'bpm'>
+  readonly tempo: RuntimeNumeric<'bpm'>
 }
 
 export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: RenderCurveOptions): ReadonlyArray<CurvePoint<'s', U>> {
@@ -81,18 +81,18 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
 
   const points: Array<CurvePoint<'s', U>> = []
 
-  const offsetSeconds = timeToSeconds(options.offset, options.tempo)
-  let currentTime: Numeric<'s'> = offsetSeconds
+  const offsetSeconds = timeToSeconds(options.offset, options.tempo.value)
+  let currentTime = offsetSeconds
 
   for (const segment of segments) {
     const segmentLength = segment.length.value > 0
-      ? timeToSeconds(segment.length, options.tempo)
-      : ZERO_SECONDS
+      ? timeToSeconds(segment.length, options.tempo.value)
+      : ZERO_SECONDS.value
 
     const definition = nonNull(getCurveSegmentType(segment.type), `Unknown curve segment type: ${segment.type}`)
 
-    const startTime = currentTime
-    const endTime = numeric('s', currentTime.value + segmentLength.value)
+    const startTime = runtimeNumeric('s', currentTime)
+    const endTime = runtimeNumeric('s', currentTime + segmentLength)
 
     points.push({
       time: startTime,
@@ -101,26 +101,26 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
     }, {
       time: endTime,
       value: definition.end(segment),
-      shape: segmentLength.value <= 0 ? 'step' : definition.endShape
+      shape: segmentLength <= 0 ? 'step' : definition.endShape
     })
 
-    currentTime = endTime
+    currentTime = endTime.value
   }
 
   const simplifiedPoints = simplifyCurvePoints(points)
 
   const endTime = options.limit != null
-    ? numeric('s', offsetSeconds.value + timeToSeconds(options.limit, options.tempo).value)
+    ? runtimeNumeric('s', offsetSeconds + timeToSeconds(options.limit, options.tempo.value))
     : undefined
 
-  if (endTime != null && currentTime.value > endTime.value) {
+  if (endTime != null && currentTime > endTime.value) {
     return takePointsBefore(simplifiedPoints, endTime)
   }
 
   return simplifiedPoints
 }
 
-function interpolatePoint<U extends Unit> (start: CurvePoint<'s', U>, end: CurvePoint<'s', U>, time: Numeric<'s'>): CurvePoint<'s', U> {
+function interpolatePoint<U extends Unit> (start: CurvePoint<'s', U>, end: CurvePoint<'s', U>, time: RuntimeNumeric<'s'>): CurvePoint<'s', U> {
   assert(time.value >= start.time.value && time.value <= end.time.value)
 
   const deltaTime = end.time.value - start.time.value
@@ -137,7 +137,7 @@ function interpolatePoint<U extends Unit> (start: CurvePoint<'s', U>, end: Curve
     case 'linear': {
       const value = {
         unit: start.value.unit,
-        value: start.value.value + t * (end.value.value - start.value.value)
+        value: (start.value.value + t * (end.value.value - start.value.value)) as Numeric<U>
       }
       return { time, value, shape: 'linear' }
     }
@@ -174,7 +174,7 @@ export function mergeCurvePoints<U extends Unit> (
 
 function takePointsBefore<U extends Unit> (
   points: ReadonlyArray<CurvePoint<'s', U>>,
-  time: Numeric<'s'>
+  time: RuntimeNumeric<'s'>
 ): ReadonlyArray<CurvePoint<'s', U>> {
   const result: Array<CurvePoint<'s', U>> = []
 
@@ -208,7 +208,7 @@ function takePointsBefore<U extends Unit> (
 
 function takePointsAfter<U extends Unit> (
   points: ReadonlyArray<CurvePoint<'s', U>>,
-  time: Numeric<'s'>
+  time: RuntimeNumeric<'s'>
 ): ReadonlyArray<CurvePoint<'s', U>> {
   for (let i = 0; i < points.length; ++i) {
     const point = points[i]
@@ -233,7 +233,7 @@ function takePointsAfter<U extends Unit> (
   return []
 }
 
-function compareTimes (left: Numeric<'s'>, right: Numeric<'s'>): number {
+function compareTimes (left: RuntimeNumeric<'s'>, right: RuntimeNumeric<'s'>): number {
   const difference = left.value - right.value
   if (Math.abs(difference) <= TIME_EPSILON) {
     return 0

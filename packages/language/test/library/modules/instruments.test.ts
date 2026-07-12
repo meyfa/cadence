@@ -1,5 +1,5 @@
 import type { Instrument } from '@core'
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'
@@ -11,7 +11,7 @@ import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 import { getFunctionExport } from './test-utils.js'
 
-const DEFAULT_TEMPO = numeric('bpm', 120)
+const DEFAULT_TEMPO = runtimeNumeric('bpm', 120)
 
 function createFunctionContext (): GlobalScope {
   return createGlobalScope({
@@ -26,13 +26,13 @@ function createFunctionContext (): GlobalScope {
 
 describe('library/modules/instruments.ts', () => {
   const declickEnvelope = () => applyEnvelope({
-    attack: numeric('s', 0.003),
-    decay: numeric('s', 0),
-    sustain: numeric('db', 0),
-    release: numeric('s', 0.003)
+    attack: runtimeNumeric('s', 0.003),
+    decay: runtimeNumeric('s', 0),
+    sustain: runtimeNumeric('db', 0),
+    release: runtimeNumeric('s', 0.003)
   }, {
-    velocity: numeric(undefined, 1),
-    gate: numeric('s', 1.5)
+    velocity: runtimeNumeric(undefined, 1),
+    gate: runtimeNumeric('s', 1.5)
   })
 
   describe('sample', () => {
@@ -43,9 +43,9 @@ describe('library/modules/instruments.ts', () => {
 
       const result = sample.invoke(context, {
         url: StringFacet.type().of('https://example.com/kick.wav'),
-        gain: Numbers.of(numeric('db', -3)),
+        gain: Numbers.of(runtimeNumeric('db', -3)),
         root_note: StringFacet.type().of('C4'),
-        length: Numbers.of(numeric('s', 1.5))
+        length: Numbers.of(runtimeNumeric('s', 1.5))
       })
 
       const [asset] = context.assets.values()
@@ -55,19 +55,19 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         id: instrument.id,
-        gain: { id: instrument.gain.id, initial: numeric('db', -3) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', -3) },
         trigger: instrument.trigger
       } satisfies Instrument)
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: declickEnvelope(),
-          duration: numeric('s', 1.503),
+          duration: runtimeNumeric('s', 1.503),
           source: {
             type: 'sample',
             assetId: asset.id,
-            length: numeric('s', 1.5),
-            playbackRate: numeric(undefined, 1)
+            length: runtimeNumeric('s', 1.5),
+            playbackRate: runtimeNumeric(undefined, 1)
           }
         }
       ])
@@ -94,27 +94,27 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: numeric('s', 0.003),
-            decay: numeric('s', 0),
-            sustain: numeric('db', 0),
-            release: numeric('s', 0.003)
+            attack: runtimeNumeric('s', 0.003),
+            decay: runtimeNumeric('s', 0),
+            sustain: runtimeNumeric('db', 0),
+            release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: numeric(undefined, 1)
+            velocity: runtimeNumeric(undefined, 1)
           }),
           duration: undefined,
           source: {
             type: 'sample',
             assetId: asset.id,
             length: undefined,
-            playbackRate: numeric(undefined, 1)
+            playbackRate: runtimeNumeric(undefined, 1)
           }
         }
       ])
@@ -132,11 +132,11 @@ describe('library/modules/instruments.ts', () => {
 
         const result = sample.invoke(context, {
           url: StringFacet.type().of('https://example.com/kick.wav'),
-          length: Numbers.of(numeric('s', length))
+          length: Numbers.of(runtimeNumeric('s', length))
         })
 
         const instrument = InstrumentFacet.get(result)
-        const voices = instrument.trigger({ velocity: numeric(undefined, 1) }, DEFAULT_TEMPO)
+        const voices = instrument.trigger({ velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO)
 
         assert.strictEqual(voices.length, 0)
       }
@@ -153,26 +153,26 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: numeric('s', 0.003),
-            decay: numeric('s', 0),
-            sustain: numeric('db', 0),
-            release: numeric('s', 0.003)
+            attack: runtimeNumeric('s', 0.003),
+            decay: runtimeNumeric('s', 0),
+            sustain: runtimeNumeric('db', 0),
+            release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: numeric(undefined, 1)
+            velocity: runtimeNumeric(undefined, 1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'sine',
-            frequency: numeric('hz', 440)
+            frequency: runtimeNumeric('hz', 440)
           }
         }
       ])
@@ -195,26 +195,26 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: numeric('s', 0.003),
-            decay: numeric('s', 0),
-            sustain: numeric('db', 0),
-            release: numeric('s', 0.003)
+            attack: runtimeNumeric('s', 0.003),
+            decay: runtimeNumeric('s', 0),
+            sustain: runtimeNumeric('db', 0),
+            release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: numeric(undefined, 1)
+            velocity: runtimeNumeric(undefined, 1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'square',
-            frequency: numeric('hz', 440)
+            frequency: runtimeNumeric('hz', 440)
           }
         }
       ])
@@ -237,26 +237,26 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: numeric('s', 0.003),
-            decay: numeric('s', 0),
-            sustain: numeric('db', 0),
-            release: numeric('s', 0.003)
+            attack: runtimeNumeric('s', 0.003),
+            decay: runtimeNumeric('s', 0),
+            sustain: runtimeNumeric('db', 0),
+            release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: numeric(undefined, 1)
+            velocity: runtimeNumeric(undefined, 1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'saw',
-            frequency: numeric('hz', 440)
+            frequency: runtimeNumeric('hz', 440)
           }
         }
       ])
@@ -279,26 +279,26 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: numeric('db', 0) },
+        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: numeric(undefined, 1) }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: runtimeNumeric(undefined, 1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: numeric('s', 0.003),
-            decay: numeric('s', 0),
-            sustain: numeric('db', 0),
-            release: numeric('s', 0.003)
+            attack: runtimeNumeric('s', 0.003),
+            decay: runtimeNumeric('s', 0),
+            sustain: runtimeNumeric('db', 0),
+            release: runtimeNumeric('s', 0.003)
           }, {
             gate: undefined,
-            velocity: numeric(undefined, 1)
+            velocity: runtimeNumeric(undefined, 1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'triangle',
-            frequency: numeric('hz', 440)
+            frequency: runtimeNumeric('hz', 440)
           }
         }
       ])

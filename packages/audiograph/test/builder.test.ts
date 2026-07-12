@@ -1,5 +1,6 @@
 import type { BusId, InstrumentId } from '@core'
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'
@@ -7,10 +8,10 @@ import { createEntityKey } from '../src/entities.js'
 import type { NodeId } from '../src/graph.js'
 
 describe('builder.ts', () => {
-  const tempo = numeric('bpm', 120)
-  const length = numeric('beats', 16)
-  const beats = (value: number) => numeric('beats', value)
-  const scalar = (value: number) => numeric(undefined, value)
+  const tempo = 120 as Numeric<'bpm'>
+  const length = 16 as Numeric<'beats'>
+  const beats = (value: number) => runtimeNumeric('beats', value)
+  const scalar = (value: number) => runtimeNumeric(undefined, value)
 
   it('should maintain tempo and length', () => {
     const builder = createAudioGraphBuilder({ tempo, length })
@@ -22,22 +23,22 @@ describe('builder.ts', () => {
   })
 
   it('should throw for infinite tempo', () => {
-    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', Infinity), length }))
-    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', -Infinity), length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: Infinity as Numeric<'bpm'>, length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: -Infinity as Numeric<'bpm'>, length }))
   })
 
   it('should throw for non-positive tempo', () => {
-    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', 0), length }))
-    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', -120), length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: 0 as Numeric<'bpm'>, length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: -120 as Numeric<'bpm'>, length }))
   })
 
   it('should throw for negative length', () => {
-    assert.throws(() => createAudioGraphBuilder({ tempo, length: numeric('beats', -1) }))
+    assert.throws(() => createAudioGraphBuilder({ tempo, length: -1 as Numeric<'beats'> }))
   })
 
   it('should throw for NaN tempo and length', () => {
-    assert.throws(() => createAudioGraphBuilder({ tempo: numeric('bpm', Number.NaN), length }))
-    assert.throws(() => createAudioGraphBuilder({ tempo, length: numeric('beats', Number.NaN) }))
+    assert.throws(() => createAudioGraphBuilder({ tempo: Number.NaN as Numeric<'bpm'>, length }))
+    assert.throws(() => createAudioGraphBuilder({ tempo, length: Number.NaN as Numeric<'beats'> }))
   })
 
   it('should assign unique IDs to nodes', () => {

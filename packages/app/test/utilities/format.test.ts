@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import type { Numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { formatBytes, formatDuration } from '../../src/utilities/format.js'
@@ -24,7 +24,7 @@ describe('utilities/format.ts', () => {
       ]
 
       for (const { input, expected } of testCases) {
-        const result = formatDuration(numeric('s', input))
+        const result = formatDuration(input as Numeric<'s'>)
         assert.strictEqual(result, expected, `Expected formatDuration(${input}) to return "${expected}", got "${result}"`)
       }
     })
@@ -53,7 +53,7 @@ describe('utilities/format.ts', () => {
       ]
 
       for (const { input, expected } of testCases) {
-        const result = formatBytes(numeric('bytes', input))
+        const result = formatBytes(input as Numeric<'bytes'>)
         assert.strictEqual(result, expected, `Expected formatBytes(${input}) to return "${expected}", got "${result}"`)
       }
     })

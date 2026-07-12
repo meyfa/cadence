@@ -27,7 +27,7 @@ export function createSampleSource (
 
   const sourceNode = transport.ctx.createBufferSource()
   sourceNode.buffer = sampleBuffer
-  sourceNode.playbackRate.value = node.playbackRate.value
+  sourceNode.playbackRate.value = node.playbackRate
 
   return sourceNode
 }

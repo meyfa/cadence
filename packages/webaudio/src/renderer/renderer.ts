@@ -38,7 +38,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
       const disposeStack = new DisposeStack()
 
       const duration = beatsToSeconds(graph.length, graph.tempo)
-      const safeDuration = Math.max(0.001, duration.value)
+      const safeDuration = Math.max(0.001, duration)
 
       const transport = createOfflineTransport({
         channels: options.channels,
@@ -51,7 +51,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
           if (time == null) {
             return
           }
-          options.onProgress?.(Math.max(0, Math.min(1, time.value / safeDuration)))
+          options.onProgress?.(Math.max(0, Math.min(1, time / safeDuration)))
         }))
       }
 

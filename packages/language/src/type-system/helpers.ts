@@ -1,5 +1,5 @@
 import type { Parameter } from '@core'
-import type { Numeric, Unit } from '@utility'
+import type { RuntimeNumeric, Unit } from '@utility'
 import type { Function } from './base/function.js'
 import { FunctionFacet } from './base/function.js'
 import type { Module } from './base/module.js'
@@ -46,7 +46,7 @@ export const Modules = {
 }
 
 export const Numbers = {
-  of: <const U extends Unit> (value: Numeric<U>): Value<Facet<'number', Numeric<U>>> => {
+  of: <const U extends Unit> (value: RuntimeNumeric<U>): Value<Facet<'number', RuntimeNumeric<U>>> => {
     return NumberFacet.with(value.unit).type().of(value)
   }
 }
