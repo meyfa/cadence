@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@emotion/cache": "11.14.0",
-    "@floating-ui/react-dom": "2.1.8",
+    "@floating-ui/react-dom": "2.1.9",
     "superstruct": "2.0.2"
   }
 }
