@@ -2,6 +2,7 @@ import type { AudioGraphOptions } from '@audiograph'
 import { createAudioGraph } from '@audiograph'
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@editor'
 import { activateTabOfType, useLatestRef, useLayoutDispatch, useNotificationService, useObservable, useProvideProblems, useRegisterCommand, useRegisterService } from '@editor'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
@@ -19,7 +20,7 @@ const PLAYBACK_ERROR_TIMEOUT = runtimeNumeric('s', 5)
 
 const AUDIO_GRAPH_OPTIONS: AudioGraphOptions = {
   metering: {
-    interval: runtimeNumeric('s', 0.1)
+    interval: 0.1 as Numeric<'s'>
   }
 }
 

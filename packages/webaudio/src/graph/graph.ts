@@ -104,7 +104,7 @@ function scheduleNoteEvents (graph: AudioGraph<Node>, instances: Map<NodeId, Ins
   for (const [nodeId, options] of graph.noteEvents) {
     const instance = instances.get(nodeId)
     for (const event of options) {
-      instance?.triggerNote?.(event, graph.tempo.value)
+      instance?.triggerNote?.(event, graph.tempo)
     }
   }
 }

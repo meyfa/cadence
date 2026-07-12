@@ -25,7 +25,7 @@ export function createBiquadInstance (node: BiquadNode, transport: Transport): I
   const audioNode = transport.ctx.createBiquadFilter()
   audioNode.type = node.filterType
   automate(transport, audioNode.frequency, node.frequency)
-  audioNode.Q.value = -(node.rolloffPerOctave.value as number)
+  audioNode.Q.value = -(node.rolloffPerOctave as number)
   return toInstance(audioNode)
 }
 
@@ -42,8 +42,8 @@ export function createWidthInstance (node: WidthNode, transport: Transport): Ins
 
   const merger = ctx.createChannelMerger(2)
 
-  const directGain = (1 + node.width.value) / 2
-  const crossGain = (1 - node.width.value) / 2
+  const directGain = (1 + node.width) / 2
+  const crossGain = (1 - node.width) / 2
 
   const leftDirect = ctx.createGain()
   leftDirect.gain.value = directGain
@@ -85,8 +85,8 @@ export function createWidthInstance (node: WidthNode, transport: Transport): Ins
 }
 
 export function createDelayInstance (node: DelayNode, transport: Transport): Instance {
-  const audioNode = transport.ctx.createDelay(Math.max(1, node.time.value))
-  audioNode.delayTime.value = node.time.value
+  const audioNode = transport.ctx.createDelay(Math.max(1, node.time))
+  audioNode.delayTime.value = node.time
   return toInstance(audioNode)
 }
 
@@ -99,7 +99,7 @@ export function createReverbInstance (node: ReverbNode, transport: Transport): I
     createBuffer: (options) => new AudioBuffer(options),
     numberOfChannels: ctx.destination.channelCount,
     sampleRate: ctx.sampleRate,
-    decay: node.decay.value
+    decay: node.decay
   })
 
   return toInstance(audioNode)

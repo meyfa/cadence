@@ -54,7 +54,7 @@ export function createInstrumentInstance (
       sourceNode.start(time)
 
       if (source.duration != null) {
-        sourceNode.stop(time + source.duration.value)
+        sourceNode.stop(time + source.duration)
       }
 
       sourceNode.addEventListener('ended', () => {

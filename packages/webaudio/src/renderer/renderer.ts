@@ -37,7 +37,7 @@ export function createAudioRenderer (options: AudioRendererOptions): AudioRender
     render: async (graph, options) => {
       const disposeStack = new DisposeStack()
 
-      const duration = beatsToSeconds(graph.length.value, graph.tempo.value)
+      const duration = beatsToSeconds(graph.length, graph.tempo)
       const safeDuration = Math.max(0.001, duration)
 
       const transport = createOfflineTransport({

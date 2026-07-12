@@ -1,5 +1,5 @@
 import type { Asset, AssetId, NoteEvent } from '@core'
-import type { Brand, RuntimeNumeric } from '@utility'
+import type { Brand, Numeric } from '@utility'
 import type { EntityKey } from './entities.js'
 
 export interface AudioGraph<TNode = AnyNode> {
@@ -7,8 +7,8 @@ export interface AudioGraph<TNode = AnyNode> {
   readonly edges: readonly Edge[]
   readonly outputIds: readonly NodeId[]
 
-  readonly tempo: RuntimeNumeric<'bpm'>
-  readonly length: RuntimeNumeric<'beats'>
+  readonly tempo: Numeric<'bpm'>
+  readonly length: Numeric<'beats'>
 
   readonly assets: ReadonlyMap<AssetId, Asset>
 

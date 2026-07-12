@@ -1,5 +1,5 @@
 import type { AssetId, Curve, NoteData } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode } from './graph.js'
 
@@ -51,22 +51,22 @@ export interface BiquadNode extends AnyNode {
   readonly type: 'biquad'
   readonly filterType: 'lowpass' | 'highpass'
   readonly frequency: Curve<'s', 'hz'>
-  readonly rolloffPerOctave: RuntimeNumeric<'db'>
+  readonly rolloffPerOctave: Numeric<'db'>
 }
 
 export interface WidthNode extends AnyNode {
   readonly type: 'width'
-  readonly width: RuntimeNumeric<undefined>
+  readonly width: Numeric<undefined>
 }
 
 export interface DelayNode extends AnyNode {
   readonly type: 'delay'
-  readonly time: RuntimeNumeric<'s'>
+  readonly time: Numeric<'s'>
 }
 
 export interface ReverbNode extends AnyNode {
   readonly type: 'reverb'
-  readonly decay: RuntimeNumeric<'s'>
+  readonly decay: Numeric<'s'>
 }
 
 export interface WaveShaperNode extends AnyNode {
@@ -88,17 +88,17 @@ export type SourceNode = SampleNode | OscillatorNode
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly gainCurve: Curve<'s', undefined>
-  readonly duration?: RuntimeNumeric<'s'>
+  readonly duration?: Numeric<'s'>
   readonly assetId: AssetId
-  readonly playbackRate: RuntimeNumeric<undefined>
+  readonly playbackRate: Numeric<undefined>
 }
 
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
   readonly gainCurve: Curve<'s', undefined>
-  readonly duration: RuntimeNumeric<'s'> | undefined
+  readonly duration: Numeric<'s'> | undefined
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
-  readonly frequency: RuntimeNumeric<'hz'>
+  readonly frequency: Numeric<'hz'>
 }
 
 // metering
@@ -114,5 +114,5 @@ export interface GainMeterNode extends AnyNode {
   /**
    * The approximate interval, in seconds, at which the gain meter should post updates.
    */
-  readonly interval: RuntimeNumeric<'s'>
+  readonly interval: Numeric<'s'>
 }

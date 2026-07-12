@@ -12,7 +12,7 @@ export async function createGainMeterInstance (
   meterCallbacks?: MeterCallbacks
 ): Promise<Instance> {
   const instance = await createGainMeter(transport.ctx, {
-    interval: node.interval.value * transport.ctx.sampleRate
+    interval: node.interval * transport.ctx.sampleRate
   })
 
   let unsubscribe: UnsubscribeFn | undefined

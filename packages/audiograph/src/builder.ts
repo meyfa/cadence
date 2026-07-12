@@ -1,6 +1,6 @@
 import type { Asset, AssetId, NoteEvent } from '@core'
 import { isPitch } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
 
@@ -20,15 +20,15 @@ export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
 }
 
 export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: {
-  readonly tempo: RuntimeNumeric<'bpm'>
-  readonly length: RuntimeNumeric<'beats'>
+  readonly tempo: Numeric<'bpm'>
+  readonly length: Numeric<'beats'>
 }): AudioGraphBuilder<TNode> {
-  if (!Number.isFinite(meta.tempo.value) || meta.tempo.value <= 0) {
-    throw new Error(`Invalid tempo: ${meta.tempo.value}`)
+  if (!Number.isFinite(meta.tempo) || meta.tempo <= 0) {
+    throw new Error(`Invalid tempo: ${meta.tempo}`)
   }
 
-  if (!Number.isFinite(meta.length.value) || meta.length.value < 0) {
-    throw new Error(`Invalid length: ${meta.length.value}`)
+  if (!Number.isFinite(meta.length) || meta.length < 0) {
+    throw new Error(`Invalid length: ${meta.length}`)
   }
 
   const nodes = new Map<NodeId, TNode>()

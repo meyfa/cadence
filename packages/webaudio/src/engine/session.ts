@@ -25,9 +25,9 @@ export function createAudioSession (
 ): AudioSession {
   const disposeStack = new DisposeStack()
 
-  const endPosition = range.end ?? graph.length.value
-  const startTime = beatsToSeconds(range.start, graph.tempo.value)
-  const endTime = beatsToSeconds(endPosition, graph.tempo.value)
+  const endPosition = range.end ?? graph.length
+  const startTime = beatsToSeconds(range.start, graph.tempo)
+  const endTime = beatsToSeconds(endPosition, graph.tempo)
 
   // Whether nothing should be played at all because the start is after the end
   const endImmediately = endPosition <= 0 || range.start >= endPosition
@@ -86,7 +86,7 @@ export function createAudioSession (
       disposeStack.push(transport.time.subscribe((time) => {
         if (!disposed) {
           const clamped = Math.max(startTime, time)
-          position.set((clamped * graph.tempo.value / 60) as Numeric<'beats'>)
+          position.set((clamped * graph.tempo / 60) as Numeric<'beats'>)
         }
       }))
     }).catch((err: unknown) => {

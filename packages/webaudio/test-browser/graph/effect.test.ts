@@ -1,5 +1,4 @@
 import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import { describe, expect, it } from 'vitest'
 import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
 import type { Transport } from '../../src/transport/transport.js'
@@ -31,7 +30,7 @@ async function renderWidth (options: {
 }> {
   const { width, inputChannels, fill } = options
   const { ctx, transport } = createTestTransport()
-  const instance = createWidthInstance({ type: 'width', width: runtimeNumeric(undefined, width) }, transport)
+  const instance = createWidthInstance({ type: 'width', width }, transport)
 
   try {
     const input = ctx.createBuffer(inputChannels, length, sampleRate)
@@ -73,7 +72,7 @@ async function renderDelay (options: {
     schedule: (_time, onSchedule) => onSchedule(0 as Numeric<'s'>)
   }
 
-  const instance = createDelayInstance({ type: 'delay', time: runtimeNumeric('s', time) }, transport)
+  const instance = createDelayInstance({ type: 'delay', time }, transport)
 
   try {
     const source = ctx.createBufferSource()
