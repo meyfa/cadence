@@ -1,5 +1,5 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
-import type { RuntimeNumeric, Unit } from '@utility'
+import type { Numeric, Unit } from '@utility'
 import type { Value } from '../../type-system/types.js'
 import type { GenerateOptions } from './options.js'
 
@@ -12,7 +12,7 @@ export interface BusContext {
 }
 
 export interface ParameterContext {
-  readonly allocateParameter: <U extends Unit>(initial: RuntimeNumeric<U>) => Parameter<U>
+  readonly allocateParameter: <const U extends Unit>(unit: U, initial: Numeric<U>) => Parameter<U>
 }
 
 export interface InstrumentContext {
@@ -79,7 +79,7 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
     allocateBus: (data) => allocateBus(scope, data),
 
     // from ParameterContext
-    allocateParameter: (initial) => allocateParameter(scope, initial),
+    allocateParameter: (unit, initial) => allocateParameter(scope, unit, initial),
 
     // from InstrumentContext
     allocateInstrument: (data) => allocateInstrument(scope, data),
@@ -124,11 +124,11 @@ function allocateBus (scope: GlobalScope, data: Omit<Bus, 'id'>): Bus {
   return bus
 }
 
-function allocateParameter<U extends Unit> (scope: GlobalScope, initial: RuntimeNumeric<U>): Parameter<U> {
+function allocateParameter<U extends Unit> (scope: GlobalScope, unit: U, initial: Numeric<U>): Parameter<U> {
   const id = scope.automations.size as ParameterId
   scope.automations.set(id, { initial, points: [] })
 
-  return { id, initial }
+  return { id, unit, initial }
 }
 
 function allocateInstrument (scope: GlobalScope, data: Omit<Instrument, 'id'>): Instrument {

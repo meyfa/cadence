@@ -53,7 +53,7 @@ export const Numbers = {
 
 export const Parameters = {
   of: <const U extends Unit> (value: Parameter<U>): Value<Facet<'parameter', Parameter<U>>> => {
-    return ParameterFacet.with(value.initial.unit).type().of(value)
+    return ParameterFacet.with(value.unit).type().of(value)
   }
 }
 

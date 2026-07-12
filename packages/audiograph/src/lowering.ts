@@ -1,7 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@core'
 import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
@@ -93,12 +92,12 @@ function createBus (program: Program, bus: Bus, builder: Builder): SubGraph {
 
   // Optimization: Skip adding a node if the value is constant 0.
   // TODO: Make this more generic and move into appendEffect?
-  if (bus.pan.initial.value !== 0 || program.automations.has(bus.pan.id)) {
+  if (bus.pan.initial !== 0 || program.automations.has(bus.pan.id)) {
     appendEffect({ type: 'pan', pan: bus.pan })
   }
 
   // TODO: see above
-  if (bus.gain.initial.value !== 0 || program.automations.has(bus.gain.id)) {
+  if (bus.gain.initial !== 0 || program.automations.has(bus.gain.id)) {
     appendEffect({ type: 'gain', gain: bus.gain })
   }
 
@@ -218,19 +217,19 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
     }
 
     case 'width': {
-      if (Number.isNaN(effect.width.value)) {
-        throw new Error(`Invalid width: ${effect.width.value}`)
+      if (Number.isNaN(effect.width)) {
+        throw new Error(`Invalid width: ${effect.width}`)
       }
 
       return toSubGraph(builder.addNode<WidthNode>('width', {
         // TODO time variant
-        width: Math.max(0, Math.min(1, effect.width.value)) as Numeric<undefined>
+        width: Math.max(0, Math.min(1, effect.width)) as Numeric<undefined>
       }))
     }
 
     case 'delay': {
-      if (Number.isNaN(effect.feedback.initial.value)) {
-        throw new Error(`Invalid feedback: ${effect.feedback.initial.value}`)
+      if (Number.isNaN(effect.feedback.initial)) {
+        throw new Error(`Invalid feedback: ${effect.feedback.initial}`)
       }
 
       if (!Number.isFinite(effect.time.value)) {
@@ -242,7 +241,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         time: timeToSeconds(effect.time, program.track.tempo)
       })
 
-      if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
+      if (effect.feedback.initial > 0 || program.automations.has(effect.feedback.id)) {
         const feedbackGainId = builder.addNode<GainNode>('gain', {
           gain: computeParameterCurve(effect.feedback, program, feedbackTransform)
         })
@@ -251,7 +250,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         builder.addEdge(feedbackGainId, delayNodeId)
       }
 
-      return createDryWetMix(delayNodeId, effect.mix.value, effect.wet.value, builder)
+      return createDryWetMix(delayNodeId, effect.mix, effect.wet, builder)
     }
 
     case 'reverb': {
@@ -259,7 +258,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         throw new Error(`Invalid decay: ${effect.decay.value}`)
       }
 
-      const mix = Math.max(0, Math.min(1, effect.mix.value))
+      const mix = Math.max(0, Math.min(1, effect.mix))
       if (mix <= 0) {
         return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
       }
@@ -269,7 +268,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         decay: timeToSeconds(effect.decay, program.track.tempo)
       })
 
-      return createDryWetMix(reverbId, mix, effect.wet.value, builder)
+      return createDryWetMix(reverbId, mix, effect.wet, builder)
     }
 
     case 'clip': {
@@ -289,8 +288,8 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const inputId = builder.addNode<GainNode>('gain', {
         gain: {
-          initial: runtimeNumeric(undefined, invert(thresholdGain.initial.value)),
-          points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: runtimeNumeric(undefined, invert(value.value)), shape }))
+          initial: invert(thresholdGain.initial),
+          points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: invert(value), shape }))
         }
       })
 
@@ -340,14 +339,14 @@ function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>,
   // dry: 0.0...0.5 -> 100%,   0.75: 50%,         1.0:   0%
   // wet:       0.0 ->   0%,   0.25: 50%,   0.5...1.0: 100%
 
-  const dry = Math.max(0, Math.min(1, (1 - mix) * 2))
+  const dry = Math.max(0, Math.min(1, (1 - mix) * 2)) as Numeric<undefined>
   const dryNodeId = builder.addNode<GainNode>('gain', {
-    gain: { initial: runtimeNumeric(undefined, dry), points: [] }
+    gain: { initial: dry, points: [] }
   })
 
-  const wet = Math.max(0, Math.min(1, mix * 2))
+  const wet = Math.max(0, Math.min(1, mix * 2)) as Numeric<undefined>
   const wetNodeId = builder.addNode<GainNode>('gain', {
-    gain: { initial: runtimeNumeric(undefined, wet), points: [] }
+    gain: { initial: wet, points: [] }
   })
 
   const wetInputId = wetLevelId ?? effectId
@@ -368,7 +367,7 @@ function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): Node
     return undefined
   }
 
-  const gain = runtimeNumeric(undefined, dbToGain(wetGain))
+  const gain = dbToGain(wetGain)
 
   return builder.addNode<GainNode>('gain', {
     // TODO time variant

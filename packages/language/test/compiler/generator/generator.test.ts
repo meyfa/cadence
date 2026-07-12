@@ -10,6 +10,12 @@ import { lex } from '../../../src/lexer/lexer.js'
 import { parse } from '../../../src/parser/parser.js'
 import { assertResultComplete } from '../../test-utils.js'
 
+const scalar = (value: number) => value as Numeric<undefined>
+const beats = (value: number) => value as Numeric<'beats'>
+const seconds = (value: number) => value as Numeric<'s'>
+const db = (value: number) => value as Numeric<'db'>
+const hz = (value: number) => value as Numeric<'hz'>
+
 const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
 function generateSource (source: string) {
@@ -33,9 +39,6 @@ function generateSource (source: string) {
 }
 
 describe('compiler/generator/generator.ts', () => {
-  const beats = (value: number) => value as Numeric<'beats'>
-  const scalar = (value: number) => value as Numeric<undefined>
-
   it('should produce a correct empty program', () => {
     const result = generateSource('')
     assert.deepStrictEqual(result, {
@@ -100,7 +103,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -119,7 +122,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 1)
     assert.strictEqual(voices[0].source.type, 'sample')
     assert.strictEqual(voices[0].source.assetId, asset.id)
@@ -226,9 +229,9 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.mixer.buses[0].gain.initial, runtimeNumeric('db', -42))
-    assert.deepStrictEqual(result.mixer.buses[1].gain.initial, runtimeNumeric('db', -41))
-    assert.deepStrictEqual(result.mixer.buses[2].gain.initial, runtimeNumeric('db', -200))
+    assert.strictEqual(result.mixer.buses[0].gain.initial, db(-42))
+    assert.strictEqual(result.mixer.buses[1].gain.initial, db(-41))
+    assert.strictEqual(result.mixer.buses[2].gain.initial, db(-200))
   })
 
   it('should resolve variables in part scope', () => {
@@ -266,7 +269,7 @@ describe('compiler/generator/generator.ts', () => {
     const result = generateSource(source)
     const effect = result.mixer.buses[0].effects[0]
     assert.strictEqual(effect.type, 'gain')
-    assert.deepStrictEqual(effect.gain.initial, runtimeNumeric('db', -20))
+    assert.deepStrictEqual(effect.gain.initial, db(-20))
   })
 
   it('should generate instrument routings for patterns', () => {
@@ -328,8 +331,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(4), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -350,9 +353,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', -30), shape: 'linear' },
-      { time: runtimeNumeric('s', 6), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(4), value: db(-30), shape: 'linear' },
+      { time: seconds(6), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -373,9 +376,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 10), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 16), value: runtimeNumeric('db', -30), shape: 'linear' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(10), value: db(-60), shape: 'step' },
+      { time: seconds(16), value: db(-30), shape: 'linear' }
     ])
   })
 
@@ -396,9 +399,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 12), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 16), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(12), value: db(-60), shape: 'step' },
+      { time: seconds(16), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -419,9 +422,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 12), value: runtimeNumeric('db', -30), shape: 'linear' },
-      { time: runtimeNumeric('s', 16), value: runtimeNumeric('db', -30), shape: 'step' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(12), value: db(-30), shape: 'linear' },
+      { time: seconds(16), value: db(-30), shape: 'step' }
     ])
   })
 
@@ -442,8 +445,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -30), shape: 'step' },
-      { time: runtimeNumeric('s', 8), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-30), shape: 'step' },
+      { time: seconds(8), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -467,10 +470,10 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -60), shape: 'step' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', 0), shape: 'linear' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', -15), shape: 'step' },
-      { time: runtimeNumeric('s', 8), value: runtimeNumeric('db', -30), shape: 'linear' }
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(4), value: db(0), shape: 'linear' },
+      { time: seconds(4), value: db(-15), shape: 'step' },
+      { time: seconds(8), value: db(-30), shape: 'linear' }
     ])
   })
 
@@ -492,8 +495,8 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -15), shape: 'step' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', -15), shape: 'step' }
+      { time: seconds(0), value: db(-15), shape: 'step' },
+      { time: seconds(4), value: db(-15), shape: 'step' }
     ])
   })
 
@@ -515,9 +518,9 @@ describe('compiler/generator/generator.ts', () => {
     const [automation] = result.automations.values()
 
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -15), shape: 'step' },
-      { time: runtimeNumeric('s', 2), value: runtimeNumeric('db', -30), shape: 'step' },
-      { time: runtimeNumeric('s', 4), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-15), shape: 'step' },
+      { time: seconds(2), value: db(-30), shape: 'step' },
+      { time: seconds(4), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -538,8 +541,8 @@ describe('compiler/generator/generator.ts', () => {
     const automation = result.automations.get(result.mixer.buses[0].gain.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', -20), shape: 'step' },
-      { time: runtimeNumeric('s', 8), value: runtimeNumeric('db', 0), shape: 'linear' }
+      { time: seconds(0), value: db(-20), shape: 'step' },
+      { time: seconds(8), value: db(0), shape: 'linear' }
     ])
   })
 
@@ -562,13 +565,13 @@ describe('compiler/generator/generator.ts', () => {
 
     const effect = result.mixer.buses[0].effects[0]
     assert.strictEqual(effect.type, 'lowpass')
-    assert.deepStrictEqual(effect.frequency.initial, runtimeNumeric('hz', 123))
+    assert.strictEqual(effect.frequency.initial, 123)
 
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('hz', 100), shape: 'step' },
-      { time: runtimeNumeric('s', 8), value: runtimeNumeric('hz', 4000), shape: 'linear' }
+      { time: seconds(0), value: hz(100), shape: 'step' },
+      { time: seconds(8), value: hz(4000), shape: 'linear' }
     ])
   })
 
@@ -592,13 +595,13 @@ describe('compiler/generator/generator.ts', () => {
 
     const effect = result.mixer.buses[0].effects[0]
     assert.strictEqual(effect.type, 'lowpass')
-    assert.deepStrictEqual(effect.frequency.initial, runtimeNumeric('hz', 200))
+    assert.strictEqual(effect.frequency.initial, 200)
 
     const automation = result.automations.get(effect.frequency.id)
     assert.ok(automation != null)
     assert.deepStrictEqual(automation.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('hz', 500), shape: 'step' },
-      { time: runtimeNumeric('s', 8), value: runtimeNumeric('hz', 1000), shape: 'linear' }
+      { time: seconds(0), value: hz(500), shape: 'step' },
+      { time: seconds(8), value: hz(1000), shape: 'linear' }
     ])
   })
 
@@ -689,13 +692,14 @@ describe('compiler/generator/generator.ts', () => {
 
     assert.deepStrictEqual(effect, {
       type: 'delay',
-      mix: runtimeNumeric(undefined, 0.25),
+      mix: scalar(0.25),
       time: runtimeNumeric('s', 1.5),
       feedback: {
         id: effect.feedback.id,
-        initial: runtimeNumeric(undefined, 0.4)
+        unit: undefined,
+        initial: 0.4
       },
-      wet: runtimeNumeric('db', 0)
+      wet: db(0)
     })
   })
 
@@ -712,9 +716,9 @@ describe('compiler/generator/generator.ts', () => {
     const result = generateSource(source)
     assert.deepStrictEqual(result.mixer.buses[0].effects[0], {
       type: 'reverb',
-      mix: runtimeNumeric(undefined, 0.25),
+      mix: scalar(0.25),
       decay: runtimeNumeric('beats', 2),
-      wet: runtimeNumeric('db', 0)
+      wet: db(0)
     })
   })
 
@@ -738,7 +742,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 0)
   })
 
@@ -764,21 +768,21 @@ describe('compiler/generator/generator.ts', () => {
     const pitchFrequency = getMidiFrequency(convertPitchToMidi(pitch))
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: 1 as Numeric<undefined>, pitch }, DEFAULT_TEMPO)
+    const voices = instrument.trigger({ velocity: scalar(1), pitch }, DEFAULT_TEMPO)
     assert.strictEqual(voices.length, 2)
 
     const [voice0, voice1] = voices
     assert.deepStrictEqual(voice0.envelope.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', 0), shape: 'step' },
-      { time: runtimeNumeric('s', 0.5), value: runtimeNumeric('db', -60), shape: 'linear' }
+      { time: seconds(0), value: db(0), shape: 'step' },
+      { time: seconds(0.5), value: db(-60), shape: 'linear' }
     ])
     assert.strictEqual(voice0.source.type, 'oscillator')
     assert.strictEqual(voice0.source.shape, 'sine')
     assert.deepStrictEqual(voice0.source.frequency, 440)
 
     assert.deepStrictEqual(voice1.envelope.points, [
-      { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', 0), shape: 'step' },
-      { time: runtimeNumeric('s', 0.5), value: runtimeNumeric('db', -60), shape: 'linear' }
+      { time: seconds(0), value: db(0), shape: 'step' },
+      { time: seconds(0.5), value: db(-60), shape: 'linear' }
     ])
     assert.strictEqual(voice1.source.type, 'oscillator')
     assert.strictEqual(voice1.source.shape, 'sine')

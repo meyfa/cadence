@@ -233,8 +233,8 @@ const BusNodeInfo: FunctionComponent<{
   return (
     <>
       <div className='font-bold'>bus.{object.name}</div>
-      <div>gain: {object.gain.initial.value.toFixed(2)} {object.gain.initial.unit}</div>
-      <div>pan: {object.pan.initial.value.toFixed(2)}</div>
+      <div>gain: {object.gain.initial.toFixed(2)} dB</div>
+      <div>pan: {object.pan.initial.toFixed(2)}</div>
       {object.effects.length > 0 && (
         <div>+ {pluralize(object.effects.length, 'effect')}</div>
       )}

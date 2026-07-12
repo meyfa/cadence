@@ -1,6 +1,6 @@
 import { ast } from '@ast'
 import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Source, Step, Track, Voice } from '@core'
-import { concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@core'
+import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@core'
 import type { Numeric, RuntimeNumeric, Unit } from '@utility'
 import { runtimeNumeric } from '@utility'
 import { getStandardModuleValue } from '../../library/modules.js'
@@ -188,6 +188,9 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
   const properties = resolveArgumentList(scope, part.properties, partSchema)
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
 
+  const startTimeSeconds = beatsToSeconds(startTime, tempo)
+  const lengthSeconds = beatsToSeconds(length.value, tempo)
+
   const routings: InstrumentRouting[] = []
 
   for (const child of part.children) {
@@ -211,7 +214,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
         break
 
       case 'AutomateStatement':
-        generateAutomation(partScope, child, { offset: runtimeNumeric('beats', startTime), limit: length, tempo })
+        generateAutomation(partScope, child, { offset: startTimeSeconds, limit: lengthSeconds, tempo })
         break
 
       default:
@@ -353,14 +356,14 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
-  const gainData = properties.gain != null ? NumberFacet.get(properties.gain) : runtimeNumeric('db', 0)
-  const panData = properties.pan != null ? NumberFacet.get(properties.pan) : runtimeNumeric(undefined, 0)
+  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
+  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
 
-  const gain = scope.top.allocateParameter(gainData)
+  const gain = scope.top.allocateParameter('db', gainData)
   valueRecord.gain = Parameters.of(gain)
   typeRecord.gain = valueRecord.gain.type
 
-  const pan = scope.top.allocateParameter(panData)
+  const pan = scope.top.allocateParameter(undefined, panData)
   valueRecord.pan = Parameters.of(pan)
   typeRecord.pan = valueRecord.pan.type
 
@@ -553,7 +556,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
     }
   }
 
-  const gainParameter = scope.top.allocateParameter(runtimeNumeric('db', 0))
+  const gainParameter = scope.top.allocateParameter('db', 0 as Numeric<'db'>)
 
   const instrument = scope.top.allocateInstrument({
     gain: gainParameter,
@@ -614,9 +617,9 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
   }
 
   const envelope = {
-    initial: runtimeNumeric('db', -Infinity),
+    initial: -Infinity as Numeric<'db'>,
     points: renderCurvePoints(envelopeValue, {
-      offset: runtimeNumeric('beats', 0),
+      offset: 0 as Numeric<'s'>,
       tempo
     })
   }
@@ -625,7 +628,7 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
     {
       envelope,
       source: outputValue,
-      duration: envelope.points.at(-1)?.time.value
+      duration: envelope.points.at(-1)?.time
     }
   ]
 }

@@ -1,5 +1,5 @@
 import type { Effect } from '@core'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
@@ -10,7 +10,7 @@ import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
 import { makeSchema } from '../../type-system/schema.js'
 import type { Value } from '../../type-system/types.js'
 
-const UNITY_GAIN = runtimeNumeric('db', 0)
+const UNITY_GAIN = 0 as Numeric<'db'>
 
 // types
 
@@ -56,7 +56,7 @@ const gain = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'gain',
-      gain: context.allocateParameter(NumberFacet.get(args.gain))
+      gain: context.allocateParameter('db', NumberFacet.get(args.gain).value)
     }
 
     return GainEffectType.of(effect, {
@@ -77,7 +77,7 @@ const pan = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'pan',
-      pan: context.allocateParameter(NumberFacet.get(args.pan))
+      pan: context.allocateParameter(undefined, NumberFacet.get(args.pan).value)
     }
 
     return PanEffectType.of(effect, {
@@ -98,7 +98,7 @@ const lowpass = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'lowpass',
-      frequency: context.allocateParameter(NumberFacet.get(args.frequency))
+      frequency: context.allocateParameter('hz', NumberFacet.get(args.frequency).value)
     }
 
     return LowpassEffectType.of(effect, {
@@ -119,7 +119,7 @@ const highpass = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'highpass',
-      frequency: context.allocateParameter(NumberFacet.get(args.frequency))
+      frequency: context.allocateParameter('hz', NumberFacet.get(args.frequency).value)
     }
 
     return HighpassEffectType.of(effect, {
@@ -140,7 +140,7 @@ const width = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'width',
-      width: NumberFacet.get(args.width)
+      width: NumberFacet.get(args.width).value
     }
 
     return WidthEffectType.of(effect)
@@ -162,10 +162,10 @@ const delay = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'delay',
-      mix: NumberFacet.get(args.mix),
+      mix: NumberFacet.get(args.mix).value,
       time: NumberFacet.get(args.time),
-      feedback: context.allocateParameter(NumberFacet.get(args.feedback)),
-      wet: args.wet != null ? NumberFacet.get(args.wet) : UNITY_GAIN
+      feedback: context.allocateParameter(undefined, NumberFacet.get(args.feedback).value),
+      wet: args.wet != null ? NumberFacet.get(args.wet).value : UNITY_GAIN
     }
 
     return DelayEffectType.of(effect, {
@@ -188,9 +188,9 @@ const reverb = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'reverb',
-      mix: NumberFacet.get(args.mix),
+      mix: NumberFacet.get(args.mix).value,
       decay: NumberFacet.get(args.decay),
-      wet: args.wet != null ? NumberFacet.get(args.wet) : UNITY_GAIN
+      wet: args.wet != null ? NumberFacet.get(args.wet).value : UNITY_GAIN
     }
 
     return ReverbEffectType.of(effect)
@@ -209,7 +209,7 @@ const clip = Functions.of({
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'clip',
-      threshold: context.allocateParameter(NumberFacet.get(args.threshold))
+      threshold: context.allocateParameter('db', NumberFacet.get(args.threshold).value)
     }
 
     return ClipEffectType.of(effect, {

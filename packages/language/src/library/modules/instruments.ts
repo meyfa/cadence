@@ -1,7 +1,6 @@
 import type { Oscillator } from '@core'
 import { beatsToSeconds, convertPitchToMidi, getMidiFrequency, isPitch } from '@core'
 import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'
@@ -17,13 +16,13 @@ import { applyEnvelope } from '../envelope.js'
 
 const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
-const UNITY_GAIN = runtimeNumeric('db', 0)
+const UNITY_GAIN = 0 as Numeric<'db'>
 
 const ENVELOPE_DECLICK: Envelope = {
-  attack: runtimeNumeric('s', 0.003),
-  decay: runtimeNumeric('s', 0),
-  sustain: runtimeNumeric('db', 0),
-  release: runtimeNumeric('s', 0.003)
+  attack: 0.003 as Numeric<'s'>,
+  decay: 0 as Numeric<'s'>,
+  sustain: 0 as Numeric<'db'>,
+  release: 0.003 as Numeric<'s'>
 }
 
 const SampleInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
@@ -49,7 +48,7 @@ const sample = Functions.of({
   // eslint-disable-next-line camelcase
   invoke: (context: ParameterContext & InstrumentContext & AssetContext, { url, gain, root_note, length }) => {
     const urlValue = StringFacet.get(url)
-    const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
+    const gainValue = gain != null ? NumberFacet.get(gain).value : UNITY_GAIN
     const rootNote = (() => {
       // eslint-disable-next-line camelcase
       const string = root_note != null ? StringFacet.get(root_note) : undefined
@@ -57,7 +56,7 @@ const sample = Functions.of({
     })()
     const lengthValue = length != null ? NumberFacet.get(length).value : undefined
 
-    const gainParameter = context.allocateParameter(gainValue)
+    const gainParameter = context.allocateParameter('db', gainValue)
 
     const asset = context.allocateAsset({
       url: urlValue
@@ -87,7 +86,7 @@ const sample = Functions.of({
         })()
 
         const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
-        const duration = gate != null ? envelope.points.at(-1)?.time.value : undefined
+        const duration = gate != null ? envelope.points.at(-1)?.time : undefined
 
         return [
           {
@@ -121,8 +120,8 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
     effects: { blocking: true },
 
     invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
-      const gainValue = gain != null ? NumberFacet.get(gain) : UNITY_GAIN
-      const gainParameter = context.allocateParameter(gainValue)
+      const gainValue = gain != null ? NumberFacet.get(gain).value : UNITY_GAIN
+      const gainParameter = context.allocateParameter('db', gainValue)
 
       const instrument = context.allocateInstrument({
         gain: gainParameter,
@@ -133,7 +132,7 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
 
           const gate = note.gate != null ? beatsToSeconds(note.gate, tempo) : undefined
           const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
-          const duration = gate != null ? envelope.points.at(-1)?.time.value : undefined
+          const duration = gate != null ? envelope.points.at(-1)?.time : undefined
 
           return [
             {

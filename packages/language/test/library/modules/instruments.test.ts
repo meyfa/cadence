@@ -12,6 +12,11 @@ import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 import { getFunctionExport } from './test-utils.js'
 
+const scalar = (value: number) => value as Numeric<undefined>
+const seconds = (value: number) => value as Numeric<'s'>
+const db = (value: number) => value as Numeric<'db'>
+const hz = (value: number) => value as Numeric<'hz'>
+
 const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
 function createFunctionContext (): GlobalScope {
@@ -27,12 +32,12 @@ function createFunctionContext (): GlobalScope {
 
 describe('library/modules/instruments.ts', () => {
   const declickEnvelope = () => applyEnvelope({
-    attack: runtimeNumeric('s', 0.003),
-    decay: runtimeNumeric('s', 0),
-    sustain: runtimeNumeric('db', 0),
-    release: runtimeNumeric('s', 0.003)
+    attack: seconds(0.003),
+    decay: seconds(0),
+    sustain: db(0),
+    release: seconds(0.003)
   }, {
-    velocity: 1 as Numeric<undefined>,
+    velocity: scalar(1),
     gate: 1.5 as Numeric<'s'>
   })
 
@@ -56,19 +61,23 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         id: instrument.id,
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', -3) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(-3)
+        },
         trigger: instrument.trigger
       } satisfies Instrument)
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: declickEnvelope(),
-          duration: 1.503 as Numeric<'s'>,
+          duration: seconds(1.503),
           source: {
             type: 'sample',
             assetId: asset.id,
-            length: 1.5 as Numeric<'s'>,
-            playbackRate: 1 as Numeric<undefined>
+            length: seconds(1.5),
+            playbackRate: scalar(1)
           }
         }
       ])
@@ -95,27 +104,31 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(0)
+        },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: runtimeNumeric('s', 0.003),
-            decay: runtimeNumeric('s', 0),
-            sustain: runtimeNumeric('db', 0),
-            release: runtimeNumeric('s', 0.003)
+            attack: seconds(0.003),
+            decay: seconds(0),
+            sustain: db(0),
+            release: seconds(0.003)
           }, {
             gate: undefined,
-            velocity: 1 as Numeric<undefined>
+            velocity: scalar(1)
           }),
           duration: undefined,
           source: {
             type: 'sample',
             assetId: asset.id,
             length: undefined,
-            playbackRate: 1 as Numeric<undefined>
+            playbackRate: scalar(1)
           }
         }
       ])
@@ -137,7 +150,7 @@ describe('library/modules/instruments.ts', () => {
         })
 
         const instrument = InstrumentFacet.get(result)
-        const voices = instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO)
+        const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
 
         assert.strictEqual(voices.length, 0)
       }
@@ -154,26 +167,30 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(0)
+        },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: runtimeNumeric('s', 0.003),
-            decay: runtimeNumeric('s', 0),
-            sustain: runtimeNumeric('db', 0),
-            release: runtimeNumeric('s', 0.003)
+            attack: seconds(0.003),
+            decay: seconds(0),
+            sustain: db(0),
+            release: seconds(0.003)
           }, {
             gate: undefined,
-            velocity: 1 as Numeric<undefined>
+            velocity: scalar(1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'sine',
-            frequency: 440 as Numeric<'hz'>
+            frequency: hz(440)
           }
         }
       ])
@@ -196,26 +213,30 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(0)
+        },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: runtimeNumeric('s', 0.003),
-            decay: runtimeNumeric('s', 0),
-            sustain: runtimeNumeric('db', 0),
-            release: runtimeNumeric('s', 0.003)
+            attack: seconds(0.003),
+            decay: seconds(0),
+            sustain: db(0),
+            release: seconds(0.003)
           }, {
             gate: undefined,
-            velocity: 1 as Numeric<undefined>
+            velocity: scalar(1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'square',
-            frequency: 440 as Numeric<'hz'>
+            frequency: hz(440)
           }
         }
       ])
@@ -238,26 +259,30 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(0)
+        },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: runtimeNumeric('s', 0.003),
-            decay: runtimeNumeric('s', 0),
-            sustain: runtimeNumeric('db', 0),
-            release: runtimeNumeric('s', 0.003)
+            attack: seconds(0.003),
+            decay: seconds(0),
+            sustain: db(0),
+            release: seconds(0.003)
           }, {
             gate: undefined,
-            velocity: 1 as Numeric<undefined>
+            velocity: scalar(1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'saw',
-            frequency: 440 as Numeric<'hz'>
+            frequency: hz(440)
           }
         }
       ])
@@ -280,26 +305,30 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
-        gain: { id: instrument.gain.id, initial: runtimeNumeric('db', 0) },
+        gain: {
+          id: instrument.gain.id,
+          unit: 'db',
+          initial: db(0)
+        },
         trigger: instrument.trigger
       })
 
-      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
+      assert.deepStrictEqual(instrument.trigger({ pitch: 'A4', velocity: scalar(1) }, DEFAULT_TEMPO), [
         {
           envelope: applyEnvelope({
-            attack: runtimeNumeric('s', 0.003),
-            decay: runtimeNumeric('s', 0),
-            sustain: runtimeNumeric('db', 0),
-            release: runtimeNumeric('s', 0.003)
+            attack: seconds(0.003),
+            decay: seconds(0),
+            sustain: db(0),
+            release: seconds(0.003)
           }, {
             gate: undefined,
-            velocity: 1 as Numeric<undefined>
+            velocity: scalar(1)
           }),
           duration: undefined,
           source: {
             type: 'oscillator',
             shape: 'triangle',
-            frequency: 440 as Numeric<'hz'>
+            frequency: hz(440)
           }
         }
       ])

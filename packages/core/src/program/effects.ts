@@ -1,4 +1,4 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 import type { Parameter } from './automations.js'
 
 export type Effect =
@@ -33,22 +33,22 @@ export interface HighpassEffect {
 
 export interface WidthEffect {
   readonly type: 'width'
-  readonly width: RuntimeNumeric<undefined>
+  readonly width: Numeric<undefined>
 }
 
 export interface DelayEffect {
   readonly type: 'delay'
-  readonly mix: RuntimeNumeric<undefined>
+  readonly mix: Numeric<undefined>
   readonly time: RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
   readonly feedback: Parameter<undefined>
-  readonly wet: RuntimeNumeric<'db'>
+  readonly wet: Numeric<'db'>
 }
 
 export interface ReverbEffect {
   readonly type: 'reverb'
-  readonly mix: RuntimeNumeric<undefined>
+  readonly mix: Numeric<undefined>
   readonly decay: RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
-  readonly wet: RuntimeNumeric<'db'>
+  readonly wet: Numeric<'db'>
 }
 
 export interface ClipEffect {

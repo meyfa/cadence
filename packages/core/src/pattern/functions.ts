@@ -280,7 +280,7 @@ export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pat
 }
 
 /**
- * Multiply a pattern by a runtimeNumeric factor, keeping the sequence of events the same but adjusting their timing.
+ * Multiply a pattern by a numeric factor, keeping the sequence of events the same but adjusting their timing.
  *
  * For example, multiplying a pattern of length 2 by 3 will produce a pattern of length 6 where each event occurs
  * at three times the original time.

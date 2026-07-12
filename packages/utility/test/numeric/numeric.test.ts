@@ -4,7 +4,7 @@ import { runtimeNumeric } from '../../src/numeric/numeric.js'
 
 describe('numeric/numeric.ts', () => {
   describe('runtimeNumeric()', () => {
-    it('should create a runtimeNumeric value with the specified unit and value', () => {
+    it('should create a RuntimeNumeric value with the specified unit and value', () => {
       const num = runtimeNumeric('s', 2.5)
       assert.deepStrictEqual(num, { unit: 's', value: 2.5 })
     })

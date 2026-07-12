@@ -16,6 +16,9 @@ const options: GenerateOptions = {
   }
 }
 
+const scalar = (value: number) => value as Numeric<undefined>
+const db = (value: number) => value as Numeric<'db'>
+
 describe('compiler/generator/scopes.ts', () => {
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided options and initial resolutions', () => {
@@ -40,15 +43,15 @@ describe('compiler/generator/scopes.ts', () => {
 
       const bus0 = {
         name: 'bus0',
-        gain: scope.allocateParameter(runtimeNumeric('db', 0)),
-        pan: scope.allocateParameter(runtimeNumeric(undefined, 0)),
+        gain: scope.allocateParameter('db', db(0)),
+        pan: scope.allocateParameter(undefined, scalar(0)),
         effects: []
       } as const
 
       const bus1 = {
         name: 'bus1',
-        gain: scope.allocateParameter(runtimeNumeric('db', -3)),
-        pan: scope.allocateParameter(runtimeNumeric(undefined, -0.5)),
+        gain: scope.allocateParameter('db', db(-3)),
+        pan: scope.allocateParameter(undefined, scalar(-0.5)),
         effects: []
       } as const
 
@@ -67,15 +70,15 @@ describe('compiler/generator/scopes.ts', () => {
     it('should allocate parameters with unique IDs', () => {
       const scope = createGlobalScope(options, new Map())
 
-      const parameter0 = scope.allocateParameter(runtimeNumeric('db', 12))
-      const parameter1 = scope.allocateParameter(runtimeNumeric('db', 6))
+      const parameter0 = scope.allocateParameter('db', db(12))
+      const parameter1 = scope.allocateParameter('db', db(6))
 
       assert.strictEqual(parameter0.id, 0)
       assert.strictEqual(parameter1.id, 1)
 
       assert.deepStrictEqual([...scope.automations], [
-        [0, { initial: runtimeNumeric('db', 12), points: [] }],
-        [1, { initial: runtimeNumeric('db', 6), points: [] }]
+        [0, { initial: 12, points: [] }],
+        [1, { initial: 6, points: [] }]
       ])
     })
 
@@ -83,12 +86,12 @@ describe('compiler/generator/scopes.ts', () => {
       const scope = createGlobalScope(options, new Map())
 
       const instrument0 = {
-        gain: scope.allocateParameter(runtimeNumeric('db', -6)),
+        gain: scope.allocateParameter('db', db(-6)),
         trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
       const instrument1 = {
-        gain: scope.allocateParameter(runtimeNumeric('db', -3)),
+        gain: scope.allocateParameter('db', db(-3)),
         trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
