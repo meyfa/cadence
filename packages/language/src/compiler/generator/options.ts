@@ -1,9 +1,11 @@
+import type { Numeric } from '@utility'
+
 export interface GenerateOptions {
   readonly beatsPerBar: number
 
   readonly tempo: {
-    readonly default: number
-    readonly minimum: number
-    readonly maximum: number
+    readonly default: Numeric<'bpm'>
+    readonly minimum: Numeric<'bpm'>
+    readonly maximum: Numeric<'bpm'>
   }
 }

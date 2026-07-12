@@ -16,5 +16,5 @@ export function timeToSeconds (
 }
 
 export function calculateTotalLength (program: Program): Numeric<'beats'> {
-  return program.track.parts.reduce((total, part) => total + part.length.value, 0) as Numeric<'beats'>
+  return program.track.parts.reduce((total, part) => total + part.length, 0) as Numeric<'beats'>
 }

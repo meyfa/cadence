@@ -26,7 +26,7 @@ interface MeteringOptions {
 
 export function createAudioGraph (program: Program, options?: AudioGraphOptions): AudioGraph<Node> {
   const builder = createAudioGraphBuilder<Node>({
-    tempo: program.track.tempo.value,
+    tempo: program.track.tempo,
     length: calculateTotalLength(program)
   })
 
@@ -121,7 +121,7 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
       const result: SourceNode[] = []
 
       for (const voice of instrument.trigger(note, program.track.tempo)) {
-        if (voice.duration == null || voice.duration.value > 0) {
+        if (voice.duration == null || voice.duration > 0) {
           result.push(createSourceNode(voice))
         }
       }
@@ -156,32 +156,32 @@ function createSourceNode (voice: Voice): SourceNode {
 function createSampleSourceNode (voice: Voice<Sample>): SourceNode {
   const { assetId, playbackRate } = voice.source
 
-  if (playbackRate.value <= 0 || !Number.isFinite(playbackRate.value)) {
+  if (playbackRate <= 0 || !Number.isFinite(playbackRate)) {
     throw new Error(`Invalid playback rate`)
   }
 
   return {
     type: 'sample',
     gainCurve: transformCurve(voice.envelope, gainTransform),
-    duration: voice.duration?.value,
+    duration: voice.duration,
     assetId,
-    playbackRate: playbackRate.value
+    playbackRate
   }
 }
 
 function createOscillatorSourceNode (voice: Voice<Oscillator>): SourceNode {
   const { shape, frequency } = voice.source
 
-  if (frequency.value <= 0 || !Number.isFinite(frequency.value)) {
-    throw new Error(`Invalid frequency: ${frequency.value}`)
+  if (frequency <= 0 || !Number.isFinite(frequency)) {
+    throw new Error(`Invalid frequency: ${frequency}`)
   }
 
   return {
     type: 'oscillator',
     gainCurve: transformCurve(voice.envelope, gainTransform),
-    duration: voice.duration?.value,
+    duration: voice.duration,
     shape,
-    frequency: frequency.value
+    frequency
   }
 }
 
@@ -239,7 +239,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const delayNodeId = builder.addNode<DelayNode>('delay', {
         // TODO time variant
-        time: timeToSeconds(effect.time, program.track.tempo.value)
+        time: timeToSeconds(effect.time, program.track.tempo)
       })
 
       if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
@@ -266,7 +266,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const reverbId = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
-        decay: timeToSeconds(effect.decay, program.track.tempo.value)
+        decay: timeToSeconds(effect.decay, program.track.tempo)
       })
 
       return createDryWetMix(reverbId, mix, effect.wet.value, builder)
@@ -420,7 +420,7 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
         continue
       }
 
-      const events = renderPatternEvents(routing.source.value, part.length.value).map((event) => ({
+      const events = renderPatternEvents(routing.source.value, part.length).map((event) => ({
         ...event,
         time: event.time + offsetBeats as Numeric<'beats'>
       }))
@@ -428,7 +428,7 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
       builder.addNoteEvents(nodeId, events)
     }
 
-    offsetBeats += part.length.value
+    offsetBeats += part.length
   }
 }
 

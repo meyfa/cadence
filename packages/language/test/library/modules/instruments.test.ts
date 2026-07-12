@@ -12,15 +12,15 @@ import { InstrumentFacet } from '../../../src/type-system/domain/instrument.js'
 import { Numbers } from '../../../src/type-system/helpers.js'
 import { getFunctionExport } from './test-utils.js'
 
-const DEFAULT_TEMPO = runtimeNumeric('bpm', 120)
+const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
 function createFunctionContext (): GlobalScope {
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
-      default: DEFAULT_TEMPO.value,
-      minimum: 20,
-      maximum: 300
+      default: DEFAULT_TEMPO,
+      minimum: 20 as Numeric<'bpm'>,
+      maximum: 300 as Numeric<'bpm'>
     }
   }, new Map())
 }
@@ -63,12 +63,12 @@ describe('library/modules/instruments.ts', () => {
       assert.deepStrictEqual(instrument.trigger({ velocity: 1 as Numeric<undefined> }, DEFAULT_TEMPO), [
         {
           envelope: declickEnvelope(),
-          duration: runtimeNumeric('s', 1.503),
+          duration: 1.503 as Numeric<'s'>,
           source: {
             type: 'sample',
             assetId: asset.id,
-            length: runtimeNumeric('s', 1.5),
-            playbackRate: runtimeNumeric(undefined, 1)
+            length: 1.5 as Numeric<'s'>,
+            playbackRate: 1 as Numeric<undefined>
           }
         }
       ])
@@ -115,7 +115,7 @@ describe('library/modules/instruments.ts', () => {
             type: 'sample',
             assetId: asset.id,
             length: undefined,
-            playbackRate: runtimeNumeric(undefined, 1)
+            playbackRate: 1 as Numeric<undefined>
           }
         }
       ])
@@ -173,7 +173,7 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'oscillator',
             shape: 'sine',
-            frequency: runtimeNumeric('hz', 440)
+            frequency: 440 as Numeric<'hz'>
           }
         }
       ])
@@ -215,7 +215,7 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'oscillator',
             shape: 'square',
-            frequency: runtimeNumeric('hz', 440)
+            frequency: 440 as Numeric<'hz'>
           }
         }
       ])
@@ -257,7 +257,7 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'oscillator',
             shape: 'saw',
-            frequency: runtimeNumeric('hz', 440)
+            frequency: 440 as Numeric<'hz'>
           }
         }
       ])
@@ -299,7 +299,7 @@ describe('library/modules/instruments.ts', () => {
           source: {
             type: 'oscillator',
             shape: 'triangle',
-            frequency: runtimeNumeric('hz', 440)
+            frequency: 440 as Numeric<'hz'>
           }
         }
       ])

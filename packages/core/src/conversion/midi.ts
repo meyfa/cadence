@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand, Numeric } from '@utility'
 import type { Pitch } from '../pattern/types.js'
 
 // Note: Actual MIDI supports 0-127 (C-1 through G9), but for syntactical
@@ -54,6 +54,6 @@ export function convertPitchToMidi (pitch: Pitch): MidiNote {
   return midi
 }
 
-export function getMidiFrequency (midi: MidiNote): number {
-  return 440 * Math.pow(2, (midi - 69) / 12)
+export function getMidiFrequency (midi: MidiNote): Numeric<'hz'> {
+  return 440 * Math.pow(2, (midi - 69) / 12) as Numeric<'hz'>
 }

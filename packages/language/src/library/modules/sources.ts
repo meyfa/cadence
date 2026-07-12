@@ -19,7 +19,7 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
       return SourceFacet.type().of({
         type: 'oscillator',
         shape,
-        frequency: NumberFacet.get(frequency)
+        frequency: NumberFacet.get(frequency).value
       })
     }
   })

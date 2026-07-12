@@ -133,7 +133,7 @@ export function computeExportMetrics (program: Program, options: {
 
 function computeTrackDuration (program: Program): Numeric<'s'> {
   const lengthInBeats = calculateTotalLength(program)
-  return beatsToSeconds(lengthInBeats, program.track.tempo.value)
+  return beatsToSeconds(lengthInBeats, program.track.tempo)
 }
 
 function estimateFileSize (options: {

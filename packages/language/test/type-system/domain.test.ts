@@ -43,7 +43,7 @@ const instrument: Instrument = {
 
 const part: Part = {
   name: 'intro',
-  length: runtimeNumeric('beats', 4),
+  length: 4 as Numeric<'beats'>,
   routings: [{
     source: {
       type: 'pattern',

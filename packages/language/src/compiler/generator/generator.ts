@@ -75,7 +75,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   }
 
   mixer ??= { buses: [], routings: [] }
-  track ??= { tempo: runtimeNumeric('bpm', options.tempo.default), parts: [] }
+  track ??= { tempo: options.tempo.default, parts: [] }
 
   // Implicit output routings for unrouted buses and instruments
   mixer = {
@@ -146,13 +146,13 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
   const properties = resolveArgumentList(scope, track.properties, trackSchema)
 
   const tempo = properties.tempo != null
-    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
-    : runtimeNumeric('bpm', options.tempo.default)
+    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum).value
+    : options.tempo.default
 
   const trackScope = createLocalScope(scope)
   const parts: Part[] = []
 
-  let currentTime = runtimeNumeric('beats', 0)
+  let currentTime = 0 as Numeric<'beats'>
 
   for (const child of track.children) {
     switch (child.type) {
@@ -169,7 +169,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
           trackScope.resolutions.set(part.name, PartFacet.type().of(part))
         }
 
-        currentTime = runtimeNumeric('beats', currentTime.value + part.length.value)
+        currentTime = currentTime + part.length as Numeric<'beats'>
         break
       }
 
@@ -181,7 +181,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
   return { tempo, parts }
 }
 
-function generatePart (scope: Scope, part: ast.PartStatement, startTime: RuntimeNumeric<'beats'>, tempo: RuntimeNumeric<'bpm'>): Part {
+function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
   const partScope = createLocalScope(scope)
 
   const name = part.name?.name
@@ -211,7 +211,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Runtime
         break
 
       case 'AutomateStatement':
-        generateAutomation(partScope, child, { offset: startTime, limit: length, tempo })
+        generateAutomation(partScope, child, { offset: runtimeNumeric('beats', startTime), limit: length, tempo })
         break
 
       default:
@@ -219,7 +219,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Runtime
     }
   }
 
-  return { name, length, routings }
+  return { name, length: length.value, routings }
 }
 
 function generateAutomation (scope: Scope, statement: ast.AutomateStatement, options: RenderCurveOptions): void {
@@ -534,7 +534,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
-  const voiceConstructors: Array<(note: NoteValue, tempo: RuntimeNumeric<'bpm'>) => readonly Voice[]> = []
+  const voiceConstructors: Array<(note: NoteValue, tempo: Numeric<'bpm'>) => readonly Voice[]> = []
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -577,7 +577,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   return InstrumentFacet.type().of(instrument)
 }
 
-function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: RuntimeNumeric<'bpm'>): readonly Voice[] {
+function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: Numeric<'bpm'>): readonly Voice[] {
   const voiceScope = createLocalScope(scope)
 
   if (voice.bindings.note != null) {
@@ -625,7 +625,7 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
     {
       envelope,
       source: outputValue,
-      duration: envelope.points.at(-1)?.time
+      duration: envelope.points.at(-1)?.time.value
     }
   ]
 }
