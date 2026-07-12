@@ -1,10 +1,10 @@
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
 interface AudioContextWithWorklet extends BaseAudioContext {
   readonly audioWorklet: AudioWorklet
 }
 
-const LOAD_TIMEOUT = runtimeNumeric('s', 30)
+const LOAD_TIMEOUT = 30 as Numeric<'s'>
 
 const workletCache = new WeakMap<BaseAudioContext, Map<string, Promise<void>>>()
 
@@ -20,7 +20,7 @@ export async function addWorkletModule (ctx: BaseAudioContext, moduleUrl: string
     }
   }
 
-  const promise = add(ctx, moduleUrl, AbortSignal.timeout(LOAD_TIMEOUT.value * 1000))
+  const promise = add(ctx, moduleUrl, AbortSignal.timeout(LOAD_TIMEOUT * 1000))
 
   let ctxCache = workletCache.get(ctx)
   if (ctxCache == null) {

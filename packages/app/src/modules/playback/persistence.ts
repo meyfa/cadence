@@ -33,7 +33,9 @@ export function usePlaybackSettingsSync (): void {
   const audioEngine = useAudioEngine()
   const outputGain = useObservable(audioEngine.outputGain)
 
-  usePersistentBinding(outputGainDomain, { outputGain }, (persisted) => {
-    audioEngine.outputGain.set(persisted.outputGain)
+  usePersistentBinding(outputGainDomain, {
+    outputGain: runtimeNumeric('db', outputGain)
+  }, (persisted) => {
+    audioEngine.outputGain.set(persisted.outputGain.value)
   }, { onConflict: 'accept-remote' })
 }

@@ -1,5 +1,5 @@
 import type { NoteEvent } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
 export interface Instance {
   readonly dispose: () => void
@@ -7,5 +7,5 @@ export interface Instance {
   readonly input?: AudioNode
   readonly output?: AudioNode
 
-  readonly triggerNote?: (note: NoteEvent, tempo: RuntimeNumeric<'bpm'>) => void
+  readonly triggerNote?: (note: NoteEvent, tempo: Numeric<'bpm'>) => void
 }

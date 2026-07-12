@@ -1,4 +1,4 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import { describe, expect, it } from 'vitest'
 import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
@@ -15,14 +15,14 @@ function createTestTransport () {
     ctx,
     input: output,
     output,
-    schedule: (_time, onSchedule) => onSchedule(0)
+    schedule: (_time, onSchedule) => onSchedule(0 as Numeric<'s'>)
   }
 
   return { ctx, transport }
 }
 
 async function renderWidth (options: {
-  readonly width: RuntimeNumeric<undefined>
+  readonly width: Numeric<undefined>
   readonly inputChannels: number
   readonly fill: (buffer: AudioBuffer) => void
 }): Promise<{
@@ -31,7 +31,7 @@ async function renderWidth (options: {
 }> {
   const { width, inputChannels, fill } = options
   const { ctx, transport } = createTestTransport()
-  const instance = createWidthInstance({ type: 'width', width }, transport)
+  const instance = createWidthInstance({ type: 'width', width: runtimeNumeric(undefined, width) }, transport)
 
   try {
     const input = ctx.createBuffer(inputChannels, length, sampleRate)
@@ -54,13 +54,13 @@ async function renderWidth (options: {
 }
 
 async function renderDelay (options: {
-  readonly time: RuntimeNumeric<'s'>
+  readonly time: Numeric<'s'>
 }): Promise<{
   readonly output: AudioBuffer
 }> {
   const { time } = options
 
-  const delaySeconds = Math.max(1.25, time.value + 0.25)
+  const delaySeconds = Math.max(1.25, time + 0.25)
   const delaySamples = Math.ceil(delaySeconds * sampleRate)
   const renderLength = delaySamples + 256
 
@@ -70,10 +70,10 @@ async function renderDelay (options: {
     ctx,
     input: output,
     output,
-    schedule: (_time, onSchedule) => onSchedule(0)
+    schedule: (_time, onSchedule) => onSchedule(0 as Numeric<'s'>)
   }
 
-  const instance = createDelayInstance({ type: 'delay', time }, transport)
+  const instance = createDelayInstance({ type: 'delay', time: runtimeNumeric('s', time) }, transport)
 
   try {
     const source = ctx.createBufferSource()
@@ -97,7 +97,7 @@ describe('graph/effect.ts', () => {
   describe('createWidthInstance', () => {
     it('renders mono-compatible output when width = 0', async () => {
       const { output } = await renderWidth({
-        width: runtimeNumeric(undefined, 0),
+        width: 0 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -111,7 +111,7 @@ describe('graph/effect.ts', () => {
 
     it('swaps stereo channels when width = -1', async () => {
       const { output } = await renderWidth({
-        width: runtimeNumeric(undefined, -1),
+        width: -1 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -125,7 +125,7 @@ describe('graph/effect.ts', () => {
 
     it('applies weighted stereo mix when width = 0.5', async () => {
       const { output } = await renderWidth({
-        width: runtimeNumeric(undefined, 0.5),
+        width: 0.5 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -139,7 +139,7 @@ describe('graph/effect.ts', () => {
 
     it('passes through unmodified stereo signal when width = 1', async () => {
       const { input, output } = await renderWidth({
-        width: runtimeNumeric(undefined, 1),
+        width: 1 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -154,7 +154,7 @@ describe('graph/effect.ts', () => {
     it('keeps mono the same for any width', async () => {
       for (const widthValue of [-1, -0.5, 0, 0.5, 1]) {
         const { input, output } = await renderWidth({
-          width: runtimeNumeric(undefined, widthValue),
+          width: widthValue as Numeric<undefined>,
           inputChannels: 2,
           fill: (input) => {
             const mono = fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -172,7 +172,7 @@ describe('graph/effect.ts', () => {
       // With upmixing, the output should be the same in both channels.
 
       const { input, output } = await renderWidth({
-        width: runtimeNumeric(undefined, 1),
+        width: 1 as Numeric<undefined>,
         inputChannels: 1,
         fill: (input) => {
           fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -185,7 +185,7 @@ describe('graph/effect.ts', () => {
 
     it('does not clamp out-of-range width values', async () => {
       const expanded = await renderWidth({
-        width: runtimeNumeric(undefined, 1.5),
+        width: 1.5 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -197,7 +197,7 @@ describe('graph/effect.ts', () => {
       expect(average(expanded.output.getChannelData(1))).toBeCloseTo(-0.25, 3)
 
       const inverted = await renderWidth({
-        width: runtimeNumeric(undefined, -1.5),
+        width: -1.5 as Numeric<undefined>,
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -212,7 +212,7 @@ describe('graph/effect.ts', () => {
 
   describe('createDelayInstance', () => {
     it('supports delay times longer than one second', async () => {
-      const time = runtimeNumeric('s', 1.5)
+      const time = 1.5 as Numeric<'s'>
       const { output } = await renderDelay({ time })
 
       const channel = output.getChannelData(0)
@@ -220,7 +220,7 @@ describe('graph/effect.ts', () => {
         return Math.abs(value) > Math.abs(data[bestIndex]) ? index : bestIndex
       }, 0)
 
-      expect(peakIndex / sampleRate).toBeCloseTo(time.value, 2)
+      expect(peakIndex / sampleRate).toBeCloseTo(time, 2)
     })
   })
 })

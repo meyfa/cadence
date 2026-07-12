@@ -1,6 +1,6 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern, dbToGain } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -270,7 +270,7 @@ describe('lowering.ts', () => {
         {
           type: 'gain',
           gain: {
-            initial: dbToGain(runtimeNumeric('db', -3)),
+            initial: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
             points: []
           }
         } satisfies GainNode
@@ -287,7 +287,7 @@ describe('lowering.ts', () => {
         {
           type: 'gain',
           gain: {
-            initial: dbToGain(runtimeNumeric('db', -6)),
+            initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
             points: []
           }
         } satisfies GainNode
@@ -393,16 +393,16 @@ describe('lowering.ts', () => {
     assert.deepStrictEqual(graph.nodes.get(3 as NodeId), {
       type: 'gain',
       gain: {
-        initial: dbToGain(runtimeNumeric('db', -6)),
+        initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
         points: [
           {
             time: runtimeNumeric('s', 0.5),
-            value: dbToGain(runtimeNumeric('db', -3)),
+            value: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
             shape: 'exponential'
           },
           {
             time: runtimeNumeric('s', 1),
-            value: dbToGain(runtimeNumeric('db', -12)),
+            value: runtimeNumeric(undefined, dbToGain(-12 as Numeric<'db'>)),
             shape: 'step'
           }
         ]
@@ -704,7 +704,7 @@ describe('lowering.ts', () => {
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'gain',
           gain: {
-            initial: dbToGain(runtimeNumeric('db', -3)),
+            initial: runtimeNumeric(undefined, dbToGain(-3 as Numeric<'db'>)),
             points: []
           }
         } satisfies GainNode)
@@ -967,7 +967,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(runtimeNumeric('beats', 0.5), runtimeNumeric('bpm', 120))
+              time: runtimeNumeric('s', beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -1044,7 +1044,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(runtimeNumeric('beats', 0.5), runtimeNumeric('bpm', 120))
+              time: runtimeNumeric('s', beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -1169,7 +1169,7 @@ describe('lowering.ts', () => {
             2,
             {
               type: 'delay',
-              time: beatsToSeconds(runtimeNumeric('beats', 0.5), runtimeNumeric('bpm', 120))
+              time: runtimeNumeric('s', beatsToSeconds(0.5 as Numeric<'beats'>, 120 as Numeric<'bpm'>))
             } satisfies DelayNode
           ],
           // feedback gain node
@@ -1189,7 +1189,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: dbToGain(runtimeNumeric('db', -6)),
+                initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
                 points: []
               }
             } satisfies GainNode
@@ -1366,7 +1366,7 @@ describe('lowering.ts', () => {
 
         assert.deepStrictEqual(graph.nodes.get(2 as NodeId), {
           type: 'reverb',
-          decay: beatsToSeconds(runtimeNumeric('beats', 2), runtimeNumeric('bpm', 120))
+          decay: runtimeNumeric('s', beatsToSeconds(2 as Numeric<'beats'>, 120 as Numeric<'bpm'>))
         } satisfies ReverbNode)
       })
 
@@ -1403,7 +1403,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: dbToGain(runtimeNumeric('db', -6)),
+                initial: runtimeNumeric(undefined, dbToGain(-6 as Numeric<'db'>)),
                 points: []
               }
             } satisfies GainNode
@@ -1482,7 +1482,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: runtimeNumeric(undefined, 1 / dbToGain(threshold).value),
+                initial: runtimeNumeric(undefined, 1 / dbToGain(threshold.value)),
                 points: []
               }
             } satisfies GainNode
@@ -1501,7 +1501,7 @@ describe('lowering.ts', () => {
             {
               type: 'gain',
               gain: {
-                initial: dbToGain(threshold),
+                initial: runtimeNumeric(undefined, dbToGain(threshold.value)),
                 points: []
               }
             } satisfies GainNode

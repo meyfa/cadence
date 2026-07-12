@@ -1,4 +1,4 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import { insertSorted } from '@utility'
 
 export interface Scheduler {
@@ -7,7 +7,7 @@ export interface Scheduler {
    *
    * @param offsetTime AudioContext time when transport time is 0.
    */
-  readonly start: (offsetTime: number) => void
+  readonly start: (offsetTime: Numeric<'s'>) => void
 
   /**
    * Stop periodic flushing of events.
@@ -19,7 +19,7 @@ export interface Scheduler {
    *
    * The callback receives an absolute AudioContext time.
    */
-  readonly schedule: (time: number, callback: (time: number) => void) => void
+  readonly schedule: (time: Numeric<'s'>, callback: (time: Numeric<'s'>) => void) => void
 
   /**
    * Flush any currently-due events (useful after scheduling near-term events).
@@ -31,17 +31,17 @@ export interface RealtimeSchedulerOptions {
   /**
    * Time source for the scheduler (e.g. AudioContext.currentTime).
    */
-  readonly now: () => number
+  readonly now: () => Numeric<'s'>
 
   /**
    * Scheduler tick frequency.
    */
-  readonly tickInterval: RuntimeNumeric<'s'>
+  readonly tickInterval: Numeric<'s'>
 
   /**
    * How far ahead (from transport time) callbacks may run.
    */
-  readonly scheduleAheadTime: RuntimeNumeric<'s'>
+  readonly scheduleAheadTime: Numeric<'s'>
 
   readonly timers?: {
     readonly setInterval: typeof globalThis.setInterval
@@ -60,21 +60,21 @@ export function createRealtimeScheduler (options: RealtimeSchedulerOptions): Sch
   const queue = createScheduledEventQueue()
 
   let interval: ReturnType<typeof globalThis.setInterval> | undefined
-  let offsetTime = 0
+  let offsetTime = 0 as Numeric<'s'>
   let started = false
 
   const flush = () => {
     if (started) {
-      queue.flushBefore(now() - offsetTime + scheduleAheadTime.value, offsetTime)
+      queue.flushBefore(now() - offsetTime + scheduleAheadTime, offsetTime)
     }
   }
 
-  const start = (newOffsetTime: number) => {
+  const start = (newOffsetTime: Numeric<'s'>) => {
     if (!started) {
       started = true
       offsetTime = newOffsetTime
       flush()
-      interval = timers.setInterval(flush, tickInterval.value * 1000)
+      interval = timers.setInterval(flush, tickInterval * 1000)
     }
   }
 
@@ -87,10 +87,10 @@ export function createRealtimeScheduler (options: RealtimeSchedulerOptions): Sch
     started = false
   }
 
-  const schedule = (time: number, callback: (time: number) => void) => {
+  const schedule = (time: Numeric<'s'>, callback: (time: Numeric<'s'>) => void) => {
     queue.schedule({ time, callback })
     // If the event is near, try scheduling it without waiting for the next tick.
-    if (started && time <= now() - offsetTime + scheduleAheadTime.value) {
+    if (started && time <= now() - offsetTime + scheduleAheadTime) {
       flush()
     }
   }
@@ -101,7 +101,7 @@ export function createRealtimeScheduler (options: RealtimeSchedulerOptions): Sch
 export function createImmediateScheduler (): Scheduler {
   const queue = createScheduledEventQueue()
 
-  let offsetTime = 0
+  let offsetTime = 0 as Numeric<'s'>
   let started = false
 
   const flush = () => {
@@ -110,7 +110,7 @@ export function createImmediateScheduler (): Scheduler {
     }
   }
 
-  const start = (newOffsetTime: number) => {
+  const start = (newOffsetTime: Numeric<'s'>) => {
     if (!started) {
       started = true
       offsetTime = newOffsetTime
@@ -122,7 +122,7 @@ export function createImmediateScheduler (): Scheduler {
     started = false
   }
 
-  const schedule = (time: number, callback: (time: number) => void) => {
+  const schedule = (time: Numeric<'s'>, callback: (time: Numeric<'s'>) => void) => {
     queue.schedule({ time, callback })
     if (started) {
       flush()
@@ -139,8 +139,8 @@ interface ScheduledEventQueue {
 }
 
 interface ScheduledEvent {
-  readonly time: number
-  readonly callback: (time: number) => void
+  readonly time: Numeric<'s'>
+  readonly callback: (time: Numeric<'s'>) => void
 }
 
 const compareByTime = (a: ScheduledEvent, b: ScheduledEvent): number => a.time - b.time
@@ -169,7 +169,7 @@ function createScheduledEventQueue (): ScheduledEventQueue {
     ensureSorted()
 
     for (const event of scheduled) {
-      event.callback(event.time + offsetTime)
+      event.callback((event.time + offsetTime) as Numeric<'s'>)
     }
 
     scheduled.splice(0, scheduled.length)
@@ -185,7 +185,7 @@ function createScheduledEventQueue (): ScheduledEventQueue {
         break
       }
 
-      event.callback(event.time + offsetTime)
+      event.callback((event.time + offsetTime) as Numeric<'s'>)
       ++flushed
     }
 

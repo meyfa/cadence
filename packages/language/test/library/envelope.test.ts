@@ -1,6 +1,6 @@
 import type { Curve } from '@core'
 import { gainToDb } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -120,7 +120,7 @@ describe('envelope.ts', () => {
         velocity: runtimeNumeric(undefined, 0.75)
       })
 
-      const velocityLevel = gainToDb(runtimeNumeric(undefined, 0.75))
+      const velocityLevel = runtimeNumeric('db', gainToDb(0.75 as Numeric<undefined>))
 
       const startLevel = runtimeNumeric('db', velocityLevel.value + RELATIVE_SILENCE.value)
       const sustainLevel = runtimeNumeric('db', velocityLevel.value - 6)

@@ -10,7 +10,7 @@ export function automate<U extends Unit> (transport: Transport, param: AudioPara
     return
   }
 
-  transport.schedule(0, (time) => {
+  transport.schedule(0 as Numeric<'s'>, (time) => {
     param.setValueAtTime(source.initial.value, 0)
 
     // Precompute point times

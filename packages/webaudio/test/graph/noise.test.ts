@@ -1,7 +1,7 @@
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
+import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { generateReverbImpulseResponse } from '../../src/graph/noise.js'
-import assert from 'node:assert'
 
 class MockAudioBuffer {
   readonly length: number
@@ -39,7 +39,7 @@ describe('graph/noise.ts', () => {
   describe('generateReverbImpulseResponse', () => {
     it('generates an impulse response with the expected properties', () => {
       const sampleRate = 44_100
-      const decay = runtimeNumeric('s', 1.5)
+      const decay = 1.5 as Numeric<'s'>
 
       const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
@@ -48,7 +48,7 @@ describe('graph/noise.ts', () => {
         decay
       })
 
-      const expectedLength = Math.max(1, Math.floor(sampleRate * decay.value))
+      const expectedLength = Math.max(1, Math.floor(sampleRate * decay))
       assert.strictEqual(ir.length, expectedLength, `Expected impulse response length to be ${expectedLength}, but got ${ir.length}`)
 
       assert.strictEqual(ir.numberOfChannels, 4)
@@ -57,7 +57,7 @@ describe('graph/noise.ts', () => {
 
     it('generates an impulse response with a decaying envelope', () => {
       const sampleRate = 44_100
-      const decay = runtimeNumeric('s', 2)
+      const decay = 2 as Numeric<'s'>
 
       const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
@@ -78,7 +78,7 @@ describe('graph/noise.ts', () => {
 
     it('generates different noise for different channels', () => {
       const sampleRate = 44_100
-      const decay = runtimeNumeric('s', 1)
+      const decay = 1 as Numeric<'s'>
 
       const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
@@ -96,7 +96,7 @@ describe('graph/noise.ts', () => {
 
     it('handles long decay times without errors', () => {
       const sampleRate = 44_100
-      const decay = runtimeNumeric('s', 30)
+      const decay = 30 as Numeric<'s'>
 
       const ir = generateReverbImpulseResponse({
         createBuffer: (options) => new MockAudioBuffer(options) as any as AudioBuffer,
@@ -105,7 +105,7 @@ describe('graph/noise.ts', () => {
         decay
       })
 
-      assert.strictEqual(ir.length, Math.max(1, Math.floor(sampleRate * decay.value)))
+      assert.strictEqual(ir.length, Math.max(1, Math.floor(sampleRate * decay)))
     })
   })
 })

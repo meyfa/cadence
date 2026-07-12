@@ -1,18 +1,17 @@
-import type { RuntimeNumeric } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
-export function dbToGain ({ value }: RuntimeNumeric<'db'>): RuntimeNumeric<undefined> {
+export function dbToGain (value: Numeric<'db'>): Numeric<undefined> {
   if (Number.isNaN(value) || (value > 0 && !Number.isFinite(value))) {
     throw new Error(`Invalid gain: ${value}`)
   }
 
-  return runtimeNumeric(undefined, Math.pow(10, value / 20))
+  return Math.pow(10, value / 20) as Numeric<undefined>
 }
 
-export function gainToDb ({ value }: RuntimeNumeric<undefined>): RuntimeNumeric<'db'> {
+export function gainToDb (value: Numeric<undefined>): Numeric<'db'> {
   if (value <= 0) {
-    return runtimeNumeric('db', -Infinity)
+    return -Infinity as Numeric<'db'>
   }
 
-  return runtimeNumeric('db', 20 * Math.log10(value))
+  return (20 * Math.log10(value)) as Numeric<'db'>
 }

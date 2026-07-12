@@ -49,7 +49,7 @@ export function identityTransform<U extends Unit> (): Transform<U, U> {
 
 export const gainTransform: Transform<'db', undefined> = {
   transformValue: (value) => {
-    return dbToGain(value)
+    return runtimeNumeric(undefined, dbToGain(value.value))
   },
 
   transformCurveShape: (curve) => {

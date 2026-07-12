@@ -1,6 +1,6 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
 export interface BeatRange {
-  readonly start: RuntimeNumeric<'beats'>
-  readonly end?: RuntimeNumeric<'beats'>
+  readonly start: Numeric<'beats'>
+  readonly end?: Numeric<'beats'>
 }

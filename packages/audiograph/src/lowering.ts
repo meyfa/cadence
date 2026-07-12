@@ -1,6 +1,6 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
@@ -27,7 +27,7 @@ interface MeteringOptions {
 export function createAudioGraph (program: Program, options?: AudioGraphOptions): AudioGraph<Node> {
   const builder = createAudioGraphBuilder<Node>({
     tempo: program.track.tempo,
-    length: calculateTotalLength(program)
+    length: runtimeNumeric('beats', calculateTotalLength(program))
   })
 
   const outputId = builder.addNode<IdentityNode>('identity', {})
@@ -239,7 +239,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const delayNodeId = builder.addNode<DelayNode>('delay', {
         // TODO time variant
-        time: timeToSeconds(effect.time, program.track.tempo)
+        time: timeToSeconds(effect.time, program.track.tempo.value)
       })
 
       if (effect.feedback.initial.value > 0 || program.automations.has(effect.feedback.id)) {
@@ -251,7 +251,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         builder.addEdge(feedbackGainId, delayNodeId)
       }
 
-      return createDryWetMix(delayNodeId, effect.mix.value, effect.wet, builder)
+      return createDryWetMix(delayNodeId, effect.mix.value, effect.wet.value, builder)
     }
 
     case 'reverb': {
@@ -266,10 +266,10 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       const reverbId = builder.addNode<ReverbNode>('reverb', {
         // TODO time variant
-        decay: timeToSeconds(effect.decay, program.track.tempo)
+        decay: timeToSeconds(effect.decay, program.track.tempo.value)
       })
 
-      return createDryWetMix(reverbId, mix, effect.wet, builder)
+      return createDryWetMix(reverbId, mix, effect.wet.value, builder)
     }
 
     case 'clip': {
@@ -313,7 +313,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
   }
 }
 
-function createDryWetMix (effectId: NodeId, mix: number, wetGain: RuntimeNumeric<'db'>, builder: Builder): SubGraph {
+function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>, builder: Builder): SubGraph {
   if (Number.isNaN(mix)) {
     throw new Error(`Invalid mix: ${mix}`)
   }
@@ -363,12 +363,12 @@ function createDryWetMix (effectId: NodeId, mix: number, wetGain: RuntimeNumeric
   }
 }
 
-function createOptionalGainNode (wetGain: RuntimeNumeric<'db'>, builder: Builder): NodeId | undefined {
-  if (wetGain.value === 0) {
+function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): NodeId | undefined {
+  if (wetGain === 0) {
     return undefined
   }
 
-  const gain = dbToGain(wetGain)
+  const gain = runtimeNumeric(undefined, dbToGain(wetGain))
 
   return builder.addNode<GainNode>('gain', {
     // TODO time variant

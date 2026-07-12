@@ -99,7 +99,7 @@ export function createReverbInstance (node: ReverbNode, transport: Transport): I
     createBuffer: (options) => new AudioBuffer(options),
     numberOfChannels: ctx.destination.channelCount,
     sampleRate: ctx.sampleRate,
-    decay: node.decay
+    decay: node.decay.value
   })
 
   return toInstance(audioNode)

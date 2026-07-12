@@ -1,6 +1,6 @@
 import type { AudioGraph, EntityKey, Node } from '@audiograph'
-import type { RuntimeNumeric, Observable, Observer, UnsubscribeFn } from '@utility'
-import { DisposeStack, MutableObservable, runtimeNumeric } from '@utility'
+import type { Numeric, Observable, Observer, UnsubscribeFn } from '@utility'
+import { DisposeStack, MutableObservable } from '@utility'
 import type { CacheLimits } from '../assets/fetcher.js'
 import { createAudioFetcher } from '../assets/fetcher.js'
 import type { MeterCallbacks } from '../graph/factory.js'
@@ -10,20 +10,20 @@ import { createAudioSession } from './session.js'
 import type { BeatRange } from './types.js'
 
 export interface AudioEngineOptions {
-  readonly outputGain: RuntimeNumeric<'db'>
-  readonly assetLoadTimeout: RuntimeNumeric<'s'>
+  readonly outputGain: Numeric<'db'>
+  readonly assetLoadTimeout: Numeric<'s'>
   readonly cacheLimits: CacheLimits
 }
 
 export interface AudioEngine {
-  readonly outputGain: MutableObservable<RuntimeNumeric<'db'>>
+  readonly outputGain: MutableObservable<Numeric<'db'>>
 
   readonly playing: Observable<boolean>
   readonly play: (graph: AudioGraph<Node>) => void
   readonly stop: () => void
 
   readonly range: MutableObservable<BeatRange>
-  readonly position: Observable<RuntimeNumeric<'beats'>>
+  readonly position: Observable<Numeric<'beats'>>
   readonly errors: Observable<readonly Error[]>
 
   readonly meters: {
@@ -41,7 +41,7 @@ export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   })
 
   const playing = new MutableObservable(false)
-  const range = new MutableObservable({ start: runtimeNumeric('beats', 0) })
+  const range = new MutableObservable<BeatRange>({ start: 0 as Numeric<'beats'> })
   const position = new MutableObservable(range.get().start)
   const errors = new MutableObservable<readonly Error[]>([])
 

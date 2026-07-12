@@ -1,14 +1,14 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { AssetCache } from './cache.js'
 import { createAssetCache } from './cache.js'
 
 export interface CacheLimits {
-  readonly arrayBuffer: RuntimeNumeric<'bytes'>
-  readonly audioBuffer: RuntimeNumeric<'bytes'>
+  readonly arrayBuffer: Numeric<'bytes'>
+  readonly audioBuffer: Numeric<'bytes'>
 }
 
 export interface AudioFetcherOptions {
-  readonly timeout: RuntimeNumeric<'s'>
+  readonly timeout: Numeric<'s'>
   readonly cacheLimits: CacheLimits
 }
 
@@ -20,23 +20,23 @@ export function createAudioFetcher (options: AudioFetcherOptions): AudioFetcher 
   // This uses two levels of caching as the decoded audio is typically much larger
   // than the raw data fetched from the network.
 
-  const arrayBufferCache = options.cacheLimits.arrayBuffer.value > 0
+  const arrayBufferCache = options.cacheLimits.arrayBuffer > 0
     ? createAssetCache<ArrayBuffer>({
         maxSize: options.cacheLimits.arrayBuffer,
-        getSize: (value) => value.byteLength
+        getSize: (value) => value.byteLength as Numeric<'bytes'>
       })
     : undefined
 
-  const audioBufferCache = options.cacheLimits.audioBuffer.value > 0
+  const audioBufferCache = options.cacheLimits.audioBuffer > 0
     ? createAssetCache<AudioBuffer>({
         maxSize: options.cacheLimits.audioBuffer,
-        getSize: (value) => value.length * value.numberOfChannels * 4 // 32-bit float
+        getSize: (value) => (value.length * value.numberOfChannels * 4) as Numeric<'bytes'> // 32-bit float
       })
     : undefined
 
   return {
     fetch: async (ctx: BaseAudioContext, url: string | URL) => {
-      const signal = AbortSignal.timeout(options.timeout.value * 1000)
+      const signal = AbortSignal.timeout(options.timeout * 1000)
 
       try {
         return await fetchAudioBuffer(ctx, url, signal, {

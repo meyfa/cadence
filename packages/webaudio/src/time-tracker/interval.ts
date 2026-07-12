@@ -1,14 +1,15 @@
-import { MutableObservable, runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
+import { MutableObservable } from '@utility'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 export function createIntervalTimeTracker (ctx: BaseAudioContext, options: TimeTrackerOptions): TimeTracker {
   const { updateInterval, offsetTime } = options
 
-  const time = new MutableObservable(runtimeNumeric('s', 0))
+  const time = new MutableObservable(0 as Numeric<'s'>)
 
   const interval = setInterval(() => {
-    time.set(runtimeNumeric('s', ctx.currentTime - offsetTime.value))
-  }, updateInterval.value * 1000)
+    time.set((ctx.currentTime - offsetTime) as Numeric<'s'>)
+  }, updateInterval * 1000)
 
   const dispose = () => {
     clearInterval(interval)

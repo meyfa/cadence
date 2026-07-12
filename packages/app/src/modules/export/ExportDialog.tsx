@@ -1,6 +1,7 @@
 import { createAudioGraph } from '@audiograph'
 import { AIFFFormat, createLeadingSilenceTransform, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -69,14 +70,14 @@ export const ExportDialog: FunctionComponent<{
 
     return computeExportMetrics(program, {
       sampleRate,
-      leadingSilence: runtimeNumeric('s', Number.parseFloat(leadingSilence)),
+      leadingSilence: Number.parseFloat(leadingSilence) as Numeric<'s'>,
       type,
       wavFormat,
       aiffFormat
     })
   }, [program, sampleRate, leadingSilence, type, wavFormat, aiffFormat])
 
-  const exceedsMaxDuration = metrics != null && metrics.duration.value > MAX_EXPORT_DURATION.value
+  const exceedsMaxDuration = metrics != null && metrics.duration > MAX_EXPORT_DURATION
 
   const onExport = useCallback(() => {
     if (program == null || exceedsMaxDuration) {

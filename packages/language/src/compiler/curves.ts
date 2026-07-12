@@ -81,12 +81,12 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
 
   const points: Array<CurvePoint<'s', U>> = []
 
-  const offsetSeconds = timeToSeconds(options.offset, options.tempo)
+  const offsetSeconds = timeToSeconds(options.offset, options.tempo.value)
   let currentTime: RuntimeNumeric<'s'> = offsetSeconds
 
   for (const segment of segments) {
     const segmentLength = segment.length.value > 0
-      ? timeToSeconds(segment.length, options.tempo)
+      ? timeToSeconds(segment.length, options.tempo.value)
       : ZERO_SECONDS
 
     const definition = nonNull(getCurveSegmentType(segment.type), `Unknown curve segment type: ${segment.type}`)
@@ -110,7 +110,7 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
   const simplifiedPoints = simplifyCurvePoints(points)
 
   const endTime = options.limit != null
-    ? runtimeNumeric('s', offsetSeconds.value + timeToSeconds(options.limit, options.tempo).value)
+    ? runtimeNumeric('s', offsetSeconds.value + timeToSeconds(options.limit, options.tempo.value).value)
     : undefined
 
   if (endTime != null && currentTime.value > endTime.value) {

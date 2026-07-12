@@ -1,8 +1,8 @@
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 
 export interface AssetCacheOptions<T> {
-  readonly maxSize: RuntimeNumeric<'bytes'>
-  readonly getSize: (value: T) => number
+  readonly maxSize: Numeric<'bytes'>
+  readonly getSize: (value: T) => Numeric<'bytes'>
 }
 
 export interface AssetCache<T> {
@@ -13,7 +13,7 @@ export interface AssetCache<T> {
 
 interface CacheEntry<T> {
   readonly value: T
-  readonly size: number
+  readonly size: Numeric<'bytes'>
 }
 
 export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<T> {
@@ -29,7 +29,7 @@ export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<
   }
 
   const evictIfNeeded = (requiredSize: number): void => {
-    while (totalSize + requiredSize > options.maxSize.value) {
+    while (totalSize + requiredSize > options.maxSize) {
       const oldestKey = cache.keys().next().value
       if (oldestKey == null) {
         break
@@ -54,7 +54,7 @@ export function createAssetCache<T> (options: AssetCacheOptions<T>): AssetCache<
       deleteKey(key)
 
       const size = options.getSize(value)
-      if (size > options.maxSize.value) {
+      if (size > options.maxSize) {
         return // too large to store
       }
 
