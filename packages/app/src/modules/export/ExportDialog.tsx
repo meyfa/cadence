@@ -2,7 +2,6 @@ import { createAudioGraph } from '@audiograph'
 import { AIFFFormat, createLeadingSilenceTransform, WAVFormat } from '@codecs'
 import { Field, Label } from '@headlessui/react'
 import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
@@ -89,7 +88,7 @@ export const ExportDialog: FunctionComponent<{
     const format = type === 'wav' ? wavFormat : aiffFormat
 
     const transforms = [
-      createLeadingSilenceTransform(runtimeNumeric('s', Number.parseFloat(leadingSilence)))
+      createLeadingSilenceTransform(Number.parseFloat(leadingSilence) as Numeric<'s'>)
     ]
 
     const token = ++tokenRef.current

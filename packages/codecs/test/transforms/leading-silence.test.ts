@@ -1,4 +1,4 @@
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
@@ -6,7 +6,7 @@ import { createLeadingSilenceTransform } from '../../src/transforms/leading-sile
 
 describe('transforms/leading-silence.ts', () => {
   it('transforms audio by adding leading silence', () => {
-    const transform = createLeadingSilenceTransform(runtimeNumeric('s', 0.1))
+    const transform = createLeadingSilenceTransform(0.1 as Numeric<'s'>)
     const input = new SimpleAudioBuffer(1000, [new Float32Array([1, 1, 1, 1, 1])])
     const output = transform(input)
 
@@ -25,17 +25,17 @@ describe('transforms/leading-silence.ts', () => {
   })
 
   it('throws if duration is negative', () => {
-    assert.throws(() => createLeadingSilenceTransform(runtimeNumeric('s', -0.1)), /non-negative/)
+    assert.throws(() => createLeadingSilenceTransform(-0.1 as Numeric<'s'>), /non-negative/)
   })
 
   it('handles zero duration by returning an identity transform', () => {
-    const transform = createLeadingSilenceTransform(runtimeNumeric('s', 0))
+    const transform = createLeadingSilenceTransform(0 as Numeric<'s'>)
     const input = new SimpleAudioBuffer(1000, [new Float32Array([1, 1, 1])])
     assert.strictEqual(transform(input), input)
   })
 
   it('handles non-integer sample counts by rounding up to nearest sample', () => {
-    const transform = createLeadingSilenceTransform(runtimeNumeric('s', 0.0011)) // 1.1 samples at 1000 Hz
+    const transform = createLeadingSilenceTransform(0.0011 as Numeric<'s'>) // 1.1 samples at 1000 Hz
     const input = new SimpleAudioBuffer(1000, [new Float32Array([1, 1, 1])])
     const output = transform(input)
 

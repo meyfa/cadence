@@ -1,4 +1,3 @@
-import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
@@ -13,12 +12,12 @@ describe('pcm/aiff.ts', () => {
     }
 
     // AIFF: FORM(12) + COMM(8 + 18) + SSND(8 + 8 + data)
-    assert.deepStrictEqual(estimateAIFFSize(stereo10s, { format: 'pcm16' }), runtimeNumeric('bytes', 54 + 441_000 * 2 * 2))
-    assert.deepStrictEqual(estimateAIFFSize(stereo10s, { format: 'pcm24' }), runtimeNumeric('bytes', 54 + 441_000 * 2 * 3))
-    assert.deepStrictEqual(estimateAIFFSize(stereo10s, { format: 'pcm32' }), runtimeNumeric('bytes', 54 + 441_000 * 2 * 4))
+    assert.strictEqual(estimateAIFFSize(stereo10s, { format: 'pcm16' }), 54 + 441_000 * 2 * 2)
+    assert.strictEqual(estimateAIFFSize(stereo10s, { format: 'pcm24' }), 54 + 441_000 * 2 * 3)
+    assert.strictEqual(estimateAIFFSize(stereo10s, { format: 'pcm32' }), 54 + 441_000 * 2 * 4)
 
     // AIFC adds FVER (12 bytes) + compression info to COMM; with our settings this makes the header 24 bytes larger.
-    assert.deepStrictEqual(estimateAIFFSize(stereo10s, { format: 'float32' }), runtimeNumeric('bytes', 78 + 441_000 * 2 * 4))
+    assert.strictEqual(estimateAIFFSize(stereo10s, { format: 'float32' }), 78 + 441_000 * 2 * 4)
   })
 
   it('encodes pcm16 correctly (big-endian)', () => {

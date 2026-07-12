@@ -3,7 +3,7 @@ import type { AIFFEncodingOptions, AIFFFormat, AudioBufferTransform, WAVEncoding
 import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize } from '@codecs'
 import type { Program } from '@core'
 import { beatsToSeconds, calculateTotalLength } from '@core'
-import type { Numeric, RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import { createAudioRenderer } from '@webaudio'
 import type { Option } from '../../components/dropdown/Dropdown.js'
 import { saveFile } from '../../utilities/files.js'
@@ -19,7 +19,7 @@ export type SampleRate = '44100' | '48000' | '96000'
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
   readonly mimeType: string
-  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => RuntimeNumeric<'bytes'>
+  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => Numeric<'bytes'>
   readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
 }
 
@@ -153,5 +153,5 @@ function estimateFileSize (options: {
     numberOfChannels: RENDER_CHANNELS
   }
 
-  return exportType.estimateSize(description, { format }).value
+  return exportType.estimateSize(description, { format })
 }

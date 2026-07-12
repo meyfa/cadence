@@ -1,5 +1,4 @@
-import type { RuntimeNumeric } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { AudioBufferLike, AudioDescription } from '../common/types.js'
 import type { FloatSampleBits, PCMFormat, PCMSampleBits } from './pcm-io.js'
 import { getBitsPerSample, writeAudioData, writeExtended80, writeStringData, writeUint16BE, writeUint32BE } from './pcm-io.js'
@@ -27,7 +26,7 @@ const toPCMFormat = (format: AIFFFormat): PCMFormat => `${format}be`
 /**
  * Estimate the size of an AIFF/AIFC file given information about the audio data and encoding options.
  */
-export function estimateAIFFSize (audio: AudioDescription, options: AIFFEncodingOptions): RuntimeNumeric<'bytes'> {
+export function estimateAIFFSize (audio: AudioDescription, options: AIFFEncodingOptions): Numeric<'bytes'> {
   const numChannels = audio.numberOfChannels
   const bitsPerSample = getBitsPerSample(toPCMFormat(options.format))
   const dataSize = audio.length * numChannels * (bitsPerSample / 8)
@@ -45,7 +44,7 @@ export function estimateAIFFSize (audio: AudioDescription, options: AIFFEncoding
   // FORM chunk: 'FORM'(4) + size(4) + formType(4) + chunks...
   const fileSize = 12 + fverSize + (8 + commChunkSize + commPad) + (8 + ssndChunkSize + ssndPad)
 
-  return runtimeNumeric('bytes', fileSize)
+  return fileSize as Numeric<'bytes'>
 }
 
 /**
