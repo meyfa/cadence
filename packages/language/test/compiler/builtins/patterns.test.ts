@@ -1,5 +1,6 @@
 import type { Pattern } from '@core'
 import { createSerialPattern, loopPattern, renderPatternEvents } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -38,20 +39,18 @@ function invoke (builtin: PatternBuiltin, self: Value<Facet<'pattern', Pattern>>
 }
 
 describe('library/modules/patterns.ts', () => {
-  // helper to create RuntimeNumeric<'beats'>
-  const beats = (value: number) => runtimeNumeric('beats', value)
-  const half = runtimeNumeric(undefined, 0.5)
-  const quarter = runtimeNumeric(undefined, 0.25)
+  const beats = (value: number) => value as Numeric<'beats'>
+  const scalar = (value: number) => value as Numeric<undefined>
 
   describe('loop', () => {
     const loop = getPatternBuiltin('loop')
 
     it('should loop finite patterns infinitely', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', velocity: runtimeNumeric(undefined, 0.5), length: quarter },
-        { value: '-', length: quarter },
-        { value: '-', length: quarter },
-        { value: 'G5', length: quarter }
+        { value: 'x', velocity: scalar(0.5), length: beats(0.25) },
+        { value: '-', length: beats(0.25) },
+        { value: '-', length: beats(0.25) },
+        { value: 'G5', length: beats(0.25) }
       ]))
 
       const result = invoke(loop, pattern, {})
@@ -61,18 +60,18 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.25), velocity: runtimeNumeric(undefined, 0.5) },
-        { time: beats(0.75), gate: beats(0.25), pitch: 'G5', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(0.25), velocity: runtimeNumeric(undefined, 0.5) },
-        { time: beats(1.75), gate: beats(0.25), pitch: 'G5', velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.25), velocity: scalar(0.5) },
+        { time: beats(0.75), gate: beats(0.25), pitch: 'G5', velocity: scalar(1) },
+        { time: beats(1), gate: beats(0.25), velocity: scalar(0.5) },
+        { time: beats(1.75), gate: beats(0.25), pitch: 'G5', velocity: scalar(1) }
       ])
     })
 
     it('should keep infinite patterns infinite', () => {
       const pattern = PatternFacet.type().of(loopPattern(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ])))
 
       const result = invoke(loop, pattern, {})
@@ -82,9 +81,9 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1.5), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: scalar(1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: scalar(1) }
       ])
     })
 
@@ -93,7 +92,7 @@ describe('library/modules/patterns.ts', () => {
 
       const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -101,9 +100,9 @@ describe('library/modules/patterns.ts', () => {
 
     it('should support times parameter', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(loop, pattern, {
@@ -115,27 +114,27 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1.5), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(2.5), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(3.0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(4.0), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: scalar(1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(2.5), gate: beats(0.5), pitch: 'C4', velocity: scalar(1) },
+        { time: beats(3.0), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(4.0), gate: beats(0.5), pitch: 'C4', velocity: scalar(1) }
       ])
     })
 
     it('should support times parameter of zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(runtimeNumeric(undefined, 0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -143,16 +142,16 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat negative times parameter as zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(loop, pattern, {
         times: Numbers.of(runtimeNumeric(undefined, -2))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -160,9 +159,9 @@ describe('library/modules/patterns.ts', () => {
 
     it('should support fractional times parameter', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(loop, pattern, {
@@ -174,7 +173,7 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.5), velocity: scalar(1) }
       ])
     })
   })
@@ -184,13 +183,13 @@ describe('library/modules/patterns.ts', () => {
 
     it('should loop finite patterns until the duration is filled', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', velocity: runtimeNumeric(undefined, 0.5), length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', velocity: scalar(0.5), length: beats(0.5) }
       ]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(2.0))
+        duration: Numbers.of(runtimeNumeric(undefined, 2.0))
       })
       const resultPattern = PatternFacet.get(result)
       assert.deepStrictEqual(resultPattern.length, beats(2.0))
@@ -198,21 +197,21 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 0.5) },
-        { time: beats(1.5), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: scalar(0.5) },
+        { time: beats(1.5), gate: beats(0.5), velocity: scalar(1) }
       ])
     })
 
     it('should truncate infinite patterns to the requested duration', () => {
       const pattern = PatternFacet.type().of(loopPattern(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ])))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(2.0))
+        duration: Numbers.of(runtimeNumeric('beats', 2.0))
       })
       const resultPattern = PatternFacet.get(result)
       assert.deepStrictEqual(resultPattern.length, beats(2.0))
@@ -220,9 +219,9 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1.5), gate: beats(0.5), velocity: runtimeNumeric(undefined, 1) }
+        { time: beats(0), gate: beats(0.5), velocity: scalar(1) },
+        { time: beats(1), gate: beats(0.5), pitch: 'C4', velocity: scalar(1) },
+        { time: beats(1.5), gate: beats(0.5), velocity: scalar(1) }
       ])
     })
 
@@ -230,10 +229,10 @@ describe('library/modules/patterns.ts', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(2.0))
+        duration: Numbers.of(runtimeNumeric('beats', 2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -241,16 +240,16 @@ describe('library/modules/patterns.ts', () => {
 
     it('should return empty pattern when duration is zero', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(0))
+        duration: Numbers.of(runtimeNumeric('beats', 0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -258,16 +257,16 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat negative duration as empty', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(-2.0))
+        duration: Numbers.of(runtimeNumeric('beats', -2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -275,16 +274,16 @@ describe('library/modules/patterns.ts', () => {
 
     it('should treat non-finite duration as empty', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'x', length: half },
-        { value: '-', length: half },
-        { value: 'C4', length: half }
+        { value: 'x', length: beats(0.5) },
+        { value: '-', length: beats(0.5) },
+        { value: 'C4', length: beats(0.5) }
       ]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(Number.POSITIVE_INFINITY))
+        duration: Numbers.of(runtimeNumeric('beats', Number.POSITIVE_INFINITY))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length?.value, 0)
+      assert.deepStrictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -292,12 +291,12 @@ describe('library/modules/patterns.ts', () => {
 
     it('should trim notes with gate that extends beyond the duration', () => {
       const pattern = PatternFacet.type().of(createSerialPattern([
-        { value: 'A4', gate: runtimeNumeric(undefined, 3) },
-        { value: 'B4', gate: runtimeNumeric(undefined, 5), velocity: runtimeNumeric(undefined, 0.5) }
+        { value: 'A4', gate: beats(3) },
+        { value: 'B4', gate: beats(5), velocity: scalar(0.5) }
       ]))
 
       const result = invoke(fill, pattern, {
-        duration: Numbers.of(beats(4.0))
+        duration: Numbers.of(runtimeNumeric('beats', 4.0))
       })
       const resultPattern = PatternFacet.get(result)
       assert.deepStrictEqual(resultPattern.length, beats(4.0))
@@ -305,10 +304,10 @@ describe('library/modules/patterns.ts', () => {
       const events = renderPatternEvents(resultPattern, beats(4.0))
 
       assert.deepStrictEqual(events, [
-        { time: beats(0), gate: beats(3.0), pitch: 'A4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(1), gate: beats(3.0), pitch: 'B4', velocity: runtimeNumeric(undefined, 0.5) },
-        { time: beats(2), gate: beats(2.0), pitch: 'A4', velocity: runtimeNumeric(undefined, 1) },
-        { time: beats(3), gate: beats(1.0), pitch: 'B4', velocity: runtimeNumeric(undefined, 0.5) }
+        { time: beats(0), gate: beats(3.0), pitch: 'A4', velocity: scalar(1) },
+        { time: beats(1), gate: beats(3.0), pitch: 'B4', velocity: scalar(0.5) },
+        { time: beats(2), gate: beats(2.0), pitch: 'A4', velocity: scalar(1) },
+        { time: beats(3), gate: beats(1.0), pitch: 'B4', velocity: scalar(0.5) }
       ])
     })
   })

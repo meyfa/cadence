@@ -102,6 +102,9 @@ function createProgramWithEffect (effect: Effect): Program {
   }
 }
 
+const beats = (value: number) => value as Numeric<'beats'>
+const scalar = (value: number) => value as Numeric<undefined>
+
 describe('lowering.ts', () => {
   it('should lower empty program correctly', () => {
     const program: Program = {
@@ -306,8 +309,8 @@ describe('lowering.ts', () => {
     const instrumentNode = graph.nodes.get(3 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
       pitch: 'A4',
-      velocity: runtimeNumeric(undefined, 1),
-      gate: runtimeNumeric('beats', 1)
+      velocity: 1 as Numeric<undefined>,
+      gate: 1 as Numeric<'beats'>
     })
 
     assert.strictEqual(voices.length, 1)
@@ -445,7 +448,7 @@ describe('lowering.ts', () => {
                   type: 'pattern',
                   value: createSerialPattern([
                     { value: 'C4' },
-                    { value: 'E4', velocity: runtimeNumeric(undefined, 0.75) }
+                    { value: 'E4', velocity: 0.75 as Numeric<undefined> }
                   ])
                 },
                 destination: {
@@ -489,10 +492,10 @@ describe('lowering.ts', () => {
       [
         2 as NodeId,
         [
-          { time: runtimeNumeric('beats', 0), pitch: 'C4', velocity: runtimeNumeric(undefined, 1), gate: runtimeNumeric('beats', 1) },
-          { time: runtimeNumeric('beats', 1), pitch: 'E4', velocity: runtimeNumeric(undefined, 0.75), gate: runtimeNumeric('beats', 1) },
-          { time: runtimeNumeric('beats', 4), pitch: 'G4', velocity: runtimeNumeric(undefined, 1), gate: runtimeNumeric('beats', 1) },
-          { time: runtimeNumeric('beats', 5), pitch: 'B4', velocity: runtimeNumeric(undefined, 1), gate: runtimeNumeric('beats', 1) }
+          { time: beats(0), pitch: 'C4', velocity: scalar(1), gate: beats(1) },
+          { time: beats(1), pitch: 'E4', velocity: scalar(0.75), gate: beats(1) },
+          { time: beats(4), pitch: 'G4', velocity: scalar(1), gate: beats(1) },
+          { time: beats(5), pitch: 'B4', velocity: scalar(1), gate: beats(1) }
         ]
       ]
     ])
@@ -546,8 +549,8 @@ describe('lowering.ts', () => {
 
     const note: NoteData = {
       pitch: 'C4',
-      velocity: runtimeNumeric(undefined, 1),
-      gate: runtimeNumeric('beats', 16)
+      velocity: 1 as Numeric<undefined>,
+      gate: 16 as Numeric<'beats'>
     }
 
     for (const curve of testCases) {
@@ -611,8 +614,8 @@ describe('lowering.ts', () => {
     const instrumentNode = graph.nodes.get(2 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
       pitch: 'C4',
-      velocity: runtimeNumeric(undefined, 1),
-      gate: runtimeNumeric('beats', 1)
+      velocity: 1 as Numeric<undefined>,
+      gate: 1 as Numeric<'beats'>
     })
 
     assert.deepStrictEqual(
@@ -651,8 +654,8 @@ describe('lowering.ts', () => {
       assert.throws(() => {
         instrumentNode.trigger({
           pitch: 'C4',
-          velocity: runtimeNumeric(undefined, 1),
-          gate: runtimeNumeric('beats', 1)
+          velocity: 1 as Numeric<undefined>,
+          gate: 1 as Numeric<'beats'>
         })
       }, /Invalid playback rate/, `should throw for playback rate: ${playbackRate}`)
     }
@@ -684,8 +687,8 @@ describe('lowering.ts', () => {
       assert.throws(() => {
         instrumentNode.trigger({
           pitch: 'C4',
-          velocity: runtimeNumeric(undefined, 1),
-          gate: runtimeNumeric('beats', 1)
+          velocity: 1 as Numeric<undefined>,
+          gate: 1 as Numeric<'beats'>
         })
       }, /Invalid frequency/, `should throw for frequency: ${frequency}`)
     }

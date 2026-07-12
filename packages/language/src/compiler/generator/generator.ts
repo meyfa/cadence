@@ -477,13 +477,15 @@ function generateStep (scope: Scope, expression: ast.Step): Step {
   const { value } = expression
 
   const length = expression.length != null
-    ? NumberFacet.with(undefined).get(resolve(scope, expression.length))
+    ? NumberFacet.with(undefined).get(resolve(scope, expression.length)).value as unknown as Numeric<'beats'>
     : undefined
 
   const parameters = resolveArgumentList(scope, expression.parameters, stepSchema)
-  const gate = parameters.gate != null ? NumberFacet.get(parameters.gate) : undefined
+  const gate = parameters.gate != null
+    ? NumberFacet.get(parameters.gate).value as unknown as Numeric<'beats'>
+    : undefined
   const velocity = parameters.vel != null
-    ? clamped(NumberFacet.get(parameters.vel), 0, 1)
+    ? clamped(NumberFacet.get(parameters.vel), 0, 1).value as unknown as Numeric<undefined>
     : undefined
 
   if (length == null) {
@@ -560,11 +562,11 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         return []
       }
 
-      const gate = Numbers.of(note.gate ?? runtimeNumeric('beats', 0))
+      const gate = Numbers.of(runtimeNumeric('beats', note.gate ?? 0 as Numeric<'beats'>))
       const frequency = Numbers.of(
         runtimeNumeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
       )
-      const velocity = Numbers.of(note.velocity)
+      const velocity = Numbers.of(runtimeNumeric(undefined, note.velocity))
 
       const noteBinding = noteType.of({ gate, frequency, velocity })
 

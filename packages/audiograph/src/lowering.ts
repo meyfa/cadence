@@ -420,9 +420,9 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
         continue
       }
 
-      const events = renderPatternEvents(routing.source.value, part.length).map((event) => ({
+      const events = renderPatternEvents(routing.source.value, part.length.value).map((event) => ({
         ...event,
-        time: runtimeNumeric('beats', event.time.value + offsetBeats)
+        time: event.time + offsetBeats as Numeric<'beats'>
       }))
 
       builder.addNoteEvents(nodeId, events)

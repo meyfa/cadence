@@ -1,6 +1,6 @@
 import type { Curve, CurvePoint } from '@core'
 import { gainToDb } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 
 export interface Envelope {
@@ -11,8 +11,8 @@ export interface Envelope {
 }
 
 export interface EnvelopeOptions {
-  readonly velocity: RuntimeNumeric<undefined>
-  readonly gate: RuntimeNumeric<'s'> | undefined
+  readonly velocity: Numeric<undefined>
+  readonly gate: Numeric<'s'> | undefined
 }
 
 const NEGATIVE_INFINITY_DB = runtimeNumeric('db', -Infinity)
@@ -20,7 +20,7 @@ const RELATIVE_SILENCE_DB = runtimeNumeric('db', -60)
 
 export function applyEnvelope (envelope: Envelope, options: EnvelopeOptions): Curve<'s', 'db'> {
   const points: Array<CurvePoint<'s', 'db'>> = []
-  const velocityDb = runtimeNumeric('db', gainToDb(options.velocity.value))
+  const velocityDb = runtimeNumeric('db', gainToDb(options.velocity))
 
   const startTime = runtimeNumeric('s', 0)
   const startValue = NEGATIVE_INFINITY_DB
@@ -59,12 +59,12 @@ function applySegment (points: Array<CurvePoint<'s', 'db'>>, options: EnvelopeOp
   const { startTime, startValue, endTime, endValue } = segment
 
   // do not add segments after the note release
-  if (gate != null && gate.value <= startTime.value) {
+  if (gate != null && gate <= startTime.value) {
     return
   }
 
   // check if segment can be added in full
-  if (gate == null || gate.value >= endTime.value) {
+  if (gate == null || gate >= endTime.value) {
     addLinearSegment(points, startTime, startValue, endTime, endValue)
     return
   }
@@ -73,11 +73,11 @@ function applySegment (points: Array<CurvePoint<'s', 'db'>>, options: EnvelopeOp
 
   // if the segment is completely silent, we can just add a single point at the gate time
   if (!Number.isFinite(startValue.value) && !Number.isFinite(endValue.value)) {
-    addStep(points, gate, NEGATIVE_INFINITY_DB)
+    addStep(points, runtimeNumeric('s', gate), NEGATIVE_INFINITY_DB)
     return
   }
 
-  const t = (gate.value - startTime.value) / (endTime.value - startTime.value)
+  const t = (gate - startTime.value) / (endTime.value - startTime.value)
 
   const finiteStartValue = Number.isFinite(startValue.value)
     ? startValue
@@ -88,7 +88,7 @@ function applySegment (points: Array<CurvePoint<'s', 'db'>>, options: EnvelopeOp
     : runtimeNumeric('db', startValue.value + RELATIVE_SILENCE_DB.value)
 
   const interpolatedValue = runtimeNumeric('db', finiteStartValue.value + t * (finiteEndValue.value - finiteStartValue.value))
-  addLinearSegment(points, startTime, finiteStartValue, gate, interpolatedValue)
+  addLinearSegment(points, startTime, finiteStartValue, runtimeNumeric('s', gate), interpolatedValue)
 }
 
 function applyRelease (points: Array<CurvePoint<'s', 'db'>>, envelope: Envelope, options: EnvelopeOptions): void {
@@ -99,7 +99,7 @@ function applyRelease (points: Array<CurvePoint<'s', 'db'>>, envelope: Envelope,
     return
   }
 
-  const releaseStartTime = gate
+  const releaseStartTime = runtimeNumeric('s', gate)
   const releaseStartValue = lastPoint.value
 
   const releaseEndTime = runtimeNumeric('s', releaseStartTime.value + envelope.release.value)

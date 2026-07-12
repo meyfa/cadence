@@ -1,6 +1,6 @@
 import type { Oscillator } from '@core'
-import { convertPitchToMidi, getMidiFrequency, isPitch, timeToSeconds } from '@core'
-import type { RuntimeNumeric } from '@utility'
+import { beatsToSeconds, convertPitchToMidi, getMidiFrequency, isPitch } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
@@ -78,12 +78,12 @@ const sample = Functions.of({
         const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNoteMidi
         const playbackRate = runtimeNumeric(undefined, Math.pow(2, (midiNote - rootNoteMidi) / 12))
 
-        const gate: RuntimeNumeric<'s'> | undefined = (() => {
+        const gate: Numeric<'s'> | undefined = (() => {
           if (note.gate == null) {
-            return lengthValue
+            return lengthValue?.value
           }
-          const gateSeconds = timeToSeconds(note.gate, tempo.value)
-          return runtimeNumeric('s', lengthValue == null ? gateSeconds : Math.min(gateSeconds, lengthValue.value))
+          const gateSeconds = beatsToSeconds(note.gate, tempo.value)
+          return lengthValue == null ? gateSeconds : Math.min(gateSeconds, lengthValue.value) as Numeric<'s'>
         })()
 
         const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
@@ -131,7 +131,7 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
           const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
           const frequency = runtimeNumeric('hz', getMidiFrequency(midiNote))
 
-          const gate = note.gate != null ? runtimeNumeric('s', timeToSeconds(note.gate, tempo.value)) : undefined
+          const gate = note.gate != null ? beatsToSeconds(note.gate, tempo.value) : undefined
           const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
           const duration = gate != null ? envelope.points.at(-1)?.time : undefined
 

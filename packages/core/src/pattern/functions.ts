@@ -1,9 +1,8 @@
-import type { RuntimeNumeric } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import type { NoteEvent, Pattern, Step } from './types.js'
 
-const zeroBeats = runtimeNumeric('beats', 0)
-const defaultVelocity = runtimeNumeric(undefined, 1)
+const zeroBeats = 0 as Numeric<'beats'>
+const defaultVelocity = 1 as Numeric<undefined>
 
 const emptyPattern: Pattern = {
   length: zeroBeats,
@@ -22,10 +21,10 @@ function getSumOfLengths (patterns: readonly Pattern[]): Pattern['length'] {
     if (pattern.length == null) {
       return undefined
     }
-    sum += pattern.length.value
+    sum += pattern.length
   }
 
-  return runtimeNumeric('beats', sum)
+  return sum as Numeric<'beats'>
 }
 
 function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
@@ -35,21 +34,18 @@ function getMaxLength (patterns: readonly Pattern[]): Pattern['length'] {
     if (pattern.length == null) {
       return undefined
     }
-    max = Math.max(max, pattern.length.value)
+    max = Math.max(max, pattern.length)
   }
 
-  return runtimeNumeric('beats', max)
+  return max as Numeric<'beats'>
 }
 
-function pushStepEvent (events: NoteEvent[], step: Step, offset: number): void {
+function pushStepEvent (events: NoteEvent[], step: Step, time: Numeric<'beats'>): void {
   if (step.value === '-') {
     return
   }
 
-  const time = runtimeNumeric('beats', offset)
-
-  const stepGate = step.gate?.value ?? step.length?.value ?? 1
-  const gate = runtimeNumeric('beats', stepGate)
+  const gate = step.gate ?? step.length ?? 1 as Numeric<'beats'>
   const velocity = step.velocity ?? defaultVelocity
 
   events.push(
@@ -68,20 +64,20 @@ export function createSerialPattern (steps: readonly Step[]): Pattern {
   }
 
   const events: NoteEvent[] = []
-  let offset = 0
+  let offset = 0 as Numeric<'beats'>
 
   for (const step of steps) {
-    const stepLength = step.length?.value ?? 1
+    const stepLength = step.length ?? 1
     if (!isPositiveFiniteNumber(stepLength)) {
       continue
     }
 
     pushStepEvent(events, step, offset)
-    offset += stepLength
+    offset = offset + stepLength as Numeric<'beats'>
   }
 
   return {
-    length: runtimeNumeric('beats', offset),
+    length: offset,
     evaluate: () => events
   }
 }
@@ -96,20 +92,20 @@ export function createParallelPattern (steps: readonly Step[]): Pattern {
   }
 
   const events: NoteEvent[] = []
-  let maxLength = 0
+  let maxLength = 0 as Numeric<'beats'>
 
   for (const step of steps) {
-    const stepLength = step.length?.value ?? 1
+    const stepLength = step.length ?? 1
     if (!isPositiveFiniteNumber(stepLength)) {
       continue
     }
 
-    pushStepEvent(events, step, 0)
-    maxLength = Math.max(maxLength, stepLength)
+    pushStepEvent(events, step, 0 as Numeric<'beats'>)
+    maxLength = Math.max(maxLength, stepLength) as Numeric<'beats'>
   }
 
   return {
-    length: runtimeNumeric('beats', maxLength),
+    length: maxLength,
     evaluate: () => events
   }
 }
@@ -119,7 +115,7 @@ export function createParallelPattern (steps: readonly Step[]): Pattern {
  */
 export function concatPatterns (patterns: readonly Pattern[]): Pattern {
   // We only need to consider non-empty patterns, and only up to (and including) the first infinite one.
-  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length.value > 0)
+  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length > 0)
   const infiniteIndex = nonEmptyPatterns.findIndex((p) => p.length == null)
   const filteredPatterns = infiniteIndex >= 0 ? nonEmptyPatterns.slice(0, infiniteIndex + 1) : nonEmptyPatterns
 
@@ -128,12 +124,12 @@ export function concatPatterns (patterns: readonly Pattern[]): Pattern {
   }
 
   // Precompute offsets for each pattern
-  const offsets: number[] = []
+  const offsets: Array<Numeric<'beats'>> = []
 
-  let cumulativeOffset = 0
+  let cumulativeOffset = 0 as Numeric<'beats'>
   for (const pattern of filteredPatterns) {
     offsets.push(cumulativeOffset)
-    cumulativeOffset += pattern.length?.value ?? 0
+    cumulativeOffset = cumulativeOffset + (pattern.length ?? 0) as Numeric<'beats'>
   }
 
   return {
@@ -149,7 +145,7 @@ export function concatPatterns (patterns: readonly Pattern[]): Pattern {
         for (const event of pattern.evaluate()) {
           yield {
             ...event,
-            time: runtimeNumeric('beats', event.time.value + offset)
+            time: event.time + offset as Numeric<'beats'>
           }
         }
       }
@@ -161,7 +157,7 @@ export function concatPatterns (patterns: readonly Pattern[]): Pattern {
  * Merge multiple patterns into a single pattern, creating a parallel arrangement.
  */
 export function mergePatterns (patterns: readonly Pattern[]): Pattern {
-  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length.value > 0)
+  const nonEmptyPatterns = patterns.filter((p) => p.length == null || p.length > 0)
   if (nonEmptyPatterns.length <= 1) {
     return nonEmptyPatterns.at(0) ?? emptyPattern
   }
@@ -179,7 +175,7 @@ export function mergePatterns (patterns: readonly Pattern[]): Pattern {
 
         for (const nextEvent of nextEvents) {
           if (!nextEvent.done) {
-            const eventTime = nextEvent.value.time.value
+            const eventTime = nextEvent.value.time
             if (earliestTime == null || eventTime < earliestTime) {
               earliestTime = eventTime
             }
@@ -193,7 +189,7 @@ export function mergePatterns (patterns: readonly Pattern[]): Pattern {
 
         for (let i = 0; i < nextEvents.length; i++) {
           const nextEvent = nextEvents[i]
-          if (!nextEvent.done && nextEvent.value.time.value === earliestTime) {
+          if (!nextEvent.done && nextEvent.value.time === earliestTime) {
             yield nextEvent.value
             nextEvents[i] = iterators[i].next()
           }
@@ -211,8 +207,8 @@ export function mergePatterns (patterns: readonly Pattern[]): Pattern {
  * - Patterns that are longer than the specified duration will be truncated.
  * - Patterns that are shorter than the specified duration will be repeated (and possibly truncated) to fit.
  */
-export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'>): Pattern {
-  const patternLength = pattern.length?.value
+export function loopPattern (pattern: Pattern, duration?: Numeric<'beats'>): Pattern {
+  const patternLength = pattern.length
 
   // Looping an empty pattern always results in an empty pattern
   if (patternLength != null && patternLength <= 0) {
@@ -238,7 +234,7 @@ export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'
             hasEvents = true
             yield {
               ...event,
-              time: runtimeNumeric('beats', event.time.value + offset)
+              time: event.time + offset as Numeric<'beats'>
             }
           }
 
@@ -248,7 +244,7 @@ export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'
     }
   }
 
-  if (!isPositiveFiniteNumber(duration.value)) {
+  if (!isPositiveFiniteNumber(duration)) {
     return emptyPattern
   }
 
@@ -262,21 +258,18 @@ export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'
 
       do {
         for (const event of pattern.evaluate()) {
-          const eventTime = offset + event.time.value
-          if (eventTime >= duration.value) {
+          const time = offset + event.time as Numeric<'beats'>
+          if (time >= duration) {
             return
           }
 
-          const remainingDuration = duration.value - eventTime
+          const remainingDuration = duration - time as Numeric<'beats'>
+          const gate = event.gate != null && event.gate > remainingDuration
+            ? remainingDuration
+            : event.gate
 
           hasEvents = true
-          yield {
-            ...event,
-            time: runtimeNumeric('beats', eventTime),
-            gate: event.gate != null && event.gate.value > remainingDuration
-              ? runtimeNumeric('beats', remainingDuration)
-              : event.gate
-          }
+          yield { ...event, time, gate }
         }
 
         // will only get here if pattern is finite
@@ -296,7 +289,7 @@ export function loopPattern (pattern: Pattern, duration?: RuntimeNumeric<'beats'
  */
 export function multiplyPattern (pattern: Pattern, times: number): Pattern {
   // empty pattern remains empty
-  if (pattern.length != null && pattern.length.value <= 0) {
+  if (pattern.length != null && pattern.length <= 0) {
     return pattern
   }
 
@@ -312,16 +305,14 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
 
   return {
     // infinite pattern remains infinite, otherwise scale length
-    length: pattern.length != null ? runtimeNumeric('beats', pattern.length.value * times) : undefined,
+    length: pattern.length != null ? pattern.length * times as Numeric<'beats'> : undefined,
 
     evaluate: function* () {
       for (const event of pattern.evaluate()) {
         yield {
           ...event,
-          time: runtimeNumeric('beats', event.time.value * times),
-          gate: event.gate != null
-            ? runtimeNumeric('beats', event.gate.value * times)
-            : undefined
+          time: event.time * times as Numeric<'beats'>,
+          gate: event.gate != null ? event.gate * times as Numeric<'beats'> : undefined
         }
       }
     }
@@ -332,25 +323,24 @@ export function multiplyPattern (pattern: Pattern, times: number): Pattern {
  * Render a pattern to up to a specific time. Longer patterns will be truncated,
  * while shorter patterns will stay as-is (no additional events are produced).
  */
-export function renderPatternEvents (pattern: Pattern, end: RuntimeNumeric<'beats'>): readonly NoteEvent[] {
-  if (!isPositiveFiniteNumber(end.value)) {
+export function renderPatternEvents (pattern: Pattern, end: Numeric<'beats'>): readonly NoteEvent[] {
+  if (!isPositiveFiniteNumber(end)) {
     return []
   }
 
   const events: NoteEvent[] = []
 
   for (const event of pattern.evaluate()) {
-    if (event.time.value >= end.value) {
+    if (event.time >= end) {
       break
     }
 
-    const remainingDuration = end.value - event.time.value
-    events.push({
-      ...event,
-      gate: event.gate != null && event.gate.value > remainingDuration
-        ? runtimeNumeric('beats', remainingDuration)
-        : event.gate
-    })
+    const remainingDuration = end - event.time as Numeric<'beats'>
+    const gate = event.gate != null && event.gate > remainingDuration
+      ? remainingDuration
+      : event.gate
+
+    events.push({ ...event, gate })
   }
 
   return events
