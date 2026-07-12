@@ -281,15 +281,15 @@ const TimelinePart: FunctionComponent<{
   beatsPerBar: number
   beatWidth: number
 }> = ({ part, beatsPerBar, beatWidth }) => {
-  const partWidth = part.length.value * beatWidth
+  const partWidth = part.length * beatWidth
   const borderWidth = partWidth >= 2 ? 1 : 0
   const maxPaddingX = Math.max(0, (partWidth - borderWidth * 2) / 2)
   const paddingX = Math.min(8, maxPaddingX)
 
   const [lengthShort, lengthLong] = useMemo(() => {
     return [
-      formatBeatDuration(part.length.value, beatsPerBar),
-      formatBeatDurationAsWords(part.length.value, beatsPerBar)
+      formatBeatDuration(part.length, beatsPerBar),
+      formatBeatDurationAsWords(part.length, beatsPerBar)
     ]
   }, [part, beatsPerBar])
 

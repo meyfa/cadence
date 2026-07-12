@@ -1,5 +1,6 @@
 import type { Result } from '@language'
 import { check, generate, lex, parse } from '@language'
+import type { Numeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { demoCode } from '../../src/defaults/demo-code.js'
@@ -24,9 +25,9 @@ describe('defaults/demo-code.ts', () => {
 
     const program = generate(checkResult.value, {
       tempo: {
-        default: 120,
-        minimum: 1,
-        maximum: 400
+        default: 120 as Numeric<'bpm'>,
+        minimum: 1 as Numeric<'bpm'>,
+        maximum: 400 as Numeric<'bpm'>
       },
       beatsPerBar: 4
     })

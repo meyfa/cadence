@@ -17,9 +17,9 @@ function createFunctionContext (): GlobalScope {
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
-      default: 120,
-      minimum: 20,
-      maximum: 300
+      default: 120 as Numeric<'bpm'>,
+      minimum: 20 as Numeric<'bpm'>,
+      maximum: 300 as Numeric<'bpm'>
     }
   }, new Map())
 }

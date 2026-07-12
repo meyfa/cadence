@@ -2,6 +2,7 @@ import { CommonProvider, createLocalStorageBackend, DialogHost, ModuleHost, Noti
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import type { GenerateOptions } from '@language'
+import type { Numeric } from '@utility'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
@@ -32,9 +33,9 @@ const modules = [
 const compileOptions: GenerateOptions = {
   beatsPerBar: 4,
   tempo: {
-    default: 128,
-    minimum: 1,
-    maximum: 400
+    default: 128 as Numeric<'bpm'>,
+    minimum: 1 as Numeric<'bpm'>,
+    maximum: 400 as Numeric<'bpm'>
   }
 }
 

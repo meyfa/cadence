@@ -70,7 +70,7 @@ export function createCurveSegment<U extends Unit> (
 export interface RenderCurveOptions {
   readonly offset: CurveDuration
   readonly limit?: CurveDuration
-  readonly tempo: RuntimeNumeric<'bpm'>
+  readonly tempo: Numeric<'bpm'>
 }
 
 export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: RenderCurveOptions): ReadonlyArray<CurvePoint<'s', U>> {
@@ -81,12 +81,12 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
 
   const points: Array<CurvePoint<'s', U>> = []
 
-  const offsetSeconds = timeToSeconds(options.offset, options.tempo.value)
+  const offsetSeconds = timeToSeconds(options.offset, options.tempo)
   let currentTime = offsetSeconds
 
   for (const segment of segments) {
     const segmentLength = segment.length.value > 0
-      ? timeToSeconds(segment.length, options.tempo.value)
+      ? timeToSeconds(segment.length, options.tempo)
       : ZERO_SECONDS.value
 
     const definition = nonNull(getCurveSegmentType(segment.type), `Unknown curve segment type: ${segment.type}`)
@@ -110,7 +110,7 @@ export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: Ren
   const simplifiedPoints = simplifyCurvePoints(points)
 
   const endTime = options.limit != null
-    ? runtimeNumeric('s', offsetSeconds + timeToSeconds(options.limit, options.tempo.value))
+    ? runtimeNumeric('s', offsetSeconds + timeToSeconds(options.limit, options.tempo))
     : undefined
 
   if (endTime != null && currentTime > endTime.value) {

@@ -10,7 +10,7 @@ import { lex } from '../../../src/lexer/lexer.js'
 import { parse } from '../../../src/parser/parser.js'
 import { assertResultComplete } from '../../test-utils.js'
 
-const DEFAULT_TEMPO = runtimeNumeric('bpm', 120)
+const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
 function generateSource (source: string) {
   const tokens = lex(source)
@@ -24,9 +24,9 @@ function generateSource (source: string) {
 
   return generate(checked.value, {
     tempo: {
-      default: DEFAULT_TEMPO.value,
-      minimum: 1,
-      maximum: 300
+      default: DEFAULT_TEMPO,
+      minimum: 1 as Numeric<'bpm'>,
+      maximum: 300 as Numeric<'bpm'>
     },
     beatsPerBar: 4
   })
@@ -44,7 +44,7 @@ describe('compiler/generator/generator.ts', () => {
       automations: new Map(),
       assets: new Map(),
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: DEFAULT_TEMPO,
         parts: []
       },
       mixer: {
@@ -56,12 +56,12 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should set track tempo from AST', () => {
     const result = generateSource('track (tempo: 140.bpm) {}')
-    assert.deepStrictEqual(result.track.tempo, runtimeNumeric('bpm', 140))
+    assert.deepStrictEqual(result.track.tempo, 140)
   })
 
   it('should clamp track tempo to maximum', () => {
     const result = generateSource('track (tempo: 400.bpm) {}')
-    assert.deepStrictEqual(result.track.tempo, runtimeNumeric('bpm', 300))
+    assert.deepStrictEqual(result.track.tempo, 300)
   })
 
   it('should support tempo from a variable', () => {
@@ -72,7 +72,7 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.tempo, runtimeNumeric('bpm', 180))
+    assert.deepStrictEqual(result.track.tempo, 180)
   })
 
   it('should use tempo variable from outer scope', () => {
@@ -84,7 +84,7 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.tempo, runtimeNumeric('bpm', 90))
+    assert.deepStrictEqual(result.track.tempo, 90)
   })
 
   it('should support imported names', () => {
@@ -133,7 +133,7 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.tempo, runtimeNumeric('bpm', 123))
+    assert.deepStrictEqual(result.track.tempo, 123)
   })
 
   it('should allow parts and buses to shadow top-level variables', () => {
@@ -154,7 +154,7 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should clamp negative part lengths to 0', () => {
     const result = generateSource('track { part intro (-4.bars) {} }')
-    assert.deepStrictEqual(result.track.parts[0].length, runtimeNumeric('beats', 0))
+    assert.deepStrictEqual(result.track.parts[0].length, 0)
   })
 
   it('should support part lengths from variables', () => {
@@ -171,9 +171,9 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.parts[0].length, runtimeNumeric('beats', 42))
-    assert.deepStrictEqual(result.track.parts[1].length, runtimeNumeric('beats', 43))
-    assert.deepStrictEqual(result.track.parts[2].length, runtimeNumeric('beats', 200))
+    assert.deepStrictEqual(result.track.parts[0].length, 42)
+    assert.deepStrictEqual(result.track.parts[1].length, 43)
+    assert.deepStrictEqual(result.track.parts[2].length, 200)
   })
 
   it('should support units: beat, beats, bar, bars', () => {
@@ -187,10 +187,10 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.parts[0].length, runtimeNumeric('beats', 1))
-    assert.deepStrictEqual(result.track.parts[1].length, runtimeNumeric('beats', 2))
-    assert.deepStrictEqual(result.track.parts[2].length, runtimeNumeric('beats', 4))
-    assert.deepStrictEqual(result.track.parts[3].length, runtimeNumeric('beats', 8))
+    assert.deepStrictEqual(result.track.parts[0].length, 1)
+    assert.deepStrictEqual(result.track.parts[1].length, 2)
+    assert.deepStrictEqual(result.track.parts[2].length, 4)
+    assert.deepStrictEqual(result.track.parts[3].length, 8)
   })
 
   it('should resolve variables in track scope', () => {
@@ -207,9 +207,9 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.parts[0].length, runtimeNumeric('beats', 8))
-    assert.deepStrictEqual(result.track.parts[1].length, runtimeNumeric('beats', 9))
-    assert.deepStrictEqual(result.track.parts[2].length, runtimeNumeric('beats', 200))
+    assert.deepStrictEqual(result.track.parts[0].length, 8)
+    assert.deepStrictEqual(result.track.parts[1].length, 9)
+    assert.deepStrictEqual(result.track.parts[2].length, 200)
   })
 
   it('should resolve variables in mixer scope', () => {
@@ -774,7 +774,7 @@ describe('compiler/generator/generator.ts', () => {
     ])
     assert.strictEqual(voice0.source.type, 'oscillator')
     assert.strictEqual(voice0.source.shape, 'sine')
-    assert.deepStrictEqual(voice0.source.frequency, runtimeNumeric('hz', 440))
+    assert.deepStrictEqual(voice0.source.frequency, 440)
 
     assert.deepStrictEqual(voice1.envelope.points, [
       { time: runtimeNumeric('s', 0), value: runtimeNumeric('db', 0), shape: 'step' },
@@ -782,6 +782,6 @@ describe('compiler/generator/generator.ts', () => {
     ])
     assert.strictEqual(voice1.source.type, 'oscillator')
     assert.strictEqual(voice1.source.shape, 'sine')
-    assert.deepStrictEqual(voice1.source.frequency, runtimeNumeric('hz', pitchFrequency))
+    assert.deepStrictEqual(voice1.source.frequency, pitchFrequency)
   })
 })

@@ -1,4 +1,5 @@
 import type { Instrument } from '@core'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -9,9 +10,9 @@ import { Numbers } from '../../../src/type-system/helpers.js'
 const options: GenerateOptions = {
   beatsPerBar: 4,
   tempo: {
-    default: 120,
-    minimum: 20,
-    maximum: 300
+    default: 120 as Numeric<'bpm'>,
+    minimum: 20 as Numeric<'bpm'>,
+    maximum: 300 as Numeric<'bpm'>
   }
 }
 

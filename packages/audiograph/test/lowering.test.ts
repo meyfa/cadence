@@ -1,6 +1,6 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Effect, Instrument, InstrumentId, InstrumentRouting, MixerRouting, NoteData, ParameterId, Program, Track } from '@core'
 import { beatsToSeconds, createSerialPattern, dbToGain } from '@core'
-import type { Numeric, RuntimeNumeric } from '@utility'
+import type { Numeric } from '@utility'
 import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -39,7 +39,7 @@ function createProgramWithInstrument (instrument: Instrument, asset?: Asset): Pr
     automations: new Map(),
     assets,
     track: {
-      tempo: runtimeNumeric('bpm', 120),
+      tempo: 120 as Numeric<'bpm'>,
       parts: []
     },
     mixer: {
@@ -67,7 +67,7 @@ function createProgramWithEffect (effect: Effect): Program {
     automations: new Map(),
     assets: new Map(),
     track: {
-      tempo: runtimeNumeric('bpm', 120),
+      tempo: 120 as Numeric<'bpm'>,
       parts: []
     },
     mixer: {
@@ -113,7 +113,7 @@ describe('lowering.ts', () => {
       automations: new Map(),
       assets: new Map(),
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: 120 as Numeric<'bpm'>,
         parts: []
       },
       mixer: {
@@ -152,7 +152,7 @@ describe('lowering.ts', () => {
         ]
       ]),
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: 120 as Numeric<'bpm'>,
         parts: []
       },
       mixer: {
@@ -198,9 +198,9 @@ describe('lowering.ts', () => {
                 source: {
                   type: 'oscillator',
                   shape: 'sine',
-                  frequency: runtimeNumeric('hz', 440)
+                  frequency: 440 as Numeric<'hz'>
                 },
-                duration: runtimeNumeric('s', 1)
+                duration: 1 as Numeric<'s'>
               }
             ]
           } satisfies Instrument
@@ -211,7 +211,7 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: 120 as Numeric<'bpm'>,
         parts: []
       } satisfies Track,
 
@@ -370,7 +370,7 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: 120 as Numeric<'bpm'>,
         parts: []
       } satisfies Track,
 
@@ -437,11 +437,11 @@ describe('lowering.ts', () => {
       assets: new Map(),
 
       track: {
-        tempo: runtimeNumeric('bpm', 120),
+        tempo: 120 as Numeric<'bpm'>,
         parts: [
           {
             name: 'Part 1',
-            length: runtimeNumeric('beats', 4),
+            length: 4 as Numeric<'beats'>,
             routings: [
               {
                 source: {
@@ -460,7 +460,7 @@ describe('lowering.ts', () => {
           },
           {
             name: 'Part 2',
-            length: runtimeNumeric('beats', 4),
+            length: 4 as Numeric<'beats'>,
             routings: [
               {
                 source: {
@@ -566,7 +566,7 @@ describe('lowering.ts', () => {
             source: {
               type: 'oscillator',
               shape: 'sine',
-              frequency: runtimeNumeric('hz', 440)
+              frequency: 440 as Numeric<'hz'>
             }
           }
         ]
@@ -585,7 +585,7 @@ describe('lowering.ts', () => {
   })
 
   it('should skip voices with negative or zero duration', () => {
-    const makeVoice = (frequency: RuntimeNumeric<'hz'>, duration: RuntimeNumeric<'s'> | undefined) => ({
+    const makeVoice = (frequency: Numeric<'hz'>, duration: Numeric<'s'> | undefined) => ({
       envelope: SIMPLE_CURVE,
       source: {
         type: 'oscillator',
@@ -602,10 +602,10 @@ describe('lowering.ts', () => {
         initial: runtimeNumeric('db', -6)
       },
       trigger: () => [
-        makeVoice(runtimeNumeric('hz', 100), runtimeNumeric('s', -1)),
-        makeVoice(runtimeNumeric('hz', 200), runtimeNumeric('s', 0)),
-        makeVoice(runtimeNumeric('hz', 300), runtimeNumeric('s', 1)),
-        makeVoice(runtimeNumeric('hz', 400), undefined)
+        makeVoice(100 as Numeric<'hz'>, -1 as Numeric<'s'>),
+        makeVoice(200 as Numeric<'hz'>, 0 as Numeric<'s'>),
+        makeVoice(300 as Numeric<'hz'>, 1 as Numeric<'s'>),
+        makeVoice(400 as Numeric<'hz'>, undefined)
       ]
     })
 
@@ -638,8 +638,8 @@ describe('lowering.ts', () => {
             source: {
               type: 'sample',
               assetId: 300 as AssetId,
-              length: runtimeNumeric('s', -1),
-              playbackRate: runtimeNumeric(undefined, playbackRate)
+              length: -1 as Numeric<'s'>,
+              playbackRate: playbackRate as Numeric<undefined>
             }
           }
         ]
@@ -675,7 +675,7 @@ describe('lowering.ts', () => {
             source: {
               type: 'oscillator',
               shape: 'sine',
-              frequency: runtimeNumeric('hz', frequency)
+              frequency: frequency as Numeric<'hz'>
             }
           }
         ]
@@ -1571,7 +1571,7 @@ describe('lowering.ts', () => {
         automations: new Map(),
         assets: new Map(),
         track: {
-          tempo: runtimeNumeric('bpm', 120),
+          tempo: 120 as Numeric<'bpm'>,
           parts: []
         },
         mixer: {
