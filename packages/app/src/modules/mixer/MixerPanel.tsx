@@ -1,12 +1,12 @@
+import type { EntityKey } from '@audiograph'
 import { createEntityKey } from '@audiograph'
 import type { Bus, Instrument, Program } from '@core'
 import type { PanelProps } from '@editor'
 import { useNonNullValue, useService } from '@editor'
 import { Flowchart } from '@flowchart'
-import type { GainMeasurement } from '@webaudio'
 import clsx from 'clsx'
 import type { CSSProperties, FunctionComponent, PropsWithChildren } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.js'
 import { Popover } from '../../components/popover/Popover.js'
 import { pluralize } from '../../utilities/format.js'
@@ -158,10 +158,6 @@ const MixerNode: FunctionComponent<{
   const openPopover = useCallback(() => setPopover(true), [])
   const closePopover = useCallback(() => setPopover(false), [])
 
-  const [measurement, setMeasurement] = useState<GainMeasurement>({ peak: [0, 0], rms: [0, 0] })
-
-  const meteringService = useService<MeteringService>(METERING_SERVICE_ID)
-
   const entityKey = useMemo(() => {
     switch (node.data.type) {
       case 'output':
@@ -172,12 +168,6 @@ const MixerNode: FunctionComponent<{
         return createEntityKey({ type: node.data.type, id: node.data.object.id })
     }
   }, [node.data])
-
-  useEffect(() => {
-    return meteringService?.subscribeToGain(entityKey, setMeasurement)
-  }, [meteringService, entityKey])
-
-  const { peak, rms } = measurement
 
   return (
     <>
@@ -190,16 +180,8 @@ const MixerNode: FunctionComponent<{
         ref={setContainer}
         onClick={openPopover}
       >
-        {/* vertical stereo peak/RMS meters */}
-        <svg className='w-3.5 h-full mr-2 shrink-0'>
-          <rect x='0' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
-          <rect x='8' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
-          <rect x='0' y={(1 - rms[0]) * 100 + '%'} width='6' height={rms[0] * 100 + '%'} fill='var(--color-accent-100)' className='transition-all duration-100' />
-          <rect x='8' y={(1 - rms[1]) * 100 + '%'} width='6' height={rms[1] * 100 + '%'} fill='var(--color-accent-100)' className='transition-all duration-100' />
-          <rect x='0' y={(1 - peak[0]) * 100 + '%'} width='6' height='2' fill={peak[0] > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)'} />
-          <rect x='8' y={(1 - peak[1]) * 100 + '%'} width='6' height='2' fill={peak[1] > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)'} />
-        </svg>
-        {/* node info */}
+        <StereoMeter entityKey={entityKey} />
+
         <div className='grow min-w-0 flex flex-col justify-center text-start'>
           <div className='text-content-100'>
             {getNodeTypeLabel(node.data.type)}
@@ -218,6 +200,47 @@ const MixerNode: FunctionComponent<{
         </Popover>
       )}
     </>
+  )
+}
+
+const StereoMeter: FunctionComponent<{
+  entityKey: EntityKey
+}> = ({ entityKey }) => {
+  const meteringService = useService<MeteringService>(METERING_SERVICE_ID)
+
+  // We use DOM refs to avoid React re-renders per measurement frame.
+
+  const rmsLRef = useRef<SVGRectElement>(null)
+  const rmsRRef = useRef<SVGRectElement>(null)
+  const peakLRef = useRef<SVGRectElement>(null)
+  const peakRRef = useRef<SVGRectElement>(null)
+
+  useEffect(() => {
+    return meteringService?.subscribeToGain(entityKey, (measurement) => {
+      const [peakLeft, peakRight] = measurement.peak
+      const [rmsLeft, rmsRight] = measurement.rms
+
+      rmsLRef.current?.setAttribute('y', (1 - rmsLeft) * 100 + '%')
+      rmsLRef.current?.setAttribute('height', rmsLeft * 100 + '%')
+      rmsRRef.current?.setAttribute('y', (1 - rmsRight) * 100 + '%')
+      rmsRRef.current?.setAttribute('height', rmsRight * 100 + '%')
+
+      peakLRef.current?.setAttribute('y', (1 - peakLeft) * 100 + '%')
+      peakLRef.current?.setAttribute('fill', peakLeft > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)')
+      peakRRef.current?.setAttribute('y', (1 - peakRight) * 100 + '%')
+      peakRRef.current?.setAttribute('fill', peakRight > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)')
+    })
+  }, [meteringService, entityKey])
+
+  return (
+    <svg className='w-3.5 h-full mr-2 shrink-0'>
+      <rect x='0' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
+      <rect x='8' y='0' width='6' height='100%' fill='var(--color-surface-100)' />
+      <rect ref={rmsLRef} x='0' width='6' fill='var(--color-accent-100)' className='transition-all duration-100' />
+      <rect ref={rmsRRef} x='8' width='6' fill='var(--color-accent-100)' className='transition-all duration-100' />
+      <rect ref={peakLRef} x='0' width='6' height='2' fill='var(--color-content-300)' />
+      <rect ref={peakRRef} x='8' width='6' height='2' fill='var(--color-content-300)' />
+    </svg>
   )
 }
 
