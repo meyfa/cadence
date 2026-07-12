@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { describe, expect, it } from 'vitest'
 import { createOfflineTransport } from '../../src/transport/transport.js'
 
@@ -6,7 +6,7 @@ describe('transport/transport.ts', () => {
   describe('createOfflineTransport', () => {
     it('uses the immediate scheduler during offline rendering', async () => {
       const transport = createOfflineTransport({
-        duration: numeric('s', 3),
+        duration: runtimeNumeric('s', 3),
         channels: 2,
         sampleRate: 44_100
       })
@@ -25,7 +25,7 @@ describe('transport/transport.ts', () => {
 
     it('tracks time during offline rendering', async () => {
       const transport = createOfflineTransport({
-        duration: numeric('s', 3),
+        duration: runtimeNumeric('s', 3),
         channels: 2,
         sampleRate: 44_100
       })

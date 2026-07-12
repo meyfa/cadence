@@ -1,11 +1,11 @@
-import type { Numeric, Observable } from '@utility'
-import { DisposeStack, MutableObservable, numeric } from '@utility'
+import type { RuntimeNumeric, Observable } from '@utility'
+import { DisposeStack, MutableObservable, runtimeNumeric } from '@utility'
 import { createIntervalTimeTracker } from '../time-tracker/interval.js'
 import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
 import { createImmediateScheduler, createRealtimeScheduler } from './scheduler.js'
 
 export interface OfflineTransportOptions {
-  readonly duration: Numeric<'s'>
+  readonly duration: RuntimeNumeric<'s'>
   readonly channels: number
   readonly sampleRate: number
 }
@@ -19,23 +19,23 @@ export interface Transport {
 }
 
 export interface OnlineTransport extends Transport {
-  readonly start: (position: Numeric<'s'>) => Promise<void>
-  readonly time: Observable<Numeric<'s'>>
+  readonly start: (position: RuntimeNumeric<'s'>) => Promise<void>
+  readonly time: Observable<RuntimeNumeric<'s'>>
 
   readonly dispose: () => void
 }
 
 export interface OfflineTransport extends Transport {
   readonly render: () => Promise<AudioBuffer>
-  readonly time: Observable<Numeric<'s'> | undefined>
+  readonly time: Observable<RuntimeNumeric<'s'> | undefined>
 }
 
-const TICK_INTERVAL = numeric('s', 0.025)
-const SCHEDULE_AHEAD_TIME = numeric('s', 0.05)
+const TICK_INTERVAL = runtimeNumeric('s', 0.025)
+const SCHEDULE_AHEAD_TIME = runtimeNumeric('s', 0.05)
 
 // Assuming faster than real-time rendering, so less frequent updates should be sufficient for offline
-const TIME_UPDATE_INTERVAL_ONLINE = numeric('s', 0.050)
-const TIME_UPDATE_INTERVAL_OFFLINE = numeric('s', 0.100)
+const TIME_UPDATE_INTERVAL_ONLINE = runtimeNumeric('s', 0.050)
+const TIME_UPDATE_INTERVAL_OFFLINE = runtimeNumeric('s', 0.100)
 
 export function createOnlineTransport (): OnlineTransport {
   const disposeStack = new DisposeStack()
@@ -63,7 +63,7 @@ export function createOnlineTransport (): OnlineTransport {
   let offsetTime = ctx.currentTime
   let started = false
 
-  const time = new MutableObservable(numeric('s', 0))
+  const time = new MutableObservable(runtimeNumeric('s', 0))
 
   const scheduler = createRealtimeScheduler({
     now: () => ctx.currentTime,
@@ -87,7 +87,7 @@ export function createOnlineTransport (): OnlineTransport {
     const tracker = await (async () => {
       const options = {
         updateInterval: TIME_UPDATE_INTERVAL_ONLINE,
-        offsetTime: numeric('s', offsetTime)
+        offsetTime: runtimeNumeric('s', offsetTime)
       }
 
       try {
@@ -127,7 +127,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
   output.connect(ctx.destination)
   disposeStack.push(() => output.disconnect())
 
-  const time = new MutableObservable<Numeric<'s'> | undefined>(undefined)
+  const time = new MutableObservable<RuntimeNumeric<'s'> | undefined>(undefined)
 
   const scheduler = createImmediateScheduler()
   disposeStack.push(() => scheduler.stop())
@@ -138,7 +138,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
     try {
       const tracker = await createWorkletTimeTracker(ctx, input, {
         updateInterval: TIME_UPDATE_INTERVAL_OFFLINE,
-        offsetTime: numeric('s', 0)
+        offsetTime: runtimeNumeric('s', 0)
       })
 
       disposeStack.pushDisposable(tracker)
@@ -151,7 +151,7 @@ export function createOfflineTransport (options: OfflineTransportOptions): Offli
 
     // Offline rendering knows its exact end time even if the worklet meter's
     // final postMessage is delayed or never observed on the main thread.
-    time.set(numeric('s', buffer.length / buffer.sampleRate))
+    time.set(runtimeNumeric('s', buffer.length / buffer.sampleRate))
 
     disposeStack.dispose()
 

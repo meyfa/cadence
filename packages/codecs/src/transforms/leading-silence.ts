@@ -1,11 +1,11 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { ConcatenatedAudioBuffer } from '../common/concatenated-audio-buffer.js'
 import { ConstantAudioBuffer } from '../common/constant-audio-buffer.js'
 import type { AudioBufferTransform } from '../common/types.js'
 
 const identity: AudioBufferTransform = (input) => input
 
-export function createLeadingSilenceTransform (duration: Numeric<'s'>): AudioBufferTransform {
+export function createLeadingSilenceTransform (duration: RuntimeNumeric<'s'>): AudioBufferTransform {
   if (duration.value < 0) {
     throw new Error('Duration must be non-negative.')
   }

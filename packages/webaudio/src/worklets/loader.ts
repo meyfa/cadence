@@ -1,10 +1,10 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 
 interface AudioContextWithWorklet extends BaseAudioContext {
   readonly audioWorklet: AudioWorklet
 }
 
-const LOAD_TIMEOUT = numeric('s', 30)
+const LOAD_TIMEOUT = runtimeNumeric('s', 30)
 
 const workletCache = new WeakMap<BaseAudioContext, Map<string, Promise<void>>>()
 

@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { mulberry32, xmur3 } from '@utility'
 
 type CreateAudioBuffer = (options: AudioBufferOptions) => AudioBuffer
@@ -11,7 +11,7 @@ export function generateReverbImpulseResponse (options: {
   readonly createBuffer: CreateAudioBuffer
   readonly numberOfChannels: number
   readonly sampleRate: number
-  readonly decay: Numeric<'s'>
+  readonly decay: RuntimeNumeric<'s'>
 }): AudioBuffer {
   const { sampleRate, numberOfChannels, decay, createBuffer } = options
 

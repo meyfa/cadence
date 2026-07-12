@@ -1,5 +1,5 @@
 import type { AssetId, Curve, NoteData } from '@core'
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode } from './graph.js'
 
@@ -51,22 +51,22 @@ export interface BiquadNode extends AnyNode {
   readonly type: 'biquad'
   readonly filterType: 'lowpass' | 'highpass'
   readonly frequency: Curve<'s', 'hz'>
-  readonly rolloffPerOctave: Numeric<'db'>
+  readonly rolloffPerOctave: RuntimeNumeric<'db'>
 }
 
 export interface WidthNode extends AnyNode {
   readonly type: 'width'
-  readonly width: Numeric<undefined>
+  readonly width: RuntimeNumeric<undefined>
 }
 
 export interface DelayNode extends AnyNode {
   readonly type: 'delay'
-  readonly time: Numeric<'s'>
+  readonly time: RuntimeNumeric<'s'>
 }
 
 export interface ReverbNode extends AnyNode {
   readonly type: 'reverb'
-  readonly decay: Numeric<'s'>
+  readonly decay: RuntimeNumeric<'s'>
 }
 
 export interface WaveShaperNode extends AnyNode {
@@ -88,17 +88,17 @@ export type SourceNode = SampleNode | OscillatorNode
 export interface SampleNode extends AnyNode {
   readonly type: 'sample'
   readonly gainCurve: Curve<'s', undefined>
-  readonly duration?: Numeric<'s'>
+  readonly duration?: RuntimeNumeric<'s'>
   readonly assetId: AssetId
-  readonly playbackRate: Numeric<undefined>
+  readonly playbackRate: RuntimeNumeric<undefined>
 }
 
 export interface OscillatorNode extends AnyNode {
   readonly type: 'oscillator'
   readonly gainCurve: Curve<'s', undefined>
-  readonly duration: Numeric<'s'> | undefined
+  readonly duration: RuntimeNumeric<'s'> | undefined
   readonly shape: 'sine' | 'square' | 'saw' | 'triangle'
-  readonly frequency: Numeric<'hz'>
+  readonly frequency: RuntimeNumeric<'hz'>
 }
 
 // metering
@@ -114,5 +114,5 @@ export interface GainMeterNode extends AnyNode {
   /**
    * The approximate interval, in seconds, at which the gain meter should post updates.
    */
-  readonly interval: Numeric<'s'>
+  readonly interval: RuntimeNumeric<'s'>
 }

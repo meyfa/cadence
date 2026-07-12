@@ -1,5 +1,5 @@
 import type { Instrument } from '@core'
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../../src/compiler/generator/options.js'
@@ -18,7 +18,7 @@ const options: GenerateOptions = {
 describe('compiler/generator/scopes.ts', () => {
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided options and initial resolutions', () => {
-      const foo = Numbers.of(numeric('db', 12))
+      const foo = Numbers.of(runtimeNumeric('db', 12))
 
       const result = createGlobalScope(options, new Map([['foo', foo]]))
 
@@ -39,15 +39,15 @@ describe('compiler/generator/scopes.ts', () => {
 
       const bus0 = {
         name: 'bus0',
-        gain: scope.allocateParameter(numeric('db', 0)),
-        pan: scope.allocateParameter(numeric(undefined, 0)),
+        gain: scope.allocateParameter(runtimeNumeric('db', 0)),
+        pan: scope.allocateParameter(runtimeNumeric(undefined, 0)),
         effects: []
       } as const
 
       const bus1 = {
         name: 'bus1',
-        gain: scope.allocateParameter(numeric('db', -3)),
-        pan: scope.allocateParameter(numeric(undefined, -0.5)),
+        gain: scope.allocateParameter(runtimeNumeric('db', -3)),
+        pan: scope.allocateParameter(runtimeNumeric(undefined, -0.5)),
         effects: []
       } as const
 
@@ -66,15 +66,15 @@ describe('compiler/generator/scopes.ts', () => {
     it('should allocate parameters with unique IDs', () => {
       const scope = createGlobalScope(options, new Map())
 
-      const parameter0 = scope.allocateParameter(numeric('db', 12))
-      const parameter1 = scope.allocateParameter(numeric('db', 6))
+      const parameter0 = scope.allocateParameter(runtimeNumeric('db', 12))
+      const parameter1 = scope.allocateParameter(runtimeNumeric('db', 6))
 
       assert.strictEqual(parameter0.id, 0)
       assert.strictEqual(parameter1.id, 1)
 
       assert.deepStrictEqual([...scope.automations], [
-        [0, { initial: numeric('db', 12), points: [] }],
-        [1, { initial: numeric('db', 6), points: [] }]
+        [0, { initial: runtimeNumeric('db', 12), points: [] }],
+        [1, { initial: runtimeNumeric('db', 6), points: [] }]
       ])
     })
 
@@ -82,12 +82,12 @@ describe('compiler/generator/scopes.ts', () => {
       const scope = createGlobalScope(options, new Map())
 
       const instrument0 = {
-        gain: scope.allocateParameter(numeric('db', -6)),
+        gain: scope.allocateParameter(runtimeNumeric('db', -6)),
         trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
       const instrument1 = {
-        gain: scope.allocateParameter(numeric('db', -3)),
+        gain: scope.allocateParameter(runtimeNumeric('db', -3)),
         trigger: () => []
       } satisfies Omit<Instrument, 'id'>
 
@@ -130,7 +130,7 @@ describe('compiler/generator/scopes.ts', () => {
   describe('createLocalScope()', () => {
     it('should create a local scope with the provided parent and empty resolutions', () => {
       const globalScope = createGlobalScope(options, new Map([
-        ['foo', Numbers.of(numeric('db', 12))]
+        ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 
       const localScope = createLocalScope(globalScope)
@@ -139,7 +139,7 @@ describe('compiler/generator/scopes.ts', () => {
       assert.strictEqual(localScope.parent, globalScope)
       assert.strictEqual(localScope.resolutions.get('foo'), undefined)
 
-      const bar = Numbers.of(numeric('db', 6))
+      const bar = Numbers.of(runtimeNumeric('db', 6))
       localScope.resolutions.set('bar', bar)
       assert.strictEqual(localScope.resolutions.get('bar'), bar)
       assert.strictEqual(globalScope.resolutions.get('bar'), undefined)
@@ -155,11 +155,11 @@ describe('compiler/generator/scopes.ts', () => {
   describe('cloneScope()', () => {
     it('should create a new scope with the same top and parent, and a copy of the resolutions', () => {
       const globalScope = createGlobalScope(options, new Map([
-        ['foo', Numbers.of(numeric('db', 12))]
+        ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 
       const localScope = createLocalScope(globalScope)
-      localScope.resolutions.set('bar', Numbers.of(numeric('db', 6)))
+      localScope.resolutions.set('bar', Numbers.of(runtimeNumeric('db', 6)))
 
       const clonedScope = cloneScope(localScope)
 
@@ -171,15 +171,15 @@ describe('compiler/generator/scopes.ts', () => {
 
     it('should not be affected by changes to the original scope after cloning', () => {
       const globalScope = createGlobalScope(options, new Map([
-        ['foo', Numbers.of(numeric('db', 12))]
+        ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 
       const localScope = createLocalScope(globalScope)
-      localScope.resolutions.set('bar', Numbers.of(numeric('db', 6)))
+      localScope.resolutions.set('bar', Numbers.of(runtimeNumeric('db', 6)))
 
       const clonedScope = cloneScope(localScope)
 
-      localScope.resolutions.set('baz', Numbers.of(numeric('db', 3)))
+      localScope.resolutions.set('baz', Numbers.of(runtimeNumeric('db', 3)))
 
       assert.strictEqual(clonedScope.resolutions.get('baz'), undefined)
     })

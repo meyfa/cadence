@@ -1,8 +1,8 @@
-import type { Numeric, Unit } from '@utility'
+import type { RuntimeNumeric, Unit } from '@utility'
 import { makeFacet } from '../factory.js'
 import type { Facet, FacetType } from '../types.js'
 
-export type CurveDuration = Numeric<'beats'> | Numeric<'s'>
+export type CurveDuration = RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
 
 export interface Curve<U extends Unit> {
   readonly unit: U
@@ -15,15 +15,15 @@ export interface HoldCurveSegment<U extends Unit> {
   readonly type: 'hold'
   readonly length: CurveDuration
   readonly unit: U
-  readonly value: Numeric<U>
+  readonly value: RuntimeNumeric<U>
 }
 
 export interface LinearCurveSegment<U extends Unit> {
   readonly type: 'lin'
   readonly length: CurveDuration
   readonly unit: U
-  readonly start: Numeric<U>
-  readonly end: Numeric<U>
+  readonly start: RuntimeNumeric<U>
+  readonly end: RuntimeNumeric<U>
 }
 
 const FACET_NAME = 'curve'

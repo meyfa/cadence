@@ -1,11 +1,11 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '../hooks/latest-ref.js'
 import { usePersistenceContext } from './components/PersistenceContext.js'
 import type { PersistenceDomain, PersistenceEvent } from './types.js'
 
-const STORAGE_DEBOUNCE = numeric('s', 0.25)
+const STORAGE_DEBOUNCE = runtimeNumeric('s', 0.25)
 
 export interface UsePersistentBindingOptions {
   readonly onConflict?: PersistentStateConflictPolicy

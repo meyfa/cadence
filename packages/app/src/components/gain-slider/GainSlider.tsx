@@ -1,13 +1,13 @@
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../slider/Slider.js'
 import { GainIcon } from './GainIcon.js'
 
 export const GainSlider: FunctionComponent<{
-  gain: Numeric<'db'>
-  onChange: (gain: Numeric<'db'>) => void
+  gain: RuntimeNumeric<'db'>
+  onChange: (gain: RuntimeNumeric<'db'>) => void
   label: string
   orientation?: 'horizontal' | 'vertical'
   collapsible?: boolean
@@ -21,7 +21,7 @@ export const GainSlider: FunctionComponent<{
       min={-60}
       max={0}
       value={gain.value}
-      onChange={(value) => onChange(numeric('db', value))}
+      onChange={(value) => onChange(runtimeNumeric('db', value))}
       step={1}
       icon={<GainIcon gain={gain} />}
       collapsible={collapsible}

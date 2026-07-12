@@ -1,4 +1,4 @@
-import type { Unit } from '@utility'
+import type { Numeric, Unit } from '@utility'
 import type { Value } from '../type-system/types.js'
 import { Numbers } from '../type-system/helpers.js'
 
@@ -31,15 +31,15 @@ export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefine
     case 'db':
     case 'hz':
     case 's':
-      return Numbers.of({ unit, value })
+      return Numbers.of({ unit, value: value as Numeric<typeof unit> })
     case 'ms':
-      return Numbers.of({ unit: 's', value: value / 1000 })
+      return Numbers.of({ unit: 's', value: (value / 1000) as Numeric<'s'> })
     case 'beat':
     case 'beats':
-      return Numbers.of({ unit: 'beats', value })
+      return Numbers.of({ unit: 'beats', value: value as Numeric<'beats'> })
     case 'bar':
     case 'bars':
-      return Numbers.of({ unit: 'beats', value: value * constants.beatsPerBar })
+      return Numbers.of({ unit: 'beats', value: (value * constants.beatsPerBar) as Numeric<'beats'> })
   }
 }
 

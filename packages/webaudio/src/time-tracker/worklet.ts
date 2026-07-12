@@ -1,4 +1,4 @@
-import { MutableObservable, numeric } from '@utility'
+import { MutableObservable, runtimeNumeric } from '@utility'
 import { createTimeMeter } from '../worklets/metering/factory.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
@@ -14,10 +14,10 @@ export async function createWorkletTimeTracker (
 
   input.connect(instance.node)
 
-  const time = new MutableObservable(numeric('s', 0))
+  const time = new MutableObservable(runtimeNumeric('s', 0))
   const unsubscribe = instance.measurements.subscribe((measurement) => {
     if (measurement != null) {
-      time.set(numeric('s', measurement.time - offsetTime.value))
+      time.set(runtimeNumeric('s', measurement.time - offsetTime.value))
     }
   })
 

@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { CSSProperties, FunctionComponent } from 'react'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Layout } from 'react-resizable-panels'
@@ -11,7 +11,7 @@ import type { LayoutNodeViewProps } from './LayoutNodeView.js'
 import { LayoutNodeView } from './LayoutNodeView.js'
 
 // The interval during which layout changes are considered part of the same change stack.
-const CHANGE_STACK_WINDOW = numeric('s', 0.05)
+const CHANGE_STACK_WINDOW = runtimeNumeric('s', 0.05)
 
 type LayoutChangeOrigin = 'library' | 'self'
 

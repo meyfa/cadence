@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { describe, expect, it } from 'vitest'
 import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
 import type { Transport } from '../../src/transport/transport.js'
@@ -22,7 +22,7 @@ function createTestTransport () {
 }
 
 async function renderWidth (options: {
-  readonly width: Numeric<undefined>
+  readonly width: RuntimeNumeric<undefined>
   readonly inputChannels: number
   readonly fill: (buffer: AudioBuffer) => void
 }): Promise<{
@@ -54,7 +54,7 @@ async function renderWidth (options: {
 }
 
 async function renderDelay (options: {
-  readonly time: Numeric<'s'>
+  readonly time: RuntimeNumeric<'s'>
 }): Promise<{
   readonly output: AudioBuffer
 }> {
@@ -97,7 +97,7 @@ describe('graph/effect.ts', () => {
   describe('createWidthInstance', () => {
     it('renders mono-compatible output when width = 0', async () => {
       const { output } = await renderWidth({
-        width: numeric(undefined, 0),
+        width: runtimeNumeric(undefined, 0),
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -111,7 +111,7 @@ describe('graph/effect.ts', () => {
 
     it('swaps stereo channels when width = -1', async () => {
       const { output } = await renderWidth({
-        width: numeric(undefined, -1),
+        width: runtimeNumeric(undefined, -1),
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -125,7 +125,7 @@ describe('graph/effect.ts', () => {
 
     it('applies weighted stereo mix when width = 0.5', async () => {
       const { output } = await renderWidth({
-        width: numeric(undefined, 0.5),
+        width: runtimeNumeric(undefined, 0.5),
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -139,7 +139,7 @@ describe('graph/effect.ts', () => {
 
     it('passes through unmodified stereo signal when width = 1', async () => {
       const { input, output } = await renderWidth({
-        width: numeric(undefined, 1),
+        width: runtimeNumeric(undefined, 1),
         inputChannels: 2,
         fill: (input) => {
           fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -154,7 +154,7 @@ describe('graph/effect.ts', () => {
     it('keeps mono the same for any width', async () => {
       for (const widthValue of [-1, -0.5, 0, 0.5, 1]) {
         const { input, output } = await renderWidth({
-          width: numeric(undefined, widthValue),
+          width: runtimeNumeric(undefined, widthValue),
           inputChannels: 2,
           fill: (input) => {
             const mono = fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -172,7 +172,7 @@ describe('graph/effect.ts', () => {
       // With upmixing, the output should be the same in both channels.
 
       const { input, output } = await renderWidth({
-        width: numeric(undefined, 1),
+        width: runtimeNumeric(undefined, 1),
         inputChannels: 1,
         fill: (input) => {
           fillSignal(input.getChannelData(0), { sampleRate, frequency: 440 })
@@ -185,7 +185,7 @@ describe('graph/effect.ts', () => {
 
     it('does not clamp out-of-range width values', async () => {
       const expanded = await renderWidth({
-        width: numeric(undefined, 1.5),
+        width: runtimeNumeric(undefined, 1.5),
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -197,7 +197,7 @@ describe('graph/effect.ts', () => {
       expect(average(expanded.output.getChannelData(1))).toBeCloseTo(-0.25, 3)
 
       const inverted = await renderWidth({
-        width: numeric(undefined, -1.5),
+        width: runtimeNumeric(undefined, -1.5),
         inputChannels: 2,
         fill: (input) => {
           input.getChannelData(0).fill(1)
@@ -212,7 +212,7 @@ describe('graph/effect.ts', () => {
 
   describe('createDelayInstance', () => {
     it('supports delay times longer than one second', async () => {
-      const time = numeric('s', 1.5)
+      const time = runtimeNumeric('s', 1.5)
       const { output } = await renderDelay({ time })
 
       const channel = output.getChannelData(0)

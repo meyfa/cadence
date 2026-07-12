@@ -2,8 +2,8 @@ import type { Part, Program } from '@core'
 import { calculateTotalLength } from '@core'
 import { useGlobalMouseMove, useGlobalMouseUp } from '@editor'
 import { Warning } from '@mui/icons-material'
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { BeatRange } from '@webaudio'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
@@ -38,7 +38,7 @@ export const Timeline: FunctionComponent<{
   program: Program
   selection: BeatRange
   setSelection: (range: BeatRange) => void
-  playbackPosition?: Numeric<'beats'>
+  playbackPosition?: RuntimeNumeric<'beats'>
 }> = ({ program, selection, setSelection, playbackPosition }) => {
   const trackLength = calculateTotalLength(program)
 
@@ -114,7 +114,7 @@ export const Timeline: FunctionComponent<{
 
 const TimeRuler: FunctionComponent<{
   beatsPerBar: number
-  trackLength: Numeric<'beats'>
+  trackLength: RuntimeNumeric<'beats'>
   beatWidth: number
   selection: BeatRange
   onSelect: (range: BeatRange) => void
@@ -159,9 +159,9 @@ const TimeRuler: FunctionComponent<{
 
   const timelineRef = useRef<HTMLDivElement>(null)
   const [isSelecting, setIsSelecting] = useState(false)
-  const [selectionStart, setSelectionStart] = useState<Numeric<'beats'> | undefined>(undefined)
+  const [selectionStart, setSelectionStart] = useState<RuntimeNumeric<'beats'> | undefined>(undefined)
 
-  const computeTimeFromEvent = useCallback((event: MouseEvent | React.MouseEvent): Numeric<'beats'> | undefined => {
+  const computeTimeFromEvent = useCallback((event: MouseEvent | React.MouseEvent): RuntimeNumeric<'beats'> | undefined => {
     const rect = timelineRef.current?.getBoundingClientRect()
     if (rect == null || beatWidth <= 0) {
       return undefined
@@ -177,7 +177,7 @@ const TimeRuler: FunctionComponent<{
     const snappedIndex = Math.round(positionInBeats / granularityBeats) * granularityBeats
     const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength.value))
 
-    return numeric('beats', clampedIndex)
+    return runtimeNumeric('beats', clampedIndex)
   }, [beatsPerBar, beatWidth, trackLength])
 
   const updateSelection = useCallback((event: MouseEvent | React.MouseEvent) => {
@@ -346,8 +346,8 @@ const markerPathData = {
 
 const TimelineMarker: FunctionComponent<{
   variant: 'cursor' | 'start' | 'end'
-  position: Numeric<'beats'>
-  trackLength: Numeric<'beats'>
+  position: RuntimeNumeric<'beats'>
+  trackLength: RuntimeNumeric<'beats'>
   dimmed: boolean
 }> = ({ variant, position, trackLength, dimmed }) => {
   return (

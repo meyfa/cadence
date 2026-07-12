@@ -1,4 +1,4 @@
-import { numeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createImmediateScheduler, createRealtimeScheduler } from '../../src/transport/scheduler.js'
@@ -15,8 +15,8 @@ describe('transport/scheduler.ts', () => {
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: runtimeNumeric('s', 0.01),
+        scheduleAheadTime: runtimeNumeric('s', 0.05),
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -61,8 +61,8 @@ describe('transport/scheduler.ts', () => {
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: runtimeNumeric('s', 0.01),
+        scheduleAheadTime: runtimeNumeric('s', 0.05),
 
         timers: {
           setInterval: (() => 1) as unknown as SetInterval,
@@ -91,8 +91,8 @@ describe('transport/scheduler.ts', () => {
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: runtimeNumeric('s', 0.01),
+        scheduleAheadTime: runtimeNumeric('s', 0.05),
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -127,8 +127,8 @@ describe('transport/scheduler.ts', () => {
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: runtimeNumeric('s', 0.01),
+        scheduleAheadTime: runtimeNumeric('s', 0.05),
 
         timers: {
           setInterval: ((handler: unknown) => {
@@ -161,8 +161,8 @@ describe('transport/scheduler.ts', () => {
 
       const scheduler = createRealtimeScheduler({
         now: () => nowSeconds,
-        tickInterval: numeric('s', 0.01),
-        scheduleAheadTime: numeric('s', 0.05),
+        tickInterval: runtimeNumeric('s', 0.01),
+        scheduleAheadTime: runtimeNumeric('s', 0.05),
 
         timers: {
           setInterval: ((handler: unknown) => {

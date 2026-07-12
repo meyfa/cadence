@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { insertSorted } from '@utility'
 
 export interface Scheduler {
@@ -36,12 +36,12 @@ export interface RealtimeSchedulerOptions {
   /**
    * Scheduler tick frequency.
    */
-  readonly tickInterval: Numeric<'s'>
+  readonly tickInterval: RuntimeNumeric<'s'>
 
   /**
    * How far ahead (from transport time) callbacks may run.
    */
-  readonly scheduleAheadTime: Numeric<'s'>
+  readonly scheduleAheadTime: RuntimeNumeric<'s'>
 
   readonly timers?: {
     readonly setInterval: typeof globalThis.setInterval

@@ -1,14 +1,14 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import type { AssetCache } from './cache.js'
 import { createAssetCache } from './cache.js'
 
 export interface CacheLimits {
-  readonly arrayBuffer: Numeric<'bytes'>
-  readonly audioBuffer: Numeric<'bytes'>
+  readonly arrayBuffer: RuntimeNumeric<'bytes'>
+  readonly audioBuffer: RuntimeNumeric<'bytes'>
 }
 
 export interface AudioFetcherOptions {
-  readonly timeout: Numeric<'s'>
+  readonly timeout: RuntimeNumeric<'s'>
   readonly cacheLimits: CacheLimits
 }
 

@@ -1,7 +1,8 @@
 import type { ast } from '@ast'
-import type { FacetType, Value } from '../../type-system/types.js'
+import type { Numeric, Unit } from '@utility'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { Numbers } from '../../type-system/helpers.js'
+import type { FacetType, Value } from '../../type-system/types.js'
 
 export interface UnaryOperation {
   readonly operator: ast.UnaryOperator
@@ -21,7 +22,7 @@ export const unaryOperations: Readonly<Record<ast.UnaryOperator, UnaryOperation>
     check: (operand) => NumberFacet.is(operand) ? operand : undefined,
     compute: (operand) => {
       const { unit, value } = NumberFacet.get(operand)
-      return Numbers.of({ unit, value: -value })
+      return Numbers.of({ unit, value: -(value as number) as Numeric<Unit> })
     }
   }
 }

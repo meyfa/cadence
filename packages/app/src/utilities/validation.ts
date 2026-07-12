@@ -1,4 +1,4 @@
-import type { Unit } from '@utility'
+import type { Numeric, Unit } from '@utility'
 import type { Struct, StructError } from 'superstruct'
 import { literal, number, object, string } from 'superstruct'
 
@@ -9,9 +9,9 @@ export function readonly<T, S> (struct: Struct<T, S>): Struct<Readonly<T>, S> {
   return struct
 }
 
-export const validateNumeric = <const U extends Unit> (unit: U) => object({
+export const validateRuntimeNumeric = <const U extends Unit> (unit: U) => object({
   unit: literal(unit),
-  value: number()
+  value: number() as unknown as Struct<Numeric<U>, null>
 })
 
 export const brandedString = <T extends string> (): Struct<T & (string & { [K in keyof T]: T[K] }), null> => {

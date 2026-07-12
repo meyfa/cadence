@@ -3,15 +3,15 @@ import type { AIFFEncodingOptions, AIFFFormat, AudioBufferTransform, WAVEncoding
 import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize } from '@codecs'
 import type { Program } from '@core'
 import { beatsToSeconds, calculateTotalLength } from '@core'
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { createAudioRenderer } from '@webaudio'
 import type { Option } from '../../components/dropdown/Dropdown.js'
 import { saveFile } from '../../utilities/files.js'
 
-const ASSET_LOAD_TIMEOUT = numeric('s', 30)
+const ASSET_LOAD_TIMEOUT = runtimeNumeric('s', 30)
 
-export const MAX_EXPORT_DURATION = numeric('s', 60 * 60) // 1 hour
+export const MAX_EXPORT_DURATION = runtimeNumeric('s', 60 * 60) // 1 hour
 export const RENDER_CHANNELS = 2 // stereo
 
 export type FileType = 'wav' | 'aiff'
@@ -20,7 +20,7 @@ export type SampleRate = '44100' | '48000' | '96000'
 interface ExportFileType<TEncodingOptions = never> {
   readonly extension: string
   readonly mimeType: string
-  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => Numeric<'bytes'>
+  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => RuntimeNumeric<'bytes'>
   readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
 }
 
@@ -86,8 +86,8 @@ export async function renderAndSave<TEncodingOptions> (
   const renderer = createAudioRenderer({
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
-      arrayBuffer: numeric('bytes', 0),
-      audioBuffer: numeric('bytes', 0)
+      arrayBuffer: runtimeNumeric('bytes', 0),
+      audioBuffer: runtimeNumeric('bytes', 0)
     }
   })
 
@@ -113,37 +113,37 @@ export async function renderAndSave<TEncodingOptions> (
 }
 
 export interface ExportMetrics {
-  readonly duration: Numeric<'s'>
-  readonly fileSize: Numeric<'bytes'>
+  readonly duration: RuntimeNumeric<'s'>
+  readonly fileSize: RuntimeNumeric<'bytes'>
 }
 
 export function computeExportMetrics (program: Program, options: {
   readonly sampleRate: SampleRate
-  readonly leadingSilence: Numeric<'s'>
+  readonly leadingSilence: RuntimeNumeric<'s'>
   readonly type: FileType
   readonly wavFormat: WAVFormat
   readonly aiffFormat: AIFFFormat
 }): ExportMetrics {
   const trackLength = computeTrackDuration(program)
-  const duration = numeric('s', trackLength.value + options.leadingSilence.value)
+  const duration = runtimeNumeric('s', trackLength.value + options.leadingSilence.value)
 
   const fileSize = estimateFileSize({ ...options, duration })
 
   return { duration, fileSize }
 }
 
-function computeTrackDuration (program: Program): Numeric<'s'> {
+function computeTrackDuration (program: Program): RuntimeNumeric<'s'> {
   const lengthInBeats = calculateTotalLength(program)
   return beatsToSeconds(lengthInBeats, program.track.tempo)
 }
 
 function estimateFileSize (options: {
-  readonly duration: Numeric<'s'>
+  readonly duration: RuntimeNumeric<'s'>
   readonly sampleRate: SampleRate
   readonly type: FileType
   readonly wavFormat: WAVFormat
   readonly aiffFormat: AIFFFormat
-}): Numeric<'bytes'> {
+}): RuntimeNumeric<'bytes'> {
   const { duration, sampleRate, type, wavFormat, aiffFormat } = options
 
   const exportType = type === 'wav' ? WAV : AIFF

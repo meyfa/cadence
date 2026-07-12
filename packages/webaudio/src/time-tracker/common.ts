@@ -1,11 +1,11 @@
-import type { Numeric, Observable } from '@utility'
+import type { RuntimeNumeric, Observable } from '@utility'
 
 export interface TimeTrackerOptions {
-  readonly updateInterval: Numeric<'s'>
-  readonly offsetTime: Numeric<'s'>
+  readonly updateInterval: RuntimeNumeric<'s'>
+  readonly offsetTime: RuntimeNumeric<'s'>
 }
 
 export interface TimeTracker {
   readonly dispose: () => void
-  readonly time: Observable<Numeric<'s'>>
+  readonly time: Observable<RuntimeNumeric<'s'>>
 }

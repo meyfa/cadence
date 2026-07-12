@@ -1,5 +1,6 @@
 import type { ast } from '@ast'
 import { concatPatterns, multiplyPattern } from '@core'
+import type { Numeric, Unit } from '@utility'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { StringFacet } from '../../type-system/base/string.js'
 import { PatternFacet } from '../../type-system/domain/pattern.js'
@@ -52,7 +53,10 @@ const add: BinaryOperation = {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {
       const leftData = NumberFacet.get(left)
       const rightData = NumberFacet.get(right)
-      return Numbers.of({ unit: leftData.unit, value: leftData.value + rightData.value })
+      return Numbers.of({
+        unit: leftData.unit,
+        value: (leftData.value + rightData.value) as Numeric<Unit>
+      })
     }
 
     fail()
@@ -78,7 +82,10 @@ const subtract: BinaryOperation = {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {
       const leftData = NumberFacet.get(left)
       const rightData = NumberFacet.get(right)
-      return Numbers.of({ unit: leftData.unit, value: leftData.value - rightData.value })
+      return Numbers.of({
+        unit: leftData.unit,
+        value: (leftData.value - rightData.value) as Numeric<Unit>
+      })
     }
 
     fail()
@@ -111,7 +118,10 @@ const multiply: BinaryOperation = {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {
       const leftData = NumberFacet.get(left)
       const rightData = NumberFacet.get(right)
-      return Numbers.of({ unit: leftData.unit ?? rightData.unit, value: leftData.value * rightData.value })
+      return Numbers.of({
+        unit: leftData.unit ?? rightData.unit,
+        value: (leftData.value * rightData.value) as Numeric<Unit>
+      })
     }
 
     if (PatternFacet.has(left) && NumberFacet.has(right)) {
@@ -161,7 +171,10 @@ const divide: BinaryOperation = {
       const rightData = NumberFacet.get(right)
       // Equal units cancel out
       const unit = leftData.unit === rightData.unit ? undefined : leftData.unit
-      return Numbers.of({ unit, value: leftData.value / rightData.value })
+      return Numbers.of({
+        unit,
+        value: (leftData.value / rightData.value) as Numeric<Unit>
+      })
     }
 
     if (PatternFacet.has(left) && NumberFacet.has(right)) {

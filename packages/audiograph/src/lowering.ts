@@ -1,7 +1,7 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@core'
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.js'
 import type { AudioGraphBuilder } from './builder.js'
 import { createAudioGraphBuilder } from './builder.js'
@@ -21,7 +21,7 @@ export interface AudioGraphOptions {
 }
 
 interface MeteringOptions {
-  readonly interval: Numeric<'s'>
+  readonly interval: RuntimeNumeric<'s'>
 }
 
 export function createAudioGraph (program: Program, options?: AudioGraphOptions): AudioGraph<Node> {
@@ -204,7 +204,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         filterType: 'lowpass',
         frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
-        rolloffPerOctave: numeric('db', 12)
+        rolloffPerOctave: runtimeNumeric('db', 12)
       }))
     }
 
@@ -213,7 +213,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
         filterType: 'highpass',
         frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
         // TODO configurable rolloff
-        rolloffPerOctave: numeric('db', 12)
+        rolloffPerOctave: runtimeNumeric('db', 12)
       }))
     }
 
@@ -224,7 +224,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
 
       return toSubGraph(builder.addNode<WidthNode>('width', {
         // TODO time variant
-        width: numeric(undefined, Math.max(0, Math.min(1, effect.width.value)))
+        width: runtimeNumeric(undefined, Math.max(0, Math.min(1, effect.width.value)))
       }))
     }
 
@@ -277,12 +277,12 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
       // one in front of the wave shaper with gain of -threshold, and one after with gain of +threshold to compensate.
       // If the threshold is -Infinity, we must of course not apply a +Infinity gain, which would be illegal.
 
-      const invert = (value: Numeric<undefined>): Numeric<undefined> => {
+      const invert = (value: RuntimeNumeric<undefined>): RuntimeNumeric<undefined> => {
         if (value.value === 0) {
           throw new Error('Invalid gain')
         }
 
-        return numeric(undefined, 1 / value.value)
+        return runtimeNumeric(undefined, 1 / value.value)
       }
 
       const thresholdGain = computeParameterCurve(effect.threshold, program, gainTransform)
@@ -313,7 +313,7 @@ function createEffect (program: Program, effect: Effect, builder: Builder): SubG
   }
 }
 
-function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>, builder: Builder): SubGraph {
+function createDryWetMix (effectId: NodeId, mix: number, wetGain: RuntimeNumeric<'db'>, builder: Builder): SubGraph {
   if (Number.isNaN(mix)) {
     throw new Error(`Invalid mix: ${mix}`)
   }
@@ -342,12 +342,12 @@ function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>,
 
   const dry = Math.max(0, Math.min(1, (1 - mix) * 2))
   const dryNodeId = builder.addNode<GainNode>('gain', {
-    gain: { initial: numeric(undefined, dry), points: [] }
+    gain: { initial: runtimeNumeric(undefined, dry), points: [] }
   })
 
   const wet = Math.max(0, Math.min(1, mix * 2))
   const wetNodeId = builder.addNode<GainNode>('gain', {
-    gain: { initial: numeric(undefined, wet), points: [] }
+    gain: { initial: runtimeNumeric(undefined, wet), points: [] }
   })
 
   const wetInputId = wetLevelId ?? effectId
@@ -363,7 +363,7 @@ function createDryWetMix (effectId: NodeId, mix: number, wetGain: Numeric<'db'>,
   }
 }
 
-function createOptionalGainNode (wetGain: Numeric<'db'>, builder: Builder): NodeId | undefined {
+function createOptionalGainNode (wetGain: RuntimeNumeric<'db'>, builder: Builder): NodeId | undefined {
   if (wetGain.value === 0) {
     return undefined
   }
@@ -422,7 +422,7 @@ function createNoteEvents (track: Track, instruments: ReadonlyMap<InstrumentId, 
 
       const events = renderPatternEvents(routing.source.value, part.length).map((event) => ({
         ...event,
-        time: numeric('beats', event.time.value + offsetBeats)
+        time: runtimeNumeric('beats', event.time.value + offsetBeats)
       }))
 
       builder.addNoteEvents(nodeId, events)

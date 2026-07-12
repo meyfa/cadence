@@ -1,7 +1,7 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 
 export interface AssetCacheOptions<T> {
-  readonly maxSize: Numeric<'bytes'>
+  readonly maxSize: RuntimeNumeric<'bytes'>
   readonly getSize: (value: T) => number
 }
 

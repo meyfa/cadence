@@ -1,20 +1,20 @@
 import type { PersistenceDomain } from '@editor'
 import { useObservable, usePersistentBinding } from '@editor'
-import type { Numeric } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
+import { runtimeNumeric } from '@utility'
 import type { Struct } from 'superstruct'
 import { type } from 'superstruct'
-import { validateNumeric } from '../../utilities/validation.js'
+import { validateRuntimeNumeric } from '../../utilities/validation.js'
 import { useAudioEngine } from './provider.js'
 
-export const defaultOutputGain = numeric('db', -12)
+export const defaultOutputGain = runtimeNumeric('db', -12)
 
 interface PlaybackSettings {
-  readonly outputGain: Numeric<'db'>
+  readonly outputGain: RuntimeNumeric<'db'>
 }
 
 const playbackSettingsSchema: Struct<PlaybackSettings> = type({
-  outputGain: validateNumeric('db')
+  outputGain: validateRuntimeNumeric('db')
 })
 
 const playbackSettingsDefaults: PlaybackSettings = {

@@ -1,10 +1,10 @@
-import type { Numeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@utility'
 
 export function pluralize (count: number, singular: string, plural = singular.at(-1) === 's' ? `${singular}es` : `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`
 }
 
-export function formatDuration (duration: Numeric<'s'>): string {
+export function formatDuration (duration: RuntimeNumeric<'s'>): string {
   const sign = duration.value < 0 ? '-' : ''
 
   const millis = Math.round(Math.abs(duration.value) * 1000)
@@ -35,7 +35,7 @@ interface BeatDurationParts {
   readonly beats: number
 }
 
-function getBeatDurationParts (duration: Numeric<'beats'>, beatsPerBar: number): BeatDurationParts {
+function getBeatDurationParts (duration: RuntimeNumeric<'beats'>, beatsPerBar: number): BeatDurationParts {
   const sign = Math.sign(duration.value)
   let remainingBeats = Math.abs(duration.value)
 
@@ -49,12 +49,12 @@ function getBeatDurationParts (duration: Numeric<'beats'>, beatsPerBar: number):
   }
 }
 
-export function formatBeatDuration (duration: Numeric<'beats'>, beatsPerBar: number): string {
+export function formatBeatDuration (duration: RuntimeNumeric<'beats'>, beatsPerBar: number): string {
   const { sign, bars, beats } = getBeatDurationParts(duration, beatsPerBar)
   return `${sign < 0 ? '-' : ''}${bars}:${beats.toFixed(2)}`
 }
 
-export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerBar: number): string {
+export function formatBeatDurationAsWords (duration: RuntimeNumeric<'beats'>, beatsPerBar: number): string {
   const { sign, bars, beats } = getBeatDurationParts(duration, beatsPerBar)
   const parts: string[] = []
 
@@ -73,7 +73,7 @@ export function formatBeatDurationAsWords (duration: Numeric<'beats'>, beatsPerB
   return `${sign < 0 ? '-' : ''}${parts.join(' ')}`
 }
 
-export function formatBytes (bytes: Numeric<'bytes'>): string {
+export function formatBytes (bytes: RuntimeNumeric<'bytes'>): string {
   let { value } = bytes
 
   if (value < 1024) {
@@ -84,7 +84,7 @@ export function formatBytes (bytes: Numeric<'bytes'>): string {
   let unitIndex = -1
 
   do {
-    value /= 1024
+    value = (value / 1024) as Numeric<'bytes'>
     ++unitIndex
   } while (value >= 1024 && unitIndex < units.length - 1)
 

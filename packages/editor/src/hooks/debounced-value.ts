@@ -1,7 +1,7 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { useEffect, useState } from 'react'
 
-export function useDebouncedValue<T> (value: T, delay: Numeric<'s'>): T {
+export function useDebouncedValue<T> (value: T, delay: RuntimeNumeric<'s'>): T {
   const [debouncedValue, setDebouncedValue] = useState(value)
 
   const delayMs = delay.value * 1000

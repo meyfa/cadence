@@ -1,6 +1,6 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { beatsToSeconds } from '@core'
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { DisposeStack } from '@utility'
 import type { CacheLimits } from '../assets/fetcher.js'
 import { createAudioFetcher } from '../assets/fetcher.js'
@@ -8,7 +8,7 @@ import { createWebAudioGraph } from '../graph/graph.js'
 import { createOfflineTransport } from '../transport/transport.js'
 
 export interface AudioRendererOptions {
-  readonly assetLoadTimeout: Numeric<'s'>
+  readonly assetLoadTimeout: RuntimeNumeric<'s'>
   readonly cacheLimits: CacheLimits
 }
 

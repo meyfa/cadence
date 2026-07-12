@@ -1,8 +1,8 @@
 import { ast } from '@ast'
 import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Source, Step, Track, Voice } from '@core'
 import { concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@core'
-import type { Numeric, Unit } from '@utility'
-import { numeric } from '@utility'
+import type { Numeric, RuntimeNumeric, Unit } from '@utility'
+import { runtimeNumeric } from '@utility'
 import { getStandardModuleValue } from '../../library/modules.js'
 import type { Function } from '../../type-system/base/function.js'
 import { FunctionFacet } from '../../type-system/base/function.js'
@@ -75,7 +75,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   }
 
   mixer ??= { buses: [], routings: [] }
-  track ??= { tempo: numeric('bpm', options.tempo.default), parts: [] }
+  track ??= { tempo: runtimeNumeric('bpm', options.tempo.default), parts: [] }
 
   // Implicit output routings for unrouted buses and instruments
   mixer = {
@@ -95,14 +95,14 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   }
 }
 
-function clamped<U extends Unit> (value: Numeric<U>, minimum: number, maximum: number): Numeric<U> {
+function clamped<U extends Unit> (value: RuntimeNumeric<U>, minimum: number, maximum: number): RuntimeNumeric<U> {
   if (value.value >= minimum && value.value <= maximum) {
     return value
   }
 
   return {
     unit: value.unit,
-    value: Math.min(Math.max(value.value, minimum), maximum)
+    value: Math.min(Math.max(value.value, minimum), maximum) as Numeric<U>
   }
 }
 
@@ -147,12 +147,12 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
 
   const tempo = properties.tempo != null
     ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum)
-    : numeric('bpm', options.tempo.default)
+    : runtimeNumeric('bpm', options.tempo.default)
 
   const trackScope = createLocalScope(scope)
   const parts: Part[] = []
 
-  let currentTime = numeric('beats', 0)
+  let currentTime = runtimeNumeric('beats', 0)
 
   for (const child of track.children) {
     switch (child.type) {
@@ -169,7 +169,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
           trackScope.resolutions.set(part.name, PartFacet.type().of(part))
         }
 
-        currentTime = numeric('beats', currentTime.value + part.length.value)
+        currentTime = runtimeNumeric('beats', currentTime.value + part.length.value)
         break
       }
 
@@ -181,7 +181,7 @@ function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
   return { tempo, parts }
 }
 
-function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
+function generatePart (scope: Scope, part: ast.PartStatement, startTime: RuntimeNumeric<'beats'>, tempo: RuntimeNumeric<'bpm'>): Part {
   const partScope = createLocalScope(scope)
 
   const name = part.name?.name
@@ -353,8 +353,8 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
-  const gainData = properties.gain != null ? NumberFacet.get(properties.gain) : numeric('db', 0)
-  const panData = properties.pan != null ? NumberFacet.get(properties.pan) : numeric(undefined, 0)
+  const gainData = properties.gain != null ? NumberFacet.get(properties.gain) : runtimeNumeric('db', 0)
+  const panData = properties.pan != null ? NumberFacet.get(properties.pan) : runtimeNumeric(undefined, 0)
 
   const gain = scope.top.allocateParameter(gainData)
   valueRecord.gain = Parameters.of(gain)
@@ -501,7 +501,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 
   const generatedSegments: Array<CurveSegment<Unit>> = []
 
-  const getPreviousSegmentEnd = (): Numeric<Unit> => {
+  const getPreviousSegmentEnd = (): RuntimeNumeric<Unit> => {
     const previous = nonNull(generatedSegments.at(-1))
     const definition = nonNull(getCurveSegmentType(previous.type))
     return definition.end(previous)
@@ -515,7 +515,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
     const length = (() => {
       const value = NumberFacet.get(resolve(scope, segment.length))
       assert(value.unit === 'beats' || value.unit === 's')
-      return value as Numeric<'beats'> | Numeric<'s'>
+      return value as RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
     })()
 
     const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
@@ -532,7 +532,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
-  const voiceConstructors: Array<(note: NoteValue, tempo: Numeric<'bpm'>) => readonly Voice[]> = []
+  const voiceConstructors: Array<(note: NoteValue, tempo: RuntimeNumeric<'bpm'>) => readonly Voice[]> = []
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -551,7 +551,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
     }
   }
 
-  const gainParameter = scope.top.allocateParameter(numeric('db', 0))
+  const gainParameter = scope.top.allocateParameter(runtimeNumeric('db', 0))
 
   const instrument = scope.top.allocateInstrument({
     gain: gainParameter,
@@ -560,9 +560,9 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         return []
       }
 
-      const gate = Numbers.of(note.gate ?? numeric('beats', 0))
+      const gate = Numbers.of(note.gate ?? runtimeNumeric('beats', 0))
       const frequency = Numbers.of(
-        numeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
+        runtimeNumeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
       )
       const velocity = Numbers.of(note.velocity)
 
@@ -575,7 +575,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   return InstrumentFacet.type().of(instrument)
 }
 
-function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: Numeric<'bpm'>): readonly Voice[] {
+function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: RuntimeNumeric<'bpm'>): readonly Voice[] {
   const voiceScope = createLocalScope(scope)
 
   if (voice.bindings.note != null) {
@@ -612,9 +612,9 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
   }
 
   const envelope = {
-    initial: numeric('db', -Infinity),
+    initial: runtimeNumeric('db', -Infinity),
     points: renderCurvePoints(envelopeValue, {
-      offset: numeric('beats', 0),
+      offset: runtimeNumeric('beats', 0),
       tempo
     })
   }

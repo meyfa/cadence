@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import { useCallback, useEffect, useRef } from 'react'
 
 export type PushOrigin<T> = (origin: T) => boolean
@@ -9,7 +9,7 @@ export type PushOrigin<T> = (origin: T) => boolean
  * Otherwise, it returns false.
  * Any call to the function resets the time window.
  */
-export function useChangeOrigin<T extends string> (windowDuration: Numeric<'s'>): PushOrigin<T> {
+export function useChangeOrigin<T extends string> (windowDuration: RuntimeNumeric<'s'>): PushOrigin<T> {
   const originRef = useRef<T | undefined>(undefined)
   const pendingResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 

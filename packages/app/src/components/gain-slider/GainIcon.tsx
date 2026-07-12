@@ -1,9 +1,9 @@
 import { VolumeDownOutlined, VolumeOffOutlined, VolumeUpOutlined } from '@mui/icons-material'
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import type { FunctionComponent } from 'react'
 
 export const GainIcon: FunctionComponent<{
-  gain: Numeric<'db'>
+  gain: RuntimeNumeric<'db'>
 }> = ({ gain }) => {
   if (gain.value < -48) {
     return <VolumeOffOutlined />

@@ -1,6 +1,6 @@
 import type { Asset, AssetId, NoteEvent } from '@core'
 import { isPitch } from '@core'
-import type { Numeric } from '@utility'
+import type { RuntimeNumeric } from '@utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
 
@@ -20,8 +20,8 @@ export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
 }
 
 export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: {
-  readonly tempo: Numeric<'bpm'>
-  readonly length: Numeric<'beats'>
+  readonly tempo: RuntimeNumeric<'bpm'>
+  readonly length: RuntimeNumeric<'beats'>
 }): AudioGraphBuilder<TNode> {
   if (!Number.isFinite(meta.tempo.value) || meta.tempo.value <= 0) {
     throw new Error(`Invalid tempo: ${meta.tempo.value}`)

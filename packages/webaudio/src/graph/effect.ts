@@ -25,7 +25,7 @@ export function createBiquadInstance (node: BiquadNode, transport: Transport): I
   const audioNode = transport.ctx.createBiquadFilter()
   audioNode.type = node.filterType
   automate(transport, audioNode.frequency, node.frequency)
-  audioNode.Q.value = -node.rolloffPerOctave.value
+  audioNode.Q.value = -(node.rolloffPerOctave.value as number)
   return toInstance(audioNode)
 }
 

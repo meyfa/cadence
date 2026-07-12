@@ -1,4 +1,4 @@
-import type { Brand, Numeric } from '@utility'
+import type { Brand, RuntimeNumeric } from '@utility'
 import type { ComponentType } from 'react'
 
 export type NotificationId = Brand<string, 'editor.NotificationId'>
@@ -20,7 +20,7 @@ export interface NotificationOptions {
    */
   readonly kind?: string
 
-  readonly timeout?: Numeric<'s'>
+  readonly timeout?: RuntimeNumeric<'s'>
 }
 
 type DisposeNotification = () => void

@@ -1,7 +1,7 @@
 import type { AudioGraph, Node } from '@audiograph'
 import { beatsToSeconds, dbToGain } from '@core'
-import type { Numeric, Observable } from '@utility'
-import { DisposeStack, MutableObservable, numeric } from '@utility'
+import type { RuntimeNumeric, Observable } from '@utility'
+import { DisposeStack, MutableObservable, runtimeNumeric } from '@utility'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { MeterCallbacks } from '../graph/factory.js'
 import { createWebAudioGraph } from '../graph/graph.js'
@@ -10,7 +10,7 @@ import type { BeatRange } from './types.js'
 
 export interface AudioSession {
   readonly ended: Observable<boolean>
-  readonly position: Observable<Numeric<'beats'>>
+  readonly position: Observable<RuntimeNumeric<'beats'>>
   readonly errors: Observable<readonly Error[]>
   readonly start: () => void
   readonly dispose: () => void
@@ -19,7 +19,7 @@ export interface AudioSession {
 export function createAudioSession (
   graph: AudioGraph<Node>,
   range: BeatRange,
-  outputGain: Observable<Numeric<'db'>>,
+  outputGain: Observable<RuntimeNumeric<'db'>>,
   fetcher: AudioFetcher,
   meterCallbacks: MeterCallbacks
 ): AudioSession {
@@ -86,7 +86,7 @@ export function createAudioSession (
       disposeStack.push(transport.time.subscribe((time) => {
         if (!disposed) {
           const clamped = Math.max(startTime.value, time.value)
-          position.set(numeric('beats', clamped * graph.tempo.value / 60))
+          position.set(runtimeNumeric('beats', clamped * graph.tempo.value / 60))
         }
       }))
     }).catch((err: unknown) => {

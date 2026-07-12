@@ -1,5 +1,5 @@
-import type { Numeric, Unit } from '@utility'
-import { numeric } from '@utility'
+import type { RuntimeNumeric, Unit } from '@utility'
+import { runtimeNumeric } from '@utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { makeFacet, makeType, makeUnion } from '../../src/type-system/factory.js'
@@ -8,11 +8,11 @@ import { expectTypeEquals } from '../test-utils.js'
 
 const stringFacet = makeFacet<'string', string>('string', {})
 const numberFacet = makeFacet<'number', number>('number', {})
-const numericFacet = makeFacet<'numeric', Numeric<Unit>>('numeric', {})
-const decibelFacet = makeFacet<'numeric', Numeric<'db'>>('numeric', { unit: 'db' }, {
+const numericFacet = makeFacet<'numeric', RuntimeNumeric<Unit>>('numeric', {})
+const decibelFacet = makeFacet<'numeric', RuntimeNumeric<'db'>>('numeric', { unit: 'db' }, {
   format: () => 'numeric(db)'
 })
-const hertzFacet = makeFacet<'numeric', Numeric<'hz'>>('numeric', { unit: 'hz' }, {
+const hertzFacet = makeFacet<'numeric', RuntimeNumeric<'hz'>>('numeric', { unit: 'hz' }, {
   format: () => 'numeric(hz)'
 })
 
@@ -29,7 +29,7 @@ describe('type-system', () => {
   describe('DataForFacet', () => {
     it('should infer facet data', () => {
       expectTypeEquals<string, DataForFacet<typeof stringFacet>>()
-      expectTypeEquals<Numeric<Unit>, DataForFacet<typeof numericFacet>>()
+      expectTypeEquals<RuntimeNumeric<Unit>, DataForFacet<typeof numericFacet>>()
     })
   })
 
@@ -49,16 +49,16 @@ describe('type-system', () => {
 
   describe('get()', () => {
     it('should infer a more specific data type from the value if available', () => {
-      const specificValue = decibelType.of(numeric('db', 42))
+      const specificValue = decibelType.of(runtimeNumeric('db', 42))
       const specificData = numericFacet.get(specificValue)
-      expectTypeEquals<Numeric<Unit> & Numeric<'db'>, typeof specificData>()
+      expectTypeEquals<RuntimeNumeric<Unit> & RuntimeNumeric<'db'>, typeof specificData>()
       expectTypeEquals<'db', typeof specificData.unit>()
       assert.strictEqual(specificData.unit, 'db')
       assert.strictEqual(specificData.value, 42)
 
       const widenedValue: Value = specificValue
       const widenedData = numericFacet.get(widenedValue)
-      expectTypeEquals<Numeric<Unit>, typeof widenedData>()
+      expectTypeEquals<RuntimeNumeric<Unit>, typeof widenedData>()
       expectTypeEquals<Unit, typeof widenedData.unit>()
       assert.strictEqual(widenedData.unit, 'db')
       assert.strictEqual(widenedData.value, 42)
@@ -120,31 +120,31 @@ describe('type-system', () => {
 
     it('should check values', () => {
       const pairValue = stringAndNumberType.of('hello', 42)
-      const broadNumericValue = numericType.of(numeric(undefined, 5))
-      const decibelValue = decibelType.of(numeric('db', 42))
+      const broadRuntimeNumericValue = numericType.of(runtimeNumeric(undefined, 5))
+      const decibelValue = decibelType.of(runtimeNumeric('db', 42))
 
       assert.strictEqual(stringFacet.has(pairValue), true)
       assert.strictEqual(numberFacet.has(pairValue), true)
       assert.strictEqual(decibelFacet.has(decibelValue), true)
       assert.strictEqual(numericFacet.has(decibelValue), true)
-      assert.strictEqual(decibelFacet.has(broadNumericValue), false)
+      assert.strictEqual(decibelFacet.has(broadRuntimeNumericValue), false)
     })
 
     it('should retrieve facet data', () => {
       const pairValue = stringAndNumberType.of('hello', 42)
-      const broadNumericValue = numericType.of(numeric(undefined, 5))
-      const decibelValue = decibelType.of(numeric('db', 42))
+      const broadRuntimeNumericValue = numericType.of(runtimeNumeric(undefined, 5))
+      const decibelValue = decibelType.of(runtimeNumeric('db', 42))
 
       assert.strictEqual(stringFacet.get(pairValue), 'hello')
       assert.strictEqual(numberFacet.get(pairValue), 42)
-      assert.deepStrictEqual(decibelFacet.get(decibelValue), numeric('db', 42))
+      assert.deepStrictEqual(decibelFacet.get(decibelValue), runtimeNumeric('db', 42))
 
       assert.throws(() => stringFacet.get(decibelValue), /Value is not assignable to facet: string/)
-      assert.throws(() => decibelFacet.get(broadNumericValue), /Value is not assignable to facet: numeric/)
+      assert.throws(() => decibelFacet.get(broadRuntimeNumericValue), /Value is not assignable to facet: numeric/)
     })
 
     it('should narrow values through has()', () => {
-      const maybeFacetValue: Value = decibelType.of(numeric('db', 42))
+      const maybeFacetValue: Value = decibelType.of(runtimeNumeric('db', 42))
       if (!numericFacet.has(maybeFacetValue)) {
         assert.fail('Expected numericFacet.has() to narrow a decibel value')
       }
@@ -228,7 +228,7 @@ describe('type-system', () => {
     })
 
     it('should narrow values through has()', () => {
-      const maybeTypeValue: Value = decibelType.of(numeric('db', 42))
+      const maybeTypeValue: Value = decibelType.of(runtimeNumeric('db', 42))
       if (!decibelType.has(maybeTypeValue)) {
         assert.fail('Expected decibelType.has() to narrow a decibel value')
       }
@@ -272,19 +272,19 @@ describe('type-system', () => {
       const primitiveUnion = makeUnion(stringType, numberType)
       const stringValue = stringType.of('hello')
       const pairValue = stringAndNumberType.of('hello', 42)
-      const decibelValue = decibelType.of(numeric('db', 42))
-      const broadNumericValue = numericType.of(numeric(undefined, 5))
+      const decibelValue = decibelType.of(runtimeNumeric('db', 42))
+      const broadRuntimeNumericValue = numericType.of(runtimeNumeric(undefined, 5))
 
       assert.strictEqual(primitiveUnion.has(stringValue), true)
       assert.strictEqual(primitiveUnion.has(pairValue), true)
       assert.strictEqual(primitiveUnion.has(decibelValue), false)
 
       assert.strictEqual(numericUnion.has(decibelValue), true)
-      assert.strictEqual(numericUnion.has(broadNumericValue), false)
+      assert.strictEqual(numericUnion.has(broadRuntimeNumericValue), false)
     })
 
     it('should narrow values through has()', () => {
-      const maybeUnionValue: Value = hertzType.of(numeric('hz', 1000))
+      const maybeUnionValue: Value = hertzType.of(runtimeNumeric('hz', 1000))
       if (!numericUnion.has(maybeUnionValue)) {
         assert.fail('Expected numericUnion.has() to narrow a member value')
       }
