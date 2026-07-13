@@ -14,7 +14,8 @@
     "start": "npm run --workspace=packages/app start --",
     "build": "npm run --workspace=packages/app build --",
     "test": "npm run --workspaces --if-present test --",
-    "test:browser": "npm run --workspaces --if-present test:browser --"
+    "test:browser": "npm run --workspaces --if-present test:browser --",
+    "license-check": "tsx scripts/license-check.ts"
   },
   "repository": {
     "type": "git",

@@ -5,6 +5,7 @@
   },
   "include": [
     "./eslint.config.js",
+    "./scripts/*.ts",
     "./packages/*/src",
     "./packages/*/test",
     "./packages/*/test-browser",

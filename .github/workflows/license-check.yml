@@ -1,0 +1,21 @@
+name: License Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: actions/setup-node@v6.4.0
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - run: npm ci
+      - run: npm run license-check
