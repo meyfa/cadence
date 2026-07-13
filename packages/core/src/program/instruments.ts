@@ -8,6 +8,7 @@ export type InstrumentId = Brand<number, 'core.InstrumentId'>
 
 export interface Instrument {
   readonly id: InstrumentId
+  readonly label?: string
   readonly gain: Parameter<'db'>
   readonly trigger: (note: NoteData, tempo: Numeric<'bpm'>) => readonly Voice[]
 }
