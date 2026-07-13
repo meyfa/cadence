@@ -29,6 +29,19 @@ const config = defineConfig({
   build: {
     outDir: 'dist',
 
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vendor',
+              test: /node_modules/
+            }
+          ]
+        }
+      }
+    },
+
     // Exclude audio worklet processors from inlining, as the Content Security Policy
     // may prevent loading them from base64-encoded data URLs.
     assetsInlineLimit: (filePath) => {
