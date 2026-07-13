@@ -61,6 +61,7 @@ describe('library/modules/instruments.ts', () => {
 
       assert.deepStrictEqual(instrument, {
         id: instrument.id,
+        label: 'sample(kick.wav)',
         gain: {
           id: instrument.gain.id,
           unit: 'db',
@@ -104,6 +105,7 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        label: 'sample(snare.wav)',
         gain: {
           id: instrument.gain.id,
           unit: 'db',
@@ -167,6 +169,7 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        label: 'sine',
         gain: {
           id: instrument.gain.id,
           unit: 'db',
@@ -213,6 +216,7 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        label: 'square',
         gain: {
           id: instrument.gain.id,
           unit: 'db',
@@ -259,6 +263,7 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        label: 'saw',
         gain: {
           id: instrument.gain.id,
           unit: 'db',
@@ -305,6 +310,7 @@ describe('library/modules/instruments.ts', () => {
       const { id, ...instrument } = InstrumentFacet.get(result)
 
       assert.deepStrictEqual(instrument, {
+        label: 'triangle',
         gain: {
           id: instrument.gain.id,
           unit: 'db',

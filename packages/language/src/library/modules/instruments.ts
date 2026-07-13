@@ -33,6 +33,12 @@ const OscillatorInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
   gain: ParameterFacet.with('db').type()
 }))
 
+function getSampleInstrumentLabel (url: string): string {
+  const lastSlashIndex = url.lastIndexOf('/')
+  const filename = lastSlashIndex !== -1 ? url.slice(lastSlashIndex + 1) : url
+  return `sample(${filename})`
+}
+
 const sample = Functions.of({
   summary: 'Creates a sample-backed instrument from a URL.',
 
@@ -67,6 +73,8 @@ const sample = Functions.of({
     const invalidLength = lengthValue != null && (!Number.isFinite(lengthValue) || lengthValue <= 0)
 
     const instrument = context.allocateInstrument({
+      label: getSampleInstrumentLabel(urlValue),
+
       gain: gainParameter,
 
       trigger: (note, tempo) => {
@@ -124,6 +132,8 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
       const gainParameter = context.allocateParameter('db', gainValue)
 
       const instrument = context.allocateInstrument({
+        label: shape,
+
         gain: gainParameter,
 
         trigger: (note, tempo) => {

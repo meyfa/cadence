@@ -61,7 +61,7 @@ function getNodeLabel ({ data }: MixerFlowNode): string | undefined {
       return data.object.name
 
     case 'instrument':
-      return undefined // TODO: Find a way to describe the instrument
+      return data.object.label
   }
 }
 
@@ -268,10 +268,11 @@ const BusNodeInfo: FunctionComponent<{
 const InstrumentNodeInfo: FunctionComponent<{
   object: Instrument
   program: Program
-}> = () => {
+}> = ({ object }) => {
   return (
     <>
       <div className='font-bold'>(Instrument)</div>
+      <div>{object.label}</div>
     </>
   )
 }
