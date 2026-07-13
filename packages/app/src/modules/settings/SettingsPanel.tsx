@@ -30,6 +30,11 @@ export const SettingsPanel: FunctionComponent<PanelProps> = () => {
             <GitHub className='mr-2' />
             github.com/meyfa/cadence
           </a>
+
+          <p>
+            This app uses open-source libraries.
+            Please see: <a href='/license.md' target='_blank' rel='noreferrer' className='outline-none hocus:underline text-content-200 hocus:text-content-300'>licenses</a>
+          </p>
         </Card>
       </div>
     </div>

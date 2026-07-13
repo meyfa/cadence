@@ -29,6 +29,10 @@ const config = defineConfig({
   build: {
     outDir: 'dist',
 
+    license: {
+      fileName: 'license.md'
+    },
+
     rolldownOptions: {
       output: {
         codeSplitting: {
