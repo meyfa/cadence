@@ -1,13 +1,13 @@
-export type * from './brand/brand.js'
+export type * from './brand/brand.ts'
 
-export * from './collections/arrays.js'
-export * from './collections/multimap.js'
+export * from './collections/arrays.ts'
+export * from './collections/multimap.ts'
 
-export * from './disposable/disposable.js'
+export * from './disposable/disposable.ts'
 
-export * from './numeric/numeric.js'
+export * from './numeric/numeric.ts'
 
-export * from './observable/observable.js'
+export * from './observable/observable.ts'
 
-export * from './random/random.js'
-export * from './random/id.js'
+export * from './random/random.ts'
+export * from './random/id.ts'

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it, vi } from 'vitest'
-import { useDebouncedValue } from '../../src/hooks/debounced-value.js'
+import { useDebouncedValue } from '../../src/hooks/debounced-value.ts'
 
 describe('hooks/debounced-value.ts', () => {
   it('delays updates until the debounce interval elapses', () => {

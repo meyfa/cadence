@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { runtimeNumeric } from '../../src/numeric/numeric.js'
+import { runtimeNumeric } from '../../src/numeric/numeric.ts'
 
 describe('numeric/numeric.ts', () => {
   describe('runtimeNumeric()', () => {

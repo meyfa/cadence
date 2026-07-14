@@ -1,12 +1,12 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { computeBaseModel } from '../../../src/model/analysis/base.js'
-import { computeKnownValueModel } from '../../../src/model/analysis/known-values.js'
-import { computeReferenceModel } from '../../../src/model/analysis/references.js'
-import type { BaseModel, KnownValueModel, ReferenceModel } from '../../../src/model/model.js'
-import { findIdentifierAt } from '../../../src/model/query.js'
-import { textFromString } from '../../../src/utilities/text.js'
-import { getCadenceParser } from '../../helpers.js'
+import { computeBaseModel } from '../../../src/model/analysis/base.ts'
+import { computeKnownValueModel } from '../../../src/model/analysis/known-values.ts'
+import { computeReferenceModel } from '../../../src/model/analysis/references.ts'
+import type { BaseModel, KnownValueModel, ReferenceModel } from '../../../src/model/model.ts'
+import { findIdentifierAt } from '../../../src/model/query.ts'
+import { textFromString } from '../../../src/utilities/text.ts'
+import { getCadenceParser } from '../../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 

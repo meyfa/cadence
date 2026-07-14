@@ -1,9 +1,9 @@
 import type { AudioGraph, Node, NodeId } from '@meyfa/cadence-audiograph'
-import type { AudioFetcher } from '../assets/fetcher.js'
-import type { Transport } from '../transport/transport.js'
-import type { MeterCallbacks } from './factory.js'
-import { createNodeInstance } from './factory.js'
-import type { Instance } from './instance.js'
+import type { AudioFetcher } from '../assets/fetcher.ts'
+import type { Transport } from '../transport/transport.ts'
+import type { MeterCallbacks } from './factory.ts'
+import { createNodeInstance } from './factory.ts'
+import type { Instance } from './instance.ts'
 
 export interface WebAudioGraph {
   readonly dispose: () => void

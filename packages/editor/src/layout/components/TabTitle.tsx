@@ -4,9 +4,9 @@ import { Tab as HUITab } from '@headlessui/react'
 import type { ComponentType, FunctionComponent } from 'react'
 import React, { useCallback } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import type { ModuleRenderFn, PanelId, PanelProps } from '../../modules/types.js'
-import type { Tab, TabId } from '../types.js'
-import { usePanelById } from './panel-lookup.js'
+import type { ModuleRenderFn, PanelId, PanelProps } from '../../modules/types.ts'
+import type { Tab, TabId } from '../types.ts'
+import { usePanelById } from './panel-lookup.ts'
 
 const MOUSE_BUTTON_MIDDLE = 1
 

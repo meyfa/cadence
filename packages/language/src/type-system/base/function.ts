@@ -1,6 +1,6 @@
-import { makeFacet } from '../factory.js'
-import type { InferSchema, Schema } from '../schema.js'
-import type { CustomComparable, FacetType, ValueForType } from '../types.js'
+import { makeFacet } from '../factory.ts'
+import type { InferSchema, Schema } from '../schema.ts'
+import type { CustomComparable, FacetType, ValueForType } from '../types.ts'
 
 export interface Effects {
   readonly blocking: boolean

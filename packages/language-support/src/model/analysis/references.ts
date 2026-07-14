@@ -1,6 +1,6 @@
 import { getStandardModule } from '@meyfa/cadence-language'
-import type { BaseModel, Binding, BindingId, Identifier, IdentifierId, Import, ImportId, ReferenceModel, Resolution } from '../model.js'
-import { findBindingAt } from '../query.js'
+import type { BaseModel, Binding, BindingId, Identifier, IdentifierId, Import, ImportId, ReferenceModel, Resolution } from '../model.ts'
+import { findBindingAt } from '../query.ts'
 
 export function computeReferenceModel (model: BaseModel): ReferenceModel {
   const resolutions = new Map<IdentifierId, Resolution>()

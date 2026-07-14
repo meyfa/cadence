@@ -1,9 +1,9 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import type { Lexer, Options, Rules, Token } from 'leac'
 import { createLexer } from 'leac'
-import { truncateString } from '../result/errors.js'
-import type { Result } from '../result/result.js'
-import { LexError } from './error.js'
+import { truncateString } from '../result/errors.ts'
+import type { Result } from '../result/result.ts'
+import { LexError } from './error.ts'
 
 const ERROR_CONTEXT_LIMIT = 16
 

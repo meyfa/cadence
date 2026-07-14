@@ -1,7 +1,7 @@
 import type { FunctionComponent, PropsWithChildren, ReactNode } from 'react'
 import { createContext, Fragment } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { Module } from '../types.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { Module } from '../types.ts'
 
 const ModuleContext = createContext<readonly Module[] | undefined>([])
 

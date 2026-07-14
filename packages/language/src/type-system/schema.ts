@@ -1,4 +1,4 @@
-import type { Type, ValueForType } from './types.js'
+import type { Type, ValueForType } from './types.ts'
 
 export interface Schema<Items extends readonly SchemaItem[] = readonly SchemaItem[]> {
   readonly items: Items

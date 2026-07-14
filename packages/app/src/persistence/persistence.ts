@@ -2,10 +2,10 @@ import type { DockLayout, PersistenceDomain, ProjectSource } from '@meyfa/cadenc
 import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch } from '@meyfa/cadence-editor'
 import { useCallback, useMemo } from 'react'
 import { record, string, type } from 'superstruct'
-import { defaultLayout } from '../defaults/default-layout.js'
-import { demoCode } from '../defaults/demo-code.js'
-import { TRACK_FILE_PATH } from './constants.js'
-import { dockLayoutSchema } from './layout.js'
+import { defaultLayout } from '../defaults/default-layout.ts'
+import { demoCode } from '../defaults/demo-code.ts'
+import { TRACK_FILE_PATH } from './constants.ts'
+import { dockLayoutSchema } from './layout.ts'
 
 const layoutDomain: PersistenceDomain<DockLayout> = {
   key: 'app.layout',

@@ -3,9 +3,9 @@ import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { GenerateOptions } from '../../../src/compiler/generator/options.js'
-import { createGlobalScope, cloneScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.js'
-import { Numbers } from '../../../src/type-system/helpers.js'
+import type { GenerateOptions } from '../../../src/compiler/generator/options.ts'
+import { createGlobalScope, cloneScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.ts'
+import { Numbers } from '../../../src/type-system/helpers.ts'
 
 const options: GenerateOptions = {
   beatsPerBar: 4,

@@ -4,11 +4,11 @@ import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { gainTransform, transformCurve } from '../src/automation.js'
-import { createEntityKey } from '../src/entities.js'
-import type { NodeId } from '../src/graph.js'
-import { createAudioGraph } from '../src/lowering.js'
-import type { BiquadNode, DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from '../src/nodes.js'
+import { gainTransform, transformCurve } from '../src/automation.ts'
+import { createEntityKey } from '../src/entities.ts'
+import type { NodeId } from '../src/graph.ts'
+import { createAudioGraph } from '../src/lowering.ts'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, InstrumentNode, Node, OscillatorNode, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from '../src/nodes.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const beats = (value: number) => value as Numeric<'beats'>

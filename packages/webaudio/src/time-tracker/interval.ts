@@ -1,6 +1,6 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import { MutableObservable } from '@meyfa/cadence-utility'
-import type { TimeTracker, TimeTrackerOptions } from './common.js'
+import type { TimeTracker, TimeTrackerOptions } from './common.ts'
 
 export function createIntervalTimeTracker (ctx: BaseAudioContext, options: TimeTrackerOptions): TimeTracker {
   const { updateInterval, offsetTime } = options

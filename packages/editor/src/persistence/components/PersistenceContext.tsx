@@ -1,7 +1,7 @@
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { createContext } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { PersistenceEngine } from '../engine.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { PersistenceEngine } from '../engine.ts'
 
 interface PersistenceContextValue {
   readonly engine: PersistenceEngine

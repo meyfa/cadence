@@ -1,6 +1,6 @@
-import type { Binding, Identifier } from '../model/model.js'
-import { findIdentifierAt } from '../model/query.js'
-import type { SemanticOperation } from '../utilities/operations.js'
+import type { Binding, Identifier } from '../model/model.ts'
+import { findIdentifierAt } from '../model/query.ts'
+import type { SemanticOperation } from '../utilities/operations.ts'
 
 export interface GoToDefinitionResult {
   /**

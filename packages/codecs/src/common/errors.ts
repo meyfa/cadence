@@ -1,4 +1,4 @@
-import type { AudioBufferLike } from './types.js'
+import type { AudioBufferLike } from './types.ts'
 
 export const ErrorMessages = Object.freeze({
   ZeroChannels: 'Audio buffer must have at least one channel.',

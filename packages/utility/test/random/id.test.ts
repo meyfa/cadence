@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { randomId } from '../../src/random/id.js'
+import { randomId } from '../../src/random/id.ts'
 
 describe('random/id.ts', () => {
   describe('randomId', () => {

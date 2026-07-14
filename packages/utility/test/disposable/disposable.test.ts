@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { DisposeStack } from '../../src/disposable/disposable.js'
+import { DisposeStack } from '../../src/disposable/disposable.ts'
 
 describe('disposable/disposable.ts', () => {
   describe('DisposeStack', () => {

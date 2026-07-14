@@ -1,8 +1,8 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
-import { Slider } from '../slider/Slider.js'
-import { GainIcon } from './GainIcon.js'
+import { Slider } from '../slider/Slider.tsx'
+import { GainIcon } from './GainIcon.tsx'
 
 export const GainSlider: FunctionComponent<{
   gain: Numeric<'db'>

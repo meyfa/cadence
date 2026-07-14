@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import * as compilerAssert from '../../src/compiler/assert.js'
-import { CompileError } from '../../src/compiler/error.js'
+import * as compilerAssert from '../../src/compiler/assert.ts'
+import { CompileError } from '../../src/compiler/error.ts'
 
 describe('compiler/assert.ts', () => {
   describe('fail', () => {

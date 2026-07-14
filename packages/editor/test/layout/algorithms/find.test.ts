@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { findFocusedTab, findNode, findNodeById, findPane, findPaneById, findPaneByTabId, findTab, findTabByComponentType } from '../../../src/layout/algorithms/find.js'
-import { pane1Id, pane2Id, pane3Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.js'
+import { findFocusedTab, findNode, findNodeById, findPane, findPaneById, findPaneByTabId, findTab, findTabByComponentType } from '../../../src/layout/algorithms/find.ts'
+import { pane1Id, pane2Id, pane3Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.ts'
 
 describe('layout/algorithms/find.ts', () => {
   describe('findNode', () => {

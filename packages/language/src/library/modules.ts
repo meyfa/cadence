@@ -1,9 +1,9 @@
-import type { Module } from '../type-system/base/module.js'
-import { ModuleFacet } from '../type-system/base/module.js'
-import type { Value } from '../type-system/types.js'
-import { effectsModule } from './modules/effects.js'
-import { instrumentsModule } from './modules/instruments.js'
-import { sourcesModule } from './modules/sources.js'
+import type { Module } from '../type-system/base/module.ts'
+import { ModuleFacet } from '../type-system/base/module.ts'
+import type { Value } from '../type-system/types.ts'
+import { effectsModule } from './modules/effects.ts'
+import { instrumentsModule } from './modules/instruments.ts'
+import { sourcesModule } from './modules/sources.ts'
 
 const standardLibrary = Object.freeze(new Map([
   ['sources', sourcesModule],

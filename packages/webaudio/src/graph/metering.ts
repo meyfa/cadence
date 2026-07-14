@@ -1,9 +1,9 @@
 import type { GainMeterNode } from '@meyfa/cadence-audiograph'
 import type { UnsubscribeFn } from '@meyfa/cadence-utility'
-import type { Transport } from '../transport/transport.js'
-import { createGainMeter } from '../worklets/metering/factory.js'
-import type { Assets, MeterCallbacks } from './factory.js'
-import type { Instance } from './instance.js'
+import type { Transport } from '../transport/transport.ts'
+import { createGainMeter } from '../worklets/metering/factory.ts'
+import type { Assets, MeterCallbacks } from './factory.ts'
+import type { Instance } from './instance.ts'
 
 export async function createGainMeterInstance (
   node: GainMeterNode,

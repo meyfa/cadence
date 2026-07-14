@@ -3,12 +3,12 @@ import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortabl
 import { TabGroup, TabList, TabPanels } from '@headlessui/react'
 import type { CSSProperties, FunctionComponent, PropsWithChildren, WheelEvent } from 'react'
 import { useCallback, useRef } from 'react'
-import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms/mutate.js'
-import type { LayoutNodeId, PaneNode, TabId } from '../types.js'
-import type { DockLayoutStyles } from './DockLayoutView.js'
-import type { LayoutNodeViewProps } from './LayoutNodeView.js'
-import { TabContent } from './TabContent.js'
-import { parseTabDropTarget, TabTitle } from './TabTitle.js'
+import { removeTabFromPane, transformNode, updateFocusedTab } from '../algorithms/mutate.ts'
+import type { LayoutNodeId, PaneNode, TabId } from '../types.ts'
+import type { DockLayoutStyles } from './DockLayoutView.ts'
+import type { LayoutNodeViewProps } from './LayoutNodeView.ts'
+import { TabContent } from './TabContent.tsx'
+import { parseTabDropTarget, TabTitle } from './TabTitle.tsx'
 
 const paneNodeDropZones = ['north', 'south', 'east', 'west', 'center'] as const
 type PaneNodeDropZone = typeof paneNodeDropZones[number]

@@ -1,5 +1,5 @@
 import type { Module, ModuleId } from '@meyfa/cadence-editor'
-import { CommandPalette } from './CommandPalette.js'
+import { CommandPalette } from './CommandPalette.tsx'
 
 const moduleId = 'command-palette' as ModuleId
 

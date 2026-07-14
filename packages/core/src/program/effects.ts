@@ -1,5 +1,5 @@
 import type { Numeric, RuntimeNumeric } from '@meyfa/cadence-utility'
-import type { Parameter } from './automations.js'
+import type { Parameter } from './automations.ts'
 
 export type Effect =
   GainEffect |

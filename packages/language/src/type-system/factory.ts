@@ -1,5 +1,5 @@
-import { isFacetAssignableFromFacet, isFacetAssignableFromType, isTypeAssignableFromType } from './assignability.js'
-import type { DataForFacets, Facet, FacetType, Generics, SpecificFacetDataForValue, Type, UnionType, Value, ValueForType } from './types.js'
+import { isFacetAssignableFromFacet, isFacetAssignableFromType, isTypeAssignableFromType } from './assignability.ts'
+import type { DataForFacets, Facet, FacetType, Generics, SpecificFacetDataForValue, Type, UnionType, Value, ValueForType } from './types.ts'
 
 export interface FacetOptions<Data = unknown> {
   readonly format?: () => string

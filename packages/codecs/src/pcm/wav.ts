@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { AudioBufferLike, AudioDescription } from '../common/types.js'
-import type { FloatSampleBits, PCMFormat, PCMSampleBits } from './pcm-io.js'
-import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE } from './pcm-io.js'
+import type { AudioBufferLike, AudioDescription } from '../common/types.ts'
+import type { FloatSampleBits, PCMFormat, PCMSampleBits } from './pcm-io.ts'
+import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE } from './pcm-io.ts'
 
 export type WAVFormat = `pcm${PCMSampleBits}` | `float${FloatSampleBits}`
 

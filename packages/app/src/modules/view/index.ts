@@ -1,10 +1,10 @@
 import type { Command, CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@meyfa/cadence-editor'
 import { useLayoutDispatch, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
-import { defaultLayout } from '../../defaults/default-layout.js'
-import { applyThemeSetting } from '../../theme.js'
-import { useViewSettingsSync } from './persistence.js'
-import { ThemeSettingsCard } from './ThemeSettingsCard.js'
+import { defaultLayout } from '../../defaults/default-layout.ts'
+import { applyThemeSetting } from '../../theme.ts'
+import { useViewSettingsSync } from './persistence.ts'
+import { ThemeSettingsCard } from './ThemeSettingsCard.tsx'
 
 const moduleId = 'view' as ModuleId
 

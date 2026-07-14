@@ -1,6 +1,6 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { getEmptySourceRange } from '@meyfa/cadence-ast'
-import { CompileError } from '../error.js'
+import { CompileError } from '../error.ts'
 
 export interface Bus {
   readonly name: string

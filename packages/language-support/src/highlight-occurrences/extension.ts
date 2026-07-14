@@ -2,8 +2,8 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState, Extension } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import { applySemanticOperation } from '../utilities/operations.js'
-import { findHighlightedOccurrences } from './operation.js'
+import { applySemanticOperation } from '../utilities/operations.ts'
+import { findHighlightedOccurrences } from './operation.ts'
 
 const OCCURRENCE_CLASS = 'cm-cadence-highlight-occurrence'
 

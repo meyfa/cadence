@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
-import type { AudioDescription } from '../../src/common/types.js'
-import { encodeAIFF, estimateAIFFSize } from '../../src/pcm/aiff.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.ts'
+import type { AudioDescription } from '../../src/common/types.ts'
+import { encodeAIFF, estimateAIFFSize } from '../../src/pcm/aiff.ts'
 
 describe('pcm/aiff.ts', () => {
   it('estimates file size correctly', () => {

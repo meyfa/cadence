@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { getHoverInfo } from '../../src/hover/operation.js'
-import { applySemanticOperationWithParser } from '../../src/utilities/operations.js'
-import { getCadenceParser, getRangeAt } from '../helpers.js'
+import { getHoverInfo } from '../../src/hover/operation.ts'
+import { applySemanticOperationWithParser } from '../../src/utilities/operations.ts'
+import { getCadenceParser, getRangeAt } from '../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 

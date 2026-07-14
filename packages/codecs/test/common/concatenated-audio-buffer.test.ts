@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { ConcatenatedAudioBuffer } from '../../src/common/concatenated-audio-buffer.js'
-import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
+import { ConcatenatedAudioBuffer } from '../../src/common/concatenated-audio-buffer.ts'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.ts'
 
 describe('common/concatenated-audio-buffer.ts', () => {
   it('throws when given zero buffers', () => {

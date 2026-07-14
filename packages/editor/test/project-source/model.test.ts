@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createProjectSourceState, getProjectFileContent, setProjectFileContent } from '../../src/project-source/model.js'
+import { createProjectSourceState, getProjectFileContent, setProjectFileContent } from '../../src/project-source/model.ts'
 
 describe('project-source/model.ts', () => {
   it('should create and read project files', () => {

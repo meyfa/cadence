@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { BaseModel, IdentifierId, ScopeId } from '../../src/model/model.js'
-import { findIdentifierAt } from '../../src/model/query.js'
-import { getRangeAt } from '../helpers.js'
+import type { BaseModel, IdentifierId, ScopeId } from '../../src/model/model.ts'
+import { findIdentifierAt } from '../../src/model/query.ts'
+import { getRangeAt } from '../helpers.ts'
 
 describe('analysis/query.ts', () => {
   describe('findIdentifierAt()', () => {

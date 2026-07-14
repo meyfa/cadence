@@ -1,6 +1,6 @@
 /**
- * @import { AudioWorkletGlobalScope, AudioWorkletProcessInputs, AudioWorkletProcessOutputs } from '../types.js'
- * @import { MeterConfiguration } from './messages.js'
+ * @import { AudioWorkletGlobalScope, AudioWorkletProcessInputs, AudioWorkletProcessOutputs } from '../types.ts'
+ * @import { MeterConfiguration } from './messages.ts'
  */
 
 const workletScope = /** @type {AudioWorkletGlobalScope} */ (/** @type {unknown} */ (globalThis))

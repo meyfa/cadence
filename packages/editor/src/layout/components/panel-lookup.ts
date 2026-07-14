@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useModules } from '../../modules/components/ModuleContext.js'
-import type { Module, Panel, PanelId } from '../../modules/types.js'
+import { useModules } from '../../modules/components/ModuleContext.tsx'
+import type { Module, Panel, PanelId } from '../../modules/types.ts'
 
 export function usePanelById (id: PanelId): Panel | undefined {
   const modules = useModules()

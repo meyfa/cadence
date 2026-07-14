@@ -1,10 +1,10 @@
 import assert from 'node:assert'
-import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'
-import type { Function } from '../../../src/type-system/base/function.js'
-import { FunctionFacet } from '../../../src/type-system/base/function.js'
-import { ModuleFacet } from '../../../src/type-system/base/module.js'
-import type { Schema } from '../../../src/type-system/schema.js'
-import type { FacetType, Value } from '../../../src/type-system/types.js'
+import type { GlobalScope } from '../../../src/compiler/generator/scopes.ts'
+import type { Function } from '../../../src/type-system/base/function.ts'
+import { FunctionFacet } from '../../../src/type-system/base/function.ts'
+import { ModuleFacet } from '../../../src/type-system/base/module.ts'
+import type { Schema } from '../../../src/type-system/schema.ts'
+import type { FacetType, Value } from '../../../src/type-system/types.ts'
 
 export function getModuleExport (moduleValue: Value, exportName: string): Value {
   const module = ModuleFacet.get(moduleValue)

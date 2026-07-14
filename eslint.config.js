@@ -238,15 +238,16 @@ export default defineConfig([
         {
           ignorePackages: true,
           pattern: {
-            js: 'always',
+            ts: 'always',
+            tsx: 'always',
             grammar: 'always',
-
-            jsx: 'never',
-            ts: 'never',
-            tsx: 'never'
+            js: 'never',
+            jsx: 'never'
           }
         }
       ],
+
+      'import/no-unresolved': 'error',
 
       // monorepo: Prevent cross-package imports that violate dependency direction
       'import/no-restricted-paths': [

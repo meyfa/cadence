@@ -1,7 +1,7 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@meyfa/cadence-editor'
 import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
-import { SettingsPanel } from './SettingsPanel.js'
+import { SettingsPanel } from './SettingsPanel.tsx'
 
 const moduleId = 'settings' as ModuleId
 export const settingsPanelId = `${moduleId}.settings` as PanelId

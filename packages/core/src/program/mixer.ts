@@ -1,7 +1,7 @@
 import type { Brand } from '@meyfa/cadence-utility'
-import type { Parameter } from './automations.js'
-import type { Effect } from './effects.js'
-import type { InstrumentId } from './instruments.js'
+import type { Parameter } from './automations.ts'
+import type { Effect } from './effects.ts'
+import type { InstrumentId } from './instruments.ts'
 
 export interface Mixer {
   readonly buses: readonly Bus[]

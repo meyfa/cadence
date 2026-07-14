@@ -1,8 +1,8 @@
 import type { ast } from '@meyfa/cadence-ast'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
-import { NumberFacet } from '../../type-system/base/number.js'
-import { Numbers } from '../../type-system/helpers.js'
-import type { FacetType, Value } from '../../type-system/types.js'
+import { NumberFacet } from '../../type-system/base/number.ts'
+import { Numbers } from '../../type-system/helpers.ts'
+import type { FacetType, Value } from '../../type-system/types.ts'
 
 export interface UnaryOperation {
   readonly operator: ast.UnaryOperator

@@ -1,9 +1,9 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLatestRef } from '../hooks/latest-ref.js'
-import { usePersistenceContext } from './components/PersistenceContext.js'
-import type { PersistenceDomain, PersistenceEvent } from './types.js'
+import { useLatestRef } from '../hooks/latest-ref.ts'
+import { usePersistenceContext } from './components/PersistenceContext.tsx'
+import type { PersistenceDomain, PersistenceEvent } from './types.ts'
 
 const STORAGE_DEBOUNCE = 0.25 as Numeric<'s'>
 

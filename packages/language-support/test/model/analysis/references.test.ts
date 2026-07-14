@@ -1,10 +1,10 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { computeBaseModel } from '../../../src/model/analysis/base.js'
-import { computeReferenceModel } from '../../../src/model/analysis/references.js'
-import type { BaseModel, ReferenceModel } from '../../../src/model/model.js'
-import { textFromString } from '../../../src/utilities/text.js'
-import { getCadenceParser, getRangeAt } from '../../helpers.js'
+import { computeBaseModel } from '../../../src/model/analysis/base.ts'
+import { computeReferenceModel } from '../../../src/model/analysis/references.ts'
+import type { BaseModel, ReferenceModel } from '../../../src/model/model.ts'
+import { textFromString } from '../../../src/utilities/text.ts'
+import { getCadenceParser, getRangeAt } from '../../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 

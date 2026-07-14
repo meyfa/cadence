@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { resolveInScope } from '../../src/compiler/resolution.js'
+import { resolveInScope } from '../../src/compiler/resolution.ts'
 
 describe('compiler/resolution.ts', () => {
   describe('resolveInScope()', () => {

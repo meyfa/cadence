@@ -1,2 +1,2 @@
-export type * from './types.js'
-export * from './components/Flowchart.js'
+export type * from './types.ts'
+export * from './components/Flowchart.tsx'

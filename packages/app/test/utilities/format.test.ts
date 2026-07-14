@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { formatBytes, formatDuration } from '../../src/utilities/format.js'
+import { formatBytes, formatDuration } from '../../src/utilities/format.ts'
 
 describe('utilities/format.ts', () => {
   describe('formatDuration', () => {

@@ -1,6 +1,6 @@
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
-import type { Value } from '../type-system/types.js'
-import { Numbers } from '../type-system/helpers.js'
+import type { Value } from '../type-system/types.ts'
+import { Numbers } from '../type-system/helpers.ts'
 
 interface Constants {
   readonly beatsPerBar: number

@@ -1,12 +1,12 @@
 import type { ast } from '@meyfa/cadence-ast'
 import { concatPatterns, multiplyPattern } from '@meyfa/cadence-core'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
-import { NumberFacet } from '../../type-system/base/number.js'
-import { StringFacet } from '../../type-system/base/string.js'
-import { PatternFacet } from '../../type-system/domain/pattern.js'
-import { Numbers } from '../../type-system/helpers.js'
-import type { FacetType, Value } from '../../type-system/types.js'
-import { fail } from '../assert.js'
+import { NumberFacet } from '../../type-system/base/number.ts'
+import { StringFacet } from '../../type-system/base/string.ts'
+import { PatternFacet } from '../../type-system/domain/pattern.ts'
+import { Numbers } from '../../type-system/helpers.ts'
+import type { FacetType, Value } from '../../type-system/types.ts'
+import { fail } from '../assert.ts'
 
 export interface BinaryOperation {
   readonly operator: ast.BinaryOperator

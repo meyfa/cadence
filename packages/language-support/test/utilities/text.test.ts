@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { textFromString, toSourceRange } from '../../src/utilities/text.js'
+import { textFromString, toSourceRange } from '../../src/utilities/text.ts'
 
 describe('utilities/text.ts', () => {
   describe('textFromString()', () => {

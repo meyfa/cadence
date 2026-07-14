@@ -2,11 +2,11 @@ import type { AudioGraph, Node } from '@meyfa/cadence-audiograph'
 import { beatsToSeconds, dbToGain } from '@meyfa/cadence-core'
 import type { Numeric, Observable } from '@meyfa/cadence-utility'
 import { DisposeStack, MutableObservable } from '@meyfa/cadence-utility'
-import type { AudioFetcher } from '../assets/fetcher.js'
-import type { MeterCallbacks } from '../graph/factory.js'
-import { createWebAudioGraph } from '../graph/graph.js'
-import { createOnlineTransport } from '../transport/transport.js'
-import type { BeatRange } from './types.js'
+import type { AudioFetcher } from '../assets/fetcher.ts'
+import type { MeterCallbacks } from '../graph/factory.ts'
+import { createWebAudioGraph } from '../graph/graph.ts'
+import { createOnlineTransport } from '../transport/transport.ts'
+import type { BeatRange } from './types.ts'
 
 export interface AudioSession {
   readonly ended: Observable<boolean>

@@ -1,8 +1,8 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
-import { createLeadingSilenceTransform } from '../../src/transforms/leading-silence.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.ts'
+import { createLeadingSilenceTransform } from '../../src/transforms/leading-silence.ts'
 
 describe('transforms/leading-silence.ts', () => {
   it('transforms audio by adding leading silence', () => {

@@ -8,7 +8,7 @@ import type { Extension, SelectionRange, Text } from '@codemirror/state'
 import { Compartment, EditorState } from '@codemirror/state'
 import type { ViewUpdate } from '@codemirror/view'
 import { drawSelection, dropCursor, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection } from '@codemirror/view'
-import type { EditorLocation } from './types.js'
+import type { EditorLocation } from './types.ts'
 
 // Adapted from:
 // https://github.com/codemirror/basic-setup/blob/b43b3ae8dd8986d1bff587113ea32ab365246217/src/codemirror.ts

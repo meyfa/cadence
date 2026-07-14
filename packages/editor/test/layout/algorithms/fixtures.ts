@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNodeId, TabId } from '../../../src/layout/types.js'
+import type { DockLayout, LayoutNodeId, TabId } from '../../../src/layout/types.ts'
 
 export const rootId = 'root' as LayoutNodeId
 export const pane1Id = 'pane1' as LayoutNodeId

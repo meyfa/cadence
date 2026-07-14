@@ -2,12 +2,12 @@ import type { InstrumentNode, SourceNode } from '@meyfa/cadence-audiograph'
 import type { NoteEvent } from '@meyfa/cadence-core'
 import { beatsToSeconds } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { Transport } from '../../transport/transport.js'
-import { applyAutomationPoints } from '../automation.js'
-import type { Assets } from '../factory.js'
-import type { Instance } from '../instance.js'
-import { createOscillatorSource } from './oscillator.js'
-import { createSampleSource } from './sample.js'
+import type { Transport } from '../../transport/transport.ts'
+import { applyAutomationPoints } from '../automation.ts'
+import type { Assets } from '../factory.ts'
+import type { Instance } from '../instance.ts'
+import { createOscillatorSource } from './oscillator.ts'
+import { createSampleSource } from './sample.ts'
 
 export function createInstrumentInstance (
   node: InstrumentNode,

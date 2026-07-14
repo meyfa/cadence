@@ -1,6 +1,6 @@
 import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
-import { makeFacet } from '../factory.js'
-import type { Facet, FacetType } from '../types.js'
+import { makeFacet } from '../factory.ts'
+import type { Facet, FacetType } from '../types.ts'
 
 export type CurveDuration = RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
 

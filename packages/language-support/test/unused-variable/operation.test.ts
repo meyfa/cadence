@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { findUnusedVariables } from '../../src/unused-variable/operation.js'
-import { applySemanticOperationWithParser } from '../../src/utilities/operations.js'
-import { getCadenceParser, getRangeAt } from '../helpers.js'
+import { findUnusedVariables } from '../../src/unused-variable/operation.ts'
+import { applySemanticOperationWithParser } from '../../src/utilities/operations.ts'
+import { getCadenceParser, getRangeAt } from '../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 

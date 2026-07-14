@@ -2,7 +2,7 @@ import type { HeaderInsert } from '@meyfa/cadence-editor'
 import { useModules } from '@meyfa/cadence-editor'
 import type { FunctionComponent, ReactNode } from 'react'
 import { useMemo } from 'react'
-import { MainMenu } from '../commands/MainMenu.js'
+import { MainMenu } from '../commands/MainMenu.tsx'
 
 export const Header: FunctionComponent<{
   readonly logo?: ReactNode

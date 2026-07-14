@@ -1,5 +1,5 @@
-import type { Effects } from '../../type-system/base/function.js'
-import type { FacetType } from '../../type-system/types.js'
+import type { Effects } from '../../type-system/base/function.ts'
+import type { FacetType } from '../../type-system/types.ts'
 
 // scope types
 

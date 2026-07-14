@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { analyzeTree } from '../../src/model/analysis.js'
-import { textFromString } from '../../src/utilities/text.js'
-import { getCadenceParser } from '../helpers.js'
+import { analyzeTree } from '../../src/model/analysis.ts'
+import { textFromString } from '../../src/utilities/text.ts'
+import { getCadenceParser } from '../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 

@@ -1,5 +1,5 @@
 import type { StepValue } from '@meyfa/cadence-core'
-import type { SourceRange } from './range.js'
+import type { SourceRange } from './range.ts'
 
 export interface ASTNode {
   readonly type: string

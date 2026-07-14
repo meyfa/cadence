@@ -1,7 +1,7 @@
 import type { SampleNode } from '@meyfa/cadence-audiograph'
-import type { Transport } from '../../transport/transport.js'
-import type { Assets } from '../factory.js'
-import type { Instance } from '../instance.js'
+import type { Transport } from '../../transport/transport.ts'
+import type { Assets } from '../factory.ts'
+import type { Instance } from '../instance.ts'
 
 export function createSampleInstance (node: SampleNode, transport: Transport, assets: Assets): Instance {
   const audioNode = createSampleSource(node, transport, assets)

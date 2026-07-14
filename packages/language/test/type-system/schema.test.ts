@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { NumberFacet } from '../../src/type-system/base/number.js'
-import { StringFacet } from '../../src/type-system/base/string.js'
-import { makeSchema } from '../../src/type-system/schema.js'
+import { NumberFacet } from '../../src/type-system/base/number.ts'
+import { StringFacet } from '../../src/type-system/base/string.ts'
+import { makeSchema } from '../../src/type-system/schema.ts'
 
 describe('type-system/schema.ts', () => {
   describe('makeSchema()', () => {

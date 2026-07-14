@@ -1,4 +1,4 @@
-import type { StorageBackend } from '../types.js'
+import type { StorageBackend } from '../types.ts'
 
 export interface LocalStorageBackendOptions {
   readonly prefix: string

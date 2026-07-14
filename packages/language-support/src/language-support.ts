@@ -1,6 +1,6 @@
 import { LanguageSupport, LRLanguage } from '@codemirror/language'
 import { parser } from './cadence.grammar'
-import { cadenceParserConfig } from './parser-metadata.js'
+import { cadenceParserConfig } from './parser-metadata.ts'
 
 const parserWithMetadata = parser.configure(cadenceParserConfig)
 

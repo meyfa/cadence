@@ -1,5 +1,5 @@
 import { randomId } from '@meyfa/cadence-utility'
-import type { PersistenceDomain, PersistenceEvent, StorageBackend, StoredValue } from './types.js'
+import type { PersistenceDomain, PersistenceEvent, StorageBackend, StoredValue } from './types.ts'
 
 export class PersistenceEngine {
   private readonly backend: StorageBackend

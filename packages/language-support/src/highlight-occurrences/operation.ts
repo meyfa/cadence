@@ -1,6 +1,6 @@
-import { findIdentifierAt } from '../model/query.js'
-import type { SemanticOperation } from '../utilities/operations.js'
-import type { SourceRange } from '../utilities/range.js'
+import { findIdentifierAt } from '../model/query.ts'
+import type { SemanticOperation } from '../utilities/operations.ts'
+import type { SourceRange } from '../utilities/range.ts'
 
 export const findHighlightedOccurrences: SemanticOperation<[pos: number], readonly SourceRange[]> = (model, pos) => {
   const identifier = findIdentifierAt(model, pos)

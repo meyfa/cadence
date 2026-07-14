@@ -1,7 +1,7 @@
 import type { FunctionComponent } from 'react'
-import type { LayoutEdge } from '../layout.js'
-import { getMarkerKey } from '../markers.js'
-import type { FlowEdgeStyle } from '../types.js'
+import type { LayoutEdge } from '../layout.ts'
+import { getMarkerKey } from '../markers.ts'
+import type { FlowEdgeStyle } from '../types.ts'
 
 export const FlowchartEdge: FunctionComponent<{
   edge: LayoutEdge

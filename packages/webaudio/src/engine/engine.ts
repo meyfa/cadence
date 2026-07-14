@@ -1,13 +1,13 @@
 import type { AudioGraph, EntityKey, Node } from '@meyfa/cadence-audiograph'
 import type { Numeric, Observable, Observer, UnsubscribeFn } from '@meyfa/cadence-utility'
 import { DisposeStack, MutableObservable } from '@meyfa/cadence-utility'
-import type { CacheLimits } from '../assets/fetcher.js'
-import { createAudioFetcher } from '../assets/fetcher.js'
-import type { MeterCallbacks } from '../graph/factory.js'
-import type { GainMeasurement } from './engine.js'
-import type { AudioSession } from './session.js'
-import { createAudioSession } from './session.js'
-import type { BeatRange } from './types.js'
+import type { CacheLimits } from '../assets/fetcher.ts'
+import { createAudioFetcher } from '../assets/fetcher.ts'
+import type { MeterCallbacks } from '../graph/factory.ts'
+import type { GainMeasurement } from './engine.ts'
+import type { AudioSession } from './session.ts'
+import { createAudioSession } from './session.ts'
+import type { BeatRange } from './types.ts'
 
 export interface AudioEngineOptions {
   readonly outputGain: Numeric<'db'>
@@ -31,7 +31,7 @@ export interface AudioEngine {
   }
 }
 
-export type { GainMeasurement } from '../worklets/metering/messages.js'
+export type { GainMeasurement } from '../worklets/metering/messages.ts'
 
 export function createAudioEngine (options: AudioEngineOptions): AudioEngine {
   const outputGain = new MutableObservable(options.outputGain)

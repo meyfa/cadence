@@ -1,5 +1,5 @@
 import type { Bus } from '@meyfa/cadence-core'
-import { makeFacet } from '../factory.js'
+import { makeFacet } from '../factory.ts'
 
 const FACET_NAME = 'bus'
 

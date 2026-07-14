@@ -1,7 +1,7 @@
-export * from './assets/cache.js'
-export * from './assets/fetcher.js'
+export * from './assets/cache.ts'
+export * from './assets/fetcher.ts'
 
-export type * from './engine/types.js'
-export * from './engine/engine.js'
+export type * from './engine/types.ts'
+export * from './engine/engine.ts'
 
-export * from './renderer/renderer.js'
+export * from './renderer/renderer.ts'

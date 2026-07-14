@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createMemoryStorageBackend } from '../../src/persistence/backends/memory.js'
-import { PersistenceEngine } from '../../src/persistence/engine.js'
-import type { PersistenceDomain } from '../../src/persistence/types.js'
+import { createMemoryStorageBackend } from '../../src/persistence/backends/memory.ts'
+import { PersistenceEngine } from '../../src/persistence/engine.ts'
+import type { PersistenceDomain } from '../../src/persistence/types.ts'
 
 describe('persistence/engine.ts', () => {
   const domain: PersistenceDomain<string> = {

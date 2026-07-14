@@ -3,8 +3,8 @@ import { usePersistentBinding } from '@meyfa/cadence-editor'
 import { useRef } from 'react'
 import type { Struct } from 'superstruct'
 import { enums, type } from 'superstruct'
-import type { ThemeSetting } from '../../theme.js'
-import { applyThemeSetting, useThemeSetting } from '../../theme.js'
+import type { ThemeSetting } from '../../theme.ts'
+import { applyThemeSetting, useThemeSetting } from '../../theme.ts'
 
 export const defaultThemeSetting: ThemeSetting = 'dark'
 

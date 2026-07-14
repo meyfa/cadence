@@ -2,8 +2,8 @@ import { randomId } from '@meyfa/cadence-utility'
 import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { NotificationComponentProps, NotificationId, NotificationOptions, NotificationService } from '../types.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { NotificationComponentProps, NotificationId, NotificationOptions, NotificationService } from '../types.ts'
 
 interface NotificationEntry<P extends NotificationComponentProps = NotificationComponentProps> {
   readonly id: NotificationId

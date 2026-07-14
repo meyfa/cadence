@@ -1,10 +1,10 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../../src/compiler/checker/checker.js'
-import type { CompileError } from '../../../src/compiler/error.js'
-import { lex } from '../../../src/lexer/lexer.js'
-import { parse } from '../../../src/parser/parser.js'
-import { assertResultComplete } from '../../test-utils.js'
+import { check } from '../../../src/compiler/checker/checker.ts'
+import type { CompileError } from '../../../src/compiler/error.ts'
+import { lex } from '../../../src/lexer/lexer.ts'
+import { parse } from '../../../src/parser/parser.ts'
+import { assertResultComplete } from '../../test-utils.ts'
 
 function checkSource (source: string): readonly CompileError[] {
   const tokens = lex(source)

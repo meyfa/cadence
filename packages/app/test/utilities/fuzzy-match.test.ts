@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { fuzzyMatch } from '../../src/utilities/fuzzy-match.js'
+import { fuzzyMatch } from '../../src/utilities/fuzzy-match.ts'
 
 describe('utilities/fuzzy-match.ts', () => {
   describe('fuzzyMatch', () => {

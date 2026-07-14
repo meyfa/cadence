@@ -1,5 +1,5 @@
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { NoteEvent, Pattern, Step } from './types.js'
+import type { NoteEvent, Pattern, Step } from './types.ts'
 
 const zeroBeats = 0 as Numeric<'beats'>
 const defaultVelocity = 1 as Numeric<undefined>

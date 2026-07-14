@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { findPaneById, findPaneByTabId, findTabByComponentType } from '../../../src/layout/algorithms/find.js'
-import { activateTabInPane, activateTabOfType, createTab, moveTabBetweenPanes, moveTabIntoPane, moveTabToPaneEnd, moveTabToSplit, removeTabFromPane, transformNode, updateFocusedTab } from '../../../src/layout/algorithms/mutate.js'
-import type { DockLayout, LayoutNodeId, PaneNode, SplitNode } from '../../../src/layout/types.js'
-import { pane1Id, pane2Id, pane3Id, tab1Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.js'
+import { findPaneById, findPaneByTabId, findTabByComponentType } from '../../../src/layout/algorithms/find.ts'
+import { activateTabInPane, activateTabOfType, createTab, moveTabBetweenPanes, moveTabIntoPane, moveTabToPaneEnd, moveTabToSplit, removeTabFromPane, transformNode, updateFocusedTab } from '../../../src/layout/algorithms/mutate.ts'
+import type { DockLayout, LayoutNodeId, PaneNode, SplitNode } from '../../../src/layout/types.ts'
+import { pane1Id, pane2Id, pane3Id, tab1Id, tab2Id, tab3Id, tab4Id, testLayout } from './fixtures.ts'
 
 describe('layout/algorithms/mutate.ts', () => {
   function getPane (layout: DockLayout, paneId: LayoutNodeId): PaneNode {

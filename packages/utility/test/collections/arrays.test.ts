@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { insertAt, insertSorted, move, removeAt } from '../../src/collections/arrays.js'
+import { insertAt, insertSorted, move, removeAt } from '../../src/collections/arrays.ts'
 
 describe('collections/arrays.ts', () => {
   describe('move', () => {

@@ -2,8 +2,8 @@ import type { CommandId } from '@meyfa/cadence-editor'
 import { useCommandRegistry } from '@meyfa/cadence-editor'
 import { RestartAltOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
-import { Button } from '../../../components/button/Button.js'
-import { Card } from '../../../components/card/Card.js'
+import { Button } from '../../../components/button/Button.tsx'
+import { Card } from '../../../components/card/Card.tsx'
 
 export const ResetProjectSettingsCard: FunctionComponent = () => {
   const { getCommandById } = useCommandRegistry()

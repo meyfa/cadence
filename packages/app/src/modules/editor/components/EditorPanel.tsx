@@ -9,12 +9,12 @@ import type { LanguageDiagnostic } from '@meyfa/cadence-language-support'
 import { applySemanticOperation, cadenceLanguageSupport, findUnusedVariables, goToDefinitionExtension, highlightOccurrencesExtension, hoverInfoExtension } from '@meyfa/cadence-language-support'
 import type { FunctionComponent } from 'react'
 import { useCallback, useMemo, useState } from 'react'
-import { useCompilationState } from '../../../compilation/CompilationContext.js'
-import { getCspNonce } from '../../../csp.js'
-import { useEffectiveTheme } from '../../../theme.js'
-import { getEditorPanelProps } from '../panel-props.js'
-import { useEditorDispatch, useEditorRuntime } from '../provider.js'
-import { cadenceDarkTheme, cadenceLightTheme } from '../theme.js'
+import { useCompilationState } from '../../../compilation/CompilationContext.tsx'
+import { getCspNonce } from '../../../csp.ts'
+import { useEffectiveTheme } from '../../../theme.ts'
+import { getEditorPanelProps } from '../panel-props.ts'
+import { useEditorDispatch, useEditorRuntime } from '../provider.tsx'
+import { cadenceDarkTheme, cadenceLightTheme } from '../theme.ts'
 
 const indent = '  ' // 2 spaces
 const extensions = [

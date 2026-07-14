@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/checker/scopes.js'
-import { NumberFacet } from '../../../src/type-system/base/number.js'
+import { createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/checker/scopes.ts'
+import { NumberFacet } from '../../../src/type-system/base/number.ts'
 
 describe('compiler/checker/scopes.ts', () => {
   describe('createGlobalScope()', () => {

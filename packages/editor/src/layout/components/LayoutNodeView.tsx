@@ -1,11 +1,11 @@
 import type { ComponentType, FunctionComponent } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
-import type { LayoutNode, TabId } from '../types.js'
-import type { DockLayoutStyles } from './DockLayoutView.js'
-import type { LayoutDispatch } from './LayoutContext.js'
-import { PaneNodeView } from './PaneNodeView.js'
-import { SplitNodeView } from './SplitNodeView.js'
-import type { TabTitleProps } from './TabTitle.js'
+import type { LayoutNode, TabId } from '../types.ts'
+import type { DockLayoutStyles } from './DockLayoutView.ts'
+import type { LayoutDispatch } from './LayoutContext.ts'
+import { PaneNodeView } from './PaneNodeView.tsx'
+import { SplitNodeView } from './SplitNodeView.tsx'
+import type { TabTitleProps } from './TabTitle.ts'
 
 export interface LayoutNodeViewProps<TNode extends LayoutNode = LayoutNode> {
   readonly TabTitleComponent: ComponentType<TabTitleProps>

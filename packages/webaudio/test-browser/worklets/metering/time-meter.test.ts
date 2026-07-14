@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createTimeMeter } from '../../../src/worklets/metering/factory.js'
-import type { TimeMeasurement } from '../../../src/worklets/metering/messages.js'
+import { createTimeMeter } from '../../../src/worklets/metering/factory.ts'
+import type { TimeMeasurement } from '../../../src/worklets/metering/messages.ts'
 
 describe('worklets/metering/time-meter.worklet.js', () => {
   it('reports time at render-quantum boundaries once the interval has elapsed', async () => {

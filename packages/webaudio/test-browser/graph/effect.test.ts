@@ -1,8 +1,8 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it } from 'vitest'
-import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
-import type { Transport } from '../../src/transport/transport.js'
-import { average, expectSamplesClose, fillSignal } from '../helpers.js'
+import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.ts'
+import type { Transport } from '../../src/transport/transport.ts'
+import { average, expectSamplesClose, fillSignal } from '../helpers.ts'
 
 const sampleRate = 48_000
 const length = 1024

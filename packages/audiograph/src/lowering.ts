@@ -1,13 +1,13 @@
 import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@meyfa/cadence-core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.js'
-import type { AudioGraphBuilder } from './builder.js'
-import { createAudioGraphBuilder } from './builder.js'
-import type { EntityKey } from './entities.js'
-import { createEntityKey } from './entities.js'
-import type { AudioGraph, NodeId } from './graph.js'
-import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from './nodes.js'
+import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.ts'
+import type { AudioGraphBuilder } from './builder.ts'
+import { createAudioGraphBuilder } from './builder.ts'
+import type { EntityKey } from './entities.ts'
+import { createEntityKey } from './entities.ts'
+import type { AudioGraph, NodeId } from './graph.ts'
+import type { BiquadNode, DelayNode, GainMeterNode, GainNode, IdentityNode, InstrumentNode, Node, PanNode, ReverbNode, SourceNode, WaveShaperNode, WidthNode } from './nodes.ts'
 
 type Builder = AudioGraphBuilder<Node>
 

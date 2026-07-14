@@ -1,5 +1,5 @@
-import { makeFacet } from '../factory.js'
-import type { FacetType, ValueForType } from '../types.js'
+import { makeFacet } from '../factory.ts'
+import type { FacetType, ValueForType } from '../types.ts'
 
 type RecordGenerics = Readonly<Partial<Record<string, FacetType>>>
 

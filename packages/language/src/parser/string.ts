@@ -1,4 +1,4 @@
-import { lex } from '../lexer/lexer.js'
+import { lex } from '../lexer/lexer.ts'
 
 export function parseStringEscape (text: string): string | undefined {
   if (text.length !== 2 || !text.startsWith('\\')) {

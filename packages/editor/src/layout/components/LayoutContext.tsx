@@ -1,7 +1,7 @@
 import type { Dispatch, FunctionComponent, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, useReducer } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { DockLayout } from '../types.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { DockLayout } from '../types.ts'
 
 const initialLayoutState: DockLayout = {
   main: undefined

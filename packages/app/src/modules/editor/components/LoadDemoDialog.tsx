@@ -2,11 +2,11 @@ import type { DialogComponentProps, PanelId } from '@meyfa/cadence-editor'
 import { activateTabOfType, setProjectFileContent, useLayoutDispatch, useProjectSourceDispatch } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { useCallback } from 'react'
-import { ConfirmationDialog } from '../../../components/dialog/ConfirmationDialog.js'
-import { demoCode } from '../../../defaults/demo-code.js'
-import { TRACK_FILE_PATH } from '../../../persistence/constants.js'
-import type { EditorPanelProps } from '../panel-props.js'
-import { useEditorDispatch } from '../provider.js'
+import { ConfirmationDialog } from '../../../components/dialog/ConfirmationDialog.tsx'
+import { demoCode } from '../../../defaults/demo-code.ts'
+import { TRACK_FILE_PATH } from '../../../persistence/constants.ts'
+import type { EditorPanelProps } from '../panel-props.ts'
+import { useEditorDispatch } from '../provider.tsx'
 
 export const LoadDemoDialog: FunctionComponent<DialogComponentProps & {
   editorPanelId: PanelId

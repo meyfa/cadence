@@ -1,8 +1,8 @@
 import type { Tree } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
-import { analyzeSourceWithParser, analyzeTree } from '../model/analysis.js'
-import type { Model } from '../model/model.js'
-import type { TextLike } from './text.js'
+import { analyzeSourceWithParser, analyzeTree } from '../model/analysis.ts'
+import type { Model } from '../model/model.ts'
+import type { TextLike } from './text.ts'
 
 export type SemanticOperation<Args extends readonly unknown[], Result> =
   (model: Model, ...args: Args) => Result

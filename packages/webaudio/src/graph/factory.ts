@@ -1,12 +1,12 @@
 import type { Node } from '@meyfa/cadence-audiograph'
 import type { AssetId } from '@meyfa/cadence-core'
-import type { Transport } from '../transport/transport.js'
-import type { GainMeasurement } from '../worklets/metering/messages.js'
-import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance, createWaveShaperInstance, createWidthInstance } from './effect.js'
-import { createInstrumentInstance } from './instruments/instrument.js'
-import { createOscillatorInstance } from './instruments/oscillator.js'
-import { createSampleInstance } from './instruments/sample.js'
-import { createGainMeterInstance } from './metering.js'
+import type { Transport } from '../transport/transport.ts'
+import type { GainMeasurement } from '../worklets/metering/messages.ts'
+import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance, createWaveShaperInstance, createWidthInstance } from './effect.ts'
+import { createInstrumentInstance } from './instruments/instrument.ts'
+import { createOscillatorInstance } from './instruments/oscillator.ts'
+import { createSampleInstance } from './instruments/sample.ts'
+import { createGainMeterInstance } from './metering.ts'
 
 const factories = Object.freeze({
   identity: createIdentityInstance,

@@ -1,9 +1,9 @@
 import { parseStringLiteral } from '@meyfa/cadence-language'
 import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
-import type { SourceRange } from '../../utilities/range.js'
-import type { TextLike } from '../../utilities/text.js'
-import { toSourceRange } from '../../utilities/text.js'
-import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId, ScopeKind } from '../model.js'
+import type { SourceRange } from '../../utilities/range.ts'
+import type { TextLike } from '../../utilities/text.ts'
+import { toSourceRange } from '../../utilities/text.ts'
+import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId, ScopeKind } from '../model.ts'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const rootRange = toSourceRange(document, 0, document.length)

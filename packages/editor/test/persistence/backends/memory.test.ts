@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createMemoryStorageBackend } from '../../../src/persistence/backends/memory.js'
+import { createMemoryStorageBackend } from '../../../src/persistence/backends/memory.ts'
 
 describe('persistence/backends/memory.ts', () => {
   it('should return undefined for keys that are not present', async () => {

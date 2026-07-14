@@ -1,7 +1,7 @@
 import type { DependencyList, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { ServiceId } from '../types.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { ServiceId } from '../types.ts'
 
 type Unregister = () => void
 

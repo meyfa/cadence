@@ -1,4 +1,4 @@
-import type { CustomComparable, Facet, GenericValue, Type, UnionType } from './types.js'
+import type { CustomComparable, Facet, GenericValue, Type, UnionType } from './types.ts'
 
 const isGenericType = (value: GenericValue): value is Type => {
   return typeof value === 'object' && ('facets' in value || 'members' in value)

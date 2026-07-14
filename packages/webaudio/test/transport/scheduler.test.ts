@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createImmediateScheduler, createRealtimeScheduler } from '../../src/transport/scheduler.js'
+import { createImmediateScheduler, createRealtimeScheduler } from '../../src/transport/scheduler.ts'
 
 type SetInterval = typeof globalThis.setInterval
 type ClearInterval = typeof globalThis.clearInterval

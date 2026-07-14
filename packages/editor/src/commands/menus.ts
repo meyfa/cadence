@@ -1,8 +1,8 @@
 import type { Brand } from '@meyfa/cadence-utility'
 import { useMemo } from 'react'
-import { useModules } from '../modules/components/ModuleContext.js'
-import type { CommandId } from './commands.js'
-import { useMenuSpecs } from './components/MenuContext.js'
+import { useModules } from '../modules/components/ModuleContext.tsx'
+import type { CommandId } from './commands.ts'
+import { useMenuSpecs } from './components/MenuContext.tsx'
 
 export type MenuId = Brand<string, 'editor.MenuId'>
 

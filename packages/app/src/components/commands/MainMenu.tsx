@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useState } from 'react'
-import { ShortcutKeys } from './ShortcutKeys.js'
+import { ShortcutKeys } from './ShortcutKeys.tsx'
 
 export const MainMenu: FunctionComponent = () => {
   const appMenus = useAppMenus()

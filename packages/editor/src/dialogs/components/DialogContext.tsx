@@ -1,8 +1,8 @@
 import { randomId } from '@meyfa/cadence-utility'
 import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useMemo, useState } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { DialogComponentProps, DialogId, DialogService } from '../types.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { DialogComponentProps, DialogId, DialogService } from '../types.ts'
 
 interface DialogEntry<P extends DialogComponentProps = DialogComponentProps> {
   readonly id: DialogId

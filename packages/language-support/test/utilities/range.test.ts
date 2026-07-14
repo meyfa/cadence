@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { sameRange } from '../../src/utilities/range.js'
+import { sameRange } from '../../src/utilities/range.ts'
 
 describe('utilities/range.ts', () => {
   describe('sameRange()', () => {

@@ -4,8 +4,8 @@ import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent, ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ShortcutKeys } from '../../components/commands/ShortcutKeys.js'
-import { fuzzyMatch } from '../../utilities/fuzzy-match.js'
+import { ShortcutKeys } from '../../components/commands/ShortcutKeys.tsx'
+import { fuzzyMatch } from '../../utilities/fuzzy-match.ts'
 
 export const CommandPalette: FunctionComponent = () => {
   const { commands } = useCommandRegistry()

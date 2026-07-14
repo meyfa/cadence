@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { ModuleFacet } from '../../src/type-system/base/module.js'
-import { RecordFacet } from '../../src/type-system/base/record.js'
-import { StringFacet } from '../../src/type-system/base/string.js'
-import { Modules } from '../../src/type-system/helpers.js'
+import { ModuleFacet } from '../../src/type-system/base/module.ts'
+import { RecordFacet } from '../../src/type-system/base/record.ts'
+import { StringFacet } from '../../src/type-system/base/string.ts'
+import { Modules } from '../../src/type-system/helpers.ts'
 
 describe('type-system/helpers.ts', () => {
   describe('Modules', () => {

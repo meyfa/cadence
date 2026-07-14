@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { computeLayout } from '../src/layout.js'
-import type { FlowEdge, FlowEdgeId, FlowNode, FlowNodeId } from '../src/types.js'
+import { computeLayout } from '../src/layout.ts'
+import type { FlowEdge, FlowEdgeId, FlowNode, FlowNodeId } from '../src/types.ts'
 
 describe('layout.ts', () => {
   it('should compute layout for an empty graph', () => {

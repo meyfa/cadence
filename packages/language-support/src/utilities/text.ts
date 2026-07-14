@@ -1,4 +1,4 @@
-import type { SourceRange } from './range.js'
+import type { SourceRange } from './range.ts'
 
 export interface TextLike {
   readonly length: number
