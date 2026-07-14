@@ -1,10 +1,10 @@
 import type { DependencyList, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { useGlobalKeydown } from '../../hooks/global-events.js'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { KeyboardShortcut } from '../../input/keyboard-shortcuts.js'
-import { convertCodeToKey, hasModifierKey, isFunctionKey, normalizeKeyboardShortcut, serializeKeyboardShortcut } from '../../input/keyboard-shortcuts.js'
-import type { Command, CommandId, CommandRegistry, UnregisterCommand } from '../commands.js'
+import { useGlobalKeydown } from '../../hooks/global-events.ts'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { KeyboardShortcut } from '../../input/keyboard-shortcuts.ts'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, normalizeKeyboardShortcut, serializeKeyboardShortcut } from '../../input/keyboard-shortcuts.ts'
+import type { Command, CommandId, CommandRegistry, UnregisterCommand } from '../commands.ts'
 
 const CommandRegistryContext = createContext<CommandRegistry | undefined>(undefined)
 

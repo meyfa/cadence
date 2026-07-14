@@ -1,8 +1,8 @@
 import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WaveShaperNode, WidthNode } from '@meyfa/cadence-audiograph'
-import type { Transport } from '../transport/transport.js'
-import { automate } from './automation.js'
-import type { Instance } from './instance.js'
-import { generateReverbImpulseResponse } from './noise.js'
+import type { Transport } from '../transport/transport.ts'
+import { automate } from './automation.ts'
+import type { Instance } from './instance.ts'
+import { generateReverbImpulseResponse } from './noise.ts'
 
 export function createIdentityInstance (node: IdentityNode, transport: Transport): Instance {
   return toInstance(transport.ctx.createGain())

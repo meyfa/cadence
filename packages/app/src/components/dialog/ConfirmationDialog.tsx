@@ -1,6 +1,6 @@
 import type { FunctionComponent, PropsWithChildren } from 'react'
-import { Button } from '../button/Button.js'
-import { BaseDialog } from './BaseDialog.js'
+import { Button } from '../button/Button.tsx'
+import { BaseDialog } from './BaseDialog.tsx'
 
 export const ConfirmationDialog: FunctionComponent<PropsWithChildren<{
   open: boolean

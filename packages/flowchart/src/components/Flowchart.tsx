@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { computeLayout } from '../layout.js'
-import { getMarkerKey, getMarkerPath } from '../markers.js'
-import { getEdgeStyle } from '../style.js'
-import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeComponent, FlowNodeId, Marker } from '../types.js'
-import { FlowchartEdge } from './FlowchartEdge.js'
+import { computeLayout } from '../layout.ts'
+import { getMarkerKey, getMarkerPath } from '../markers.ts'
+import { getEdgeStyle } from '../style.ts'
+import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeComponent, FlowNodeId, Marker } from '../types.ts'
+import { FlowchartEdge } from './FlowchartEdge.tsx'
 
 const LAYOUT_OPTIONS = Object.freeze({
   nodeSpacingX: 80,

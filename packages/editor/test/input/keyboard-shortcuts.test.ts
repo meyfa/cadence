@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { KeyboardShortcut, KeyboardShortcutDetails } from '../../src/input/keyboard-shortcuts.js'
-import { convertCodeToKey, hasModifierKey, isFunctionKey, normalizeKeyboardShortcut, parseKeyboardShortcut, serializeKeyboardShortcut } from '../../src/input/keyboard-shortcuts.js'
+import type { KeyboardShortcut, KeyboardShortcutDetails } from '../../src/input/keyboard-shortcuts.ts'
+import { convertCodeToKey, hasModifierKey, isFunctionKey, normalizeKeyboardShortcut, parseKeyboardShortcut, serializeKeyboardShortcut } from '../../src/input/keyboard-shortcuts.ts'
 
 describe('input/keyboard-shortcuts.ts', () => {
   describe('convertCodeToKey', () => {

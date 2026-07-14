@@ -1,5 +1,5 @@
-import { validateCopyFromChannelArgs } from './errors.js'
-import type { AudioBufferLike } from './types.js'
+import { validateCopyFromChannelArgs } from './errors.ts'
+import type { AudioBufferLike } from './types.ts'
 
 export class ConcatenatedAudioBuffer implements AudioBufferLike {
   readonly sampleRate: number

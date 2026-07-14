@@ -4,11 +4,11 @@ import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../../src/compiler/checker/checker.js'
-import { generate } from '../../../src/compiler/generator/generator.js'
-import { lex } from '../../../src/lexer/lexer.js'
-import { parse } from '../../../src/parser/parser.js'
-import { assertResultComplete } from '../../test-utils.js'
+import { check } from '../../../src/compiler/checker/checker.ts'
+import { generate } from '../../../src/compiler/generator/generator.ts'
+import { lex } from '../../../src/lexer/lexer.ts'
+import { parse } from '../../../src/parser/parser.ts'
+import { assertResultComplete } from '../../test-utils.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const beats = (value: number) => value as Numeric<'beats'>

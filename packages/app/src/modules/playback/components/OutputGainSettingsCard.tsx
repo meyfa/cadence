@@ -1,8 +1,8 @@
 import { useObservable } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
-import { Card } from '../../../components/card/Card.js'
-import { GainSlider } from '../../../components/gain-slider/GainSlider.js'
-import { useAudioEngine } from '../provider.js'
+import { Card } from '../../../components/card/Card.tsx'
+import { GainSlider } from '../../../components/gain-slider/GainSlider.tsx'
+import { useAudioEngine } from '../provider.tsx'
 
 export const OutputGainSettingsCard: FunctionComponent = () => {
   const engine = useAudioEngine()

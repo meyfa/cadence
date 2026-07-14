@@ -1,9 +1,9 @@
 import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { lex } from '../../src/lexer/lexer.js'
-import { parse } from '../../src/parser/parser.js'
-import { assertResultComplete } from '../test-utils.js'
+import { lex } from '../../src/lexer/lexer.ts'
+import { parse } from '../../src/parser/parser.ts'
+import { assertResultComplete } from '../test-utils.ts'
 
 /**
  * Lex the given string and return the resulting tokens. This assumes that the lexer

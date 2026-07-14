@@ -1,8 +1,8 @@
 import { syntaxTree } from '@codemirror/language'
 import type { Extension } from '@codemirror/state'
 import { EditorView, hoverTooltip } from '@codemirror/view'
-import { applySemanticOperation } from '../utilities/operations.js'
-import { getHoverInfo } from './operation.js'
+import { applySemanticOperation } from '../utilities/operations.ts'
+import { getHoverInfo } from './operation.ts'
 
 const theme = EditorView.baseTheme({
   '.cm-cadence-hover': {

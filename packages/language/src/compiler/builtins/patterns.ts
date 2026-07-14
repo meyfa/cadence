@@ -1,12 +1,12 @@
 import type { Pattern } from '@meyfa/cadence-core'
 import { createSerialPattern, loopPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import { FunctionFacet } from '../../type-system/base/function.js'
-import { NumberFacet } from '../../type-system/base/number.js'
-import { PatternFacet } from '../../type-system/domain/pattern.js'
-import { Functions } from '../../type-system/helpers.js'
-import { makeSchema } from '../../type-system/schema.js'
-import type { FacetType, Value } from '../../type-system/types.js'
+import { FunctionFacet } from '../../type-system/base/function.ts'
+import { NumberFacet } from '../../type-system/base/number.ts'
+import { PatternFacet } from '../../type-system/domain/pattern.ts'
+import { Functions } from '../../type-system/helpers.ts'
+import { makeSchema } from '../../type-system/schema.ts'
+import type { FacetType, Value } from '../../type-system/types.ts'
 
 interface Builtin<T> {
   readonly type: FacetType

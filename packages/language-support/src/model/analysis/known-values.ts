@@ -1,4 +1,4 @@
-import type { BaseModel, Identifier, IdentifierId, KnownValue, KnownValueModel, ReferenceModel } from '../model.js'
+import type { BaseModel, Identifier, IdentifierId, KnownValue, KnownValueModel, ReferenceModel } from '../model.ts'
 
 export function computeKnownValueModel (baseModel: BaseModel, referenceModel: ReferenceModel): KnownValueModel {
   const knownValues = new Map<IdentifierId, KnownValue>()

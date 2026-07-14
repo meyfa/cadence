@@ -1,7 +1,7 @@
 import type { DependencyList, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { useSafeContext } from '../../hooks/safe-context.js'
-import type { MenuSpec } from '../menus.js'
+import { useSafeContext } from '../../hooks/safe-context.ts'
+import type { MenuSpec } from '../menus.ts'
 
 type Unregister = () => void
 

@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, Tab, TabId } from '../types.js'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, Tab, TabId } from '../types.ts'
 
 export function findNode (layout: DockLayout, predicate: (node: LayoutNode) => boolean): LayoutNode | undefined {
   const findInNode = (node: LayoutNode): LayoutNode | undefined => {

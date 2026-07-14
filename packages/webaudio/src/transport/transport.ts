@@ -1,8 +1,8 @@
 import type { Numeric, Observable } from '@meyfa/cadence-utility'
 import { DisposeStack, MutableObservable } from '@meyfa/cadence-utility'
-import { createIntervalTimeTracker } from '../time-tracker/interval.js'
-import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
-import { createImmediateScheduler, createRealtimeScheduler } from './scheduler.js'
+import { createIntervalTimeTracker } from '../time-tracker/interval.ts'
+import { createWorkletTimeTracker } from '../time-tracker/worklet.ts'
+import { createImmediateScheduler, createRealtimeScheduler } from './scheduler.ts'
 
 export interface OfflineTransportOptions {
   readonly duration: Numeric<'s'>

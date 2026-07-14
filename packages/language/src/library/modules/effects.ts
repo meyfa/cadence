@@ -1,14 +1,14 @@
 import type { Effect } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { ParameterContext } from '../../compiler/generator/scopes.js'
-import { NumberFacet } from '../../type-system/base/number.js'
-import { RecordFacet } from '../../type-system/base/record.js'
-import { EffectFacet } from '../../type-system/domain/effect.js'
-import { ParameterFacet } from '../../type-system/domain/parameter.js'
-import { makeType, makeUnion } from '../../type-system/factory.js'
-import { Functions, Modules, Parameters } from '../../type-system/helpers.js'
-import { makeSchema } from '../../type-system/schema.js'
-import type { Value } from '../../type-system/types.js'
+import type { ParameterContext } from '../../compiler/generator/scopes.ts'
+import { NumberFacet } from '../../type-system/base/number.ts'
+import { RecordFacet } from '../../type-system/base/record.ts'
+import { EffectFacet } from '../../type-system/domain/effect.ts'
+import { ParameterFacet } from '../../type-system/domain/parameter.ts'
+import { makeType, makeUnion } from '../../type-system/factory.ts'
+import { Functions, Modules, Parameters } from '../../type-system/helpers.ts'
+import { makeSchema } from '../../type-system/schema.ts'
+import type { Value } from '../../type-system/types.ts'
 
 const UNITY_GAIN = 0 as Numeric<'db'>
 

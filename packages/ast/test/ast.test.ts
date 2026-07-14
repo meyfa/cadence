@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { make } from '../src/ast.js'
-import type { SourceRange } from '../src/range.js'
+import { make } from '../src/ast.ts'
+import type { SourceRange } from '../src/range.ts'
 
 describe('ast/ast.ts', () => {
   describe('make()', () => {

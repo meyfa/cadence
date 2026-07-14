@@ -3,12 +3,12 @@ import { ast, combineSourceRanges, getSourceRange } from '@meyfa/cadence-ast'
 import { isStepValue } from '@meyfa/cadence-core'
 import { Token } from 'leac'
 import * as p from 'peberminta'
-import { truncateString } from '../result/errors.js'
-import type { Result } from '../result/result.js'
-import type { Keyword } from './constants.js'
-import { isKeyword } from './constants.js'
-import { ParseError } from './error.js'
-import { parseStringEscape } from './string.js'
+import { truncateString } from '../result/errors.ts'
+import type { Result } from '../result/result.ts'
+import type { Keyword } from './constants.ts'
+import { isKeyword } from './constants.ts'
+import { ParseError } from './error.ts'
+import { parseStringEscape } from './string.ts'
 
 const ERROR_CONTEXT_LIMIT = 16
 

@@ -1,6 +1,6 @@
 import { diagnosticCount } from '@codemirror/lint'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createCadenceEditor } from '../../src/editor/handle.js'
+import { createCadenceEditor } from '../../src/editor/handle.ts'
 
 describe('editor/handle.ts', () => {
   beforeEach(() => {

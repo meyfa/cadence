@@ -1,5 +1,5 @@
-import { ErrorMessages, validateCopyFromChannelArgs } from './errors.js'
-import type { AudioBufferLike } from './types.js'
+import { ErrorMessages, validateCopyFromChannelArgs } from './errors.ts'
+import type { AudioBufferLike } from './types.ts'
 
 export class SimpleAudioBuffer implements AudioBufferLike {
   readonly sampleRate: number

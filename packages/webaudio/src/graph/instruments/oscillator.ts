@@ -1,6 +1,6 @@
 import type { OscillatorNode } from '@meyfa/cadence-audiograph'
-import type { Transport } from '../../transport/transport.js'
-import type { Instance } from '../instance.js'
+import type { Transport } from '../../transport/transport.ts'
+import type { Instance } from '../instance.ts'
 
 const oscillatorTypeMap: Record<OscillatorNode['shape'], OscillatorType> = {
   sine: 'sine',

@@ -1,5 +1,5 @@
-import type { SourceRange } from '../utilities/range.js'
-import type { BaseModel, Binding, Identifier, Import } from './model.js'
+import type { SourceRange } from '../utilities/range.ts'
+import type { BaseModel, Binding, Identifier, Import } from './model.ts'
 
 export function findIdentifierAt (model: BaseModel, position: number): Identifier | undefined {
   return binarySearch(model.identifiers, position)

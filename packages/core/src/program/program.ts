@@ -1,10 +1,10 @@
 import type { Unit } from '@meyfa/cadence-utility'
-import type { Curve } from '../curve/types.js'
-import type { Asset, AssetId } from './assets.js'
-import type { ParameterId } from './automations.js'
-import type { Instrument, InstrumentId } from './instruments.js'
-import type { Mixer } from './mixer.js'
-import type { Track } from './track.js'
+import type { Curve } from '../curve/types.ts'
+import type { Asset, AssetId } from './assets.ts'
+import type { ParameterId } from './automations.ts'
+import type { Instrument, InstrumentId } from './instruments.ts'
+import type { Mixer } from './mixer.ts'
+import type { Track } from './track.ts'
 
 export interface Program {
   readonly beatsPerBar: number

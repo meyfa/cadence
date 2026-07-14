@@ -1,6 +1,6 @@
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { Pattern } from '../pattern/types.js'
-import type { InstrumentId } from './instruments.js'
+import type { Pattern } from '../pattern/types.ts'
+import type { InstrumentId } from './instruments.ts'
 
 export interface Track {
   readonly tempo: Numeric<'bpm'>

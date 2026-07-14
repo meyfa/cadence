@@ -3,11 +3,11 @@ import type { Extension } from '@codemirror/state'
 import { EditorSelection, StateEffect, StateField } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
-import { applySemanticOperation } from '../utilities/operations.js'
-import type { SourceRange } from '../utilities/range.js'
-import { sameRange } from '../utilities/range.js'
-import type { GoToDefinitionResult } from './operation.js'
-import { goToDefinition } from './operation.js'
+import { applySemanticOperation } from '../utilities/operations.ts'
+import type { SourceRange } from '../utilities/range.ts'
+import { sameRange } from '../utilities/range.ts'
+import type { GoToDefinitionResult } from './operation.ts'
+import { goToDefinition } from './operation.ts'
 
 interface Coordinates {
   readonly x: number

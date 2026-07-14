@@ -3,9 +3,9 @@ import { useNonNullValue, useObservable } from '@meyfa/cadence-editor'
 import type { BeatRange } from '@meyfa/cadence-webaudio'
 import type { FunctionComponent } from 'react'
 import { useCallback } from 'react'
-import { useCompilationState } from '../../../compilation/CompilationContext.js'
-import { Timeline } from '../../../components/timeline/Timeline.js'
-import { useAudioEngine } from '../provider.js'
+import { useCompilationState } from '../../../compilation/CompilationContext.tsx'
+import { Timeline } from '../../../components/timeline/Timeline.tsx'
+import { useAudioEngine } from '../provider.tsx'
 
 export const TimelinePanel: FunctionComponent<PanelProps> = () => {
   const { result: { program: currentProgram } } = useCompilationState()

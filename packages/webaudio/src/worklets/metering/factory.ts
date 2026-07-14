@@ -1,7 +1,7 @@
 import type { Observable } from '@meyfa/cadence-utility'
 import { MutableObservable } from '@meyfa/cadence-utility'
-import { addWorkletModule } from '../loader.js'
-import type { GainMeasurement, MeterConfiguration, TimeMeasurement } from './messages.js'
+import { addWorkletModule } from '../loader.ts'
+import type { GainMeasurement, MeterConfiguration, TimeMeasurement } from './messages.ts'
 
 export interface MeterInstance<T> {
   readonly dispose: () => void

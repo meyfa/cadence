@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../../src/pattern/functions.js'
+import { concatPatterns, createParallelPattern, createSerialPattern, loopPattern, mergePatterns, multiplyPattern, renderPatternEvents } from '../../src/pattern/functions.ts'
 
 describe('pattern/functions.ts', () => {
   // helper to create RuntimeNumeric<'beats'>

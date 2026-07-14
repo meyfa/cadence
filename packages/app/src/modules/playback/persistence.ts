@@ -4,8 +4,8 @@ import type { RuntimeNumeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import type { Struct } from 'superstruct'
 import { type } from 'superstruct'
-import { validateRuntimeNumeric } from '../../utilities/validation.js'
-import { useAudioEngine } from './provider.js'
+import { validateRuntimeNumeric } from '../../utilities/validation.ts'
+import { useAudioEngine } from './provider.tsx'
 
 export const defaultOutputGain = runtimeNumeric('db', -12)
 

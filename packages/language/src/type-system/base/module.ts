@@ -1,5 +1,5 @@
-import { makeFacet } from '../factory.js'
-import type { CustomComparable, FacetType, Value } from '../types.js'
+import { makeFacet } from '../factory.ts'
+import type { CustomComparable, FacetType, Value } from '../types.ts'
 
 export interface Module {
   readonly name: string

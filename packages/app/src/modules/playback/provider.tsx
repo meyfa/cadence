@@ -4,8 +4,8 @@ import type { AudioEngine, AudioEngineOptions } from '@meyfa/cadence-webaudio'
 import { createAudioEngine } from '@meyfa/cadence-webaudio'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { createContext } from 'react'
-import { isLikelyMobile, isLowMemoryDevice } from '../../utilities/features.js'
-import { defaultOutputGain } from './persistence.js'
+import { isLikelyMobile, isLowMemoryDevice } from '../../utilities/features.ts'
+import { defaultOutputGain } from './persistence.ts'
 
 const AudioEngineContext = createContext<AudioEngine | undefined>(undefined)
 

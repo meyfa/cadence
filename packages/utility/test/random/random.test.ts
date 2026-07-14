@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { mulberry32, xmur3 } from '../../src/random/random.js'
+import { mulberry32, xmur3 } from '../../src/random/random.ts'
 
 describe('random/random.ts', () => {
   describe('mulberry32', () => {

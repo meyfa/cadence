@@ -1,9 +1,9 @@
 import type { Oscillator } from '@meyfa/cadence-core'
-import { NumberFacet } from '../../type-system/base/number.js'
-import { SourceFacet } from '../../type-system/domain/source.js'
-import { Functions, Modules } from '../../type-system/helpers.js'
-import { makeSchema } from '../../type-system/schema.js'
-import type { Value } from '../../type-system/types.js'
+import { NumberFacet } from '../../type-system/base/number.ts'
+import { SourceFacet } from '../../type-system/domain/source.ts'
+import { Functions, Modules } from '../../type-system/helpers.ts'
+import { makeSchema } from '../../type-system/schema.ts'
+import type { Value } from '../../type-system/types.ts'
 
 function createOscillatorFunction (shape: Oscillator['shape']): Value {
   return Functions.of({

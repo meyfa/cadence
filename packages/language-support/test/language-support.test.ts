@@ -3,7 +3,7 @@ import { highlightTree, tags as t, tagHighlighter } from '@lezer/highlight'
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { cadenceParserConfig } from '../src/parser-metadata.js'
+import { cadenceParserConfig } from '../src/parser-metadata.ts'
 
 const cadenceGrammar = await readFile(new URL('../src/cadence.grammar', import.meta.url), 'utf8')
 const cadenceParser = buildParser(cadenceGrammar).configure(cadenceParserConfig)

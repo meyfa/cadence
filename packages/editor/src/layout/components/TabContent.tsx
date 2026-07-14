@@ -2,12 +2,12 @@ import { TabPanel } from '@headlessui/react'
 import type { ComponentType, FunctionComponent } from 'react'
 import { useEffect, useRef } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
-import type { PanelId } from '../../modules/types.js'
-import { updateFocusedTab } from '../algorithms/mutate.js'
-import type { Tab as LayoutTab } from '../types.js'
-import type { LayoutDispatch } from './LayoutContext.js'
-import { PanelErrorBoundary } from './PanelErrorBoundary.js'
-import { usePanelById } from './panel-lookup.js'
+import type { PanelId } from '../../modules/types.ts'
+import { updateFocusedTab } from '../algorithms/mutate.ts'
+import type { Tab as LayoutTab } from '../types.ts'
+import type { LayoutDispatch } from './LayoutContext.ts'
+import { PanelErrorBoundary } from './PanelErrorBoundary.tsx'
+import { usePanelById } from './panel-lookup.ts'
 
 export interface TabContentProps {
   readonly tab: LayoutTab

@@ -1,10 +1,10 @@
 import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@meyfa/cadence-editor'
 import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
-import { pluralize } from '../../utilities/format.js'
-import { ProblemsNotifications } from './ProblemsNotifications.js'
-import { ProblemsPanel } from './ProblemsPanel.js'
-import { useProblemCountByKind } from './hooks.js'
+import { pluralize } from '../../utilities/format.ts'
+import { ProblemsNotifications } from './ProblemsNotifications.tsx'
+import { ProblemsPanel } from './ProblemsPanel.tsx'
+import { useProblemCountByKind } from './hooks.ts'
 
 const moduleId = 'problems' as ModuleId
 export const problemsPanelId = `${moduleId}.problems` as PanelId

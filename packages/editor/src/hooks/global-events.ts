@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useLatestRef } from './latest-ref.js'
+import { useLatestRef } from './latest-ref.ts'
 
 function useWindowEvent<K extends keyof WindowEventMap> (
   type: K,

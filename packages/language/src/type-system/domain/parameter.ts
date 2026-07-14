@@ -1,7 +1,7 @@
 import type { Parameter } from '@meyfa/cadence-core'
 import type { Unit } from '@meyfa/cadence-utility'
-import { makeFacet } from '../factory.js'
-import type { Facet, FacetType } from '../types.js'
+import { makeFacet } from '../factory.ts'
+import type { Facet, FacetType } from '../types.ts'
 
 const FACET_NAME = 'parameter'
 

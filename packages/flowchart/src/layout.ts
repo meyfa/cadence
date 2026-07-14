@@ -1,6 +1,6 @@
 import type { ReadonlyMultimap } from '@meyfa/cadence-utility'
 import { createMultimap } from '@meyfa/cadence-utility'
-import type { FlowEdge, FlowNode, FlowNodeId } from './types.js'
+import type { FlowEdge, FlowNode, FlowNodeId } from './types.ts'
 
 export interface LayoutOptions {
   readonly nodeSpacingX: number

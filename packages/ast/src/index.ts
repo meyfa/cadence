@@ -1,2 +1,2 @@
-export * as ast from './ast.js'
-export * from './range.js'
+export * as ast from './ast.ts'
+export * from './range.ts'

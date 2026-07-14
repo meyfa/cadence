@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createGainMeter } from '../../../src/worklets/metering/factory.js'
-import type { GainMeasurement } from '../../../src/worklets/metering/messages.js'
+import { createGainMeter } from '../../../src/worklets/metering/factory.ts'
+import type { GainMeasurement } from '../../../src/worklets/metering/messages.ts'
 
 describe('worklets/metering/gain-meter.worklet.js', () => {
   it('reports stereo RMS and peak at render-quantum boundaries once the interval has elapsed', async () => {

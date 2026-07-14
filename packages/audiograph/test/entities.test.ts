@@ -1,7 +1,7 @@
 import type { BusId, InstrumentId } from '@meyfa/cadence-core'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createEntityKey } from '../src/entities.js'
+import { createEntityKey } from '../src/entities.ts'
 
 describe('entities.ts', () => {
   it('should create unique entity keys', () => {

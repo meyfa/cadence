@@ -7,8 +7,8 @@ import type { BeatRange } from '@meyfa/cadence-webaudio'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/format.js'
-import { Popover } from '../popover/Popover.js'
+import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/format.ts'
+import { Popover } from '../popover/Popover.tsx'
 
 const TIMELINE_ZOOM_MIN = 4
 const TIMELINE_ZOOM_MAX = 64

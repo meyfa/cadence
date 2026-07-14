@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, TabId } from '../types.js'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, TabId } from '../types.ts'
 
 export type NodeUpdates = ReadonlyMap<LayoutNodeId, LayoutNode>
 

@@ -1,6 +1,6 @@
-import type { Binding, Import, Model, ReferenceModel } from '../model/model.js'
-import type { LanguageDiagnostic } from '../utilities/diagnostic.js'
-import type { SemanticOperation } from '../utilities/operations.js'
+import type { Binding, Import, Model, ReferenceModel } from '../model/model.ts'
+import type { LanguageDiagnostic } from '../utilities/diagnostic.ts'
+import type { SemanticOperation } from '../utilities/operations.ts'
 
 export const findUnusedVariables: SemanticOperation<[], readonly LanguageDiagnostic[]> = (model) => {
   return [

@@ -3,7 +3,7 @@ import { check, generate, lex, parse } from '@meyfa/cadence-language'
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { demoCode } from '../../src/defaults/demo-code.js'
+import { demoCode } from '../../src/defaults/demo-code.ts'
 
 function getResultError<TValue, TError> (result: Result<TValue, TError>): TError | undefined {
   if (result.complete) {

@@ -1,7 +1,7 @@
 import { convertPitchToMidi } from '@meyfa/cadence-core'
-import { NumberFacet } from '../type-system/base/number.js'
-import { RecordFacet } from '../type-system/base/record.js'
-import { makeSchema } from '../type-system/schema.js'
+import { NumberFacet } from '../type-system/base/number.ts'
+import { RecordFacet } from '../type-system/base/record.ts'
+import { makeSchema } from '../type-system/schema.ts'
 
 export const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 

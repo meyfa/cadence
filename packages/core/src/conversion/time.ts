@@ -1,5 +1,5 @@
 import type { Numeric, RuntimeNumeric } from '@meyfa/cadence-utility'
-import type { Program } from '../program/program.js'
+import type { Program } from '../program/program.ts'
 
 export function beatsToSeconds (
   beats: Numeric<'beats'>,

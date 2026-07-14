@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-import type { Result, SuccessResult } from '../src/result/result.js'
+import type { Result, SuccessResult } from '../src/result/result.ts'
 import assert from 'node:assert'
 
 export type Equals<X, Y> =

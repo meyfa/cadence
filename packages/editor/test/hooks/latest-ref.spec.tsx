@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { useLatestRef } from '../../src/hooks/latest-ref.js'
+import { useLatestRef } from '../../src/hooks/latest-ref.ts'
 
 describe('hooks/latest-ref.ts', () => {
   it('always exposes the latest value while keeping the same ref object', () => {

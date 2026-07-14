@@ -1,4 +1,4 @@
-import { CompileError } from './error.js'
+import { CompileError } from './error.ts'
 
 const FAILURE_MESSAGE = 'Internal compiler error (should have been caught in semantic analysis)'
 

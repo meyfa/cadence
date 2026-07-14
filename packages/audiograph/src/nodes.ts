@@ -1,7 +1,7 @@
 import type { AssetId, Curve, NoteData } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { EntityKey } from './entities.js'
-import type { AnyNode } from './graph.js'
+import type { EntityKey } from './entities.ts'
+import type { AnyNode } from './graph.ts'
 
 export interface NodeTypeMap {
   // utility

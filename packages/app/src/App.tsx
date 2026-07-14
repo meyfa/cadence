@@ -1,13 +1,13 @@
 import type { DockLayoutStyles, MenuId, MenuSpec } from '@meyfa/cadence-editor'
 import { DockLayoutView, useLayout, useLayoutDispatch, useLoadSettled, useRegisterMenu } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
-import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
-import { Footer } from './components/footer/Footer.js'
-import { Header } from './components/header/Header.js'
-import { Logo } from './components/logo/Logo.js'
-import { PanelErrorFallback } from './components/tab/PanelErrorFallback.js'
-import { StyledTabTitle } from './components/tab/StyledTabTitle.js'
-import { useAppPersistenceSync } from './persistence/persistence.js'
+import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.tsx'
+import { Footer } from './components/footer/Footer.tsx'
+import { Header } from './components/header/Header.tsx'
+import { Logo } from './components/logo/Logo.tsx'
+import { PanelErrorFallback } from './components/tab/PanelErrorFallback.tsx'
+import { StyledTabTitle } from './components/tab/StyledTabTitle.tsx'
+import { useAppPersistenceSync } from './persistence/persistence.ts'
 
 const fileMenu: MenuSpec = {
   id: 'file' as MenuId,

@@ -2,10 +2,10 @@ import type { Diagnostic } from '@codemirror/lint'
 import type { Extension } from '@codemirror/state'
 import type { EditorView, ViewUpdate } from '@codemirror/view'
 import { FunctionComponent, useCallback, useEffect, useRef } from 'react'
-import { useLatestRef } from '../../hooks/latest-ref.js'
-import type { CadenceEditorHandle } from '../handle.js'
-import { createCadenceEditor } from '../handle.js'
-import type { EditorLocation } from '../types.js'
+import { useLatestRef } from '../../hooks/latest-ref.ts'
+import type { CadenceEditorHandle } from '../handle.ts'
+import { createCadenceEditor } from '../handle.ts'
+import type { EditorLocation } from '../types.ts'
 
 export const Editor: FunctionComponent<{
   document: string

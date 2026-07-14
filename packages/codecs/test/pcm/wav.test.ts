@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
-import type { AudioDescription } from '../../src/common/types.js'
-import { encodeWAV, estimateWAVSize } from '../../src/pcm/wav.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.ts'
+import type { AudioDescription } from '../../src/common/types.ts'
+import { encodeWAV, estimateWAVSize } from '../../src/pcm/wav.ts'
 
 describe('pcm/wav.ts', () => {
   it('estimates file size correctly', () => {

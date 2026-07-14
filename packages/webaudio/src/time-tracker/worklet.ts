@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import { MutableObservable } from '@meyfa/cadence-utility'
-import { createTimeMeter } from '../worklets/metering/factory.js'
-import type { TimeTracker, TimeTrackerOptions } from './common.js'
+import { createTimeMeter } from '../worklets/metering/factory.ts'
+import type { TimeTracker, TimeTrackerOptions } from './common.ts'
 
 export async function createWorkletTimeTracker (
   ctx: BaseAudioContext,

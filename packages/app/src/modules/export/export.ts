@@ -5,8 +5,8 @@ import type { Program } from '@meyfa/cadence-core'
 import { beatsToSeconds, calculateTotalLength } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { createAudioRenderer } from '@meyfa/cadence-webaudio'
-import type { Option } from '../../components/dropdown/Dropdown.js'
-import { saveFile } from '../../utilities/files.js'
+import type { Option } from '../../components/dropdown/Dropdown.ts'
+import { saveFile } from '../../utilities/files.ts'
 
 const ASSET_LOAD_TIMEOUT = 30 as Numeric<'s'>
 

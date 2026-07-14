@@ -1,8 +1,8 @@
-export type * from './common/types.js'
-export * from './common/simple-audio-buffer.js'
-export * from './common/constant-audio-buffer.js'
+export type * from './common/types.ts'
+export * from './common/simple-audio-buffer.ts'
+export * from './common/constant-audio-buffer.ts'
 
-export * from './transforms/leading-silence.js'
+export * from './transforms/leading-silence.ts'
 
-export * from './pcm/wav.js'
-export * from './pcm/aiff.js'
+export * from './pcm/wav.ts'
+export * from './pcm/aiff.ts'

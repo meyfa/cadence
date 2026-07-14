@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
-import { ConcatenatedAudioBuffer } from '../common/concatenated-audio-buffer.js'
-import { ConstantAudioBuffer } from '../common/constant-audio-buffer.js'
-import type { AudioBufferTransform } from '../common/types.js'
+import { ConcatenatedAudioBuffer } from '../common/concatenated-audio-buffer.ts'
+import { ConstantAudioBuffer } from '../common/constant-audio-buffer.ts'
+import type { AudioBufferTransform } from '../common/types.ts'
 
 const identity: AudioBufferTransform = (input) => input
 

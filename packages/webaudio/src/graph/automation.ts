@@ -1,6 +1,6 @@
 import type { Curve, CurveShape } from '@meyfa/cadence-core'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
-import type { Transport } from '../transport/transport.js'
+import type { Transport } from '../transport/transport.ts'
 
 export function automate<U extends Unit> (transport: Transport, param: AudioParam, source: Curve<'s', U>): void {
   param.value = source.initial

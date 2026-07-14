@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.js'
+import { SimpleAudioBuffer } from '../../src/common/simple-audio-buffer.ts'
 
 describe('common/simple-audio-buffer.ts', () => {
   it('should have correct properties', () => {

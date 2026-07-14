@@ -1,7 +1,7 @@
 import type { DockLayout, EditorLocation, PanelId } from '@meyfa/cadence-editor'
 import { findFocusedTab } from '@meyfa/cadence-editor'
-import { getEditorPanelProps } from './panel-props.js'
-import type { EditorState } from './provider.js'
+import { getEditorPanelProps } from './panel-props.ts'
+import type { EditorState } from './provider.ts'
 
 export function getFocusedEditorFilePath (layout: DockLayout, panelId: PanelId): string | undefined {
   const tab = findFocusedTab(layout)

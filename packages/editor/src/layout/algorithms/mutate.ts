@@ -1,7 +1,7 @@
 import { insertAt, randomId, removeAt } from '@meyfa/cadence-utility'
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, Tab, TabId } from '../types.js'
-import { findNodeById, findPaneById, findPaneByTabId, findTabByComponentType } from './find.js'
-import { updateNodesInLayout } from './internal.js'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, Tab, TabId } from '../types.ts'
+import { findNodeById, findPaneById, findPaneByTabId, findTabByComponentType } from './find.ts'
+import { updateNodesInLayout } from './internal.ts'
 
 type TabInsertionPosition = 'before' | 'after'
 

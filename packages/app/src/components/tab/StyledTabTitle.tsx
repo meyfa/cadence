@@ -2,7 +2,7 @@ import type { TabTitleProps } from '@meyfa/cadence-editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
-import { isCoarsePointer, isMacOS } from '../../utilities/features.js'
+import { isCoarsePointer, isMacOS } from '../../utilities/features.ts'
 
 export const StyledTabTitle: FunctionComponent<TabTitleProps> = ({ tab, state, onClose, TitleComponent, NotificationsComponent, closeable }) => {
   const dragging = state === 'dragging'

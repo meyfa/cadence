@@ -1,8 +1,8 @@
 import type { CurvePoint, CurveShape } from '@meyfa/cadence-core'
 import { timeToSeconds } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
-import type { Curve, CurveDuration, CurveSegment, HoldCurveSegment, LinearCurveSegment } from '../type-system/domain/curve.js'
-import { assert, nonNull } from './assert.js'
+import type { Curve, CurveDuration, CurveSegment, HoldCurveSegment, LinearCurveSegment } from '../type-system/domain/curve.ts'
+import { assert, nonNull } from './assert.ts'
 
 const SEGMENT_TYPE_HOLD = 'hold'
 const SEGMENT_TYPE_LINEAR = 'lin'

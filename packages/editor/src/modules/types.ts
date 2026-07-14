@@ -1,8 +1,8 @@
 import type { Brand } from '@meyfa/cadence-utility'
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
-import type { CommandId } from '../commands/commands.js'
-import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'
-import type { SerializedComponent, TabId } from '../layout/types.js'
+import type { CommandId } from '../commands/commands.ts'
+import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.ts'
+import type { SerializedComponent, TabId } from '../layout/types.ts'
 
 export type ModuleRenderFn<P = {}, T extends ReactNode = ReactNode> = (props: P) => T
 export type ModuleProviderComponent = ComponentType<PropsWithChildren>

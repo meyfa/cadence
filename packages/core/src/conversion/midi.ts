@@ -1,5 +1,5 @@
 import type { Brand, Numeric } from '@meyfa/cadence-utility'
-import type { Pitch } from '../pattern/types.js'
+import type { Pitch } from '../pattern/types.ts'
 
 // Note: Actual MIDI supports 0-127 (C-1 through G9), but for syntactical
 // simplicity, we instead support the range resulting from:

@@ -1,7 +1,7 @@
 import type { DockLayout, LayoutNodeId, PanelId, TabId } from '@meyfa/cadence-editor'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { getFocusedEditorCaret, getFocusedEditorFilePath } from '../../../src/modules/editor/caret.js'
+import { getFocusedEditorCaret, getFocusedEditorFilePath } from '../../../src/modules/editor/caret.ts'
 
 const testEditorPanelId = 'editor.editor' as PanelId
 const testMixerPanelId = 'mixer.mixer' as PanelId

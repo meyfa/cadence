@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { generateReverbImpulseResponse } from '../../src/graph/noise.js'
+import { generateReverbImpulseResponse } from '../../src/graph/noise.ts'
 
 class MockAudioBuffer {
   readonly length: number

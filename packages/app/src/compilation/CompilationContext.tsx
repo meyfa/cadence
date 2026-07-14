@@ -3,8 +3,8 @@ import type { GenerateOptions } from '@meyfa/cadence-language'
 import type { Numeric } from '@meyfa/cadence-utility'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useMemo } from 'react'
-import type { CompileResult } from './compiler.js'
-import { compileSource, useCompiler } from './compiler.js'
+import type { CompileResult } from './compiler.ts'
+import { compileSource, useCompiler } from './compiler.ts'
 
 export interface CompilationState {
   readonly loading: boolean

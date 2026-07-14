@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { parseStringLiteral } from '../../src/parser/string.js'
+import { parseStringLiteral } from '../../src/parser/string.ts'
 
 describe('parser/string.ts', () => {
   describe('parseStringLiteral()', () => {

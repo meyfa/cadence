@@ -1,5 +1,5 @@
-export type * from './graph.js'
-export type * from './nodes.js'
-export * from './entities.js'
+export type * from './graph.ts'
+export type * from './nodes.ts'
+export * from './entities.ts'
 
-export * from './lowering.js'
+export * from './lowering.ts'

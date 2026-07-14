@@ -1,4 +1,4 @@
-import type { StorageBackend, StorageCallback } from '../types.js'
+import type { StorageBackend, StorageCallback } from '../types.ts'
 
 export interface MemoryStorageBackend extends StorageBackend {
   readonly setAndNotify: (key: string, newValue: string | undefined) => void

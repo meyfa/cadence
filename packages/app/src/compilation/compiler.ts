@@ -4,7 +4,7 @@ import { getProjectFileContent } from '@meyfa/cadence-editor'
 import type { CheckedProgram, GenerateOptions } from '@meyfa/cadence-language'
 import { check, CompoundError, generate, lex, parse, RangeError, Result } from '@meyfa/cadence-language'
 import { useMemo } from 'react'
-import { TRACK_FILE_PATH } from '../persistence/constants.js'
+import { TRACK_FILE_PATH } from '../persistence/constants.ts'
 
 type UnwrappableError = RangeError | CompoundError<RangeError>
 

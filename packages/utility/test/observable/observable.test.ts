@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { MutableObservable } from '../../src/observable/observable.js'
+import { MutableObservable } from '../../src/observable/observable.ts'
 
 describe('observable/observable.ts', () => {
   describe('MutableObservable', () => {

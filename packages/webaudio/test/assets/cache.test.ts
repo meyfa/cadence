@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createAssetCache } from '../../src/assets/cache.js'
+import { createAssetCache } from '../../src/assets/cache.ts'
 
 describe('assets/cache.ts', () => {
   it('returns nothing for missing keys', () => {

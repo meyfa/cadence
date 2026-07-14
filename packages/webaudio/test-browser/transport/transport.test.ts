@@ -1,6 +1,6 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it } from 'vitest'
-import { createOfflineTransport } from '../../src/transport/transport.js'
+import { createOfflineTransport } from '../../src/transport/transport.ts'
 
 describe('transport/transport.ts', () => {
   describe('createOfflineTransport', () => {

@@ -3,8 +3,8 @@ import { gainToDb } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { Envelope } from '../../src/library/envelope.js'
-import { applyEnvelope } from '../../src/library/envelope.js'
+import type { Envelope } from '../../src/library/envelope.ts'
+import { applyEnvelope } from '../../src/library/envelope.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const seconds = (value: number) => value as Numeric<'s'>

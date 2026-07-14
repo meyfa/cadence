@@ -1,8 +1,8 @@
 import type { Brand, Numeric } from '@meyfa/cadence-utility'
-import type { Curve } from '../curve/types.js'
-import type { NoteData } from '../pattern/types.js'
-import type { AssetId } from './assets.js'
-import type { Parameter } from './automations.js'
+import type { Curve } from '../curve/types.ts'
+import type { NoteData } from '../pattern/types.ts'
+import type { AssetId } from './assets.ts'
+import type { Parameter } from './automations.ts'
 
 export type InstrumentId = Brand<number, 'core.InstrumentId'>
 

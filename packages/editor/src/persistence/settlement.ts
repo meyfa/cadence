@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { usePersistenceContext } from './components/PersistenceContext.js'
+import { usePersistenceContext } from './components/PersistenceContext.tsx'
 
 /**
  * Returns true once there are no pending loads. This can be used to delay rendering until

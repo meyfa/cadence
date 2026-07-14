@@ -1,8 +1,8 @@
 import type { Asset, AssetId, NoteEvent } from '@meyfa/cadence-core'
 import { isPitch } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { EntityKey } from './entities.js'
-import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
+import type { EntityKey } from './entities.ts'
+import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.ts'
 
 export interface AudioGraphBuilder<TNode extends AnyNode = AnyNode> {
   readonly addNode: <T extends TNode> (type: T['type'], node: Omit<T, 'id' | 'type'>) => NodeId

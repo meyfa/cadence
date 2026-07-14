@@ -2,10 +2,10 @@ import type { AudioGraph, Node } from '@meyfa/cadence-audiograph'
 import { beatsToSeconds } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { DisposeStack } from '@meyfa/cadence-utility'
-import type { CacheLimits } from '../assets/fetcher.js'
-import { createAudioFetcher } from '../assets/fetcher.js'
-import { createWebAudioGraph } from '../graph/graph.js'
-import { createOfflineTransport } from '../transport/transport.js'
+import type { CacheLimits } from '../assets/fetcher.ts'
+import { createAudioFetcher } from '../assets/fetcher.ts'
+import { createWebAudioGraph } from '../graph/graph.ts'
+import { createOfflineTransport } from '../transport/transport.ts'
 
 export interface AudioRendererOptions {
   readonly assetLoadTimeout: Numeric<'s'>

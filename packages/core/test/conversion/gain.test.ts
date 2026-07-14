@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { dbToGain, gainToDb } from '../../src/conversion/gain.js'
+import { dbToGain, gainToDb } from '../../src/conversion/gain.ts'
 
 describe('conversion/gain.ts', () => {
   describe('dbToGain', () => {

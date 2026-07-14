@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { useProblemCountByKind } from './hooks.js'
+import { useProblemCountByKind } from './hooks.ts'
 
 export const ProblemsNotifications = () => {
   const { error, warning } = useProblemCountByKind()

@@ -1,4 +1,4 @@
-import * as ast from './ast.js'
+import * as ast from './ast.ts'
 
 interface Token {
   readonly offset: number

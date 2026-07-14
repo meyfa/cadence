@@ -1,6 +1,6 @@
 import type { Asset, AssetId, NoteEvent } from '@meyfa/cadence-core'
 import type { Brand, Numeric } from '@meyfa/cadence-utility'
-import type { EntityKey } from './entities.js'
+import type { EntityKey } from './entities.ts'
 
 export interface AudioGraph<TNode = AnyNode> {
   readonly nodes: ReadonlyMap<NodeId, TNode>

@@ -1,9 +1,9 @@
-import type { Function } from '../type-system/base/function.js'
-import { FunctionFacet } from '../type-system/base/function.js'
-import type { Module } from '../type-system/base/module.js'
-import { ModuleFacet } from '../type-system/base/module.js'
-import type { Value } from '../type-system/types.js'
-import { getStandardModule } from './modules.js'
+import type { Function } from '../type-system/base/function.ts'
+import { FunctionFacet } from '../type-system/base/function.ts'
+import type { Module } from '../type-system/base/module.ts'
+import { ModuleFacet } from '../type-system/base/module.ts'
+import type { Value } from '../type-system/types.ts'
+import { getStandardModule } from './modules.ts'
 
 export interface Documentation {
   readonly title: string

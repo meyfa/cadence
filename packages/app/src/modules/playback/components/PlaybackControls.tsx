@@ -2,9 +2,9 @@ import type { CommandId } from '@meyfa/cadence-editor'
 import { useCommandRegistry, useObservable } from '@meyfa/cadence-editor'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
-import { Button } from '../../../components/button/Button.js'
-import { GainSlider } from '../../../components/gain-slider/GainSlider.js'
-import { useAudioEngine } from '../provider.js'
+import { Button } from '../../../components/button/Button.tsx'
+import { GainSlider } from '../../../components/gain-slider/GainSlider.tsx'
+import { useAudioEngine } from '../provider.tsx'
 
 export const PlaybackControls: FunctionComponent = () => {
   const engine = useAudioEngine()

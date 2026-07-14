@@ -1,22 +1,22 @@
-export { cadenceLanguageSupport } from './language-support.js'
+export { cadenceLanguageSupport } from './language-support.ts'
 
-export type * from './utilities/diagnostic.js'
+export type * from './utilities/diagnostic.ts'
 
-export type { SemanticOperation } from './utilities/operations.js'
-export { applySemanticOperation, applySemanticOperationWithParser } from './utilities/operations.js'
+export type { SemanticOperation } from './utilities/operations.ts'
+export { applySemanticOperation, applySemanticOperationWithParser } from './utilities/operations.ts'
 
 // "go to definition" feature
-export { goToDefinition } from './go-to-definition/operation.js'
-export { goToDefinitionExtension } from './go-to-definition/extension.js'
+export { goToDefinition } from './go-to-definition/operation.ts'
+export { goToDefinitionExtension } from './go-to-definition/extension.ts'
 
 // "highlight occurrences" feature
-export { findHighlightedOccurrences } from './highlight-occurrences/operation.js'
-export { highlightOccurrencesExtension } from './highlight-occurrences/extension.js'
+export { findHighlightedOccurrences } from './highlight-occurrences/operation.ts'
+export { highlightOccurrencesExtension } from './highlight-occurrences/extension.ts'
 
 // "hover info" feature
-export type { HoverInfoWithRange } from './hover/operation.js'
-export { getHoverInfo } from './hover/operation.js'
-export { hoverInfoExtension } from './hover/extension.js'
+export type { HoverInfoWithRange } from './hover/operation.ts'
+export { getHoverInfo } from './hover/operation.ts'
+export { hoverInfoExtension } from './hover/extension.ts'
 
 // "unused variable" diagnostics
-export { findUnusedVariables } from './unused-variable/operation.js'
+export { findUnusedVariables } from './unused-variable/operation.ts'

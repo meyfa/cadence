@@ -1,6 +1,6 @@
 import type { Numeric } from '@meyfa/cadence-utility'
-import type { AssetCache } from './cache.js'
-import { createAssetCache } from './cache.js'
+import type { AssetCache } from './cache.ts'
+import { createAssetCache } from './cache.ts'
 
 export interface CacheLimits {
   readonly arrayBuffer: Numeric<'bytes'>

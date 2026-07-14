@@ -2,9 +2,9 @@ import type { BusId, InstrumentId } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createAudioGraphBuilder } from '../src/builder.js'
-import { createEntityKey } from '../src/entities.js'
-import type { NodeId } from '../src/graph.js'
+import { createAudioGraphBuilder } from '../src/builder.ts'
+import { createEntityKey } from '../src/entities.ts'
+import type { NodeId } from '../src/graph.ts'
 
 describe('builder.ts', () => {
   const tempo = 120 as Numeric<'bpm'>

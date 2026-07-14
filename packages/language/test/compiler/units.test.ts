@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { NumberFacet } from '../../src/type-system/base/number.js'
-import { SyntaxUnits, isSyntaxUnit, toBaseUnit, toNumberValue } from '../../src/compiler/units.js'
+import { NumberFacet } from '../../src/type-system/base/number.ts'
+import { SyntaxUnits, isSyntaxUnit, toBaseUnit, toNumberValue } from '../../src/compiler/units.ts'
 
 describe('compiler/units.ts', () => {
   describe('isSyntaxUnit()', () => {

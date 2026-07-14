@@ -2,9 +2,9 @@ import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { makeFacet, makeType, makeUnion } from '../../src/type-system/factory.js'
-import type { DataForFacet, DataForFacets, Value, ValueForType } from '../../src/type-system/types.js'
-import { expectTypeEquals } from '../test-utils.js'
+import { makeFacet, makeType, makeUnion } from '../../src/type-system/factory.ts'
+import type { DataForFacet, DataForFacets, Value, ValueForType } from '../../src/type-system/types.ts'
+import { expectTypeEquals } from '../test-utils.ts'
 
 const stringFacet = makeFacet<'string', string>('string', {})
 const numberFacet = makeFacet<'number', number>('number', {})
