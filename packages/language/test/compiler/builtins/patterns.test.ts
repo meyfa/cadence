@@ -38,7 +38,7 @@ function invoke (builtin: PatternBuiltin, self: Value<Facet<'pattern', Pattern>>
   return FunctionFacet.get(functionValue).invoke(context as never, args)
 }
 
-describe('library/modules/patterns.ts', () => {
+describe('compiler/builtins/patterns.ts', () => {
   const beats = (value: number) => value as Numeric<'beats'>
   const scalar = (value: number) => value as Numeric<undefined>
 
