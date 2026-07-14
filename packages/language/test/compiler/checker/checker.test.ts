@@ -622,6 +622,17 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject duplicate bus names across different mixers', () => {
+      const source = [
+        'm1 = mixer { bus foo {} }',
+        'm2 = mixer { bus foo {} }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate bus named "foo"'
+      ])
+    })
+
     it('should reject conflicting bus name and local variable name', () => {
       const source = [
         'mixer {',
@@ -940,13 +951,16 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should reject instrument expressions in non-blocking contexts', () => {
+    it('should reject blocking expressions in non-blocking contexts', () => {
       const source = [
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
         '  voice {',
-        '    foo = instrument {}',
+        '    inv_instrument = instrument {}',
+        '    inv_mixer = mixer {}',
+        '    inv_track = track {}',
+        '',
         '    envelope ~[lin(0.db, -60.db):100.ms]',
         '    output src.sine(440.hz)',
         '  }',
@@ -954,7 +968,9 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Cannot construct an instrument in a realtime context'
+        'Cannot construct an instrument in a realtime context',
+        'Cannot construct a mixer in a realtime context',
+        'Cannot construct a track in a realtime context'
       ])
     })
 

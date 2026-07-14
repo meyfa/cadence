@@ -629,7 +629,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'MixerStatement',
+        type: 'Mixer',
         properties: [],
         children: [
           {
@@ -704,7 +704,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'TrackStatement',
+        type: 'Track',
         properties: [],
         children: [
           {
@@ -757,7 +757,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'TrackStatement',
+        type: 'Track',
         properties: [],
         children: [
           {
@@ -768,7 +768,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'MixerStatement',
+        type: 'Mixer',
         properties: [],
         children: [
           {

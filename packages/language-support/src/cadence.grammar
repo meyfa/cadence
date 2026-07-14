@@ -56,7 +56,7 @@ Unit[@dynamicPrecedence=1] {
 }
 
 @top Program {
-  (UseStatement | Assignment | TrackStatement | MixerStatement)*
+  (UseStatement | Assignment | Track | Mixer)*
 }
 
 interpolationExpression {
@@ -113,7 +113,18 @@ argumentList {
 }
 
 primary {
-  "(" expression ")" | Number | String | Pattern | Curve | Instrument | Voice | Call | VariableName | BusNamespace
+  "(" expression ")" |
+  Call |
+  VariableName |
+  BusNamespace |
+  Number |
+  String |
+  Curve |
+  Instrument |
+  Mixer |
+  Pattern |
+  Track |
+  Voice
 }
 
 Call {
@@ -175,7 +186,7 @@ Automation {
   expression
 }
 
-TrackStatement {
+Track {
   kw<"track">
   ("(" argumentList? ")")?
   TrackBlock[group=Block] {
@@ -192,7 +203,7 @@ PartStatement {
   }
 }
 
-MixerStatement {
+Mixer {
   kw<"mixer">
   ("(" argumentList? ")")?
   MixerBlock[group=Block] {

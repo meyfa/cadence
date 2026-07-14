@@ -95,7 +95,7 @@ export interface Call extends ASTNode {
   readonly arguments: ReadonlyArray<Expression | Property>
 }
 
-export type Value = Identifier | Number | String | Pattern | Curve | Instrument | Voice
+export type Value = Identifier | Number | String | Pattern | Curve | Instrument | Voice | Mixer | Track
 export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAccess | Call
 
 // Composite Types
@@ -122,8 +122,8 @@ export type ArgumentList = ReadonlyArray<Expression | Property>
 
 // Domain Types
 
-export interface TrackStatement extends ASTNode {
-  readonly type: 'TrackStatement'
+export interface Track extends ASTNode {
+  readonly type: 'Track'
   readonly properties: ArgumentList
   readonly children: ReadonlyArray<Assignment | PartStatement>
 }
@@ -135,8 +135,8 @@ export interface PartStatement extends ASTNode {
   readonly children: ReadonlyArray<Assignment | Routing | AutomateStatement>
 }
 
-export interface MixerStatement extends ASTNode {
-  readonly type: 'MixerStatement'
+export interface Mixer extends ASTNode {
+  readonly type: 'Mixer'
   readonly properties: ArgumentList
   readonly children: ReadonlyArray<Assignment | BusStatement>
 }
@@ -188,7 +188,7 @@ export interface OutputStatement extends ASTNode {
 export interface Program extends ASTNode {
   readonly type: 'Program'
   readonly imports: readonly UseStatement[]
-  readonly children: ReadonlyArray<Assignment | TrackStatement | MixerStatement>
+  readonly children: ReadonlyArray<Assignment | Track | Mixer>
 }
 
 // Factory
@@ -230,9 +230,9 @@ export interface NodeByType {
   Assignment: Assignment
   Routing: Routing
 
-  TrackStatement: TrackStatement
+  Track: Track
   PartStatement: PartStatement
-  MixerStatement: MixerStatement
+  Mixer: Mixer
   BusStatement: BusStatement
   EffectStatement: EffectStatement
   AutomateStatement: AutomateStatement

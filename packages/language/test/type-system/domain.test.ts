@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, Parameter, ParameterId, Part, Pattern, Source, Voice } from '@meyfa/cadence-core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, Source, Track, Voice } from '@meyfa/cadence-core'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -9,10 +9,12 @@ import type { Curve } from '../../src/type-system/domain/curve.ts'
 import { CurveFacet } from '../../src/type-system/domain/curve.ts'
 import { EffectFacet } from '../../src/type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../src/type-system/domain/instrument.ts'
+import { MixerFacet } from '../../src/type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../src/type-system/domain/parameter.ts'
 import { PartFacet } from '../../src/type-system/domain/part.ts'
 import { PatternFacet } from '../../src/type-system/domain/pattern.ts'
 import { SourceFacet } from '../../src/type-system/domain/source.ts'
+import { TrackFacet } from '../../src/type-system/domain/track.ts'
 import { VoiceFacet } from '../../src/type-system/domain/voice.ts'
 import { expectTypeEquals } from '../test-utils.ts'
 
@@ -109,6 +111,16 @@ const voice: Voice = {
   })
 }
 
+const track: Track = {
+  tempo: 120 as Numeric<'bpm'>,
+  parts: [part]
+}
+
+const mixer: Mixer = {
+  buses: [bus],
+  routings: []
+}
+
 describe('type-system/domain', () => {
   describe('BusFacet', () => {
     it('should format and round-trip bus values', () => {
@@ -168,6 +180,18 @@ describe('type-system/domain', () => {
     })
   })
 
+  describe('MixerFacet', () => {
+    it('should format and round-trip mixer values', () => {
+      const value = MixerFacet.type().of(mixer)
+      const mixerData = MixerFacet.get(value)
+
+      expectTypeEquals<Mixer, typeof mixerData>()
+      assert.strictEqual(MixerFacet.format(), 'mixer')
+      assert.strictEqual(MixerFacet.has(value), true)
+      assert.strictEqual(mixerData, mixer)
+    })
+  })
+
   describe('ParameterFacet', () => {
     it('should support unit-specific parameters and detail()', () => {
       const genericValue = ParameterFacet.type().of(gainParameter)
@@ -222,6 +246,18 @@ describe('type-system/domain', () => {
       assert.strictEqual(SourceFacet.format(), 'source')
       assert.strictEqual(SourceFacet.has(value), true)
       assert.strictEqual(sourceData, source)
+    })
+  })
+
+  describe('TrackFacet', () => {
+    it('should format and round-trip track values', () => {
+      const value = TrackFacet.type().of(track)
+      const trackData = TrackFacet.get(value)
+
+      expectTypeEquals<Track, typeof trackData>()
+      assert.strictEqual(TrackFacet.format(), 'track')
+      assert.strictEqual(TrackFacet.has(value), true)
+      assert.strictEqual(trackData, track)
     })
   })
 
