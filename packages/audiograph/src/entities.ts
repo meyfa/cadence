@@ -1,5 +1,5 @@
-import type { BusId, InstrumentId } from '@core'
-import type { Brand } from '@utility'
+import type { BusId, InstrumentId } from '@meyfa/cadence-core'
+import type { Brand } from '@meyfa/cadence-utility'
 
 export type Entity = BusEntity | InstrumentEntity | OutputEntity
 

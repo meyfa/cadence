@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import type { Parameter } from './automations.js'
 import type { Effect } from './effects.js'
 import type { InstrumentId } from './instruments.js'

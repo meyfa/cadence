@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import type { SourceRange } from '../utilities/range.js'
 
 export type Model = BaseModel & ReferenceModel & KnownValueModel

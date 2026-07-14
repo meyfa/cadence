@@ -1,5 +1,5 @@
-import type { Documentation } from '@language'
-import { getDocumentation } from '@language'
+import type { Documentation } from '@meyfa/cadence-language'
+import { getDocumentation } from '@meyfa/cadence-language'
 import { findIdentifierAt } from '../model/query.js'
 import type { SemanticOperation } from '../utilities/operations.js'
 import type { SourceRange } from '../utilities/range.js'

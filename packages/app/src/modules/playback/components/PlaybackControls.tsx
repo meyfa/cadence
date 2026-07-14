@@ -1,5 +1,5 @@
-import type { CommandId } from '@editor'
-import { useCommandRegistry, useObservable } from '@editor'
+import type { CommandId } from '@meyfa/cadence-editor'
+import { useCommandRegistry, useObservable } from '@meyfa/cadence-editor'
 import { PlayArrowOutlined, StopOutlined } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Button } from '../../../components/button/Button.js'

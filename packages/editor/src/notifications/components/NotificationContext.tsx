@@ -1,4 +1,4 @@
-import { randomId } from '@utility'
+import { randomId } from '@meyfa/cadence-utility'
 import type { ComponentType, FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'

@@ -1,6 +1,6 @@
-import type { Asset, AssetId, NoteEvent } from '@core'
-import { isPitch } from '@core'
-import type { Numeric } from '@utility'
+import type { Asset, AssetId, NoteEvent } from '@meyfa/cadence-core'
+import { isPitch } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.js'
 

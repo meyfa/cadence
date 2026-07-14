@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { NoteEvent, Pattern, Step } from './types.js'
 
 const zeroBeats = 0 as Numeric<'beats'>

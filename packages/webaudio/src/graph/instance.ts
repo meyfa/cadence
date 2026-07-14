@@ -1,5 +1,5 @@
-import type { NoteEvent } from '@core'
-import type { Numeric } from '@utility'
+import type { NoteEvent } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 
 export interface Instance {
   readonly dispose: () => void

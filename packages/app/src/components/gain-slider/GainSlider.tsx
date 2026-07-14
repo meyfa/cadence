@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import { Slider } from '../slider/Slider.js'

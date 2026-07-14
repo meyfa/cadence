@@ -1,4 +1,4 @@
-import type { SourceRange } from '@ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
 import { RangeError } from '../result/errors.js'
 
 export class LexError extends RangeError {

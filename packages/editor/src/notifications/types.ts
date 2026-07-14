@@ -1,4 +1,4 @@
-import type { Brand, Numeric } from '@utility'
+import type { Brand, Numeric } from '@meyfa/cadence-utility'
 import type { ComponentType } from 'react'
 
 export type NotificationId = Brand<string, 'editor.NotificationId'>

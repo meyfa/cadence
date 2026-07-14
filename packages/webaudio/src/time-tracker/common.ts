@@ -1,4 +1,4 @@
-import type { Numeric, Observable } from '@utility'
+import type { Numeric, Observable } from '@meyfa/cadence-utility'
 
 export interface TimeTrackerOptions {
   readonly updateInterval: Numeric<'s'>

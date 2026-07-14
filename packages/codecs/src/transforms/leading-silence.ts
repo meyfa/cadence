@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { ConcatenatedAudioBuffer } from '../common/concatenated-audio-buffer.js'
 import { ConstantAudioBuffer } from '../common/constant-audio-buffer.js'
 import type { AudioBufferTransform } from '../common/types.js'

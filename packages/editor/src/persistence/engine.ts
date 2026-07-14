@@ -1,4 +1,4 @@
-import { randomId } from '@utility'
+import { randomId } from '@meyfa/cadence-utility'
 import type { PersistenceDomain, PersistenceEvent, StorageBackend, StoredValue } from './types.js'
 
 export class PersistenceEngine {

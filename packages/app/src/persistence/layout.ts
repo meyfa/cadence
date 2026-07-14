@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, SplitOrientation, Tab, TabId } from '@editor'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, SplitNode, SplitOrientation, Tab, TabId } from '@meyfa/cadence-editor'
 import type { Struct } from 'superstruct'
 import { array, enums, lazy, literal, number, optional, record, string, type, union, unknown } from 'superstruct'
 import type { StructValidation } from '../utilities/validation.js'

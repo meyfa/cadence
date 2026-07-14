@@ -1,4 +1,4 @@
-import type { Numeric, Unit } from '@utility'
+import type { Numeric, Unit } from '@meyfa/cadence-utility'
 
 export type CurveShape = 'step' | 'linear' | 'exponential'
 

@@ -1,4 +1,4 @@
-import type { Brand, Numeric } from '@utility'
+import type { Brand, Numeric } from '@meyfa/cadence-utility'
 import type { Pitch } from '../pattern/types.js'
 
 // Note: Actual MIDI supports 0-127 (C-1 through G9), but for syntactical

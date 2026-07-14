@@ -1,4 +1,4 @@
-import type { Numeric, RuntimeNumeric } from '@utility'
+import type { Numeric, RuntimeNumeric } from '@meyfa/cadence-utility'
 import type { Parameter } from './automations.js'
 
 export type Effect =

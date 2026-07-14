@@ -1,4 +1,4 @@
-import type { StepValue } from '@core'
+import type { StepValue } from '@meyfa/cadence-core'
 import type { SourceRange } from './range.js'
 
 export interface ASTNode {

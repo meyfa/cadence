@@ -1,4 +1,4 @@
-import type { Unit } from '@utility'
+import type { Unit } from '@meyfa/cadence-utility'
 import type { Curve } from '../curve/types.js'
 import type { Asset, AssetId } from './assets.js'
 import type { ParameterId } from './automations.js'

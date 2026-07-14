@@ -1,4 +1,4 @@
-import { parseStringLiteral } from '@language'
+import { parseStringLiteral } from '@meyfa/cadence-language'
 import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { SourceRange } from '../../utilities/range.js'
 import type { TextLike } from '../../utilities/text.js'

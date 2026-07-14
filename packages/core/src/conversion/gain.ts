@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 
 export function dbToGain (value: Numeric<'db'>): Numeric<undefined> {
   if (Number.isNaN(value) || (value > 0 && !Number.isFinite(value))) {

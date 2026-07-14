@@ -1,5 +1,5 @@
-import type { FooterInsert } from '@editor'
-import { useCommandRegistry, useModules } from '@editor'
+import type { FooterInsert } from '@meyfa/cadence-editor'
+import { useCommandRegistry, useModules } from '@meyfa/cadence-editor'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useMemo } from 'react'
 

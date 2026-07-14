@@ -2,7 +2,7 @@ import type { FunctionComponent, PropsWithChildren } from 'react'
 import { createContext, useCallback, useLayoutEffect, useMemo, useState } from 'react'
 import { useSafeContext } from '../../hooks/safe-context.js'
 import type { Problem } from '../types.js'
-import { randomId } from '@utility'
+import { randomId } from '@meyfa/cadence-utility'
 
 type UndoInsert = () => void
 

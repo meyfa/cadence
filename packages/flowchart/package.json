@@ -5,6 +5,7 @@
   "author": "Fabian Meyer",
   "license": "Apache-2.0",
   "type": "module",
+  "main": "src/index.ts",
   "scripts": {
     "test": "tsx --test \"test/**/*.test.ts\""
   },

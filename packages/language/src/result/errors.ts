@@ -1,4 +1,4 @@
-import type { SourceRange } from '@ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
 
 export class CompoundError<TError extends Error> extends Error {
   readonly errors: readonly TError[]

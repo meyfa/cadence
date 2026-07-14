@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
 import type { CommandId } from '../commands/commands.js'
 import type { MenuItemDefinition, MenuSectionDefinition } from '../commands/menus.js'

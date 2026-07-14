@@ -1,4 +1,4 @@
-import { convertPitchToMidi } from '@core'
+import { convertPitchToMidi } from '@meyfa/cadence-core'
 import { NumberFacet } from '../type-system/base/number.js'
 import { RecordFacet } from '../type-system/base/record.js'
 import { makeSchema } from '../type-system/schema.js'

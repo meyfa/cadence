@@ -1,4 +1,4 @@
-import type { Effect } from '@core'
+import type { Effect } from '@meyfa/cadence-core'
 import { makeFacet } from '../factory.js'
 
 const FACET_NAME = 'effect'

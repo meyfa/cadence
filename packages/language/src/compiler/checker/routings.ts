@@ -1,5 +1,5 @@
-import type { SourceRange } from '@ast'
-import { getEmptySourceRange } from '@ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
+import { getEmptySourceRange } from '@meyfa/cadence-ast'
 import { CompileError } from '../error.js'
 
 export interface Bus {

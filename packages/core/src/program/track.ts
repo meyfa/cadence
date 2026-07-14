@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { Pattern } from '../pattern/types.js'
 import type { InstrumentId } from './instruments.js'
 

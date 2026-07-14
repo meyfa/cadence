@@ -1,6 +1,6 @@
 import type { EditorView } from '@codemirror/view'
-import type { EditorLocation, TabId } from '@editor'
-import { useSafeContext } from '@editor'
+import type { EditorLocation, TabId } from '@meyfa/cadence-editor'
+import { useSafeContext } from '@meyfa/cadence-editor'
 import type { Dispatch, FunctionComponent, PropsWithChildren, RefObject, SetStateAction } from 'react'
 import { createContext, useReducer, useRef } from 'react'
 

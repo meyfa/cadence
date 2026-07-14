@@ -1,4 +1,4 @@
-import type { Brand, Numeric, Unit } from '@utility'
+import type { Brand, Numeric, Unit } from '@meyfa/cadence-utility'
 
 export type ParameterId = Brand<number, 'core.ParameterId'>
 

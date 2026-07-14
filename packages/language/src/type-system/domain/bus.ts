@@ -1,4 +1,4 @@
-import type { Bus } from '@core'
+import type { Bus } from '@meyfa/cadence-core'
 import { makeFacet } from '../factory.js'
 
 const FACET_NAME = 'bus'

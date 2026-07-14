@@ -1,5 +1,5 @@
-import type { DockLayoutStyles, MenuId, MenuSpec } from '@editor'
-import { DockLayoutView, useLayout, useLayoutDispatch, useLoadSettled, useRegisterMenu } from '@editor'
+import type { DockLayoutStyles, MenuId, MenuSpec } from '@meyfa/cadence-editor'
+import { DockLayoutView, useLayout, useLayoutDispatch, useLoadSettled, useRegisterMenu } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { ConfirmationDialog } from './components/dialog/ConfirmationDialog.js'
 import { Footer } from './components/footer/Footer.js'

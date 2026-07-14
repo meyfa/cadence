@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it, vi } from 'vitest'
 import { useDebouncedValue } from '../../src/hooks/debounced-value.js'
 

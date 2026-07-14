@@ -1,5 +1,5 @@
-import type { Bus, BusId, Instrument, InstrumentId, Program } from '@core'
-import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeId } from '@flowchart'
+import type { Bus, BusId, Instrument, InstrumentId, Program } from '@meyfa/cadence-core'
+import type { FlowEdge, FlowEdgeId, FlowEdgeStyle, FlowNode, FlowNodeId } from '@meyfa/cadence-flowchart'
 
 const mixerObjectTypes = ['bus', 'instrument'] as const
 type MixerObjectType = typeof mixerObjectTypes[number]

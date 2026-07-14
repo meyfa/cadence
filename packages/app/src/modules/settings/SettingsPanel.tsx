@@ -1,5 +1,5 @@
-import type { PanelProps } from '@editor'
-import { useModules } from '@editor'
+import type { PanelProps } from '@meyfa/cadence-editor'
+import { useModules } from '@meyfa/cadence-editor'
 import { GitHub } from '@mui/icons-material'
 import type { FunctionComponent } from 'react'
 import { Card } from '../../components/card/Card.js'

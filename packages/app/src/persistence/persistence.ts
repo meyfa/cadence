@@ -1,5 +1,5 @@
-import type { DockLayout, PersistenceDomain, ProjectSource } from '@editor'
-import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch } from '@editor'
+import type { DockLayout, PersistenceDomain, ProjectSource } from '@meyfa/cadence-editor'
+import { createProjectSourceState, useLayout, useLayoutDispatch, usePersistentBinding, useProjectSource, useProjectSourceDispatch } from '@meyfa/cadence-editor'
 import { useCallback, useMemo } from 'react'
 import { record, string, type } from 'superstruct'
 import { defaultLayout } from '../defaults/default-layout.js'

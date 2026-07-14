@@ -1,5 +1,5 @@
-import type { CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
-import { useDialogService, useRegisterCommand } from '@editor'
+import type { CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@meyfa/cadence-editor'
+import { useDialogService, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { ExportDialog } from './ExportDialog.js'
 

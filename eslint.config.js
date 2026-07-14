@@ -3,9 +3,6 @@ import eslintConfig from '@meyfa/eslint-config'
 import pluginReact from 'eslint-plugin-react'
 import pluginReactHooks from 'eslint-plugin-react-hooks'
 import { defineConfig } from 'eslint/config'
-import assert from 'node:assert'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 
 const packages = [
   {
@@ -22,7 +19,7 @@ const packages = [
       'utility',
       'webaudio'
     ],
-    anonymous: true // not exposed via "@app"
+    anonymous: true // not exposed via "@meyfa/cadence-app"
   },
   {
     name: 'ast',
@@ -93,17 +90,13 @@ const packages = [
   }
 ]
 
-// Ensure that the above list is synced with the TSConfig
-const tsconfigPath = path.resolve(import.meta.dirname, './tsconfig.base.json')
-const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf-8'))
-const tsconfigPackages = Object.keys(tsconfig.compilerOptions.paths).map((key) => {
-  return key.replace(/^@/, '')
-})
-assert.deepStrictEqual(
-  tsconfigPackages.sort(),
-  packages.filter((pkg) => pkg.anonymous !== true).map((pkg) => pkg.name).sort(),
-  'The package list in eslint.config.js is out of sync with tsconfig.base.json'
-)
+/**
+ * @param {{ name: string }} pkg
+ * @returns {string}
+ */
+function formatPackageName (pkg) {
+  return `@meyfa/cadence-${pkg.name}`
+}
 
 /**
  * @type {import('eslint').Linter.Config}
@@ -116,7 +109,7 @@ const crossPackageRelativeImportRestrictions = {
         .filter((pkg) => pkg.anonymous !== true)
         .map((pkg) => ({
           group: [`**/${pkg.name}/src`, `**/${pkg.name}/src/**`],
-          message: `Use @${pkg.name} imports instead of relative paths into the ${pkg.name} package.`
+          message: `Use ${formatPackageName(pkg)} imports instead of relative paths into the ${pkg.name} package.`
         }))
     }]
   }
@@ -133,8 +126,8 @@ const selfImportRestrictions = packages
       'no-restricted-imports': ['error', {
         patterns: [
           {
-            group: [`@${pkg.name}`, `@${pkg.name}/*`],
-            message: `Use relative imports instead of @${pkg.name} within the ${pkg.name} package.`
+            group: [formatPackageName(pkg), `${formatPackageName(pkg)}/*`],
+            message: `Use relative imports instead of ${formatPackageName(pkg)} within the ${pkg.name} package.`
           },
           {
             group: [`**/${pkg.name}/src`, `**/${pkg.name}/src/**`],
@@ -144,7 +137,7 @@ const selfImportRestrictions = packages
             .filter((otherPkg) => otherPkg.anonymous !== true && otherPkg.name !== pkg.name)
             .map((otherPkg) => ({
               group: [`**/${otherPkg.name}/src`, `**/${otherPkg.name}/src/**`],
-              message: `Use @${otherPkg.name} imports instead of relative paths into the ${otherPkg.name} package.`
+              message: `Use ${formatPackageName(otherPkg)} imports instead of relative paths into the ${otherPkg.name} package.`
             }))
         ]
       }]

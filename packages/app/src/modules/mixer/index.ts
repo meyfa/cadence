@@ -1,5 +1,5 @@
-import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@editor'
-import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@editor'
+import type { CommandId, MenuSectionId, Module, ModuleId, PanelId } from '@meyfa/cadence-editor'
+import { activateTabOfType, useLayoutDispatch, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { MixerPanel } from './MixerPanel.js'
 

@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { useCallback, useEffect, useRef } from 'react'
 
 export type PushOrigin<T> = (origin: T) => boolean

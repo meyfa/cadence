@@ -1,5 +1,5 @@
-import type { Node } from '@audiograph'
-import type { AssetId } from '@core'
+import type { Node } from '@meyfa/cadence-audiograph'
+import type { AssetId } from '@meyfa/cadence-core'
 import type { Transport } from '../transport/transport.js'
 import type { GainMeasurement } from '../worklets/metering/messages.js'
 import { createBiquadInstance, createDelayInstance, createGainInstance, createIdentityInstance, createPanInstance, createReverbInstance, createWaveShaperInstance, createWidthInstance } from './effect.js'

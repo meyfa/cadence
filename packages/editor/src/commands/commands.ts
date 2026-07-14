@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import type { KeyboardShortcut } from '../input/keyboard-shortcuts.js'
 
 export type CommandId = Brand<string, 'editor.CommandId'>

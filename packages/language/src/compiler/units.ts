@@ -1,4 +1,4 @@
-import type { Numeric, Unit } from '@utility'
+import type { Numeric, Unit } from '@meyfa/cadence-utility'
 import type { Value } from '../type-system/types.js'
 import { Numbers } from '../type-system/helpers.js'
 

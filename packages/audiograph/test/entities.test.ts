@@ -1,4 +1,4 @@
-import type { BusId, InstrumentId } from '@core'
+import type { BusId, InstrumentId } from '@meyfa/cadence-core'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createEntityKey } from '../src/entities.js'

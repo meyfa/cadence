@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it } from 'vitest'
 import { createDelayInstance, createWidthInstance } from '../../src/graph/effect.js'
 import type { Transport } from '../../src/transport/transport.js'

@@ -1,4 +1,4 @@
-import type { NotificationComponentProps } from '@editor'
+import type { NotificationComponentProps } from '@meyfa/cadence-editor'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 

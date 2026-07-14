@@ -1,4 +1,4 @@
-import { useObservable } from '@editor'
+import { useObservable } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { Card } from '../../../components/card/Card.js'
 import { GainSlider } from '../../../components/gain-slider/GainSlider.js'

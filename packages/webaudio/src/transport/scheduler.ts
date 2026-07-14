@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { insertSorted } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
+import { insertSorted } from '@meyfa/cadence-utility'
 
 export interface Scheduler {
   /**

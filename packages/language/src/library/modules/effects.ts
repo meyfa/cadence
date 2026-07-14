@@ -1,5 +1,5 @@
-import type { Effect } from '@core'
-import type { Numeric } from '@utility'
+import type { Effect } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { ParameterContext } from '../../compiler/generator/scopes.js'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { RecordFacet } from '../../type-system/base/record.js'

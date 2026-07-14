@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import type { ComponentType } from 'react'
 
 export type DialogId = Brand<string, 'editor.DialogId'>
