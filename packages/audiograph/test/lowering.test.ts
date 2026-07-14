@@ -470,7 +470,8 @@ describe('lowering.ts', () => {
                   id: instrumentId
                 }
               } satisfies InstrumentRouting
-            ]
+            ],
+            automations: []
           },
           {
             name: 'Part 2',
@@ -489,7 +490,8 @@ describe('lowering.ts', () => {
                   id: instrumentId
                 }
               } satisfies InstrumentRouting
-            ]
+            ],
+            automations: []
           }
         ]
       },

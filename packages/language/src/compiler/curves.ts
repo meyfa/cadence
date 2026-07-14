@@ -1,7 +1,6 @@
-import type { CurvePoint, CurveShape } from '@meyfa/cadence-core'
+import type { CurveDuration, CurvePoint, CurveShape, HoldSegment, LinearSegment, RelativeCurve, RelativeCurveSegment } from '@meyfa/cadence-core'
 import { timeToSeconds } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
-import type { Curve, CurveDuration, CurveSegment, HoldCurveSegment, LinearCurveSegment } from '../type-system/domain/curve.ts'
 import { assert, nonNull } from './assert.ts'
 
 const SEGMENT_TYPE_HOLD = 'hold'
@@ -10,11 +9,11 @@ const SEGMENT_TYPE_LINEAR = 'lin'
 const TIME_EPSILON = 1e-6 // 1 microsecond, which is less than 1 sample at 96 kHz
 
 export interface CurveSegmentType {
-  readonly type: CurveSegment<any>['type']
+  readonly type: RelativeCurveSegment<any>['type']
   readonly parameterCount: number
-  readonly create: <U extends Unit>(parameters: ReadonlyArray<RuntimeNumeric<U>>, length: CurveDuration) => CurveSegment<U>
-  readonly start: <U extends Unit>(segment: CurveSegment<U>) => RuntimeNumeric<U>
-  readonly end: <U extends Unit>(segment: CurveSegment<U>) => RuntimeNumeric<U>
+  readonly create: <U extends Unit>(parameters: ReadonlyArray<RuntimeNumeric<U>>, length: CurveDuration) => RelativeCurveSegment<U>
+  readonly start: <U extends Unit>(segment: RelativeCurveSegment<U>) => RuntimeNumeric<U>
+  readonly end: <U extends Unit>(segment: RelativeCurveSegment<U>) => RuntimeNumeric<U>
   readonly endShape: CurveShape
 }
 
@@ -26,8 +25,8 @@ const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
       const [value] = parameters
       return { type: SEGMENT_TYPE_HOLD, length, unit: value.unit, value }
     },
-    start: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
-    end: <U extends Unit>(segment: CurveSegment<U>) => (segment as HoldCurveSegment<U>).value,
+    start: <U extends Unit>(segment: RelativeCurveSegment<U>) => (segment as HoldSegment<U>).value,
+    end: <U extends Unit>(segment: RelativeCurveSegment<U>) => (segment as HoldSegment<U>).value,
     endShape: 'step'
   }],
 
@@ -38,8 +37,8 @@ const curveSegmentTypes: ReadonlyMap<string, CurveSegmentType> = new Map([
       const [start, end] = parameters
       return { type: SEGMENT_TYPE_LINEAR, length, unit: start.unit, start, end }
     },
-    start: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).start,
-    end: <U extends Unit>(segment: CurveSegment<U>) => (segment as LinearCurveSegment<U>).end,
+    start: <U extends Unit>(segment: RelativeCurveSegment<U>) => (segment as LinearSegment<U>).start,
+    end: <U extends Unit>(segment: RelativeCurveSegment<U>) => (segment as LinearSegment<U>).end,
     endShape: 'linear'
   }]
 ])
@@ -48,7 +47,7 @@ export function getCurveSegmentType (type: string): CurveSegmentType | undefined
   return curveSegmentTypes.get(type)
 }
 
-export function createCurve<U extends Unit> (segments: ReadonlyArray<CurveSegment<U>>): Curve<U> {
+export function createCurve<U extends Unit> (segments: ReadonlyArray<RelativeCurveSegment<U>>): RelativeCurve<U> {
   const unit = segments.at(0)?.unit as U
   return { unit, segments }
 }
@@ -57,7 +56,7 @@ export function createCurveSegment<U extends Unit> (
   type: string,
   parameters: ReadonlyArray<RuntimeNumeric<U>>,
   length: CurveDuration
-): CurveSegment<U> {
+): RelativeCurveSegment<U> {
   const definition = nonNull(curveSegmentTypes.get(type), `Unknown curve segment type: ${type}`)
   assert(definition.parameterCount === parameters.length, 'Invalid curve parameters')
 
@@ -70,7 +69,7 @@ export interface RenderCurveOptions {
   readonly tempo: Numeric<'bpm'>
 }
 
-export function renderCurvePoints<U extends Unit> (curve: Curve<U>, options: RenderCurveOptions): ReadonlyArray<CurvePoint<'s', U>> {
+export function renderCurvePoints<U extends Unit> (curve: RelativeCurve<U>, options: RenderCurveOptions): ReadonlyArray<CurvePoint<'s', U>> {
   const segments = curve.segments
   if (segments.length === 0 || (options.limit != null && options.limit <= 0)) {
     return []

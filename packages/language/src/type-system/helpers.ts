@@ -1,4 +1,4 @@
-import type { Parameter } from '@meyfa/cadence-core'
+import type { Parameter, RelativeCurve } from '@meyfa/cadence-core'
 import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import type { Function } from './base/function.ts'
 import { FunctionFacet } from './base/function.ts'
@@ -6,12 +6,11 @@ import type { Module } from './base/module.ts'
 import { ModuleFacet } from './base/module.ts'
 import { NumberFacet } from './base/number.ts'
 import { RecordFacet } from './base/record.ts'
+import { CurveFacet } from './domain/curve.ts'
 import { ParameterFacet } from './domain/parameter.ts'
 import { makeType } from './factory.ts'
 import type { Schema } from './schema.ts'
 import type { Facet, FacetType, Value } from './types.ts'
-import type { Curve } from './domain/curve.ts'
-import { CurveFacet } from './domain/curve.ts'
 
 export const Functions = {
   of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
@@ -58,7 +57,7 @@ export const Parameters = {
 }
 
 export const Curves = {
-  of: <const U extends Unit> (value: Curve<U>): Value<Facet<'curve', Curve<U>>> => {
+  of: <const U extends Unit> (value: RelativeCurve<U>): Value<Facet<'curve', RelativeCurve<U>>> => {
     return CurveFacet.with(value.unit).type().of(value)
   }
 }
