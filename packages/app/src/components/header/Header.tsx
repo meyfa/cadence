@@ -1,5 +1,5 @@
-import type { HeaderInsert } from '@editor'
-import { useModules } from '@editor'
+import type { HeaderInsert } from '@meyfa/cadence-editor'
+import { useModules } from '@meyfa/cadence-editor'
 import type { FunctionComponent, ReactNode } from 'react'
 import { useMemo } from 'react'
 import { MainMenu } from '../commands/MainMenu.js'

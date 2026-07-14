@@ -1,5 +1,5 @@
-import type { Numeric, Observable } from '@utility'
-import { DisposeStack, MutableObservable } from '@utility'
+import type { Numeric, Observable } from '@meyfa/cadence-utility'
+import { DisposeStack, MutableObservable } from '@meyfa/cadence-utility'
 import { createIntervalTimeTracker } from '../time-tracker/interval.js'
 import { createWorkletTimeTracker } from '../time-tracker/worklet.js'
 import { createImmediateScheduler, createRealtimeScheduler } from './scheduler.js'

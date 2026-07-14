@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 
 interface AudioContextWithWorklet extends BaseAudioContext {
   readonly audioWorklet: AudioWorklet

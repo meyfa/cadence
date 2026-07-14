@@ -1,5 +1,5 @@
-import type { PersistenceDomain } from '@editor'
-import { usePersistentBinding } from '@editor'
+import type { PersistenceDomain } from '@meyfa/cadence-editor'
+import { usePersistentBinding } from '@meyfa/cadence-editor'
 import { useRef } from 'react'
 import type { Struct } from 'superstruct'
 import { enums, type } from 'superstruct'

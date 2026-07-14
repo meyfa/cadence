@@ -1,4 +1,4 @@
-import type { Instrument } from '@core'
+import type { Instrument } from '@meyfa/cadence-core'
 import { makeFacet } from '../factory.js'
 
 const FACET_NAME = 'instrument'

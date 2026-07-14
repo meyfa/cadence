@@ -1,4 +1,4 @@
-import type { Part } from '@core'
+import type { Part } from '@meyfa/cadence-core'
 import { makeFacet } from '../factory.js'
 
 const FACET_NAME = 'part'

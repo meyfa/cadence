@@ -1,5 +1,5 @@
-import type { BusId, InstrumentId } from '@core'
-import type { Numeric } from '@utility'
+import type { BusId, InstrumentId } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { createAudioGraphBuilder } from '../src/builder.js'

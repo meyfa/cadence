@@ -1,6 +1,6 @@
-import type { CurvePoint, CurveShape } from '@core'
-import { timeToSeconds } from '@core'
-import type { Numeric, RuntimeNumeric, Unit } from '@utility'
+import type { CurvePoint, CurveShape } from '@meyfa/cadence-core'
+import { timeToSeconds } from '@meyfa/cadence-core'
+import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import type { Curve, CurveDuration, CurveSegment, HoldCurveSegment, LinearCurveSegment } from '../type-system/domain/curve.js'
 import { assert, nonNull } from './assert.js'
 

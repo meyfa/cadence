@@ -1,5 +1,5 @@
 import { VolumeDownOutlined, VolumeOffOutlined, VolumeUpOutlined } from '@mui/icons-material'
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { FunctionComponent } from 'react'
 
 export const GainIcon: FunctionComponent<{

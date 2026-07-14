@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 
 export interface AssetCacheOptions<T> {
   readonly maxSize: Numeric<'bytes'>

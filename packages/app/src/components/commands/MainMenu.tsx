@@ -1,5 +1,5 @@
-import type { Command, CommandId, Menu, MenuId, MenuSection } from '@editor'
-import { useAppMenus, useCommandRegistry } from '@editor'
+import type { Command, CommandId, Menu, MenuId, MenuSection } from '@meyfa/cadence-editor'
+import { useAppMenus, useCommandRegistry } from '@meyfa/cadence-editor'
 import { MenuButton, Menu as MenuContainer, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react'
 import { ArrowLeft, ArrowRight, Menu as MenuIcon } from '@mui/icons-material'
 import clsx from 'clsx'

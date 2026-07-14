@@ -1,4 +1,4 @@
-import type { Module, ModuleId } from '@editor'
+import type { Module, ModuleId } from '@meyfa/cadence-editor'
 import { CommandPalette } from './CommandPalette.js'
 
 const moduleId = 'command-palette' as ModuleId

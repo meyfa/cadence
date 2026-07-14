@@ -1,8 +1,8 @@
-import type { Program } from '@core'
-import type { ProjectSource } from '@editor'
-import { getProjectFileContent } from '@editor'
-import type { CheckedProgram, GenerateOptions } from '@language'
-import { check, CompoundError, generate, lex, parse, RangeError, Result } from '@language'
+import type { Program } from '@meyfa/cadence-core'
+import type { ProjectSource } from '@meyfa/cadence-editor'
+import { getProjectFileContent } from '@meyfa/cadence-editor'
+import type { CheckedProgram, GenerateOptions } from '@meyfa/cadence-language'
+import { check, CompoundError, generate, lex, parse, RangeError, Result } from '@meyfa/cadence-language'
 import { useMemo } from 'react'
 import { TRACK_FILE_PATH } from '../persistence/constants.js'
 

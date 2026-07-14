@@ -1,5 +1,5 @@
-import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@core'
-import type { Numeric, Unit } from '@utility'
+import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@meyfa/cadence-core'
+import type { Numeric, Unit } from '@meyfa/cadence-utility'
 import type { Value } from '../../type-system/types.js'
 import type { GenerateOptions } from './options.js'
 

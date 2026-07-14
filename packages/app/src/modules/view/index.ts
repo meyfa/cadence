@@ -1,5 +1,5 @@
-import type { Command, CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@editor'
-import { useLayoutDispatch, useRegisterCommand } from '@editor'
+import type { Command, CommandId, MenuId, MenuSectionId, Module, ModuleId } from '@meyfa/cadence-editor'
+import { useLayoutDispatch, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { defaultLayout } from '../../defaults/default-layout.js'
 import { applyThemeSetting } from '../../theme.js'

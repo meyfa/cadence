@@ -1,4 +1,4 @@
-import type { Pattern } from '@core'
+import type { Pattern } from '@meyfa/cadence-core'
 import { makeFacet } from '../factory.js'
 
 const FACET_NAME = 'pattern'

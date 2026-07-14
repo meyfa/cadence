@@ -1,4 +1,4 @@
-import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WaveShaperNode, WidthNode } from '@audiograph'
+import type { BiquadNode, DelayNode, GainNode, IdentityNode, PanNode, ReverbNode, WaveShaperNode, WidthNode } from '@meyfa/cadence-audiograph'
 import type { Transport } from '../transport/transport.js'
 import { automate } from './automation.js'
 import type { Instance } from './instance.js'

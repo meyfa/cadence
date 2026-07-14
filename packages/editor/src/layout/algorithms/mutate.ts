@@ -1,4 +1,4 @@
-import { insertAt, randomId, removeAt } from '@utility'
+import { insertAt, randomId, removeAt } from '@meyfa/cadence-utility'
 import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SerializedComponent, Tab, TabId } from '../types.js'
 import { findNodeById, findPaneById, findPaneByTabId, findTabByComponentType } from './find.js'
 import { updateNodesInLayout } from './internal.js'

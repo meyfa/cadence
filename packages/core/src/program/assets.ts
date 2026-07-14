@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 
 export type AssetId = Brand<number, 'core.AssetId'>
 

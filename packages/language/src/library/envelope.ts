@@ -1,6 +1,6 @@
-import type { Curve, CurvePoint } from '@core'
-import { gainToDb } from '@core'
-import type { Numeric } from '@utility'
+import type { Curve, CurvePoint } from '@meyfa/cadence-core'
+import { gainToDb } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 
 export interface Envelope {
   readonly attack: Numeric<'s'>

@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNodeId, TabId } from '@editor'
+import type { DockLayout, LayoutNodeId, TabId } from '@meyfa/cadence-editor'
 import { editorPanelId } from '../modules/editor/index.js'
 import type { EditorPanelProps } from '../modules/editor/panel-props.js'
 import { mixerPanelId } from '../modules/mixer/index.js'

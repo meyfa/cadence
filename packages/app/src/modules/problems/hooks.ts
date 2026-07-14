@@ -1,5 +1,5 @@
-import type { ProblemKind } from '@editor'
-import { useProblems } from '@editor'
+import type { ProblemKind } from '@meyfa/cadence-editor'
+import { useProblems } from '@meyfa/cadence-editor'
 import { useMemo } from 'react'
 
 export function useProblemCountByKind (): Record<ProblemKind, number> {

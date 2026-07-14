@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { mulberry32, xmur3 } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
+import { mulberry32, xmur3 } from '@meyfa/cadence-utility'
 
 type CreateAudioBuffer = (options: AudioBufferOptions) => AudioBuffer
 

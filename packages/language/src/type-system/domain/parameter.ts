@@ -1,5 +1,5 @@
-import type { Parameter } from '@core'
-import type { Unit } from '@utility'
+import type { Parameter } from '@meyfa/cadence-core'
+import type { Unit } from '@meyfa/cadence-utility'
 import { makeFacet } from '../factory.js'
 import type { Facet, FacetType } from '../types.js'
 

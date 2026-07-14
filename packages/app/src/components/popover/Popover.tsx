@@ -1,4 +1,4 @@
-import { useGlobalEscapePress, useGlobalMouseUp } from '@editor'
+import { useGlobalEscapePress, useGlobalMouseUp } from '@meyfa/cadence-editor'
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
 import type { FunctionComponent, PropsWithChildren } from 'react'
 import { useCallback, useRef } from 'react'

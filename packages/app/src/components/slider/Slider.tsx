@@ -1,4 +1,4 @@
-import { useGlobalEscapePress, useGlobalMouseUp } from '@editor'
+import { useGlobalEscapePress, useGlobalMouseUp } from '@meyfa/cadence-editor'
 import { Adjust } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'

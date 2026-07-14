@@ -1,5 +1,5 @@
-import type { KeyboardShortcut } from '@editor'
-import { parseKeyboardShortcut } from '@editor'
+import type { KeyboardShortcut } from '@meyfa/cadence-editor'
+import { parseKeyboardShortcut } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { Fragment } from 'react'
 

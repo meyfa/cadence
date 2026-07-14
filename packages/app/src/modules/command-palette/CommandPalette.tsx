@@ -1,5 +1,5 @@
-import type { Command, CommandId } from '@editor'
-import { useCommandRegistry, useGlobalEscapePress, useRegisterCommand } from '@editor'
+import type { Command, CommandId } from '@meyfa/cadence-editor'
+import { useCommandRegistry, useGlobalEscapePress, useRegisterCommand } from '@meyfa/cadence-editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent, ReactNode } from 'react'

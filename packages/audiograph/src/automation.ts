@@ -1,6 +1,6 @@
-import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@core'
-import { dbToGain } from '@core'
-import type { Numeric, Unit } from '@utility'
+import type { Curve, CurvePoint, CurveShape, Parameter, Program } from '@meyfa/cadence-core'
+import { dbToGain } from '@meyfa/cadence-core'
+import type { Numeric, Unit } from '@meyfa/cadence-utility'
 
 export interface Transform<FromUnit extends Unit, ToUnit extends Unit> {
   readonly transformValue: (value: Numeric<FromUnit>) => Numeric<ToUnit>

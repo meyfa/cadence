@@ -1,5 +1,5 @@
-import type { Parameter } from '@core'
-import type { RuntimeNumeric, Unit } from '@utility'
+import type { Parameter } from '@meyfa/cadence-core'
+import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import type { Function } from './base/function.js'
 import { FunctionFacet } from './base/function.js'
 import type { Module } from './base/module.js'

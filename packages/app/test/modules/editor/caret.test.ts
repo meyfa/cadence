@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNodeId, PanelId, TabId } from '@editor'
+import type { DockLayout, LayoutNodeId, PanelId, TabId } from '@meyfa/cadence-editor'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { getFocusedEditorCaret, getFocusedEditorFilePath } from '../../../src/modules/editor/caret.js'

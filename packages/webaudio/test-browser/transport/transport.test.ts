@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { describe, expect, it } from 'vitest'
 import { createOfflineTransport } from '../../src/transport/transport.js'
 

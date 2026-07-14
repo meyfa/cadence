@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
+import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.js'

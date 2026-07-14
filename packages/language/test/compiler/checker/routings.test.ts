@@ -1,4 +1,4 @@
-import type { SourceRange } from '@ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { checkCyclicRoutings } from '../../../src/compiler/checker/routings.js'

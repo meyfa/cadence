@@ -1,5 +1,5 @@
-import type { GainMeterNode } from '@audiograph'
-import type { UnsubscribeFn } from '@utility'
+import type { GainMeterNode } from '@meyfa/cadence-audiograph'
+import type { UnsubscribeFn } from '@meyfa/cadence-utility'
 import type { Transport } from '../transport/transport.js'
 import { createGainMeter } from '../worklets/metering/factory.js'
 import type { Assets, MeterCallbacks } from './factory.js'

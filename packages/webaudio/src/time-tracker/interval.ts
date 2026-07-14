@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { MutableObservable } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
+import { MutableObservable } from '@meyfa/cadence-utility'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 
 export function createIntervalTimeTracker (ctx: BaseAudioContext, options: TimeTrackerOptions): TimeTracker {

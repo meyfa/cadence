@@ -1,5 +1,5 @@
-import type { DialogComponentProps, PanelId } from '@editor'
-import { activateTabOfType, setProjectFileContent, useLayoutDispatch, useProjectSourceDispatch } from '@editor'
+import type { DialogComponentProps, PanelId } from '@meyfa/cadence-editor'
+import { activateTabOfType, setProjectFileContent, useLayoutDispatch, useProjectSourceDispatch } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { useCallback } from 'react'
 import { ConfirmationDialog } from '../../../components/dialog/ConfirmationDialog.js'

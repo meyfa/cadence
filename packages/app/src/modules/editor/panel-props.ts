@@ -1,4 +1,4 @@
-import type { PanelProps } from '@editor'
+import type { PanelProps } from '@meyfa/cadence-editor'
 import { object, string } from 'superstruct'
 
 export interface EditorPanelProps {

@@ -1,5 +1,5 @@
-import type { DockLayout, EditorLocation, PanelId } from '@editor'
-import { findFocusedTab } from '@editor'
+import type { DockLayout, EditorLocation, PanelId } from '@meyfa/cadence-editor'
+import { findFocusedTab } from '@meyfa/cadence-editor'
 import { getEditorPanelProps } from './panel-props.js'
 import type { EditorState } from './provider.js'
 

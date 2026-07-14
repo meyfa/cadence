@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { useEffect, useState } from 'react'
 
 const DARK_THEME = 'dark'

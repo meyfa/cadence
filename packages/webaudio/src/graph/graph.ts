@@ -1,4 +1,4 @@
-import type { AudioGraph, Node, NodeId } from '@audiograph'
+import type { AudioGraph, Node, NodeId } from '@meyfa/cadence-audiograph'
 import type { AudioFetcher } from '../assets/fetcher.js'
 import type { Transport } from '../transport/transport.js'
 import type { MeterCallbacks } from './factory.js'

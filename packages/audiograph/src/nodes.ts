@@ -1,5 +1,5 @@
-import type { AssetId, Curve, NoteData } from '@core'
-import type { Numeric } from '@utility'
+import type { AssetId, Curve, NoteData } from '@meyfa/cadence-core'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { EntityKey } from './entities.js'
 import type { AnyNode } from './graph.js'
 

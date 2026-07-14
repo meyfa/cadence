@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { AudioBufferLike, AudioDescription } from '../common/types.js'
 import type { FloatSampleBits, PCMFormat, PCMSampleBits } from './pcm-io.js'
 import { getBitsPerSample, writeAudioData, writeStringData, writeUint16LE, writeUint32LE } from './pcm-io.js'

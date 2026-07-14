@@ -1,4 +1,4 @@
-import type { OscillatorNode } from '@audiograph'
+import type { OscillatorNode } from '@meyfa/cadence-audiograph'
 import type { Transport } from '../../transport/transport.js'
 import type { Instance } from '../instance.js'
 

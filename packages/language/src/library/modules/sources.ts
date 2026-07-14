@@ -1,4 +1,4 @@
-import type { Oscillator } from '@core'
+import type { Oscillator } from '@meyfa/cadence-core'
 import { NumberFacet } from '../../type-system/base/number.js'
 import { SourceFacet } from '../../type-system/domain/source.js'
 import { Functions, Modules } from '../../type-system/helpers.js'

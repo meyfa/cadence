@@ -1,5 +1,5 @@
-import type { Numeric } from '@utility'
-import { MutableObservable } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
+import { MutableObservable } from '@meyfa/cadence-utility'
 import { createTimeMeter } from '../worklets/metering/factory.js'
 import type { TimeTracker, TimeTrackerOptions } from './common.js'
 

@@ -1,4 +1,4 @@
-import type { Brand } from '@utility'
+import type { Brand } from '@meyfa/cadence-utility'
 import { useMemo } from 'react'
 import { useModules } from '../modules/components/ModuleContext.js'
 import type { CommandId } from './commands.js'

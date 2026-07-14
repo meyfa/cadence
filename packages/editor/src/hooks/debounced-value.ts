@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { useEffect, useState } from 'react'
 
 export function useDebouncedValue<T> (value: T, delay: Numeric<'s'>): T {

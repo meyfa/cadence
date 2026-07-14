@@ -1,4 +1,4 @@
-import type { TabTitleProps } from '@editor'
+import type { TabTitleProps } from '@meyfa/cadence-editor'
 import { Close } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'

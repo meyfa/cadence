@@ -1,17 +1,5 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@ast": ["./packages/ast/src/index.ts"],
-      "@audiograph": ["./packages/audiograph/src/index.ts"],
-      "@codecs": ["./packages/codecs/src/index.ts"],
-      "@core": ["./packages/core/src/index.ts"],
-      "@editor": ["./packages/editor/src/index.ts"],
-      "@flowchart": ["./packages/flowchart/src/index.ts"],
-      "@language": ["./packages/language/src/index.ts"],
-      "@language-support": ["./packages/language-support/src/index.ts"],
-      "@utility": ["./packages/utility/src/index.ts"],
-      "@webaudio": ["./packages/webaudio/src/index.ts"]
-    },
     "lib": [
       "ES2022",
       "DOM",

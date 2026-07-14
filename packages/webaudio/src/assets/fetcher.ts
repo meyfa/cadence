@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { AssetCache } from './cache.js'
 import { createAssetCache } from './cache.js'
 

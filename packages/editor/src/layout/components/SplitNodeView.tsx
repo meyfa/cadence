@@ -1,4 +1,4 @@
-import type { Numeric } from '@utility'
+import type { Numeric } from '@meyfa/cadence-utility'
 import type { CSSProperties, FunctionComponent } from 'react'
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Layout } from 'react-resizable-panels'

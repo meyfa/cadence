@@ -1,5 +1,5 @@
-import type { RuntimeNumeric, Unit } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
+import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { makeFacet, makeType, makeUnion } from '../../src/type-system/factory.js'

@@ -1,5 +1,5 @@
-import type { SourceRange } from '@ast'
-import { areSourceRangesEqual } from '@ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
+import { areSourceRangesEqual } from '@meyfa/cadence-ast'
 import { RangeError } from '../result/errors.js'
 
 export class CompileError extends RangeError {

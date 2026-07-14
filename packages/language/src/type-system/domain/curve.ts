@@ -1,4 +1,4 @@
-import type { RuntimeNumeric, Unit } from '@utility'
+import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { makeFacet } from '../factory.js'
 import type { Facet, FacetType } from '../types.js'
 

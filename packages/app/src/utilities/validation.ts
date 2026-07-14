@@ -1,4 +1,4 @@
-import type { Numeric, Unit } from '@utility'
+import type { Numeric, Unit } from '@meyfa/cadence-utility'
 import type { Struct, StructError } from 'superstruct'
 import { literal, number, object, string } from 'superstruct'
 

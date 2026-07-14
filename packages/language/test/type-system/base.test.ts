@@ -1,5 +1,5 @@
-import type { RuntimeNumeric } from '@utility'
-import { runtimeNumeric } from '@utility'
+import type { RuntimeNumeric } from '@meyfa/cadence-utility'
+import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { Function } from '../../src/type-system/base/function.js'

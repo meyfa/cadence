@@ -1,5 +1,5 @@
-import type { Observable } from '@utility'
-import { MutableObservable } from '@utility'
+import type { Observable } from '@meyfa/cadence-utility'
+import { MutableObservable } from '@meyfa/cadence-utility'
 import { addWorkletModule } from '../loader.js'
 import type { GainMeasurement, MeterConfiguration, TimeMeasurement } from './messages.js'
 

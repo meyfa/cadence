@@ -1,4 +1,4 @@
-import type { Brand, Numeric } from '@utility'
+import type { Brand, Numeric } from '@meyfa/cadence-utility'
 import type { Curve } from '../curve/types.js'
 import type { NoteData } from '../pattern/types.js'
 import type { AssetId } from './assets.js'

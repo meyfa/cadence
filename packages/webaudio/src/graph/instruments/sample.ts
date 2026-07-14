@@ -1,4 +1,4 @@
-import type { SampleNode } from '@audiograph'
+import type { SampleNode } from '@meyfa/cadence-audiograph'
 import type { Transport } from '../../transport/transport.js'
 import type { Assets } from '../factory.js'
 import type { Instance } from '../instance.js'
