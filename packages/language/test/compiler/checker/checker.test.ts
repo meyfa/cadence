@@ -309,6 +309,18 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should allow instrument definitions without voices', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'my_instrument = instrument {',
+        '  foo = -6.db',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should allow valid instrument definitions', () => {
       const source = [
         'use "sources" as src',
@@ -320,7 +332,6 @@ describe('compiler/checker/checker.ts', () => {
         '    envelope ~[lin(0.db, -60.db):100.ms]',
         '    output src.sine(bar)',
         '  }',
-        '  voice note {}',
         '  voice note {',
         '    baz = note',
         '    note_frequency = note.frequency',
@@ -788,6 +799,7 @@ describe('compiler/checker/checker.ts', () => {
         '  voice {',
         '    bar = 440.hz',
         '    bar = 880.hz',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
         '    output src.sine(440)',
         '  }',
         '}'
@@ -796,6 +808,21 @@ describe('compiler/checker/checker.ts', () => {
       assertErrorMessages(source, [
         'Identifier "bar" is already defined',
         'Expected type number(hz), got number'
+      ])
+    })
+
+    it('should reject empty voice', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'my_instrument = instrument {',
+        '  voice {}',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Voice is missing an envelope',
+        'Voice is missing an output'
       ])
     })
 
@@ -819,10 +846,17 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject accessing note from another voice', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
-        '  voice note {}',
+        '  voice note {',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(440.hz)',
+        '  }',
         '  voice {',
         '    baz = note',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -834,15 +868,20 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject reassignment of the note binding', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice note {',
         '    note = 440.hz',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(note)',
         '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Identifier "note" is already defined'
+        'Identifier "note" is already defined',
+        'Expected type number(hz), got record(frequency, gate, velocity)'
       ])
     })
 
@@ -859,16 +898,20 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple output statements in a voice'
+        'Multiple output statements in a voice',
+        'Voice is missing an envelope'
       ])
     })
 
     it('should reject multiple envelopes in a voice', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice {',
         '    envelope ~[lin(0.db, -60.db):100.ms]',
         '    envelope ~[lin(-60.db, 0.db):100.ms]',
+        '    output src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -881,9 +924,13 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject blocking effects in non-blocking contexts', () => {
       const source = [
         'use "instruments" as *',
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice {',
         '    foo = sample("piano.wav")',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -895,9 +942,13 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject instrument expressions in non-blocking contexts', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice {',
         '    foo = instrument {}',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -953,9 +1004,13 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should enforce ordering within instrument definitions', () => {
       const source = [
+        'use "sources" as src',
+        '',
         'my_instrument = instrument {',
         '  voice {',
         '    bar = foo',
+        '    envelope ~[lin(0.db, -60.db):100.ms]',
+        '    output src.sine(440.hz)',
         '  }',
         '  foo = -6.db',
         '}'

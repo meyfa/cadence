@@ -199,15 +199,17 @@ describe('lowering.ts', () => {
               unit: 'db',
               initial: db(-6)
             },
-            trigger: () => [
+            voices: [
               {
-                envelope: SIMPLE_CURVE,
-                source: {
-                  type: 'oscillator',
-                  shape: 'sine',
-                  frequency: hz(440)
-                },
-                duration: seconds(1)
+                invoke: () => ({
+                  envelope: SIMPLE_CURVE,
+                  source: {
+                    type: 'oscillator',
+                    shape: 'sine',
+                    frequency: hz(440)
+                  },
+                  duration: seconds(1)
+                })
               }
             ]
           } satisfies Instrument
@@ -351,7 +353,7 @@ describe('lowering.ts', () => {
               unit: 'db',
               initial: db(-6)
             },
-            trigger: () => []
+            voices: []
           } satisfies Instrument
         ]
       ]),
@@ -440,7 +442,7 @@ describe('lowering.ts', () => {
               unit: 'db',
               initial: db(-6)
             },
-            trigger: () => []
+            voices: []
           } satisfies Instrument
         ]
       ]),
@@ -521,7 +523,7 @@ describe('lowering.ts', () => {
         unit: 'db',
         initial: db(-Infinity)
       },
-      trigger: () => []
+      voices: []
     })
 
     assert.doesNotThrow(() => createAudioGraph(program))
@@ -536,7 +538,7 @@ describe('lowering.ts', () => {
           unit: 'db',
           initial: db(gain)
         },
-        trigger: () => []
+        voices: []
       })
 
       assert.throws(() => createAudioGraph(program), /Invalid gain/, `should throw for gain: ${gain}`)
@@ -575,14 +577,16 @@ describe('lowering.ts', () => {
           unit: 'db',
           initial: db(-6)
         },
-        trigger: () => [
+        voices: [
           {
-            envelope: curve,
-            source: {
-              type: 'oscillator',
-              shape: 'sine',
-              frequency: hz(440)
-            }
+            invoke: () => ({
+              envelope: curve,
+              source: {
+                type: 'oscillator',
+                shape: 'sine',
+                frequency: hz(440)
+              }
+            })
           }
         ]
       })
@@ -601,14 +605,16 @@ describe('lowering.ts', () => {
 
   it('should skip voices with negative or zero duration', () => {
     const makeVoice = (frequency: Numeric<'hz'>, duration: Numeric<'s'> | undefined) => ({
-      envelope: SIMPLE_CURVE,
-      source: {
-        type: 'oscillator',
-        shape: 'sine',
-        frequency
-      },
-      duration
-    } as const)
+      invoke: () => ({
+        envelope: SIMPLE_CURVE,
+        source: {
+          type: 'oscillator',
+          shape: 'sine',
+          frequency
+        },
+        duration
+      } as const)
+    })
 
     const program = createProgramWithInstrument({
       id: 100 as InstrumentId,
@@ -617,7 +623,7 @@ describe('lowering.ts', () => {
         unit: 'db',
         initial: db(-6)
       },
-      trigger: () => [
+      voices: [
         makeVoice(hz(100), seconds(-1)),
         makeVoice(hz(200), seconds(0)),
         makeVoice(hz(300), seconds(1)),
@@ -649,15 +655,17 @@ describe('lowering.ts', () => {
           unit: 'db',
           initial: db(-6)
         },
-        trigger: () => [
+        voices: [
           {
-            envelope: SIMPLE_CURVE,
-            source: {
-              type: 'sample',
-              assetId: 300 as AssetId,
-              length: seconds(-1),
-              playbackRate: scalar(playbackRate)
-            }
+            invoke: () => ({
+              envelope: SIMPLE_CURVE,
+              source: {
+                type: 'sample',
+                assetId: 300 as AssetId,
+                length: seconds(-1),
+                playbackRate: scalar(playbackRate)
+              }
+            })
           }
         ]
       }, {
@@ -687,14 +695,16 @@ describe('lowering.ts', () => {
           unit: 'db',
           initial: db(-6)
         },
-        trigger: () => [
+        voices: [
           {
-            envelope: SIMPLE_CURVE,
-            source: {
-              type: 'oscillator',
-              shape: 'sine',
-              frequency: hz(frequency)
-            }
+            invoke: () => ({
+              envelope: SIMPLE_CURVE,
+              source: {
+                type: 'oscillator',
+                shape: 'sine',
+                frequency: hz(frequency)
+              }
+            })
           }
         ]
       })
@@ -1586,7 +1596,7 @@ describe('lowering.ts', () => {
           unit: 'db',
           initial: db(-6)
         },
-        trigger: () => []
+        voices: []
       }))
 
       assert.strictEqual(graph.meters.size, 0)
@@ -1608,7 +1618,7 @@ describe('lowering.ts', () => {
                 unit: 'db',
                 initial: db(-6)
               },
-              trigger: () => []
+              voices: []
             } satisfies Instrument
           ]
         ]),
@@ -1705,7 +1715,7 @@ describe('lowering.ts', () => {
         unit: 'db',
         initial: db(-6)
       },
-      trigger: () => []
+      voices: []
     })
 
     for (const interval of [Infinity, -Infinity, Number.NaN, 0, -1]) {

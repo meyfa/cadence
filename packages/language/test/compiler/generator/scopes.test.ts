@@ -87,12 +87,12 @@ describe('compiler/generator/scopes.ts', () => {
 
       const instrument0 = {
         gain: scope.allocateParameter('db', db(-6)),
-        trigger: () => []
+        voices: []
       } satisfies Omit<Instrument, 'id'>
 
       const instrument1 = {
         gain: scope.allocateParameter('db', db(-3)),
-        trigger: () => []
+        voices: []
       } satisfies Omit<Instrument, 'id'>
 
       const allocated0 = scope.allocateInstrument(instrument0)

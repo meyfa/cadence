@@ -10,10 +10,14 @@ export interface Instrument {
   readonly id: InstrumentId
   readonly label?: string
   readonly gain: Parameter<'db'>
-  readonly trigger: (note: NoteData, tempo: Numeric<'bpm'>) => readonly Voice[]
+  readonly voices: readonly Voice[]
 }
 
-export interface Voice<S extends Source = Source> {
+export interface Voice {
+  readonly invoke: (note: NoteData, tempo: Numeric<'bpm'>) => VoiceInstance
+}
+
+export interface VoiceInstance<S extends Source = Source> {
   readonly source: S
   readonly envelope: Curve<'s', 'db'>
   readonly duration?: Numeric<'s'>
