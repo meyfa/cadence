@@ -19,6 +19,7 @@ import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
+import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType } from '../../type-system/factory.ts'
 import { Curves, Numbers, Parameters } from '../../type-system/helpers.ts'
 import type { InferSchema, Schema } from '../../type-system/schema.ts'
@@ -392,6 +393,9 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
  */
 function resolve (scope: Scope, expression: ast.Expression): Value {
   switch (expression.type) {
+    case 'Identifier':
+      return resolveIdentifier(scope, expression)
+
     case 'Number':
       return toNumberValue(scope.top.options, undefined, expression.value)
 
@@ -407,8 +411,8 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Instrument':
       return generateInstrument(scope, expression)
 
-    case 'Identifier':
-      return resolveIdentifier(scope, expression)
+    case 'Voice':
+      return generateVoice(scope, expression)
 
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
@@ -545,8 +549,8 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         processAssignment(instrumentScope, child)
         break
 
-      case 'VoiceStatement': {
-        voices.push(generateVoice(instrumentScope, child))
+      case 'Voice': {
+        voices.push(VoiceFacet.get(resolve(instrumentScope, child)))
         break
       }
 
@@ -561,7 +565,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   return InstrumentFacet.type().of(instrument)
 }
 
-function generateVoice (scope: Scope, voice: ast.VoiceStatement): Voice {
+function generateVoice (scope: Scope, voice: ast.Voice): Value {
   const frozenScope: Scope = cloneScope(scope)
 
   const invoke: Voice['invoke'] = (note, tempo) => {
@@ -577,7 +581,7 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement): Voice {
     return createVoiceInstance(voice, instanceScope, tempo)
   }
 
-  return { invoke }
+  return VoiceFacet.type().of({ invoke })
 }
 
 const noteBindingCache = new WeakMap<NoteData, NoteValue>()
@@ -600,7 +604,7 @@ function createNoteBinding (note: NoteData): NoteValue {
   return binding
 }
 
-function createVoiceInstance (voice: ast.VoiceStatement, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
+function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
   let envelopeValue: Curve<'db'> | undefined
   let outputValue: Source | undefined
 

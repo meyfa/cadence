@@ -123,7 +123,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
-      case 'VoiceStatement': {
+      case 'Voice': {
         const scope = addScope({ kind: 'voice', range, parentId: scopeId })
         nextScopeId = scope.id
         break
@@ -180,7 +180,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             break
           }
 
-          case 'VoiceStatement': {
+          case 'Voice': {
             addBinding({ kind: 'regular', scopeId, name, range: nameRange })
             break
           }

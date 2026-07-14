@@ -343,7 +343,8 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   string_,
   serialPattern_,
   curve_,
-  p.recursive(() => instrument_)
+  p.recursive(() => instrument_),
+  p.recursive(() => voice_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -683,7 +684,7 @@ const envelopeStatement_: p.Parser<Token, unknown, ast.EnvelopeStatement> = p.ab
   }
 )
 
-const voiceStatement_: p.Parser<Token, unknown, ast.VoiceStatement> = p.abc(
+const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   keyword('voice'),
   p.option(identifier_, undefined),
   combine3(
@@ -694,7 +695,7 @@ const voiceStatement_: p.Parser<Token, unknown, ast.VoiceStatement> = p.abc(
     expectLiteral('}')
   ),
   (_voice, note, [_lp, children, _rp]) => {
-    return ast.make('VoiceStatement', combineSourceRanges(_voice, _rp), {
+    return ast.make('Voice', combineSourceRanges(_voice, _rp), {
       children,
       bindings: {
         note
@@ -708,7 +709,7 @@ const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
   combine3(
     expectLiteral('{'),
     p.many(
-      p.eitherOr(assignment_, voiceStatement_)
+      p.eitherOr(assignment_, voice_)
     ),
     expectLiteral('}')
   ),

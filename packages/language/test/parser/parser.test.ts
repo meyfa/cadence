@@ -816,7 +816,7 @@ describe('parser/parser.ts', () => {
               }
             },
             {
-              type: 'VoiceStatement',
+              type: 'Voice',
               bindings: {
                 note: undefined
               },
@@ -833,7 +833,7 @@ describe('parser/parser.ts', () => {
               ]
             },
             {
-              type: 'VoiceStatement',
+              type: 'Voice',
               bindings: {
                 note: { type: 'Identifier', name: 'note' }
               },
