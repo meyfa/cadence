@@ -32,6 +32,7 @@ import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import { checkCyclicRoutings } from './routings.ts'
 import type { MutableNamespace, MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { VoiceFacet } from '../../type-system/domain/voice.ts'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -441,6 +442,9 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
 
 function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
   switch (expression.type) {
+    case 'Identifier':
+      return checkIdentifier(scope, expression)
+
     case 'Number':
       return checkNumber(scope, expression)
 
@@ -456,8 +460,8 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Instrument':
       return checkInstrument(scope, expression)
 
-    case 'Identifier':
-      return checkIdentifier(scope, expression)
+    case 'Voice':
+      return checkVoice(scope, expression)
 
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
@@ -471,6 +475,15 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Call':
       return checkCall(scope, expression)
   }
+}
+
+function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<FacetType> {
+  const valueType = resolveInScope(scope, identifier.name)
+  if (valueType == null) {
+    return { errors: [new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)] }
+  }
+
+  return { errors: [], result: valueType }
 }
 
 function checkNumber (scope: Scope, number: ast.Number): Checked<FacetType> {
@@ -654,9 +667,11 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
         errors.push(...checkAssignment(instrumentScope, child))
         break
 
-      case 'VoiceStatement':
-        errors.push(...checkVoice(instrumentScope, child))
+      case 'Voice': {
+        const voiceCheck = checkVoice(instrumentScope, child)
+        errors.push(...voiceCheck.errors)
         break
+      }
 
       default:
         assertNever(child)
@@ -666,7 +681,7 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   return { errors, result: InstrumentFacet.type() }
 }
 
-function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileError[] {
+function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
   const voiceScope = createLocalScope(scope, { blocking: false })
   const errors: CompileError[] = []
 
@@ -730,16 +745,7 @@ function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileE
     errors.push(new CompileError('Voice is missing an output', voice.range))
   }
 
-  return errors
-}
-
-function checkIdentifier (scope: Scope, identifier: ast.Identifier): Checked<FacetType> {
-  const valueType = resolveInScope(scope, identifier.name)
-  if (valueType == null) {
-    return { errors: [new CompileError(`Unknown identifier "${identifier.name}"`, identifier.range)] }
-  }
-
-  return { errors: [], result: valueType }
+  return { errors, result: VoiceFacet.type() }
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {

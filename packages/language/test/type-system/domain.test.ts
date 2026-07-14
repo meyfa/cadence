@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, Parameter, ParameterId, Part, Pattern } from '@meyfa/cadence-core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, Parameter, ParameterId, Part, Pattern, Source, Voice } from '@meyfa/cadence-core'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -12,6 +12,8 @@ import { InstrumentFacet } from '../../src/type-system/domain/instrument.ts'
 import { ParameterFacet } from '../../src/type-system/domain/parameter.ts'
 import { PartFacet } from '../../src/type-system/domain/part.ts'
 import { PatternFacet } from '../../src/type-system/domain/pattern.ts'
+import { SourceFacet } from '../../src/type-system/domain/source.ts'
+import { VoiceFacet } from '../../src/type-system/domain/voice.ts'
 import { expectTypeEquals } from '../test-utils.ts'
 
 const gainParameter: Parameter<'db'> = {
@@ -66,48 +68,62 @@ const bus: Bus = {
   effects: [effect]
 }
 
-describe('type-system/domain', () => {
-  describe('ParameterFacet', () => {
-    it('should support unit-specific parameters and detail()', () => {
-      const genericValue = ParameterFacet.type().of(gainParameter)
-      const decibelFacet = ParameterFacet.with('db')
-      const decibelType = decibelFacet.type()
-      const decibelValue = decibelType.of(gainParameter)
-      const parameterData = decibelFacet.get(decibelValue)
+const curve: Curve<'db'> = {
+  unit: 'db',
+  segments: [
+    {
+      type: 'hold',
+      length: runtimeNumeric('beats', 1),
+      unit: 'db',
+      value: runtimeNumeric('db', -6)
+    },
+    {
+      type: 'lin',
+      length: runtimeNumeric('beats', 2),
+      unit: 'db',
+      start: runtimeNumeric('db', -6),
+      end: runtimeNumeric('db', 0)
+    }
+  ]
+}
 
-      expectTypeEquals<Parameter<'db'>, typeof parameterData>()
-      assert.strictEqual(ParameterFacet.format(), 'parameter')
-      assert.strictEqual(ParameterFacet.with(undefined).format(), 'parameter')
-      assert.strictEqual(decibelFacet.format(), 'parameter(db)')
-      assert.strictEqual(ParameterFacet.has(decibelValue), true)
-      assert.strictEqual(decibelFacet.has(genericValue), false)
-      assert.strictEqual(ParameterFacet.detail(decibelType), 'db')
-      assert.strictEqual(parameterData.initial, -6)
-      assert.throws(() => ParameterFacet.detail(ParameterFacet.type()), /Invalid generics for parameter facet/)
+const source: Source = {
+  type: 'oscillator',
+  shape: 'sine',
+  frequency: 440 as Numeric<'hz'>
+}
+
+const voice: Voice = {
+  invoke: () => ({
+    source,
+    envelope: {
+      initial: 0 as Numeric<'db'>,
+      points: [
+        {
+          time: 0 as Numeric<'s'>,
+          value: 0 as Numeric<'db'>,
+          shape: 'step'
+        }
+      ]
+    }
+  })
+}
+
+describe('type-system/domain', () => {
+  describe('BusFacet', () => {
+    it('should format and round-trip bus values', () => {
+      const value = BusFacet.type().of(bus)
+      const busData = BusFacet.get(value)
+
+      expectTypeEquals<Bus, typeof busData>()
+      assert.strictEqual(BusFacet.format(), 'bus')
+      assert.strictEqual(BusFacet.has(value), true)
+      assert.strictEqual(busData, bus)
     })
   })
 
   describe('CurveFacet', () => {
     it('should support unit-specific curves and detail()', () => {
-      const curve: Curve<'db'> = {
-        unit: 'db',
-        segments: [
-          {
-            type: 'hold',
-            length: runtimeNumeric('beats', 1),
-            unit: 'db',
-            value: runtimeNumeric('db', -6)
-          },
-          {
-            type: 'lin',
-            length: runtimeNumeric('beats', 2),
-            unit: 'db',
-            start: runtimeNumeric('db', -6),
-            end: runtimeNumeric('db', 0)
-          }
-        ]
-      }
-
       const genericValue = CurveFacet.type().of(curve)
       const decibelFacet = CurveFacet.with('db')
       const decibelType = decibelFacet.type()
@@ -124,18 +140,6 @@ describe('type-system/domain', () => {
       assert.strictEqual(curveData.segments[0]?.unit, 'db')
       assert.strictEqual(curveData.segments[1]?.type, 'lin')
       assert.throws(() => CurveFacet.detail(CurveFacet.type()), /Invalid generics for curve facet/)
-    })
-  })
-
-  describe('BusFacet', () => {
-    it('should format and round-trip bus values', () => {
-      const value = BusFacet.type().of(bus)
-      const busData = BusFacet.get(value)
-
-      expectTypeEquals<Bus, typeof busData>()
-      assert.strictEqual(BusFacet.format(), 'bus')
-      assert.strictEqual(BusFacet.has(value), true)
-      assert.strictEqual(busData, bus)
     })
   })
 
@@ -164,6 +168,26 @@ describe('type-system/domain', () => {
     })
   })
 
+  describe('ParameterFacet', () => {
+    it('should support unit-specific parameters and detail()', () => {
+      const genericValue = ParameterFacet.type().of(gainParameter)
+      const decibelFacet = ParameterFacet.with('db')
+      const decibelType = decibelFacet.type()
+      const decibelValue = decibelType.of(gainParameter)
+      const parameterData = decibelFacet.get(decibelValue)
+
+      expectTypeEquals<Parameter<'db'>, typeof parameterData>()
+      assert.strictEqual(ParameterFacet.format(), 'parameter')
+      assert.strictEqual(ParameterFacet.with(undefined).format(), 'parameter')
+      assert.strictEqual(decibelFacet.format(), 'parameter(db)')
+      assert.strictEqual(ParameterFacet.has(decibelValue), true)
+      assert.strictEqual(decibelFacet.has(genericValue), false)
+      assert.strictEqual(ParameterFacet.detail(decibelType), 'db')
+      assert.strictEqual(parameterData.initial, -6)
+      assert.throws(() => ParameterFacet.detail(ParameterFacet.type()), /Invalid generics for parameter facet/)
+    })
+  })
+
   describe('PartFacet', () => {
     it('should format and round-trip part values', () => {
       const value = PartFacet.type().of(part)
@@ -186,6 +210,30 @@ describe('type-system/domain', () => {
       assert.strictEqual(PatternFacet.has(value), true)
       assert.strictEqual(patternData, pattern)
       assert.deepStrictEqual(Array.from(patternData.evaluate()), Array.from(pattern.evaluate()))
+    })
+  })
+
+  describe('SourceFacet', () => {
+    it('should format and round-trip source values', () => {
+      const value = SourceFacet.type().of(source)
+      const sourceData = SourceFacet.get(value)
+
+      expectTypeEquals<Source, typeof sourceData>()
+      assert.strictEqual(SourceFacet.format(), 'source')
+      assert.strictEqual(SourceFacet.has(value), true)
+      assert.strictEqual(sourceData, source)
+    })
+  })
+
+  describe('VoiceFacet', () => {
+    it('should format and round-trip voice values', () => {
+      const value = VoiceFacet.type().of(voice)
+      const voiceData = VoiceFacet.get(value)
+
+      expectTypeEquals<Voice, typeof voiceData>()
+      assert.strictEqual(VoiceFacet.format(), 'voice')
+      assert.strictEqual(VoiceFacet.has(value), true)
+      assert.strictEqual(voiceData, voice)
     })
   })
 })

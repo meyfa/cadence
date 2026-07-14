@@ -95,7 +95,7 @@ export interface Call extends ASTNode {
   readonly arguments: ReadonlyArray<Expression | Property>
 }
 
-export type Value = Identifier | Number | String | Pattern | Curve | Instrument
+export type Value = Identifier | Number | String | Pattern | Curve | Instrument | Voice
 export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAccess | Call
 
 // Composite Types
@@ -162,11 +162,11 @@ export interface AutomateStatement extends ASTNode {
 
 export interface Instrument extends ASTNode {
   readonly type: 'Instrument'
-  readonly children: ReadonlyArray<Assignment | VoiceStatement>
+  readonly children: ReadonlyArray<Assignment | Voice>
 }
 
-export interface VoiceStatement extends ASTNode {
-  readonly type: 'VoiceStatement'
+export interface Voice extends ASTNode {
+  readonly type: 'Voice'
   readonly children: ReadonlyArray<Assignment | EnvelopeStatement | OutputStatement>
   readonly bindings: {
     readonly note?: Identifier
@@ -238,7 +238,7 @@ export interface NodeByType {
   AutomateStatement: AutomateStatement
 
   Instrument: Instrument
-  VoiceStatement: VoiceStatement
+  Voice: Voice
   EnvelopeStatement: EnvelopeStatement
   OutputStatement: OutputStatement
 
