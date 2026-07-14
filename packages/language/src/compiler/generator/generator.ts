@@ -1,5 +1,5 @@
 import { ast } from '@meyfa/cadence-ast'
-import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, Part, Pattern, Program, Source, Step, Track, Voice } from '@meyfa/cadence-core'
+import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, NoteData, Part, Pattern, Program, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
 import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -537,7 +537,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
-  const voiceConstructors: Array<(note: NoteValue, tempo: Numeric<'bpm'>) => readonly Voice[]> = []
+  const voices: Voice[] = []
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -546,8 +546,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         break
 
       case 'VoiceStatement': {
-        const frozenScope = cloneScope(instrumentScope)
-        voiceConstructors.push((note, tempo) => generateVoice(frozenScope, child, note, tempo))
+        voices.push(generateVoice(instrumentScope, child))
         break
       }
 
@@ -557,54 +556,68 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   }
 
   const gainParameter = scope.top.allocateParameter('db', 0 as Numeric<'db'>)
-
-  const instrument = scope.top.allocateInstrument({
-    gain: gainParameter,
-    trigger: (note, tempo) => {
-      if (voiceConstructors.length === 0) {
-        return []
-      }
-
-      const gate = Numbers.of(runtimeNumeric('beats', note.gate ?? 0 as Numeric<'beats'>))
-      const frequency = Numbers.of(
-        runtimeNumeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
-      )
-      const velocity = Numbers.of(runtimeNumeric(undefined, note.velocity))
-
-      const noteBinding = noteType.of({ gate, frequency, velocity })
-
-      return voiceConstructors.flatMap((create) => create(noteBinding, tempo))
-    }
-  })
+  const instrument = scope.top.allocateInstrument({ gain: gainParameter, voices })
 
   return InstrumentFacet.type().of(instrument)
 }
 
-function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue, tempo: Numeric<'bpm'>): readonly Voice[] {
-  const voiceScope = createLocalScope(scope)
+function generateVoice (scope: Scope, voice: ast.VoiceStatement): Voice {
+  const frozenScope: Scope = cloneScope(scope)
 
-  if (voice.bindings.note != null) {
-    assert(!voiceScope.resolutions.has(voice.bindings.note.name))
-    voiceScope.resolutions.set(voice.bindings.note.name, note)
+  const invoke: Voice['invoke'] = (note, tempo) => {
+    const instanceScope = createLocalScope(frozenScope)
+
+    if (voice.bindings.note != null) {
+      const noteBinding = createNoteBinding(note)
+
+      assert(!instanceScope.resolutions.has(voice.bindings.note.name))
+      instanceScope.resolutions.set(voice.bindings.note.name, noteBinding)
+    }
+
+    return createVoiceInstance(voice, instanceScope, tempo)
   }
 
+  return { invoke }
+}
+
+const noteBindingCache = new WeakMap<NoteData, NoteValue>()
+
+function createNoteBinding (note: NoteData): NoteValue {
+  const cached = noteBindingCache.get(note)
+  if (cached != null) {
+    return cached
+  }
+
+  const gate = Numbers.of(runtimeNumeric('beats', note.gate ?? 0 as Numeric<'beats'>))
+  const frequency = Numbers.of(
+    runtimeNumeric('hz', getMidiFrequency(note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE))
+  )
+  const velocity = Numbers.of(runtimeNumeric(undefined, note.velocity))
+
+  const binding = noteType.of({ gate, frequency, velocity })
+  noteBindingCache.set(note, binding)
+
+  return binding
+}
+
+function createVoiceInstance (voice: ast.VoiceStatement, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
   let envelopeValue: Curve<'db'> | undefined
   let outputValue: Source | undefined
 
   for (const child of voice.children) {
     switch (child.type) {
       case 'Assignment':
-        processAssignment(voiceScope, child)
+        processAssignment(scope, child)
         break
 
       case 'EnvelopeStatement':
         assert(envelopeValue == null)
-        envelopeValue = CurveFacet.with('db').get(resolve(voiceScope, child.expression))
+        envelopeValue = CurveFacet.with('db').get(resolve(scope, child.expression))
         break
 
       case 'OutputStatement':
         assert(outputValue == null)
-        outputValue = SourceFacet.get(resolve(voiceScope, child.expression))
+        outputValue = SourceFacet.get(resolve(scope, child.expression))
         break
 
       default:
@@ -612,9 +625,8 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
     }
   }
 
-  if (outputValue == null || envelopeValue == null) {
-    return []
-  }
+  assert(envelopeValue != null)
+  assert(outputValue != null)
 
   const envelope = {
     initial: -Infinity as Numeric<'db'>,
@@ -624,13 +636,11 @@ function generateVoice (scope: Scope, voice: ast.VoiceStatement, note: NoteValue
     })
   }
 
-  return [
-    {
-      envelope,
-      source: outputValue,
-      duration: envelope.points.at(-1)?.time
-    }
-  ]
+  return {
+    envelope,
+    source: outputValue,
+    duration: envelope.points.at(-1)?.time
+  }
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {

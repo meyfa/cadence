@@ -1,4 +1,4 @@
-import type { Oscillator } from '@meyfa/cadence-core'
+import type { AssetId, MidiNote, Oscillator, Voice } from '@meyfa/cadence-core'
 import { beatsToSeconds, convertPitchToMidi, getMidiFrequency, isPitch } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import type { AssetContext, InstrumentContext, ParameterContext } from '../../compiler/generator/scopes.ts'
@@ -39,6 +39,60 @@ function getSampleInstrumentLabel (url: string): string {
   return `sample(${filename})`
 }
 
+function createSampleVoice (assetId: AssetId, rootNote: MidiNote, length: Numeric<'s'> | undefined): Voice {
+  const invoke: Voice['invoke'] = (note, tempo) => {
+    const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNote
+    const playbackRate = Math.pow(2, (midiNote - rootNote) / 12) as Numeric<undefined>
+
+    const gate: Numeric<'s'> | undefined = (() => {
+      if (note.gate == null) {
+        return length
+      }
+      const gateSeconds = beatsToSeconds(note.gate, tempo)
+      return length == null ? gateSeconds : Math.min(gateSeconds, length) as Numeric<'s'>
+    })()
+
+    const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
+    const duration = gate != null ? envelope.points.at(-1)?.time : undefined
+
+    return {
+      envelope,
+      source: {
+        type: 'sample',
+        assetId,
+        length,
+        playbackRate
+      },
+      duration
+    }
+  }
+
+  return { invoke }
+}
+
+function createOscillatorVoice (shape: Oscillator['shape']): Voice {
+  const invoke: Voice['invoke'] = (note, tempo) => {
+    const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
+    const frequency = getMidiFrequency(midiNote)
+
+    const gate = note.gate != null ? beatsToSeconds(note.gate, tempo) : undefined
+    const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
+    const duration = gate != null ? envelope.points.at(-1)?.time : undefined
+
+    return {
+      envelope,
+      source: {
+        type: 'oscillator',
+        shape,
+        frequency
+      },
+      duration
+    }
+  }
+
+  return { invoke }
+}
+
 const sample = Functions.of({
   summary: 'Creates a sample-backed instrument from a URL.',
 
@@ -61,54 +115,18 @@ const sample = Functions.of({
       return string != null && isPitch(string) ? string : undefined
     })()
     const lengthValue = length != null ? NumberFacet.get(length).value : undefined
-
     const gainParameter = context.allocateParameter('db', gainValue)
-
-    const asset = context.allocateAsset({
-      url: urlValue
-    })
-
+    const asset = context.allocateAsset({ url: urlValue })
     const rootNoteMidi = rootNote != null ? convertPitchToMidi(rootNote) : DEFAULT_ROOT_NOTE
 
-    const invalidLength = lengthValue != null && (!Number.isFinite(lengthValue) || lengthValue <= 0)
+    const voices = lengthValue == null || (Number.isFinite(lengthValue) && lengthValue > 0)
+      ? [createSampleVoice(asset.id, rootNoteMidi, lengthValue)]
+      : []
 
     const instrument = context.allocateInstrument({
       label: getSampleInstrumentLabel(urlValue),
-
       gain: gainParameter,
-
-      trigger: (note, tempo) => {
-        if (invalidLength) {
-          return []
-        }
-
-        const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : rootNoteMidi
-        const playbackRate = Math.pow(2, (midiNote - rootNoteMidi) / 12) as Numeric<undefined>
-
-        const gate: Numeric<'s'> | undefined = (() => {
-          if (note.gate == null) {
-            return lengthValue
-          }
-          const gateSeconds = beatsToSeconds(note.gate, tempo)
-          return lengthValue == null ? gateSeconds : Math.min(gateSeconds, lengthValue) as Numeric<'s'>
-        })()
-
-        const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
-        const duration = gate != null ? envelope.points.at(-1)?.time : undefined
-
-        return [
-          {
-            envelope,
-            source: {
-              type: 'sample',
-              assetId: asset.id,
-              length: lengthValue,
-              playbackRate
-            },
-            duration
-          }
-        ]
-      }
+      voices
     })
 
     return SampleInstrumentType.of(instrument, {
@@ -131,31 +149,12 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
       const gainValue = gain != null ? NumberFacet.get(gain).value : UNITY_GAIN
       const gainParameter = context.allocateParameter('db', gainValue)
 
+      const voices = [createOscillatorVoice(shape)]
+
       const instrument = context.allocateInstrument({
         label: shape,
-
         gain: gainParameter,
-
-        trigger: (note, tempo) => {
-          const midiNote = note.pitch != null ? convertPitchToMidi(note.pitch) : DEFAULT_ROOT_NOTE
-          const frequency = getMidiFrequency(midiNote)
-
-          const gate = note.gate != null ? beatsToSeconds(note.gate, tempo) : undefined
-          const envelope = applyEnvelope(ENVELOPE_DECLICK, { velocity: note.velocity, gate })
-          const duration = gate != null ? envelope.points.at(-1)?.time : undefined
-
-          return [
-            {
-              envelope,
-              source: {
-                type: 'oscillator',
-                shape,
-                frequency
-              },
-              duration
-            }
-          ]
-        }
+        voices
       })
 
       return OscillatorInstrumentType.of(instrument, {

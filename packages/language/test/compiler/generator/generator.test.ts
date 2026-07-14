@@ -103,10 +103,11 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voices.length, 1)
-    assert.strictEqual(voices[0].source.type, 'sample')
-    assert.strictEqual(voices[0].source.assetId, asset.id)
+    assert.strictEqual(instrument.voices.length, 1)
+
+    const voice = instrument.voices[0].invoke({ velocity: scalar(1) }, DEFAULT_TEMPO)
+    assert.strictEqual(voice.source.type, 'sample')
+    assert.strictEqual(voice.source.assetId, asset.id)
   })
 
   it('should support import aliases', () => {
@@ -122,10 +123,10 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(asset.url, 'kick.wav')
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voices.length, 1)
-    assert.strictEqual(voices[0].source.type, 'sample')
-    assert.strictEqual(voices[0].source.assetId, asset.id)
+    assert.strictEqual(instrument.voices.length, 1)
+
+    const voice = instrument.voices[0].invoke({ velocity: scalar(1) }, DEFAULT_TEMPO)
+    assert.strictEqual(voice.source.type, 'sample')
   })
 
   it('should support shadowing of imported names', () => {
@@ -722,19 +723,10 @@ describe('compiler/generator/generator.ts', () => {
     })
   })
 
-  it('should generate silent instruments', () => {
+  it('should generate instrument without voices', () => {
     const source = [
       'my_instrument = instrument {',
       '  foo = -6.db',
-      '  voice {',
-      '    bar = 440.hz',
-      '  }',
-      '  voice note {',
-      '    baz = note',
-      '    note_frequency = note.frequency',
-      '    note_gate = note.gate',
-      '    note_velocity = note.velocity',
-      '  }',
       '}'
     ].join('\n')
 
@@ -742,8 +734,7 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.instruments.size, 1)
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: scalar(1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voices.length, 0)
+    assert.deepStrictEqual(instrument.voices, [])
   })
 
   it('should generate instruments with voices', () => {
@@ -755,8 +746,10 @@ describe('compiler/generator/generator.ts', () => {
       '    output src.sine(440.hz)',
       '  }',
       '  voice note {',
+      '    n = note',
+      '    f = n.frequency',
       '    envelope ~[lin(0.db, -60.db):1.beat]',
-      '    output src.sine(note.frequency)',
+      '    output src.sine(f)',
       '  }',
       '}'
     ].join('\n')
@@ -768,10 +761,11 @@ describe('compiler/generator/generator.ts', () => {
     const pitchFrequency = getMidiFrequency(convertPitchToMidi(pitch))
 
     const [instrument] = result.instruments.values()
-    const voices = instrument.trigger({ velocity: scalar(1), pitch }, DEFAULT_TEMPO)
-    assert.strictEqual(voices.length, 2)
+    assert.strictEqual(instrument.voices.length, 2)
 
-    const [voice0, voice1] = voices
+    const voice0 = instrument.voices[0].invoke({ velocity: scalar(1), pitch }, DEFAULT_TEMPO)
+    const voice1 = instrument.voices[1].invoke({ velocity: scalar(1), pitch }, DEFAULT_TEMPO)
+
     assert.deepStrictEqual(voice0.envelope.points, [
       { time: seconds(0), value: db(0), shape: 'step' },
       { time: seconds(0.5), value: db(-60), shape: 'linear' }

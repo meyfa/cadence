@@ -722,6 +722,14 @@ function checkVoice (scope: Scope, voice: ast.VoiceStatement): readonly CompileE
     }
   }
 
+  if (!hasEnvelope) {
+    errors.push(new CompileError('Voice is missing an envelope', voice.range))
+  }
+
+  if (!hasOutput) {
+    errors.push(new CompileError('Voice is missing an output', voice.range))
+  }
+
   return errors
 }
 

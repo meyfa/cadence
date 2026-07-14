@@ -40,7 +40,7 @@ const effect: Effect = {
 const instrument: Instrument = {
   id: 1 as InstrumentId,
   gain: gainParameter,
-  trigger: () => []
+  voices: []
 }
 
 const part: Part = {

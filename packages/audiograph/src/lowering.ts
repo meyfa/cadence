@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, Voice } from '@meyfa/cadence-core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, VoiceInstance } from '@meyfa/cadence-core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.ts'
@@ -119,10 +119,13 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
     trigger: (note) => {
       const result: SourceNode[] = []
 
-      for (const voice of instrument.trigger(note, program.track.tempo)) {
-        if (voice.duration == null || voice.duration > 0) {
-          result.push(createSourceNode(voice))
+      for (const voice of instrument.voices) {
+        const instance = voice.invoke(note, program.track.tempo)
+        if (instance.duration != null && instance.duration <= 0) {
+          continue
         }
+
+        result.push(createSourceNode(instance))
       }
 
       return result
@@ -142,17 +145,17 @@ function createInstrument (program: Program, instrument: Instrument, builder: Bu
   }
 }
 
-function createSourceNode (voice: Voice): SourceNode {
+function createSourceNode (voice: VoiceInstance): SourceNode {
   switch (voice.source.type) {
     case 'sample':
-      return createSampleSourceNode(voice as Voice<Sample>)
+      return createSampleSourceNode(voice as VoiceInstance<Sample>)
 
     case 'oscillator':
-      return createOscillatorSourceNode(voice as Voice<Oscillator>)
+      return createOscillatorSourceNode(voice as VoiceInstance<Oscillator>)
   }
 }
 
-function createSampleSourceNode (voice: Voice<Sample>): SourceNode {
+function createSampleSourceNode (voice: VoiceInstance<Sample>): SourceNode {
   const { assetId, playbackRate } = voice.source
 
   if (playbackRate <= 0 || !Number.isFinite(playbackRate)) {
@@ -168,7 +171,7 @@ function createSampleSourceNode (voice: Voice<Sample>): SourceNode {
   }
 }
 
-function createOscillatorSourceNode (voice: Voice<Oscillator>): SourceNode {
+function createOscillatorSourceNode (voice: VoiceInstance<Oscillator>): SourceNode {
   const { shape, frequency } = voice.source
 
   if (frequency <= 0 || !Number.isFinite(frequency)) {
