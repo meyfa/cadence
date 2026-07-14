@@ -708,7 +708,7 @@ describe('parser/parser.ts', () => {
         properties: [],
         children: [
           {
-            type: 'PartStatement',
+            type: 'Part',
             name: undefined,
             properties: [
               {
@@ -720,7 +720,7 @@ describe('parser/parser.ts', () => {
             children: []
           },
           {
-            type: 'PartStatement',
+            type: 'Part',
             name: { type: 'Identifier', name: 'my_part' },
             properties: [
               {

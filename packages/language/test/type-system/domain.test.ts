@@ -1,11 +1,10 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, Source, Track, Voice } from '@meyfa/cadence-core'
+import type { Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, RelativeCurve, Source, Track, Voice } from '@meyfa/cadence-core'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { BusFacet } from '../../src/type-system/domain/bus.ts'
-import type { Curve } from '../../src/type-system/domain/curve.ts'
 import { CurveFacet } from '../../src/type-system/domain/curve.ts'
 import { EffectFacet } from '../../src/type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../src/type-system/domain/instrument.ts'
@@ -50,16 +49,19 @@ const instrument: Instrument = {
 const part: Part = {
   name: 'intro',
   length: 4 as Numeric<'beats'>,
-  routings: [{
-    source: {
-      type: 'pattern',
-      value: pattern
-    },
-    destination: {
-      type: 'instrument',
-      id: instrument.id
+  routings: [
+    {
+      source: {
+        type: 'pattern',
+        value: pattern
+      },
+      destination: {
+        type: 'instrument',
+        id: instrument.id
+      }
     }
-  }]
+  ],
+  automations: []
 }
 
 const bus: Bus = {
@@ -70,7 +72,7 @@ const bus: Bus = {
   effects: [effect]
 }
 
-const curve: Curve<'db'> = {
+const curve: RelativeCurve<'db'> = {
   unit: 'db',
   segments: [
     {
@@ -142,7 +144,7 @@ describe('type-system/domain', () => {
       const decibelValue = decibelType.of(curve)
       const curveData = decibelFacet.get(decibelValue)
 
-      expectTypeEquals<Curve<'db'>, typeof curveData>()
+      expectTypeEquals<RelativeCurve<'db'>, typeof curveData>()
       assert.strictEqual(CurveFacet.format(), 'curve')
       assert.strictEqual(CurveFacet.with(undefined).format(), 'curve')
       assert.strictEqual(decibelFacet.format(), 'curve(db)')

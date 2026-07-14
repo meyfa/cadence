@@ -158,7 +158,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             break
           }
 
-          case 'PartStatement': {
+          case 'Part': {
             addBinding({ kind: 'part', scopeId, name, range: nameRange })
             break
           }

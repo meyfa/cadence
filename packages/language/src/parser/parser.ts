@@ -346,7 +346,8 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => instrument_),
   p.recursive(() => voice_),
   p.recursive(() => mixer_),
-  p.recursive(() => track_)
+  p.recursive(() => track_),
+  p.recursive(() => part_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -528,7 +529,7 @@ const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab
   }
 )
 
-const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
+const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
   combine2(
     keyword('part'),
     p.option(identifier_, undefined)
@@ -554,7 +555,7 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   ([_part, name], callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
 
-    return ast.make('PartStatement', combineSourceRanges(_part, _rp), {
+    return ast.make('Part', combineSourceRanges(_part, _rp), {
       name,
       properties: args,
       children
@@ -575,7 +576,7 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
   combine3(
     expectLiteral('{'),
     p.many(
-      p.eitherOr(assignment_, partStatement_)
+      p.eitherOr(assignment_, part_)
     ),
     expectLiteral('}')
   ),

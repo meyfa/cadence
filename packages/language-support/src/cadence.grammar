@@ -122,6 +122,7 @@ primary {
   Curve |
   Instrument |
   Mixer |
+  Part |
   Pattern |
   Track |
   Voice
@@ -190,11 +191,11 @@ Track {
   kw<"track">
   ("(" argumentList? ")")?
   TrackBlock[group=Block] {
-    "{" (Assignment | PartStatement)* "}"
+    "{" (Assignment | Part)* "}"
   }
 }
 
-PartStatement {
+Part {
   kw<"part">
   VariableDefinition?
   ("(" argumentList? ")")?

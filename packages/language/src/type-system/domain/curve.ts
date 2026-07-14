@@ -1,43 +1,20 @@
-import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
+import type { RelativeCurve } from '@meyfa/cadence-core'
+import type { Unit } from '@meyfa/cadence-utility'
 import { makeFacet } from '../factory.ts'
 import type { Facet, FacetType } from '../types.ts'
 
-export type CurveDuration = RuntimeNumeric<'beats'> | RuntimeNumeric<'s'>
-
-export interface Curve<U extends Unit> {
-  readonly unit: U
-  readonly segments: ReadonlyArray<CurveSegment<U>>
-}
-
-export type CurveSegment<U extends Unit> = HoldCurveSegment<U> | LinearCurveSegment<U>
-
-export interface HoldCurveSegment<U extends Unit> {
-  readonly type: 'hold'
-  readonly length: CurveDuration
-  readonly unit: U
-  readonly value: RuntimeNumeric<U>
-}
-
-export interface LinearCurveSegment<U extends Unit> {
-  readonly type: 'lin'
-  readonly length: CurveDuration
-  readonly unit: U
-  readonly start: RuntimeNumeric<U>
-  readonly end: RuntimeNumeric<U>
-}
-
 const FACET_NAME = 'curve'
 
-const cache = new Map<Unit, Facet<typeof FACET_NAME, Curve<Unit>>>()
+const cache = new Map<Unit, Facet<typeof FACET_NAME, RelativeCurve<Unit>>>()
 
 export const CurveFacet = {
-  ...makeFacet<typeof FACET_NAME, Curve<Unit>>(FACET_NAME, {}),
+  ...makeFacet<typeof FACET_NAME, RelativeCurve<Unit>>(FACET_NAME, {}),
 
   with: <const U extends Unit> (unit: U) => {
-    let cached = cache.get(unit) as Facet<typeof FACET_NAME, Curve<U>> | undefined
+    let cached = cache.get(unit) as Facet<typeof FACET_NAME, RelativeCurve<U>> | undefined
 
     if (cached == null) {
-      cached = makeFacet<typeof FACET_NAME, Curve<U>>(FACET_NAME, { unit }, {
+      cached = makeFacet<typeof FACET_NAME, RelativeCurve<U>>(FACET_NAME, { unit }, {
         format: () => unit == null ? FACET_NAME : `${FACET_NAME}(${unit})`
       })
       cache.set(unit, cached)

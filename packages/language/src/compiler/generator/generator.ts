@@ -1,5 +1,5 @@
 import { ast } from '@meyfa/cadence-ast'
-import type { Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, NoteData, Part, Pattern, Program, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
+import type { Automation, Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, NoteData, Part, Pattern, Program, RelativeCurve, RelativeCurveSegment, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
 import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -11,7 +11,6 @@ import { NumberFacet } from '../../type-system/base/number.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import { BusFacet } from '../../type-system/domain/bus.ts'
-import type { Curve, CurveSegment } from '../../type-system/domain/curve.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
@@ -176,6 +175,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Track':
       return generateTrack(scope, expression)
 
+    case 'Part':
+      return generatePart(scope, expression)
+
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
 
@@ -270,7 +272,7 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
   assert(segments.length > 0)
   assert(otherChildren.length === 0)
 
-  const generatedSegments: Array<CurveSegment<Unit>> = []
+  const generatedSegments: Array<RelativeCurveSegment<Unit>> = []
 
   const getPreviousSegmentEnd = (): RuntimeNumeric<Unit> => {
     const previous = nonNull(generatedSegments.at(-1))
@@ -367,7 +369,7 @@ function createNoteBinding (note: NoteData): NoteValue {
 }
 
 function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
-  let envelopeValue: Curve<'db'> | undefined
+  let envelopeValue: RelativeCurve<'db'> | undefined
   let outputValue: Source | undefined
 
   for (const child of voice.children) {
@@ -581,13 +583,23 @@ function generateTrack (scope: Scope, track: ast.Track): Value {
         processAssignment(trackScope, child)
         break
 
-      case 'PartStatement': {
-        const part = generatePart(trackScope, child, currentTime, tempo)
+      case 'Part': {
+        const part = PartFacet.get(resolve(trackScope, child))
         parts.push(part)
 
         if (part.name != null) {
           assert(!trackScope.resolutions.has(part.name))
           trackScope.resolutions.set(part.name, PartFacet.type().of(part))
+        }
+
+        const automationRenderOptions: RenderCurveOptions = {
+          offset: beatsToSeconds(currentTime, tempo),
+          limit: beatsToSeconds(part.length, tempo),
+          tempo
+        }
+
+        for (const automation of part.automations) {
+          applyAutomation(scope.top, automation, automationRenderOptions)
         }
 
         currentTime = currentTime + part.length as Numeric<'beats'>
@@ -602,17 +614,15 @@ function generateTrack (scope: Scope, track: ast.Track): Value {
   return TrackFacet.type().of({ tempo, parts })
 }
 
-function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
+function generatePart (scope: Scope, part: ast.Part): Value {
   const partScope = createLocalScope(scope)
 
   const name = part.name?.name
   const properties = resolveArgumentList(scope, part.properties, partSchema)
   const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
 
-  const startTimeSeconds = beatsToSeconds(startTime, tempo)
-  const lengthSeconds = beatsToSeconds(length.value, tempo)
-
   const routings: InstrumentRouting[] = []
+  const automations: Automation[] = []
 
   for (const child of part.children) {
     switch (child.type) {
@@ -635,7 +645,7 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
         break
 
       case 'AutomateStatement':
-        generateAutomation(partScope, child, { offset: startTimeSeconds, limit: lengthSeconds, tempo })
+        automations.push(generateAutomation(partScope, child))
         break
 
       default:
@@ -643,18 +653,27 @@ function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric
     }
   }
 
-  return { name, length: length.value, routings }
+  return PartFacet.type().of({ name, length: length.value, routings, automations })
 }
 
-function generateAutomation (scope: Scope, statement: ast.AutomateStatement, options: RenderCurveOptions): void {
+function generateAutomation (scope: Scope, statement: ast.AutomateStatement): Automation {
   const target = ParameterFacet.get(resolve(scope, statement.target))
   const curve = CurveFacet.get(resolve(scope, statement.curve))
 
+  return {
+    parameterId: target.id,
+    curve
+  }
+}
+
+function applyAutomation (top: GlobalScope, automation: Automation, options: RenderCurveOptions): void {
+  const { parameterId, curve } = automation
+
   const rendered = renderCurvePoints(curve, options)
-  const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
+  const existing = nonNull(top.automations.get(parameterId), 'Parameter allocated incorrectly')
 
   const points = mergeCurvePoints(existing.points, rendered)
-  scope.top.automations.set(target.id, { ...existing, points })
+  top.automations.set(parameterId, { ...existing, points })
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {

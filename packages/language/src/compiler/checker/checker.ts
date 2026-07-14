@@ -231,6 +231,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Track':
       return checkTrack(scope, expression)
 
+    case 'Part':
+      return checkPart(scope, expression)
+
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
 
@@ -667,7 +670,7 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
         errors.push(...checkAssignment(trackScope, child))
         break
 
-      case 'PartStatement': {
+      case 'Part': {
         if (child.name != null) {
           if (seenParts.has(child.name.name)) {
             errors.push(new CompileError(`Duplicate part named "${child.name.name}"`, child.range))
@@ -681,7 +684,9 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
           trackScope.resolutions.set(child.name.name, PartFacet.type())
         }
 
-        errors.push(...checkPart(trackScope, child))
+        const partCheck = checkPart(trackScope, child)
+        errors.push(...partCheck.errors)
+
         break
       }
 
@@ -693,7 +698,7 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
   return { errors, result: TrackFacet.type() }
 }
 
-function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileError[] {
+function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
   const partScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
@@ -718,7 +723,7 @@ function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileErro
     }
   }
 
-  return errors
+  return { errors, result: PartFacet.type() }
 }
 
 function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly CompileError[] {
