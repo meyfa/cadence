@@ -108,7 +108,12 @@ const crossPackageRelativeImportRestrictions = {
       patterns: packages
         .filter((pkg) => pkg.anonymous !== true)
         .map((pkg) => ({
-          group: [`**/${pkg.name}/src`, `**/${pkg.name}/src/**`],
+          group: [
+            `**/${pkg.name}/src`,
+            `**/${pkg.name}/src/**`,
+            `${formatPackageName(pkg)}/src`,
+            `${formatPackageName(pkg)}/src/**`
+          ],
           message: `Use ${formatPackageName(pkg)} imports instead of relative paths into the ${pkg.name} package.`
         }))
     }]

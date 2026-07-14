@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { SourceRange, combineSourceRanges, getEmptySourceRange, getSourceRange } from '../src/range.ts'
+import type { SourceRange } from '../src/range.ts'
+import { combineSourceRanges, getEmptySourceRange, getSourceRange } from '../src/range.ts'
 
 describe('ast/range.ts', () => {
   describe('getEmptySourceRange()', () => {

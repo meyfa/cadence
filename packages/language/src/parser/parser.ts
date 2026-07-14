@@ -1,7 +1,7 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast, combineSourceRanges, getSourceRange } from '@meyfa/cadence-ast'
 import { isStepValue } from '@meyfa/cadence-core'
-import { Token } from 'leac'
+import type { Token } from 'leac'
 import * as p from 'peberminta'
 import { truncateString } from '../result/errors.ts'
 import type { Result } from '../result/result.ts'
