@@ -8,7 +8,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test": "tsx --test \"test/**/*.test.ts\""
+    "test": "npm run test:node && npm run test:dom",
+    "test:node": "node --test \"test/**/*.test.ts\"",
+    "test:dom": "vitest --config ./vitest.config.ts --run"
   },
   "dependencies": {
     "@emotion/cache": "11.14.0",

@@ -8,7 +8,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "npm run test:node && npm run test:dom",
-    "test:node": "tsx --test \"test/**/*.test.ts\"",
+    "test:node": "node --test \"test/**/*.test.ts\"",
     "test:dom": "vitest --config ./vitest.config.ts --run"
   },
   "dependencies": {
