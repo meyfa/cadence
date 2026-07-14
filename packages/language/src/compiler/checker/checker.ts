@@ -13,14 +13,17 @@ import { BusFacet } from '../../type-system/domain/bus.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
+import { MixerFacet } from '../../type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
+import { TrackFacet } from '../../type-system/domain/track.ts'
+import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType, makeUnion } from '../../type-system/factory.ts'
 import type { Schema, SchemaItem } from '../../type-system/schema.ts'
 import type { FacetType, Type, Value } from '../../type-system/types.ts'
-import { assertNever } from '../assert.ts'
+import { assertNever, nonNull } from '../assert.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import { BUS_NAMESPACE, busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
@@ -30,9 +33,8 @@ import { unaryOperations } from '../operators/unary.ts'
 import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import { checkCyclicRoutings } from './routings.ts'
-import type { MutableNamespace, MutableScope, Scope } from './scopes.ts'
+import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
-import { VoiceFacet } from '../../type-system/domain/voice.ts'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -70,21 +72,25 @@ export function check (program: ast.Program): CheckResult {
         errors.push(...checkAssignment(scope, child))
         break
 
-      case 'TrackStatement':
+      case 'Track': {
         if (hasTrack) {
           errors.push(new CompileError('Multiple track definitions', child.range))
         }
         hasTrack = true
-        errors.push(...checkTrack(scope, child))
+        const trackCheck = checkExpression(scope, child)
+        errors.push(...trackCheck.errors)
         break
+      }
 
-      case 'MixerStatement':
+      case 'Mixer': {
         if (hasMixer) {
           errors.push(new CompileError('Multiple mixer definitions', child.range))
         }
         hasMixer = true
-        errors.push(...checkMixer(scope, child, busNamespace))
+        const mixerCheck = checkExpression(scope, child)
+        errors.push(...mixerCheck.errors)
         break
+      }
 
       default:
         assertNever(child)
@@ -196,250 +202,6 @@ function checkAssignment (scope: MutableScope, assignment: ast.Assignment): read
   return errors
 }
 
-function checkTrack (scope: MutableScope, track: ast.TrackStatement): readonly CompileError[] {
-  const trackScope = createLocalScope(scope)
-  const errors: CompileError[] = []
-
-  errors.push(...checkArgumentList(trackScope, track.properties, trackSchema, track.range, 'property'))
-
-  const seenParts = new Set<string>()
-
-  for (const child of track.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(trackScope, child))
-        break
-
-      case 'PartStatement': {
-        if (child.name != null) {
-          if (seenParts.has(child.name.name)) {
-            errors.push(new CompileError(`Duplicate part named "${child.name.name}"`, child.range))
-          } else if (trackScope.resolutions.has(child.name.name)) {
-            errors.push(new CompileError(`Part name "${child.name.name}" conflicts with existing identifier`, child.name.range))
-          }
-
-          seenParts.add(child.name.name)
-
-          // Reserve the name in the local scope
-          trackScope.resolutions.set(child.name.name, PartFacet.type())
-        }
-
-        errors.push(...checkPart(trackScope, child))
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  return errors
-}
-
-function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileError[] {
-  const partScope = createLocalScope(scope)
-  const errors: CompileError[] = []
-
-  errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
-
-  for (const child of part.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(partScope, child))
-        break
-
-      case 'Routing':
-        errors.push(...checkInstrumentRouting(partScope, child))
-        break
-
-      case 'AutomateStatement':
-        errors.push(...checkAutomation(partScope, child))
-        break
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  return errors
-}
-
-function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  const destination = resolveInScope(scope, routing.destination.name)
-  if (destination == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
-  } else {
-    errors.push(...checkType(InstrumentFacet.type(), destination, routing.destination.range))
-  }
-
-  const sourceCheck = checkExpression(scope, routing.source)
-  errors.push(...sourceCheck.errors)
-  if (sourceCheck.result != null) {
-    errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
-  }
-
-  return errors
-}
-
-function checkAutomation (scope: Scope, automation: ast.AutomateStatement): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  const targetCheck = checkExpression(scope, automation.target)
-  errors.push(...targetCheck.errors)
-  if (targetCheck.result != null) {
-    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, automation.target.range))
-  }
-
-  const curveCheck = checkExpression(scope, automation.curve)
-  errors.push(...curveCheck.errors)
-
-  if (curveCheck.result == null) {
-    return errors
-  }
-
-  let curveType = CurveFacet.type()
-
-  if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
-    const parameterType = ParameterFacet.detail(targetCheck.result)
-    curveType = CurveFacet.with(parameterType).type()
-  }
-
-  errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
-
-  return errors
-}
-
-function checkMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): readonly CompileError[] {
-  const mixerScope = createLocalScope(scope)
-  const errors: CompileError[] = []
-
-  errors.push(...checkArgumentList(mixerScope, mixer.properties, mixerSchema, mixer.range, 'property'))
-
-  const buses: ast.BusStatement[] = []
-  const seenBuses = new Map<string, FacetType>()
-
-  for (const child of mixer.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(mixerScope, child))
-        break
-
-      case 'BusStatement': {
-        const bus = child
-        buses.push(bus)
-
-        if (seenBuses.has(bus.name.name)) {
-          errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-        } else if (mixerScope.resolutions.has(bus.name.name)) {
-          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
-        }
-
-        const busCheck = checkBus(mixerScope, bus)
-        errors.push(...busCheck.errors)
-
-        const type = busCheck.result ?? BusFacet.type()
-        seenBuses.set(bus.name.name, type)
-        mixerScope.resolutions.set(bus.name.name, type)
-        mixerScope.top.buses.set(bus.name.name, type)
-        busNamespace.resolutions.set(bus.name.name, type)
-
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  errors.push(...checkCyclicRoutings(buses.map((bus) => ({
-    name: bus.name.name,
-    sources: bus.children.filter((child) => child.type === 'Identifier').map((source) => source.name),
-    range: bus.name.range
-  }))))
-
-  return errors
-}
-
-function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
-  const busScope = createLocalScope(scope)
-  const errors: CompileError[] = []
-
-  errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
-
-  const properties = {
-    gain: ParameterFacet.with('db').type(),
-    pan: ParameterFacet.with(undefined).type()
-  }
-
-  const record: Record<string, FacetType> = Object.create(null)
-  Object.assign(record, properties)
-
-  for (const child of bus.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(busScope, child))
-        break
-
-      case 'Identifier': {
-        const sourceCheck = checkExpression(busScope, child)
-        errors.push(...sourceCheck.errors)
-
-        if (sourceCheck.result != null) {
-          const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
-          errors.push(...checkType(options, sourceCheck.result, child.range))
-        }
-
-        break
-      }
-
-      case 'EffectStatement': {
-        const effectCheck = checkExpression(busScope, child.expression)
-        errors.push(...effectCheck.errors)
-
-        let effectType: FacetType | undefined
-
-        if (effectCheck.result != null) {
-          const typeErrors = checkType(EffectFacet.type(), effectCheck.result, child.expression.range)
-          errors.push(...typeErrors)
-
-          if (typeErrors.length === 0) {
-            effectType = effectCheck.result
-          }
-        }
-
-        if (child.name == null) {
-          continue
-        }
-
-        if (Object.hasOwn(properties, child.name.name)) {
-          errors.push(new CompileError(`Effect name "${child.name.name}" conflicts with bus property of the same name`, child.name.range))
-          continue
-        }
-
-        if (Object.hasOwn(record, child.name.name)) {
-          errors.push(new CompileError(`Duplicate effect name "${child.name.name}"`, child.name.range))
-          continue
-        }
-
-        if (effectType != null) {
-          record[child.name.name] = effectType
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  const type = makeType(BusFacet, RecordFacet.with(record))
-
-  return { errors, result: type }
-}
-
 function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
   switch (expression.type) {
     case 'Identifier':
@@ -462,6 +224,12 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
 
     case 'Voice':
       return checkVoice(scope, expression)
+
+    case 'Mixer':
+      return checkMixer(scope, expression)
+
+    case 'Track':
+      return checkTrack(scope, expression)
 
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
@@ -746,6 +514,258 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
   }
 
   return { errors, result: VoiceFacet.type() }
+}
+
+function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
+  const mixerScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  if (!scope.allowedEffects.blocking) {
+    errors.push(new CompileError('Cannot construct a mixer in a realtime context', expression.range))
+  }
+
+  errors.push(...checkArgumentList(mixerScope, expression.properties, mixerSchema, expression.range, 'property'))
+
+  const busNamespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
+
+  const buses: ast.BusStatement[] = []
+
+  for (const child of expression.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(mixerScope, child))
+        break
+
+      case 'BusStatement': {
+        const bus = child
+        buses.push(bus)
+
+        if (busNamespace.resolutions.has(bus.name.name)) {
+          errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
+        } else if (mixerScope.resolutions.has(bus.name.name)) {
+          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
+        }
+
+        const busCheck = checkBus(mixerScope, bus)
+        errors.push(...busCheck.errors)
+
+        const type = busCheck.result ?? BusFacet.type()
+        mixerScope.resolutions.set(bus.name.name, type)
+        mixerScope.top.buses.set(bus.name.name, type)
+        busNamespace.resolutions.set(bus.name.name, type)
+
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  errors.push(...checkCyclicRoutings(buses.map((bus) => ({
+    name: bus.name.name,
+    sources: bus.children.filter((child) => child.type === 'Identifier').map((source) => source.name),
+    range: bus.name.range
+  }))))
+
+  return { errors, result: MixerFacet.type() }
+}
+
+function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
+  const busScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
+
+  const properties = {
+    gain: ParameterFacet.with('db').type(),
+    pan: ParameterFacet.with(undefined).type()
+  }
+
+  const record: Record<string, FacetType> = Object.create(null)
+  Object.assign(record, properties)
+
+  for (const child of bus.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(busScope, child))
+        break
+
+      case 'Identifier': {
+        const sourceCheck = checkExpression(busScope, child)
+        errors.push(...sourceCheck.errors)
+
+        if (sourceCheck.result != null) {
+          const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
+          errors.push(...checkType(options, sourceCheck.result, child.range))
+        }
+
+        break
+      }
+
+      case 'EffectStatement': {
+        const effectCheck = checkExpression(busScope, child.expression)
+        errors.push(...effectCheck.errors)
+
+        let effectType: FacetType | undefined
+
+        if (effectCheck.result != null) {
+          const typeErrors = checkType(EffectFacet.type(), effectCheck.result, child.expression.range)
+          errors.push(...typeErrors)
+
+          if (typeErrors.length === 0) {
+            effectType = effectCheck.result
+          }
+        }
+
+        if (child.name == null) {
+          continue
+        }
+
+        if (Object.hasOwn(properties, child.name.name)) {
+          errors.push(new CompileError(`Effect name "${child.name.name}" conflicts with bus property of the same name`, child.name.range))
+          continue
+        }
+
+        if (Object.hasOwn(record, child.name.name)) {
+          errors.push(new CompileError(`Duplicate effect name "${child.name.name}"`, child.name.range))
+          continue
+        }
+
+        if (effectType != null) {
+          record[child.name.name] = effectType
+        }
+
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  const type = makeType(BusFacet, RecordFacet.with(record))
+
+  return { errors, result: type }
+}
+
+function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
+  const trackScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  if (!scope.allowedEffects.blocking) {
+    errors.push(new CompileError('Cannot construct a track in a realtime context', expression.range))
+  }
+
+  errors.push(...checkArgumentList(trackScope, expression.properties, trackSchema, expression.range, 'property'))
+
+  const seenParts = new Set<string>()
+
+  for (const child of expression.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(trackScope, child))
+        break
+
+      case 'PartStatement': {
+        if (child.name != null) {
+          if (seenParts.has(child.name.name)) {
+            errors.push(new CompileError(`Duplicate part named "${child.name.name}"`, child.range))
+          } else if (trackScope.resolutions.has(child.name.name)) {
+            errors.push(new CompileError(`Part name "${child.name.name}" conflicts with existing identifier`, child.name.range))
+          }
+
+          seenParts.add(child.name.name)
+
+          // Reserve the name in the local scope
+          trackScope.resolutions.set(child.name.name, PartFacet.type())
+        }
+
+        errors.push(...checkPart(trackScope, child))
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  return { errors, result: TrackFacet.type() }
+}
+
+function checkPart (scope: Scope, part: ast.PartStatement): readonly CompileError[] {
+  const partScope = createLocalScope(scope)
+  const errors: CompileError[] = []
+
+  errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
+
+  for (const child of part.children) {
+    switch (child.type) {
+      case 'Assignment':
+        errors.push(...checkAssignment(partScope, child))
+        break
+
+      case 'Routing':
+        errors.push(...checkInstrumentRouting(partScope, child))
+        break
+
+      case 'AutomateStatement':
+        errors.push(...checkAutomation(partScope, child))
+        break
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  return errors
+}
+
+function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const destination = resolveInScope(scope, routing.destination.name)
+  if (destination == null) {
+    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
+  } else {
+    errors.push(...checkType(InstrumentFacet.type(), destination, routing.destination.range))
+  }
+
+  const sourceCheck = checkExpression(scope, routing.source)
+  errors.push(...sourceCheck.errors)
+  if (sourceCheck.result != null) {
+    errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
+  }
+
+  return errors
+}
+
+function checkAutomation (scope: Scope, automation: ast.AutomateStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const targetCheck = checkExpression(scope, automation.target)
+  errors.push(...targetCheck.errors)
+  if (targetCheck.result != null) {
+    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, automation.target.range))
+  }
+
+  const curveCheck = checkExpression(scope, automation.curve)
+  errors.push(...curveCheck.errors)
+
+  if (curveCheck.result == null) {
+    return errors
+  }
+
+  let curveType = CurveFacet.type()
+
+  if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
+    const parameterType = ParameterFacet.detail(targetCheck.result)
+    curveType = CurveFacet.with(parameterType).type()
+  }
+
+  errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
+
+  return errors
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {

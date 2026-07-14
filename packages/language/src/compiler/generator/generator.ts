@@ -15,10 +15,12 @@ import type { Curve, CurveSegment } from '../../type-system/domain/curve.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
+import { MixerFacet } from '../../type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
+import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType } from '../../type-system/factory.ts'
 import { Curves, Numbers, Parameters } from '../../type-system/helpers.ts'
@@ -60,14 +62,14 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
         processAssignment(scope, child)
         break
 
-      case 'MixerStatement':
+      case 'Mixer':
         assert(mixer == null)
-        mixer = generateMixer(scope, child, busNamespace)
+        mixer = MixerFacet.get(resolve(scope, child))
         break
 
-      case 'TrackStatement':
+      case 'Track':
         assert(track == null)
-        track = generateTrack(scope, child)
+        track = TrackFacet.get(resolve(scope, child))
         break
 
       default:
@@ -141,252 +143,6 @@ function processAssignment (scope: MutableScope, assignment: ast.Assignment): vo
   scope.resolutions.set(assignment.key.name, resolve(scope, assignment.value))
 }
 
-function generateTrack (scope: Scope, track: ast.TrackStatement): Track {
-  const { options } = scope.top
-
-  const properties = resolveArgumentList(scope, track.properties, trackSchema)
-
-  const tempo = properties.tempo != null
-    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum).value
-    : options.tempo.default
-
-  const trackScope = createLocalScope(scope)
-  const parts: Part[] = []
-
-  let currentTime = 0 as Numeric<'beats'>
-
-  for (const child of track.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(trackScope, child)
-        break
-
-      case 'PartStatement': {
-        const part = generatePart(trackScope, child, currentTime, tempo)
-        parts.push(part)
-
-        if (part.name != null) {
-          assert(!trackScope.resolutions.has(part.name))
-          trackScope.resolutions.set(part.name, PartFacet.type().of(part))
-        }
-
-        currentTime = currentTime + part.length as Numeric<'beats'>
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  return { tempo, parts }
-}
-
-function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
-  const partScope = createLocalScope(scope)
-
-  const name = part.name?.name
-  const properties = resolveArgumentList(scope, part.properties, partSchema)
-  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
-
-  const startTimeSeconds = beatsToSeconds(startTime, tempo)
-  const lengthSeconds = beatsToSeconds(length.value, tempo)
-
-  const routings: InstrumentRouting[] = []
-
-  for (const child of part.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(partScope, child)
-        break
-
-      case 'Routing':
-        routings.push({
-          source: {
-            type: 'pattern',
-            value: PatternFacet.get(resolve(partScope, child.source))
-          },
-
-          destination: {
-            type: 'instrument',
-            id: InstrumentFacet.get(resolve(partScope, child.destination)).id
-          }
-        })
-        break
-
-      case 'AutomateStatement':
-        generateAutomation(partScope, child, { offset: startTimeSeconds, limit: lengthSeconds, tempo })
-        break
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  return { name, length: length.value, routings }
-}
-
-function generateAutomation (scope: Scope, statement: ast.AutomateStatement, options: RenderCurveOptions): void {
-  const target = ParameterFacet.get(resolve(scope, statement.target))
-  const curve = CurveFacet.get(resolve(scope, statement.curve))
-
-  const rendered = renderCurvePoints(curve, options)
-  const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
-
-  const points = mergeCurvePoints(existing.points, rendered)
-  scope.top.automations.set(target.id, { ...existing, points })
-}
-
-function generateMixer (scope: Scope, mixer: ast.MixerStatement, busNamespace: MutableNamespace): Mixer {
-  const mixerScope = createLocalScope(scope)
-
-  const busStatements: ast.BusStatement[] = []
-  const buses: Bus[] = []
-  const routings: MixerRouting[] = []
-
-  for (const child of mixer.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(mixerScope, child)
-        break
-
-      case 'BusStatement': {
-        busStatements.push(child)
-        const generated = generateBus(mixerScope, child, busNamespace)
-        buses.push(generated.bus)
-        routings.push(...generated.routings)
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  return { buses, routings }
-}
-
-function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRouting[] {
-  const routings: MixerRouting[] = []
-
-  const unroutedBuses = new Set<BusId>(mixer.buses.map((b) => b.id))
-  const unroutedInstruments = new Set<InstrumentId>(scope.top.instruments.keys())
-
-  for (const routing of mixer.routings) {
-    switch (routing.source.type) {
-      case 'bus':
-        unroutedBuses.delete(routing.source.id)
-        break
-      case 'instrument':
-        unroutedInstruments.delete(routing.source.id)
-        break
-      default:
-        assertNever(routing.source)
-    }
-  }
-
-  const createImplicitRouting = (source: MixerRouting['source']) => {
-    routings.push({ implicit: true, source, destination: { type: 'output' } })
-  }
-
-  for (const busId of unroutedBuses) {
-    createImplicitRouting({ type: 'bus', id: busId })
-  }
-
-  for (const instrumentId of unroutedInstruments) {
-    createImplicitRouting({ type: 'instrument', id: instrumentId })
-  }
-
-  return routings
-}
-
-interface BusGenerationResult {
-  readonly bus: Bus
-  readonly routings: readonly MixerRouting[]
-}
-
-function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): BusGenerationResult {
-  const busScope = createLocalScope(scope)
-
-  const name = bus.name.name
-  const properties = resolveArgumentList(scope, bus.properties, busSchema)
-
-  const valueRecord: Record<string, Value> = Object.create(null)
-  const typeRecord: Record<string, FacetType> = Object.create(null)
-
-  const sources: Array<MixerRouting['source']> = []
-  const effects: Effect[] = []
-
-  for (const child of bus.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(busScope, child)
-        break
-
-      case 'Identifier': {
-        const source = resolve(busScope, child)
-
-        if (InstrumentFacet.has(source)) {
-          sources.push({ type: 'instrument', id: InstrumentFacet.get(source).id })
-        } else if (BusFacet.has(source)) {
-          sources.push({ type: 'bus', id: BusFacet.get(source).id })
-        } else {
-          fail()
-        }
-
-        break
-      }
-
-      case 'EffectStatement': {
-        const effectValue = resolve(busScope, child.expression)
-        effects.push(EffectFacet.get(effectValue))
-
-        const effectName = child.name?.name
-        if (effectName != null) {
-          valueRecord[effectName] = effectValue
-          typeRecord[effectName] = effectValue.type
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
-    }
-  }
-
-  // These must always be allocated even if not explicitly set,
-  // as they could still be automated.
-  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
-  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
-
-  const gain = scope.top.allocateParameter('db', gainData)
-  valueRecord.gain = Parameters.of(gain)
-  typeRecord.gain = valueRecord.gain.type
-
-  const pan = scope.top.allocateParameter(undefined, panData)
-  valueRecord.pan = Parameters.of(pan)
-  typeRecord.pan = valueRecord.pan.type
-
-  const data = scope.top.allocateBus({ name, gain, pan, effects })
-  const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
-
-  assert(!scope.resolutions.has(name))
-  scope.resolutions.set(name, value)
-
-  assert(!namespace.resolutions.has(name))
-  namespace.resolutions.set(name, value)
-
-  const destination = { type: 'bus', id: data.id } as const
-  const routings = sources.map((source) => ({
-    implicit: false,
-    source,
-    destination
-  }))
-
-  return { bus: data, routings }
-}
-
 /**
  * Resolve an expression to a value within the given scope. Since this expression (or sub-expressions) may call
  * functions, the scope may be updated.
@@ -413,6 +169,12 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
     case 'Voice':
       return generateVoice(scope, expression)
+
+    case 'Mixer':
+      return generateMixer(scope, expression)
+
+    case 'Track':
+      return generateTrack(scope, expression)
 
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
@@ -645,6 +407,254 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
     source: outputValue,
     duration: envelope.points.at(-1)?.time
   }
+}
+
+function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
+  const mixerScope = createLocalScope(scope)
+
+  const busNamespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
+
+  const busStatements: ast.BusStatement[] = []
+  const buses: Bus[] = []
+  const routings: MixerRouting[] = []
+
+  for (const child of mixer.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(mixerScope, child)
+        break
+
+      case 'BusStatement': {
+        busStatements.push(child)
+        const generated = generateBus(mixerScope, child, busNamespace)
+        buses.push(generated.bus)
+        routings.push(...generated.routings)
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  return MixerFacet.type().of({ buses, routings })
+}
+
+function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRouting[] {
+  const routings: MixerRouting[] = []
+
+  const unroutedBuses = new Set<BusId>(mixer.buses.map((b) => b.id))
+  const unroutedInstruments = new Set<InstrumentId>(scope.top.instruments.keys())
+
+  for (const routing of mixer.routings) {
+    switch (routing.source.type) {
+      case 'bus':
+        unroutedBuses.delete(routing.source.id)
+        break
+      case 'instrument':
+        unroutedInstruments.delete(routing.source.id)
+        break
+      default:
+        assertNever(routing.source)
+    }
+  }
+
+  const createImplicitRouting = (source: MixerRouting['source']) => {
+    routings.push({ implicit: true, source, destination: { type: 'output' } })
+  }
+
+  for (const busId of unroutedBuses) {
+    createImplicitRouting({ type: 'bus', id: busId })
+  }
+
+  for (const instrumentId of unroutedInstruments) {
+    createImplicitRouting({ type: 'instrument', id: instrumentId })
+  }
+
+  return routings
+}
+
+interface BusGenerationResult {
+  readonly bus: Bus
+  readonly routings: readonly MixerRouting[]
+}
+
+function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): BusGenerationResult {
+  const busScope = createLocalScope(scope)
+
+  const name = bus.name.name
+  const properties = resolveArgumentList(scope, bus.properties, busSchema)
+
+  const valueRecord: Record<string, Value> = Object.create(null)
+  const typeRecord: Record<string, FacetType> = Object.create(null)
+
+  const sources: Array<MixerRouting['source']> = []
+  const effects: Effect[] = []
+
+  for (const child of bus.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(busScope, child)
+        break
+
+      case 'Identifier': {
+        const source = resolve(busScope, child)
+
+        if (InstrumentFacet.has(source)) {
+          sources.push({ type: 'instrument', id: InstrumentFacet.get(source).id })
+        } else if (BusFacet.has(source)) {
+          sources.push({ type: 'bus', id: BusFacet.get(source).id })
+        } else {
+          fail()
+        }
+
+        break
+      }
+
+      case 'EffectStatement': {
+        const effectValue = resolve(busScope, child.expression)
+        effects.push(EffectFacet.get(effectValue))
+
+        const effectName = child.name?.name
+        if (effectName != null) {
+          valueRecord[effectName] = effectValue
+          typeRecord[effectName] = effectValue.type
+        }
+
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  // These must always be allocated even if not explicitly set,
+  // as they could still be automated.
+  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
+  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
+
+  const gain = scope.top.allocateParameter('db', gainData)
+  valueRecord.gain = Parameters.of(gain)
+  typeRecord.gain = valueRecord.gain.type
+
+  const pan = scope.top.allocateParameter(undefined, panData)
+  valueRecord.pan = Parameters.of(pan)
+  typeRecord.pan = valueRecord.pan.type
+
+  const data = scope.top.allocateBus({ name, gain, pan, effects })
+  const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
+
+  assert(!scope.resolutions.has(name))
+  scope.resolutions.set(name, value)
+
+  assert(!namespace.resolutions.has(name))
+  namespace.resolutions.set(name, value)
+
+  const destination = { type: 'bus', id: data.id } as const
+  const routings = sources.map((source) => ({
+    implicit: false,
+    source,
+    destination
+  }))
+
+  return { bus: data, routings }
+}
+
+function generateTrack (scope: Scope, track: ast.Track): Value {
+  const { options } = scope.top
+
+  const properties = resolveArgumentList(scope, track.properties, trackSchema)
+
+  const tempo = properties.tempo != null
+    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum).value
+    : options.tempo.default
+
+  const trackScope = createLocalScope(scope)
+  const parts: Part[] = []
+
+  let currentTime = 0 as Numeric<'beats'>
+
+  for (const child of track.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(trackScope, child)
+        break
+
+      case 'PartStatement': {
+        const part = generatePart(trackScope, child, currentTime, tempo)
+        parts.push(part)
+
+        if (part.name != null) {
+          assert(!trackScope.resolutions.has(part.name))
+          trackScope.resolutions.set(part.name, PartFacet.type().of(part))
+        }
+
+        currentTime = currentTime + part.length as Numeric<'beats'>
+        break
+      }
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  return TrackFacet.type().of({ tempo, parts })
+}
+
+function generatePart (scope: Scope, part: ast.PartStatement, startTime: Numeric<'beats'>, tempo: Numeric<'bpm'>): Part {
+  const partScope = createLocalScope(scope)
+
+  const name = part.name?.name
+  const properties = resolveArgumentList(scope, part.properties, partSchema)
+  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
+
+  const startTimeSeconds = beatsToSeconds(startTime, tempo)
+  const lengthSeconds = beatsToSeconds(length.value, tempo)
+
+  const routings: InstrumentRouting[] = []
+
+  for (const child of part.children) {
+    switch (child.type) {
+      case 'Assignment':
+        processAssignment(partScope, child)
+        break
+
+      case 'Routing':
+        routings.push({
+          source: {
+            type: 'pattern',
+            value: PatternFacet.get(resolve(partScope, child.source))
+          },
+
+          destination: {
+            type: 'instrument',
+            id: InstrumentFacet.get(resolve(partScope, child.destination)).id
+          }
+        })
+        break
+
+      case 'AutomateStatement':
+        generateAutomation(partScope, child, { offset: startTimeSeconds, limit: lengthSeconds, tempo })
+        break
+
+      default:
+        assertNever(child)
+    }
+  }
+
+  return { name, length: length.value, routings }
+}
+
+function generateAutomation (scope: Scope, statement: ast.AutomateStatement, options: RenderCurveOptions): void {
+  const target = ParameterFacet.get(resolve(scope, statement.target))
+  const curve = CurveFacet.get(resolve(scope, statement.curve))
+
+  const rendered = renderCurvePoints(curve, options)
+  const existing = nonNull(scope.top.automations.get(target.id), 'Parameter allocated incorrectly')
+
+  const points = mergeCurvePoints(existing.points, rendered)
+  scope.top.automations.set(target.id, { ...existing, points })
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {

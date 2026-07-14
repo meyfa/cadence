@@ -344,7 +344,9 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   serialPattern_,
   curve_,
   p.recursive(() => instrument_),
-  p.recursive(() => voice_)
+  p.recursive(() => voice_),
+  p.recursive(() => mixer_),
+  p.recursive(() => track_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -560,7 +562,7 @@ const partStatement_: p.Parser<Token, unknown, ast.PartStatement> = p.abc(
   }
 )
 
-const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
+const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
   keyword('track'),
   p.option(
     combine3(
@@ -580,7 +582,7 @@ const trackStatement_: p.Parser<Token, unknown, ast.TrackStatement> = p.abc(
   (_track, callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
 
-    return ast.make('TrackStatement', combineSourceRanges(_track, _rp), {
+    return ast.make('Track', combineSourceRanges(_track, _rp), {
       properties: args,
       children
     })
@@ -641,7 +643,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
   }
 )
 
-const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
+const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
   keyword('mixer'),
   p.option(
     combine3(
@@ -661,7 +663,7 @@ const mixerStatement_: p.Parser<Token, unknown, ast.MixerStatement> = p.abc(
   (_mixer, callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
 
-    return ast.make('MixerStatement', combineSourceRanges(_mixer, _rp), {
+    return ast.make('Mixer', combineSourceRanges(_mixer, _rp), {
       properties: args,
       children
     })
@@ -724,7 +726,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
   p.many(useStatement_),
   p.many(
     p.eitherOr(
-      p.eitherOr(assignment_, p.eitherOr(trackStatement_, mixerStatement_)),
+      p.eitherOr(assignment_, p.eitherOr(track_, mixer_)),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
         throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))

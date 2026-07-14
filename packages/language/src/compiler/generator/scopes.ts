@@ -35,7 +35,7 @@ export interface Scope {
 export interface GlobalScope extends Scope, Context {
   readonly options: GenerateOptions
 
-  readonly namespaces: Map<string, Namespace>
+  readonly namespaces: Map<string, MutableNamespace>
 
   readonly buses: Map<BusId, Bus>
   readonly instruments: Map<InstrumentId, Instrument>

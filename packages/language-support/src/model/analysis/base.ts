@@ -144,12 +144,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'VariableDefinition': {
-        // The parser can produce VariableDefinition nodes with trailing whitespace (possibly a bug).
-        // Example (emits "kick " with a trailing space):
-        //     track { part { kick } }
-        const rawName = document.sliceString(from, to)
-        const name = rawName.trimEnd()
-        const nameRange = toSourceRange(document, from, from + name.length)
+        const { name, range: nameRange } = getVariableName(document, from, to)
 
         switch (parentType) {
           case 'Assignment': {
@@ -198,8 +193,8 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'Callee':
       case 'Member':
       case 'BusNamespace': {
-        const name = document.sliceString(from, to)
-        accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range, previousSibling })
+        const { name, range: nameRange } = getVariableName(document, from, to)
+        accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
         break
       }
     }
@@ -257,6 +252,17 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   sortByOffset(imports)
 
   return { rootScopeId, scopes, identifiers, bindings, imports }
+}
+
+function getVariableName (document: TextLike, from: number, to: number): Readonly<{ name: string, range: SourceRange }> {
+  // The parser can produce nodes with trailing whitespace (possibly a bug).
+  // Example (emits "kick " with a trailing space):
+  //     track { part { kick } }
+  const rawName = document.sliceString(from, to)
+  const name = rawName.trimEnd()
+  const range = toSourceRange(document, from, from + name.length)
+
+  return { name, range }
 }
 
 function sortByOffset (items: Array<{ readonly range: SourceRange }>): void {
