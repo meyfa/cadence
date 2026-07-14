@@ -67,6 +67,7 @@ const part: Part = {
 const bus: Bus = {
   id: 1 as BusId,
   name: 'main',
+  sources: [],
   pan: panParameter,
   gain: gainParameter,
   effects: [effect]

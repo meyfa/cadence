@@ -100,7 +100,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
-      case 'BusStatement': {
+      case 'Bus': {
         const block = cursor.node.getChild('BusBlock')
         if (block != null) {
           const blockRange = toSourceRange(document, block.from, block.to)
@@ -163,7 +163,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             break
           }
 
-          case 'BusStatement': {
+          case 'Bus': {
             if (pendingScope?.kind === 'bus') {
               addBinding({ kind: 'bus', scopeId, name, range: nameRange, declaredScopeId: pendingScope.id })
             }

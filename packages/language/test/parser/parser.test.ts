@@ -633,7 +633,7 @@ describe('parser/parser.ts', () => {
         properties: [],
         children: [
           {
-            type: 'BusStatement',
+            type: 'Bus',
             name: { type: 'Identifier', name: 'mybus' },
             properties: [
               {
@@ -739,7 +739,7 @@ describe('parser/parser.ts', () => {
   it('should reject unnamed buses', () => {
     const result = parse(lexSource('mixer { bus {} }'))
     assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.message, 'Unexpected "{"; expected bus name')
+    assert.strictEqual(result.error.message, 'Unexpected "bus"; expected "}"')
   })
 
   it('should allow assignments in track and mixer bodies', () => {

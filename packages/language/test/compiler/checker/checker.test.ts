@@ -618,7 +618,8 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Duplicate bus named "foo"'
+        'Duplicate bus named "foo"',
+        'Bus name "foo" conflicts with existing identifier'
       ])
     })
 

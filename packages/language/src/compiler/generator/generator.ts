@@ -1,5 +1,5 @@
 import { ast } from '@meyfa/cadence-ast'
-import type { Automation, Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, NoteData, Part, Pattern, Program, RelativeCurve, RelativeCurveSegment, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
+import type { Automation, Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, MixerSource, NoteData, Part, Pattern, Program, RelativeCurve, RelativeCurveSegment, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
 import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -37,7 +37,7 @@ import { unaryOperations } from '../operators/unary.ts'
 import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toNumberValue } from '../units.ts'
 import type { GenerateOptions } from './options.ts'
-import type { GlobalScope, MutableNamespace, MutableScope, Scope } from './scopes.ts'
+import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
 import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
 
 /**
@@ -171,6 +171,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
     case 'Mixer':
       return generateMixer(scope, expression)
+
+    case 'Bus':
+      return generateBus(scope, expression)
 
     case 'Track':
       return generateTrack(scope, expression)
@@ -414,9 +417,6 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
 function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
   const mixerScope = createLocalScope(scope)
 
-  const busNamespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-
-  const busStatements: ast.BusStatement[] = []
   const buses: Bus[] = []
   const routings: MixerRouting[] = []
 
@@ -426,11 +426,21 @@ function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
         processAssignment(mixerScope, child)
         break
 
-      case 'BusStatement': {
-        busStatements.push(child)
-        const generated = generateBus(mixerScope, child, busNamespace)
-        buses.push(generated.bus)
-        routings.push(...generated.routings)
+      case 'Bus': {
+        const busValue = resolve(mixerScope, child)
+        const bus = BusFacet.get(busValue)
+        buses.push(bus)
+
+        assert(!mixerScope.resolutions.has(child.name.name))
+        mixerScope.resolutions.set(child.name.name, busValue)
+
+        const destination = { type: 'bus', id: bus.id } as const
+        routings.push(...bus.sources.map((source) => ({
+          implicit: false,
+          source,
+          destination
+        })))
+
         break
       }
 
@@ -461,7 +471,7 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
     }
   }
 
-  const createImplicitRouting = (source: MixerRouting['source']) => {
+  const createImplicitRouting = (source: MixerSource) => {
     routings.push({ implicit: true, source, destination: { type: 'output' } })
   }
 
@@ -476,13 +486,10 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
   return routings
 }
 
-interface BusGenerationResult {
-  readonly bus: Bus
-  readonly routings: readonly MixerRouting[]
-}
-
-function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: MutableNamespace): BusGenerationResult {
+function generateBus (scope: Scope, bus: ast.Bus): Value {
   const busScope = createLocalScope(scope)
+
+  const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
 
   const name = bus.name.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
@@ -490,7 +497,7 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   const valueRecord: Record<string, Value> = Object.create(null)
   const typeRecord: Record<string, FacetType> = Object.create(null)
 
-  const sources: Array<MixerRouting['source']> = []
+  const sources: MixerSource[] = []
   const effects: Effect[] = []
 
   for (const child of bus.children) {
@@ -544,23 +551,13 @@ function generateBus (scope: MutableScope, bus: ast.BusStatement, namespace: Mut
   valueRecord.pan = Parameters.of(pan)
   typeRecord.pan = valueRecord.pan.type
 
-  const data = scope.top.allocateBus({ name, gain, pan, effects })
+  const data = scope.top.allocateBus({ name, sources, gain, pan, effects })
   const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
-
-  assert(!scope.resolutions.has(name))
-  scope.resolutions.set(name, value)
 
   assert(!namespace.resolutions.has(name))
   namespace.resolutions.set(name, value)
 
-  const destination = { type: 'bus', id: data.id } as const
-  const routings = sources.map((source) => ({
-    implicit: false,
-    source,
-    destination
-  }))
-
-  return { bus: data, routings }
+  return value
 }
 
 function generateTrack (scope: Scope, track: ast.Track): Value {

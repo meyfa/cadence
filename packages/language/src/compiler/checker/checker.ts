@@ -228,6 +228,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Mixer':
       return checkMixer(scope, expression)
 
+    case 'Bus':
+      return checkBus(scope, expression)
+
     case 'Track':
       return checkTrack(scope, expression)
 
@@ -529,9 +532,7 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
 
   errors.push(...checkArgumentList(mixerScope, expression.properties, mixerSchema, expression.range, 'property'))
 
-  const busNamespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-
-  const buses: ast.BusStatement[] = []
+  const buses: ast.Bus[] = []
 
   for (const child of expression.children) {
     switch (child.type) {
@@ -539,23 +540,19 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
         errors.push(...checkAssignment(mixerScope, child))
         break
 
-      case 'BusStatement': {
+      case 'Bus': {
         const bus = child
         buses.push(bus)
-
-        if (busNamespace.resolutions.has(bus.name.name)) {
-          errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-        } else if (mixerScope.resolutions.has(bus.name.name)) {
-          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
-        }
 
         const busCheck = checkBus(mixerScope, bus)
         errors.push(...busCheck.errors)
 
-        const type = busCheck.result ?? BusFacet.type()
-        mixerScope.resolutions.set(bus.name.name, type)
-        mixerScope.top.buses.set(bus.name.name, type)
-        busNamespace.resolutions.set(bus.name.name, type)
+        if (mixerScope.resolutions.has(bus.name.name)) {
+          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
+        } else {
+          const type = busCheck.result ?? BusFacet.type()
+          mixerScope.resolutions.set(bus.name.name, type)
+        }
 
         break
       }
@@ -574,7 +571,7 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
   return { errors, result: MixerFacet.type() }
 }
 
-function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
+function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
   const busScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
@@ -648,6 +645,13 @@ function checkBus (scope: Scope, bus: ast.BusStatement): Checked<FacetType> {
   }
 
   const type = makeType(BusFacet, RecordFacet.with(record))
+
+  const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
+  if (namespace.resolutions.has(bus.name.name)) {
+    errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
+  } else {
+    namespace.resolutions.set(bus.name.name, type)
+  }
 
   return { errors, result: type }
 }

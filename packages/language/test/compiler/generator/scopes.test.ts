@@ -43,6 +43,7 @@ describe('compiler/generator/scopes.ts', () => {
 
       const bus0 = {
         name: 'bus0',
+        sources: [],
         gain: scope.allocateParameter('db', db(0)),
         pan: scope.allocateParameter(undefined, scalar(0)),
         effects: []
@@ -50,6 +51,7 @@ describe('compiler/generator/scopes.ts', () => {
 
       const bus1 = {
         name: 'bus1',
+        sources: [],
         gain: scope.allocateParameter('db', db(-3)),
         pan: scope.allocateParameter(undefined, scalar(-0.5)),
         effects: []

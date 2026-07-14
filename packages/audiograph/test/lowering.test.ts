@@ -82,6 +82,7 @@ function createProgramWithEffect (effect: Effect): Program {
         {
           id: 100 as BusId,
           name: 'Bus 1',
+          sources: [],
           gain: {
             id: 400 as ParameterId,
             unit: 'db',
@@ -229,6 +230,7 @@ describe('lowering.ts', () => {
           {
             id: busId,
             name: 'Bus 1',
+            sources: [],
             gain: {
               id: busGainId,
               unit: 'db',
@@ -1635,6 +1637,7 @@ describe('lowering.ts', () => {
             {
               id: busId,
               name: 'Bus 1',
+              sources: [],
               gain: {
                 id: 201 as ParameterId,
                 unit: 'db',
