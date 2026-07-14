@@ -15,7 +15,6 @@ describe('compiler/checker/scopes.ts', () => {
       assert.strictEqual(result.resolutions.get('foo'), foo)
       assert.deepStrictEqual(result.allowedEffects, { blocking: true })
 
-      assert.strictEqual(result.buses.size, 0)
       assert.strictEqual(result.namespaces.size, 0)
     })
   })

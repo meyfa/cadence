@@ -11,7 +11,6 @@ export interface Scope {
 }
 
 export interface GlobalScope extends Scope {
-  readonly buses: Map<string, FacetType>
   readonly namespaces: Map<string, MutableNamespace>
 }
 

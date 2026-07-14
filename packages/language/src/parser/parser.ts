@@ -346,6 +346,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => instrument_),
   p.recursive(() => voice_),
   p.recursive(() => mixer_),
+  p.recursive(() => bus_),
   p.recursive(() => track_),
   p.recursive(() => part_)
 )
@@ -610,10 +611,10 @@ const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.abc(
   }
 )
 
-const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
+const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   combine2(
     keyword('bus'),
-    expect(identifier_, 'bus name')
+    identifier_
   ),
   p.option(
     combine3(
@@ -636,7 +637,7 @@ const busStatement_: p.Parser<Token, unknown, ast.BusStatement> = p.abc(
   ([_bus, name], callChain, [_lp, children, _rp]) => {
     const args = callChain == null ? [] : callChain[1]
 
-    return ast.make('BusStatement', combineSourceRanges(_bus, _rp), {
+    return ast.make('Bus', combineSourceRanges(_bus, _rp), {
       name,
       properties: args,
       children
@@ -657,7 +658,7 @@ const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
   combine3(
     expectLiteral('{'),
     p.many(
-      p.eitherOr(assignment_, busStatement_)
+      p.eitherOr(assignment_, bus_)
     ),
     expectLiteral('}')
   ),

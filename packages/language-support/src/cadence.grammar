@@ -116,9 +116,9 @@ primary {
   "(" expression ")" |
   Call |
   VariableName |
-  BusNamespace |
   Number |
   String |
+  Bus |
   Curve |
   Instrument |
   Mixer |
@@ -134,7 +134,7 @@ Call {
 }
 
 AccessOrCall {
-  primary
+  (primary | BusNamespace "." Member { Unit | word })
   (
     "." Call |
     "." Member { Unit | word }
@@ -208,11 +208,11 @@ Mixer {
   kw<"mixer">
   ("(" argumentList? ")")?
   MixerBlock[group=Block] {
-    "{" (Assignment | BusStatement)* "}"
+    "{" (Assignment | Bus)* "}"
   }
 }
 
-BusStatement {
+Bus {
   kw<"bus"> VariableDefinition
   ("(" argumentList? ")")?
   BusBlock[group=Block] {

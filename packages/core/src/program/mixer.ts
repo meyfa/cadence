@@ -13,6 +13,7 @@ export type BusId = Brand<number, 'core.BusId'>
 export interface Bus {
   readonly id: BusId
   readonly name: string
+  readonly sources: readonly MixerSource[]
   readonly pan: Parameter<undefined>
   readonly gain: Parameter<'db'>
   readonly effects: readonly Effect[]
@@ -20,19 +21,21 @@ export interface Bus {
 
 export interface MixerRouting {
   readonly implicit: boolean
+  readonly source: MixerSource
+  readonly destination: MixerDestination
+}
 
-  readonly source: {
-    readonly type: 'instrument'
-    readonly id: InstrumentId
-  } | {
-    readonly type: 'bus'
-    readonly id: BusId
-  }
+export type MixerSource = {
+  readonly type: 'instrument'
+  readonly id: InstrumentId
+} | {
+  readonly type: 'bus'
+  readonly id: BusId
+}
 
-  readonly destination: {
-    readonly type: 'output'
-  } | {
-    readonly type: 'bus'
-    readonly id: BusId
-  }
+export type MixerDestination = {
+  readonly type: 'output'
+} | {
+  readonly type: 'bus'
+  readonly id: BusId
 }
