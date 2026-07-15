@@ -142,7 +142,7 @@ AccessOrCall {
 }
 
 expression {
-  AccessOrCall | UnaryExpression | BinaryExpression
+  Automation | AccessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {

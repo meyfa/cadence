@@ -10,6 +10,7 @@ import { ModuleFacet } from '../../type-system/base/module.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
+import { AutomationFacet } from '../../type-system/domain/automation.ts'
 import { BusFacet } from '../../type-system/domain/bus.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
@@ -180,6 +181,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
     case 'Part':
       return generatePart(scope, expression)
+
+    case 'Automation':
+      return generateAutomation(scope, expression)
 
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
@@ -641,8 +645,8 @@ function generatePart (scope: Scope, part: ast.Part): Value {
         })
         break
 
-      case 'AutomateStatement':
-        automations.push(generateAutomation(partScope, child))
+      case 'Automation':
+        automations.push(AutomationFacet.get(resolve(partScope, child)))
         break
 
       default:
@@ -653,14 +657,11 @@ function generatePart (scope: Scope, part: ast.Part): Value {
   return PartFacet.type().of({ name, length: length.value, routings, automations })
 }
 
-function generateAutomation (scope: Scope, statement: ast.AutomateStatement): Automation {
+function generateAutomation (scope: Scope, statement: ast.Automation): Value {
   const target = ParameterFacet.get(resolve(scope, statement.target))
   const curve = CurveFacet.get(resolve(scope, statement.curve))
 
-  return {
-    parameterId: target.id,
-    curve
-  }
+  return AutomationFacet.type().of({ parameterId: target.id, curve })
 }
 
 function applyAutomation (top: GlobalScope, automation: Automation, options: RenderCurveOptions): void {
