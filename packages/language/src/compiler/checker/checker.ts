@@ -9,6 +9,7 @@ import { ModuleFacet } from '../../type-system/base/module.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
+import { AutomationFacet } from '../../type-system/domain/automation.ts'
 import { BusFacet } from '../../type-system/domain/bus.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
@@ -236,6 +237,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
 
     case 'Part':
       return checkPart(scope, expression)
+
+    case 'Automation':
+      return checkAutomation(scope, expression)
 
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
@@ -718,9 +722,11 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
         errors.push(...checkInstrumentRouting(partScope, child))
         break
 
-      case 'AutomateStatement':
-        errors.push(...checkAutomation(partScope, child))
+      case 'Automation': {
+        const automationCheck = checkAutomation(partScope, child)
+        errors.push(...automationCheck.errors)
         break
+      }
 
       default:
         assertNever(child)
@@ -749,20 +755,20 @@ function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly C
   return errors
 }
 
-function checkAutomation (scope: Scope, automation: ast.AutomateStatement): readonly CompileError[] {
+function checkAutomation (scope: Scope, expression: ast.Automation): Checked<FacetType> {
   const errors: CompileError[] = []
 
-  const targetCheck = checkExpression(scope, automation.target)
+  const targetCheck = checkExpression(scope, expression.target)
   errors.push(...targetCheck.errors)
   if (targetCheck.result != null) {
-    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, automation.target.range))
+    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, expression.target.range))
   }
 
-  const curveCheck = checkExpression(scope, automation.curve)
+  const curveCheck = checkExpression(scope, expression.curve)
   errors.push(...curveCheck.errors)
 
   if (curveCheck.result == null) {
-    return errors
+    return { errors, result: AutomationFacet.type() }
   }
 
   let curveType = CurveFacet.type()
@@ -772,9 +778,9 @@ function checkAutomation (scope: Scope, automation: ast.AutomateStatement): read
     curveType = CurveFacet.with(parameterType).type()
   }
 
-  errors.push(...checkType(curveType, curveCheck.result, automation.curve.range))
+  errors.push(...checkType(curveType, curveCheck.result, expression.curve.range))
 
-  return errors
+  return { errors, result: AutomationFacet.type() }
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {

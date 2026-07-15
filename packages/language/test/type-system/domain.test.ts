@@ -1,9 +1,10 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, RelativeCurve, Source, Track, Voice } from '@meyfa/cadence-core'
+import type { Automation, Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, RelativeCurve, Source, Track, Voice } from '@meyfa/cadence-core'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { AutomationFacet } from '../../src/type-system/domain/automation.ts'
 import { BusFacet } from '../../src/type-system/domain/bus.ts'
 import { CurveFacet } from '../../src/type-system/domain/curve.ts'
 import { EffectFacet } from '../../src/type-system/domain/effect.ts'
@@ -124,7 +125,24 @@ const mixer: Mixer = {
   routings: []
 }
 
+const automation: Automation = {
+  parameterId: gainParameter.id,
+  curve
+}
+
 describe('type-system/domain', () => {
+  describe('AutomationFacet', () => {
+    it('should format and round-trip automation values', () => {
+      const value = AutomationFacet.type().of(automation)
+      const automationData = AutomationFacet.get(value)
+
+      expectTypeEquals<Automation, typeof automationData>()
+      assert.strictEqual(AutomationFacet.format(), 'automation')
+      assert.strictEqual(AutomationFacet.has(value), true)
+      assert.strictEqual(automationData, automation)
+    })
+  })
+
   describe('BusFacet', () => {
     it('should format and round-trip bus values', () => {
       const value = BusFacet.type().of(bus)

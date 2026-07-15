@@ -348,7 +348,8 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => mixer_),
   p.recursive(() => bus_),
   p.recursive(() => track_),
-  p.recursive(() => part_)
+  p.recursive(() => part_),
+  p.recursive(() => automation_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -516,7 +517,7 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   }
 )
 
-const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab(
+const automation_: p.Parser<Token, unknown, ast.Automation> = p.ab(
   combine2(
     keyword('automate'),
     expression_
@@ -526,7 +527,7 @@ const automateStatement_: p.Parser<Token, unknown, ast.AutomateStatement> = p.ab
     expression_
   ),
   ([_automate, target], [_as, curve]) => {
-    return ast.make('AutomateStatement', combineSourceRanges(_automate, curve), { target, curve })
+    return ast.make('Automation', combineSourceRanges(_automate, curve), { target, curve })
   }
 )
 
@@ -548,7 +549,7 @@ const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
     p.many(
       p.eitherOr(
         assignment_,
-        p.eitherOr(routing_, automateStatement_)
+        p.eitherOr(routing_, automation_)
       )
     ),
     expectLiteral('}')
