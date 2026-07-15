@@ -19,6 +19,7 @@ import { MixerFacet } from '../../type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
+import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
@@ -181,6 +182,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
     case 'Part':
       return generatePart(scope, expression)
+
+    case 'Routing':
+      return generateRouting(scope, expression)
 
     case 'Automation':
       return generateAutomation(scope, expression)
@@ -632,17 +636,7 @@ function generatePart (scope: Scope, part: ast.Part): Value {
         break
 
       case 'Routing':
-        routings.push({
-          source: {
-            type: 'pattern',
-            value: PatternFacet.get(resolve(partScope, child.source))
-          },
-
-          destination: {
-            type: 'instrument',
-            id: InstrumentFacet.get(resolve(partScope, child.destination)).id
-          }
-        })
+        routings.push(RoutingFacet.get(resolve(partScope, child)))
         break
 
       case 'Automation':
@@ -655,6 +649,16 @@ function generatePart (scope: Scope, part: ast.Part): Value {
   }
 
   return PartFacet.type().of({ name, length: length.value, routings, automations })
+}
+
+function generateRouting (scope: Scope, routing: ast.Routing): Value {
+  const destination = InstrumentFacet.get(resolve(scope, routing.destination))
+  const source = PatternFacet.get(resolve(scope, routing.source))
+
+  return RoutingFacet.type().of({
+    destination: { type: 'instrument', id: destination.id },
+    source: { type: 'pattern', value: source }
+  })
 }
 
 function generateAutomation (scope: Scope, statement: ast.Automation): Value {

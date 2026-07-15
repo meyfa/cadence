@@ -95,7 +95,7 @@ export interface Call extends ASTNode {
   readonly arguments: ReadonlyArray<Expression | Property>
 }
 
-export type Value = Identifier | Number | String | Pattern | Curve | Instrument | Voice | Mixer | Bus | Track | Part | Automation
+export type Value = Identifier | Number | String | Pattern | Curve | Instrument | Voice | Mixer | Bus | Track | Part | Routing | Automation
 export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAccess | Call
 
 // Composite Types
@@ -228,13 +228,13 @@ export interface NodeByType {
   Property: Property
   Call: Call
   Assignment: Assignment
-  Routing: Routing
 
   Mixer: Mixer
   Bus: Bus
   EffectStatement: EffectStatement
   Track: Track
   Part: Part
+  Routing: Routing
   Automation: Automation
 
   Instrument: Instrument

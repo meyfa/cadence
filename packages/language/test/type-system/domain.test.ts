@@ -1,4 +1,4 @@
-import type { Automation, Bus, BusId, Effect, Instrument, InstrumentId, Mixer, Parameter, ParameterId, Part, Pattern, RelativeCurve, Source, Track, Voice } from '@meyfa/cadence-core'
+import type { Automation, Bus, BusId, Effect, Instrument, InstrumentId, InstrumentRouting, Mixer, Parameter, ParameterId, Part, Pattern, RelativeCurve, Source, Track, Voice } from '@meyfa/cadence-core'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
@@ -13,6 +13,7 @@ import { MixerFacet } from '../../src/type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../src/type-system/domain/parameter.ts'
 import { PartFacet } from '../../src/type-system/domain/part.ts'
 import { PatternFacet } from '../../src/type-system/domain/pattern.ts'
+import { RoutingFacet } from '../../src/type-system/domain/routing.ts'
 import { SourceFacet } from '../../src/type-system/domain/source.ts'
 import { TrackFacet } from '../../src/type-system/domain/track.ts'
 import { VoiceFacet } from '../../src/type-system/domain/voice.ts'
@@ -123,6 +124,17 @@ const track: Track = {
 const mixer: Mixer = {
   buses: [bus],
   routings: []
+}
+
+const routing: InstrumentRouting = {
+  source: {
+    type: 'pattern',
+    value: pattern
+  },
+  destination: {
+    type: 'instrument',
+    id: instrument.id
+  }
 }
 
 const automation: Automation = {
@@ -255,6 +267,18 @@ describe('type-system/domain', () => {
       assert.strictEqual(PatternFacet.has(value), true)
       assert.strictEqual(patternData, pattern)
       assert.deepStrictEqual(Array.from(patternData.evaluate()), Array.from(pattern.evaluate()))
+    })
+  })
+
+  describe('RoutingFacet', () => {
+    it('should format and round-trip routing values', () => {
+      const value = RoutingFacet.type().of(routing)
+      const routingData = RoutingFacet.get(value)
+
+      expectTypeEquals<InstrumentRouting, typeof routingData>()
+      assert.strictEqual(RoutingFacet.format(), 'routing')
+      assert.strictEqual(RoutingFacet.has(value), true)
+      assert.strictEqual(routingData, routing)
     })
   })
 

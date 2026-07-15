@@ -142,7 +142,7 @@ AccessOrCall {
 }
 
 expression {
-  Automation | AccessOrCall | UnaryExpression | BinaryExpression
+  Automation | Routing | AccessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
@@ -176,7 +176,6 @@ Assignment {
 Routing {
   VariableName
   "<<"
-  (VariableName "<<")*
   expression
 }
 
