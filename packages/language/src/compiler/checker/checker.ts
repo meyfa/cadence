@@ -18,6 +18,7 @@ import { MixerFacet } from '../../type-system/domain/mixer.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
+import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
@@ -237,6 +238,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
 
     case 'Part':
       return checkPart(scope, expression)
+
+    case 'Routing':
+      return checkRouting(scope, expression)
 
     case 'Automation':
       return checkAutomation(scope, expression)
@@ -718,9 +722,11 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
         errors.push(...checkAssignment(partScope, child))
         break
 
-      case 'Routing':
-        errors.push(...checkInstrumentRouting(partScope, child))
+      case 'Routing': {
+        const routingCheck = checkRouting(partScope, child)
+        errors.push(...routingCheck.errors)
         break
+      }
 
       case 'Automation': {
         const automationCheck = checkAutomation(partScope, child)
@@ -736,7 +742,7 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
   return { errors, result: PartFacet.type() }
 }
 
-function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly CompileError[] {
+function checkRouting (scope: Scope, routing: ast.Routing): Checked<FacetType> {
   const errors: CompileError[] = []
 
   const destination = resolveInScope(scope, routing.destination.name)
@@ -752,7 +758,7 @@ function checkInstrumentRouting (scope: Scope, routing: ast.Routing): readonly C
     errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
   }
 
-  return errors
+  return { errors, result: RoutingFacet.type() }
 }
 
 function checkAutomation (scope: Scope, expression: ast.Automation): Checked<FacetType> {

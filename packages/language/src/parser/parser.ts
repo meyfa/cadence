@@ -349,6 +349,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => bus_),
   p.recursive(() => track_),
   p.recursive(() => part_),
+  p.recursive(() => routing_),
   p.recursive(() => automation_)
 )
 
