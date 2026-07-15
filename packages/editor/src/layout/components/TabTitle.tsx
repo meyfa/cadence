@@ -137,12 +137,20 @@ export const TabTitle: FunctionComponent<{
     }
   }, [disabled, resolvedOnClose])
 
+  const onKeyDownCapture = useCallback((event: React.KeyboardEvent) => {
+    // Let modified Space combinations bubble to global shortcut handlers.
+    if (event.code === 'Space' && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) {
+      event.preventDefault()
+    }
+  }, [])
+
   return (
     <HUITab
       as='div'
       ref={setElementRef}
       {...attributes}
       {...listeners}
+      onKeyDownCapture={onKeyDownCapture}
       onFocusCapture={disabled ? undefined : onTabFocus}
       style={{ position: 'relative', flex: 'none', outline: 'none', pointerEvents: disabled ? 'none' : undefined }}
     >
