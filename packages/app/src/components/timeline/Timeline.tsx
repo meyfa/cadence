@@ -2,11 +2,11 @@ import type { Part, Program } from '@meyfa/cadence-core'
 import { calculateTotalLength } from '@meyfa/cadence-core'
 import { useGlobalMouseMove, useGlobalMouseUp } from '@meyfa/cadence-editor'
 import { Warning } from '@mui/icons-material'
-import type { Numeric } from '@meyfa/cadence-utility'
+import type { Numeric, Observable } from '@meyfa/cadence-utility'
 import type { BeatRange } from '@meyfa/cadence-webaudio'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/format.ts'
 import { Popover } from '../popover/Popover.tsx'
 
@@ -37,8 +37,9 @@ export const Timeline: FunctionComponent<{
   program: Program
   selection: BeatRange
   setSelection: (range: BeatRange) => void
-  playbackPosition?: Numeric<'beats'>
-}> = ({ program, selection, setSelection, playbackPosition }) => {
+  playbackActive: boolean
+  playbackPosition: Observable<Numeric<'beats'>>
+}> = ({ program, selection, setSelection, playbackActive, playbackPosition }) => {
   const trackLength = calculateTotalLength(program)
 
   const [beatWidth, setBeatWidth] = useState(TIMELINE_ZOOM_DEFAULT)
@@ -85,7 +86,7 @@ export const Timeline: FunctionComponent<{
             variant={isRangeSelection ? 'start' : 'cursor'}
             position={selection.start}
             trackLength={trackLength}
-            dimmed={playbackPosition != null}
+            dimmed={playbackActive}
           />
         )}
 
@@ -94,20 +95,74 @@ export const Timeline: FunctionComponent<{
             variant='end'
             position={selection.end}
             trackLength={trackLength}
-            dimmed={playbackPosition != null}
+            dimmed={playbackActive}
           />
         )}
 
-        {playbackPosition != null && (
-          <div
-            className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-100 pointer-events-none'
-            style={{
-              left: `${(playbackPosition / trackLength) * 100}%`
-            }}
-          />
-        )}
+        <PlaybackCursor
+          active={playbackActive}
+          trackLength={trackLength}
+          position={playbackPosition}
+        />
       </div>
     </div>
+  )
+}
+
+const PlaybackCursor: FunctionComponent<{
+  active: boolean
+  trackLength: Numeric<'beats'>
+  position: Observable<Numeric<'beats'>>
+}> = ({ active, trackLength, position }) => {
+  // We use DOM refs to avoid React re-renders per position update.
+
+  const cursorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const cursor = cursorRef.current
+    if (cursor == null) {
+      return
+    }
+
+    if (!active || trackLength <= 0) {
+      cursor.style.display = 'none'
+      return
+    }
+
+    cursor.style.display = ''
+
+    let frameHandle: number | undefined
+    let latestPosition: Numeric<'beats'> | undefined
+
+    const applyPosition = () => {
+      frameHandle = undefined
+      if (latestPosition == null) {
+        return
+      }
+
+      const clampedPosition = Math.max(0, Math.min(latestPosition, trackLength))
+      cursor.style.left = `${(clampedPosition / trackLength) * 100}%`
+    }
+
+    const unsubscribe = position.subscribe((position) => {
+      latestPosition = position
+      frameHandle ??= requestAnimationFrame(applyPosition)
+    })
+
+    return () => {
+      unsubscribe()
+      if (frameHandle != null) {
+        cancelAnimationFrame(frameHandle)
+      }
+    }
+  }, [active, trackLength, position])
+
+  return (
+    <div
+      ref={cursorRef}
+      className='absolute top-0 bottom-0 w-1 -ml-0.5 bg-accent-100 pointer-events-none'
+      style={{ display: 'none' }}
+    />
   )
 }
 
