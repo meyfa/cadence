@@ -17,7 +17,6 @@ export const TimelinePanel: FunctionComponent<PanelProps> = () => {
   const setRange = useCallback((range: BeatRange) => engine.range.set(range), [engine])
 
   const playing = useObservable(engine.playing)
-  const position = useObservable(engine.position)
 
   return (
     <div className='h-full overflow-auto overflow-x-scroll'>
@@ -32,7 +31,8 @@ export const TimelinePanel: FunctionComponent<PanelProps> = () => {
           program={program}
           selection={range}
           setSelection={setRange}
-          playbackPosition={playing ? position : undefined}
+          playbackActive={playing}
+          playbackPosition={engine.position}
         />
       )}
     </div>

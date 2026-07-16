@@ -34,7 +34,7 @@ const TICK_INTERVAL = 0.025 as Numeric<'s'>
 const SCHEDULE_AHEAD_TIME = 0.05 as Numeric<'s'>
 
 // Assuming faster than real-time rendering, so less frequent updates should be sufficient for offline
-const TIME_UPDATE_INTERVAL_ONLINE = 0.050 as Numeric<'s'>
+const TIME_UPDATE_INTERVAL_ONLINE = 0.016 as Numeric<'s'>
 const TIME_UPDATE_INTERVAL_OFFLINE = 0.100 as Numeric<'s'>
 
 export function createOnlineTransport (): OnlineTransport {
