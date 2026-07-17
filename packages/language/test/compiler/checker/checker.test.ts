@@ -73,7 +73,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept a program with one track and unique parts', () => {
       const source = [
-        'track {',
+        '& track {',
         '  part intro (4.bars) {}',
         '  part main (length: 8.bars) {}',
         '}'
@@ -103,7 +103,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept delay effect time in beats or seconds', () => {
       const source = [
         'use "effects" as fx',
-        'mixer {',
+        '& mixer {',
         '  bus bus1 {',
         '    effect fx.delay(mix: 0.25, time: 3.beats, feedback: 0.4)',
         '  }',
@@ -119,7 +119,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept reverb effect decay in beats or seconds', () => {
       const source = [
         'use "effects" as fx',
-        'mixer {',
+        '& mixer {',
         '  bus bus1 {',
         '    effect fx.reverb(mix: 0.25, decay: 3.beats)',
         '  }',
@@ -135,10 +135,10 @@ describe('compiler/checker/checker.ts', () => {
     it('should allow parts and buses to shadow top-level variables', () => {
       const source = [
         'foo = 42',
-        'mixer {',
+        '& mixer {',
         '  bus foo {}',
         '}',
-        'track {',
+        '& track {',
         '  part foo (4.bars) {}',
         '}'
       ].join('\n')
@@ -153,14 +153,14 @@ describe('compiler/checker/checker.ts', () => {
         'shadowed_by_part = 300',
         'shadowed_by_bus = 400',
         '',
-        'track {',
+        '& track {',
         '  shadowed_by_track = 101',
         '  part (4.bars) {',
         '    shadowed_by_part = 301',
         '  }',
         '}',
         '',
-        'mixer {',
+        '& mixer {',
         '  shadowed_by_mixer = 201',
         '  bus foo {',
         '    shadowed_by_bus = 401',
@@ -202,7 +202,7 @@ describe('compiler/checker/checker.ts', () => {
         'use "instruments" as *',
         'kick = sample("kick.wav")',
         'synth = sample("synth.wav")',
-        'mixer {',
+        '& mixer {',
         '  bus main {',
         '    kick',
         '    renamed_synth = synth',
@@ -216,7 +216,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should allow buses as sources in mixer', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 {}',
         '  bus bus1 { bus0 }',
         '}'
@@ -227,12 +227,12 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept bus references after the mixer declaration', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus foo {}',
         '  bus bar {}',
         '}',
         'foo_gain = bus.foo.gain',
-        'track {',
+        '& track {',
         '  part intro (4.bars) {',
         '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
@@ -264,10 +264,10 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept bus gain automation via explicit namespace', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus main {}',
         '}',
-        'track {',
+        '& track {',
         '  part intro (4.bars) {',
         '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
         '  }',
@@ -280,12 +280,12 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept bus effect automation via explicit namespace', () => {
       const source = [
         'use "effects" as fx',
-        'mixer {',
+        '& mixer {',
         '  bus main {',
         '    effect lp = fx.lowpass(1000.hz)',
         '  }',
         '}',
-        'track {',
+        '& track {',
         '  part intro (4.bars) {',
         '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
         '  }',
@@ -299,7 +299,7 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'use "effects" as fx',
         'lp = 42',
-        'mixer {',
+        '& mixer {',
         '  bus main {',
         '    effect lp = fx.lowpass(1000.hz)',
         '  }',
@@ -413,7 +413,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject variable reassignment in nested scopes', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  in_mixer = 1',
         '  in_mixer = 2',
         '',
@@ -423,7 +423,7 @@ describe('compiler/checker/checker.ts', () => {
         '  }',
         '}',
         '',
-        'track {',
+        '& track {',
         '  in_track = 1',
         '  in_track = 2',
         '',
@@ -444,8 +444,8 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject duplicate track blocks', () => {
       const source = [
-        'track {}',
-        'track {}'
+        '& track {}',
+        '& track {}'
       ].join('\n')
 
       assertErrorMessages(source, [
@@ -454,14 +454,14 @@ describe('compiler/checker/checker.ts', () => {
     })
 
     it('should reject duplicate properties', () => {
-      assertErrorMessages('track(tempo: 120.bpm, tempo: 120.bpm) {}', [
+      assertErrorMessages('& track (tempo: 120.bpm, tempo: 120.bpm) {}', [
         'Duplicate property named "tempo"'
       ])
     })
 
     it('should reject duplicate part blocks within a track', () => {
       const source = [
-        'track {',
+        '& track {',
         '  part intro (4.bars) {}',
         '  part intro (8.bars) {}',
         '}'
@@ -474,7 +474,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject conflicting part name and local variable name', () => {
       const source = [
-        'track {',
+        '& track {',
         '  before = 42',
         '  part before (4.bars) {}',
         '  part after (4.bars) {}',
@@ -491,7 +491,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject variable usage from within the track scope', () => {
       const source = [
         'foo = bar',
-        'track (my_tempo) {',
+        '& track (my_tempo) {',
         '  my_tempo = 123.bpm',
         '  bar = 100',
         '}'
@@ -506,7 +506,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject variable usage from within the mixer scope', () => {
       const source = [
         'foo = bar',
-        'mixer {',
+        '& mixer {',
         '  bar = 100',
         '}'
       ].join('\n')
@@ -586,7 +586,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject automations that target non-parameters', () => {
       const source = [
         'some_value = ""',
-        'track {',
+        '& track {',
         '  part intro (4.bars) {',
         '    automate some_value as ~[hold(-60):1.bar]',
         '  }',
@@ -598,10 +598,10 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should reject duplicate mixer blocks', () => {
+    it('should reject duplicate mixer emissions', () => {
       const source = [
-        'mixer {}',
-        'mixer {}'
+        '& mixer {}',
+        '& mixer {}'
       ].join('\n')
 
       assertErrorMessages(source, [
@@ -611,7 +611,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject duplicate bus blocks within a mixer', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus foo {}',
         '  bus foo {}',
         '}'
@@ -636,7 +636,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject conflicting bus name and local variable name', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  before = 42',
         '  bus before {}',
         '  bus after {}',
@@ -653,7 +653,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject duplicate named effects within the same bus', () => {
       const source = [
         'use "effects" as fx',
-        'mixer {',
+        '& mixer {',
         '  bus main {',
         '    effect lp = fx.lowpass(1000.hz)',
         '    effect lp = fx.highpass(200.hz)',
@@ -669,7 +669,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject named effects that collide with built-in bus fields', () => {
       const source = [
         'use "effects" as fx',
-        'mixer {',
+        '& mixer {',
         '  bus main {',
         '    effect gain = fx.lowpass(1000.hz)',
         '    effect pan = fx.highpass(200.hz)',
@@ -685,7 +685,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject buses as sources in mixer before their declaration', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 { bus1 }',
         '  bus bus1 {}',
         '}'
@@ -698,7 +698,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject bus referring to itself as a source', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 { bus0 }',
         '}'
       ].join('\n')
@@ -711,7 +711,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject cyclic mixer routings', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 { bus2 }',
         '  bus bus1 { bus0 }',
         '  bus bus2 { bus1 }',
@@ -726,7 +726,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should only report buses that are part of a cycle', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 { bus1 }',
         '  bus bus1 { bus2 }',
         '  bus bus2 { bus1 }',
@@ -959,7 +959,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should enforce ordering in the global scope', () => {
       const source = [
-        'track (my_tempo) {}',
+        '& track (my_tempo) {}',
         'my_tempo = 120.bpm'
       ].join('\n')
 
@@ -971,12 +971,12 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject bus references before the mixer declaration', () => {
       const source = [
         'foo_gain = bus.foo.gain',
-        'track {',
+        '& track {',
         '  part intro (4.bars) {',
         '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
         '}',
-        'mixer {',
+        '& mixer {',
         '  bus foo {}',
         '  bus bar {}',
         '}'
@@ -990,7 +990,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should enforce ordering within mixer', () => {
       const source = [
-        'mixer {',
+        '& mixer {',
         '  bus bus0 (gain: level) {}',
         '  level = -6.db',
         '}'

@@ -29,7 +29,7 @@ arp_main    = ([D3:3 D4:3 G4 G4] + [D3:3 D4:2 G5 G4 F4]) / 4
 // Steps can have custom lengths. The hit below is 8 times the default step length.
 clap_pattern = [x:8]
 
-mixer {
+& mixer {
   // Mixer buses are used to modify groups of instruments.
   // Buses can receive signals from instruments, but also other buses.
 
@@ -52,7 +52,7 @@ mixer {
   }
 }
 
-track (120.bpm) {
+& track (120.bpm) {
   // Parts play in sequence. Patterns will trigger notes for their
   // defined length or the length of the part, whichever is shorter.
 

@@ -11,7 +11,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'foo = sample("/samples/foo.wav")',
       'bar = foo',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    foo << [x---]',
       '  }',
@@ -33,12 +33,12 @@ describe('highlight-occurrences/operation.ts', () => {
 
   it('normalizes explicit bus namespace references to the bus member range', () => {
     const source = [
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part foo {',
       '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus foo {}',
       '}',
       ''
@@ -58,7 +58,7 @@ describe('highlight-occurrences/operation.ts', () => {
   it('does not highlight named argument keys', () => {
     const source = [
       'tempo = 128.bpm',
-      'track (tempo: 140.bpm) {}',
+      '& track (tempo: 140.bpm) {}',
       ''
     ].join('\n')
 
@@ -73,7 +73,7 @@ describe('highlight-occurrences/operation.ts', () => {
   it('does not highlight member accesses', () => {
     const source = [
       'synth = sample("...")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',

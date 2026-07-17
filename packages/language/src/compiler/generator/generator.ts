@@ -63,15 +63,21 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
         processAssignment(scope, child)
         break
 
-      case 'Mixer':
-        assert(mixer == null)
-        mixer = MixerFacet.get(resolve(scope, child))
-        break
+      case 'Emission': {
+        const value = resolve(scope, child.value)
 
-      case 'Track':
-        assert(track == null)
-        track = TrackFacet.get(resolve(scope, child))
+        if (MixerFacet.has(value)) {
+          assert(mixer == null)
+          mixer = MixerFacet.get(value)
+        } else if (TrackFacet.has(value)) {
+          assert(track == null)
+          track = TrackFacet.get(value)
+        } else {
+          fail()
+        }
+
         break
+      }
 
       default:
         assertNever(child)

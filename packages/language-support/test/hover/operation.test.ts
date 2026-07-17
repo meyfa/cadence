@@ -10,7 +10,7 @@ describe('hover/operation.ts', () => {
   it('returns function docs for wildcard-imported symbols', () => {
     const source = [
       'use "effects" as *',
-      'mixer {',
+      '& mixer {',
       '  bus drum_bus {',
       '    effect gain(-6.db)',
       '  }',
@@ -34,7 +34,7 @@ describe('hover/operation.ts', () => {
   it('returns module docs for aliased imports', () => {
     const source = [
       'use "effects" as fx',
-      'mixer {',
+      '& mixer {',
       '  bus drum_bus {',
       '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
       '  }',
@@ -57,7 +57,7 @@ describe('hover/operation.ts', () => {
   it('returns function docs for aliased module members', () => {
     const source = [
       'use "effects" as fx',
-      'mixer {',
+      '& mixer {',
       '  bus drum_bus {',
       '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
       '    effect fx.reverb(mix: 0.3, decay: 1.s)',
@@ -93,7 +93,7 @@ describe('hover/operation.ts', () => {
   it('does not return docs for property names that only textually match wildcard imports', () => {
     const source = [
       'use "effects" as *',
-      'mixer {',
+      '& mixer {',
       '  bus drum_bus {',
       '    effect delay(gain: 0.5)',
       '  }',
@@ -155,7 +155,7 @@ describe('hover/operation.ts', () => {
     const source = [
       'use "effects" as fx',
       'delay = 1',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    effect fx.reverb(delay)',
       '  }',

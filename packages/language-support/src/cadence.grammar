@@ -58,7 +58,7 @@ Unit[@dynamicPrecedence=1] {
 }
 
 @top Program {
-  (UseStatement | Assignment | Track | Mixer)*
+  (UseStatement | Assignment | Emission)*
 }
 
 interpolationExpression {

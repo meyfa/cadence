@@ -74,15 +74,13 @@ describe('language-support.ts', () => {
       'pattern = [D4:2 - x]',
       'inst = sample("kick-{tempo}")',
       '',
-      '& some_emission',
-      '',
-      'track (tempo: 140.bpm) {',
+      '& track (tempo: 140.bpm) {',
       '  part drums {',
       '    automate lib.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
       '  }',
       '}',
       '',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    inst',
       '    effect fx.pan(-1)',
@@ -105,7 +103,7 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, 'tempo', source.indexOf('tempo ='), 'definition-variable')
     assertHighlightAt(spans, source, 'mix', source.indexOf('mix ='), 'definition-variable')
     assertHighlightAt(spans, source, 'inst', definitionInstrumentStart, 'definition-variable')
-    assertHighlightAt(spans, source, '&', source.indexOf('& some_emission'), 'operator')
+    assertHighlightAt(spans, source, '&', source.indexOf('& track'), 'operator')
     assertHighlightAt(spans, source, 'tempo', source.indexOf('(tempo:') + 1, 'definition-property')
     assertHighlightAt(spans, source, 'lib', source.indexOf('lib', source.indexOf('as lib')), 'definition-variable')
     assertHighlightAt(spans, source, 'gain', source.indexOf('.gain') + 1, 'property')
@@ -127,7 +125,7 @@ describe('language-support.ts', () => {
 
   it('highlights routing operators and variable references', () => {
     const source = [
-      'track {',
+      '& track {',
       '  part drums {',
       '    drums << my_pattern',
       '  }',
