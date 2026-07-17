@@ -28,6 +28,8 @@
   "*"
   "/"
 
+  "&"
+
   @precedence { Comment, "/" }
 }
 
@@ -173,6 +175,11 @@ Assignment {
   expression
 }
 
+Emission {
+  "&"
+  expression
+}
+
 Routing {
   VariableName
   "<<"
@@ -228,7 +235,7 @@ EffectStatement {
 Instrument {
   kw<"instrument">
   InstrumentBlock[group=Block] {
-    "{" (Assignment | Voice)* "}"
+    "{" (Assignment | Emission)* "}"
   }
 }
 
@@ -236,16 +243,6 @@ Voice {
   kw<"voice">
   VariableDefinition?
   VoiceBlock[group=Block] {
-    "{" (Assignment | EnvelopeStatement | OutputStatement)* "}"
+    "{" (Assignment | Emission)* "}"
   }
-}
-
-EnvelopeStatement {
-  kw<"envelope">
-  expression
-}
-
-OutputStatement {
-  kw<"output">
-  expression
 }

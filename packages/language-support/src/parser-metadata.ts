@@ -28,6 +28,8 @@ export const cadenceParserConfig: ParserConfig = {
 
       '+ - "*" "/"': t.arithmeticOperator,
 
+      '&': t.operator,
+
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
 

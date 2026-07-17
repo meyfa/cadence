@@ -348,32 +348,95 @@ describe('lexer/lexer.ts', () => {
     assert.strictEqual(result.complete, false)
   })
 
-  it('should lex instrument definitions', () => {
+  it('should lex a track', () => {
     const source = [
-      'my_synth = instrument {',
-      '  foo = -6.db',
-      '  voice note {}',
+      'track (128.bpm) {',
+      '  part intro (4.bars) {}',
+      '  part verse (8.bars) {}',
       '}'
     ].join('\n')
 
     const result = lex(source)
+    assert.strictEqual(result.complete, true)
+
     assert.deepStrictEqual(stripTokenMeta(result), {
       complete: true,
       value: [
-        { name: 'word', text: 'my_synth' },
+        { name: 'word', text: 'track' },
+        { name: '(', text: '(' },
+        { name: 'number', text: '128' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'bpm' },
+        { name: ')', text: ')' },
+        { name: '{', text: '{' },
+
+        { name: 'word', text: 'part' },
+        { name: 'word', text: 'intro' },
+        { name: '(', text: '(' },
+        { name: 'number', text: '4' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'bars' },
+        { name: ')', text: ')' },
+        { name: '{', text: '{' },
+        { name: '}', text: '}' },
+
+        { name: 'word', text: 'part' },
+        { name: 'word', text: 'verse' },
+        { name: '(', text: '(' },
+        { name: 'number', text: '8' },
+        { name: '.', text: '.' },
+        { name: 'word', text: 'bars' },
+        { name: ')', text: ')' },
+        { name: '{', text: '{' },
+        { name: '}', text: '}' },
+
+        { name: '}', text: '}' }
+      ]
+    })
+  })
+
+  it('should lex emission', () => {
+    const source = [
+      'foo = instrument {',
+      '  & voice {',
+      '    & ~[hold(0.db)]',
+      '    & sine()',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = lex(source)
+    assert.strictEqual(result.complete, true)
+
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'word', text: 'foo' },
         { name: '=', text: '=' },
         { name: 'word', text: 'instrument' },
         { name: '{', text: '{' },
-        { name: 'word', text: 'foo' },
-        { name: '=', text: '=' },
-        { name: '-', text: '-' },
-        { name: 'number', text: '6' },
+
+        { name: '&', text: '&' },
+        { name: 'word', text: 'voice' },
+        { name: '{', text: '{' },
+
+        { name: '&', text: '&' },
+        { name: '~[', text: '~[' },
+        { name: 'word', text: 'hold' },
+        { name: '(', text: '(' },
+        { name: 'number', text: '0' },
         { name: '.', text: '.' },
         { name: 'word', text: 'db' },
-        { name: 'word', text: 'voice' },
-        { name: 'word', text: 'note' },
-        { name: '{', text: '{' },
+        { name: ')', text: ')' },
+        { name: ']', text: ']' },
+
+        { name: '&', text: '&' },
+        { name: 'word', text: 'sine' },
+        { name: '(', text: '(' },
+        { name: ')', text: ')' },
+
         { name: '}', text: '}' },
+
         { name: '}', text: '}' }
       ]
     })

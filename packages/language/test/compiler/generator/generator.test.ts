@@ -741,15 +741,15 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "sources" as src',
       'my_instrument = instrument {',
-      '  voice {',
-      '    envelope ~[lin(0.db, -60.db):1.beat]',
-      '    output src.sine(440.hz)',
+      '  & voice {',
+      '    & ~[lin(0.db, -60.db):1.beat]',
+      '    & src.sine(440.hz)',
       '  }',
-      '  voice note {',
+      '  & voice note {',
       '    n = note',
       '    f = n.frequency',
-      '    envelope ~[lin(0.db, -60.db):1.beat]',
-      '    output src.sine(f)',
+      '    & ~[lin(0.db, -60.db):1.beat]',
+      '    & src.sine(f)',
       '  }',
       '}'
     ].join('\n')

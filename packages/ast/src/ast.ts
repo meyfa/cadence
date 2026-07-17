@@ -100,6 +100,8 @@ export type Expression = Value | UnaryExpression | BinaryExpression | PropertyAc
 
 // Composite Types
 
+export type ArgumentList = ReadonlyArray<Expression | Property>
+
 export interface Property extends ASTNode {
   readonly type: 'Property'
   readonly key: Identifier
@@ -112,13 +114,10 @@ export interface Assignment extends ASTNode {
   readonly value: Expression
 }
 
-export interface Routing extends ASTNode {
-  readonly type: 'Routing'
-  readonly destination: Identifier
-  readonly source: Expression
+export interface Emission extends ASTNode {
+  readonly type: 'Emission'
+  readonly value: Expression
 }
-
-export type ArgumentList = ReadonlyArray<Expression | Property>
 
 // Domain Types
 
@@ -135,6 +134,12 @@ export interface Bus extends ASTNode {
   readonly children: ReadonlyArray<Assignment | Identifier | EffectStatement>
 }
 
+export interface EffectStatement extends ASTNode {
+  readonly type: 'EffectStatement'
+  readonly name?: Identifier
+  readonly expression: Expression
+}
+
 export interface Track extends ASTNode {
   readonly type: 'Track'
   readonly properties: ArgumentList
@@ -148,10 +153,10 @@ export interface Part extends ASTNode {
   readonly children: ReadonlyArray<Assignment | Routing | Automation>
 }
 
-export interface EffectStatement extends ASTNode {
-  readonly type: 'EffectStatement'
-  readonly name?: Identifier
-  readonly expression: Expression
+export interface Routing extends ASTNode {
+  readonly type: 'Routing'
+  readonly destination: Identifier
+  readonly source: Expression
 }
 
 export interface Automation extends ASTNode {
@@ -162,25 +167,15 @@ export interface Automation extends ASTNode {
 
 export interface Instrument extends ASTNode {
   readonly type: 'Instrument'
-  readonly children: ReadonlyArray<Assignment | Voice>
+  readonly children: ReadonlyArray<Assignment | Emission>
 }
 
 export interface Voice extends ASTNode {
   readonly type: 'Voice'
-  readonly children: ReadonlyArray<Assignment | EnvelopeStatement | OutputStatement>
+  readonly children: ReadonlyArray<Assignment | Emission>
   readonly bindings: {
     readonly note?: Identifier
   }
-}
-
-export interface EnvelopeStatement extends ASTNode {
-  readonly type: 'EnvelopeStatement'
-  readonly expression: Expression
-}
-
-export interface OutputStatement extends ASTNode {
-  readonly type: 'OutputStatement'
-  readonly expression: Expression
 }
 
 // Root Type
@@ -224,10 +219,11 @@ export interface NodeByType {
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression
   PropertyAccess: PropertyAccess
+  Call: Call
 
   Property: Property
-  Call: Call
   Assignment: Assignment
+  Emission: Emission
 
   Mixer: Mixer
   Bus: Bus
@@ -239,8 +235,6 @@ export interface NodeByType {
 
   Instrument: Instrument
   Voice: Voice
-  EnvelopeStatement: EnvelopeStatement
-  OutputStatement: OutputStatement
 
   Program: Program
 }

@@ -9,9 +9,7 @@ export const keywords = Object.freeze([
   'effect',
   'automate',
   'instrument',
-  'voice',
-  'envelope',
-  'output'
+  'voice'
 ] as const)
 
 export type Keyword = (typeof keywords)[number]

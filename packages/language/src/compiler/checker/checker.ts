@@ -449,9 +449,14 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
         errors.push(...checkAssignment(instrumentScope, child))
         break
 
-      case 'Voice': {
-        const voiceCheck = checkVoice(instrumentScope, child)
-        errors.push(...voiceCheck.errors)
+      case 'Emission': {
+        const valueCheck = checkExpression(instrumentScope, child.value)
+        errors.push(...valueCheck.errors)
+
+        if (valueCheck.result != null) {
+          errors.push(...checkType(VoiceFacet.type(), valueCheck.result, child.value.range))
+        }
+
         break
       }
 
@@ -480,35 +485,27 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
         errors.push(...checkAssignment(voiceScope, child))
         break
 
-      case 'EnvelopeStatement': {
-        if (hasEnvelope) {
-          errors.push(new CompileError('Multiple envelope statements in a voice', child.range))
+      case 'Emission': {
+        const valueCheck = checkExpression(voiceScope, child.value)
+        errors.push(...valueCheck.errors)
+
+        if (valueCheck.result == null) {
+          continue
         }
 
-        hasEnvelope = true
-
-        const expressionCheck = checkExpression(voiceScope, child.expression)
-        errors.push(...expressionCheck.errors)
-
-        if (expressionCheck.result != null) {
-          errors.push(...checkType(CurveFacet.with('db').type(), expressionCheck.result, child.expression.range))
-        }
-
-        break
-      }
-
-      case 'OutputStatement': {
-        if (hasOutput) {
-          errors.push(new CompileError('Multiple output statements in a voice', child.range))
-        }
-
-        hasOutput = true
-
-        const expressionCheck = checkExpression(voiceScope, child.expression)
-        errors.push(...expressionCheck.errors)
-
-        if (expressionCheck.result != null) {
-          errors.push(...checkType(SourceFacet.type(), expressionCheck.result, child.expression.range))
+        // value can be either curve (envelope) or source (output)
+        if (CurveFacet.with('db').is(valueCheck.result)) {
+          if (hasEnvelope) {
+            errors.push(new CompileError('Multiple envelopes in a voice', child.range))
+          }
+          hasEnvelope = true
+        } else if (SourceFacet.is(valueCheck.result)) {
+          if (hasOutput) {
+            errors.push(new CompileError('Multiple outputs in a voice', child.range))
+          }
+          hasOutput = true
+        } else {
+          errors.push(new CompileError(`Invalid emission type ${valueCheck.result.format()}`, child.value.range))
         }
 
         break
