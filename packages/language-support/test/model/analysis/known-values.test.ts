@@ -30,7 +30,7 @@ describe('model/analysis/known-values.ts', () => {
       'kick = sample("/samples/kick.wav")',
       'snare = sample("/samples/snare.wav")',
       '',
-      'mixer {',
+      '& mixer {',
       '  bus {',
       '    effect fx.gain(-3.db)',
       '  }',
@@ -71,7 +71,7 @@ describe('model/analysis/known-values.ts', () => {
     const source = [
       'use "effects" as *',
       '',
-      'mixer {',
+      '& mixer {',
       '  bus main (gain: -3.db) {}',
       '}',
       ''

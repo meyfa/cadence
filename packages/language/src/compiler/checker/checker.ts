@@ -74,23 +74,31 @@ export function check (program: ast.Program): CheckResult {
         errors.push(...checkAssignment(scope, child))
         break
 
-      case 'Track': {
-        if (hasTrack) {
-          errors.push(new CompileError('Multiple track definitions', child.range))
-        }
-        hasTrack = true
-        const trackCheck = checkExpression(scope, child)
-        errors.push(...trackCheck.errors)
-        break
-      }
+      case 'Emission': {
+        const valueCheck = checkExpression(scope, child.value)
+        errors.push(...valueCheck.errors)
 
-      case 'Mixer': {
-        if (hasMixer) {
-          errors.push(new CompileError('Multiple mixer definitions', child.range))
+        if (valueCheck.result == null) {
+          break
         }
-        hasMixer = true
-        const mixerCheck = checkExpression(scope, child)
-        errors.push(...mixerCheck.errors)
+
+        if (MixerFacet.is(valueCheck.result)) {
+          if (hasMixer) {
+            errors.push(new CompileError('Multiple mixer definitions', child.range))
+          }
+          hasMixer = true
+          break
+        }
+
+        if (TrackFacet.is(valueCheck.result)) {
+          if (hasTrack) {
+            errors.push(new CompileError('Multiple track definitions', child.range))
+          }
+          hasTrack = true
+          break
+        }
+
+        errors.push(new CompileError(`Unexpected type ${valueCheck.result.format()}, expected track or mixer`, child.value.range))
         break
       }
 

@@ -183,7 +183,7 @@ export interface Voice extends ASTNode {
 export interface Program extends ASTNode {
   readonly type: 'Program'
   readonly imports: readonly UseStatement[]
-  readonly children: ReadonlyArray<Assignment | Track | Mixer>
+  readonly children: ReadonlyArray<Assignment | Emission>
 }
 
 // Factory

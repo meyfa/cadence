@@ -11,7 +11,7 @@ describe('unused-variable/operation.ts', () => {
     const source = [
       'used = sample("/samples/used.wav")',
       'unused = sample("/samples/unused.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    used << [x---]',
       '  }',
@@ -33,11 +33,11 @@ describe('unused-variable/operation.ts', () => {
 
   it('does not report parts or buses as unused', () => {
     const source = [
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus drums {',
       '  }',
       '}',
@@ -53,7 +53,7 @@ describe('unused-variable/operation.ts', () => {
   it('treats member access roots as references', () => {
     const source = [
       'synth = sample("...")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
@@ -70,12 +70,12 @@ describe('unused-variable/operation.ts', () => {
   it('does not treat explicit bus namespace access as an assignment reference', () => {
     const source = [
       'foo = sample("...")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus foo {}',
       '}',
       ''
@@ -98,7 +98,7 @@ describe('unused-variable/operation.ts', () => {
       'use "instruments" as instruments',
       'use "effects" as fx',
       '',
-      'mixer {',
+      '& mixer {',
       '  bus drums {',
       '    effect fx.gain(0.db)',
       '  }',
@@ -123,7 +123,7 @@ describe('unused-variable/operation.ts', () => {
       'use "instruments" as *',
       'use "effects" as *',
       '',
-      'mixer {',
+      '& mixer {',
       '  bus drums {',
       '    effect gain(0.db)',
       '  }',

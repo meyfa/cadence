@@ -58,12 +58,12 @@ describe('compiler/generator/generator.ts', () => {
   })
 
   it('should set track tempo from AST', () => {
-    const result = generateSource('track (tempo: 140.bpm) {}')
+    const result = generateSource('& track (tempo: 140.bpm) {}')
     assert.deepStrictEqual(result.track.tempo, 140)
   })
 
   it('should clamp track tempo to maximum', () => {
-    const result = generateSource('track (tempo: 400.bpm) {}')
+    const result = generateSource('& track (tempo: 400.bpm) {}')
     assert.deepStrictEqual(result.track.tempo, 300)
   })
 
@@ -71,7 +71,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'foo = 90.bpm',
       'bar = foo * 2',
-      'track (tempo: bar) {}'
+      '& track (tempo: bar) {}'
     ].join('\n')
 
     const result = generateSource(source)
@@ -81,7 +81,7 @@ describe('compiler/generator/generator.ts', () => {
   it('should use tempo variable from outer scope', () => {
     const source = [
       'my_tempo = 90.bpm',
-      'track (tempo: my_tempo) {',
+      '& track (tempo: my_tempo) {',
       '  my_tempo = 150.bpm',
       '}'
     ].join('\n')
@@ -133,7 +133,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "effects" as *',
       'gain = 123.bpm',
-      'track (tempo: gain) {}'
+      '& track (tempo: gain) {}'
     ].join('\n')
 
     const result = generateSource(source)
@@ -143,10 +143,10 @@ describe('compiler/generator/generator.ts', () => {
   it('should allow parts and buses to shadow top-level variables', () => {
     const source = [
       'foo = 42',
-      'track {',
+      '& track {',
       '  part foo (4.bars) {}',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus foo {}',
       '}'
     ].join('\n')
@@ -157,7 +157,7 @@ describe('compiler/generator/generator.ts', () => {
   })
 
   it('should clamp negative part lengths to 0', () => {
-    const result = generateSource('track { part intro (-4.bars) {} }')
+    const result = generateSource('& track { part intro (-4.bars) {} }')
     assert.deepStrictEqual(result.track.parts[0].length, 0)
   })
 
@@ -165,7 +165,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'root_scope = 42.beats',
       'shadowed = 100.beats',
-      'track {',
+      '& track {',
       '  track_scope = root_scope + 1.beats',
       '  shadowed = 200.beats',
       '  part part0 (length: root_scope) {}',
@@ -182,7 +182,7 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should support units: beat, beats, bar, bars', () => {
     const source = [
-      'track {',
+      '& track {',
       '  part part0 (length: 1.beat) {}',
       '  part part1 (length: 2.beats) {}',
       '  part part2 (length: 1.bar) {}',
@@ -201,7 +201,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'root_scope = 8.beats',
       'shadowed = 100.beats',
-      'track {',
+      '& track {',
       '  track_scope = root_scope + 1.beats',
       '  shadowed = 200.beats',
       '  part part0 (length: root_scope) {}',
@@ -220,7 +220,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'root_scope = -42.db',
       'shadowed = -100.db',
-      'mixer {',
+      '& mixer {',
       '  mixer_scope = root_scope + 1.db',
       '  shadowed = -200.db',
       '  bus bus0 (gain: root_scope) {}',
@@ -239,7 +239,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      '& track {',
       '  part intro (4.bars) {',
       '    my_pattern = [C4 D4]',
       '    synth << my_pattern',
@@ -259,7 +259,7 @@ describe('compiler/generator/generator.ts', () => {
   it('should resolve variables in bus scope', () => {
     const source = [
       'use "effects" as *',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    my_gain = -20.db',
       '    effect gain(my_gain)',
@@ -277,7 +277,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      '& track {',
       '  part (4.bars) {',
       '    synth << [C4(0.5):2 D4(1, vel: 0.75) -]',
       '  }',
@@ -298,7 +298,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track {',
+      '& track {',
       '  part (4.bars) {',
       '    synth << [C4(vel: 1.5):2 D4(vel: -0.5)]',
       '  }',
@@ -319,7 +319,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as ~[lin((-60).db, 0.db):2.bars]',
       '  }',
@@ -341,7 +341,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as ~[lin(-60.db, -30.db):2.bars lin(-30.db, 0.db):1.bar]',
       '  }',
@@ -364,7 +364,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.bars) {',
       '    automate synth.gain as ~[hold(-60.db):5.bars lin(-60.db, 0.db):6.bars hold:2.bars]',
       '  }',
@@ -387,7 +387,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.bars) {',
       '    automate synth.gain as ~[hold((-60).db):6.bars lin(0.db):2.bars]',
       '  }',
@@ -410,7 +410,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.bars) {',
       '    automate synth.gain as ~[lin((-60).db, (-30).db):6.bars hold:2.bars]',
       '  }',
@@ -433,7 +433,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate synth.gain as ~[hold((-60).db):(-2.beats) lin((-60).db, (-30).db):0.s lin((-30).db, 0.db):4.bars]',
       '  }',
@@ -455,7 +455,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.beats) {',
       '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
       '  }',
@@ -482,7 +482,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.beats) {',
       '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
       '    automate synth.gain as ~[hold(-15.db):8.beats]',
@@ -505,7 +505,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "instruments" as *',
       'synth = sample("synth.wav")',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (8.beats) {',
       '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
       '    automate synth.gain as ~[hold(-15.db):4.beats]',
@@ -527,10 +527,10 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should automate bus gain via explicit namespace', () => {
     const source = [
-      'mixer {',
+      '& mixer {',
       '  bus main {}',
       '}',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
       '  }',
@@ -550,12 +550,12 @@ describe('compiler/generator/generator.ts', () => {
   it('should automate bus effect parameters via explicit namespace', () => {
     const source = [
       'use "effects" as fx',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    effect lp = fx.lowpass(123.hz)',
       '  }',
       '}',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
       '  }',
@@ -580,12 +580,12 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "effects" as fx',
       'lp = fx.lowpass(200.hz)',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part intro (4.bars) {',
       '    automate lp.frequency as ~[lin(500.hz, 1000.hz):4.bars]',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    effect lp',
       '  }',
@@ -629,7 +629,7 @@ describe('compiler/generator/generator.ts', () => {
   it('should route instruments into the output when they are declared after the mixer', () => {
     const source = [
       'use "instruments" as *',
-      'mixer {}',
+      '& mixer {}',
       'synth = sample("synth.wav")'
     ].join('\n')
 
@@ -648,7 +648,7 @@ describe('compiler/generator/generator.ts', () => {
 
   it('should support buses as sources in mixer', () => {
     const source = [
-      'mixer {',
+      '& mixer {',
       '  bus bus0 {}',
       '  bus bus1 { bus0 }',
       '}'
@@ -679,7 +679,7 @@ describe('compiler/generator/generator.ts', () => {
   it('should preserve seconds for delay effect time', () => {
     const source = [
       'use "effects" as fx',
-      'mixer {',
+      '& mixer {',
       '  bus bus0 {',
       '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
       '  }',
@@ -707,7 +707,7 @@ describe('compiler/generator/generator.ts', () => {
   it('should preserve beats for reverb decay', () => {
     const source = [
       'use "effects" as fx',
-      'mixer {',
+      '& mixer {',
       '  bus bus0 {',
       '    effect fx.reverb(mix: 0.25, decay: 2.beats)',
       '  }',

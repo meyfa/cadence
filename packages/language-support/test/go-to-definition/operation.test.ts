@@ -72,12 +72,12 @@ describe('go-to-definition/operation.ts', () => {
 
   it('resolves explicit bus namespace access to the bus definition', () => {
     const source = [
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part foo {',
       '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus foo {}',
       '}',
       ''
@@ -95,12 +95,12 @@ describe('go-to-definition/operation.ts', () => {
   it('resolves explicit bus namespace effect access to the effect definition', () => {
     const source = [
       'use "effects" as fx',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part foo {',
       '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
       '  }',
       '}',
-      'mixer {',
+      '& mixer {',
       '  bus main {',
       '    effect lp = fx.lowpass(1000.hz)',
       '  }',
@@ -120,7 +120,7 @@ describe('go-to-definition/operation.ts', () => {
   it('does not resolve named argument keys', () => {
     const source = [
       'tempo = 128.bpm',
-      'track (tempo: 140.bpm) {}',
+      '& track (tempo: 140.bpm) {}',
       ''
     ].join('\n')
 
@@ -136,7 +136,7 @@ describe('go-to-definition/operation.ts', () => {
       '',
       'synth = sample("...")',
       '',
-      'track (120.bpm) {',
+      '& track (120.bpm) {',
       '  part p {',
       '    automate synth.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
       '  }',

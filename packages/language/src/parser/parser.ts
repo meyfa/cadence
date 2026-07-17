@@ -722,7 +722,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
   p.many(useStatement_),
   p.many(
     p.eitherOr(
-      p.eitherOr(assignment_, p.eitherOr(track_, mixer_)),
+      p.eitherOr(assignment_, emission_),
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
         throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))
