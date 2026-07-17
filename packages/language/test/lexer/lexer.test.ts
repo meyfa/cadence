@@ -109,6 +109,20 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should fail to lex strings with newlines', () => {
+    const result = lex('"hello\nworld"')
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.name, 'LexError')
+    assert.strictEqual(result.error.message, 'Unexpected newline in string')
+  })
+
+  it('should fail to lex strings with carriage returns', () => {
+    const result = lex('"hello\rworld"')
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.name, 'LexError')
+    assert.strictEqual(result.error.message, 'Unexpected newline in string')
+  })
+
   it('should lex string literals with interpolations', () => {
     const result = lex('"value is {x + 1}" "multiple {a} and {b * 2} interpolations"')
     assert.deepStrictEqual(stripTokenMeta(result), {

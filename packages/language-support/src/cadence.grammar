@@ -9,7 +9,7 @@
 
   stringDelimiter { "\"" }
   stringEscape { "\\" $[.] }
-  stringContent { !["\\{] }
+  stringContent { !["\\{\r\n] }
 
   "~["
   "[" "]"

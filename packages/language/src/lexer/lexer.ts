@@ -22,7 +22,8 @@ function lazy (fn: () => Lexer): Lexer {
 const stringLexer = createLexer([
   { name: '"', pop: true },
   { name: 'stringEscape', regex: /\\./ },
-  { name: 'stringContent', regex: /[^"\\{]+/ },
+  { name: 'stringNewline', regex: /\r\n|\r|\n/ },
+  { name: 'stringContent', regex: /[^"\\{\r\n]+/ },
   { name: '{', push: lazy(() => interpolationLexer) }
 ], undefined, options)
 
@@ -82,6 +83,20 @@ export function lex (input: string, filePath?: string): LexResult {
   }
 
   const lexerResult = mainLexer(input)
+
+  const stringNewline = lexerResult.tokens.find((token) => token.name === 'stringNewline')
+  if (stringNewline != null) {
+    return {
+      complete: false,
+      error: new LexError('Unexpected newline in string', {
+        offset: stringNewline.offset,
+        length: 1,
+        filePath,
+        ...getLineAndColumn(stringNewline.offset)
+      })
+    }
+  }
+
   if (!lexerResult.complete) {
     const context = truncateString(input.slice(lexerResult.offset), ERROR_CONTEXT_LIMIT)
 
