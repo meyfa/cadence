@@ -346,7 +346,7 @@ describe('model/analysis/references.ts', () => {
   it('resolves reference to voice note binding', () => {
     const source = [
       'my_instrument = instrument {',
-      '  voice my_note {',
+      '  & voice my_note {',
       '    foo = my_note',
       '  }',
       '  bar = my_note // invalid reference',

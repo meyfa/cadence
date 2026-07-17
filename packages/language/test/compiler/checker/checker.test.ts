@@ -327,19 +327,19 @@ describe('compiler/checker/checker.ts', () => {
         '',
         'my_instrument = instrument {',
         '  foo = -6.db',
-        '  voice {',
+        '  & voice {',
         '    bar = 440.hz',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(bar)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(bar)',
         '  }',
-        '  voice note {',
+        '  & voice note {',
         '    baz = note',
         '    note_frequency = note.frequency',
         '    note_gate = note.gate',
         '    note_velocity = note.velocity',
         '',
-        '    envelope ~[lin(-60.db, 0.db):30.ms lin(-10.db):note_gate lin(-60.db):10.ms]',
-        '    output src.saw(note_frequency)',
+        '    & ~[lin(-60.db, 0.db):30.ms lin(-10.db):note_gate lin(-60.db):10.ms]',
+        '    & src.saw(note_frequency)',
         '  }',
         '}'
       ].join('\n')
@@ -808,11 +808,11 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
+        '  & voice {',
         '    bar = 440.hz',
         '    bar = 880.hz',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440)',
         '  }',
         '}'
       ].join('\n')
@@ -828,7 +828,7 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {}',
+        '  & voice {}',
         '}'
       ].join('\n')
 
@@ -838,37 +838,19 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should report switched output and envelope values', () => {
-      const source = [
-        'use "sources" as src',
-        '',
-        'my_instrument = instrument {',
-        '  voice {',
-        '    output ~[lin(0.db, -60.db):100.ms]',
-        '    envelope src.sine(440.hz)',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Expected type source, got curve(db)',
-        'Expected type curve(db), got source'
-      ])
-    })
-
     it('should reject accessing note from another voice', () => {
       const source = [
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice note {',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '  & voice note {',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
-        '  voice {',
+        '  & voice {',
         '    baz = note',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -883,10 +865,10 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice note {',
+        '  & voice note {',
         '    note = 440.hz',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(note)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(note)',
         '  }',
         '}'
       ].join('\n')
@@ -902,15 +884,15 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
-        '    output src.sine(440.hz)',
-        '    output src.sine(880.hz)',
+        '  & voice {',
+        '    & src.sine(440.hz)',
+        '    & src.sine(880.hz)',
         '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple output statements in a voice',
+        'Multiple outputs in a voice',
         'Voice is missing an envelope'
       ])
     })
@@ -920,16 +902,16 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    envelope ~[lin(-60.db, 0.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '  & voice {',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & ~[lin(-60.db, 0.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple envelope statements in a voice'
+        'Multiple envelopes in a voice'
       ])
     })
 
@@ -939,10 +921,10 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
+        '  & voice {',
         '    foo = sample("piano.wav")',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -957,13 +939,13 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
+        '  & voice {',
         '    inv_instrument = instrument {}',
         '    inv_mixer = mixer {}',
         '    inv_track = track {}',
         '',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -1024,10 +1006,10 @@ describe('compiler/checker/checker.ts', () => {
         'use "sources" as src',
         '',
         'my_instrument = instrument {',
-        '  voice {',
+        '  & voice {',
         '    bar = foo',
-        '    envelope ~[lin(0.db, -60.db):100.ms]',
-        '    output src.sine(440.hz)',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
         '  }',
         '  foo = -6.db',
         '}'

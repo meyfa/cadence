@@ -324,8 +324,9 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         processAssignment(instrumentScope, child)
         break
 
-      case 'Voice': {
-        voices.push(VoiceFacet.get(resolve(instrumentScope, child)))
+      case 'Emission': {
+        const value = resolve(instrumentScope, child.value)
+        voices.push(VoiceFacet.get(value))
         break
       }
 
@@ -389,15 +390,20 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
         processAssignment(scope, child)
         break
 
-      case 'EnvelopeStatement':
-        assert(envelopeValue == null)
-        envelopeValue = CurveFacet.with('db').get(resolve(scope, child.expression))
-        break
+      case 'Emission': {
+        const value = resolve(scope, child.value)
+        if (CurveFacet.with('db').has(value)) {
+          assert(envelopeValue == null)
+          envelopeValue = CurveFacet.with('db').get(value)
+        } else if (SourceFacet.has(value)) {
+          assert(outputValue == null)
+          outputValue = SourceFacet.get(value)
+        } else {
+          fail()
+        }
 
-      case 'OutputStatement':
-        assert(outputValue == null)
-        outputValue = SourceFacet.get(resolve(scope, child.expression))
         break
+      }
 
       default:
         assertNever(child)

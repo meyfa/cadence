@@ -509,6 +509,14 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
+const emission_: p.Parser<Token, unknown, ast.Emission> = p.ab(
+  literal('&'),
+  expression_,
+  (_amp, value) => {
+    return ast.make('Emission', combineSourceRanges(_amp, value), { value })
+  }
+)
+
 const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   identifier_,
   literal('<<'),
@@ -674,29 +682,13 @@ const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
   }
 )
 
-const outputStatement_: p.Parser<Token, unknown, ast.OutputStatement> = p.ab(
-  keyword('output'),
-  expression_,
-  (_output, expression) => {
-    return ast.make('OutputStatement', combineSourceRanges(_output, expression), { expression })
-  }
-)
-
-const envelopeStatement_: p.Parser<Token, unknown, ast.EnvelopeStatement> = p.ab(
-  keyword('envelope'),
-  expression_,
-  (_envelope, expression) => {
-    return ast.make('EnvelopeStatement', combineSourceRanges(_envelope, expression), { expression })
-  }
-)
-
 const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   keyword('voice'),
   p.option(identifier_, undefined),
   combine3(
     literal('{'),
     p.many(
-      p.eitherOr(assignment_, p.eitherOr(outputStatement_, envelopeStatement_))
+      p.eitherOr(assignment_, emission_)
     ),
     expectLiteral('}')
   ),
@@ -715,7 +707,7 @@ const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
   combine3(
     expectLiteral('{'),
     p.many(
-      p.eitherOr(assignment_, voice_)
+      p.eitherOr(assignment_, emission_)
     ),
     expectLiteral('}')
   ),
