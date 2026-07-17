@@ -109,18 +109,24 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
-  it('should fail to lex strings with newlines', () => {
-    const result = lex('"hello\nworld"')
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.name, 'LexError')
-    assert.strictEqual(result.error.message, 'Unexpected newline in string')
-  })
+  it('should fail to lex strings with LF and/or CR characters', () => {
+    const lf = lex('"hello\nworld"')
+    assert.strictEqual(lf.complete, false)
+    assert.strictEqual(lf.error.name, 'LexError')
+    assert.strictEqual(lf.error.message, 'Unexpected newline in string')
+    assert.deepStrictEqual(lf.error.range, { offset: 6, length: 1, line: 1, column: 7, filePath: undefined })
 
-  it('should fail to lex strings with carriage returns', () => {
-    const result = lex('"hello\rworld"')
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.name, 'LexError')
-    assert.strictEqual(result.error.message, 'Unexpected newline in string')
+    const cr = lex('"hello\rworld"')
+    assert.strictEqual(cr.complete, false)
+    assert.strictEqual(cr.error.name, 'LexError')
+    assert.strictEqual(cr.error.message, 'Unexpected newline in string')
+    assert.deepStrictEqual(cr.error.range, { offset: 6, length: 1, line: 1, column: 7, filePath: undefined })
+
+    const crlf = lex('"hello\r\nworld"')
+    assert.strictEqual(crlf.complete, false)
+    assert.strictEqual(crlf.error.name, 'LexError')
+    assert.strictEqual(crlf.error.message, 'Unexpected newline in string')
+    assert.deepStrictEqual(crlf.error.range, { offset: 6, length: 2, line: 1, column: 7, filePath: undefined })
   })
 
   it('should lex string literals with interpolations', () => {

@@ -90,7 +90,7 @@ export function lex (input: string, filePath?: string): LexResult {
       complete: false,
       error: new LexError('Unexpected newline in string', {
         offset: stringNewline.offset,
-        length: 1,
+        length: stringNewline.text.length,
         filePath,
         ...getLineAndColumn(stringNewline.offset)
       })
