@@ -34,7 +34,6 @@ import { binaryOperations } from '../operators/binary.ts'
 import { unaryOperations } from '../operators/unary.ts'
 import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toBaseUnit } from '../units.ts'
-import { checkCyclicRoutings } from './routings.ts'
 import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
 
@@ -75,30 +74,33 @@ export function check (program: ast.Program): CheckResult {
         break
 
       case 'Emission': {
-        const valueCheck = checkExpression(scope, child.value)
-        errors.push(...valueCheck.errors)
+        for (const value of child.values) {
+          const valueCheck = checkExpression(scope, value)
+          errors.push(...valueCheck.errors)
 
-        if (valueCheck.result == null) {
-          break
-        }
-
-        if (MixerFacet.is(valueCheck.result)) {
-          if (hasMixer) {
-            errors.push(new CompileError('Multiple mixer definitions', child.range))
+          if (valueCheck.result == null) {
+            continue
           }
-          hasMixer = true
-          break
-        }
 
-        if (TrackFacet.is(valueCheck.result)) {
-          if (hasTrack) {
-            errors.push(new CompileError('Multiple track definitions', child.range))
+          if (MixerFacet.is(valueCheck.result)) {
+            if (hasMixer) {
+              errors.push(new CompileError('Multiple mixers', value.range))
+            }
+            hasMixer = true
+            continue
           }
-          hasTrack = true
-          break
+
+          if (TrackFacet.is(valueCheck.result)) {
+            if (hasTrack) {
+              errors.push(new CompileError('Multiple tracks', value.range))
+            }
+            hasTrack = true
+            continue
+          }
+
+          errors.push(new CompileError(`Unexpected type ${valueCheck.result.format()}, expected track or mixer`, value.range))
         }
 
-        errors.push(new CompileError(`Unexpected type ${valueCheck.result.format()}, expected track or mixer`, child.value.range))
         break
       }
 
@@ -458,11 +460,13 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
         break
 
       case 'Emission': {
-        const valueCheck = checkExpression(instrumentScope, child.value)
-        errors.push(...valueCheck.errors)
+        for (const value of child.values) {
+          const valueCheck = checkExpression(instrumentScope, value)
+          errors.push(...valueCheck.errors)
 
-        if (valueCheck.result != null) {
-          errors.push(...checkType(VoiceFacet.type(), valueCheck.result, child.value.range))
+          if (valueCheck.result != null) {
+            errors.push(...checkType(VoiceFacet.type(), valueCheck.result, value.range))
+          }
         }
 
         break
@@ -494,26 +498,28 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
         break
 
       case 'Emission': {
-        const valueCheck = checkExpression(voiceScope, child.value)
-        errors.push(...valueCheck.errors)
+        for (const value of child.values) {
+          const valueCheck = checkExpression(voiceScope, value)
+          errors.push(...valueCheck.errors)
 
-        if (valueCheck.result == null) {
-          continue
-        }
+          if (valueCheck.result == null) {
+            continue
+          }
 
-        // value can be either curve (envelope) or source (output)
-        if (CurveFacet.with('db').is(valueCheck.result)) {
-          if (hasEnvelope) {
-            errors.push(new CompileError('Multiple envelopes in a voice', child.range))
+          // value can be either curve (envelope) or source (output)
+          if (CurveFacet.with('db').is(valueCheck.result)) {
+            if (hasEnvelope) {
+              errors.push(new CompileError('Multiple envelopes in a voice', value.range))
+            }
+            hasEnvelope = true
+          } else if (SourceFacet.is(valueCheck.result)) {
+            if (hasOutput) {
+              errors.push(new CompileError('Multiple outputs in a voice', value.range))
+            }
+            hasOutput = true
+          } else {
+            errors.push(new CompileError(`Invalid emission type ${valueCheck.result.format()}`, value.range))
           }
-          hasEnvelope = true
-        } else if (SourceFacet.is(valueCheck.result)) {
-          if (hasOutput) {
-            errors.push(new CompileError('Multiple outputs in a voice', child.range))
-          }
-          hasOutput = true
-        } else {
-          errors.push(new CompileError(`Invalid emission type ${valueCheck.result.format()}`, child.value.range))
         }
 
         break
@@ -575,12 +581,6 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
     }
   }
 
-  errors.push(...checkCyclicRoutings(buses.map((bus) => ({
-    name: bus.name.name,
-    sources: bus.children.filter((child) => child.type === 'Identifier').map((source) => source.name),
-    range: bus.name.range
-  }))))
-
   return { errors, result: MixerFacet.type() }
 }
 
@@ -604,13 +604,15 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
         errors.push(...checkAssignment(busScope, child))
         break
 
-      case 'Identifier': {
-        const sourceCheck = checkExpression(busScope, child)
-        errors.push(...sourceCheck.errors)
+      case 'Emission': {
+        for (const value of child.values) {
+          const valueCheck = checkExpression(busScope, value)
+          errors.push(...valueCheck.errors)
 
-        if (sourceCheck.result != null) {
-          const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
-          errors.push(...checkType(options, sourceCheck.result, child.range))
+          if (valueCheck.result != null) {
+            const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
+            errors.push(...checkType(options, valueCheck.result, value.range))
+          }
         }
 
         break

@@ -178,6 +178,7 @@ Assignment {
 Emission {
   "&"
   expression
+  ("," expression)*
 }
 
 Routing {
@@ -222,7 +223,7 @@ Bus {
   kw<"bus"> VariableDefinition
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (Assignment | VariableName | EffectStatement)* "}"
+    "{" (Assignment | Emission | EffectStatement)* "}"
   }
 }
 

@@ -24,7 +24,7 @@ describe('go-to-definition/operation.ts', () => {
   })
 
   it('resolves bus references inside mixer', () => {
-    const source = 'mixer { bus a { } bus b { a } }'
+    const source = 'mixer { bus a { } bus b { & a } }'
 
     const defPos = source.indexOf('bus a') + 'bus '.length
 
@@ -59,7 +59,7 @@ describe('go-to-definition/operation.ts', () => {
   })
 
   it('tolerates incomplete input', () => {
-    const source = 'mixer { bus a { } bus b { a '
+    const source = 'mixer { bus a { } bus b { & a '
 
     const defPos = source.indexOf('bus a') + 'bus '.length
     const refPos = source.lastIndexOf('a')

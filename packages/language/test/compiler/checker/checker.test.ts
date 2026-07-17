@@ -204,9 +204,9 @@ describe('compiler/checker/checker.ts', () => {
         'synth = sample("synth.wav")',
         '& mixer {',
         '  bus main {',
-        '    kick',
+        '    & kick',
         '    renamed_synth = synth',
-        '    renamed_synth',
+        '    & renamed_synth',
         '  }',
         '}'
       ].join('\n')
@@ -218,7 +218,7 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         '& mixer {',
         '  bus bus0 {}',
-        '  bus bus1 { bus0 }',
+        '  bus bus1 { & bus0 }',
         '}'
       ].join('\n')
 
@@ -442,14 +442,14 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should reject duplicate track blocks', () => {
+    it('should reject duplicate track emissions', () => {
       const source = [
         '& track {}',
         '& track {}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple track definitions'
+        'Multiple tracks'
       ])
     })
 
@@ -605,7 +605,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple mixer definitions'
+        'Multiple mixers'
       ])
     })
 
@@ -686,57 +686,13 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject buses as sources in mixer before their declaration', () => {
       const source = [
         '& mixer {',
-        '  bus bus0 { bus1 }',
+        '  bus bus0 { & bus1 }',
         '  bus bus1 {}',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
         'Unknown identifier "bus1"'
-      ])
-    })
-
-    it('should reject bus referring to itself as a source', () => {
-      const source = [
-        '& mixer {',
-        '  bus bus0 { bus0 }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Unknown identifier "bus0"',
-        'Cyclic routing: bus0 -> bus0'
-      ])
-    })
-
-    it('should reject cyclic mixer routings', () => {
-      const source = [
-        '& mixer {',
-        '  bus bus0 { bus2 }',
-        '  bus bus1 { bus0 }',
-        '  bus bus2 { bus1 }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Unknown identifier "bus2"',
-        'Cyclic routing: bus0 -> bus1 -> bus2 -> bus0'
-      ])
-    })
-
-    it('should only report buses that are part of a cycle', () => {
-      const source = [
-        '& mixer {',
-        '  bus bus0 { bus1 }',
-        '  bus bus1 { bus2 }',
-        '  bus bus2 { bus1 }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Unknown identifier "bus1"',
-        'Unknown identifier "bus2"',
-        'Cyclic routing: bus1 -> bus2 -> bus1'
       ])
     })
 

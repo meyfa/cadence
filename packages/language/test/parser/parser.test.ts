@@ -617,7 +617,7 @@ describe('parser/parser.ts', () => {
     const source = [
       '& mixer {',
       '  bus mybus(gain: (-3).db) {',
-      '    kick snare hihat',
+      '    & kick, snare, hihat',
       '    effect fx.pan(0.5)',
       '    effect lp = fx.lowpass(400.hz)',
       '  }',
@@ -630,68 +630,75 @@ describe('parser/parser.ts', () => {
     assert.strictEqual(result.value.children.length, 1)
     assert.strictEqual(result.value.children[0].type, 'Emission')
 
-    const mixer = result.value.children[0].value
+    const emissions = result.value.children[0].values
 
-    assert.deepStrictEqual(stripRanges(mixer), {
-      type: 'Mixer',
-      properties: [],
-      children: [
-        {
-          type: 'Bus',
-          name: { type: 'Identifier', name: 'mybus' },
-          properties: [
-            {
-              type: 'Property',
-              key: { type: 'Identifier', name: 'gain' },
-              value: {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: -3 },
-                property: { type: 'Identifier', name: 'db' }
-              }
-            }
-          ],
-          children: [
-            { type: 'Identifier', name: 'kick' },
-            { type: 'Identifier', name: 'snare' },
-            { type: 'Identifier', name: 'hihat' },
-            {
-              type: 'EffectStatement',
-              name: undefined,
-              expression: {
-                type: 'Call',
-                callee: {
+    assert.deepStrictEqual(stripRanges(emissions), [
+      {
+        type: 'Mixer',
+        properties: [],
+        children: [
+          {
+            type: 'Bus',
+            name: { type: 'Identifier', name: 'mybus' },
+            properties: [
+              {
+                type: 'Property',
+                key: { type: 'Identifier', name: 'gain' },
+                value: {
                   type: 'PropertyAccess',
-                  object: { type: 'Identifier', name: 'fx' },
-                  property: { type: 'Identifier', name: 'pan' }
-                },
-                arguments: [
-                  { type: 'Number', value: 0.5 }
+                  object: { type: 'Number', value: -3 },
+                  property: { type: 'Identifier', name: 'db' }
+                }
+              }
+            ],
+            children: [
+              {
+                type: 'Emission',
+                values: [
+                  { type: 'Identifier', name: 'kick' },
+                  { type: 'Identifier', name: 'snare' },
+                  { type: 'Identifier', name: 'hihat' }
                 ]
-              }
-            },
-            {
-              type: 'EffectStatement',
-              name: { type: 'Identifier', name: 'lp' },
-              expression: {
-                type: 'Call',
-                callee: {
-                  type: 'PropertyAccess',
-                  object: { type: 'Identifier', name: 'fx' },
-                  property: { type: 'Identifier', name: 'lowpass' }
-                },
-                arguments: [
-                  {
+              },
+              {
+                type: 'EffectStatement',
+                name: undefined,
+                expression: {
+                  type: 'Call',
+                  callee: {
                     type: 'PropertyAccess',
-                    object: { type: 'Number', value: 400 },
-                    property: { type: 'Identifier', name: 'hz' }
-                  }
-                ]
+                    object: { type: 'Identifier', name: 'fx' },
+                    property: { type: 'Identifier', name: 'pan' }
+                  },
+                  arguments: [
+                    { type: 'Number', value: 0.5 }
+                  ]
+                }
+              },
+              {
+                type: 'EffectStatement',
+                name: { type: 'Identifier', name: 'lp' },
+                expression: {
+                  type: 'Call',
+                  callee: {
+                    type: 'PropertyAccess',
+                    object: { type: 'Identifier', name: 'fx' },
+                    property: { type: 'Identifier', name: 'lowpass' }
+                  },
+                  arguments: [
+                    {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: 400 },
+                      property: { type: 'Identifier', name: 'hz' }
+                    }
+                  ]
+                }
               }
-            }
-          ]
-        }
-      ]
-    })
+            ]
+          }
+        ]
+      }
+    ])
   })
 
   it('should allow named and unnamed parts', () => {
@@ -707,38 +714,40 @@ describe('parser/parser.ts', () => {
 
     assert.strictEqual(result.value.children[0].type, 'Emission')
 
-    const track = result.value.children[0].value
+    const emissions = result.value.children[0].values
 
-    assert.deepStrictEqual(stripRanges(track), {
-      type: 'Track',
-      properties: [],
-      children: [
-        {
-          type: 'Part',
-          name: undefined,
-          properties: [
-            {
-              type: 'PropertyAccess',
-              object: { type: 'Number', value: 4 },
-              property: { type: 'Identifier', name: 'bars' }
-            }
-          ],
-          children: []
-        },
-        {
-          type: 'Part',
-          name: { type: 'Identifier', name: 'my_part' },
-          properties: [
-            {
-              type: 'PropertyAccess',
-              object: { type: 'Number', value: 2 },
-              property: { type: 'Identifier', name: 'bars' }
-            }
-          ],
-          children: []
-        }
-      ]
-    })
+    assert.deepStrictEqual(stripRanges(emissions), [
+      {
+        type: 'Track',
+        properties: [],
+        children: [
+          {
+            type: 'Part',
+            name: undefined,
+            properties: [
+              {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 4 },
+                property: { type: 'Identifier', name: 'bars' }
+              }
+            ],
+            children: []
+          },
+          {
+            type: 'Part',
+            name: { type: 'Identifier', name: 'my_part' },
+            properties: [
+              {
+                type: 'PropertyAccess',
+                object: { type: 'Number', value: 2 },
+                property: { type: 'Identifier', name: 'bars' }
+              }
+            ],
+            children: []
+          }
+        ]
+      }
+    ])
   })
 
   it('should reject unnamed buses', () => {
@@ -763,31 +772,35 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
         type: 'Emission',
-        value: {
-          type: 'Track',
-          properties: [],
-          children: [
-            {
-              type: 'Assignment',
-              key: { type: 'Identifier', name: 'foo' },
-              value: { type: 'Number', value: 42 }
-            }
-          ]
-        }
+        values: [
+          {
+            type: 'Track',
+            properties: [],
+            children: [
+              {
+                type: 'Assignment',
+                key: { type: 'Identifier', name: 'foo' },
+                value: { type: 'Number', value: 42 }
+              }
+            ]
+          }
+        ]
       },
       {
         type: 'Emission',
-        value: {
-          type: 'Mixer',
-          properties: [],
-          children: [
-            {
-              type: 'Assignment',
-              key: { type: 'Identifier', name: 'bar' },
-              value: { type: 'Number', value: 43 }
-            }
-          ]
-        }
+        values: [
+          {
+            type: 'Mixer',
+            properties: [],
+            children: [
+              {
+                type: 'Assignment',
+                key: { type: 'Identifier', name: 'bar' },
+                value: { type: 'Number', value: 43 }
+              }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -828,33 +841,37 @@ describe('parser/parser.ts', () => {
             },
             {
               type: 'Emission',
-              value: {
-                type: 'Voice',
-                bindings: {
-                  note: undefined
-                },
-                children: [
-                  {
-                    type: 'Assignment',
-                    key: { type: 'Identifier', name: 'bar' },
-                    value: {
-                      type: 'PropertyAccess',
-                      object: { type: 'Number', value: 440 },
-                      property: { type: 'Identifier', name: 'hz' }
+              values: [
+                {
+                  type: 'Voice',
+                  bindings: {
+                    note: undefined
+                  },
+                  children: [
+                    {
+                      type: 'Assignment',
+                      key: { type: 'Identifier', name: 'bar' },
+                      value: {
+                        type: 'PropertyAccess',
+                        object: { type: 'Number', value: 440 },
+                        property: { type: 'Identifier', name: 'hz' }
+                      }
                     }
-                  }
-                ]
-              }
+                  ]
+                }
+              ]
             },
             {
               type: 'Emission',
-              value: {
-                type: 'Voice',
-                bindings: {
-                  note: { type: 'Identifier', name: 'note' }
-                },
-                children: []
-              }
+              values: [
+                {
+                  type: 'Voice',
+                  bindings: {
+                    note: { type: 'Identifier', name: 'note' }
+                  },
+                  children: []
+                }
+              ]
             }
           ]
         }

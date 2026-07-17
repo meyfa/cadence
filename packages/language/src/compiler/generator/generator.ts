@@ -64,16 +64,18 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
         break
 
       case 'Emission': {
-        const value = resolve(scope, child.value)
+        for (const value of child.values) {
+          const emittedValue = resolve(scope, value)
 
-        if (MixerFacet.has(value)) {
-          assert(mixer == null)
-          mixer = MixerFacet.get(value)
-        } else if (TrackFacet.has(value)) {
-          assert(track == null)
-          track = TrackFacet.get(value)
-        } else {
-          fail()
+          if (MixerFacet.has(emittedValue)) {
+            assert(mixer == null)
+            mixer = MixerFacet.get(emittedValue)
+          } else if (TrackFacet.has(emittedValue)) {
+            assert(track == null)
+            track = TrackFacet.get(emittedValue)
+          } else {
+            fail()
+          }
         }
 
         break
@@ -331,8 +333,10 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
         break
 
       case 'Emission': {
-        const value = resolve(instrumentScope, child.value)
-        voices.push(VoiceFacet.get(value))
+        for (const value of child.values) {
+          const emittedValue = resolve(instrumentScope, value)
+          voices.push(VoiceFacet.get(emittedValue))
+        }
         break
       }
 
@@ -397,15 +401,18 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
         break
 
       case 'Emission': {
-        const value = resolve(scope, child.value)
-        if (CurveFacet.with('db').has(value)) {
-          assert(envelopeValue == null)
-          envelopeValue = CurveFacet.with('db').get(value)
-        } else if (SourceFacet.has(value)) {
-          assert(outputValue == null)
-          outputValue = SourceFacet.get(value)
-        } else {
-          fail()
+        for (const value of child.values) {
+          const emittedValue = resolve(scope, value)
+
+          if (CurveFacet.with('db').has(emittedValue)) {
+            assert(envelopeValue == null)
+            envelopeValue = CurveFacet.with('db').get(emittedValue)
+          } else if (SourceFacet.has(emittedValue)) {
+            assert(outputValue == null)
+            outputValue = SourceFacet.get(emittedValue)
+          } else {
+            fail()
+          }
         }
 
         break
@@ -526,15 +533,17 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
         processAssignment(busScope, child)
         break
 
-      case 'Identifier': {
-        const source = resolve(busScope, child)
+      case 'Emission': {
+        for (const value of child.values) {
+          const emittedValue = resolve(busScope, value)
 
-        if (InstrumentFacet.has(source)) {
-          sources.push({ type: 'instrument', id: InstrumentFacet.get(source).id })
-        } else if (BusFacet.has(source)) {
-          sources.push({ type: 'bus', id: BusFacet.get(source).id })
-        } else {
-          fail()
+          if (InstrumentFacet.has(emittedValue)) {
+            sources.push({ type: 'instrument', id: InstrumentFacet.get(emittedValue).id })
+          } else if (BusFacet.has(emittedValue)) {
+            sources.push({ type: 'bus', id: BusFacet.get(emittedValue).id })
+          } else {
+            fail()
+          }
         }
 
         break

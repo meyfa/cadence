@@ -650,7 +650,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       '& mixer {',
       '  bus bus0 {}',
-      '  bus bus1 { bus0 }',
+      '  bus bus1 { & bus0 }',
       '}'
     ].join('\n')
 
