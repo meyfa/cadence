@@ -163,4 +163,26 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, 'db', source.indexOf('0.5.db') + '0.5.'.length, 'number')
     assertHighlightAt(spans, source, 'ms', source.indexOf('250.ms') + '250.'.length, 'number')
   })
+
+  it('terminates strings at newlines', () => {
+    const source = 'foo = "Hello,\nWorld"'
+
+    const spans = getHighlightSpans(source)
+
+    const stringSpans = spans.filter((span) => span.classes.includes('string'))
+    assert.strictEqual(stringSpans.length, 1)
+
+    assert.strictEqual(stringSpans[0].text, '"Hello,')
+  })
+
+  it('terminates strings at carriage returns', () => {
+    const source = 'foo = "Hello,\rWorld"'
+
+    const spans = getHighlightSpans(source)
+
+    const stringSpans = spans.filter((span) => span.classes.includes('string'))
+    assert.strictEqual(stringSpans.length, 1)
+
+    assert.strictEqual(stringSpans[0].text, '"Hello,')
+  })
 })
