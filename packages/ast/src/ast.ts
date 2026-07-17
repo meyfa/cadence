@@ -116,7 +116,7 @@ export interface Assignment extends ASTNode {
 
 export interface Emission extends ASTNode {
   readonly type: 'Emission'
-  readonly value: Expression
+  readonly values: readonly Expression[]
 }
 
 // Domain Types
@@ -131,7 +131,7 @@ export interface Bus extends ASTNode {
   readonly type: 'Bus'
   readonly name: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Assignment | Identifier | EffectStatement>
+  readonly children: ReadonlyArray<Assignment | Emission | EffectStatement>
 }
 
 export interface EffectStatement extends ASTNode {

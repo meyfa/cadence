@@ -82,7 +82,7 @@ describe('language-support.ts', () => {
       '',
       '& mixer {',
       '  bus main {',
-      '    inst',
+      '    & inst',
       '    effect fx.pan(-1)',
       '  }',
       '}',
@@ -92,7 +92,7 @@ describe('language-support.ts', () => {
     const spans = getHighlightSpans(source)
 
     const definitionInstrumentStart = source.indexOf('inst =')
-    const useInstrumentStart = source.indexOf('    inst') + '    '.length
+    const useInstrumentStart = source.indexOf('& inst') + '& '.length
 
     assertHighlightAt(spans, source, '// comment', source.indexOf('// comment'), 'comment')
     assertHighlightAt(spans, source, 'use', source.indexOf('use'), 'keyword')

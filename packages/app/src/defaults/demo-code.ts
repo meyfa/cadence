@@ -34,18 +34,18 @@ clap_pattern = [x:8]
   // Buses can receive signals from instruments, but also other buses.
 
   bus drums (gain: -1.5.db) {
-    kick snare hat tom
+    & kick, snare, hat, tom
   }
 
   bus synths (gain: -10.db) {
-    synth
+    & synth
   }
 
   // A bus can have zero or more effects, which are applied in order.
   // input -> effects... -> pan -> gain -> output
 
   bus clap_delay (gain: 3.db, pan: -0.25) {
-    clap
+    & clap
 
     effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
     effect fx.reverb(mix: 0.3, decay: 1.s)

@@ -38,7 +38,7 @@ describe('model/analysis/base.ts', () => {
       '& mixer {',
       '  bus drums {',
       '    effect crush = fx.clip(-6.db)',
-      '    kick snare',
+      '    & kick, snare',
       '  }',
       '}',
       ''
@@ -232,7 +232,7 @@ describe('model/analysis/base.ts', () => {
       '',
       '& mixer {',
       '  bus drums (gain: -1.5.db) {',
-      '    kick snare',
+      '    & kick, snare',
       '  }',
       '  bus delay {',
       '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
@@ -332,7 +332,7 @@ describe('model/analysis/base.ts', () => {
       '',
       '& mixer {',
       '  bus drums (gain: -1.5.db) {',
-      '    kick snare',
+      '    & kick, snare',
       '  }',
       '}',
       ''

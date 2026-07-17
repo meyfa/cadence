@@ -509,11 +509,20 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
-const emission_: p.Parser<Token, unknown, ast.Emission> = p.ab(
+const emission_: p.Parser<Token, unknown, ast.Emission> = p.abc(
   literal('&'),
   expression_,
-  (_amp, value) => {
-    return ast.make('Emission', combineSourceRanges(_amp, value), { value })
+  p.many(
+    combine2(
+      literal(','),
+      expression_
+    )
+  ),
+  (_amp, firstValue, restValues) => {
+    const values = [firstValue, ...restValues.map(([, value]) => value)]
+    const lastValue = values.at(-1) ?? firstValue
+
+    return ast.make('Emission', combineSourceRanges(_amp, lastValue), { values })
   }
 )
 
@@ -639,7 +648,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
     p.many(
       p.eitherOr(
         assignment_,
-        p.eitherOr(identifier_, effectStatement_)
+        p.eitherOr(emission_, effectStatement_)
       )
     ),
     expectLiteral('}')
