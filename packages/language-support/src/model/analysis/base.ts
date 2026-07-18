@@ -66,8 +66,8 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     let accessChainTail: Identifier | undefined
 
     switch (typeName) {
-      case 'UseStatement': {
-        const statement = parseUseStatement(document, cursor.node)
+      case 'Import': {
+        const statement = parseImport(document, cursor.node)
         if (statement == null) {
           break
         }
@@ -296,7 +296,7 @@ function importKey (moduleName: string, range: SourceRange): ImportId {
   return `${moduleName}:${range.offset}:${range.length}` as ImportId
 }
 
-function parseUseStatement (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> | undefined {
+function parseImport (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> | undefined {
   let moduleName: string | undefined
   let alias: string | undefined
   let aliasRange: SourceRange | undefined

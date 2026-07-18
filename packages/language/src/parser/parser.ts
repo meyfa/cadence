@@ -478,7 +478,7 @@ const argumentList_: p.Parser<Token, unknown, ast.ArgumentList> = p.sepBy(
   literal(',')
 )
 
-const useStatement_: p.Parser<Token, unknown, ast.UseStatement> = p.ab(
+const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
   combine2(
     keyword('use'),
     expect(string_, 'module name')
@@ -493,10 +493,10 @@ const useStatement_: p.Parser<Token, unknown, ast.UseStatement> = p.ab(
   ([_use, libraryToken], [_as, aliasToken]) => {
     const range = combineSourceRanges(_use, aliasToken)
     if (aliasToken.name === '*') {
-      return ast.make('UseStatement', range, { library: libraryToken })
+      return ast.make('Import', range, { library: libraryToken })
     }
 
-    return ast.make('UseStatement', range, { library: libraryToken, alias: (aliasToken as ast.Identifier).name })
+    return ast.make('Import', range, { library: libraryToken, alias: (aliasToken as ast.Identifier).name })
   }
 )
 
@@ -728,7 +728,7 @@ const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
 )
 
 const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
-  p.many(useStatement_),
+  p.many(import_),
   p.many(
     p.eitherOr(
       p.eitherOr(assignment_, emission_),

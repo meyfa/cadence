@@ -58,7 +58,7 @@ Unit[@dynamicPrecedence=1] {
 }
 
 @top Program {
-  (UseStatement | Assignment | Emission)*
+  (Import | Assignment | Emission)*
 }
 
 interpolationExpression {
@@ -164,7 +164,7 @@ Property {
   expression
 }
 
-UseStatement {
+Import {
   kw<"use"> String
   kw<"as"> UseAlias { word | "*" }
 }
