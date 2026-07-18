@@ -32,7 +32,7 @@ describe('model/analysis/known-values.ts', () => {
       '',
       '& mixer {',
       '  & bus {',
-      '    effect fx.gain(-3.db)',
+      '    & fx.gain(-3.db)',
       '  }',
       '}',
       ''

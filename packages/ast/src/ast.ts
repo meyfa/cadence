@@ -138,13 +138,7 @@ export interface Bus extends ASTNode {
   readonly type: 'Bus'
   readonly name?: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Statement | EffectStatement>
-}
-
-export interface EffectStatement extends ASTNode {
-  readonly type: 'EffectStatement'
-  readonly name?: Identifier
-  readonly expression: Expression
+  readonly children: readonly Statement[]
 }
 
 export interface Track extends ASTNode {
@@ -233,7 +227,6 @@ export interface NodeByType {
 
   Mixer: Mixer
   Bus: Bus
-  EffectStatement: EffectStatement
   Track: Track
   Part: Part
   Routing: Routing

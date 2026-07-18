@@ -114,7 +114,7 @@ describe('unused-variable/operation.ts', () => {
       '',
       '& mixer {',
       '  & bus drums {',
-      '    effect fx.gain(0.db)',
+      '    & fx.gain(0.db)',
       '  }',
       '}',
       ''
@@ -139,7 +139,7 @@ describe('unused-variable/operation.ts', () => {
       '',
       '& mixer {',
       '  & bus drums {',
-      '    effect gain(0.db)',
+      '    & gain(0.db)',
       '  }',
       '}',
       ''

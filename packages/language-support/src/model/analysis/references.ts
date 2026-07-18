@@ -55,7 +55,6 @@ interface BindingLookup {
   readonly namedImports: ReadonlyMap<string, Binding>
   readonly defaultImports: ReadonlyMap<string, Import>
   readonly buses: ReadonlyMap<string, Binding>
-  readonly effectsByBusName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
   readonly byScopeAndName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
   readonly parentScopes: ReadonlyMap<string, string>
 }
@@ -64,7 +63,6 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
   const namedImports = new Map<string, Binding>()
   const defaultImports = new Map<string, Import>()
   const buses = new Map<string, Binding>()
-  const effectsByBusName = new Map<string, Map<string, Binding>>()
   const byScopeAndName = new Map<string, Map<string, Binding>>()
 
   const busNameByScopeId = new Map<string, string>()
@@ -86,22 +84,6 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
           }
         }
         break
-
-      case 'effect': {
-        const busName = busNameByScopeId.get(binding.scopeId)
-        if (busName != null) {
-          let busEffects = effectsByBusName.get(busName)
-          if (busEffects == null) {
-            busEffects = new Map<string, Binding>()
-            effectsByBusName.set(busName, busEffects)
-          }
-
-          if (!busEffects.has(binding.name)) {
-            busEffects.set(binding.name, binding)
-          }
-        }
-        break
-      }
 
       default:
         break
@@ -134,7 +116,7 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
     }
   }
 
-  return { namedImports, defaultImports, buses, effectsByBusName, byScopeAndName, parentScopes }
+  return { namedImports, defaultImports, buses, byScopeAndName, parentScopes }
 }
 
 function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
@@ -154,15 +136,6 @@ function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, loo
 }
 
 function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Binding | undefined {
-  if (isExplicitBusMemberReference(occurrence)) {
-    const busIdentifier = occurrence.previousSibling
-    if (busIdentifier == null) {
-      return undefined
-    }
-
-    return lookup.effectsByBusName.get(busIdentifier.name)?.get(occurrence.name)
-  }
-
   if (isExplicitBusReference(occurrence)) {
     return lookup.buses.get(occurrence.name)
   }
@@ -195,14 +168,6 @@ function isExplicitBusReference (identifier: Identifier): boolean {
   return identifier.previousSibling != null &&
     identifier.previousSibling.name === 'bus' &&
     identifier.previousSibling.previousSibling == null
-}
-
-function isExplicitBusMemberReference (identifier: Identifier): boolean {
-  const objectIdentifier = identifier.previousSibling
-  const namespaceIdentifier = objectIdentifier?.previousSibling
-
-  return namespaceIdentifier?.name === 'bus' &&
-    namespaceIdentifier.previousSibling == null
 }
 
 const importCache = new WeakMap<BindingLookup, Map<string, Import | undefined>>()

@@ -165,11 +165,6 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             break
           }
 
-          case 'EffectStatement': {
-            addBinding({ kind: 'effect', scopeId, name, range: nameRange })
-            break
-          }
-
           case 'Voice': {
             addBinding({ kind: 'regular', scopeId, name, range: nameRange })
             break

@@ -105,10 +105,10 @@ describe('compiler/checker/checker.ts', () => {
         'use "effects" as fx',
         '& mixer {',
         '  & bus {',
-        '    effect fx.delay(mix: 0.25, time: 3.beats, feedback: 0.4)',
+        '    & fx.delay(mix: 0.25, time: 3.beats, feedback: 0.4)',
         '  }',
         '  & bus {',
-        '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
+        '    & fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
         '  }',
         '}'
       ].join('\n')
@@ -121,10 +121,10 @@ describe('compiler/checker/checker.ts', () => {
         'use "effects" as fx',
         '& mixer {',
         '  & bus {',
-        '    effect fx.reverb(mix: 0.25, decay: 3.beats)',
+        '    & fx.reverb(mix: 0.25, decay: 3.beats)',
         '  }',
         '  & bus {',
-        '    effect fx.reverb(mix: 0.25, decay: 1.5.s)',
+        '    & fx.reverb(mix: 0.25, decay: 1.5.s)',
         '  }',
         '}'
       ].join('\n')
@@ -319,7 +319,7 @@ describe('compiler/checker/checker.ts', () => {
         'use "effects" as fx',
         '& mixer {',
         '  & bus main {',
-        '    effect lp = fx.lowpass(1000.hz)',
+        '    & @lp = fx.lowpass(1000.hz)',
         '  }',
         '}',
         '& track {',
@@ -338,7 +338,7 @@ describe('compiler/checker/checker.ts', () => {
         'lp = 42',
         '& mixer {',
         '  & bus {',
-        '    effect lp = fx.lowpass(1000.hz)',
+        '    & @lp = fx.lowpass(1000.hz)',
         '  }',
         '}'
       ].join('\n')
@@ -703,39 +703,6 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Duplicate bus named "foo"'
-      ])
-    })
-
-    it('should reject duplicate named effects within the same bus', () => {
-      const source = [
-        'use "effects" as fx',
-        '& mixer {',
-        '  & bus main {',
-        '    effect lp = fx.lowpass(1000.hz)',
-        '    effect lp = fx.highpass(200.hz)',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Duplicate property "lp"'
-      ])
-    })
-
-    it('should reject named effects that collide with built-in bus fields', () => {
-      const source = [
-        'use "effects" as fx',
-        '& mixer {',
-        '  & bus main {',
-        '    effect gain = fx.lowpass(1000.hz)',
-        '    effect pan = fx.highpass(200.hz)',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Duplicate property "gain"',
-        'Duplicate property "pan"'
       ])
     })
 

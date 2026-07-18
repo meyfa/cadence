@@ -83,7 +83,7 @@ describe('language-support.ts', () => {
       '& mixer {',
       '  & bus main {',
       '    & inst',
-      '    effect fx.pan(-1)',
+      '    & fx.pan(-1)',
       '  }',
       '}',
       ''

@@ -639,26 +639,6 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
   }
 )
 
-const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.abc(
-  keyword('effect'),
-  p.option(
-    combine2(
-      identifier_,
-      literal('=')
-    ),
-    undefined
-  ),
-  expression_,
-  (_effect, nameAndEq, expression) => {
-    const name = nameAndEq == null ? undefined : nameAndEq[0]
-
-    return ast.make('EffectStatement', combineSourceRanges(_effect, expression), {
-      name,
-      expression
-    })
-  }
-)
-
 const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   combine2(
     keyword('bus'),
@@ -674,9 +654,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(
-      p.eitherOr(statement_, effectStatement_)
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   ([_bus, name], callChain, [_lp, children, _rp]) => {

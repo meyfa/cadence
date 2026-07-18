@@ -25,7 +25,7 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType, makeUnion } from '../../type-system/factory.ts'
 import type { Schema, SchemaItem } from '../../type-system/schema.ts'
 import type { FacetType, Type, Value } from '../../type-system/types.ts'
-import { assertNever, nonNull } from '../assert.ts'
+import { nonNull } from '../assert.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import { BUS_NAMESPACE, busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
@@ -593,7 +593,7 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
   return { errors, result }
 }
 
-const busInputType = makeUnion(InstrumentFacet.type(), BusFacet.type())
+const busEmissionType = makeUnion(InstrumentFacet.type(), BusFacet.type(), EffectFacet.type())
 
 function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
   const busScope = createLocalScope(scope)
@@ -606,59 +606,14 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
   properties.set('pan', ParameterFacet.with(undefined).type())
 
   for (const child of bus.children) {
-    switch (child.type) {
-      case 'Statement': {
-        const statement = checkStatement(busScope, child, properties)
-        errors.push(...statement.errors)
+    const statement = checkStatement(busScope, child, properties)
+    errors.push(...statement.errors)
 
-        for (const emission of statement.emissions) {
-          errors.push(...checkType(busInputType, emission.type, emission.range))
-        }
-
-        putAll(properties, statement.properties)
-
-        break
-      }
-
-      case 'EffectStatement': {
-        const effectCheck = checkExpression(busScope, child.expression)
-        errors.push(...effectCheck.errors)
-
-        let effectType: FacetType | undefined
-
-        if (effectCheck.result != null) {
-          const typeErrors = checkType(EffectFacet.type(), effectCheck.result, child.expression.range)
-          errors.push(...typeErrors)
-
-          if (typeErrors.length === 0) {
-            effectType = effectCheck.result
-          }
-        }
-
-        if (child.name == null) {
-          continue
-        }
-
-        if (Object.hasOwn(properties, child.name.name)) {
-          errors.push(new CompileError(`Effect name "${child.name.name}" conflicts with bus property of the same name`, child.name.range))
-          continue
-        }
-
-        if (properties.has(child.name.name)) {
-          errors.push(new CompileError(`Duplicate property "${child.name.name}"`, child.name.range))
-          continue
-        }
-
-        if (effectType != null) {
-          properties.set(child.name.name, effectType)
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of statement.emissions) {
+      errors.push(...checkType(busEmissionType, emission.type, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
   const result = makeType(BusFacet, RecordFacet.with(Object.fromEntries(properties)))
