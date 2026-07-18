@@ -49,13 +49,17 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
-    it('should accept use statements without alias', () => {
+    it('should accept imports without alias', () => {
       const source = [
         'use "instruments" as *',
         'use "effects" as *'
       ].join('\n')
 
       assertValid(source)
+    })
+
+    it('should accept imports with alias', () => {
+      assertValid('use "effects" as myalias')
     })
 
     it('should define names from imported libraries', () => {
@@ -65,10 +69,6 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertValid(source)
-    })
-
-    it('should accept imports with alias', () => {
-      assertValid('use "effects" as myalias')
     })
 
     it('should accept a program with one track and unique parts', () => {
@@ -167,6 +167,31 @@ describe('compiler/checker/checker.ts', () => {
         '    shadowed_by_bus = 401',
         '  }',
         '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept property exposure', () => {
+      const source = [
+        '& m = mixer {',
+        '  @mixer_property = 42',
+        '  & @b = bus {',
+        '    @bus_property = 42',
+        '  }',
+        '}',
+        '',
+        '& t = track {',
+        '  @track_property = 42',
+        '  & @p = part (4.bars) {',
+        '    @part_property = 42',
+        '  }',
+        '}',
+        '',
+        'access_mixer_property = m.mixer_property',
+        'access_bus_property = m.b.bus_property',
+        'access_track_property = t.track_property',
+        'access_part_property = t.p.part_property'
       ].join('\n')
 
       assertValid(source)
@@ -358,6 +383,17 @@ describe('compiler/checker/checker.ts', () => {
 
       assertValid(source)
     })
+
+    it('should allow property exposure in instrument definitions', () => {
+      const source = [
+        'my_instrument = instrument {',
+        '  @foo = -6.db',
+        '}',
+        'access_foo = my_instrument.foo'
+      ].join('\n')
+
+      assertValid(source)
+    })
   })
 
   describe('invalid', () => {
@@ -451,6 +487,42 @@ describe('compiler/checker/checker.ts', () => {
         'Identifier "in_bus" is already defined',
         'Identifier "in_track" is already defined',
         'Identifier "in_part" is already defined'
+      ])
+    })
+
+    it('should reject property exposure in the global scope', () => {
+      const source = [
+        '@foo = 42'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Cannot expose properties in the global scope'
+      ])
+    })
+
+    it('should reject duplicate property exposures', () => {
+      const source = [
+        '& mixer {',
+        '  @foo = 42',
+        '  @foo = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "foo" is already defined',
+        'Duplicate property "foo"'
+      ])
+    })
+
+    it('should reject property exposures that collide with existing names', () => {
+      const source = [
+        'b = bus {',
+        '  @gain = 42',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate property "gain"'
       ])
     })
 
@@ -646,7 +718,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Duplicate effect name "lp"'
+        'Duplicate property "lp"'
       ])
     })
 
@@ -662,8 +734,8 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Effect name "gain" conflicts with bus property of the same name',
-        'Effect name "pan" conflicts with bus property of the same name'
+        'Duplicate property "gain"',
+        'Duplicate property "pan"'
       ])
     })
 
@@ -957,6 +1029,25 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Unknown identifier "foo"'
+      ])
+    })
+
+    it('should reject property access for voices', () => {
+      // voices generate their value at runtime, so any properties accessed at compile time are invalid
+      const source = [
+        'use "sources" as src',
+        '',
+        'foo = voice {',
+        '  @voice_property = -6.db',
+        '  & ~[lin(0.db, -60.db):100.ms]',
+        '  & src.sine(440.hz)',
+        '}',
+        '',
+        'access_voice_property = foo.voice_property'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Type voice has no property named "voice_property"'
       ])
     })
   })

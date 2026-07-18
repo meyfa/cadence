@@ -444,4 +444,32 @@ describe('lexer/lexer.ts', () => {
       ]
     })
   })
+
+  it('should lex exposed properties', () => {
+    const source = [
+      'm = mixer {',
+      '  @exposed_property = 42',
+      '}'
+    ].join('\n')
+
+    const result = lex(source)
+    assert.strictEqual(result.complete, true)
+
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'word', text: 'm' },
+        { name: '=', text: '=' },
+        { name: 'word', text: 'mixer' },
+        { name: '{', text: '{' },
+
+        { name: '@', text: '@' },
+        { name: 'word', text: 'exposed_property' },
+        { name: '=', text: '=' },
+        { name: 'number', text: '42' },
+
+        { name: '}', text: '}' }
+      ]
+    })
+  })
 })

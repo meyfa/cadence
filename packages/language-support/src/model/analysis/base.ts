@@ -50,6 +50,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     scopeId: string,
     pendingScope: Scope | undefined,
     assignmentHasEquals: boolean,
+    assignmentIsExposed: boolean,
     previousSibling?: Identifier
   ): Identifier | undefined => {
     const typeName = cursor.type.name
@@ -63,6 +64,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     let nextScopeId = scopeId
     let nextPendingScope = pendingScope
     let nextAssignmentHasEquals = assignmentHasEquals
+    let nextAssignmentIsExposed = assignmentIsExposed
     let accessChainTail: Identifier | undefined
 
     switch (typeName) {
@@ -130,16 +132,9 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'Assignment': {
-        nextAssignmentHasEquals = false
-
-        cursor.node.cursor().iterate((node) => {
-          if (node.type.name === '=') {
-            nextAssignmentHasEquals = true
-            return false
-          }
-          return true
-        })
-
+        const { hasEquals, isExposed } = parseAssignment(cursor.node)
+        nextAssignmentHasEquals = hasEquals
+        nextAssignmentIsExposed = isExposed
         break
       }
 
@@ -149,7 +144,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         switch (parentType) {
           case 'Assignment': {
             if (assignmentHasEquals) {
-              addBinding({ kind: 'regular', scopeId, name, range: nameRange })
+              addBinding({ kind: 'regular', scopeId, name, range: nameRange, isExposed: assignmentIsExposed })
               break
             }
             // Invalid/incomplete syntax encountered.
@@ -225,6 +220,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           nextScopeId,
           nextPendingScope,
           nextAssignmentHasEquals,
+          nextAssignmentIsExposed,
           childPreviousSibling
         )
 
@@ -244,7 +240,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     return accessChainTail
   }
 
-  walk(cursor, undefined, rootScopeId, undefined, false)
+  walk(cursor, undefined, rootScopeId, undefined, false, false)
 
   sortByOffset(scopes)
   sortByOffset(identifiers)
@@ -329,4 +325,31 @@ function parseImport (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> 
   }
 
   return { ...result, alias }
+}
+
+interface AssignmentParseResult {
+  readonly hasEquals: boolean
+  readonly isExposed: boolean
+}
+
+function parseAssignment (node: SyntaxNode): AssignmentParseResult {
+  let hasEquals = false
+  let isExposed = false
+
+  const cursor = node.cursor()
+
+  if (cursor.firstChild()) {
+    do {
+      switch (cursor.type.name) {
+        case '=':
+          hasEquals = true
+          break
+        case '@':
+          isExposed = true
+          break
+      }
+    } while (cursor.nextSibling())
+  }
+
+  return { hasEquals, isExposed }
 }

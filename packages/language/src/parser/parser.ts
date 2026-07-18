@@ -500,13 +500,17 @@ const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
   }
 )
 
-const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
-  identifier_,
-  literal('='),
-  expression_,
-  (key, _eq, value) => {
-    return ast.make('Statement', combineSourceRanges(key, value), {
+const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
+  p.option(literal('@'), undefined),
+  combine3(
+    identifier_,
+    literal('='),
+    expression_
+  ),
+  (expose, [key, _eq, value]) => {
+    return ast.make('Statement', combineSourceRanges(expose ?? key, value), {
       emit: false,
+      expose: expose != null,
       name: key,
       values: [value]
     })
@@ -528,21 +532,24 @@ const plainEmission_: p.Parser<Token, unknown, ast.Statement> = p.abc(
 
     return ast.make('Statement', combineSourceRanges(_amp, lastValue), {
       emit: true,
+      expose: false,
       values: [firstValue, ...restValues]
     })
   }
 )
 
-const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
+const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
   literal('&'),
+  p.option(literal('@'), undefined),
   combine3(
     identifier_,
     literal('='),
     expression_
   ),
-  (_amp, [key, _eq, value]) => {
+  (_amp, expose, [key, _eq, value]) => {
     return ast.make('Statement', combineSourceRanges(_amp, value), {
       emit: true,
+      expose: expose != null,
       name: key,
       values: [value]
     })

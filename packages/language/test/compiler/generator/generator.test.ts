@@ -90,6 +90,22 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(result.track.tempo, 90)
   })
 
+  it('should handle property exposure', () => {
+    const source = [
+      'm = mixer { @bit = 1 }',
+      'b = bus { @bit = 2 }',
+      't = track { @bit = 4 }',
+      'p = part (1.bar) { @bit = 8 }',
+      '',
+      'mask = m.bit + b.bit + t.bit + p.bit',
+      '',
+      '& track (tempo: mask.bpm) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.tempo, 15)
+  })
+
   it('should support imported names', () => {
     const source = [
       'use "instruments" as *',
@@ -781,5 +797,17 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(voice1.source.type, 'oscillator')
     assert.strictEqual(voice1.source.shape, 'sine')
     assert.deepStrictEqual(voice1.source.frequency, pitchFrequency)
+  })
+
+  it('should handle property exposure on instruments', () => {
+    const source = [
+      'my_instrument = instrument {',
+      '  @test_property = 123.bpm',
+      '}',
+      '& track (tempo: my_instrument.test_property) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.tempo, 123)
   })
 })

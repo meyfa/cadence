@@ -31,7 +31,7 @@ describe('unused-variable/operation.ts', () => {
     )
   })
 
-  it('does not report parts or buses as unused', () => {
+  it('does not report emitted parts or buses as unused', () => {
     const source = [
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
@@ -40,6 +40,20 @@ describe('unused-variable/operation.ts', () => {
       '& mixer {',
       '  & bus drums {',
       '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      []
+    )
+  })
+
+  it('does not report exposed properties as unused', () => {
+    const source = [
+      '& mixer {',
+      '  @foo = 42',
       '}',
       ''
     ].join('\n')

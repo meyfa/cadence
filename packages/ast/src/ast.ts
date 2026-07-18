@@ -113,6 +113,7 @@ export type Statement = NamedStatement | UnnamedStatement
 interface NamedStatement extends ASTNode {
   readonly type: 'Statement'
   readonly emit: boolean
+  readonly expose: boolean
   readonly name: Identifier
   readonly values: readonly [Expression]
 }
@@ -120,6 +121,7 @@ interface NamedStatement extends ASTNode {
 interface UnnamedStatement extends ASTNode {
   readonly type: 'Statement'
   readonly emit: true
+  readonly expose: false
   readonly name?: undefined
   readonly values: readonly [Expression, ...Expression[]]
 }

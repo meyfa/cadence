@@ -25,6 +25,7 @@ describe('model/analysis/base.ts', () => {
       'tempo = 120.bpm',
       '',
       'synth = instrument {',
+      '  @custom_property = 42',
       '  & voice note {}',
       '}',
       '',
@@ -61,6 +62,7 @@ describe('model/analysis/base.ts', () => {
         { kind: 'definition', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'bpm' },
         { kind: 'definition', scope: 'root', name: 'synth' },
+        { kind: 'definition', scope: 'instrument', name: 'custom_property' },
         { kind: 'definition', scope: 'voice', name: 'note' },
         { kind: 'property-name', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'tempo' },
@@ -217,6 +219,7 @@ describe('model/analysis/base.ts', () => {
       'snare = sample("/samples/snare.wav", gain: -3.db)',
       '',
       'my_instrument = instrument {',
+      '  @custom_property = 42',
       '  foo = 42',
       '  bar = foo * 2',
       '  & voice note {',
@@ -296,19 +299,20 @@ describe('model/analysis/base.ts', () => {
     )
 
     assert.deepStrictEqual(
-      model.bindings.map(({ kind, name, declaredScopeId }) => ({ kind, name, declaredScopeId })),
+      model.bindings.map(({ kind, name, declaredScopeId, isExposed }) => ({ kind, name, declaredScopeId, isExposed })),
       [
-        { kind: 'use-alias', name: 'fx', declaredScopeId: undefined },
-        { kind: 'regular', name: 'kick', declaredScopeId: undefined },
-        { kind: 'regular', name: 'snare', declaredScopeId: undefined },
-        { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined },
-        { kind: 'regular', name: 'foo', declaredScopeId: undefined },
-        { kind: 'regular', name: 'bar', declaredScopeId: undefined },
-        { kind: 'regular', name: 'note', declaredScopeId: undefined },
-        { kind: 'regular', name: 'baz', declaredScopeId: undefined },
-        { kind: 'part', name: 'intro', declaredScopeId: undefined },
-        { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId },
-        { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId }
+        { kind: 'use-alias', name: 'fx', declaredScopeId: undefined, isExposed: undefined },
+        { kind: 'regular', name: 'kick', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'snare', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'custom_property', declaredScopeId: undefined, isExposed: true },
+        { kind: 'regular', name: 'foo', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'bar', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'note', declaredScopeId: undefined, isExposed: undefined },
+        { kind: 'regular', name: 'baz', declaredScopeId: undefined, isExposed: false },
+        { kind: 'part', name: 'intro', declaredScopeId: undefined, isExposed: undefined },
+        { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId, isExposed: undefined },
+        { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId, isExposed: undefined }
       ]
     )
   })

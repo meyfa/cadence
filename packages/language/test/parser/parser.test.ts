@@ -97,6 +97,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           { type: 'Number', value: 42 }
@@ -113,6 +114,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         values: [
           { type: 'Number', value: 42 }
         ]
@@ -128,6 +130,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           { type: 'Number', value: 42 }
@@ -144,6 +147,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         values: [
           { type: 'Number', value: 1 },
           { type: 'String', parts: ['hello'] },
@@ -163,6 +167,28 @@ describe('parser/parser.ts', () => {
     assert.strictEqual(result.complete, false)
   })
 
+  it('should parse exposed property assignments', () => {
+    const result = parse(lexSource('@foo = 42'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: false,
+        expose: true,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          { type: 'Number', value: 42 }
+        ]
+      }
+    ])
+  })
+
+  it('should reject exposed property assignments with multiple values', () => {
+    const result = parse(lexSource('@foo = 1, 2'))
+    assert.strictEqual(result.complete, false)
+  })
+
   it('should parse unit suffixes', () => {
     const source = [
       'offset = -1.5.ms',
@@ -176,6 +202,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'offset' },
         values: [
           {
@@ -192,6 +219,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'gain' },
         values: [
           {
@@ -217,6 +245,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'target' },
         values: [
           {
@@ -241,6 +270,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           {
@@ -264,6 +294,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           {
@@ -291,6 +322,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           {
@@ -313,6 +345,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -339,6 +372,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -366,6 +400,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -389,6 +424,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -423,6 +459,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -462,6 +499,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -512,6 +550,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'pattern' },
         values: [
           {
@@ -551,6 +590,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         values: [
           {
             type: 'Routing',
@@ -575,6 +615,7 @@ describe('parser/parser.ts', () => {
         {
           type: 'Statement',
           emit: false,
+          expose: false,
           name: { type: 'Identifier', name: 'x' },
           values: [
             {
@@ -600,6 +641,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           {
@@ -645,6 +687,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'foo' },
         values: [
           {
@@ -695,6 +738,7 @@ describe('parser/parser.ts', () => {
         {
           type: 'Statement',
           emit: false,
+          expose: false,
           name: { type: 'Identifier', name: 'x' },
           values: [
             {
@@ -728,6 +772,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'x' },
         values: [
           {
@@ -774,6 +819,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Statement',
             emit: true,
+            expose: false,
             values: [
               {
                 type: 'Bus',
@@ -793,6 +839,7 @@ describe('parser/parser.ts', () => {
                   {
                     type: 'Statement',
                     emit: true,
+                    expose: false,
                     values: [
                       { type: 'Identifier', name: 'kick' },
                       { type: 'Identifier', name: 'snare' },
@@ -866,6 +913,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Statement',
             emit: true,
+            expose: false,
             values: [
               {
                 type: 'Part',
@@ -884,6 +932,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Statement',
             emit: true,
+            expose: false,
             values: [
               {
                 type: 'Part',
@@ -928,6 +977,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Statement',
             emit: true,
+            expose: false,
             values: [
               {
                 type: 'Bus',
@@ -950,6 +1000,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'Statement',
             emit: true,
+            expose: false,
             values: [
               {
                 type: 'Bus',
@@ -991,6 +1042,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         values: [
           {
             type: 'Track',
@@ -999,6 +1051,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Statement',
                 emit: false,
+                expose: false,
                 name: { type: 'Identifier', name: 'foo' },
                 values: [
                   { type: 'Number', value: 42 }
@@ -1011,6 +1064,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: true,
+        expose: false,
         values: [
           {
             type: 'Mixer',
@@ -1019,6 +1073,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Statement',
                 emit: false,
+                expose: false,
                 name: { type: 'Identifier', name: 'bar' },
                 values: [
                   { type: 'Number', value: 43 }
@@ -1049,6 +1104,7 @@ describe('parser/parser.ts', () => {
       {
         type: 'Statement',
         emit: false,
+        expose: false,
         name: { type: 'Identifier', name: 'my_synth' },
         values: [
           {
@@ -1057,6 +1113,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Statement',
                 emit: false,
+                expose: false,
                 name: { type: 'Identifier', name: 'foo' },
                 values: [
                   {
@@ -1073,6 +1130,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Statement',
                 emit: true,
+                expose: false,
                 values: [
                   {
                     type: 'Voice',
@@ -1083,6 +1141,7 @@ describe('parser/parser.ts', () => {
                       {
                         type: 'Statement',
                         emit: false,
+                        expose: false,
                         name: { type: 'Identifier', name: 'bar' },
                         values: [
                           {
@@ -1099,6 +1158,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Statement',
                 emit: true,
+                expose: false,
                 values: [
                   {
                     type: 'Voice',
