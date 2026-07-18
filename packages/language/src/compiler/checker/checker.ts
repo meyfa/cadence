@@ -71,6 +71,10 @@ export function check (program: ast.Program): CheckResult {
     const statement = checkStatement(scope, child)
     errors.push(...statement.errors)
 
+    if (statement.properties.size > 0) {
+      errors.push(new CompileError('Cannot expose properties in the global scope', child.range))
+    }
+
     for (const emission of statement.emissions) {
       if (MixerFacet.is(emission.type)) {
         if (hasMixer) {
@@ -107,6 +111,12 @@ function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
   }
 
   return module
+}
+
+function putAll<K, V> (map: Map<K, V>, entries: Iterable<readonly [K, V]>): void {
+  for (const [key, value] of entries) {
+    map.set(key, value)
+  }
 }
 
 function checkType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?: SourceRange): readonly CompileError[] {
@@ -182,6 +192,7 @@ function checkImports (imports: readonly ast.Import[]): Checked<ReadonlyMap<stri
 interface CheckedStatement {
   readonly errors: readonly CompileError[]
   readonly emissions: readonly Emission[]
+  readonly properties: ReadonlyMap<string, FacetType>
 }
 
 interface Emission {
@@ -189,9 +200,10 @@ interface Emission {
   readonly range: SourceRange
 }
 
-function checkStatement (scope: MutableScope, statement: ast.Statement): CheckedStatement {
+function checkStatement (scope: MutableScope, statement: ast.Statement, existingProperties?: ReadonlyMap<string, FacetType>): CheckedStatement {
   const errors: CompileError[] = []
   const emissions: Emission[] = []
+  const properties = new Map<string, FacetType>()
 
   const values: Array<FacetType | undefined> = []
 
@@ -226,7 +238,18 @@ function checkStatement (scope: MutableScope, statement: ast.Statement): Checked
     }
   }
 
-  return { errors, emissions }
+  if (statement.expose) {
+    const propertyName = statement.name.name
+    const propertyValue = values.at(0)
+
+    if (existingProperties?.has(propertyName) === true) {
+      errors.push(new CompileError(`Duplicate property "${propertyName}"`, statement.name.range))
+    } else if (propertyValue != null) {
+      properties.set(propertyName, values.at(0) ?? StringFacet.type())
+    }
+  }
+
+  return { errors, emissions, properties }
 }
 
 function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
@@ -467,17 +490,24 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   }
 
   const instrumentScope = createLocalScope(scope)
+  const properties = new Map<string, FacetType>()
 
   for (const child of expression.children) {
-    const statement = checkStatement(instrumentScope, child)
+    const statement = checkStatement(instrumentScope, child, properties)
     errors.push(...statement.errors)
 
     for (const emission of statement.emissions) {
       errors.push(...checkType(VoiceFacet.type(), emission.type, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
-  return { errors, result: InstrumentFacet.type() }
+  const result = properties.size > 0
+    ? makeType(InstrumentFacet, RecordFacet.with(Object.fromEntries(properties)))
+    : InstrumentFacet.type()
+
+  return { errors, result }
 }
 
 function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
@@ -488,11 +518,12 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
     voiceScope.resolutions.set(voice.bindings.note.name, noteType)
   }
 
+  const properties = new Map<string, FacetType>()
   let hasEnvelope = false
   let hasOutput = false
 
   for (const child of voice.children) {
-    const statement = checkStatement(voiceScope, child)
+    const statement = checkStatement(voiceScope, child, properties)
     errors.push(...statement.errors)
 
     for (const emission of statement.emissions) {
@@ -514,6 +545,8 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
 
       errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected envelope or output`, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
   if (!hasEnvelope) {
@@ -524,7 +557,10 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
     errors.push(new CompileError('Voice is missing an output', voice.range))
   }
 
-  return { errors, result: VoiceFacet.type() }
+  // Properties cannot be used to extend the voice as the voice is generated at runtime.
+  const result = VoiceFacet.type()
+
+  return { errors, result }
 }
 
 function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
@@ -537,16 +573,24 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
 
   errors.push(...checkArgumentList(mixerScope, expression.properties, mixerSchema, expression.range, 'property'))
 
+  const properties = new Map<string, FacetType>()
+
   for (const child of expression.children) {
-    const statement = checkStatement(mixerScope, child)
+    const statement = checkStatement(mixerScope, child, properties)
     errors.push(...statement.errors)
 
     for (const emission of statement.emissions) {
       errors.push(...checkType(BusFacet.type(), emission.type, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
-  return { errors, result: MixerFacet.type() }
+  const result = properties.size > 0
+    ? makeType(MixerFacet, RecordFacet.with(Object.fromEntries(properties)))
+    : MixerFacet.type()
+
+  return { errors, result }
 }
 
 const busInputType = makeUnion(InstrumentFacet.type(), BusFacet.type())
@@ -557,23 +601,21 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
 
   errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
 
-  const properties = {
-    gain: ParameterFacet.with('db').type(),
-    pan: ParameterFacet.with(undefined).type()
-  }
-
-  const record: Record<string, FacetType> = Object.create(null)
-  Object.assign(record, properties)
+  const properties = new Map<string, FacetType>()
+  properties.set('gain', ParameterFacet.with('db').type())
+  properties.set('pan', ParameterFacet.with(undefined).type())
 
   for (const child of bus.children) {
     switch (child.type) {
       case 'Statement': {
-        const statement = checkStatement(busScope, child)
+        const statement = checkStatement(busScope, child, properties)
         errors.push(...statement.errors)
 
         for (const emission of statement.emissions) {
           errors.push(...checkType(busInputType, emission.type, emission.range))
         }
+
+        putAll(properties, statement.properties)
 
         break
       }
@@ -602,13 +644,13 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
           continue
         }
 
-        if (Object.hasOwn(record, child.name.name)) {
-          errors.push(new CompileError(`Duplicate effect name "${child.name.name}"`, child.name.range))
+        if (properties.has(child.name.name)) {
+          errors.push(new CompileError(`Duplicate property "${child.name.name}"`, child.name.range))
           continue
         }
 
         if (effectType != null) {
-          record[child.name.name] = effectType
+          properties.set(child.name.name, effectType)
         }
 
         break
@@ -619,18 +661,18 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
     }
   }
 
-  const type = makeType(BusFacet, RecordFacet.with(record))
+  const result = makeType(BusFacet, RecordFacet.with(Object.fromEntries(properties)))
 
   if (bus.name != null) {
     const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
     if (namespace.resolutions.has(bus.name.name)) {
       errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
     } else {
-      namespace.resolutions.set(bus.name.name, type)
+      namespace.resolutions.set(bus.name.name, result)
     }
   }
 
-  return { errors, result: type }
+  return { errors, result }
 }
 
 function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
@@ -643,16 +685,24 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
 
   errors.push(...checkArgumentList(trackScope, expression.properties, trackSchema, expression.range, 'property'))
 
+  const properties = new Map<string, FacetType>()
+
   for (const child of expression.children) {
-    const statement = checkStatement(trackScope, child)
+    const statement = checkStatement(trackScope, child, properties)
     errors.push(...statement.errors)
 
     for (const emission of statement.emissions) {
       errors.push(...checkType(PartFacet.type(), emission.type, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
-  return { errors, result: TrackFacet.type() }
+  const result = properties.size > 0
+    ? makeType(TrackFacet, RecordFacet.with(Object.fromEntries(properties)))
+    : TrackFacet.type()
+
+  return { errors, result }
 }
 
 const partEmissionType = makeUnion(RoutingFacet.type(), AutomationFacet.type())
@@ -663,16 +713,24 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
 
   errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
 
+  const properties = new Map<string, FacetType>()
+
   for (const child of part.children) {
-    const statement = checkStatement(partScope, child)
+    const statement = checkStatement(partScope, child, properties)
     errors.push(...statement.errors)
 
     for (const emission of statement.emissions) {
       errors.push(...checkType(partEmissionType, emission.type, emission.range))
     }
+
+    putAll(properties, statement.properties)
   }
 
-  return { errors, result: PartFacet.type() }
+  const result = properties.size > 0
+    ? makeType(PartFacet, RecordFacet.with(Object.fromEntries(properties)))
+    : PartFacet.type()
+
+  return { errors, result }
 }
 
 function checkRouting (scope: Scope, routing: ast.Routing): Checked<FacetType> {

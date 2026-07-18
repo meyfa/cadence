@@ -41,6 +41,7 @@ import { isSyntaxUnit, toNumberValue } from '../units.ts'
 import type { GenerateOptions } from './options.ts'
 import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
 import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { RecordBuilder } from './properties.ts'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -58,7 +59,9 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   let track: Track | undefined
 
   for (const child of program.children) {
-    for (const emission of processStatement(scope, child)) {
+    const { emissions } = processStatement(scope, child)
+
+    for (const emission of emissions) {
       if (MixerFacet.has(emission)) {
         assert(mixer == null)
         mixer = MixerFacet.get(emission)
@@ -132,7 +135,12 @@ function processImports (imports: readonly ast.Import[]): ReadonlyMap<string, Va
   return result
 }
 
-function processStatement (scope: MutableScope, statement: ast.Statement): readonly Value[] {
+interface Statement {
+  readonly emissions: readonly Value[]
+  readonly properties: ReadonlyMap<string, Value>
+}
+
+function processStatement (scope: MutableScope, statement: ast.Statement): Statement {
   const values = statement.values.map((value) => resolve(scope, value))
 
   if (statement.name != null) {
@@ -141,7 +149,12 @@ function processStatement (scope: MutableScope, statement: ast.Statement): reado
     scope.resolutions.set(statement.name.name, values[0])
   }
 
-  return statement.emit ? values : []
+  const emissions = statement.emit ? values : []
+  const properties = statement.expose
+    ? new Map([[statement.name.name, nonNull(values.at(0))]])
+    : new Map<string, Value>()
+
+  return { emissions, properties }
 }
 
 /**
@@ -157,7 +170,7 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
       return toNumberValue(scope.top.options, undefined, expression.value)
 
     case 'String':
-      return generateString(scope, expression.parts)
+      return generateString(scope, expression)
 
     case 'Pattern':
       return generatePattern(scope, expression)
@@ -207,8 +220,8 @@ function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
   return nonNull(resolveInScope(scope, identifier.name))
 }
 
-function generateString (scope: Scope, parts: ReadonlyArray<string | ast.Expression>): Value {
-  const resolvedParts = parts.map((part) => {
+function generateString (scope: Scope, expression: ast.String): Value {
+  const resolvedParts = expression.parts.map((part) => {
     if (typeof part === 'string') {
       return part
     }
@@ -277,9 +290,9 @@ function generateStep (scope: Scope, expression: ast.Step): Step {
   return { value, length, gate, velocity }
 }
 
-function generateCurve (scope: Scope, curve: ast.Curve): Value {
-  const segments = curve.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
-  const otherChildren = curve.children.filter((c) => c.type !== 'CurveSegment')
+function generateCurve (scope: Scope, expression: ast.Curve): Value {
+  const segments = expression.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
+  const otherChildren = expression.children.filter((c) => c.type !== 'CurveSegment')
   assert(segments.length > 0)
   assert(otherChildren.length === 0)
 
@@ -316,34 +329,39 @@ function generateCurve (scope: Scope, curve: ast.Curve): Value {
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
+  const recordBuilder = new RecordBuilder()
   const voices: Voice[] = []
 
   for (const child of expression.children) {
-    for (const emission of processStatement(instrumentScope, child)) {
+    const { emissions, properties } = processStatement(instrumentScope, child)
+    for (const emission of emissions) {
       voices.push(VoiceFacet.get(emission))
     }
+    recordBuilder.putAll(properties)
   }
 
   const gainParameter = scope.top.allocateParameter('db', 0 as Numeric<'db'>)
   const instrument = scope.top.allocateInstrument({ gain: gainParameter, voices })
 
-  return InstrumentFacet.type().of(instrument)
+  return !recordBuilder.empty
+    ? makeType(InstrumentFacet, recordBuilder.facet).of(instrument, recordBuilder.record)
+    : InstrumentFacet.type().of(instrument)
 }
 
-function generateVoice (scope: Scope, voice: ast.Voice): Value {
+function generateVoice (scope: Scope, expression: ast.Voice): Value {
   const frozenScope: Scope = cloneScope(scope)
 
   const invoke: Voice['invoke'] = (note, tempo) => {
     const instanceScope = createLocalScope(frozenScope)
 
-    if (voice.bindings.note != null) {
+    if (expression.bindings.note != null) {
       const noteBinding = createNoteBinding(note)
 
-      assert(!instanceScope.resolutions.has(voice.bindings.note.name))
-      instanceScope.resolutions.set(voice.bindings.note.name, noteBinding)
+      assert(!instanceScope.resolutions.has(expression.bindings.note.name))
+      instanceScope.resolutions.set(expression.bindings.note.name, noteBinding)
     }
 
-    return createVoiceInstance(voice, instanceScope, tempo)
+    return createVoiceInstance(expression, instanceScope, tempo)
   }
 
   return VoiceFacet.type().of({ invoke })
@@ -374,7 +392,9 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
   let outputValue: Source | undefined
 
   for (const child of voice.children) {
-    for (const emission of processStatement(scope, child)) {
+    const { emissions } = processStatement(scope, child)
+
+    for (const emission of emissions) {
       if (CurveFacet.with('db').has(emission)) {
         assert(envelopeValue == null)
         envelopeValue = CurveFacet.with('db').get(emission)
@@ -405,14 +425,17 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
   }
 }
 
-function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
+function generateMixer (scope: Scope, expression: ast.Mixer): Value {
   const mixerScope = createLocalScope(scope)
 
+  const recordBuilder = new RecordBuilder()
   const buses: Bus[] = []
   const routings: MixerRouting[] = []
 
-  for (const child of mixer.children) {
-    for (const emission of processStatement(mixerScope, child)) {
+  for (const child of expression.children) {
+    const { emissions, properties } = processStatement(mixerScope, child)
+
+    for (const emission of emissions) {
       const bus = BusFacet.get(emission)
       buses.push(bus)
 
@@ -423,9 +446,15 @@ function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
         destination
       })))
     }
+
+    recordBuilder.putAll(properties)
   }
 
-  return MixerFacet.type().of({ buses, routings })
+  const mixer = { buses, routings }
+
+  return !recordBuilder.empty
+    ? makeType(MixerFacet, recordBuilder.facet).of(mixer, recordBuilder.record)
+    : MixerFacet.type().of(mixer)
 }
 
 function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRouting[] {
@@ -462,22 +491,33 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
   return routings
 }
 
-function generateBus (scope: Scope, bus: ast.Bus): Value {
+function generateBus (scope: Scope, expression: ast.Bus): Value {
   const busScope = createLocalScope(scope)
 
-  const name = bus.name?.name
-  const properties = resolveArgumentList(scope, bus.properties, busSchema)
+  const name = expression.name?.name
 
-  const valueRecord: Record<string, Value> = Object.create(null)
-  const typeRecord: Record<string, FacetType> = Object.create(null)
-
+  const recordBuilder = new RecordBuilder()
   const sources: MixerSource[] = []
   const effects: Effect[] = []
 
-  for (const child of bus.children) {
+  const properties = resolveArgumentList(scope, expression.properties, busSchema)
+
+  // These must always be allocated even if not explicitly set,
+  // as they could still be automated.
+  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
+  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
+
+  const gain = scope.top.allocateParameter('db', gainData)
+  const pan = scope.top.allocateParameter(undefined, panData)
+  recordBuilder.put('gain', Parameters.of(gain))
+  recordBuilder.put('pan', Parameters.of(pan))
+
+  for (const child of expression.children) {
     switch (child.type) {
       case 'Statement': {
-        for (const emission of processStatement(busScope, child)) {
+        const { emissions, properties } = processStatement(busScope, child)
+
+        for (const emission of emissions) {
           if (InstrumentFacet.has(emission)) {
             sources.push({ type: 'instrument', id: InstrumentFacet.get(emission).id })
           } else if (BusFacet.has(emission)) {
@@ -487,6 +527,8 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
           }
         }
 
+        recordBuilder.putAll(properties)
+
         break
       }
 
@@ -494,10 +536,8 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
         const effectValue = resolve(busScope, child.expression)
         effects.push(EffectFacet.get(effectValue))
 
-        const effectName = child.name?.name
-        if (effectName != null) {
-          valueRecord[effectName] = effectValue
-          typeRecord[effectName] = effectValue.type
+        if (child.name?.name != null) {
+          recordBuilder.put(child.name.name, effectValue)
         }
 
         break
@@ -508,21 +548,8 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
     }
   }
 
-  // These must always be allocated even if not explicitly set,
-  // as they could still be automated.
-  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
-  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
-
-  const gain = scope.top.allocateParameter('db', gainData)
-  valueRecord.gain = Parameters.of(gain)
-  typeRecord.gain = valueRecord.gain.type
-
-  const pan = scope.top.allocateParameter(undefined, panData)
-  valueRecord.pan = Parameters.of(pan)
-  typeRecord.pan = valueRecord.pan.type
-
-  const data = scope.top.allocateBus({ name, sources, gain, pan, effects })
-  const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
+  const bus = scope.top.allocateBus({ name, sources, gain, pan, effects })
+  const value = makeType(BusFacet, recordBuilder.facet).of(bus, recordBuilder.record)
 
   if (name != null) {
     const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
@@ -533,22 +560,26 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
   return value
 }
 
-function generateTrack (scope: Scope, track: ast.Track): Value {
+function generateTrack (scope: Scope, expression: ast.Track): Value {
   const { options } = scope.top
 
-  const properties = resolveArgumentList(scope, track.properties, trackSchema)
+  const trackScope = createLocalScope(scope)
+
+  const recordBuilder = new RecordBuilder()
+  const parts: Part[] = []
+
+  const properties = resolveArgumentList(scope, expression.properties, trackSchema)
 
   const tempo = properties.tempo != null
     ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum).value
     : options.tempo.default
 
-  const trackScope = createLocalScope(scope)
-  const parts: Part[] = []
-
   let currentTime = 0 as Numeric<'beats'>
 
-  for (const child of track.children) {
-    for (const emission of processStatement(trackScope, child)) {
+  for (const child of expression.children) {
+    const { emissions, properties } = processStatement(trackScope, child)
+
+    for (const emission of emissions) {
       const part = PartFacet.get(emission)
       parts.push(part)
 
@@ -564,23 +595,33 @@ function generateTrack (scope: Scope, track: ast.Track): Value {
 
       currentTime = currentTime + part.length as Numeric<'beats'>
     }
+
+    recordBuilder.putAll(properties)
   }
 
-  return TrackFacet.type().of({ tempo, parts })
+  const track = { tempo, parts }
+
+  return !recordBuilder.empty
+    ? makeType(TrackFacet, recordBuilder.facet).of(track, recordBuilder.record)
+    : TrackFacet.type().of(track)
 }
 
-function generatePart (scope: Scope, part: ast.Part): Value {
+function generatePart (scope: Scope, expression: ast.Part): Value {
   const partScope = createLocalScope(scope)
 
-  const name = part.name?.name
-  const properties = resolveArgumentList(scope, part.properties, partSchema)
-  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
+  const name = expression.name?.name
 
+  const recordBuilder = new RecordBuilder()
   const routings: InstrumentRouting[] = []
   const automations: Automation[] = []
 
-  for (const child of part.children) {
-    for (const emission of processStatement(partScope, child)) {
+  const properties = resolveArgumentList(scope, expression.properties, partSchema)
+  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
+
+  for (const child of expression.children) {
+    const { emissions, properties } = processStatement(partScope, child)
+
+    for (const emission of emissions) {
       if (RoutingFacet.has(emission)) {
         routings.push(RoutingFacet.get(emission))
       } else if (AutomationFacet.has(emission)) {
@@ -589,14 +630,20 @@ function generatePart (scope: Scope, part: ast.Part): Value {
         fail()
       }
     }
+
+    recordBuilder.putAll(properties)
   }
 
-  return PartFacet.type().of({ name, length: length.value, routings, automations })
+  const part = { name, length: length.value, routings, automations }
+
+  return !recordBuilder.empty
+    ? makeType(PartFacet, recordBuilder.facet).of(part, recordBuilder.record)
+    : PartFacet.type().of(part)
 }
 
-function generateRouting (scope: Scope, routing: ast.Routing): Value {
-  const destination = InstrumentFacet.get(resolve(scope, routing.destination))
-  const source = PatternFacet.get(resolve(scope, routing.source))
+function generateRouting (scope: Scope, expression: ast.Routing): Value {
+  const destination = InstrumentFacet.get(resolve(scope, expression.destination))
+  const source = PatternFacet.get(resolve(scope, expression.source))
 
   return RoutingFacet.type().of({
     destination: { type: 'instrument', id: destination.id },
@@ -604,9 +651,9 @@ function generateRouting (scope: Scope, routing: ast.Routing): Value {
   })
 }
 
-function generateAutomation (scope: Scope, statement: ast.Automation): Value {
-  const target = ParameterFacet.get(resolve(scope, statement.target))
-  const curve = CurveFacet.get(resolve(scope, statement.curve))
+function generateAutomation (scope: Scope, expression: ast.Automation): Value {
+  const target = ParameterFacet.get(resolve(scope, expression.target))
+  const curve = CurveFacet.get(resolve(scope, expression.curve))
 
   return AutomationFacet.type().of({ parameterId: target.id, curve })
 }

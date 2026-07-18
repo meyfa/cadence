@@ -79,6 +79,11 @@ export interface Binding {
    * The scope declared by this binding, if applicable (e.g. for bus bindings).
    */
   readonly declaredScopeId?: string
+
+  /**
+   * For regular bindings, whether this is an exposed property.
+   */
+  readonly isExposed?: boolean
 }
 
 export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus' | 'effect'

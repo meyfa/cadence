@@ -29,6 +29,7 @@
   "/"
 
   "&"
+  "@"
 
   @precedence { Comment, "/" }
 }
@@ -170,6 +171,7 @@ Import {
 }
 
 Assignment {
+  "@"?
   VariableDefinition
   "="
   expression
