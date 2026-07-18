@@ -417,31 +417,16 @@ function generateMixer (scope: Scope, mixer: ast.Mixer): Value {
   const routings: MixerRouting[] = []
 
   for (const child of mixer.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(mixerScope, child)
-        break
+    for (const emission of processStatement(mixerScope, child)) {
+      const bus = BusFacet.get(emission)
+      buses.push(bus)
 
-      case 'Bus': {
-        const busValue = resolve(mixerScope, child)
-        const bus = BusFacet.get(busValue)
-        buses.push(bus)
-
-        assert(!mixerScope.resolutions.has(child.name.name))
-        mixerScope.resolutions.set(child.name.name, busValue)
-
-        const destination = { type: 'bus', id: bus.id } as const
-        routings.push(...bus.sources.map((source) => ({
-          implicit: false,
-          source,
-          destination
-        })))
-
-        break
-      }
-
-      default:
-        assertNever(child)
+      const destination = { type: 'bus', id: bus.id } as const
+      routings.push(...bus.sources.map((source) => ({
+        implicit: false,
+        source,
+        destination
+      })))
     }
   }
 
@@ -485,9 +470,7 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
 function generateBus (scope: Scope, bus: ast.Bus): Value {
   const busScope = createLocalScope(scope)
 
-  const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-
-  const name = bus.name.name
+  const name = bus.name?.name
   const properties = resolveArgumentList(scope, bus.properties, busSchema)
 
   const valueRecord: Record<string, Value> = Object.create(null)
@@ -546,8 +529,11 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
   const data = scope.top.allocateBus({ name, sources, gain, pan, effects })
   const value = makeType(BusFacet, RecordFacet.with(typeRecord)).of(data, valueRecord)
 
-  assert(!namespace.resolutions.has(name))
-  namespace.resolutions.set(name, value)
+  if (name != null) {
+    const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
+    assert(!namespace.resolutions.has(name))
+    namespace.resolutions.set(name, value)
+  }
 
   return value
 }
@@ -567,36 +553,21 @@ function generateTrack (scope: Scope, track: ast.Track): Value {
   let currentTime = 0 as Numeric<'beats'>
 
   for (const child of track.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(trackScope, child)
-        break
+    for (const emission of processStatement(trackScope, child)) {
+      const part = PartFacet.get(emission)
+      parts.push(part)
 
-      case 'Part': {
-        const part = PartFacet.get(resolve(trackScope, child))
-        parts.push(part)
-
-        if (part.name != null) {
-          assert(!trackScope.resolutions.has(part.name))
-          trackScope.resolutions.set(part.name, PartFacet.type().of(part))
-        }
-
-        const automationRenderOptions: RenderCurveOptions = {
-          offset: beatsToSeconds(currentTime, tempo),
-          limit: beatsToSeconds(part.length, tempo),
-          tempo
-        }
-
-        for (const automation of part.automations) {
-          applyAutomation(scope.top, automation, automationRenderOptions)
-        }
-
-        currentTime = currentTime + part.length as Numeric<'beats'>
-        break
+      const automationRenderOptions: RenderCurveOptions = {
+        offset: beatsToSeconds(currentTime, tempo),
+        limit: beatsToSeconds(part.length, tempo),
+        tempo
       }
 
-      default:
-        assertNever(child)
+      for (const automation of part.automations) {
+        applyAutomation(scope.top, automation, automationRenderOptions)
+      }
+
+      currentTime = currentTime + part.length as Numeric<'beats'>
     }
   }
 

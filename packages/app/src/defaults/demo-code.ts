@@ -33,18 +33,18 @@ clap_pattern = [x:8]
   // Mixer buses are used to modify groups of instruments.
   // Buses can receive signals from instruments, but also other buses.
 
-  bus drums (gain: -1.5.db) {
+  & bus drums (gain: -1.5.db) {
     & kick, snare, hat, tom
   }
 
-  bus synths (gain: -10.db) {
+  & bus synths (gain: -10.db) {
     & synth
   }
 
   // A bus can have zero or more effects, which are applied in order.
   // input -> effects... -> pan -> gain -> output
 
-  bus clap_delay (gain: 3.db, pan: -0.25) {
+  & bus clap_delay (gain: 3.db, pan: -0.25) {
     & clap
 
     effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
@@ -56,7 +56,7 @@ clap_pattern = [x:8]
   // Parts play in sequence. Patterns will trigger notes for their
   // defined length or the length of the part, whichever is shorter.
 
-  part intro (4.bars) {
+  & part intro (4.bars) {
     kick  << kick_pattern
     snare << snare_pattern
     synth << arp_intro
@@ -64,7 +64,7 @@ clap_pattern = [x:8]
     automate synth.gain as ~[hold(-60.db):2.bars lin(0.db):2.bars]
   }
 
-  part main (8.bars) {
+  & part main (8.bars) {
     kick  << kick_pattern
     snare << snare_pattern
     hat   << ([--x-] / 4).loop()
@@ -73,7 +73,7 @@ clap_pattern = [x:8]
     clap  << clap_pattern.loop()
   }
 
-  part outro (4.bars) {
+  & part outro (4.bars) {
     snare << snare_pattern
     tom   << ([---- -x-- ---- ---x] / 4).loop()
     synth << arp_main.loop()

@@ -46,7 +46,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'kick = sample("/samples/kick.wav")',
       '& track (120.bpm) {',
-      '  part intro (4.bars) {',
+      '  & part intro (4.bars) {',
       '    kick << [x---]',
       '  }',
       '}',
@@ -72,15 +72,45 @@ describe('model/analysis/references.ts', () => {
     assert.ok(references.includes(identifier))
   })
 
+  it('resolves bus inputs to variable definitions', () => {
+    const source = [
+      '& mixer {',
+      '  & my_bus = bus my_bus {}',
+      '  & bus {',
+      '    & my_bus',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    const position = source.lastIndexOf('my_bus')
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'my_bus')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('my_bus ='), 'my_bus'.length))
+
+    const references = model.bindingReferences.get(binding.id)
+    assert.ok(references != null)
+    assert.ok(references.includes(identifier))
+  })
+
   it('resolves explicit bus namespace access to the bus binding', () => {
     const source = [
       '& track (120.bpm) {',
-      '  part foo (4.bars) {',
+      '  & part foo (4.bars) {',
       '    automate bus.foo.gain as ~[hold(0.db)]',
       '  }',
       '}',
       '& mixer {',
-      '  bus foo {}',
+      '  & bus foo {}',
       '}',
       ''
     ].join('\n')
@@ -163,10 +193,12 @@ describe('model/analysis/references.ts', () => {
   it('does not resolve member access', () => {
     const source = [
       'use "effects" as fx',
+      '',
       'gain = 0.db',
       'synth = sample("...", gain: gain)',
+      '',
       '& track (120.bpm) {',
-      '  part intro (4.bars) {',
+      '  & part intro (4.bars) {',
       '    automate synth.gain as ~[hold(0.db)]',
       '  }',
       '}',
@@ -186,12 +218,13 @@ describe('model/analysis/references.ts', () => {
   it('does not resolve member access of an explicit bus access', () => {
     const source = [
       '& track (120.bpm) {',
-      '  part main (4.bars) {',
+      '  & part main (4.bars) {',
       '    automate bus.foo.gain as ~[hold(0.db)]',
       '  }',
       '}',
+      '',
       '& mixer {',
-      '  bus foo {}',
+      '  & bus foo {}',
       '}',
       ''
     ].join('\n')
@@ -209,13 +242,15 @@ describe('model/analysis/references.ts', () => {
   it('resolves named effect access of an explicit bus access', () => {
     const source = [
       'use "effects" as fx',
+      '',
       '& track (120.bpm) {',
-      '  part main (4.bars) {',
+      '  & part main (4.bars) {',
       '    automate bus.main.lp.frequency as ~[hold(1000.hz)]',
       '  }',
       '}',
+      '',
       '& mixer {',
-      '  bus main {',
+      '  & bus main {',
       '    effect lp = fx.lowpass(1000.hz)',
       '  }',
       '}',
@@ -268,7 +303,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
-      '  bus main {',
+      '  & bus main {',
       '    effect lowpass(1000.hz)',
       '  }',
       '}',
@@ -294,7 +329,7 @@ describe('model/analysis/references.ts', () => {
       'use "effects" as *',
       'gain = -3.db',
       '& mixer {',
-      '  bus main (gain) {}',
+      '  & bus main (gain) {}',
       '}',
       ''
     ].join('\n')

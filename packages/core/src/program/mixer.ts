@@ -12,7 +12,7 @@ export type BusId = Brand<number, 'core.BusId'>
 
 export interface Bus {
   readonly id: BusId
-  readonly name: string
+  readonly name?: string
   readonly sources: readonly MixerSource[]
   readonly pan: Parameter<undefined>
   readonly gain: Parameter<'db'>

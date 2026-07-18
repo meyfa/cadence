@@ -135,12 +135,12 @@ interface UnnamedStatement extends ASTNode {
 export interface Mixer extends ASTNode {
   readonly type: 'Mixer'
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Assignment | Bus>
+  readonly children: readonly Statement[]
 }
 
 export interface Bus extends ASTNode {
   readonly type: 'Bus'
-  readonly name: Identifier
+  readonly name?: Identifier
   readonly properties: ArgumentList
   readonly children: ReadonlyArray<Statement | EffectStatement>
 }
@@ -154,7 +154,7 @@ export interface EffectStatement extends ASTNode {
 export interface Track extends ASTNode {
   readonly type: 'Track'
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Assignment | Part>
+  readonly children: readonly Statement[]
 }
 
 export interface Part extends ASTNode {

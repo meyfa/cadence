@@ -12,7 +12,7 @@ describe('highlight-occurrences/operation.ts', () => {
       'foo = sample("/samples/foo.wav")',
       'bar = foo',
       '& track (120.bpm) {',
-      '  part intro (4.bars) {',
+      '  & part intro (4.bars) {',
       '    foo << [x---]',
       '  }',
       '}',
@@ -52,12 +52,12 @@ describe('highlight-occurrences/operation.ts', () => {
   it('normalizes explicit bus namespace references to the bus member range', () => {
     const source = [
       '& track (120.bpm) {',
-      '  part foo {',
+      '  & part foo {',
       '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
       '& mixer {',
-      '  bus foo {}',
+      '  & bus foo {}',
       '}',
       ''
     ].join('\n')
@@ -92,7 +92,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'synth = sample("...")',
       '& track (120.bpm) {',
-      '  part intro (4.bars) {',
+      '  & part intro (4.bars) {',
       '    automate synth.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',

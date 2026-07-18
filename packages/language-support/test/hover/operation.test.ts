@@ -11,7 +11,7 @@ describe('hover/operation.ts', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
-      '  bus drum_bus {',
+      '  & bus drum_bus {',
       '    effect gain(-6.db)',
       '  }',
       '}',
@@ -35,7 +35,7 @@ describe('hover/operation.ts', () => {
     const source = [
       'use "effects" as fx',
       '& mixer {',
-      '  bus drum_bus {',
+      '  & bus drum_bus {',
       '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
       '  }',
       '}',
@@ -58,7 +58,7 @@ describe('hover/operation.ts', () => {
     const source = [
       'use "effects" as fx',
       '& mixer {',
-      '  bus drum_bus {',
+      '  & bus drum_bus {',
       '    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
       '    effect fx.reverb(mix: 0.3, decay: 1.s)',
       '  }',
@@ -94,7 +94,7 @@ describe('hover/operation.ts', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
-      '  bus drum_bus {',
+      '  & bus drum_bus {',
       '    effect delay(gain: 0.5)',
       '  }',
       '}',
@@ -156,7 +156,7 @@ describe('hover/operation.ts', () => {
       'use "effects" as fx',
       'delay = 1',
       '& mixer {',
-      '  bus main {',
+      '  & bus main {',
       '    effect fx.reverb(delay)',
       '  }',
       '}',
