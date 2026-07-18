@@ -68,44 +68,27 @@ export function check (program: ast.Program): CheckResult {
   let hasMixer = false
 
   for (const child of program.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(scope, child))
-        break
+    const statement = checkStatement(scope, child)
+    errors.push(...statement.errors)
 
-      case 'Emission': {
-        for (const value of child.values) {
-          const valueCheck = checkExpression(scope, value)
-          errors.push(...valueCheck.errors)
-
-          if (valueCheck.result == null) {
-            continue
-          }
-
-          if (MixerFacet.is(valueCheck.result)) {
-            if (hasMixer) {
-              errors.push(new CompileError('Multiple mixers', value.range))
-            }
-            hasMixer = true
-            continue
-          }
-
-          if (TrackFacet.is(valueCheck.result)) {
-            if (hasTrack) {
-              errors.push(new CompileError('Multiple tracks', value.range))
-            }
-            hasTrack = true
-            continue
-          }
-
-          errors.push(new CompileError(`Unexpected type ${valueCheck.result.format()}, expected track or mixer`, value.range))
+    for (const emission of statement.emissions) {
+      if (MixerFacet.is(emission.type)) {
+        if (hasMixer) {
+          errors.push(new CompileError('Multiple mixers', emission.range))
         }
-
-        break
+        hasMixer = true
+        continue
       }
 
-      default:
-        assertNever(child)
+      if (TrackFacet.is(emission.type)) {
+        if (hasTrack) {
+          errors.push(new CompileError('Multiple tracks', emission.range))
+        }
+        hasTrack = true
+        continue
+      }
+
+      errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected track or mixer`, emission.range))
     }
   }
 
@@ -194,6 +177,56 @@ function checkImports (imports: readonly ast.Import[]): Checked<ReadonlyMap<stri
   }
 
   return { errors, result }
+}
+
+interface CheckedStatement {
+  readonly errors: readonly CompileError[]
+  readonly emissions: readonly Emission[]
+}
+
+interface Emission {
+  readonly type: FacetType
+  readonly range: SourceRange
+}
+
+function checkStatement (scope: MutableScope, statement: ast.Statement): CheckedStatement {
+  const errors: CompileError[] = []
+  const emissions: Emission[] = []
+
+  const values: Array<FacetType | undefined> = []
+
+  for (const value of statement.values) {
+    const valueCheck = checkExpression(scope, value)
+    errors.push(...valueCheck.errors)
+    values.push(valueCheck.result)
+  }
+
+  if (statement.emit) {
+    for (let i = 0; i < values.length; ++i) {
+      const { range } = statement.values[i]
+
+      const type = values[i]
+      if (type == null) {
+        continue
+      }
+
+      emissions.push({ type, range })
+    }
+  }
+
+  if (statement.name != null) {
+    const duplicate = scope.resolutions.has(statement.name.name)
+    if (duplicate) {
+      errors.push(new CompileError(`Identifier "${statement.name.name}" is already defined`, statement.name.range))
+    }
+
+    const type = values.at(0)
+    if (type != null && !duplicate) {
+      scope.resolutions.set(statement.name.name, type)
+    }
+  }
+
+  return { errors, emissions }
 }
 
 function checkAssignment (scope: MutableScope, assignment: ast.Assignment): readonly CompileError[] {
@@ -454,26 +487,11 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   const instrumentScope = createLocalScope(scope)
 
   for (const child of expression.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(instrumentScope, child))
-        break
+    const statement = checkStatement(instrumentScope, child)
+    errors.push(...statement.errors)
 
-      case 'Emission': {
-        for (const value of child.values) {
-          const valueCheck = checkExpression(instrumentScope, value)
-          errors.push(...valueCheck.errors)
-
-          if (valueCheck.result != null) {
-            errors.push(...checkType(VoiceFacet.type(), valueCheck.result, value.range))
-          }
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of statement.emissions) {
+      errors.push(...checkType(VoiceFacet.type(), emission.type, emission.range))
     }
   }
 
@@ -492,41 +510,27 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
   let hasOutput = false
 
   for (const child of voice.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(voiceScope, child))
-        break
+    const statement = checkStatement(voiceScope, child)
+    errors.push(...statement.errors)
 
-      case 'Emission': {
-        for (const value of child.values) {
-          const valueCheck = checkExpression(voiceScope, value)
-          errors.push(...valueCheck.errors)
-
-          if (valueCheck.result == null) {
-            continue
-          }
-
-          // value can be either curve (envelope) or source (output)
-          if (CurveFacet.with('db').is(valueCheck.result)) {
-            if (hasEnvelope) {
-              errors.push(new CompileError('Multiple envelopes in a voice', value.range))
-            }
-            hasEnvelope = true
-          } else if (SourceFacet.is(valueCheck.result)) {
-            if (hasOutput) {
-              errors.push(new CompileError('Multiple outputs in a voice', value.range))
-            }
-            hasOutput = true
-          } else {
-            errors.push(new CompileError(`Invalid emission type ${valueCheck.result.format()}`, value.range))
-          }
+    for (const emission of statement.emissions) {
+      if (CurveFacet.with('db').is(emission.type)) {
+        if (hasEnvelope) {
+          errors.push(new CompileError('Multiple envelopes in a voice', emission.range))
         }
-
-        break
+        hasEnvelope = true
+        continue
       }
 
-      default:
-        assertNever(child)
+      if (SourceFacet.is(emission.type)) {
+        if (hasOutput) {
+          errors.push(new CompileError('Multiple outputs in a voice', emission.range))
+        }
+        hasOutput = true
+        continue
+      }
+
+      errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected envelope or output`, emission.range))
     }
   }
 
@@ -600,19 +604,13 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
 
   for (const child of bus.children) {
     switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(busScope, child))
-        break
+      case 'Statement': {
+        const statement = checkStatement(busScope, child)
+        errors.push(...statement.errors)
 
-      case 'Emission': {
-        for (const value of child.values) {
-          const valueCheck = checkExpression(busScope, value)
-          errors.push(...valueCheck.errors)
-
-          if (valueCheck.result != null) {
-            const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
-            errors.push(...checkType(options, valueCheck.result, value.range))
-          }
+        for (const emission of statement.emissions) {
+          const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
+          errors.push(...checkType(options, emission.type, emission.range))
         }
 
         break

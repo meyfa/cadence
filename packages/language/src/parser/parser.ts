@@ -509,7 +509,20 @@ const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
   }
 )
 
-const emission_: p.Parser<Token, unknown, ast.Emission> = p.abc(
+const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
+  identifier_,
+  literal('='),
+  expression_,
+  (key, _eq, value) => {
+    return ast.make('Statement', combineSourceRanges(key, value), {
+      emit: false,
+      name: key,
+      values: [value]
+    })
+  }
+)
+
+const plainEmission_: p.Parser<Token, unknown, ast.Statement> = p.abc(
   literal('&'),
   expression_,
   p.many(
@@ -518,12 +531,37 @@ const emission_: p.Parser<Token, unknown, ast.Emission> = p.abc(
       expression_
     )
   ),
-  (_amp, firstValue, restValues) => {
-    const values = [firstValue, ...restValues.map(([, value]) => value)]
-    const lastValue = values.at(-1) ?? firstValue
+  (_amp, firstValue, rest) => {
+    const restValues = rest.map(([, value]) => value)
+    const lastValue = restValues.at(-1) ?? firstValue
 
-    return ast.make('Emission', combineSourceRanges(_amp, lastValue), { values })
+    return ast.make('Statement', combineSourceRanges(_amp, lastValue), {
+      emit: true,
+      values: [firstValue, ...restValues]
+    })
   }
+)
+
+const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
+  literal('&'),
+  combine3(
+    identifier_,
+    literal('='),
+    expression_
+  ),
+  (_amp, [key, _eq, value]) => {
+    return ast.make('Statement', combineSourceRanges(_amp, value), {
+      emit: true,
+      name: key,
+      values: [value]
+    })
+  }
+)
+
+const statement_ = p.choice<Token, unknown, ast.Statement>(
+  plainAssignment_,
+  emissionAssignment_,
+  plainEmission_
 )
 
 const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
@@ -646,10 +684,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   combine3(
     expectLiteral('{'),
     p.many(
-      p.eitherOr(
-        assignment_,
-        p.eitherOr(emission_, effectStatement_)
-      )
+      p.eitherOr(statement_, effectStatement_)
     ),
     expectLiteral('}')
   ),
@@ -696,9 +731,7 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   p.option(identifier_, undefined),
   combine3(
     literal('{'),
-    p.many(
-      p.eitherOr(assignment_, emission_)
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   (_voice, note, [_lp, children, _rp]) => {
@@ -715,9 +748,7 @@ const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
   keyword('instrument'),
   combine3(
     expectLiteral('{'),
-    p.many(
-      p.eitherOr(assignment_, emission_)
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   (_instrument, [_lp, children, _rp]) => {
@@ -731,7 +762,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
   p.many(import_),
   p.many(
     p.eitherOr(
-      p.eitherOr(assignment_, emission_),
+      statement_,
       p.map(p.any, (token) => {
         const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
         throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))

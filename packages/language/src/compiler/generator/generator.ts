@@ -58,31 +58,16 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   let track: Track | undefined
 
   for (const child of program.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(scope, child)
-        break
-
-      case 'Emission': {
-        for (const value of child.values) {
-          const emittedValue = resolve(scope, value)
-
-          if (MixerFacet.has(emittedValue)) {
-            assert(mixer == null)
-            mixer = MixerFacet.get(emittedValue)
-          } else if (TrackFacet.has(emittedValue)) {
-            assert(track == null)
-            track = TrackFacet.get(emittedValue)
-          } else {
-            fail()
-          }
-        }
-
-        break
+    for (const emission of processStatement(scope, child)) {
+      if (MixerFacet.has(emission)) {
+        assert(mixer == null)
+        mixer = MixerFacet.get(emission)
+      } else if (TrackFacet.has(emission)) {
+        assert(track == null)
+        track = TrackFacet.get(emission)
+      } else {
+        fail()
       }
-
-      default:
-        assertNever(child)
     }
   }
 
@@ -145,6 +130,18 @@ function processImports (imports: readonly ast.Import[]): ReadonlyMap<string, Va
   }
 
   return result
+}
+
+function processStatement (scope: MutableScope, statement: ast.Statement): readonly Value[] {
+  const values = statement.values.map((value) => resolve(scope, value))
+
+  if (statement.name != null) {
+    assert(values.length === 1)
+    assert(!scope.resolutions.has(statement.name.name))
+    scope.resolutions.set(statement.name.name, values[0])
+  }
+
+  return statement.emit ? values : []
 }
 
 function processAssignment (scope: MutableScope, assignment: ast.Assignment): void {
@@ -327,21 +324,8 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const voices: Voice[] = []
 
   for (const child of expression.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(instrumentScope, child)
-        break
-
-      case 'Emission': {
-        for (const value of child.values) {
-          const emittedValue = resolve(instrumentScope, value)
-          voices.push(VoiceFacet.get(emittedValue))
-        }
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of processStatement(instrumentScope, child)) {
+      voices.push(VoiceFacet.get(emission))
     }
   }
 
@@ -395,31 +379,16 @@ function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Nume
   let outputValue: Source | undefined
 
   for (const child of voice.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(scope, child)
-        break
-
-      case 'Emission': {
-        for (const value of child.values) {
-          const emittedValue = resolve(scope, value)
-
-          if (CurveFacet.with('db').has(emittedValue)) {
-            assert(envelopeValue == null)
-            envelopeValue = CurveFacet.with('db').get(emittedValue)
-          } else if (SourceFacet.has(emittedValue)) {
-            assert(outputValue == null)
-            outputValue = SourceFacet.get(emittedValue)
-          } else {
-            fail()
-          }
-        }
-
-        break
+    for (const emission of processStatement(scope, child)) {
+      if (CurveFacet.with('db').has(emission)) {
+        assert(envelopeValue == null)
+        envelopeValue = CurveFacet.with('db').get(emission)
+      } else if (SourceFacet.has(emission)) {
+        assert(outputValue == null)
+        outputValue = SourceFacet.get(emission)
+      } else {
+        fail()
       }
-
-      default:
-        assertNever(child)
     }
   }
 
@@ -529,18 +498,12 @@ function generateBus (scope: Scope, bus: ast.Bus): Value {
 
   for (const child of bus.children) {
     switch (child.type) {
-      case 'Assignment':
-        processAssignment(busScope, child)
-        break
-
-      case 'Emission': {
-        for (const value of child.values) {
-          const emittedValue = resolve(busScope, value)
-
-          if (InstrumentFacet.has(emittedValue)) {
-            sources.push({ type: 'instrument', id: InstrumentFacet.get(emittedValue).id })
-          } else if (BusFacet.has(emittedValue)) {
-            sources.push({ type: 'bus', id: BusFacet.get(emittedValue).id })
+      case 'Statement': {
+        for (const emission of processStatement(busScope, child)) {
+          if (InstrumentFacet.has(emission)) {
+            sources.push({ type: 'instrument', id: InstrumentFacet.get(emission).id })
+          } else if (BusFacet.has(emission)) {
+            sources.push({ type: 'bus', id: BusFacet.get(emission).id })
           } else {
             fail()
           }
