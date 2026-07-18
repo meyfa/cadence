@@ -60,7 +60,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.imports), [
       {
-        type: 'UseStatement',
+        type: 'Import',
         library: {
           type: 'String',
           parts: ['mylib']
@@ -68,7 +68,7 @@ describe('parser/parser.ts', () => {
         alias: 'myalias'
       },
       {
-        type: 'UseStatement',
+        type: 'Import',
         library: {
           type: 'String',
           parts: ['otherlib']

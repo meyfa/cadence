@@ -52,8 +52,8 @@ export interface Curve extends ASTNode {
 
 // Imports
 
-export interface UseStatement extends ASTNode {
-  readonly type: 'UseStatement'
+export interface Import extends ASTNode {
+  readonly type: 'Import'
   readonly library: String
 
   /**
@@ -182,7 +182,7 @@ export interface Voice extends ASTNode {
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
-  readonly imports: readonly UseStatement[]
+  readonly imports: readonly Import[]
   readonly children: ReadonlyArray<Assignment | Emission>
 }
 
@@ -214,7 +214,7 @@ export interface NodeByType {
   CurveSegment: CurveSegment
   Curve: Curve
 
-  UseStatement: UseStatement
+  Import: Import
 
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression

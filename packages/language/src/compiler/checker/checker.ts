@@ -136,7 +136,7 @@ function checkType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?:
   return []
 }
 
-function checkImports (imports: readonly ast.UseStatement[]): Checked<ReadonlyMap<string, FacetType>> {
+function checkImports (imports: readonly ast.Import[]): Checked<ReadonlyMap<string, FacetType>> {
   const standardLibraryModuleNames = getStandardModuleNames()
 
   const errors: CompileError[] = []

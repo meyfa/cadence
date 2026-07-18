@@ -118,7 +118,7 @@ function clamped<U extends Unit> (value: RuntimeNumeric<U>, minimum: number, max
   }
 }
 
-function processImports (imports: readonly ast.UseStatement[]): ReadonlyMap<string, Value> {
+function processImports (imports: readonly ast.Import[]): ReadonlyMap<string, Value> {
   const getModule = (library: ast.String) => {
     assert(library.parts.every((part) => typeof part === 'string'))
     const module = getStandardModuleValue(library.parts.join(''))
