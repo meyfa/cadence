@@ -246,7 +246,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         '& track {',
         '  & part intro (4.bars) {',
-        '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
+        '    & automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
         '}'
       ].join('\n')
@@ -281,7 +281,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         '& track {',
         '  & part intro (4.bars) {',
-        '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
+        '    & automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
         '  }',
         '}'
       ].join('\n')
@@ -299,7 +299,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         '& track {',
         '  & part intro (4.bars) {',
-        '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
+        '    & automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
         '  }',
         '}'
       ].join('\n')
@@ -566,12 +566,26 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject part emissions that are not routing or automation', () => {
+      const source = [
+        '& track {',
+        '  & part intro (4.bars) {',
+        '    & 42',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Expected type routing | automation, got number'
+      ])
+    })
+
     it('should reject automations that target non-parameters', () => {
       const source = [
         'some_value = ""',
         '& track {',
         '  & part intro (4.bars) {',
-        '    automate some_value as ~[hold(-60):1.bar]',
+        '    & automate some_value as ~[hold(-60):1.bar]',
         '  }',
         '}'
       ].join('\n')
@@ -899,7 +913,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         '& track {',
         '  & part intro (4.bars) {',
-        '    automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
+        '    & automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
         '  }',
         '}',
         '& mixer {',

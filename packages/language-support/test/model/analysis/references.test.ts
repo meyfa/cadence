@@ -47,7 +47,7 @@ describe('model/analysis/references.ts', () => {
       'kick = sample("/samples/kick.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    kick << [x---]',
+      '    & kick << [x---]',
       '  }',
       '}',
       ''
@@ -106,7 +106,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       '& track (120.bpm) {',
       '  & part foo (4.bars) {',
-      '    automate bus.foo.gain as ~[hold(0.db)]',
+      '    & automate bus.foo.gain as ~[hold(0.db)]',
       '  }',
       '}',
       '& mixer {',
@@ -199,7 +199,7 @@ describe('model/analysis/references.ts', () => {
       '',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate synth.gain as ~[hold(0.db)]',
+      '    & automate synth.gain as ~[hold(0.db)]',
       '  }',
       '}',
       ''
@@ -219,7 +219,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       '& track (120.bpm) {',
       '  & part main (4.bars) {',
-      '    automate bus.foo.gain as ~[hold(0.db)]',
+      '    & automate bus.foo.gain as ~[hold(0.db)]',
       '  }',
       '}',
       '',
@@ -245,7 +245,7 @@ describe('model/analysis/references.ts', () => {
       '',
       '& track (120.bpm) {',
       '  & part main (4.bars) {',
-      '    automate bus.main.lp.frequency as ~[hold(1000.hz)]',
+      '    & automate bus.main.lp.frequency as ~[hold(1000.hz)]',
       '  }',
       '}',
       '',

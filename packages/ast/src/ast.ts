@@ -108,12 +108,6 @@ export interface Property extends ASTNode {
   readonly value: Expression
 }
 
-export interface Assignment extends ASTNode {
-  readonly type: 'Assignment'
-  readonly key: Identifier
-  readonly value: Expression
-}
-
 export type Statement = NamedStatement | UnnamedStatement
 
 interface NamedStatement extends ASTNode {
@@ -161,7 +155,7 @@ export interface Part extends ASTNode {
   readonly type: 'Part'
   readonly name?: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Assignment | Routing | Automation>
+  readonly children: readonly Statement[]
 }
 
 export interface Routing extends ASTNode {
@@ -233,7 +227,6 @@ export interface NodeByType {
   Call: Call
 
   Property: Property
-  Assignment: Assignment
   Statement: Statement
 
   Mixer: Mixer

@@ -152,7 +152,7 @@ describe('go-to-definition/operation.ts', () => {
     const source = [
       '& track (120.bpm) {',
       '  & part foo {',
-      '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
+      '    & automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
       '& mixer {',
@@ -175,7 +175,7 @@ describe('go-to-definition/operation.ts', () => {
       'use "effects" as fx',
       '& track (120.bpm) {',
       '  & part foo {',
-      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
+      '    & automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
       '  }',
       '}',
       '& mixer {',
@@ -216,7 +216,7 @@ describe('go-to-definition/operation.ts', () => {
       '',
       '& track (120.bpm) {',
       '  & part p {',
-      '    automate synth.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
+      '    & automate synth.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
       '  }',
       '}',
       ''

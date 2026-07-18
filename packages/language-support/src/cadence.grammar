@@ -216,7 +216,7 @@ Part {
   VariableDefinition?
   ("(" argumentList? ")")?
   PartBlock[group=Block] {
-    "{" (Assignment | Routing | Automation)* "}"
+    "{" statement* "}"
   }
 }
 

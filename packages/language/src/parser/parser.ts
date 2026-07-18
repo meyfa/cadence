@@ -338,7 +338,6 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
 )
 
 const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
-  identifier_,
   number_,
   string_,
   serialPattern_,
@@ -350,7 +349,8 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => track_),
   p.recursive(() => part_),
   p.recursive(() => routing_),
-  p.recursive(() => automation_)
+  p.recursive(() => automation_),
+  identifier_
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -500,15 +500,6 @@ const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
   }
 )
 
-const assignment_: p.Parser<Token, unknown, ast.Assignment> = p.abc(
-  identifier_,
-  literal('='),
-  expression_,
-  (key, _eq, value) => {
-    return ast.make('Assignment', combineSourceRanges(key, value), { key, value })
-  }
-)
-
 const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
   identifier_,
   literal('='),
@@ -602,12 +593,7 @@ const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
   ),
   combine3(
     literal('{'),
-    p.many(
-      p.eitherOr(
-        assignment_,
-        p.eitherOr(routing_, automation_)
-      )
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   ([_part, name], callChain, [_lp, children, _rp]) => {

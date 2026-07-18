@@ -242,7 +242,7 @@ describe('compiler/generator/generator.ts', () => {
       '& track {',
       '  & part intro (4.bars) {',
       '    my_pattern = [C4 D4]',
-      '    synth << my_pattern',
+      '    & synth << my_pattern',
       '  }',
       '}'
     ].join('\n')
@@ -279,7 +279,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track {',
       '  & part (4.bars) {',
-      '    synth << [C4(0.5):2 D4(1, vel: 0.75) -]',
+      '    & synth << [C4(0.5):2 D4(1, vel: 0.75) -]',
       '  }',
       '}'
     ].join('\n')
@@ -300,7 +300,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track {',
       '  & part (4.bars) {',
-      '    synth << [C4(vel: 1.5):2 D4(vel: -0.5)]',
+      '    & synth << [C4(vel: 1.5):2 D4(vel: -0.5)]',
       '  }',
       '}'
     ].join('\n')
@@ -321,7 +321,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate synth.gain as ~[lin((-60).db, 0.db):2.bars]',
+      '    & automate synth.gain as ~[lin((-60).db, 0.db):2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -343,7 +343,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate synth.gain as ~[lin(-60.db, -30.db):2.bars lin(-30.db, 0.db):1.bar]',
+      '    & automate synth.gain as ~[lin(-60.db, -30.db):2.bars lin(-30.db, 0.db):1.bar]',
       '  }',
       '}'
     ].join('\n')
@@ -366,7 +366,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.bars) {',
-      '    automate synth.gain as ~[hold(-60.db):5.bars lin(-60.db, 0.db):6.bars hold:2.bars]',
+      '    & automate synth.gain as ~[hold(-60.db):5.bars lin(-60.db, 0.db):6.bars hold:2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -389,7 +389,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.bars) {',
-      '    automate synth.gain as ~[hold((-60).db):6.bars lin(0.db):2.bars]',
+      '    & automate synth.gain as ~[hold((-60).db):6.bars lin(0.db):2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -412,7 +412,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.bars) {',
-      '    automate synth.gain as ~[lin((-60).db, (-30).db):6.bars hold:2.bars]',
+      '    & automate synth.gain as ~[lin((-60).db, (-30).db):6.bars hold:2.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -435,7 +435,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate synth.gain as ~[hold((-60).db):(-2.beats) lin((-60).db, (-30).db):0.s lin((-30).db, 0.db):4.bars]',
+      '    & automate synth.gain as ~[hold((-60).db):(-2.beats) lin((-60).db, (-30).db):0.s lin((-30).db, 0.db):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -457,10 +457,10 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.beats) {',
-      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '    & automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
       '  }',
       '  & part outro (8.beats) {',
-      '    automate synth.gain as ~[lin(-15.db, -30.db):8.beats]',
+      '    & automate synth.gain as ~[lin(-15.db, -30.db):8.beats]',
       '  }',
       '}'
     ].join('\n')
@@ -484,8 +484,8 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.beats) {',
-      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
-      '    automate synth.gain as ~[hold(-15.db):8.beats]',
+      '    & automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '    & automate synth.gain as ~[hold(-15.db):8.beats]',
       '  }',
       '}'
     ].join('\n')
@@ -507,8 +507,8 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
       '  & part intro (8.beats) {',
-      '    automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
-      '    automate synth.gain as ~[hold(-15.db):4.beats]',
+      '    & automate synth.gain as ~[lin(-60.db, 0.db):8.beats]',
+      '    & automate synth.gain as ~[hold(-15.db):4.beats]',
       '  }',
       '}'
     ].join('\n')
@@ -532,7 +532,7 @@ describe('compiler/generator/generator.ts', () => {
       '}',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
+      '    & automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -557,7 +557,7 @@ describe('compiler/generator/generator.ts', () => {
       '}',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
+      '    & automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
       '  }',
       '}'
     ].join('\n')
@@ -582,7 +582,7 @@ describe('compiler/generator/generator.ts', () => {
       'lp = fx.lowpass(200.hz)',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    automate lp.frequency as ~[lin(500.hz, 1000.hz):4.bars]',
+      '    & automate lp.frequency as ~[lin(500.hz, 1000.hz):4.bars]',
       '  }',
       '}',
       '& mixer {',

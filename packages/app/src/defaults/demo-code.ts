@@ -57,27 +57,27 @@ clap_pattern = [x:8]
   // defined length or the length of the part, whichever is shorter.
 
   & part intro (4.bars) {
-    kick  << kick_pattern
-    snare << snare_pattern
-    synth << arp_intro
+    & kick  << kick_pattern
+    & snare << snare_pattern
+    & synth << arp_intro
 
-    automate synth.gain as ~[hold(-60.db):2.bars lin(0.db):2.bars]
+    & automate synth.gain as ~[hold(-60.db):2.bars lin(0.db):2.bars]
   }
 
   & part main (8.bars) {
-    kick  << kick_pattern
-    snare << snare_pattern
-    hat   << ([--x-] / 4).loop()
-    tom   << ([---- -x-- ---- ---x] / 4).loop()
-    synth << arp_main.loop()
-    clap  << clap_pattern.loop()
+    & kick  << kick_pattern
+    & snare << snare_pattern
+    & hat   << ([--x-] / 4).loop()
+    & tom   << ([---- -x-- ---- ---x] / 4).loop()
+    & synth << arp_main.loop()
+    & clap  << clap_pattern.loop()
   }
 
   & part outro (4.bars) {
-    snare << snare_pattern
-    tom   << ([---- -x-- ---- ---x] / 4).loop()
-    synth << arp_main.loop()
-    clap  << clap_pattern
+    & snare << snare_pattern
+    & tom   << ([---- -x-- ---- ---x] / 4).loop()
+    & synth << arp_main.loop()
+    & clap  << clap_pattern
   }
 }
 `.trimStart()

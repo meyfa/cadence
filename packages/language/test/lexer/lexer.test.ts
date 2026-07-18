@@ -350,9 +350,9 @@ describe('lexer/lexer.ts', () => {
 
   it('should lex a track', () => {
     const source = [
-      'track (128.bpm) {',
-      '  part intro (4.bars) {}',
-      '  part verse (8.bars) {}',
+      '& track (128.bpm) {',
+      '  & part intro (4.bars) {}',
+      '  & part verse (8.bars) {}',
       '}'
     ].join('\n')
 
@@ -362,6 +362,7 @@ describe('lexer/lexer.ts', () => {
     assert.deepStrictEqual(stripTokenMeta(result), {
       complete: true,
       value: [
+        { name: '&', text: '&' },
         { name: 'word', text: 'track' },
         { name: '(', text: '(' },
         { name: 'number', text: '128' },
@@ -370,6 +371,7 @@ describe('lexer/lexer.ts', () => {
         { name: ')', text: ')' },
         { name: '{', text: '{' },
 
+        { name: '&', text: '&' },
         { name: 'word', text: 'part' },
         { name: 'word', text: 'intro' },
         { name: '(', text: '(' },
@@ -380,6 +382,7 @@ describe('lexer/lexer.ts', () => {
         { name: '{', text: '{' },
         { name: '}', text: '}' },
 
+        { name: '&', text: '&' },
         { name: 'word', text: 'part' },
         { name: 'word', text: 'verse' },
         { name: '(', text: '(' },
