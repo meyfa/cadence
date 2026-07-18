@@ -86,7 +86,7 @@ export interface Binding {
   readonly isExposed?: boolean
 }
 
-export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus' | 'effect'
+export type BindingKind = 'regular' | 'use-alias' | 'part' | 'bus'
 
 // import
 

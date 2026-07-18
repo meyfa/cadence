@@ -39,9 +39,9 @@ import { unaryOperations } from '../operators/unary.ts'
 import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toNumberValue } from '../units.ts'
 import type { GenerateOptions } from './options.ts'
+import { RecordBuilder } from './properties.ts'
 import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
 import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
-import { RecordBuilder } from './properties.ts'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -513,39 +513,21 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
   recordBuilder.put('pan', Parameters.of(pan))
 
   for (const child of expression.children) {
-    switch (child.type) {
-      case 'Statement': {
-        const { emissions, properties } = processStatement(busScope, child)
+    const { emissions, properties } = processStatement(busScope, child)
 
-        for (const emission of emissions) {
-          if (InstrumentFacet.has(emission)) {
-            sources.push({ type: 'instrument', id: InstrumentFacet.get(emission).id })
-          } else if (BusFacet.has(emission)) {
-            sources.push({ type: 'bus', id: BusFacet.get(emission).id })
-          } else {
-            fail()
-          }
-        }
-
-        recordBuilder.putAll(properties)
-
-        break
+    for (const emission of emissions) {
+      if (InstrumentFacet.has(emission)) {
+        sources.push({ type: 'instrument', id: InstrumentFacet.get(emission).id })
+      } else if (BusFacet.has(emission)) {
+        sources.push({ type: 'bus', id: BusFacet.get(emission).id })
+      } else if (EffectFacet.has(emission)) {
+        effects.push(EffectFacet.get(emission))
+      } else {
+        fail()
       }
-
-      case 'EffectStatement': {
-        const effectValue = resolve(busScope, child.expression)
-        effects.push(EffectFacet.get(effectValue))
-
-        if (child.name?.name != null) {
-          recordBuilder.put(child.name.name, effectValue)
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
     }
+
+    recordBuilder.putAll(properties)
   }
 
   const bus = scope.top.allocateBus({ name, sources, gain, pan, effects })

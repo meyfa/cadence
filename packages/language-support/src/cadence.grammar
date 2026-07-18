@@ -235,14 +235,8 @@ Bus {
   VariableDefinition?
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (statement | EffectStatement)* "}"
+    "{" statement* "}"
   }
-}
-
-EffectStatement {
-  kw<"effect">
-  (VariableDefinition "=")?
-  expression
 }
 
 Instrument {

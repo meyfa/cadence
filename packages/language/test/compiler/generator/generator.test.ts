@@ -278,7 +278,7 @@ describe('compiler/generator/generator.ts', () => {
       '& mixer {',
       '  & bus main {',
       '    my_gain = -20.db',
-      '    effect gain(my_gain)',
+      '    & gain(my_gain)',
       '  }',
       '}'
     ].join('\n')
@@ -568,7 +568,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "effects" as fx',
       '& mixer {',
       '  & bus main {',
-      '    effect lp = fx.lowpass(123.hz)',
+      '    & @lp = fx.lowpass(123.hz)',
       '  }',
       '}',
       '& track (120.bpm) {',
@@ -595,7 +595,9 @@ describe('compiler/generator/generator.ts', () => {
   it('should automate effect parameters', () => {
     const source = [
       'use "effects" as fx',
+      '',
       'lp = fx.lowpass(200.hz)',
+      '',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
       '    & automate lp.frequency as ~[lin(500.hz, 1000.hz):4.bars]',
@@ -603,7 +605,7 @@ describe('compiler/generator/generator.ts', () => {
       '}',
       '& mixer {',
       '  & bus main {',
-      '    effect lp',
+      '    & lp',
       '  }',
       '}'
     ].join('\n')
@@ -697,7 +699,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "effects" as fx',
       '& mixer {',
       '  & bus bus0 {',
-      '    effect fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
+      '    & fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
       '  }',
       '}'
     ].join('\n')
@@ -725,7 +727,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "effects" as fx',
       '& mixer {',
       '  & bus bus0 {',
-      '    effect fx.reverb(mix: 0.25, decay: 2.beats)',
+      '    & fx.reverb(mix: 0.25, decay: 2.beats)',
       '  }',
       '}'
     ].join('\n')

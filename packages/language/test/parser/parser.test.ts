@@ -797,8 +797,8 @@ describe('parser/parser.ts', () => {
       '& mixer {',
       '  & bus mybus(gain: (-3).db) {',
       '    & kick, snare, hihat',
-      '    effect fx.pan(0.5)',
-      '    effect lp = fx.lowpass(400.hz)',
+      '    & fx.pan(0.5)',
+      '    & @lp = fx.lowpass(400.hz)',
       '  }',
       '}'
     ].join('\n')
@@ -847,38 +847,45 @@ describe('parser/parser.ts', () => {
                     ]
                   },
                   {
-                    type: 'EffectStatement',
-                    name: undefined,
-                    expression: {
-                      type: 'Call',
-                      callee: {
-                        type: 'PropertyAccess',
-                        object: { type: 'Identifier', name: 'fx' },
-                        property: { type: 'Identifier', name: 'pan' }
-                      },
-                      arguments: [
-                        { type: 'Number', value: 0.5 }
-                      ]
-                    }
+                    type: 'Statement',
+                    emit: true,
+                    expose: false,
+                    values: [
+                      {
+                        type: 'Call',
+                        callee: {
+                          type: 'PropertyAccess',
+                          object: { type: 'Identifier', name: 'fx' },
+                          property: { type: 'Identifier', name: 'pan' }
+                        },
+                        arguments: [
+                          { type: 'Number', value: 0.5 }
+                        ]
+                      }
+                    ]
                   },
                   {
-                    type: 'EffectStatement',
+                    type: 'Statement',
+                    emit: true,
+                    expose: true,
                     name: { type: 'Identifier', name: 'lp' },
-                    expression: {
-                      type: 'Call',
-                      callee: {
-                        type: 'PropertyAccess',
-                        object: { type: 'Identifier', name: 'fx' },
-                        property: { type: 'Identifier', name: 'lowpass' }
-                      },
-                      arguments: [
-                        {
+                    values: [
+                      {
+                        type: 'Call',
+                        callee: {
                           type: 'PropertyAccess',
-                          object: { type: 'Number', value: 400 },
-                          property: { type: 'Identifier', name: 'hz' }
-                        }
-                      ]
-                    }
+                          object: { type: 'Identifier', name: 'fx' },
+                          property: { type: 'Identifier', name: 'lowpass' }
+                        },
+                        arguments: [
+                          {
+                            type: 'PropertyAccess',
+                            object: { type: 'Number', value: 400 },
+                            property: { type: 'Identifier', name: 'hz' }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }

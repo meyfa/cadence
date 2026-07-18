@@ -47,8 +47,8 @@ clap_pattern = [x:8]
   & bus clap_delay (gain: 3.db, pan: -0.25) {
     & clap
 
-    effect fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
-    effect fx.reverb(mix: 0.3, decay: 1.s)
+    & fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)
+    & fx.reverb(mix: 0.3, decay: 1.s)
   }
 }
 

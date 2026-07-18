@@ -170,31 +170,6 @@ describe('go-to-definition/operation.ts', () => {
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 
-  it('resolves explicit bus namespace effect access to the effect definition', () => {
-    const source = [
-      'use "effects" as fx',
-      '& track (120.bpm) {',
-      '  & part foo {',
-      '    & automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
-      '  }',
-      '}',
-      '& mixer {',
-      '  & bus main {',
-      '    effect lp = fx.lowpass(1000.hz)',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const defPos = source.indexOf('effect lp') + 'effect '.length
-    const refPos = source.indexOf('bus.main.lp.frequency') + 'bus.main.'.length
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-
-    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'lp'.length))
-    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'lp'.length))
-  })
-
   it('does not resolve named argument keys', () => {
     const source = [
       'tempo = 128.bpm',
