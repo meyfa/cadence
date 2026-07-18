@@ -31,7 +31,7 @@ describe('model/analysis/known-values.ts', () => {
       'snare = sample("/samples/snare.wav")',
       '',
       '& mixer {',
-      '  bus {',
+      '  & bus {',
       '    effect fx.gain(-3.db)',
       '  }',
       '}',
@@ -72,7 +72,7 @@ describe('model/analysis/known-values.ts', () => {
       'use "effects" as *',
       '',
       '& mixer {',
-      '  bus main (gain: -3.db) {}',
+      '  & bus main (gain: -3.db) {}',
       '}',
       ''
     ].join('\n')

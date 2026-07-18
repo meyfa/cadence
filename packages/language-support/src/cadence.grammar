@@ -207,7 +207,7 @@ Track {
   kw<"track">
   ("(" argumentList? ")")?
   TrackBlock[group=Block] {
-    "{" (Assignment | Part)* "}"
+    "{" statement* "}"
   }
 }
 
@@ -224,12 +224,13 @@ Mixer {
   kw<"mixer">
   ("(" argumentList? ")")?
   MixerBlock[group=Block] {
-    "{" (Assignment | Bus)* "}"
+    "{" statement* "}"
   }
 }
 
 Bus {
-  kw<"bus"> VariableDefinition
+  kw<"bus">
+  VariableDefinition?
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
     "{" (statement | EffectStatement)* "}"

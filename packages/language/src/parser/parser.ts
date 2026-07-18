@@ -633,9 +633,7 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
   ),
   combine3(
     expectLiteral('{'),
-    p.many(
-      p.eitherOr(assignment_, part_)
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   (_track, callChain, [_lp, children, _rp]) => {
@@ -671,7 +669,7 @@ const effectStatement_: p.Parser<Token, unknown, ast.EffectStatement> = p.abc(
 const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   combine2(
     keyword('bus'),
-    identifier_
+    p.option(identifier_, undefined)
   ),
   p.option(
     combine3(
@@ -682,7 +680,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
     undefined
   ),
   combine3(
-    expectLiteral('{'),
+    literal('{'),
     p.many(
       p.eitherOr(statement_, effectStatement_)
     ),
@@ -711,9 +709,7 @@ const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
   ),
   combine3(
     expectLiteral('{'),
-    p.many(
-      p.eitherOr(assignment_, bus_)
-    ),
+    p.many(statement_),
     expectLiteral('}')
   ),
   (_mixer, callChain, [_lp, children, _rp]) => {

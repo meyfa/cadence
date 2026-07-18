@@ -23,10 +23,18 @@ describe('go-to-definition/operation.ts', () => {
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 
-  it('resolves bus references inside mixer', () => {
-    const source = 'mixer { bus a { } bus b { & a } }'
+  it('resolves bus references in mixer to variable', () => {
+    const source = [
+      '& mixer {',
+      '  & a = bus {}',
+      '  & bus {',
+      '    & a',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
 
-    const defPos = source.indexOf('bus a') + 'bus '.length
+    const defPos = source.indexOf('a = bus')
 
     const refPosLeft = source.lastIndexOf(' a ') + 1
     const refPosRight = source.lastIndexOf(' a ') + 2
@@ -40,6 +48,58 @@ describe('go-to-definition/operation.ts', () => {
       assert.deepStrictEqual(result?.identifier.range, identifierRange)
       assert.deepStrictEqual(result.binding.range, bindingRange)
     }
+  })
+
+  it('resolves bus references in mixer via bus namespace', () => {
+    const source = [
+      '& mixer {',
+      '  & bus a {}',
+      '  & bus {',
+      '    & bus.a',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const defPos = source.indexOf('bus a') + 'bus '.length
+    const refPos = source.indexOf('bus.a') + 'bus.'.length
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'a'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'a'.length))
+  })
+
+  it('does not resolve bus references in mixer via bus name', () => {
+    const source = [
+      '& mixer {',
+      '  & bus a {}',
+      '  & bus {',
+      '    & a',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const refPos = source.indexOf('& a') + '& '.length
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+    assert.strictEqual(result, undefined)
+  })
+
+  it('does not resolve part references in track via part name', () => {
+    const source = [
+      '& track (120.bpm) {',
+      '  & part a {}',
+      '  foo = a // reference',
+      '}',
+      ''
+    ].join('\n')
+
+    const refPos = source.indexOf('a // reference')
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+    assert.strictEqual(result, undefined)
   })
 
   it('resolves import alias usage', () => {
@@ -59,26 +119,44 @@ describe('go-to-definition/operation.ts', () => {
   })
 
   it('tolerates incomplete input', () => {
-    const source = 'mixer { bus a { } bus b { & a '
+    const source = [
+      '& mixer {',
+      '  & a = bus {}',
+      '  & bus b {',
+      '    & a'
+    ].join('\n')
 
-    const defPos = source.indexOf('bus a') + 'bus '.length
+    const defPos = source.indexOf('a = bus')
     const refPos = source.lastIndexOf('a')
 
     const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-
     assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'a'.length))
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'a'.length))
+  })
+
+  it('does not resolve incomplete input via bus name', () => {
+    const source = [
+      '& mixer {',
+      '  & bus a {}',
+      '  & bus b {',
+      '    & a'
+    ].join('\n')
+
+    const refPos = source.lastIndexOf('a')
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+    assert.strictEqual(result, undefined)
   })
 
   it('resolves explicit bus namespace access to the bus definition', () => {
     const source = [
       '& track (120.bpm) {',
-      '  part foo {',
+      '  & part foo {',
       '    automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
       '  }',
       '}',
       '& mixer {',
-      '  bus foo {}',
+      '  & bus foo {}',
       '}',
       ''
     ].join('\n')
@@ -96,12 +174,12 @@ describe('go-to-definition/operation.ts', () => {
     const source = [
       'use "effects" as fx',
       '& track (120.bpm) {',
-      '  part foo {',
+      '  & part foo {',
       '    automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz)]',
       '  }',
       '}',
       '& mixer {',
-      '  bus main {',
+      '  & bus main {',
       '    effect lp = fx.lowpass(1000.hz)',
       '  }',
       '}',
@@ -137,7 +215,7 @@ describe('go-to-definition/operation.ts', () => {
       'synth = sample("...")',
       '',
       '& track (120.bpm) {',
-      '  part p {',
+      '  & part p {',
       '    automate synth.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
       '  }',
       '}',

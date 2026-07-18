@@ -731,7 +731,7 @@ describe('parser/parser.ts', () => {
   it('should parse mixer buses', () => {
     const source = [
       '& mixer {',
-      '  bus mybus(gain: (-3).db) {',
+      '  & bus mybus(gain: (-3).db) {',
       '    & kick, snare, hihat',
       '    effect fx.pan(0.5)',
       '    effect lp = fx.lowpass(400.hz)',
@@ -753,62 +753,68 @@ describe('parser/parser.ts', () => {
         properties: [],
         children: [
           {
-            type: 'Bus',
-            name: { type: 'Identifier', name: 'mybus' },
-            properties: [
+            type: 'Statement',
+            emit: true,
+            values: [
               {
-                type: 'Property',
-                key: { type: 'Identifier', name: 'gain' },
-                value: {
-                  type: 'PropertyAccess',
-                  object: { type: 'Number', value: -3 },
-                  property: { type: 'Identifier', name: 'db' }
-                }
-              }
-            ],
-            children: [
-              {
-                type: 'Statement',
-                emit: true,
-                values: [
-                  { type: 'Identifier', name: 'kick' },
-                  { type: 'Identifier', name: 'snare' },
-                  { type: 'Identifier', name: 'hihat' }
-                ]
-              },
-              {
-                type: 'EffectStatement',
-                name: undefined,
-                expression: {
-                  type: 'Call',
-                  callee: {
-                    type: 'PropertyAccess',
-                    object: { type: 'Identifier', name: 'fx' },
-                    property: { type: 'Identifier', name: 'pan' }
-                  },
-                  arguments: [
-                    { type: 'Number', value: 0.5 }
-                  ]
-                }
-              },
-              {
-                type: 'EffectStatement',
-                name: { type: 'Identifier', name: 'lp' },
-                expression: {
-                  type: 'Call',
-                  callee: {
-                    type: 'PropertyAccess',
-                    object: { type: 'Identifier', name: 'fx' },
-                    property: { type: 'Identifier', name: 'lowpass' }
-                  },
-                  arguments: [
-                    {
+                type: 'Bus',
+                name: { type: 'Identifier', name: 'mybus' },
+                properties: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gain' },
+                    value: {
                       type: 'PropertyAccess',
-                      object: { type: 'Number', value: 400 },
-                      property: { type: 'Identifier', name: 'hz' }
+                      object: { type: 'Number', value: -3 },
+                      property: { type: 'Identifier', name: 'db' }
                     }
-                  ]
-                }
+                  }
+                ],
+                children: [
+                  {
+                    type: 'Statement',
+                    emit: true,
+                    values: [
+                      { type: 'Identifier', name: 'kick' },
+                      { type: 'Identifier', name: 'snare' },
+                      { type: 'Identifier', name: 'hihat' }
+                    ]
+                  },
+                  {
+                    type: 'EffectStatement',
+                    name: undefined,
+                    expression: {
+                      type: 'Call',
+                      callee: {
+                        type: 'PropertyAccess',
+                        object: { type: 'Identifier', name: 'fx' },
+                        property: { type: 'Identifier', name: 'pan' }
+                      },
+                      arguments: [
+                        { type: 'Number', value: 0.5 }
+                      ]
+                    }
+                  },
+                  {
+                    type: 'EffectStatement',
+                    name: { type: 'Identifier', name: 'lp' },
+                    expression: {
+                      type: 'Call',
+                      callee: {
+                        type: 'PropertyAccess',
+                        object: { type: 'Identifier', name: 'fx' },
+                        property: { type: 'Identifier', name: 'lowpass' }
+                      },
+                      arguments: [
+                        {
+                          type: 'PropertyAccess',
+                          object: { type: 'Number', value: 400 },
+                          property: { type: 'Identifier', name: 'hz' }
+                        }
+                      ]
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -820,8 +826,8 @@ describe('parser/parser.ts', () => {
   it('should allow named and unnamed parts', () => {
     const source = [
       '& track {',
-      '  part (4.bars) {}',
-      '  part my_part (2.bars) {}',
+      '  & part (4.bars) {}',
+      '  & part my_part (2.bars) {}',
       '}'
     ].join('\n')
 
@@ -839,38 +845,114 @@ describe('parser/parser.ts', () => {
         properties: [],
         children: [
           {
-            type: 'Part',
-            name: undefined,
-            properties: [
+            type: 'Statement',
+            emit: true,
+            values: [
               {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 4 },
-                property: { type: 'Identifier', name: 'bars' }
+                type: 'Part',
+                name: undefined,
+                properties: [
+                  {
+                    type: 'PropertyAccess',
+                    object: { type: 'Number', value: 4 },
+                    property: { type: 'Identifier', name: 'bars' }
+                  }
+                ],
+                children: []
               }
-            ],
-            children: []
+            ]
           },
           {
-            type: 'Part',
-            name: { type: 'Identifier', name: 'my_part' },
-            properties: [
+            type: 'Statement',
+            emit: true,
+            values: [
               {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 2 },
-                property: { type: 'Identifier', name: 'bars' }
+                type: 'Part',
+                name: { type: 'Identifier', name: 'my_part' },
+                properties: [
+                  {
+                    type: 'PropertyAccess',
+                    object: { type: 'Number', value: 2 },
+                    property: { type: 'Identifier', name: 'bars' }
+                  }
+                ],
+                children: []
               }
-            ],
-            children: []
+            ]
           }
         ]
       }
     ])
   })
 
-  it('should reject unnamed buses', () => {
-    const result = parse(lexSource('& mixer { bus {} }'))
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.message, 'Unexpected "bus"; expected "}"')
+  it('should allow named and unnamed buses', () => {
+    const source = [
+      '& mixer {',
+      '  & bus (gain: (-3).db) {}',
+      '  & bus my_bus(gain: (-6).db) {}',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.strictEqual(result.value.children[0].type, 'Statement')
+    assert.strictEqual(result.value.children[0].emit, true)
+
+    const emissions = result.value.children[0].values
+
+    assert.deepStrictEqual(stripRanges(emissions), [
+      {
+        type: 'Mixer',
+        properties: [],
+        children: [
+          {
+            type: 'Statement',
+            emit: true,
+            values: [
+              {
+                type: 'Bus',
+                name: undefined,
+                properties: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gain' },
+                    value: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: -3 },
+                      property: { type: 'Identifier', name: 'db' }
+                    }
+                  }
+                ],
+                children: []
+              }
+            ]
+          },
+          {
+            type: 'Statement',
+            emit: true,
+            values: [
+              {
+                type: 'Bus',
+                name: { type: 'Identifier', name: 'my_bus' },
+                properties: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gain' },
+                    value: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: -6 },
+                      property: { type: 'Identifier', name: 'db' }
+                    }
+                  }
+                ],
+                children: []
+              }
+            ]
+          }
+        ]
+      }
+    ])
   })
 
   it('should allow assignments in track and mixer bodies', () => {
@@ -896,9 +978,12 @@ describe('parser/parser.ts', () => {
             properties: [],
             children: [
               {
-                type: 'Assignment',
-                key: { type: 'Identifier', name: 'foo' },
-                value: { type: 'Number', value: 42 }
+                type: 'Statement',
+                emit: false,
+                name: { type: 'Identifier', name: 'foo' },
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
               }
             ]
           }
@@ -913,9 +998,12 @@ describe('parser/parser.ts', () => {
             properties: [],
             children: [
               {
-                type: 'Assignment',
-                key: { type: 'Identifier', name: 'bar' },
-                value: { type: 'Number', value: 43 }
+                type: 'Statement',
+                emit: false,
+                name: { type: 'Identifier', name: 'bar' },
+                values: [
+                  { type: 'Number', value: 43 }
+                ]
               }
             ]
           }

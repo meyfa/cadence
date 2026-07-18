@@ -255,7 +255,7 @@ const BusNodeInfo: FunctionComponent<{
 }> = ({ object }) => {
   return (
     <>
-      <div className='font-bold'>bus.{object.name}</div>
+      <div className='font-bold'>{object.name != null ? `bus.${object.name}` : '(unnamed bus)'}</div>
       <div>gain: {object.gain.initial.toFixed(2)} dB</div>
       <div>pan: {object.pan.initial.toFixed(2)}</div>
       {object.effects.length > 0 && (

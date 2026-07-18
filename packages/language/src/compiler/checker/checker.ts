@@ -555,33 +555,12 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
 
   errors.push(...checkArgumentList(mixerScope, expression.properties, mixerSchema, expression.range, 'property'))
 
-  const buses: ast.Bus[] = []
-
   for (const child of expression.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(mixerScope, child))
-        break
+    const statement = checkStatement(mixerScope, child)
+    errors.push(...statement.errors)
 
-      case 'Bus': {
-        const bus = child
-        buses.push(bus)
-
-        const busCheck = checkBus(mixerScope, bus)
-        errors.push(...busCheck.errors)
-
-        if (mixerScope.resolutions.has(bus.name.name)) {
-          errors.push(new CompileError(`Bus name "${bus.name.name}" conflicts with existing identifier`, bus.name.range))
-        } else {
-          const type = busCheck.result ?? BusFacet.type()
-          mixerScope.resolutions.set(bus.name.name, type)
-        }
-
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of statement.emissions) {
+      errors.push(...checkType(BusFacet.type(), emission.type, emission.range))
     }
   }
 
@@ -659,11 +638,13 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
 
   const type = makeType(BusFacet, RecordFacet.with(record))
 
-  const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-  if (namespace.resolutions.has(bus.name.name)) {
-    errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
-  } else {
-    namespace.resolutions.set(bus.name.name, type)
+  if (bus.name != null) {
+    const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
+    if (namespace.resolutions.has(bus.name.name)) {
+      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
+    } else {
+      namespace.resolutions.set(bus.name.name, type)
+    }
   }
 
   return { errors, result: type }
@@ -679,36 +660,12 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
 
   errors.push(...checkArgumentList(trackScope, expression.properties, trackSchema, expression.range, 'property'))
 
-  const seenParts = new Set<string>()
-
   for (const child of expression.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(trackScope, child))
-        break
+    const statement = checkStatement(trackScope, child)
+    errors.push(...statement.errors)
 
-      case 'Part': {
-        if (child.name != null) {
-          if (seenParts.has(child.name.name)) {
-            errors.push(new CompileError(`Duplicate part named "${child.name.name}"`, child.range))
-          } else if (trackScope.resolutions.has(child.name.name)) {
-            errors.push(new CompileError(`Part name "${child.name.name}" conflicts with existing identifier`, child.name.range))
-          }
-
-          seenParts.add(child.name.name)
-
-          // Reserve the name in the local scope
-          trackScope.resolutions.set(child.name.name, PartFacet.type())
-        }
-
-        const partCheck = checkPart(trackScope, child)
-        errors.push(...partCheck.errors)
-
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of statement.emissions) {
+      errors.push(...checkType(PartFacet.type(), emission.type, emission.range))
     }
   }
 

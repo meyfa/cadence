@@ -113,7 +113,10 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
       byScopeAndName.set(binding.scopeId, scopeMap)
     }
 
-    if (binding.kind !== 'effect') {
+    // Only regular variables and use-aliases are available via plain lexical lookup.
+    // Part and bus names are not injected into scope and must be referenced via
+    // explicit assignment (regular binding) or namespace access (e.g. bus.foo).
+    if (binding.kind === 'regular' || binding.kind === 'use-alias') {
       scopeMap.set(binding.name, binding)
     }
   }
