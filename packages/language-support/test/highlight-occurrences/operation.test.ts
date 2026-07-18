@@ -31,6 +31,24 @@ describe('highlight-occurrences/operation.ts', () => {
     )
   })
 
+  it('returns definition and reference ranges for emission assignments', () => {
+    const source = [
+      '& foo = mixer {}',
+      'bar = foo',
+      ''
+    ].join('\n')
+
+    const position = source.lastIndexOf('foo') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('& foo =') + '& '.length, 'foo'.length),
+        getRangeAt(source, source.indexOf('foo', source.indexOf('bar =')), 'foo'.length)
+      ]
+    )
+  })
+
   it('normalizes explicit bus namespace references to the bus member range', () => {
     const source = [
       '& track (120.bpm) {',

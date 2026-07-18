@@ -165,4 +165,20 @@ describe('go-to-definition/operation.ts', () => {
     assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
+
+  it('resolves emission assignment', () => {
+    const source = [
+      '& foo = 42',
+      '& foo // reference',
+      ''
+    ].join('\n')
+
+    const defPos = source.indexOf('& foo =') + '& '.length
+    const refPos = source.lastIndexOf('& foo // reference') + '& '.length
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
+  })
 })

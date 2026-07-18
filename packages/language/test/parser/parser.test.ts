@@ -49,7 +49,7 @@ describe('parser/parser.ts', () => {
     })
   })
 
-  it('should parse use statements', () => {
+  it('should parse imports', () => {
     const source = [
       'use "mylib" as myalias',
       'use "otherlib" as *'
@@ -77,7 +77,7 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should reject use statements after other statements', () => {
+  it('should reject imports after other statements', () => {
     const source = [
       'foo = 42',
       'use "mylib" as myalias'
@@ -95,11 +95,72 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: { type: 'Number', value: 42 }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          { type: 'Number', value: 42 }
+        ]
       }
     ])
+  })
+
+  it('should parse a simple emission', () => {
+    const result = parse(lexSource('& 42'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: true,
+        values: [
+          { type: 'Number', value: 42 }
+        ]
+      }
+    ])
+  })
+
+  it('should parse an emission assignment', () => {
+    const result = parse(lexSource('& foo = 42'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: true,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          { type: 'Number', value: 42 }
+        ]
+      }
+    ])
+  })
+
+  it('should parse a statement with multiple values', () => {
+    const result = parse(lexSource('& 1, "hello", foo'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: true,
+        values: [
+          { type: 'Number', value: 1 },
+          { type: 'String', parts: ['hello'] },
+          { type: 'Identifier', name: 'foo' }
+        ]
+      }
+    ])
+  })
+
+  it('should reject assignments with multiple values', () => {
+    const result = parse(lexSource('foo = 1, 2'))
+    assert.strictEqual(result.complete, false)
+  })
+
+  it('should reject emission-assignments with multiple values', () => {
+    const result = parse(lexSource('& foo = 1, 2'))
+    assert.strictEqual(result.complete, false)
   })
 
   it('should parse unit suffixes', () => {
@@ -113,31 +174,37 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'offset' },
-        value: {
-          type: 'UnaryExpression',
-          operator: '-',
-          argument: {
-            type: 'PropertyAccess',
-            object: { type: 'Number', value: 1.5 },
-            property: { type: 'Identifier', name: 'ms' }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'offset' },
+        values: [
+          {
+            type: 'UnaryExpression',
+            operator: '-',
+            argument: {
+              type: 'PropertyAccess',
+              object: { type: 'Number', value: 1.5 },
+              property: { type: 'Identifier', name: 'ms' }
+            }
           }
-        }
+        ]
       },
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'gain' },
-        value: {
-          type: 'PropertyAccess',
-          object: {
-            type: 'BinaryExpression',
-            operator: '+',
-            left: { type: 'Number', value: -6 },
-            right: { type: 'Number', value: 3 }
-          },
-          property: { type: 'Identifier', name: 'db' }
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'gain' },
+        values: [
+          {
+            type: 'PropertyAccess',
+            object: {
+              type: 'BinaryExpression',
+              operator: '+',
+              left: { type: 'Number', value: -6 },
+              right: { type: 'Number', value: 3 }
+            },
+            property: { type: 'Identifier', name: 'db' }
+          }
+        ]
       }
     ])
   })
@@ -148,17 +215,20 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'target' },
-        value: {
-          type: 'PropertyAccess',
-          object: {
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'target' },
+        values: [
+          {
             type: 'PropertyAccess',
-            object: { type: 'Identifier', name: 'bus' },
-            property: { type: 'Identifier', name: 'main' }
-          },
-          property: { type: 'Identifier', name: 'gain' }
-        }
+            object: {
+              type: 'PropertyAccess',
+              object: { type: 'Identifier', name: 'bus' },
+              property: { type: 'Identifier', name: 'main' }
+            },
+            property: { type: 'Identifier', name: 'gain' }
+          }
+        ]
       }
     ])
   })
@@ -169,16 +239,19 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'String',
-          parts: [
-            'a { b ',
-            { type: 'Identifier', name: 'x' },
-            ' c'
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          {
+            type: 'String',
+            parts: [
+              'a { b ',
+              { type: 'Identifier', name: 'x' },
+              ' c'
+            ]
+          }
+        ]
       }
     ])
   })
@@ -189,20 +262,23 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            { type: 'Step', value: 'x', parameters: [] },
-            { type: 'Step', value: 'x', parameters: [] },
-            { type: 'Step', value: '-', parameters: [] },
-            { type: 'Step', value: 'D4', length: { type: 'Number', value: 0.5 }, parameters: [] },
-            { type: 'Step', value: '-', parameters: [] },
-            { type: 'Step', value: 'G4', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              { type: 'Step', value: 'x', parameters: [] },
+              { type: 'Step', value: 'x', parameters: [] },
+              { type: 'Step', value: '-', parameters: [] },
+              { type: 'Step', value: 'D4', length: { type: 'Number', value: 0.5 }, parameters: [] },
+              { type: 'Step', value: '-', parameters: [] },
+              { type: 'Step', value: 'G4', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -213,13 +289,16 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: []
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: []
+          }
+        ]
       }
     ])
   })
@@ -232,16 +311,19 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            { type: 'Step', value: 'C4', parameters: [gate] },
-            { type: 'Step', value: '-', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              { type: 'Step', value: 'C4', parameters: [gate] },
+              { type: 'Step', value: '-', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -255,16 +337,19 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            { type: 'Step', value: 'C4', length, parameters: [gate] },
-            { type: 'Step', value: '-', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              { type: 'Step', value: 'C4', length, parameters: [gate] },
+              { type: 'Step', value: '-', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -279,16 +364,19 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            { type: 'Step', value: 'C4', length, parameters: [gate, velocity] },
-            { type: 'Step', value: '-', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              { type: 'Step', value: 'C4', length, parameters: [gate, velocity] },
+              { type: 'Step', value: '-', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -299,27 +387,30 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            {
-              type: 'Step',
-              value: 'C4',
-              length: { type: 'Number', value: 1.5 },
-              parameters: [
-                {
-                  type: 'Property',
-                  key: { type: 'Identifier', name: 'gate' },
-                  value: { type: 'Number', value: 2.0 }
-                }
-              ]
-            },
-            { type: 'Step', value: '-', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              {
+                type: 'Step',
+                value: 'C4',
+                length: { type: 'Number', value: 1.5 },
+                parameters: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gate' },
+                    value: { type: 'Number', value: 2.0 }
+                  }
+                ]
+              },
+              { type: 'Step', value: '-', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -330,32 +421,35 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            {
-              type: 'Step',
-              value: 'C4',
-              length: { type: 'Number', value: 1.5 },
-              parameters: [
-                {
-                  type: 'Property',
-                  key: { type: 'Identifier', name: 'vel' },
-                  value: { type: 'Number', value: 0.75 }
-                },
-                {
-                  type: 'Property',
-                  key: { type: 'Identifier', name: 'gate' },
-                  value: { type: 'Number', value: 2.0 }
-                }
-              ]
-            },
-            { type: 'Step', value: '-', parameters: [] }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              {
+                type: 'Step',
+                value: 'C4',
+                length: { type: 'Number', value: 1.5 },
+                parameters: [
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'vel' },
+                    value: { type: 'Number', value: 0.75 }
+                  },
+                  {
+                    type: 'Property',
+                    key: { type: 'Identifier', name: 'gate' },
+                    value: { type: 'Number', value: 2.0 }
+                  }
+                ]
+              },
+              { type: 'Step', value: '-', parameters: [] }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -366,37 +460,40 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            {
-              type: 'Pattern',
-              mode: 'parallel',
-              children: [
-                {
-                  type: 'Step',
-                  value: 'C4',
-                  length: { type: 'Number', value: 0.75 },
-                  parameters: []
-                },
-                {
-                  type: 'Step',
-                  value: '-',
-                  length: { type: 'Number', value: 0.25 },
-                  parameters: []
-                }
-              ]
-            },
-            {
-              type: 'Step',
-              value: 'E4',
-              parameters: []
-            }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              {
+                type: 'Pattern',
+                mode: 'parallel',
+                children: [
+                  {
+                    type: 'Step',
+                    value: 'C4',
+                    length: { type: 'Number', value: 0.75 },
+                    parameters: []
+                  },
+                  {
+                    type: 'Step',
+                    value: '-',
+                    length: { type: 'Number', value: 0.25 },
+                    parameters: []
+                  }
+                ]
+              },
+              {
+                type: 'Step',
+                value: 'E4',
+                parameters: []
+              }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -413,22 +510,25 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'pattern' },
-        value: {
-          type: 'Pattern',
-          mode: 'serial',
-          children: [
-            { type: 'Step', value: 'C4', parameters: [] },
-            { type: 'Step', value: '-', parameters: [] },
-            {
-              type: 'BinaryExpression',
-              operator: '*',
-              left: { type: 'Identifier', name: 'some_pattern' },
-              right: { type: 'Number', value: 2 }
-            }
-          ]
-        }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'pattern' },
+        values: [
+          {
+            type: 'Pattern',
+            mode: 'serial',
+            children: [
+              { type: 'Step', value: 'C4', parameters: [] },
+              { type: 'Step', value: '-', parameters: [] },
+              {
+                type: 'BinaryExpression',
+                operator: '*',
+                left: { type: 'Identifier', name: 'some_pattern' },
+                right: { type: 'Number', value: 2 }
+              }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -438,9 +538,9 @@ describe('parser/parser.ts', () => {
     assertResultComplete(result)
 
     const assignment = result.value.children[0]
-    assert.strictEqual(assignment.type, 'Assignment')
-    assert.strictEqual(assignment.value.type, 'Pattern')
-    assert.strictEqual(assignment.value.children[1]?.range.filePath, 'track.cadence')
+    assert.strictEqual(assignment.type, 'Statement')
+    assert.strictEqual(assignment.values[0].type, 'Pattern')
+    assert.strictEqual(assignment.values[0].children[1]?.range.filePath, 'track.cadence')
   })
 
   it('should parse property access expressions', () => {
@@ -454,17 +554,20 @@ describe('parser/parser.ts', () => {
 
       assert.deepStrictEqual(stripRanges(result.value.children), [
         {
-          type: 'Assignment',
-          key: { type: 'Identifier', name: 'x' },
-          value: {
-            type: 'PropertyAccess',
-            object: {
+          type: 'Statement',
+          emit: false,
+          name: { type: 'Identifier', name: 'x' },
+          values: [
+            {
               type: 'PropertyAccess',
-              object: { type: 'Identifier', name: 'object' },
-              property: { type: 'Identifier', name: 'foo' }
-            },
-            property: { type: 'Identifier', name: 'bar' }
-          }
+              object: {
+                type: 'PropertyAccess',
+                object: { type: 'Identifier', name: 'object' },
+                property: { type: 'Identifier', name: 'foo' }
+              },
+              property: { type: 'Identifier', name: 'bar' }
+            }
+          ]
         }
       ])
     }
@@ -476,38 +579,41 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'Curve',
-          children: [
-            {
-              type: 'CurveSegment',
-              curveType: 'hold',
-              parameters: [
-                { type: 'Number', value: 0 }
-              ],
-              length: {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 1 },
-                property: { type: 'Identifier', name: 'bar' }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          {
+            type: 'Curve',
+            children: [
+              {
+                type: 'CurveSegment',
+                curveType: 'hold',
+                parameters: [
+                  { type: 'Number', value: 0 }
+                ],
+                length: {
+                  type: 'PropertyAccess',
+                  object: { type: 'Number', value: 1 },
+                  property: { type: 'Identifier', name: 'bar' }
+                }
+              },
+              {
+                type: 'CurveSegment',
+                curveType: 'lin',
+                parameters: [
+                  { type: 'Number', value: 0 },
+                  { type: 'Number', value: 1 }
+                ],
+                length: {
+                  type: 'PropertyAccess',
+                  object: { type: 'Number', value: 2 },
+                  property: { type: 'Identifier', name: 'beats' }
+                }
               }
-            },
-            {
-              type: 'CurveSegment',
-              curveType: 'lin',
-              parameters: [
-                { type: 'Number', value: 0 },
-                { type: 'Number', value: 1 }
-              ],
-              length: {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 2 },
-                property: { type: 'Identifier', name: 'beats' }
-              }
-            }
-          ]
-        }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -518,33 +624,36 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'foo' },
-        value: {
-          type: 'Curve',
-          children: [
-            {
-              type: 'CurveSegment',
-              curveType: 'hold',
-              parameters: [],
-              length: {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 1 },
-                property: { type: 'Identifier', name: 'bar' }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'foo' },
+        values: [
+          {
+            type: 'Curve',
+            children: [
+              {
+                type: 'CurveSegment',
+                curveType: 'hold',
+                parameters: [],
+                length: {
+                  type: 'PropertyAccess',
+                  object: { type: 'Number', value: 1 },
+                  property: { type: 'Identifier', name: 'bar' }
+                }
+              },
+              {
+                type: 'CurveSegment',
+                curveType: 'hold',
+                parameters: [],
+                length: {
+                  type: 'PropertyAccess',
+                  object: { type: 'Number', value: 2 },
+                  property: { type: 'Identifier', name: 'bars' }
+                }
               }
-            },
-            {
-              type: 'CurveSegment',
-              curveType: 'hold',
-              parameters: [],
-              length: {
-                type: 'PropertyAccess',
-                object: { type: 'Number', value: 2 },
-                property: { type: 'Identifier', name: 'bars' }
-              }
-            }
-          ]
-        }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -565,25 +674,28 @@ describe('parser/parser.ts', () => {
 
       assert.deepStrictEqual(stripRanges(result.value.children), [
         {
-          type: 'Assignment',
-          key: { type: 'Identifier', name: 'x' },
-          value: {
-            type: 'Call',
-            callee: {
-              type: 'PropertyAccess',
-              object: {
-                type: 'Call',
-                callee: {
-                  type: 'PropertyAccess',
-                  object: { type: 'Identifier', name: 'object' },
-                  property: { type: 'Identifier', name: 'method1' }
+          type: 'Statement',
+          emit: false,
+          name: { type: 'Identifier', name: 'x' },
+          values: [
+            {
+              type: 'Call',
+              callee: {
+                type: 'PropertyAccess',
+                object: {
+                  type: 'Call',
+                  callee: {
+                    type: 'PropertyAccess',
+                    object: { type: 'Identifier', name: 'object' },
+                    property: { type: 'Identifier', name: 'method1' }
+                  },
+                  arguments: []
                 },
-                arguments: []
+                property: { type: 'Identifier', name: 'method2' }
               },
-              property: { type: 'Identifier', name: 'method2' }
-            },
-            arguments: []
-          }
+              arguments: []
+            }
+          ]
         }
       ])
     }
@@ -595,20 +707,23 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'x' },
-        value: {
-          type: 'Call',
-          callee: {
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'x' },
+        values: [
+          {
             type: 'Call',
-            callee: { type: 'Identifier', name: 'factory' },
-            arguments: []
-          },
-          arguments: [
-            { type: 'Identifier', name: 'arg1' },
-            { type: 'Identifier', name: 'arg2' }
-          ]
-        }
+            callee: {
+              type: 'Call',
+              callee: { type: 'Identifier', name: 'factory' },
+              arguments: []
+            },
+            arguments: [
+              { type: 'Identifier', name: 'arg1' },
+              { type: 'Identifier', name: 'arg2' }
+            ]
+          }
+        ]
       }
     ])
   })
@@ -628,7 +743,7 @@ describe('parser/parser.ts', () => {
     assertResultComplete(result)
 
     assert.strictEqual(result.value.children.length, 1)
-    assert.strictEqual(result.value.children[0].type, 'Emission')
+    assert.strictEqual(result.value.children[0].type, 'Statement')
 
     const emissions = result.value.children[0].values
 
@@ -653,7 +768,8 @@ describe('parser/parser.ts', () => {
             ],
             children: [
               {
-                type: 'Emission',
+                type: 'Statement',
+                emit: true,
                 values: [
                   { type: 'Identifier', name: 'kick' },
                   { type: 'Identifier', name: 'snare' },
@@ -712,7 +828,8 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource(source))
     assertResultComplete(result)
 
-    assert.strictEqual(result.value.children[0].type, 'Emission')
+    assert.strictEqual(result.value.children[0].type, 'Statement')
+    assert.strictEqual(result.value.children[0].emit, true)
 
     const emissions = result.value.children[0].values
 
@@ -771,7 +888,8 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Emission',
+        type: 'Statement',
+        emit: true,
         values: [
           {
             type: 'Track',
@@ -787,7 +905,8 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Emission',
+        type: 'Statement',
+        emit: true,
         values: [
           {
             type: 'Mixer',
@@ -821,60 +940,71 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Assignment',
-        key: { type: 'Identifier', name: 'my_synth' },
-        value: {
-          type: 'Instrument',
-          children: [
-            {
-              type: 'Assignment',
-              key: { type: 'Identifier', name: 'foo' },
-              value: {
-                type: 'UnaryExpression',
-                operator: '-',
-                argument: {
-                  type: 'PropertyAccess',
-                  object: { type: 'Number', value: 6 },
-                  property: { type: 'Identifier', name: 'db' }
-                }
-              }
-            },
-            {
-              type: 'Emission',
-              values: [
-                {
-                  type: 'Voice',
-                  bindings: {
-                    note: undefined
-                  },
-                  children: [
-                    {
-                      type: 'Assignment',
-                      key: { type: 'Identifier', name: 'bar' },
-                      value: {
-                        type: 'PropertyAccess',
-                        object: { type: 'Number', value: 440 },
-                        property: { type: 'Identifier', name: 'hz' }
-                      }
+        type: 'Statement',
+        emit: false,
+        name: { type: 'Identifier', name: 'my_synth' },
+        values: [
+          {
+            type: 'Instrument',
+            children: [
+              {
+                type: 'Statement',
+                emit: false,
+                name: { type: 'Identifier', name: 'foo' },
+                values: [
+                  {
+                    type: 'UnaryExpression',
+                    operator: '-',
+                    argument: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: 6 },
+                      property: { type: 'Identifier', name: 'db' }
                     }
-                  ]
-                }
-              ]
-            },
-            {
-              type: 'Emission',
-              values: [
-                {
-                  type: 'Voice',
-                  bindings: {
-                    note: { type: 'Identifier', name: 'note' }
-                  },
-                  children: []
-                }
-              ]
-            }
-          ]
-        }
+                  }
+                ]
+              },
+              {
+                type: 'Statement',
+                emit: true,
+                values: [
+                  {
+                    type: 'Voice',
+                    bindings: {
+                      note: undefined
+                    },
+                    children: [
+                      {
+                        type: 'Statement',
+                        emit: false,
+                        name: { type: 'Identifier', name: 'bar' },
+                        values: [
+                          {
+                            type: 'PropertyAccess',
+                            object: { type: 'Number', value: 440 },
+                            property: { type: 'Identifier', name: 'hz' }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                type: 'Statement',
+                emit: true,
+                values: [
+                  {
+                    type: 'Voice',
+                    bindings: {
+                      note: { type: 'Identifier', name: 'note' }
+                    },
+                    children: []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ])
   })

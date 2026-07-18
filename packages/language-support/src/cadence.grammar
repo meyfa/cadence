@@ -58,7 +58,7 @@ Unit[@dynamicPrecedence=1] {
 }
 
 @top Program {
-  (Import | Assignment | Emission)*
+  (Import | statement)*
 }
 
 interpolationExpression {
@@ -181,6 +181,15 @@ Emission {
   ("," expression)*
 }
 
+EmissionAssignment {
+  "&"
+  Assignment
+}
+
+statement {
+  Assignment | Emission | EmissionAssignment
+}
+
 Routing {
   VariableName
   "<<"
@@ -223,7 +232,7 @@ Bus {
   kw<"bus"> VariableDefinition
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
-    "{" (Assignment | Emission | EffectStatement)* "}"
+    "{" (statement | EffectStatement)* "}"
   }
 }
 
@@ -236,7 +245,7 @@ EffectStatement {
 Instrument {
   kw<"instrument">
   InstrumentBlock[group=Block] {
-    "{" (Assignment | Emission)* "}"
+    "{" statement* "}"
   }
 }
 
@@ -244,6 +253,6 @@ Voice {
   kw<"voice">
   VariableDefinition?
   VoiceBlock[group=Block] {
-    "{" (Assignment | Emission)* "}"
+    "{" statement* "}"
   }
 }

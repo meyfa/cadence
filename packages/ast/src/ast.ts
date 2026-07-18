@@ -114,9 +114,20 @@ export interface Assignment extends ASTNode {
   readonly value: Expression
 }
 
-export interface Emission extends ASTNode {
-  readonly type: 'Emission'
-  readonly values: readonly Expression[]
+export type Statement = NamedStatement | UnnamedStatement
+
+interface NamedStatement extends ASTNode {
+  readonly type: 'Statement'
+  readonly emit: boolean
+  readonly name: Identifier
+  readonly values: readonly [Expression]
+}
+
+interface UnnamedStatement extends ASTNode {
+  readonly type: 'Statement'
+  readonly emit: true
+  readonly name?: undefined
+  readonly values: readonly [Expression, ...Expression[]]
 }
 
 // Domain Types
@@ -131,7 +142,7 @@ export interface Bus extends ASTNode {
   readonly type: 'Bus'
   readonly name: Identifier
   readonly properties: ArgumentList
-  readonly children: ReadonlyArray<Assignment | Emission | EffectStatement>
+  readonly children: ReadonlyArray<Statement | EffectStatement>
 }
 
 export interface EffectStatement extends ASTNode {
@@ -167,12 +178,12 @@ export interface Automation extends ASTNode {
 
 export interface Instrument extends ASTNode {
   readonly type: 'Instrument'
-  readonly children: ReadonlyArray<Assignment | Emission>
+  readonly children: readonly Statement[]
 }
 
 export interface Voice extends ASTNode {
   readonly type: 'Voice'
-  readonly children: ReadonlyArray<Assignment | Emission>
+  readonly children: readonly Statement[]
   readonly bindings: {
     readonly note?: Identifier
   }
@@ -183,7 +194,7 @@ export interface Voice extends ASTNode {
 export interface Program extends ASTNode {
   readonly type: 'Program'
   readonly imports: readonly Import[]
-  readonly children: ReadonlyArray<Assignment | Emission>
+  readonly children: readonly Statement[]
 }
 
 // Factory
@@ -223,7 +234,7 @@ export interface NodeByType {
 
   Property: Property
   Assignment: Assignment
-  Emission: Emission
+  Statement: Statement
 
   Mixer: Mixer
   Bus: Bus
