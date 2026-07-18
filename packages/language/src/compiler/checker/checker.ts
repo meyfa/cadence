@@ -229,24 +229,6 @@ function checkStatement (scope: MutableScope, statement: ast.Statement): Checked
   return { errors, emissions }
 }
 
-function checkAssignment (scope: MutableScope, assignment: ast.Assignment): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  const duplicate = scope.resolutions.has(assignment.key.name)
-  if (duplicate) {
-    errors.push(new CompileError(`Identifier "${assignment.key.name}" is already defined`, assignment.key.range))
-  }
-
-  const expressionCheck = checkExpression(scope, assignment.value)
-  errors.push(...expressionCheck.errors)
-
-  if (!duplicate && expressionCheck.result != null) {
-    scope.resolutions.set(assignment.key.name, expressionCheck.result)
-  }
-
-  return errors
-}
-
 function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
   switch (expression.type) {
     case 'Identifier':
@@ -567,6 +549,8 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
   return { errors, result: MixerFacet.type() }
 }
 
+const busInputType = makeUnion(InstrumentFacet.type(), BusFacet.type())
+
 function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
   const busScope = createLocalScope(scope)
   const errors: CompileError[] = []
@@ -588,8 +572,7 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
         errors.push(...statement.errors)
 
         for (const emission of statement.emissions) {
-          const options = makeUnion(InstrumentFacet.type(), BusFacet.type())
-          errors.push(...checkType(options, emission.type, emission.range))
+          errors.push(...checkType(busInputType, emission.type, emission.range))
         }
 
         break
@@ -672,6 +655,8 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
   return { errors, result: TrackFacet.type() }
 }
 
+const partEmissionType = makeUnion(RoutingFacet.type(), AutomationFacet.type())
+
 function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
   const partScope = createLocalScope(scope)
   const errors: CompileError[] = []
@@ -679,25 +664,11 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
   errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
 
   for (const child of part.children) {
-    switch (child.type) {
-      case 'Assignment':
-        errors.push(...checkAssignment(partScope, child))
-        break
+    const statement = checkStatement(partScope, child)
+    errors.push(...statement.errors)
 
-      case 'Routing': {
-        const routingCheck = checkRouting(partScope, child)
-        errors.push(...routingCheck.errors)
-        break
-      }
-
-      case 'Automation': {
-        const automationCheck = checkAutomation(partScope, child)
-        errors.push(...automationCheck.errors)
-        break
-      }
-
-      default:
-        assertNever(child)
+    for (const emission of statement.emissions) {
+      errors.push(...checkType(partEmissionType, emission.type, emission.range))
     }
   }
 

@@ -543,6 +543,25 @@ describe('parser/parser.ts', () => {
     assert.strictEqual(assignment.values[0].children[1]?.range.filePath, 'track.cadence')
   })
 
+  it('should parse instrument routing expressions', () => {
+    const result = parse(lexSource('& drums << my_pattern'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: true,
+        values: [
+          {
+            type: 'Routing',
+            source: { type: 'Identifier', name: 'my_pattern' },
+            destination: { type: 'Identifier', name: 'drums' }
+          }
+        ]
+      }
+    ])
+  })
+
   it('should parse property access expressions', () => {
     const nonParenthesized = 'x = object.foo.bar'
 

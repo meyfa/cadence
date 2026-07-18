@@ -144,11 +144,6 @@ function processStatement (scope: MutableScope, statement: ast.Statement): reado
   return statement.emit ? values : []
 }
 
-function processAssignment (scope: MutableScope, assignment: ast.Assignment): void {
-  assert(!scope.resolutions.has(assignment.key.name))
-  scope.resolutions.set(assignment.key.name, resolve(scope, assignment.value))
-}
-
 /**
  * Resolve an expression to a value within the given scope. Since this expression (or sub-expressions) may call
  * functions, the scope may be updated.
@@ -585,21 +580,14 @@ function generatePart (scope: Scope, part: ast.Part): Value {
   const automations: Automation[] = []
 
   for (const child of part.children) {
-    switch (child.type) {
-      case 'Assignment':
-        processAssignment(partScope, child)
-        break
-
-      case 'Routing':
-        routings.push(RoutingFacet.get(resolve(partScope, child)))
-        break
-
-      case 'Automation':
-        automations.push(AutomationFacet.get(resolve(partScope, child)))
-        break
-
-      default:
-        assertNever(child)
+    for (const emission of processStatement(partScope, child)) {
+      if (RoutingFacet.has(emission)) {
+        routings.push(RoutingFacet.get(emission))
+      } else if (AutomationFacet.has(emission)) {
+        automations.push(AutomationFacet.get(emission))
+      } else {
+        fail()
+      }
     }
   }
 

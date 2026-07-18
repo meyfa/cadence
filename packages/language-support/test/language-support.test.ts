@@ -127,7 +127,7 @@ describe('language-support.ts', () => {
     const source = [
       '& track {',
       '  & part drums {',
-      '    drums << my_pattern',
+      '    & drums << my_pattern',
       '  }',
       '}',
       ''
