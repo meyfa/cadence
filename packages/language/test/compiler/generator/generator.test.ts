@@ -258,7 +258,7 @@ describe('compiler/generator/generator.ts', () => {
       '& track {',
       '  & part intro (4.bars) {',
       '    my_pattern = [C4 D4]',
-      '    & synth << my_pattern',
+      '    & play(synth, my_pattern)',
       '  }',
       '}'
     ].join('\n')
@@ -295,7 +295,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track {',
       '  & part (4.bars) {',
-      '    & synth << [C4(0.5):2 D4(1, vel: 0.75) -]',
+      '    & play(synth, [C4(0.5):2 D4(1, vel: 0.75) -])',
       '  }',
       '}'
     ].join('\n')
@@ -316,7 +316,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       '& track {',
       '  & part (4.bars) {',
-      '    & synth << [C4(vel: 1.5):2 D4(vel: -0.5)]',
+      '    & play(synth, [C4(vel: 1.5):2 D4(vel: -0.5)])',
       '  }',
       '}'
     ].join('\n')

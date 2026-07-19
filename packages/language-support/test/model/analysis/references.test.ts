@@ -47,7 +47,7 @@ describe('model/analysis/references.ts', () => {
       'kick = sample("/samples/kick.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    & kick << [x---]',
+      '    & play(kick, [x---])',
       '  }',
       '}',
       ''
@@ -55,7 +55,7 @@ describe('model/analysis/references.ts', () => {
 
     const model = analyzeSource(source)
 
-    const position = source.lastIndexOf('kick <<')
+    const position = source.lastIndexOf('kick, ')
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)
 

@@ -73,7 +73,8 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should accept global builtins', () => {
       const source = [
-        'foo = automate'
+        'foo = play',
+        'bar = automate'
       ].join('\n')
 
       assertValid(source)
@@ -81,8 +82,12 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should allow shadowing of global builtins', () => {
       const source = [
-        'automate = 42',
-        'foo = automate'
+        'play = 1',
+        'foo = play',
+        '',
+        'automate = 2',
+        'bar = automate',
+        ''
       ].join('\n')
 
       assertValid(source)
@@ -235,6 +240,19 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'my_pattern = [C4 E4 G4].loop()',
         'my_filled_pattern = my_pattern.fill(2.bars)'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept pattern to instrument routing', () => {
+      const source = [
+        'use "instruments" as *',
+        '& track {',
+        '  & part (1.bar) {',
+        '    & play(sine(), [C4 E4 G4])',
+        '  }',
+        '}'
       ].join('\n')
 
       assertValid(source)

@@ -13,7 +13,7 @@ describe('unused-variable/operation.ts', () => {
       'unused = sample("/samples/unused.wav")',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    & used << [x---]',
+      '    & play(used, [x---])',
       '  }',
       '}',
       ''

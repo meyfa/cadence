@@ -201,9 +201,6 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Part':
       return generatePart(scope, expression)
 
-    case 'Routing':
-      return generateRouting(scope, expression)
-
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
 
@@ -633,16 +630,6 @@ function applyAutomation (top: GlobalScope, automation: Automation, options: Ren
 
   const points = mergeCurvePoints(existing.points, rendered)
   top.automations.set(parameterId, { ...existing, points })
-}
-
-function generateRouting (scope: Scope, expression: ast.Routing): Value {
-  const destination = InstrumentFacet.get(resolve(scope, expression.destination))
-  const source = PatternFacet.get(resolve(scope, expression.source))
-
-  return RoutingFacet.type().of({
-    destination: { type: 'instrument', id: destination.id },
-    source: { type: 'pattern', value: source }
-  })
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {

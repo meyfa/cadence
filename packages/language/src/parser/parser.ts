@@ -338,6 +338,7 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
 )
 
 const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
+  identifier_,
   number_,
   string_,
   serialPattern_,
@@ -347,9 +348,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => mixer_),
   p.recursive(() => bus_),
   p.recursive(() => track_),
-  p.recursive(() => part_),
-  p.recursive(() => routing_),
-  identifier_
+  p.recursive(() => part_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -561,15 +560,6 @@ const statement_ = p.choice<Token, unknown, ast.Statement>(
   plainAssignment_,
   emissionAssignment_,
   plainEmission_
-)
-
-const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
-  identifier_,
-  literal('<<'),
-  expression_,
-  (destination, _arrow, source) => {
-    return ast.make('Routing', combineSourceRanges(destination, source), { destination, source })
-  }
 )
 
 const part_: p.Parser<Token, unknown, ast.Part> = p.abc(

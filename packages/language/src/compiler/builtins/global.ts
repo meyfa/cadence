@@ -1,10 +1,42 @@
 import type { ParameterError } from '../../type-system/base/function.ts'
 import { AutomationFacet } from '../../type-system/domain/automation.ts'
 import { CurveFacet } from '../../type-system/domain/curve.ts'
+import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
+import { PatternFacet } from '../../type-system/domain/pattern.ts'
+import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { Functions } from '../../type-system/helpers.ts'
 import { makeSchema } from '../../type-system/schema.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
+
+const play = Functions.of({
+  summary: 'Sends notes from a pattern to the target instrument.',
+
+  parameters: makeSchema([
+    { name: 'target', type: InstrumentFacet.type(), required: true },
+    { name: 'pattern', type: PatternFacet.type(), required: true }
+  ]),
+
+  returnType: RoutingFacet.type(),
+
+  effects: { blocking: false },
+
+  invoke: (_context, { target, pattern }) => {
+    const targetValue = InstrumentFacet.get(target)
+    const patternValue = PatternFacet.get(pattern)
+
+    return RoutingFacet.type().of({
+      source: {
+        type: 'pattern',
+        value: patternValue
+      },
+      destination: {
+        type: 'instrument',
+        id: targetValue.id
+      }
+    })
+  }
+})
 
 const automate = Functions.of({
   summary: 'Automates a parameter with a curve over time.',
@@ -53,5 +85,6 @@ const automate = Functions.of({
 })
 
 export const globalBuiltins: ReadonlyMap<string, Value> = new Map([
+  ['play', play],
   ['automate', automate]
 ])
