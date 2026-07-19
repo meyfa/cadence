@@ -349,7 +349,6 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => track_),
   p.recursive(() => part_),
   p.recursive(() => routing_),
-  p.recursive(() => automation_),
   identifier_
 )
 
@@ -570,20 +569,6 @@ const routing_: p.Parser<Token, unknown, ast.Routing> = p.abc(
   expression_,
   (destination, _arrow, source) => {
     return ast.make('Routing', combineSourceRanges(destination, source), { destination, source })
-  }
-)
-
-const automation_: p.Parser<Token, unknown, ast.Automation> = p.ab(
-  combine2(
-    keyword('automate'),
-    expression_
-  ),
-  combine2(
-    expect(keyword('as'), 'keyword "as"'),
-    expression_
-  ),
-  ([_automate, target], [_as, curve]) => {
-    return ast.make('Automation', combineSourceRanges(_automate, curve), { target, curve })
   }
 )
 

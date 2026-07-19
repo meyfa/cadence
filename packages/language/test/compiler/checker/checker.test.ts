@@ -71,6 +71,23 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept global builtins', () => {
+      const source = [
+        'foo = automate'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow shadowing of global builtins', () => {
+      const source = [
+        'automate = 42',
+        'foo = automate'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept a program with one track and unique parts', () => {
       const source = [
         '& track {',
@@ -271,7 +288,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         '& track {',
         '  & part intro (4.bars) {',
-        '    & automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
+        '    & automate(bus.bar.pan, ~[lin(-1, 1):1.bar])',
         '  }',
         '}'
       ].join('\n')
@@ -306,7 +323,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         '& track {',
         '  & part intro (4.bars) {',
-        '    & automate bus.main.gain as ~[lin((-20).db, 0.db):4.bars]',
+        '    & automate(bus.main.gain, ~[lin((-20).db, 0.db):4.bars])',
         '  }',
         '}'
       ].join('\n')
@@ -324,7 +341,7 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         '& track {',
         '  & part intro (4.bars) {',
-        '    & automate bus.main.lp.frequency as ~[lin(100.hz, 4000.hz):4.bars]',
+        '    & automate(bus.main.lp.frequency, ~[lin(100.hz, 4000.hz):4.bars])',
         '  }',
         '}'
       ].join('\n')
@@ -577,19 +594,19 @@ describe('compiler/checker/checker.ts', () => {
       ])
 
       assertErrorMessages('my_pattern = [C4("foo")]', [
-        'Expected type number, got string'
+        'Expected type number for argument "gate", got string'
       ])
 
       assertErrorMessages('my_pattern = [C4(gate: "foo")]', [
-        'Expected type number, got string'
+        'Expected type number for argument "gate", got string'
       ])
 
       assertErrorMessages('my_pattern = [C4(vel: "foo")]', [
-        'Expected type number, got string'
+        'Expected type number for argument "vel", got string'
       ])
 
       assertErrorMessages('my_pattern = [C4(0.5, "foo")]', [
-        'Expected type number, got string'
+        'Expected type number for argument "vel", got string'
       ])
     })
 
@@ -657,13 +674,29 @@ describe('compiler/checker/checker.ts', () => {
         'some_value = ""',
         '& track {',
         '  & part intro (4.bars) {',
-        '    & automate some_value as ~[hold(-60):1.bar]',
+        '    & automate(some_value, ~[hold(-60):1.bar])',
         '  }',
         '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Expected type parameter, got string'
+        'Expected type parameter for argument "target", got string'
+      ])
+    })
+
+    it('should reject automations with mismatched units', () => {
+      const source = [
+        'use "effects" as fx',
+        'lp = fx.lowpass(1000.hz)',
+        '& track {',
+        '  & part intro (4.bars) {',
+        '    & automate(lp.frequency, ~[hold(0.db):1.bar])',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Expected type curve(hz) for argument "curve", got curve(db)'
       ])
     })
 
@@ -798,7 +831,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "bar" is already defined',
-        'Expected type number(hz), got number'
+        'Expected type number(hz) for argument "frequency", got number'
       ])
     })
 
@@ -854,7 +887,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined',
-        'Expected type number(hz), got record(frequency, gate, velocity)'
+        'Expected type number(hz) for argument "frequency", got record(frequency, gate, velocity)'
       ])
     })
 
@@ -952,7 +985,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo_gain = bus.foo.gain',
         '& track {',
         '  & part intro (4.bars) {',
-        '    & automate bus.bar.pan as ~[lin(-1, 1):1.bar]',
+        '    & automate(bus.bar.pan, ~[lin(-1, 1):1.bar])',
         '  }',
         '}',
         '& mixer {',

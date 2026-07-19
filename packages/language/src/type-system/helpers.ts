@@ -17,7 +17,8 @@ export const Functions = {
     const type = FunctionFacet.with({
       parameters: value.parameters,
       returnType: value.returnType,
-      effects: value.effects
+      effects: value.effects,
+      check: value.check
     }).type()
 
     return type.of(value)

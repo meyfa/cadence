@@ -149,7 +149,7 @@ AccessOrCall {
 }
 
 expression {
-  Automation | Routing | AccessOrCall | UnaryExpression | BinaryExpression
+  Routing | AccessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
@@ -193,13 +193,6 @@ statement {
 Routing {
   VariableName
   "<<"
-  expression
-}
-
-Automation {
-  kw<"automate">
-  expression
-  kw<"as">
   expression
 }
 

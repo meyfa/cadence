@@ -58,7 +58,6 @@ export interface NodeByType {
 
   // Combination Types
   Routing: Routing
-  Automation: Automation
 }
 
 export type AnyNode = NodeByType[keyof NodeByType]
@@ -75,8 +74,7 @@ export type Value =
   Part |
   Instrument |
   Voice |
-  Routing |
-  Automation
+  Routing
 
 export type Expression =
   Value |
@@ -251,10 +249,4 @@ export interface Routing extends ASTNode {
   readonly type: 'Routing'
   readonly destination: Identifier
   readonly source: Expression
-}
-
-export interface Automation extends ASTNode {
-  readonly type: 'Automation'
-  readonly target: Expression
-  readonly curve: Expression
 }

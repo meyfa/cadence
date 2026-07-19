@@ -61,7 +61,7 @@ clap_pattern = [x:8]
     & snare << snare_pattern
     & synth << arp_intro
 
-    & automate synth.gain as ~[hold(-60.db):2.bars lin(0.db):2.bars]
+    & automate(synth.gain, ~[hold(-60.db):2.bars lin(0.db):2.bars])
   }
 
   & part main (8.bars) {

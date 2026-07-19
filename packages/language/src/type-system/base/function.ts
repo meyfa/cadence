@@ -6,10 +6,27 @@ export interface Effects {
   readonly blocking: boolean
 }
 
+export interface ParameterError {
+  readonly parameter: string
+  readonly message: string
+}
+
 export interface Function<S extends Schema = Schema, R extends FacetType = FacetType, Context = never> {
   readonly parameters: S
   readonly returnType: R
   readonly effects: Effects
+
+  /**
+   * Perform additional static checks on the argument types,
+   * such as validating that generics are compatible between the arguments.
+   *
+   * If an argument is missing from the map, do not report an error; this will already be handled by the schema validation.
+   */
+  readonly check?: (args: ReadonlyMap<string, FacetType>) => readonly ParameterError[]
+
+  /**
+   * Compute the return value of the function given the provided arguments.
+   */
   readonly invoke: (context: Context, args: InferSchema<S>) => ValueForType<R>
 
   // documentation
@@ -20,6 +37,7 @@ interface FunctionSpec<S extends Schema = Schema, R extends FacetType = FacetTyp
   readonly parameters: S
   readonly returnType: R
   readonly effects: Effects
+  readonly check?: (args: ReadonlyMap<string, FacetType>) => readonly ParameterError[]
 }
 
 interface FunctionSpecGeneric extends CustomComparable {
