@@ -876,7 +876,7 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
 
 function checkArgumentList (
   scope: Scope,
-  args: ast.ArgumentList,
+  args: readonly ast.Argument[],
   schema: Schema,
   range: SourceRange,
   kind = 'argument'
@@ -891,22 +891,22 @@ function checkArgumentList (
 
     let spec: SchemaItem | undefined
 
-    if (arg.type === 'Property' || namedStarted) {
+    if (arg.name != null || namedStarted) {
       namedStarted = true
 
-      if (arg.type !== 'Property') {
+      if (arg.name == null) {
         errors.push(new CompileError(`Unexpected positional ${kind} after named ${kind}s`, arg.range))
         continue
       }
 
-      spec = schema.byName.get(arg.key.name)
+      spec = schema.byName.get(arg.name.name)
       if (spec == null) {
-        errors.push(new CompileError(`Unknown ${kind} "${arg.key.name}"`, arg.key.range))
+        errors.push(new CompileError(`Unknown ${kind} "${arg.name.name}"`, arg.name.range))
         continue
       }
 
       if (seen.has(spec.name)) {
-        errors.push(new CompileError(`Duplicate ${kind} named "${arg.key.name}"`, arg.key.range))
+        errors.push(new CompileError(`Duplicate ${kind} named "${arg.name.name}"`, arg.name.range))
         continue
       }
     } else {
@@ -919,13 +919,11 @@ function checkArgumentList (
 
     seen.add(spec.name)
 
-    const value = arg.type === 'Property' ? arg.value : arg
-
-    const expressionCheck = checkExpression(scope, value)
+    const expressionCheck = checkExpression(scope, arg.value)
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result != null) {
-      errors.push(...checkType(spec.type, expressionCheck.result, value.range))
+      errors.push(...checkType(spec.type, expressionCheck.result, arg.value.range))
     }
   }
 

@@ -35,16 +35,25 @@ describe('ast/ast.ts', () => {
     it('should create complex nodes with all required properties', () => {
       const range: SourceRange = { offset: 0, length: 8, line: 1, column: 1 }
 
-      const node = make('Property', range, {
-        key: make('Identifier', range, { name: 'volume' }),
+      const node = make('Argument', range, {
+        name: make('Identifier', range, { name: 'volume' }),
         value: make('Number', range, { value: 0.75 })
       })
 
-      assert.strictEqual(node.type, 'Property')
-      assert.strictEqual(node.key.type, 'Identifier')
-      assert.strictEqual(node.key.name, 'volume')
-      assert.strictEqual(node.value.type, 'Number')
-      assert.strictEqual(node.value.value, 0.75)
+      assert.deepStrictEqual(node, {
+        type: 'Argument',
+        range,
+        name: {
+          type: 'Identifier',
+          range,
+          name: 'volume'
+        },
+        value: {
+          type: 'Number',
+          range,
+          value: 0.75
+        }
+      })
     })
   })
 })

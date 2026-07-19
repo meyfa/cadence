@@ -64,7 +64,7 @@ describe('model/analysis/base.ts', () => {
         { kind: 'definition', scope: 'root', name: 'synth' },
         { kind: 'definition', scope: 'instrument', name: 'custom_property' },
         { kind: 'definition', scope: 'voice', name: 'note' },
-        { kind: 'property-name', scope: 'root', name: 'tempo' },
+        { kind: 'argument-name', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'tempo' },
         { kind: 'definition', scope: 'track', name: 'intro' },
         { kind: 'plain', scope: 'track', name: 'bars' },

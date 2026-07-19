@@ -34,7 +34,7 @@ describe('analysis/query.ts', () => {
         },
         {
           id: '3' as IdentifierId,
-          kind: 'property-name',
+          kind: 'argument-name',
           scopeId: 'root' as ScopeId,
           name: 'baz',
           range: getRangeAt(source, source.indexOf('baz'), 'baz'.length)
