@@ -139,7 +139,7 @@ export type BinaryOperator = typeof binaryOperators[number]
 export interface UnaryExpression extends ASTNode {
   readonly type: 'UnaryExpression'
   readonly operator: UnaryOperator
-  readonly argument: Expression
+  readonly operand: Expression
 }
 
 export interface BinaryExpression extends ASTNode {
@@ -189,7 +189,7 @@ export interface Step extends ASTNode {
   readonly type: 'Step'
   readonly value: StepValue
   readonly length?: Expression
-  readonly parameters: readonly Argument[]
+  readonly arguments: readonly Argument[]
 }
 
 export interface Curve extends ASTNode {
@@ -200,7 +200,7 @@ export interface Curve extends ASTNode {
 export interface CurveSegment extends ASTNode {
   readonly type: 'CurveSegment'
   readonly curveType: string
-  readonly parameters: readonly Expression[]
+  readonly arguments: readonly Expression[]
   readonly length: Expression
 }
 
@@ -208,27 +208,27 @@ export interface CurveSegment extends ASTNode {
 
 export interface Mixer extends ASTNode {
   readonly type: 'Mixer'
-  readonly properties: readonly Argument[]
+  readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Bus extends ASTNode {
   readonly type: 'Bus'
   readonly name?: Identifier
-  readonly properties: readonly Argument[]
+  readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Track extends ASTNode {
   readonly type: 'Track'
-  readonly properties: readonly Argument[]
+  readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Part extends ASTNode {
   readonly type: 'Part'
   readonly name?: Identifier
-  readonly properties: readonly Argument[]
+  readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
 

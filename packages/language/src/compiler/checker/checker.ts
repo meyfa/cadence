@@ -371,7 +371,7 @@ function checkStep (scope: Scope, step: ast.Step): readonly CompileError[] {
     }
   }
 
-  errors.push(...checkArgumentList(scope, step.parameters, stepSchema, step.range))
+  errors.push(...checkArgumentList(scope, step.arguments, stepSchema, step.range))
 
   return errors
 }
@@ -440,21 +440,21 @@ function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious
     return { errors: [new CompileError(`Unknown curve type "${segment.curveType}"`, segment.range)] }
   }
 
-  const actualParameters = segment.parameters.length
+  const actualParameters = segment.arguments.length
   const omittedFirstParameter = expectedParameters > 0 && actualParameters === expectedParameters - 1
 
   if (omittedFirstParameter && !hasPrevious) {
-    return { errors: [new CompileError('First curve segment cannot omit its first parameter', segment.range)] }
+    return { errors: [new CompileError('First curve segment cannot omit its first argument', segment.range)] }
   }
 
   if (!omittedFirstParameter && actualParameters !== expectedParameters) {
-    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'parameter' : 'parameters'} for ${segment.curveType} curve, got ${segment.parameters.length}`
+    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'argument' : 'arguments'} for ${segment.curveType} curve, got ${segment.arguments.length}`
     return { errors: [new CompileError(message, segment.range)] }
   }
 
   const units: Array<Unit | undefined> = []
 
-  for (const point of segment.parameters) {
+  for (const point of segment.arguments) {
     const pointCheck = checkExpression(scope, point)
     errors.push(...pointCheck.errors)
 
@@ -476,7 +476,7 @@ function checkCurveSegment (scope: Scope, segment: ast.CurveSegment, hasPrevious
 
   const expected = NumberFacet.with(firstUnit).type()
   for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
-    errors.push(...checkType(expected, NumberFacet.with(units[i]).type(), segment.parameters[i].range))
+    errors.push(...checkType(expected, NumberFacet.with(units[i]).type(), segment.arguments[i].range))
   }
 
   return { errors, result: firstUnit }
@@ -571,7 +571,7 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
     errors.push(new CompileError('Cannot construct a mixer in a realtime context', expression.range))
   }
 
-  errors.push(...checkArgumentList(mixerScope, expression.properties, mixerSchema, expression.range, 'property'))
+  errors.push(...checkArgumentList(mixerScope, expression.arguments, mixerSchema, expression.range))
 
   const properties = new Map<string, FacetType>()
 
@@ -599,7 +599,7 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
   const busScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  errors.push(...checkArgumentList(scope, bus.properties, busSchema, bus.range, 'property'))
+  errors.push(...checkArgumentList(scope, bus.arguments, busSchema, bus.range))
 
   const properties = new Map<string, FacetType>()
   properties.set('gain', ParameterFacet.with('db').type())
@@ -638,7 +638,7 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
     errors.push(new CompileError('Cannot construct a track in a realtime context', expression.range))
   }
 
-  errors.push(...checkArgumentList(trackScope, expression.properties, trackSchema, expression.range, 'property'))
+  errors.push(...checkArgumentList(trackScope, expression.arguments, trackSchema, expression.range))
 
   const properties = new Map<string, FacetType>()
 
@@ -666,7 +666,7 @@ function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
   const partScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  errors.push(...checkArgumentList(scope, part.properties, partSchema, part.range, 'property'))
+  errors.push(...checkArgumentList(scope, part.arguments, partSchema, part.range))
 
   const properties = new Map<string, FacetType>()
 
@@ -736,7 +736,7 @@ function checkAutomation (scope: Scope, expression: ast.Automation): Checked<Fac
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {
-  const operandCheck = checkExpression(scope, expression.argument)
+  const operandCheck = checkExpression(scope, expression.operand)
   const errors = [...operandCheck.errors]
 
   const operand = operandCheck.result
@@ -878,8 +878,7 @@ function checkArgumentList (
   scope: Scope,
   args: readonly ast.Argument[],
   schema: Schema,
-  range: SourceRange,
-  kind = 'argument'
+  range: SourceRange
 ): readonly CompileError[] {
   const errors: CompileError[] = []
 
@@ -895,24 +894,24 @@ function checkArgumentList (
       namedStarted = true
 
       if (arg.name == null) {
-        errors.push(new CompileError(`Unexpected positional ${kind} after named ${kind}s`, arg.range))
+        errors.push(new CompileError(`Unexpected positional argument after named arguments`, arg.range))
         continue
       }
 
       spec = schema.byName.get(arg.name.name)
       if (spec == null) {
-        errors.push(new CompileError(`Unknown ${kind} "${arg.name.name}"`, arg.name.range))
+        errors.push(new CompileError(`Unknown argument "${arg.name.name}"`, arg.name.range))
         continue
       }
 
       if (seen.has(spec.name)) {
-        errors.push(new CompileError(`Duplicate ${kind} named "${arg.name.name}"`, arg.name.range))
+        errors.push(new CompileError(`Duplicate argument named "${arg.name.name}"`, arg.name.range))
         continue
       }
     } else {
       spec = schema.items.at(index)
       if (spec == null) {
-        errors.push(new CompileError(`Unknown positional ${kind}`, arg.range))
+        errors.push(new CompileError(`Unknown positional argument`, arg.range))
         continue
       }
     }
@@ -929,7 +928,7 @@ function checkArgumentList (
 
   for (const spec of schema.items) {
     if (spec.required && !seen.has(spec.name)) {
-      errors.push(new CompileError(`Missing required ${kind} "${spec.name}"`, range))
+      errors.push(new CompileError(`Missing required argument "${spec.name}"`, range))
     }
   }
 
