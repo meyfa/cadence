@@ -152,7 +152,7 @@ describe('go-to-definition/operation.ts', () => {
     const source = [
       '& track (120.bpm) {',
       '  & part foo {',
-      '    & automate bus.foo.gain as ~[hold(-60.db):3 lin(0.db):1]',
+      '    & automate(bus.foo.gain, ~[hold(-60.db):3 lin(0.db):1])',
       '  }',
       '}',
       '& mixer {',
@@ -191,7 +191,7 @@ describe('go-to-definition/operation.ts', () => {
       '',
       '& track (120.bpm) {',
       '  & part p {',
-      '    & automate synth.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
+      '    & automate(synth.gain, ~[hold(-60.db) lin(-60.db, 0.db)])',
       '  }',
       '}',
       ''

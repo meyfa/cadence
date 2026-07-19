@@ -36,6 +36,7 @@ import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { globalBuiltins } from '../builtins/global.ts'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -56,7 +57,13 @@ export function check (program: ast.Program): CheckResult {
     return failure(importResult.errors)
   }
 
-  const globalScope = createGlobalScope(importResult.result)
+  // global builtins win over imported names
+  const initialResolutions = new Map<string, FacetType>(importResult.result)
+  for (const [name, value] of globalBuiltins) {
+    initialResolutions.set(name, value.type)
+  }
+
+  const globalScope = createGlobalScope(initialResolutions)
   const scope = createLocalScope(globalScope)
 
   const errors: CompileError[] = []
@@ -290,9 +297,6 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Routing':
       return checkRouting(scope, expression)
 
-    case 'Automation':
-      return checkAutomation(scope, expression)
-
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
 
@@ -371,7 +375,8 @@ function checkStep (scope: Scope, step: ast.Step): readonly CompileError[] {
     }
   }
 
-  errors.push(...checkArgumentList(scope, step.arguments, stepSchema, step.range))
+  const argumentListCheck = checkArgumentList(scope, step.arguments, stepSchema, step.range)
+  errors.push(...argumentListCheck.errors)
 
   return errors
 }
@@ -510,19 +515,19 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
   return { errors, result }
 }
 
-function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
+function checkVoice (scope: Scope, expression: ast.Voice): Checked<FacetType> {
   const voiceScope = createLocalScope(scope, { blocking: false })
   const errors: CompileError[] = []
 
-  if (voice.bindings.note != null) {
-    voiceScope.resolutions.set(voice.bindings.note.name, noteType)
+  if (expression.bindings.note != null) {
+    voiceScope.resolutions.set(expression.bindings.note.name, noteType)
   }
 
   const properties = new Map<string, FacetType>()
   let hasEnvelope = false
   let hasOutput = false
 
-  for (const child of voice.children) {
+  for (const child of expression.children) {
     const statement = checkStatement(voiceScope, child, properties)
     errors.push(...statement.errors)
 
@@ -550,11 +555,11 @@ function checkVoice (scope: Scope, voice: ast.Voice): Checked<FacetType> {
   }
 
   if (!hasEnvelope) {
-    errors.push(new CompileError('Voice is missing an envelope', voice.range))
+    errors.push(new CompileError('Voice is missing an envelope', expression.range))
   }
 
   if (!hasOutput) {
-    errors.push(new CompileError('Voice is missing an output', voice.range))
+    errors.push(new CompileError('Voice is missing an output', expression.range))
   }
 
   // Properties cannot be used to extend the voice as the voice is generated at runtime.
@@ -571,7 +576,8 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
     errors.push(new CompileError('Cannot construct a mixer in a realtime context', expression.range))
   }
 
-  errors.push(...checkArgumentList(mixerScope, expression.arguments, mixerSchema, expression.range))
+  const argumentListCheck = checkArgumentList(mixerScope, expression.arguments, mixerSchema, expression.range)
+  errors.push(...argumentListCheck.errors)
 
   const properties = new Map<string, FacetType>()
 
@@ -595,17 +601,18 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
 
 const busEmissionType = makeUnion(InstrumentFacet.type(), BusFacet.type(), EffectFacet.type())
 
-function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
+function checkBus (scope: Scope, expression: ast.Bus): Checked<FacetType> {
   const busScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  errors.push(...checkArgumentList(scope, bus.arguments, busSchema, bus.range))
+  const argumentListCheck = checkArgumentList(busScope, expression.arguments, busSchema, expression.range)
+  errors.push(...argumentListCheck.errors)
 
   const properties = new Map<string, FacetType>()
   properties.set('gain', ParameterFacet.with('db').type())
   properties.set('pan', ParameterFacet.with(undefined).type())
 
-  for (const child of bus.children) {
+  for (const child of expression.children) {
     const statement = checkStatement(busScope, child, properties)
     errors.push(...statement.errors)
 
@@ -618,12 +625,12 @@ function checkBus (scope: Scope, bus: ast.Bus): Checked<FacetType> {
 
   const result = makeType(BusFacet, RecordFacet.with(Object.fromEntries(properties)))
 
-  if (bus.name != null) {
+  if (expression.name != null) {
     const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-    if (namespace.resolutions.has(bus.name.name)) {
-      errors.push(new CompileError(`Duplicate bus named "${bus.name.name}"`, bus.range))
+    if (namespace.resolutions.has(expression.name.name)) {
+      errors.push(new CompileError(`Duplicate bus named "${expression.name.name}"`, expression.range))
     } else {
-      namespace.resolutions.set(bus.name.name, result)
+      namespace.resolutions.set(expression.name.name, result)
     }
   }
 
@@ -638,7 +645,8 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
     errors.push(new CompileError('Cannot construct a track in a realtime context', expression.range))
   }
 
-  errors.push(...checkArgumentList(trackScope, expression.arguments, trackSchema, expression.range))
+  const argumentListCheck = checkArgumentList(trackScope, expression.arguments, trackSchema, expression.range)
+  errors.push(...argumentListCheck.errors)
 
   const properties = new Map<string, FacetType>()
 
@@ -662,15 +670,16 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
 
 const partEmissionType = makeUnion(RoutingFacet.type(), AutomationFacet.type())
 
-function checkPart (scope: Scope, part: ast.Part): Checked<FacetType> {
+function checkPart (scope: Scope, expression: ast.Part): Checked<FacetType> {
   const partScope = createLocalScope(scope)
   const errors: CompileError[] = []
 
-  errors.push(...checkArgumentList(scope, part.arguments, partSchema, part.range))
+  const argumentListCheck = checkArgumentList(partScope, expression.arguments, partSchema, expression.range)
+  errors.push(...argumentListCheck.errors)
 
   const properties = new Map<string, FacetType>()
 
-  for (const child of part.children) {
+  for (const child of expression.children) {
     const statement = checkStatement(partScope, child, properties)
     errors.push(...statement.errors)
 
@@ -705,34 +714,6 @@ function checkRouting (scope: Scope, routing: ast.Routing): Checked<FacetType> {
   }
 
   return { errors, result: RoutingFacet.type() }
-}
-
-function checkAutomation (scope: Scope, expression: ast.Automation): Checked<FacetType> {
-  const errors: CompileError[] = []
-
-  const targetCheck = checkExpression(scope, expression.target)
-  errors.push(...targetCheck.errors)
-  if (targetCheck.result != null) {
-    errors.push(...checkType(ParameterFacet.type(), targetCheck.result, expression.target.range))
-  }
-
-  const curveCheck = checkExpression(scope, expression.curve)
-  errors.push(...curveCheck.errors)
-
-  if (curveCheck.result == null) {
-    return { errors, result: AutomationFacet.type() }
-  }
-
-  let curveType = CurveFacet.type()
-
-  if (targetCheck.result != null && ParameterFacet.is(targetCheck.result)) {
-    const parameterType = ParameterFacet.detail(targetCheck.result)
-    curveType = CurveFacet.with(parameterType).type()
-  }
-
-  errors.push(...checkType(curveType, curveCheck.result, expression.curve.range))
-
-  return { errors, result: AutomationFacet.type() }
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {
@@ -859,9 +840,7 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
     return { errors }
   }
 
-  const { parameters, returnType, effects } = FunctionFacet.detail(callee)
-
-  errors.push(...checkArgumentList(scope, expression.arguments, parameters, expression.range))
+  const { parameters, returnType, effects, check: checkParameters } = FunctionFacet.detail(callee)
 
   if (!scope.allowedEffects.blocking && effects.blocking) {
     const functionName = tryGetFunctionName(expression.callee)
@@ -871,7 +850,24 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
     errors.push(new CompileError(message, expression.range))
   }
 
+  const argumentListCheck = checkArgumentList(scope, expression.arguments, parameters, expression.range)
+  errors.push(...argumentListCheck.errors)
+
+  if (checkParameters != null) {
+    const parameterErrors = checkParameters(argumentListCheck.types)
+    for (const { parameter, message } of parameterErrors) {
+      const range = argumentListCheck.ranges.get(parameter)
+      errors.push(new CompileError(message, range))
+    }
+  }
+
   return { errors, result: returnType }
+}
+
+interface ArgumentListCheckResult {
+  readonly errors: readonly CompileError[]
+  readonly types: ReadonlyMap<string, FacetType>
+  readonly ranges: ReadonlyMap<string, SourceRange>
 }
 
 function checkArgumentList (
@@ -879,8 +875,10 @@ function checkArgumentList (
   args: readonly ast.Argument[],
   schema: Schema,
   range: SourceRange
-): readonly CompileError[] {
+): ArgumentListCheckResult {
   const errors: CompileError[] = []
+  const types = new Map<string, FacetType>()
+  const ranges = new Map<string, SourceRange>()
 
   const seen = new Set<string>()
   let namedStarted = false
@@ -922,7 +920,12 @@ function checkArgumentList (
     errors.push(...expressionCheck.errors)
 
     if (expressionCheck.result != null) {
-      errors.push(...checkType(spec.type, expressionCheck.result, arg.value.range))
+      if (!spec.type.is(expressionCheck.result)) {
+        errors.push(new CompileError(`Expected type ${spec.type.format()} for argument "${spec.name}", got ${expressionCheck.result.format()}`, arg.value.range))
+      } else {
+        types.set(spec.name, expressionCheck.result)
+        ranges.set(spec.name, arg.value.range)
+      }
     }
   }
 
@@ -932,7 +935,7 @@ function checkArgumentList (
     }
   }
 
-  return errors
+  return { errors, types, ranges }
 }
 
 function tryGetFunctionName (callee: ast.Expression): string | undefined {

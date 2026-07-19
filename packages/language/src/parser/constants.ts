@@ -7,7 +7,6 @@ export const keywords = Object.freeze([
   'mixer',
   'bus',
   'effect',
-  'automate',
   'instrument',
   'voice'
 ] as const)

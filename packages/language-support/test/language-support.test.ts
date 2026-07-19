@@ -76,7 +76,7 @@ describe('language-support.ts', () => {
       '',
       '& track (tempo: 140.bpm) {',
       '  & part drums {',
-      '    automate lib.gain as ~[hold(-60.db) lin(-60.db, 0.db)]',
+      '    automate(lib.gain, ~[hold(-60.db) lin(-60.db, 0.db)])',
       '  }',
       '}',
       '',

@@ -16,7 +16,6 @@ import { CurveFacet } from '../../type-system/domain/curve.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
 import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
 import { MixerFacet } from '../../type-system/domain/mixer.ts'
-import { ParameterFacet } from '../../type-system/domain/parameter.ts'
 import { PartFacet } from '../../type-system/domain/part.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { RoutingFacet } from '../../type-system/domain/routing.ts'
@@ -42,13 +41,19 @@ import type { GenerateOptions } from './options.ts'
 import { RecordBuilder } from './properties.ts'
 import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
 import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { globalBuiltins } from '../builtins/global.ts'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
  * semantically checked and is valid.
  */
 export function generate (program: CheckedProgram, options: GenerateOptions): Program {
-  const top = createGlobalScope(options, processImports(program.imports))
+  const initialResolutions = new Map(processImports(program.imports))
+  for (const [name, value] of globalBuiltins) {
+    initialResolutions.set(name, value)
+  }
+
+  const top = createGlobalScope(options, initialResolutions)
 
   const scope = createLocalScope(top)
 
@@ -198,9 +203,6 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
     case 'Routing':
       return generateRouting(scope, expression)
-
-    case 'Automation':
-      return generateAutomation(scope, expression)
 
     case 'UnaryExpression':
       return computeUnaryExpression(scope, expression)
@@ -623,23 +625,6 @@ function generatePart (scope: Scope, expression: ast.Part): Value {
     : PartFacet.type().of(part)
 }
 
-function generateRouting (scope: Scope, expression: ast.Routing): Value {
-  const destination = InstrumentFacet.get(resolve(scope, expression.destination))
-  const source = PatternFacet.get(resolve(scope, expression.source))
-
-  return RoutingFacet.type().of({
-    destination: { type: 'instrument', id: destination.id },
-    source: { type: 'pattern', value: source }
-  })
-}
-
-function generateAutomation (scope: Scope, expression: ast.Automation): Value {
-  const target = ParameterFacet.get(resolve(scope, expression.target))
-  const curve = CurveFacet.get(resolve(scope, expression.curve))
-
-  return AutomationFacet.type().of({ parameterId: target.id, curve })
-}
-
 function applyAutomation (top: GlobalScope, automation: Automation, options: RenderCurveOptions): void {
   const { parameterId, curve } = automation
 
@@ -648,6 +633,16 @@ function applyAutomation (top: GlobalScope, automation: Automation, options: Ren
 
   const points = mergeCurvePoints(existing.points, rendered)
   top.automations.set(parameterId, { ...existing, points })
+}
+
+function generateRouting (scope: Scope, expression: ast.Routing): Value {
+  const destination = InstrumentFacet.get(resolve(scope, expression.destination))
+  const source = PatternFacet.get(resolve(scope, expression.source))
+
+  return RoutingFacet.type().of({
+    destination: { type: 'instrument', id: destination.id },
+    source: { type: 'pattern', value: source }
+  })
 }
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {
