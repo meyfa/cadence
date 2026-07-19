@@ -14,5 +14,7 @@ export * from './compiler/checker/checker.ts'
 export * from './compiler/generator/generator.ts'
 
 export type { Documentation } from './library/documentation.ts'
-export { getDocumentation } from './library/documentation.ts'
+export { getGlobalDocumentation, getModuleDocumentation } from './library/documentation.ts'
 export { getStandardModuleNames, getStandardModule } from './library/modules.ts'
+
+export { globalBuiltins } from './compiler/builtins/global.ts'

@@ -1,3 +1,4 @@
+import { globalBuiltins } from '../compiler/builtins/global.ts'
 import type { Function } from '../type-system/base/function.ts'
 import { FunctionFacet } from '../type-system/base/function.ts'
 import type { Module } from '../type-system/base/module.ts'
@@ -11,7 +12,16 @@ export interface Documentation {
   readonly annotations?: string[]
 }
 
-export function getDocumentation (moduleName: string, exportName?: string): Documentation | undefined {
+export function getGlobalDocumentation (name: string): Documentation | undefined {
+  const value = globalBuiltins.get(name)
+  if (value == null) {
+    return undefined
+  }
+
+  return describeValue(name, value)
+}
+
+export function getModuleDocumentation (moduleName: string, exportName?: string): Documentation | undefined {
   const module = getStandardModule(moduleName)
   if (module == null) {
     return undefined

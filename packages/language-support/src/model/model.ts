@@ -123,7 +123,20 @@ export type ResolutionKind = 'binding' | 'import'
 
 // known values
 
-export interface KnownValue {
+export type KnownValue = KnownGlobal | KnownModule | KnownModuleValue
+
+interface KnownGlobal {
+  readonly type: 'global'
+  readonly name: string
+}
+
+interface KnownModule {
+  readonly type: 'module'
   readonly moduleName: string
-  readonly exportName?: string
+}
+
+interface KnownModuleValue {
+  readonly type: 'module_value'
+  readonly moduleName: string
+  readonly exportName: string
 }
