@@ -52,7 +52,7 @@ export interface Identifier {
   readonly previousSibling?: Identifier
 }
 
-export type IdentifierKind = 'plain' | 'definition' | 'property-name'
+export type IdentifierKind = 'plain' | 'definition' | 'argument-name'
 
 // binding
 

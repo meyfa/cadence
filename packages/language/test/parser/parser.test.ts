@@ -339,7 +339,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('pattern = [C4(2.0)-]'))
     assertResultComplete(result)
 
-    const gate = { type: 'Number', value: 2.0 }
+    const gate = {
+      type: 'Argument',
+      value: { type: 'Number', value: 2.0 }
+    }
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
@@ -365,7 +368,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('pattern = [C4(2.0):1.5-]'))
     assertResultComplete(result)
 
-    const gate = { type: 'Number', value: 2.0 }
+    const gate = {
+      type: 'Argument',
+      value: { type: 'Number', value: 2.0 }
+    }
     const length = { type: 'Number', value: 1.5 }
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -392,8 +398,14 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('pattern = [C4(2.0, 0.75):1.5-]'))
     assertResultComplete(result)
 
-    const gate = { type: 'Number', value: 2.0 }
-    const velocity = { type: 'Number', value: 0.75 }
+    const gate = {
+      type: 'Argument',
+      value: { type: 'Number', value: 2.0 }
+    }
+    const velocity = {
+      type: 'Argument',
+      value: { type: 'Number', value: 0.75 }
+    }
     const length = { type: 'Number', value: 1.5 }
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -437,8 +449,8 @@ describe('parser/parser.ts', () => {
                 length: { type: 'Number', value: 1.5 },
                 parameters: [
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'gate' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'gate' },
                     value: { type: 'Number', value: 2.0 }
                   }
                 ]
@@ -472,13 +484,13 @@ describe('parser/parser.ts', () => {
                 length: { type: 'Number', value: 1.5 },
                 parameters: [
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'vel' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'vel' },
                     value: { type: 'Number', value: 0.75 }
                   },
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'gate' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'gate' },
                     value: { type: 'Number', value: 2.0 }
                   }
                 ]
@@ -783,8 +795,14 @@ describe('parser/parser.ts', () => {
               arguments: []
             },
             arguments: [
-              { type: 'Identifier', name: 'arg1' },
-              { type: 'Identifier', name: 'arg2' }
+              {
+                type: 'Argument',
+                value: { type: 'Identifier', name: 'arg1' }
+              },
+              {
+                type: 'Argument',
+                value: { type: 'Identifier', name: 'arg2' }
+              }
             ]
           }
         ]
@@ -826,8 +844,8 @@ describe('parser/parser.ts', () => {
                 name: { type: 'Identifier', name: 'mybus' },
                 properties: [
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'gain' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'gain' },
                     value: {
                       type: 'PropertyAccess',
                       object: { type: 'Number', value: -3 },
@@ -859,7 +877,10 @@ describe('parser/parser.ts', () => {
                           property: { type: 'Identifier', name: 'pan' }
                         },
                         arguments: [
-                          { type: 'Number', value: 0.5 }
+                          {
+                            type: 'Argument',
+                            value: { type: 'Number', value: 0.5 }
+                          }
                         ]
                       }
                     ]
@@ -879,9 +900,12 @@ describe('parser/parser.ts', () => {
                         },
                         arguments: [
                           {
-                            type: 'PropertyAccess',
-                            object: { type: 'Number', value: 400 },
-                            property: { type: 'Identifier', name: 'hz' }
+                            type: 'Argument',
+                            value: {
+                              type: 'PropertyAccess',
+                              object: { type: 'Number', value: 400 },
+                              property: { type: 'Identifier', name: 'hz' }
+                            }
                           }
                         ]
                       }
@@ -927,9 +951,12 @@ describe('parser/parser.ts', () => {
                 name: undefined,
                 properties: [
                   {
-                    type: 'PropertyAccess',
-                    object: { type: 'Number', value: 4 },
-                    property: { type: 'Identifier', name: 'bars' }
+                    type: 'Argument',
+                    value: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: 4 },
+                      property: { type: 'Identifier', name: 'bars' }
+                    }
                   }
                 ],
                 children: []
@@ -946,9 +973,12 @@ describe('parser/parser.ts', () => {
                 name: { type: 'Identifier', name: 'my_part' },
                 properties: [
                   {
-                    type: 'PropertyAccess',
-                    object: { type: 'Number', value: 2 },
-                    property: { type: 'Identifier', name: 'bars' }
+                    type: 'Argument',
+                    value: {
+                      type: 'PropertyAccess',
+                      object: { type: 'Number', value: 2 },
+                      property: { type: 'Identifier', name: 'bars' }
+                    }
                   }
                 ],
                 children: []
@@ -991,8 +1021,8 @@ describe('parser/parser.ts', () => {
                 name: undefined,
                 properties: [
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'gain' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'gain' },
                     value: {
                       type: 'PropertyAccess',
                       object: { type: 'Number', value: -3 },
@@ -1014,8 +1044,8 @@ describe('parser/parser.ts', () => {
                 name: { type: 'Identifier', name: 'my_bus' },
                 properties: [
                   {
-                    type: 'Property',
-                    key: { type: 'Identifier', name: 'gain' },
+                    type: 'Argument',
+                    name: { type: 'Identifier', name: 'gain' },
                     value: {
                       type: 'PropertyAccess',
                       object: { type: 'Number', value: -6 },

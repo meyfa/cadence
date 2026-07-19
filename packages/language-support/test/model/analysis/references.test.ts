@@ -307,7 +307,7 @@ describe('model/analysis/references.ts', () => {
     assert.strictEqual(resolution?.kind, 'binding')
   })
 
-  it('does not resolve default imports for property names', () => {
+  it('does not resolve default imports for argument names', () => {
     const source = [
       'use "effects" as *',
       'foo = bar(gain: 4)',

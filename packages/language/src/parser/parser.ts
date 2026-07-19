@@ -363,7 +363,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   value_
 )
 
-// Parse an identifier, a property access, or a call; chained as needed.
+// Parse a primary value, a property access, or a call; chained as needed.
 const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
   p.eitherOr(primary_, busNamespaceRoot_),
   p.many(
@@ -461,20 +461,22 @@ const expression_: p.Parser<Token, unknown, ast.Expression> = expect(
   'expression'
 )
 
-const property_: p.Parser<Token, unknown, ast.Property> = p.abc(
-  identifier_,
-  literal(':'),
-  expression_,
-  (key, _colon, value) => {
-    return ast.make('Property', combineSourceRanges(key, value), { key, value })
-  }
+const argument_: p.Parser<Token, unknown, ast.Argument> = p.eitherOr(
+  p.abc(
+    identifier_,
+    literal(':'),
+    expression_,
+    (name, _colon, value) => {
+      return ast.make('Argument', combineSourceRanges(name, value), { name, value })
+    }
+  ),
+  p.map(optionalExpression_, (value) => {
+    return ast.make('Argument', getSourceRange(value), { value })
+  })
 )
 
-const argumentList_: p.Parser<Token, unknown, ast.ArgumentList> = p.sepBy(
-  p.eitherOr(
-    property_,
-    optionalExpression_
-  ),
+const argumentList_: p.Parser<Token, unknown, readonly ast.Argument[]> = p.sepBy(
+  argument_,
   literal(',')
 )
 

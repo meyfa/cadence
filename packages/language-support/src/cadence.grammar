@@ -111,8 +111,12 @@ curveSegment {
 }
 
 argumentList {
-  (Property | expression)
-  ("," (Property | expression))*
+  argument ("," argument)*
+}
+
+argument {
+  (ArgumentName { word } ":")?
+  expression
 }
 
 primary {
@@ -157,12 +161,6 @@ BinaryExpression {
   (expression !plus "-" expression) |
   (expression !multiply "*" expression) |
   (expression !multiply "/" expression)
-}
-
-Property {
-  PropertyName { word }
-  ":"
-  expression
 }
 
 Import {

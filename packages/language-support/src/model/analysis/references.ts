@@ -127,7 +127,7 @@ function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, loo
     case 'definition':
       return findBindingAt(model, occurrence.range.offset)
 
-    case 'property-name':
+    case 'argument-name':
       return undefined
 
     default:

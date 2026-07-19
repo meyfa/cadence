@@ -67,7 +67,7 @@ describe('model/analysis/known-values.ts', () => {
     })
   })
 
-  it('does not set known values for property names', () => {
+  it('does not set known values for argument names', () => {
     const source = [
       'use "effects" as *',
       '',
@@ -80,7 +80,7 @@ describe('model/analysis/known-values.ts', () => {
     const model = analyzeSource(source)
 
     const gainProperty = findIdentifierAt(model, source.indexOf('gain:'))
-    assert.strictEqual(gainProperty?.kind, 'property-name')
+    assert.strictEqual(gainProperty?.kind, 'argument-name')
     assert.strictEqual(model.knownValues.get(gainProperty.id), undefined)
   })
 

@@ -38,7 +38,7 @@ export interface NodeByType {
   BinaryExpression: BinaryExpression
   PropertyAccess: PropertyAccess
   Call: Call
-  Property: Property
+  Argument: Argument
 
   // Primitive Types
   Number: Number
@@ -158,14 +158,12 @@ export interface PropertyAccess extends ASTNode {
 export interface Call extends ASTNode {
   readonly type: 'Call'
   readonly callee: Expression
-  readonly arguments: ArgumentList
+  readonly arguments: readonly Argument[]
 }
 
-export type ArgumentList = ReadonlyArray<Expression | Property>
-
-export interface Property extends ASTNode {
-  readonly type: 'Property'
-  readonly key: Identifier
+export interface Argument extends ASTNode {
+  readonly type: 'Argument'
+  readonly name?: Identifier
   readonly value: Expression
 }
 
@@ -191,7 +189,7 @@ export interface Step extends ASTNode {
   readonly type: 'Step'
   readonly value: StepValue
   readonly length?: Expression
-  readonly parameters: ArgumentList
+  readonly parameters: readonly Argument[]
 }
 
 export interface Curve extends ASTNode {
@@ -210,27 +208,27 @@ export interface CurveSegment extends ASTNode {
 
 export interface Mixer extends ASTNode {
   readonly type: 'Mixer'
-  readonly properties: ArgumentList
+  readonly properties: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Bus extends ASTNode {
   readonly type: 'Bus'
   readonly name?: Identifier
-  readonly properties: ArgumentList
+  readonly properties: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Track extends ASTNode {
   readonly type: 'Track'
-  readonly properties: ArgumentList
+  readonly properties: readonly Argument[]
   readonly children: readonly Statement[]
 }
 
 export interface Part extends ASTNode {
   readonly type: 'Part'
   readonly name?: Identifier
-  readonly properties: ArgumentList
+  readonly properties: readonly Argument[]
   readonly children: readonly Statement[]
 }
 

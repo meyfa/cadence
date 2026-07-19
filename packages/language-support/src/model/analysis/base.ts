@@ -173,9 +173,9 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
-      case 'PropertyName': {
+      case 'ArgumentName': {
         const name = document.sliceString(from, to)
-        addIdentifier({ kind: 'property-name', scopeId, name, range })
+        addIdentifier({ kind: 'argument-name', scopeId, name, range })
         break
       }
 

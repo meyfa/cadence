@@ -90,7 +90,7 @@ describe('hover/operation.ts', () => {
     )
   })
 
-  it('does not return docs for property names that only textually match wildcard imports', () => {
+  it('does not return docs for argument names that only textually match wildcard imports', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
