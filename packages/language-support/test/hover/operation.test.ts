@@ -31,6 +31,37 @@ describe('hover/operation.ts', () => {
     )
   })
 
+  it('returns function docs for global built-ins', () => {
+    const source = [
+      'play(kick, pattern)',
+      'automate(kick.gain, curve)',
+      ''
+    ].join('\n')
+
+    const playPosition = source.indexOf('play(') + 1
+    const automatePosition = source.indexOf('automate(') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, playPosition),
+      {
+        range: getRangeAt(source, source.indexOf('play('), 'play'.length),
+        title: 'play(target: instrument, pattern: pattern) -> routing',
+        summary: 'Sends notes from a pattern to the target instrument.',
+        annotations: []
+      }
+    )
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, automatePosition),
+      {
+        range: getRangeAt(source, source.indexOf('automate('), 'automate'.length),
+        title: 'automate(target: parameter, curve: curve) -> automation',
+        summary: 'Automates a parameter with a curve over time.',
+        annotations: []
+      }
+    )
+  })
+
   it('returns module docs for aliased imports', () => {
     const source = [
       'use "effects" as fx',

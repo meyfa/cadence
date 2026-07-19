@@ -1,5 +1,5 @@
 import type { Documentation } from '@meyfa/cadence-language'
-import { getDocumentation } from '@meyfa/cadence-language'
+import { getGlobalDocumentation, getModuleDocumentation } from '@meyfa/cadence-language'
 import { findIdentifierAt } from '../model/query.ts'
 import type { SemanticOperation } from '../utilities/operations.ts'
 import type { SourceRange } from '../utilities/range.ts'
@@ -15,10 +15,21 @@ export const getHoverInfo: SemanticOperation<[pos: number], HoverInfoWithRange |
   }
 
   const knownValue = model.knownValues.get(identifier.id)
-  if (knownValue != null) {
-    const info = getDocumentation(knownValue.moduleName, knownValue.exportName)
-    return info == null ? undefined : { ...info, range: identifier.range }
-  }
 
-  return undefined
+  const info = (() => {
+    if (knownValue == null) {
+      return undefined
+    }
+
+    switch (knownValue.type) {
+      case 'global':
+        return getGlobalDocumentation(knownValue.name)
+      case 'module':
+        return getModuleDocumentation(knownValue.moduleName)
+      case 'module_value':
+        return getModuleDocumentation(knownValue.moduleName, knownValue.exportName)
+    }
+  })()
+
+  return info == null ? undefined : { ...info, range: identifier.range }
 }
