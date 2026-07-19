@@ -55,9 +55,6 @@ export interface NodeByType {
   Part: Part
   Instrument: Instrument
   Voice: Voice
-
-  // Combination Types
-  Routing: Routing
 }
 
 export type AnyNode = NodeByType[keyof NodeByType]
@@ -73,8 +70,7 @@ export type Value =
   Track |
   Part |
   Instrument |
-  Voice |
-  Routing
+  Voice
 
 export type Expression =
   Value |
@@ -241,12 +237,4 @@ export interface Voice extends ASTNode {
   readonly bindings: {
     readonly note?: Identifier
   }
-}
-
-// Combination Types
-
-export interface Routing extends ASTNode {
-  readonly type: 'Routing'
-  readonly destination: Identifier
-  readonly source: Expression
 }

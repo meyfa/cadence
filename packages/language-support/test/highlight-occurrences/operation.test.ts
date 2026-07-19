@@ -13,20 +13,20 @@ describe('highlight-occurrences/operation.ts', () => {
       'bar = foo',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    & foo << [x---]',
+      '    & play(foo, [x---])',
       '  }',
       '}',
       ''
     ].join('\n')
 
-    const position = source.lastIndexOf('foo <<') + 1
+    const position = source.lastIndexOf('foo, ') + 1
 
     assert.deepStrictEqual(
       applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
       [
         getRangeAt(source, source.indexOf('foo ='), 'foo'.length),
         getRangeAt(source, source.indexOf('foo', source.indexOf('bar =')), 'foo'.length),
-        getRangeAt(source, source.lastIndexOf('foo <<'), 'foo'.length)
+        getRangeAt(source, source.lastIndexOf('foo, '), 'foo'.length)
       ]
     )
   })

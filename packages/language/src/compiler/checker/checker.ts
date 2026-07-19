@@ -26,6 +26,7 @@ import { makeType, makeUnion } from '../../type-system/factory.ts'
 import type { Schema, SchemaItem } from '../../type-system/schema.ts'
 import type { FacetType, Type, Value } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
+import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import { BUS_NAMESPACE, busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
@@ -36,7 +37,6 @@ import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
-import { globalBuiltins } from '../builtins/global.ts'
 
 export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
@@ -293,9 +293,6 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
 
     case 'Part':
       return checkPart(scope, expression)
-
-    case 'Routing':
-      return checkRouting(scope, expression)
 
     case 'UnaryExpression':
       return checkUnaryExpression(scope, expression)
@@ -695,25 +692,6 @@ function checkPart (scope: Scope, expression: ast.Part): Checked<FacetType> {
     : PartFacet.type()
 
   return { errors, result }
-}
-
-function checkRouting (scope: Scope, routing: ast.Routing): Checked<FacetType> {
-  const errors: CompileError[] = []
-
-  const destination = resolveInScope(scope, routing.destination.name)
-  if (destination == null) {
-    errors.push(new CompileError(`Unknown identifier "${routing.destination.name}"`, routing.destination.range))
-  } else {
-    errors.push(...checkType(InstrumentFacet.type(), destination, routing.destination.range))
-  }
-
-  const sourceCheck = checkExpression(scope, routing.source)
-  errors.push(...sourceCheck.errors)
-  if (sourceCheck.result != null) {
-    errors.push(...checkType(PatternFacet.type(), sourceCheck.result, routing.source.range))
-  }
-
-  return { errors, result: RoutingFacet.type() }
 }
 
 function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {

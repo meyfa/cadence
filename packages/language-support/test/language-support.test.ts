@@ -123,26 +123,6 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, 'fx', source.indexOf('fx.pan'), 'variable')
   })
 
-  it('highlights routing operators and variable references', () => {
-    const source = [
-      '& track {',
-      '  & part drums {',
-      '    & drums << my_pattern',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const spans = getHighlightSpans(source)
-    const definitionDrumsStart = source.indexOf('drums {')
-    const routingDrumsStart = source.indexOf('drums <<')
-
-    assertHighlightAt(spans, source, 'drums', definitionDrumsStart, 'definition-variable')
-    assertHighlightAt(spans, source, 'drums', routingDrumsStart, 'variable')
-    assertHighlightAt(spans, source, '<<', source.indexOf('<<'), 'operator')
-    assertHighlightAt(spans, source, 'my_pattern', source.indexOf('my_pattern'), 'variable')
-  })
-
   it('higlights units only when used as members', () => {
     const source = [
       'bpm = 120',

@@ -595,7 +595,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse instrument routing expressions', () => {
-    const result = parse(lexSource('& drums << my_pattern'))
+    const result = parse(lexSource('& play(drums, my_pattern)'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -605,9 +605,18 @@ describe('parser/parser.ts', () => {
         expose: false,
         values: [
           {
-            type: 'Routing',
-            source: { type: 'Identifier', name: 'my_pattern' },
-            destination: { type: 'Identifier', name: 'drums' }
+            type: 'Call',
+            callee: { type: 'Identifier', name: 'play' },
+            arguments: [
+              {
+                type: 'Argument',
+                value: { type: 'Identifier', name: 'drums' }
+              },
+              {
+                type: 'Argument',
+                value: { type: 'Identifier', name: 'my_pattern' }
+              }
+            ]
           }
         ]
       }

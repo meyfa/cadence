@@ -21,7 +21,6 @@
 
   "="
   ":"
-  "<<"
 
   "+"
   "-"
@@ -149,7 +148,7 @@ AccessOrCall {
 }
 
 expression {
-  Routing | AccessOrCall | UnaryExpression | BinaryExpression
+  AccessOrCall | UnaryExpression | BinaryExpression
 }
 
 UnaryExpression {
@@ -188,12 +187,6 @@ EmissionAssignment {
 
 statement {
   Assignment | Emission | EmissionAssignment
-}
-
-Routing {
-  VariableName
-  "<<"
-  expression
 }
 
 Track {
