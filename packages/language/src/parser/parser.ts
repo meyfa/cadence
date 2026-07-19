@@ -159,7 +159,7 @@ function splitStepsFromWordToken (text: string, tokenRange: SourceRange): readon
       throw new ParseError(`Invalid step value in pattern: "${stepValue}"`, stepRange)
     }
 
-    steps.push(ast.make('Step', stepRange, { value: stepValue, parameters: [] }))
+    steps.push(ast.make('Step', stepRange, { value: stepValue, arguments: [] }))
     offset += stepValue.length
   }
 
@@ -173,7 +173,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
     const tokenRange = getSourceRange(t)
     if (t.name === '-') {
       return [
-        ast.make('Step', tokenRange, { value: t.name, parameters: [] })
+        ast.make('Step', tokenRange, { value: t.name, arguments: [] })
       ]
     }
     if (t.name === 'word') {
@@ -216,15 +216,15 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
         ast.make('Step', combineSourceRanges(lastStep, length), {
           value: lastStep.value,
           length,
-          parameters: []
+          arguments: []
         })
       ]
     }
 
-    const [, parameters, _rp] = callTail
+    const [, args, _rp] = callTail
 
-    if (parameters.length === 0) {
-      throw new ParseError('Step parameters cannot be empty', combineSourceRanges(_rp, _rp))
+    if (args.length === 0) {
+      throw new ParseError('Step arguments cannot be empty', combineSourceRanges(_rp, _rp))
     }
 
     if (length == null) {
@@ -232,7 +232,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
         ...steps.slice(0, -1),
         ast.make('Step', combineSourceRanges(lastStep, _rp), {
           value: lastStep.value,
-          parameters
+          arguments: args
         })
       ]
     }
@@ -242,7 +242,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
       ast.make('Step', combineSourceRanges(lastStep, length), {
         value: lastStep.value,
         length,
-        parameters
+        arguments: args
       })
     ]
   }
@@ -319,10 +319,10 @@ const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
     }
 
     const curveType = curveTypeToken.text
-    const parameters = callTail == null ? [] : callTail[1]
+    const args = callTail == null ? [] : callTail[1]
     const length = curveLength[1]
 
-    return ast.make('CurveSegment', combineSourceRanges(curveTypeToken, length), { curveType, parameters, length })
+    return ast.make('CurveSegment', combineSourceRanges(curveTypeToken, length), { curveType, arguments: args, length })
   }
 )
 
@@ -409,17 +409,17 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.ab(
     p.eitherOr(literal('+'), literal('-')),
     p.recursive(() => unaryExpression_),
-    (op, expr) => {
+    (op, operand) => {
       // If it's a numeric literal, fold the unary operator directly
-      if (expr.type === 'Number') {
-        return ast.make('Number', combineSourceRanges(op, expr), {
-          value: op.text === '+' ? expr.value : -expr.value
+      if (operand.type === 'Number') {
+        return ast.make('Number', combineSourceRanges(op, operand), {
+          value: op.text === '+' ? operand.value : -operand.value
         })
       }
 
-      return ast.make('UnaryExpression', combineSourceRanges(op, expr), {
+      return ast.make('UnaryExpression', combineSourceRanges(op, operand), {
         operator: op.text as ast.UnaryOperator,
-        argument: expr
+        operand
       })
     }
   ),
@@ -610,7 +610,7 @@ const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
 
     return ast.make('Part', combineSourceRanges(_part, _rp), {
       name,
-      properties: args,
+      arguments: args,
       children
     })
   }
@@ -635,7 +635,7 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
     const args = callChain == null ? [] : callChain[1]
 
     return ast.make('Track', combineSourceRanges(_track, _rp), {
-      properties: args,
+      arguments: args,
       children
     })
   }
@@ -664,7 +664,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
 
     return ast.make('Bus', combineSourceRanges(_bus, _rp), {
       name,
-      properties: args,
+      arguments: args,
       children
     })
   }
@@ -689,7 +689,7 @@ const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
     const args = callChain == null ? [] : callChain[1]
 
     return ast.make('Mixer', combineSourceRanges(_mixer, _rp), {
-      properties: args,
+      arguments: args,
       children
     })
   }

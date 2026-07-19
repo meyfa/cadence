@@ -539,7 +539,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject duplicate properties', () => {
       assertErrorMessages('& track (tempo: 120.bpm, tempo: 120.bpm) {}', [
-        'Duplicate property named "tempo"'
+        'Duplicate argument named "tempo"'
       ])
     })
 
@@ -601,13 +601,13 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject lin curves that omit the start for the first segment', () => {
       assertErrorMessages('my_curve = ~[lin(0.db):1.bar]', [
-        'First curve segment cannot omit its first parameter'
+        'First curve segment cannot omit its first argument'
       ])
     })
 
     it('should reject hold curves that omit the value for the first segment', () => {
       assertErrorMessages('my_curve = ~[hold:1.bar]', [
-        'First curve segment cannot omit its first parameter'
+        'First curve segment cannot omit its first argument'
       ])
     })
 

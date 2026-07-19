@@ -275,12 +275,12 @@ function generateStep (scope: Scope, expression: ast.Step): Step {
     ? NumberFacet.with(undefined).get(resolve(scope, expression.length)).value as unknown as Numeric<'beats'>
     : undefined
 
-  const parameters = resolveArgumentList(scope, expression.parameters, stepSchema)
-  const gate = parameters.gate != null
-    ? NumberFacet.get(parameters.gate).value as unknown as Numeric<'beats'>
+  const args = resolveArgumentList(scope, expression.arguments, stepSchema)
+  const gate = args.gate != null
+    ? NumberFacet.get(args.gate).value as unknown as Numeric<'beats'>
     : undefined
-  const velocity = parameters.vel != null
-    ? clamped(NumberFacet.get(parameters.vel), 0, 1).value as unknown as Numeric<undefined>
+  const velocity = args.vel != null
+    ? clamped(NumberFacet.get(args.vel), 0, 1).value as unknown as Numeric<undefined>
     : undefined
 
   if (length == null) {
@@ -305,7 +305,7 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
   }
 
   for (const segment of segments) {
-    const parameters = segment.parameters.map((point) => {
+    const args = segment.arguments.map((point) => {
       return NumberFacet.get(resolve(scope, point))
     })
 
@@ -316,9 +316,9 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
     })()
 
     const { parameterCount } = nonNull(getCurveSegmentType(segment.curveType))
-    const resolvedParameters = parameters.length < parameterCount
-      ? [getPreviousSegmentEnd(), ...parameters]
-      : parameters
+    const resolvedParameters = args.length < parameterCount
+      ? [getPreviousSegmentEnd(), ...args]
+      : args
 
     generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
   }
@@ -500,12 +500,12 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
   const sources: MixerSource[] = []
   const effects: Effect[] = []
 
-  const properties = resolveArgumentList(scope, expression.properties, busSchema)
+  const args = resolveArgumentList(scope, expression.arguments, busSchema)
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
-  const gainData = properties.gain != null ? NumberFacet.get(properties.gain).value : 0 as Numeric<'db'>
-  const panData = properties.pan != null ? NumberFacet.get(properties.pan).value : 0 as Numeric<undefined>
+  const gainData = args.gain != null ? NumberFacet.get(args.gain).value : 0 as Numeric<'db'>
+  const panData = args.pan != null ? NumberFacet.get(args.pan).value : 0 as Numeric<undefined>
 
   const gain = scope.top.allocateParameter('db', gainData)
   const pan = scope.top.allocateParameter(undefined, panData)
@@ -550,10 +550,10 @@ function generateTrack (scope: Scope, expression: ast.Track): Value {
   const recordBuilder = new RecordBuilder()
   const parts: Part[] = []
 
-  const properties = resolveArgumentList(scope, expression.properties, trackSchema)
+  const args = resolveArgumentList(scope, expression.arguments, trackSchema)
 
-  const tempo = properties.tempo != null
-    ? clamped(NumberFacet.get(properties.tempo), options.tempo.minimum, options.tempo.maximum).value
+  const tempo = args.tempo != null
+    ? clamped(NumberFacet.get(args.tempo), options.tempo.minimum, options.tempo.maximum).value
     : options.tempo.default
 
   let currentTime = 0 as Numeric<'beats'>
@@ -597,8 +597,8 @@ function generatePart (scope: Scope, expression: ast.Part): Value {
   const routings: InstrumentRouting[] = []
   const automations: Automation[] = []
 
-  const properties = resolveArgumentList(scope, expression.properties, partSchema)
-  const length = clamped(NumberFacet.get(properties.length), 0, Number.POSITIVE_INFINITY)
+  const args = resolveArgumentList(scope, expression.arguments, partSchema)
+  const length = clamped(NumberFacet.get(args.length), 0, Number.POSITIVE_INFINITY)
 
   for (const child of expression.children) {
     const { emissions, properties } = processStatement(partScope, child)
@@ -652,7 +652,7 @@ function applyAutomation (top: GlobalScope, automation: Automation, options: Ren
 
 function computeUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Value {
   return unaryOperations[expression.operator].compute(
-    resolve(scope, expression.argument)
+    resolve(scope, expression.operand)
   )
 }
 

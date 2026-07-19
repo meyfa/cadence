@@ -208,7 +208,7 @@ describe('parser/parser.ts', () => {
           {
             type: 'UnaryExpression',
             operator: '-',
-            argument: {
+            operand: {
               type: 'PropertyAccess',
               object: { type: 'Number', value: 1.5 },
               property: { type: 'Identifier', name: 'ms' }
@@ -301,12 +301,12 @@ describe('parser/parser.ts', () => {
             type: 'Pattern',
             mode: 'serial',
             children: [
-              { type: 'Step', value: 'x', parameters: [] },
-              { type: 'Step', value: 'x', parameters: [] },
-              { type: 'Step', value: '-', parameters: [] },
-              { type: 'Step', value: 'D4', length: { type: 'Number', value: 0.5 }, parameters: [] },
-              { type: 'Step', value: '-', parameters: [] },
-              { type: 'Step', value: 'G4', parameters: [] }
+              { type: 'Step', value: 'x', arguments: [] },
+              { type: 'Step', value: 'x', arguments: [] },
+              { type: 'Step', value: '-', arguments: [] },
+              { type: 'Step', value: 'D4', length: { type: 'Number', value: 0.5 }, arguments: [] },
+              { type: 'Step', value: '-', arguments: [] },
+              { type: 'Step', value: 'G4', arguments: [] }
             ]
           }
         ]
@@ -355,8 +355,8 @@ describe('parser/parser.ts', () => {
             type: 'Pattern',
             mode: 'serial',
             children: [
-              { type: 'Step', value: 'C4', parameters: [gate] },
-              { type: 'Step', value: '-', parameters: [] }
+              { type: 'Step', value: 'C4', arguments: [gate] },
+              { type: 'Step', value: '-', arguments: [] }
             ]
           }
         ]
@@ -385,8 +385,8 @@ describe('parser/parser.ts', () => {
             type: 'Pattern',
             mode: 'serial',
             children: [
-              { type: 'Step', value: 'C4', length, parameters: [gate] },
-              { type: 'Step', value: '-', parameters: [] }
+              { type: 'Step', value: 'C4', length, arguments: [gate] },
+              { type: 'Step', value: '-', arguments: [] }
             ]
           }
         ]
@@ -419,8 +419,8 @@ describe('parser/parser.ts', () => {
             type: 'Pattern',
             mode: 'serial',
             children: [
-              { type: 'Step', value: 'C4', length, parameters: [gate, velocity] },
-              { type: 'Step', value: '-', parameters: [] }
+              { type: 'Step', value: 'C4', length, arguments: [gate, velocity] },
+              { type: 'Step', value: '-', arguments: [] }
             ]
           }
         ]
@@ -447,7 +447,7 @@ describe('parser/parser.ts', () => {
                 type: 'Step',
                 value: 'C4',
                 length: { type: 'Number', value: 1.5 },
-                parameters: [
+                arguments: [
                   {
                     type: 'Argument',
                     name: { type: 'Identifier', name: 'gate' },
@@ -455,7 +455,7 @@ describe('parser/parser.ts', () => {
                   }
                 ]
               },
-              { type: 'Step', value: '-', parameters: [] }
+              { type: 'Step', value: '-', arguments: [] }
             ]
           }
         ]
@@ -482,7 +482,7 @@ describe('parser/parser.ts', () => {
                 type: 'Step',
                 value: 'C4',
                 length: { type: 'Number', value: 1.5 },
-                parameters: [
+                arguments: [
                   {
                     type: 'Argument',
                     name: { type: 'Identifier', name: 'vel' },
@@ -495,7 +495,7 @@ describe('parser/parser.ts', () => {
                   }
                 ]
               },
-              { type: 'Step', value: '-', parameters: [] }
+              { type: 'Step', value: '-', arguments: [] }
             ]
           }
         ]
@@ -526,20 +526,20 @@ describe('parser/parser.ts', () => {
                     type: 'Step',
                     value: 'C4',
                     length: { type: 'Number', value: 0.75 },
-                    parameters: []
+                    arguments: []
                   },
                   {
                     type: 'Step',
                     value: '-',
                     length: { type: 'Number', value: 0.25 },
-                    parameters: []
+                    arguments: []
                   }
                 ]
               },
               {
                 type: 'Step',
                 value: 'E4',
-                parameters: []
+                arguments: []
               }
             ]
           }
@@ -569,8 +569,8 @@ describe('parser/parser.ts', () => {
             type: 'Pattern',
             mode: 'serial',
             children: [
-              { type: 'Step', value: 'C4', parameters: [] },
-              { type: 'Step', value: '-', parameters: [] },
+              { type: 'Step', value: 'C4', arguments: [] },
+              { type: 'Step', value: '-', arguments: [] },
               {
                 type: 'BinaryExpression',
                 operator: '*',
@@ -662,7 +662,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'CurveSegment',
                 curveType: 'hold',
-                parameters: [
+                arguments: [
                   { type: 'Number', value: 0 }
                 ],
                 length: {
@@ -674,7 +674,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'CurveSegment',
                 curveType: 'lin',
-                parameters: [
+                arguments: [
                   { type: 'Number', value: 0 },
                   { type: 'Number', value: 1 }
                 ],
@@ -708,7 +708,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'CurveSegment',
                 curveType: 'hold',
-                parameters: [],
+                arguments: [],
                 length: {
                   type: 'PropertyAccess',
                   object: { type: 'Number', value: 1 },
@@ -718,7 +718,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'CurveSegment',
                 curveType: 'hold',
-                parameters: [],
+                arguments: [],
                 length: {
                   type: 'PropertyAccess',
                   object: { type: 'Number', value: 2 },
@@ -832,7 +832,7 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(emissions), [
       {
         type: 'Mixer',
-        properties: [],
+        arguments: [],
         children: [
           {
             type: 'Statement',
@@ -842,7 +842,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Bus',
                 name: { type: 'Identifier', name: 'mybus' },
-                properties: [
+                arguments: [
                   {
                     type: 'Argument',
                     name: { type: 'Identifier', name: 'gain' },
@@ -939,7 +939,7 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(emissions), [
       {
         type: 'Track',
-        properties: [],
+        arguments: [],
         children: [
           {
             type: 'Statement',
@@ -949,7 +949,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Part',
                 name: undefined,
-                properties: [
+                arguments: [
                   {
                     type: 'Argument',
                     value: {
@@ -971,7 +971,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Part',
                 name: { type: 'Identifier', name: 'my_part' },
-                properties: [
+                arguments: [
                   {
                     type: 'Argument',
                     value: {
@@ -1009,7 +1009,7 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(emissions), [
       {
         type: 'Mixer',
-        properties: [],
+        arguments: [],
         children: [
           {
             type: 'Statement',
@@ -1019,7 +1019,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Bus',
                 name: undefined,
-                properties: [
+                arguments: [
                   {
                     type: 'Argument',
                     name: { type: 'Identifier', name: 'gain' },
@@ -1042,7 +1042,7 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Bus',
                 name: { type: 'Identifier', name: 'my_bus' },
-                properties: [
+                arguments: [
                   {
                     type: 'Argument',
                     name: { type: 'Identifier', name: 'gain' },
@@ -1083,7 +1083,7 @@ describe('parser/parser.ts', () => {
         values: [
           {
             type: 'Track',
-            properties: [],
+            arguments: [],
             children: [
               {
                 type: 'Statement',
@@ -1105,7 +1105,7 @@ describe('parser/parser.ts', () => {
         values: [
           {
             type: 'Mixer',
-            properties: [],
+            arguments: [],
             children: [
               {
                 type: 'Statement',
@@ -1156,7 +1156,7 @@ describe('parser/parser.ts', () => {
                   {
                     type: 'UnaryExpression',
                     operator: '-',
-                    argument: {
+                    operand: {
                       type: 'PropertyAccess',
                       object: { type: 'Number', value: 6 },
                       property: { type: 'Identifier', name: 'db' }
