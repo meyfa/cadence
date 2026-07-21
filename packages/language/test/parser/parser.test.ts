@@ -819,6 +819,78 @@ describe('parser/parser.ts', () => {
     ])
   })
 
+  it('should parse parameterless functions', () => {
+    const result = parse(lexSource('my_func = () { & 42 }'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'my_func' },
+        values: [
+          {
+            type: 'Function',
+            parameters: [],
+            children: [
+              {
+                type: 'Statement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ])
+  })
+
+  it('should parse functions with parameters', () => {
+    const result = parse(lexSource('my_func = (param1: number, param2: string) { & param1, param2 }'))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'my_func' },
+        values: [
+          {
+            type: 'Function',
+            parameters: [
+              {
+                type: 'Parameter',
+                name: { type: 'Identifier', name: 'param1' },
+                parameterType: { type: 'Identifier', name: 'number' }
+              },
+              {
+                type: 'Parameter',
+                name: { type: 'Identifier', name: 'param2' },
+                parameterType: { type: 'Identifier', name: 'string' }
+              }
+            ],
+            children: [
+              {
+                type: 'Statement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Identifier', name: 'param1' },
+                  { type: 'Identifier', name: 'param2' }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ])
+  })
+
   it('should parse mixer buses', () => {
     const source = [
       '& mixer {',

@@ -219,6 +219,28 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept simple function definitions', () => {
+      const source = [
+        'my_function = () {',
+        '  foo = 42',
+        '  & foo',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow blocking calls in functions', () => {
+      const source = [
+        'use "instruments" as inst',
+        'my_function = () {',
+        '  & inst.sample("piano.wav")',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept patterns with step arguments', () => {
       const source = [
         'my_pattern = [x C4(1.5):2 G4(vel: 0.75) A#4(0.5, 0.75) G4(gate: 0.5, vel: 0.75) -:3]'
@@ -984,6 +1006,35 @@ describe('compiler/checker/checker.ts', () => {
         'Cannot construct an instrument in a realtime context',
         'Cannot construct a mixer in a realtime context',
         'Cannot construct a track in a realtime context'
+      ])
+    })
+
+    it('should infer whether a function blocks from its body', () => {
+      const source = [
+        'use "instruments" as inst',
+        'use "sources" as src',
+        '',
+        'non_blocking_function = () {',
+        '  & src.sine(440.hz)',
+        '}',
+        'blocking_function = () {',
+        '  & inst.sample("piano.wav")',
+        '}',
+        '',
+        'synth = instrument {',
+        '  & voice {',
+        '    foo = non_blocking_function()',
+        '    & src.sine(440.hz), ~[hold(0.db):1.beat]',
+        '  }',
+        '  & voice {',
+        '    foo = blocking_function()',
+        '    & src.sine(440.hz), ~[hold(0.db):1.beat]',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Function "blocking_function" may block and cannot be called from a realtime context'
       ])
     })
 

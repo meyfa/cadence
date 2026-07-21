@@ -23,10 +23,12 @@ import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType } from '../../type-system/factory.ts'
-import { Curves, Numbers, Parameters } from '../../type-system/helpers.ts'
+import { Curves, Functions, Numbers, Parameters } from '../../type-system/helpers.ts'
 import type { InferSchema, Schema } from '../../type-system/schema.ts'
+import { makeSchema } from '../../type-system/schema.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
 import { assert, assertNever, fail, nonNull } from '../assert.ts'
+import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import type { CheckedProgram } from '../checker/checker.ts'
 import type { NoteValue } from '../common.ts'
@@ -41,7 +43,6 @@ import type { GenerateOptions } from './options.ts'
 import { RecordBuilder } from './properties.ts'
 import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
 import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
-import { globalBuiltins } from '../builtins/global.ts'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -183,6 +184,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Curve':
       return generateCurve(scope, expression)
 
+    case 'Function':
+      return generateFunction(scope, expression)
+
     case 'Instrument':
       return generateInstrument(scope, expression)
 
@@ -215,8 +219,8 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
   }
 }
 
-function resolveIdentifier (scope: Scope, identifier: ast.Identifier): Value {
-  return nonNull(resolveInScope(scope, identifier.name))
+function resolveIdentifier (scope: Scope, expression: ast.Identifier): Value {
+  return nonNull(resolveInScope(scope, expression.name))
 }
 
 function generateString (scope: Scope, expression: ast.String): Value {
@@ -325,6 +329,38 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
   return Curves.of(createCurve(generatedSegments))
 }
 
+function generateFunction (scope: Scope, expression: ast.Function): Value {
+  const frozenScope: Scope = cloneScope(scope)
+
+  // TODO Support parameters
+  // TODO Use correct return type when constructing the function value
+
+  const invoke: Function['invoke'] = (_context, _args) => {
+    const callScope = createLocalScope(frozenScope)
+
+    let returnValue: Value | undefined
+
+    for (const child of expression.children) {
+      const { emissions } = processStatement(callScope, child)
+
+      for (const emission of emissions) {
+        assert(returnValue == null)
+        returnValue = emission
+      }
+    }
+
+    return nonNull(returnValue)
+  }
+
+  return Functions.of({
+    parameters: makeSchema([]),
+    returnType: RecordFacet.type(),
+    effects: { blocking: false },
+    // TODO Remove any cast
+    invoke: invoke as any
+  })
+}
+
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
@@ -386,11 +422,11 @@ function createNoteBinding (note: NoteData): NoteValue {
   return binding
 }
 
-function createVoiceInstance (voice: ast.Voice, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
+function createVoiceInstance (expression: ast.Voice, scope: MutableScope, tempo: Numeric<'bpm'>): VoiceInstance {
   let envelopeValue: RelativeCurve<'db'> | undefined
   let outputValue: Source | undefined
 
-  for (const child of voice.children) {
+  for (const child of expression.children) {
     const { emissions } = processStatement(scope, child)
 
     for (const emission of emissions) {
