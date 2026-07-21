@@ -118,12 +118,22 @@ argument {
   expression
 }
 
+parameterList {
+  parameter ("," parameter)*
+}
+
+parameter {
+  ParameterName { word } ":"
+  ParameterType { word }
+}
+
 primary {
   "(" expression ")" |
   Call |
   VariableName |
   Number |
   String |
+  Function |
   Bus |
   Curve |
   Instrument |
@@ -187,6 +197,13 @@ EmissionAssignment {
 
 statement {
   Assignment | Emission | EmissionAssignment
+}
+
+Function {
+  "(" parameterList? ")"
+  FunctionBlock[group=Block] {
+    "{" statement* "}"
+  }
 }
 
 Track {

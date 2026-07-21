@@ -289,6 +289,16 @@ describe('compiler/generator/generator.ts', () => {
     assert.deepStrictEqual(effect.gain.initial, db(-20))
   })
 
+  it('should support simple functions', () => {
+    const source = [
+      'get_tempo = () { & 123.bpm }',
+      '& track (tempo: get_tempo()) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.tempo, 123)
+  })
+
   it('should generate instrument routings for patterns', () => {
     const source = [
       'use "instruments" as *',

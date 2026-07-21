@@ -337,12 +337,43 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
   }
 )
 
+const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
+  identifier_,
+  literal(':'),
+  identifier_,
+  (name, _colon, type) => {
+    return ast.make('Parameter', combineSourceRanges(name, type), { name, parameterType: type })
+  }
+)
+
+const parameterList_: p.Parser<Token, unknown, readonly ast.Parameter[]> = p.sepBy(
+  parameter_,
+  literal(',')
+)
+
+const function_: p.Parser<Token, unknown, ast.Function> = p.ab(
+  combine3(
+    literal('('),
+    parameterList_,
+    literal(')')
+  ),
+  combine3(
+    literal('{'),
+    p.recursive(() => p.many(statement_)),
+    expectLiteral('}')
+  ),
+  ([_lp, parameters, _rp], [_lb, children, _rb]) => {
+    return ast.make('Function', combineSourceRanges(_lp, _rb), { parameters, children })
+  }
+)
+
 const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
   identifier_,
   number_,
   string_,
   serialPattern_,
   curve_,
+  function_,
   p.recursive(() => instrument_),
   p.recursive(() => voice_),
   p.recursive(() => mixer_),
@@ -352,13 +383,13 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+  value_,
   p.abc(
     literal('('),
     p.recursive(() => expression_),
     expectLiteral(')'),
     (_l, v, _r) => ast.make(v.type, combineSourceRanges(_l, _r), { ...v })
-  ),
-  value_
+  )
 )
 
 // Parse a primary value, a property access, or a call; chained as needed.

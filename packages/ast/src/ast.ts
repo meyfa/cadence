@@ -39,6 +39,7 @@ export interface NodeByType {
   PropertyAccess: PropertyAccess
   Call: Call
   Argument: Argument
+  Parameter: Parameter
 
   // Primitive Types
   Number: Number
@@ -49,6 +50,7 @@ export interface NodeByType {
   CurveSegment: CurveSegment
 
   // Constructed Types
+  Function: Function
   Mixer: Mixer
   Bus: Bus
   Track: Track
@@ -65,6 +67,7 @@ export type Value =
   String |
   Pattern |
   Curve |
+  Function |
   Mixer |
   Bus |
   Track |
@@ -161,6 +164,12 @@ export interface Argument extends ASTNode {
   readonly value: Expression
 }
 
+export interface Parameter extends ASTNode {
+  readonly type: 'Parameter'
+  readonly name: Identifier
+  readonly parameterType: Identifier
+}
+
 // Primitive Types
 
 export interface Number extends ASTNode {
@@ -199,6 +208,12 @@ export interface CurveSegment extends ASTNode {
 }
 
 // Constructed Types
+
+export interface Function extends ASTNode {
+  readonly type: 'Function'
+  readonly parameters: readonly Parameter[]
+  readonly children: readonly Statement[]
+}
 
 export interface Mixer extends ASTNode {
   readonly type: 'Mixer'
