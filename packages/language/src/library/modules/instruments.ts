@@ -94,8 +94,6 @@ function createOscillatorVoice (shape: Oscillator['shape']): Voice {
 }
 
 const sample = Functions.of({
-  summary: 'Creates a sample-backed instrument from a URL.',
-
   parameters: makeSchema([
     { name: 'url', type: StringFacet.type(), required: true },
     { name: 'gain', type: NumberFacet.with('db').type(), required: false },
@@ -103,8 +101,9 @@ const sample = Functions.of({
     { name: 'length', type: NumberFacet.with('s').type(), required: false }
   ]),
   returnType: SampleInstrumentType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Creates a sample-backed instrument from a URL.',
   // eslint-disable-next-line camelcase
   invoke: (context: ParameterContext & InstrumentContext & AssetContext, { url, gain, root_note, length }) => {
     const urlValue = StringFacet.get(url)
@@ -137,14 +136,13 @@ const sample = Functions.of({
 
 function createOscillatorFunction (shape: Oscillator['shape']): Value {
   return Functions.of({
-    summary: `Creates an instrument that produces a ${shape} wave.`,
-
     parameters: makeSchema([
       { name: 'gain', type: NumberFacet.with('db').type(), required: false }
     ]),
     returnType: OscillatorInstrumentType,
-    effects: { blocking: true },
-
+    effects: { blocking: true }
+  }, {
+    summary: `Creates an instrument that produces a ${shape} wave.`,
     invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
       const gainValue = gain != null ? NumberFacet.get(gain).value : UNITY_GAIN
       const gainParameter = context.allocateParameter('db', gainValue)

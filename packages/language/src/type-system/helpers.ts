@@ -1,6 +1,6 @@
 import type { Parameter, RelativeCurve } from '@meyfa/cadence-core'
 import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
-import type { Function } from './base/function.ts'
+import type { FunctionRuntime, FunctionSpec } from './base/function.ts'
 import { FunctionFacet } from './base/function.ts'
 import type { Module } from './base/module.ts'
 import { ModuleFacet } from './base/module.ts'
@@ -13,15 +13,12 @@ import type { Schema } from './schema.ts'
 import type { Facet, FacetType, Value } from './types.ts'
 
 export const Functions = {
-  of: <const S extends Schema, const R extends FacetType, const Context> (value: Function<S, R, Context>): Value => {
-    const type = FunctionFacet.with({
-      parameters: value.parameters,
-      returnType: value.returnType,
-      effects: value.effects,
-      check: value.check
-    }).type()
-
-    return type.of(value)
+  of: <const S extends Schema, const R extends FacetType, const Context> (
+    spec: FunctionSpec<S, R>,
+    runtime: FunctionRuntime<S, R, Context>
+  ): Value => {
+    const type = FunctionFacet.with(spec).type()
+    return type.of({ ...spec, ...runtime })
   }
 }
 

@@ -10,17 +10,14 @@ import { makeSchema } from '../../type-system/schema.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
 
 const play = Functions.of({
-  summary: 'Sends notes from a pattern to the target instrument.',
-
   parameters: makeSchema([
     { name: 'target', type: InstrumentFacet.type(), required: true },
     { name: 'pattern', type: PatternFacet.type(), required: true }
   ]),
-
   returnType: RoutingFacet.type(),
-
-  effects: { blocking: false },
-
+  effects: { blocking: false }
+}, {
+  summary: 'Sends notes from a pattern to the target instrument.',
   invoke: (_context, { target, pattern }) => {
     const targetValue = InstrumentFacet.get(target)
     const patternValue = PatternFacet.get(pattern)
@@ -39,17 +36,12 @@ const play = Functions.of({
 })
 
 const automate = Functions.of({
-  summary: 'Automates a parameter with a curve over time.',
-
   parameters: makeSchema([
     { name: 'target', type: ParameterFacet.type(), required: true },
     { name: 'curve', type: CurveFacet.type(), required: true }
   ]),
-
   returnType: AutomationFacet.type(),
-
   effects: { blocking: false },
-
   check: (args: ReadonlyMap<string, FacetType>) => {
     const errors: ParameterError[] = []
 
@@ -71,8 +63,9 @@ const automate = Functions.of({
     }
 
     return errors
-  },
-
+  }
+}, {
+  summary: 'Automates a parameter with a curve over time.',
   invoke: (_context, { target, curve }) => {
     const targetValue = ParameterFacet.get(target)
     const curveValue = CurveFacet.get(curve)

@@ -4,7 +4,8 @@ import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../../src/compiler/generator/options.ts'
-import { createGlobalScope, cloneScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.ts'
+import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.ts'
+import type { SemanticModel } from '../../../src/index.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
 
 const options: GenerateOptions = {
@@ -20,11 +21,15 @@ const scalar = (value: number) => value as Numeric<undefined>
 const db = (value: number) => value as Numeric<'db'>
 
 describe('compiler/generator/scopes.ts', () => {
+  const semantic: SemanticModel = {
+    getFunctionSpec: () => assert.fail('not implemented')
+  }
+
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided options and initial resolutions', () => {
       const foo = Numbers.of(runtimeNumeric('db', 12))
 
-      const result = createGlobalScope(options, new Map([['foo', foo]]))
+      const result = createGlobalScope(options, semantic, new Map([['foo', foo]]))
 
       assert.strictEqual(result.top, result)
       assert.strictEqual(result.parent, undefined)
@@ -39,7 +44,7 @@ describe('compiler/generator/scopes.ts', () => {
     })
 
     it('should allocate buses with unique IDs', () => {
-      const scope = createGlobalScope(options, new Map())
+      const scope = createGlobalScope(options, semantic, new Map())
 
       const bus0 = {
         name: 'bus0',
@@ -70,7 +75,7 @@ describe('compiler/generator/scopes.ts', () => {
     })
 
     it('should allocate parameters with unique IDs', () => {
-      const scope = createGlobalScope(options, new Map())
+      const scope = createGlobalScope(options, semantic, new Map())
 
       const parameter0 = scope.allocateParameter('db', db(12))
       const parameter1 = scope.allocateParameter('db', db(6))
@@ -85,7 +90,7 @@ describe('compiler/generator/scopes.ts', () => {
     })
 
     it('should allocate instruments with unique IDs', () => {
-      const scope = createGlobalScope(options, new Map())
+      const scope = createGlobalScope(options, semantic, new Map())
 
       const instrument0 = {
         gain: scope.allocateParameter('db', db(-6)),
@@ -110,7 +115,7 @@ describe('compiler/generator/scopes.ts', () => {
     })
 
     it('should allocate assets with unique IDs', () => {
-      const scope = createGlobalScope(options, new Map())
+      const scope = createGlobalScope(options, semantic, new Map())
 
       const asset0 = {
         url: 'foo.wav'
@@ -135,7 +140,7 @@ describe('compiler/generator/scopes.ts', () => {
 
   describe('createLocalScope()', () => {
     it('should create a local scope with the provided parent and empty resolutions', () => {
-      const globalScope = createGlobalScope(options, new Map([
+      const globalScope = createGlobalScope(options, semantic, new Map([
         ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 
@@ -160,7 +165,7 @@ describe('compiler/generator/scopes.ts', () => {
 
   describe('cloneScope()', () => {
     it('should create a new scope with the same top and parent, and a copy of the resolutions', () => {
-      const globalScope = createGlobalScope(options, new Map([
+      const globalScope = createGlobalScope(options, semantic, new Map([
         ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 
@@ -176,7 +181,7 @@ describe('compiler/generator/scopes.ts', () => {
     })
 
     it('should not be affected by changes to the original scope after cloning', () => {
-      const globalScope = createGlobalScope(options, new Map([
+      const globalScope = createGlobalScope(options, semantic, new Map([
         ['foo', Numbers.of(runtimeNumeric('db', 12))]
       ]))
 

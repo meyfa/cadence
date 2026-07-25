@@ -11,6 +11,7 @@ import { StringFacet } from '../../../src/type-system/base/string.ts'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
 import { getFunctionExport } from './test-utils.ts'
+import type { SemanticModel } from '../../../src/index.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const seconds = (value: number) => value as Numeric<'s'>
@@ -20,6 +21,10 @@ const hz = (value: number) => value as Numeric<'hz'>
 const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
 function createFunctionContext (): GlobalScope {
+  const semantic: SemanticModel = {
+    getFunctionSpec: () => assert.fail('not implemented')
+  }
+
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
@@ -27,7 +32,7 @@ function createFunctionContext (): GlobalScope {
       minimum: 20 as Numeric<'bpm'>,
       maximum: 300 as Numeric<'bpm'>
     }
-  }, new Map())
+  }, semantic, new Map())
 }
 
 describe('library/modules/instruments.ts', () => {

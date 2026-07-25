@@ -1,6 +1,7 @@
 import type { Pattern } from '@meyfa/cadence-core'
 import { createSerialPattern, loopPattern } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
+import type { FunctionSpec } from '../../type-system/base/function.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
@@ -15,20 +16,18 @@ interface Builtin<T> {
 
 export type PatternBuiltin = Builtin<Pattern>
 
-const loopDeclaration = {
+const loopSpec = {
   parameters: makeSchema([
     { name: 'times', type: NumberFacet.with(undefined).type(), required: false }
   ]),
   returnType: PatternFacet.type(),
   effects: { blocking: false }
-} as const
+} satisfies FunctionSpec
 
 const loop: PatternBuiltin = {
-  type: FunctionFacet.with(loopDeclaration).type(),
+  type: FunctionFacet.with(loopSpec).type(),
 
-  bind: (pattern) => Functions.of({
-    ...loopDeclaration,
-
+  bind: (pattern) => Functions.of(loopSpec, {
     summary: 'Repeats a pattern for a fixed number of cycles, or indefinitely when times is omitted.',
 
     invoke: (context, { times }) => {
@@ -53,20 +52,18 @@ const loop: PatternBuiltin = {
   })
 }
 
-const fillDeclaration = {
+const fillSpec = {
   parameters: makeSchema([
     { name: 'duration', type: NumberFacet.with('beats').type(), required: true }
   ]),
   returnType: PatternFacet.type(),
   effects: { blocking: false }
-} as const
+} satisfies FunctionSpec
 
 const fill: PatternBuiltin = {
-  type: FunctionFacet.with(fillDeclaration).type(),
+  type: FunctionFacet.with(fillSpec).type(),
 
-  bind: (pattern) => Functions.of({
-    ...fillDeclaration,
-
+  bind: (pattern) => Functions.of(fillSpec, {
     summary: 'Repeats a pattern until it fills the specified duration. Longer patterns are truncated.',
 
     invoke: (context, { duration }) => {

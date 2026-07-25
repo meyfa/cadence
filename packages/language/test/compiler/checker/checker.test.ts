@@ -1,9 +1,13 @@
+import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
 import type { CompileError } from '../../../src/compiler/error.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
+import { NumberFacet } from '../../../src/type-system/base/number.ts'
+import { InstrumentFacet } from '../../../src/type-system/domain/instrument.ts'
+import { makeSchema } from '../../../src/type-system/schema.ts'
 import { assertResultComplete } from '../../test-utils.ts'
 
 function checkSource (source: string): readonly CompileError[] {
@@ -239,6 +243,71 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertValid(source)
+    })
+
+    it('should register function specs in the semantic model', () => {
+      const pureFunction = ast.make('Function', getEmptySourceRange(), {
+        parameters: [],
+        children: [
+          ast.make('Statement', getEmptySourceRange(), {
+            emit: true,
+            expose: false,
+            values: [
+              ast.make('Number', getEmptySourceRange(), { value: 42 })
+            ]
+          })
+        ]
+      })
+
+      const blockingFunction = ast.make('Function', getEmptySourceRange(), {
+        parameters: [],
+        children: [
+          ast.make('Statement', getEmptySourceRange(), {
+            emit: true,
+            expose: false,
+            values: [
+              ast.make('Instrument', getEmptySourceRange(), { children: [] })
+            ]
+          })
+        ]
+      })
+
+      const program = ast.make('Program', getEmptySourceRange(), {
+        imports: [],
+        children: [
+          ast.make('Statement', getEmptySourceRange(), {
+            emit: false,
+            expose: false,
+            name: ast.make('Identifier', getEmptySourceRange(), { name: 'pure_function' }),
+            values: [pureFunction]
+          }),
+          ast.make('Statement', getEmptySourceRange(), {
+            emit: false,
+            expose: false,
+            name: ast.make('Identifier', getEmptySourceRange(), { name: 'blocking_function' }),
+            values: [blockingFunction]
+          })
+        ]
+      })
+
+      const checkResult = check(program)
+      assertResultComplete(checkResult)
+
+      const semanticModel = checkResult.value.semantic
+
+      const pureFunctionSpec = semanticModel.getFunctionSpec(pureFunction)
+      assert.deepStrictEqual(pureFunctionSpec, {
+        parameters: makeSchema([]),
+        returnType: NumberFacet.with(undefined).type(),
+        effects: { blocking: false }
+      })
+
+      const blockingFunctionSpec = semanticModel.getFunctionSpec(blockingFunction)
+      assert.deepStrictEqual(blockingFunctionSpec, {
+        parameters: makeSchema([]),
+        returnType: InstrumentFacet.type(),
+        effects: { blocking: true }
+      })
     })
 
     it('should accept patterns with step arguments', () => {

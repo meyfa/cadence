@@ -1,4 +1,5 @@
-import type { Effects } from '../../type-system/base/function.ts'
+import { ast } from '@meyfa/cadence-ast'
+import type { Effects, FunctionSpec } from '../../type-system/base/function.ts'
 import type { FacetType } from '../../type-system/types.ts'
 
 // scope types
@@ -12,6 +13,9 @@ export interface Scope {
 
 export interface GlobalScope extends Scope {
   readonly namespaces: Map<string, MutableNamespace>
+  readonly semantic: {
+    readonly functions: Map<ast.Function, FunctionSpec>
+  }
 }
 
 export interface MutableScope extends Scope {
@@ -31,7 +35,7 @@ export interface MutableNamespace extends Namespace {
 // factory functions
 
 export function createGlobalScope (initialResolutions: ReadonlyMap<string, FacetType>): GlobalScope {
-  const scope = {
+  const scope: GlobalScope = {
     // from Scope
     get top (): GlobalScope {
       return scope
@@ -45,7 +49,9 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
 
     // from GlobalScope
     namespaces: new Map(),
-    buses: new Map()
+    semantic: {
+      functions: new Map()
+    }
   }
 
   return scope

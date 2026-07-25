@@ -4,6 +4,7 @@ import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.ts'
 import { createGlobalScope } from '../../../src/compiler/generator/scopes.ts'
+import type { SemanticModel } from '../../../src/index.ts'
 import { effectsModule } from '../../../src/library/modules/effects.ts'
 import { RecordFacet } from '../../../src/type-system/base/record.ts'
 import { EffectFacet } from '../../../src/type-system/domain/effect.ts'
@@ -11,6 +12,10 @@ import { Numbers } from '../../../src/type-system/helpers.ts'
 import { getFunctionExport } from './test-utils.ts'
 
 function createFunctionContext (): GlobalScope {
+  const semantic: SemanticModel = {
+    getFunctionSpec: () => assert.fail('not implemented')
+  }
+
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
@@ -18,7 +23,7 @@ function createFunctionContext (): GlobalScope {
       minimum: 20 as Numeric<'bpm'>,
       maximum: 300 as Numeric<'bpm'>
     }
-  }, new Map())
+  }, semantic, new Map())
 }
 
 describe('library/modules/effects.ts', () => {

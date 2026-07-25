@@ -25,7 +25,6 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType } from '../../type-system/factory.ts'
 import { Curves, Functions, Numbers, Parameters } from '../../type-system/helpers.ts'
 import type { InferSchema, Schema } from '../../type-system/schema.ts'
-import { makeSchema } from '../../type-system/schema.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
 import { assert, assertNever, fail, nonNull } from '../assert.ts'
 import { globalBuiltins } from '../builtins/global.ts'
@@ -49,12 +48,12 @@ import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from
  * semantically checked and is valid.
  */
 export function generate (program: CheckedProgram, options: GenerateOptions): Program {
-  const initialResolutions = new Map(processImports(program.imports))
+  const initialResolutions = new Map(processImports(program.ast.imports))
   for (const [name, value] of globalBuiltins) {
     initialResolutions.set(name, value)
   }
 
-  const top = createGlobalScope(options, initialResolutions)
+  const top = createGlobalScope(options, program.semantic, initialResolutions)
 
   const scope = createLocalScope(top)
 
@@ -64,7 +63,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   let mixer: Mixer | undefined
   let track: Track | undefined
 
-  for (const child of program.children) {
+  for (const child of program.ast.children) {
     const { emissions } = processStatement(scope, child)
 
     for (const emission of emissions) {
@@ -332,8 +331,9 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
 function generateFunction (scope: Scope, expression: ast.Function): Value {
   const frozenScope: Scope = cloneScope(scope)
 
+  const spec = scope.top.semantic.getFunctionSpec(expression)
+
   // TODO Support parameters
-  // TODO Use correct return type when constructing the function value
 
   const invoke: Function['invoke'] = (_context, _args) => {
     const callScope = createLocalScope(frozenScope)
@@ -352,13 +352,7 @@ function generateFunction (scope: Scope, expression: ast.Function): Value {
     return nonNull(returnValue)
   }
 
-  return Functions.of({
-    parameters: makeSchema([]),
-    returnType: RecordFacet.type(),
-    effects: { blocking: false },
-    // TODO Remove any cast
-    invoke: invoke as any
-  })
+  return Functions.of(spec, { invoke })
 }
 
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
