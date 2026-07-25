@@ -1,6 +1,7 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@meyfa/cadence-core'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
 import type { Value } from '../../type-system/types.ts'
+import type { SemanticModel } from '../checker/checker.ts'
 import type { GenerateOptions } from './options.ts'
 
 // scope aspects
@@ -34,6 +35,7 @@ export interface Scope {
 
 export interface GlobalScope extends Scope, Context {
   readonly options: GenerateOptions
+  readonly semantic: SemanticModel
 
   readonly namespaces: Map<string, MutableNamespace>
 
@@ -59,7 +61,11 @@ export interface MutableNamespace extends Namespace {
 
 // factory functions
 
-export function createGlobalScope (options: GenerateOptions, initialResolutions: ReadonlyMap<string, Value>): GlobalScope {
+export function createGlobalScope (
+  options: GenerateOptions,
+  semantic: SemanticModel,
+  initialResolutions: ReadonlyMap<string, Value>
+): GlobalScope {
   const scope: GlobalScope = {
     // from Scope
     get top () {
@@ -69,6 +75,7 @@ export function createGlobalScope (options: GenerateOptions, initialResolutions:
 
     // from GlobalScope
     options,
+    semantic,
     namespaces: new Map(),
     buses: new Map(),
     instruments: new Map(),

@@ -7,14 +7,13 @@ import type { Value } from '../../type-system/types.ts'
 
 function createOscillatorFunction (shape: Oscillator['shape']): Value {
   return Functions.of({
-    summary: `Creates a source that produces a ${shape} wave.`,
-
     parameters: makeSchema([
       { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
     ]),
     returnType: SourceFacet.type(),
-    effects: { blocking: false },
-
+    effects: { blocking: false }
+  }, {
+    summary: `Creates a source that produces a ${shape} wave.`,
     invoke: (context, { frequency }) => {
       return SourceFacet.type().of({
         type: 'oscillator',

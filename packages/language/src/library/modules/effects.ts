@@ -45,14 +45,13 @@ const ClipEffectType = makeType(EffectFacet, RecordFacet.with({
 // factories
 
 const gain = Functions.of({
-  summary: 'Applies a gain adjustment to the signal.',
-
   parameters: makeSchema([
     { name: 'gain', type: NumberFacet.with('db').type(), required: true }
   ]),
   returnType: GainEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Applies a gain adjustment to the signal.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'gain',
@@ -66,14 +65,13 @@ const gain = Functions.of({
 })
 
 const pan = Functions.of({
-  summary: 'Places the signal in the stereo field.',
-
   parameters: makeSchema([
     { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
   ]),
   returnType: PanEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Places the signal in the stereo field.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'pan',
@@ -87,14 +85,13 @@ const pan = Functions.of({
 })
 
 const lowpass = Functions.of({
-  summary: 'Filters out frequencies above the cutoff.',
-
   parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
   returnType: LowpassEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Filters out frequencies above the cutoff.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'lowpass',
@@ -108,14 +105,13 @@ const lowpass = Functions.of({
 })
 
 const highpass = Functions.of({
-  summary: 'Filters out frequencies below the cutoff.',
-
   parameters: makeSchema([
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
   returnType: HighpassEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Filters out frequencies below the cutoff.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'highpass',
@@ -129,14 +125,13 @@ const highpass = Functions.of({
 })
 
 const width = Functions.of({
-  summary: 'Adjusts the stereo width of the signal.',
-
   parameters: makeSchema([
     { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
   ]),
   returnType: WidthEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Adjusts the stereo width of the signal.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'width',
@@ -148,8 +143,6 @@ const width = Functions.of({
 })
 
 const delay = Functions.of({
-  summary: 'Adds echoes with configurable mix, time, and feedback.',
-
   parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
@@ -157,8 +150,9 @@ const delay = Functions.of({
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
   returnType: DelayEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Adds echoes with configurable mix, time, and feedback.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'delay',
@@ -175,16 +169,15 @@ const delay = Functions.of({
 })
 
 const reverb = Functions.of({
-  summary: 'Adds reverberation with configurable mix and decay.',
-
   parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
   returnType: ReverbEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Adds reverberation with configurable mix and decay.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'reverb',
@@ -198,14 +191,13 @@ const reverb = Functions.of({
 })
 
 const clip = Functions.of({
-  summary: 'Applies hard clipping to the signal at the specified threshold.',
-
   parameters: makeSchema([
     { name: 'threshold', type: NumberFacet.with('db').type(), required: true }
   ]),
   returnType: ClipEffectType,
-  effects: { blocking: true },
-
+  effects: { blocking: true }
+}, {
+  summary: 'Applies hard clipping to the signal at the specified threshold.',
   invoke: (context: ParameterContext, args) => {
     const effect: Effect = {
       type: 'clip',

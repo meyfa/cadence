@@ -8,12 +8,17 @@ import type { PatternBuiltin } from '../../../src/compiler/builtins/patterns.ts'
 import { patternBuiltins } from '../../../src/compiler/builtins/patterns.ts'
 import type { GlobalScope } from '../../../src/compiler/generator/scopes.ts'
 import { createGlobalScope } from '../../../src/compiler/generator/scopes.ts'
+import type { SemanticModel } from '../../../src/index.ts'
 import { FunctionFacet } from '../../../src/type-system/base/function.ts'
 import { PatternFacet } from '../../../src/type-system/domain/pattern.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
 import type { Facet, Value } from '../../../src/type-system/types.ts'
 
 function createFunctionContext (): GlobalScope {
+  const semantic: SemanticModel = {
+    getFunctionSpec: () => assert.fail('not implemented')
+  }
+
   return createGlobalScope({
     beatsPerBar: 4,
     tempo: {
@@ -21,7 +26,7 @@ function createFunctionContext (): GlobalScope {
       minimum: 20 as Numeric<'bpm'>,
       maximum: 300 as Numeric<'bpm'>
     }
-  }, new Map())
+  }, semantic, new Map())
 }
 
 function getPatternBuiltin (name: string): PatternBuiltin {

@@ -1,10 +1,10 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast } from '@meyfa/cadence-ast'
-import type { Brand, Unit } from '@meyfa/cadence-utility'
+import type { Unit } from '@meyfa/cadence-utility'
 import { getStandardModuleNames, getStandardModuleValue } from '../../library/modules.ts'
 import { CompoundError } from '../../result/errors.ts'
 import type { Result } from '../../result/result.ts'
-import type { Effects } from '../../type-system/base/function.ts'
+import type { Effects, FunctionSpec } from '../../type-system/base/function.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
 import { ModuleFacet } from '../../type-system/base/module.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
@@ -40,7 +40,15 @@ import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
 
-export type CheckedProgram = Brand<ast.Program, 'language.CheckedProgram'>
+export interface SemanticModel {
+  readonly getFunctionSpec: (expression: ast.Function) => FunctionSpec
+}
+
+export interface CheckedProgram {
+  readonly ast: ast.Program
+  readonly semantic: SemanticModel
+}
+
 export type CheckResult = Result<CheckedProgram, CompoundError<CompileError>>
 
 const success = (program: CheckedProgram): CheckResult => ({
@@ -105,7 +113,15 @@ export function check (program: ast.Program): CheckResult {
     }
   }
 
-  return errors.length === 0 ? success(program as CheckedProgram) : failure(errors)
+  if (errors.length > 0) {
+    return failure(errors)
+  }
+
+  const semantic: SemanticModel = {
+    getFunctionSpec: (expression) => nonNull(scope.top.semantic.functions.get(expression))
+  }
+
+  return success({ ast: program, semantic })
 }
 
 interface Checked<TValue> {
@@ -561,11 +577,14 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
     return { errors, effects: noEffects }
   }
 
-  const result = FunctionFacet.with({
+  const spec: FunctionSpec = {
     parameters: makeSchema([]),
     returnType,
     effects: { blocking }
-  }).type()
+  }
+
+  const result = FunctionFacet.with(spec).type()
+  scope.top.semantic.functions.set(expression, spec)
 
   return { errors, effects: noEffects, result }
 }

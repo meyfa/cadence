@@ -11,7 +11,10 @@ export interface ParameterError {
   readonly message: string
 }
 
-export interface Function<S extends Schema = Schema, R extends FacetType = FacetType, Context = never> {
+export interface FunctionSpec<
+  S extends Schema = Schema,
+  R extends FacetType = FacetType
+> {
   readonly parameters: S
   readonly returnType: R
   readonly effects: Effects
@@ -23,7 +26,13 @@ export interface Function<S extends Schema = Schema, R extends FacetType = Facet
    * If an argument is missing from the map, do not report an error; this will already be handled by the schema validation.
    */
   readonly check?: (args: ReadonlyMap<string, FacetType>) => readonly ParameterError[]
+}
 
+export interface FunctionRuntime<
+  S extends Schema = Schema,
+  R extends FacetType = FacetType,
+  Context = never
+> {
   /**
    * Compute the return value of the function given the provided arguments.
    */
@@ -33,11 +42,11 @@ export interface Function<S extends Schema = Schema, R extends FacetType = Facet
   readonly summary?: string
 }
 
-interface FunctionSpec<S extends Schema = Schema, R extends FacetType = FacetType> {
-  readonly parameters: S
-  readonly returnType: R
-  readonly effects: Effects
-  readonly check?: (args: ReadonlyMap<string, FacetType>) => readonly ParameterError[]
+export interface Function<
+  S extends Schema = Schema,
+  R extends FacetType = FacetType,
+  Context = never
+> extends FunctionSpec<S, R>, FunctionRuntime<S, R, Context> {
 }
 
 interface FunctionSpecGeneric extends CustomComparable {
