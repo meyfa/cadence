@@ -84,6 +84,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
+      case 'Function': {
+        const scope = addScope({ kind: 'function', range, parentId: scopeId })
+        nextScopeId = scope.id
+        break
+      }
+
       case 'TrackBlock': {
         const scope = addScope({ kind: 'track', range, parentId: scopeId })
         nextScopeId = scope.id
@@ -150,6 +156,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             // Invalid/incomplete syntax encountered.
             // We still add an identifier as a best-effort approach to provide some level of functionality.
             accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
+            break
+          }
+
+          case 'Function': {
+            addBinding({ kind: 'regular', scopeId, name, range: nameRange })
             break
           }
 

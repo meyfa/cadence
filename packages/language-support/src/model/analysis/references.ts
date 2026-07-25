@@ -125,6 +125,7 @@ function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, loo
       return findRegularBinding(occurrence, lookup)
 
     case 'definition':
+    case 'parameter':
       return findBindingAt(model, occurrence.range.offset)
 
     case 'argument-name':

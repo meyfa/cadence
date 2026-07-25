@@ -39,6 +39,7 @@ import { resolveInScope } from '../resolution.ts'
 import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import type { MutableScope, Scope } from './scopes.ts'
 import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { getFacet } from './type-facets.ts'
 
 export interface SemanticModel {
   readonly getFunctionSpec: (expression: ast.Function) => FunctionSpec
@@ -537,23 +538,42 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   const errors: CompileError[] = []
 
   // Allow blocking calls inside the function. If a blocking call is encountered,
-  // then the function itself will be marked as blocking.
+  // then the function itself will be marked as blocking when called.
   const functionScope = createLocalScope(scope, { blocking: true })
 
-  // TODO Support parameters
-  if (expression.parameters.length > 0) {
-    errors.push(new CompileError('Function parameters are not supported yet', expression.range))
+  // The act of constructing a function does not have any effects.
+  const effects = noEffects
+
+  const parameters: SchemaItem[] = []
+
+  for (const parameter of expression.parameters) {
+    const parameterCheck = checkParameter(functionScope, parameter)
+    errors.push(...parameterCheck.errors)
+
+    if (parameterCheck.result != null) {
+      functionScope.resolutions.set(parameter.name.name, parameterCheck.result)
+      parameters.push({
+        name: parameter.name.name,
+        type: parameterCheck.result,
+        required: true
+      })
+    }
+  }
+
+  // If the parameters are invalid, it makes no sense to continue checking the function body,
+  // as it will produce a lot of irrelevant errors as a consequence.
+  if (errors.length > 0) {
+    return { errors, effects }
   }
 
   let hasReturn = false
   let returnType: FacetType | undefined
-  let blocking = false
+  let callEffects = noEffects
 
   for (const child of expression.children) {
     const statement = checkStatement(functionScope, child)
     errors.push(...statement.errors)
-
-    blocking ||= statement.effects.blocking
+    callEffects = mergeEffects(callEffects, statement.effects)
 
     for (const emission of statement.emissions) {
       if (hasReturn) {
@@ -574,19 +594,54 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   }
 
   if (!hasReturn || returnType == null) {
-    return { errors, effects: noEffects }
+    return { errors, effects }
   }
 
   const spec: FunctionSpec = {
-    parameters: makeSchema([]),
+    parameters: makeSchema(parameters),
     returnType,
-    effects: { blocking }
+    effects: callEffects
   }
 
   const result = FunctionFacet.with(spec).type()
   scope.top.semantic.functions.set(expression, spec)
 
-  return { errors, effects: noEffects, result }
+  return { errors, effects, result }
+}
+
+function checkParameter (scope: Scope, expression: ast.Parameter): Checked<FacetType> {
+  const errors: CompileError[] = []
+
+  const { name } = expression.name
+
+  if (scope.resolutions.has(name)) {
+    errors.push(new CompileError(`Duplicate parameter name "${name}"`, expression.name.range))
+  }
+
+  const typeCheck = checkTypeExpression(expression.parameterType)
+  errors.push(...typeCheck.errors)
+
+  return { ...typeCheck, errors }
+}
+
+function checkTypeExpression (expression: ast.TypeExpression): Checked<FacetType> {
+  const effects = noEffects
+
+  if (expression.generics.length > 1) {
+    return { errors: [new CompileError('Type expressions can have at most one generic', expression.range)], effects }
+  }
+
+  const generic = expression.generics.at(0)?.name
+  const facet = getFacet(expression.name.name, generic)
+
+  if (facet == null) {
+    const typeName = generic != null ? `${expression.name.name}.${generic}` : expression.name.name
+    return { errors: [new CompileError(`Unknown type "${typeName}"`, expression.range)], effects }
+  }
+
+  const result = facet.type()
+
+  return { errors: [], effects, result }
 }
 
 function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<FacetType> {

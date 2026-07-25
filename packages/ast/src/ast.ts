@@ -25,7 +25,7 @@ export function make<T extends keyof NodeByType> (
 }
 
 export interface NodeByType {
-  // Root Type
+  // Root
   Program: Program
 
   // Building Blocks
@@ -33,7 +33,7 @@ export interface NodeByType {
   Statement: Statement
   Identifier: Identifier
 
-  // Expressions
+  // Value Expressions
   UnaryExpression: UnaryExpression
   BinaryExpression: BinaryExpression
   PropertyAccess: PropertyAccess
@@ -41,7 +41,10 @@ export interface NodeByType {
   Argument: Argument
   Parameter: Parameter
 
-  // Primitive Types
+  // Type Expressions
+  TypeExpression: TypeExpression
+
+  // Primitive Values
   Number: Number
   String: String
   Pattern: Pattern
@@ -49,7 +52,7 @@ export interface NodeByType {
   Curve: Curve
   CurveSegment: CurveSegment
 
-  // Constructed Types
+  // Constructed Values
   Function: Function
   Mixer: Mixer
   Bus: Bus
@@ -82,7 +85,7 @@ export type Expression =
   PropertyAccess |
   Call
 
-// Root Type
+// Root
 
 export interface Program extends ASTNode {
   readonly type: 'Program'
@@ -125,7 +128,7 @@ export interface Identifier extends ASTNode {
   readonly name: string
 }
 
-// Expressions
+// Value Expressions
 
 export const unaryOperators = ['+', '-'] as const
 export type UnaryOperator = typeof unaryOperators[number]
@@ -167,10 +170,18 @@ export interface Argument extends ASTNode {
 export interface Parameter extends ASTNode {
   readonly type: 'Parameter'
   readonly name: Identifier
-  readonly parameterType: Identifier
+  readonly parameterType: TypeExpression
 }
 
-// Primitive Types
+// Type Expressions
+
+export interface TypeExpression extends ASTNode {
+  readonly type: 'TypeExpression'
+  readonly name: Identifier
+  readonly generics: readonly Identifier[]
+}
+
+// Primitive Values
 
 export interface Number extends ASTNode {
   readonly type: 'Number'
@@ -207,7 +218,7 @@ export interface CurveSegment extends ASTNode {
   readonly length: Expression
 }
 
-// Constructed Types
+// Constructed Values
 
 export interface Function extends ASTNode {
   readonly type: 'Function'

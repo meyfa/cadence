@@ -850,7 +850,7 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse functions with parameters', () => {
-    const result = parse(lexSource('my_func = (param1: number, param2: string) { & param1, param2 }'))
+    const result = parse(lexSource('my_func = (param1: number.db, param2: string) { & param1, param2 }'))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -866,12 +866,22 @@ describe('parser/parser.ts', () => {
               {
                 type: 'Parameter',
                 name: { type: 'Identifier', name: 'param1' },
-                parameterType: { type: 'Identifier', name: 'number' }
+                parameterType: {
+                  type: 'TypeExpression',
+                  name: { type: 'Identifier', name: 'number' },
+                  generics: [
+                    { type: 'Identifier', name: 'db' }
+                  ]
+                }
               },
               {
                 type: 'Parameter',
                 name: { type: 'Identifier', name: 'param2' },
-                parameterType: { type: 'Identifier', name: 'string' }
+                parameterType: {
+                  type: 'TypeExpression',
+                  name: { type: 'Identifier', name: 'string' },
+                  generics: []
+                }
               }
             ],
             children: [
