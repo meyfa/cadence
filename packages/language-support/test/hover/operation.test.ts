@@ -24,7 +24,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, position),
       {
         range: getRangeAt(source, source.indexOf('gain('), 'gain'.length),
-        title: 'gain(gain: number(db)) -> effect + record(gain)',
+        title: 'gain = (gain: number.db): effect + record(gain)',
         summary: 'Applies a gain adjustment to the signal.',
         annotations: ['may block']
       }
@@ -45,7 +45,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, playPosition),
       {
         range: getRangeAt(source, source.indexOf('play('), 'play'.length),
-        title: 'play(target: instrument, pattern: pattern) -> routing',
+        title: 'play = (target: instrument, pattern: pattern): routing',
         summary: 'Sends notes from a pattern to the target instrument.',
         annotations: []
       }
@@ -55,7 +55,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, automatePosition),
       {
         range: getRangeAt(source, source.indexOf('automate('), 'automate'.length),
-        title: 'automate(target: parameter, curve: curve) -> automation',
+        title: 'automate = (target: parameter, curve: curve): automation',
         summary: 'Automates a parameter with a curve over time.',
         annotations: []
       }
@@ -104,7 +104,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, delayPosition),
       {
         range: getRangeAt(source, source.indexOf('delay('), 'delay'.length),
-        title: 'delay(mix: number, time: number(beats) | number(s), feedback: number, wet?: number(db)) -> effect + record(feedback)',
+        title: 'delay = (mix: number, time: number.beats | number.s, feedback: number, wet?: number.db): effect + record(feedback)',
         summary: 'Adds echoes with configurable mix, time, and feedback.',
         annotations: ['may block']
       }
@@ -114,7 +114,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, reverbPosition),
       {
         range: getRangeAt(source, source.indexOf('reverb('), 'reverb'.length),
-        title: 'reverb(mix: number, decay: number(beats) | number(s), wet?: number(db)) -> effect',
+        title: 'reverb = (mix: number, decay: number.beats | number.s, wet?: number.db): effect',
         summary: 'Adds reverberation with configurable mix and decay.',
         annotations: ['may block']
       }
