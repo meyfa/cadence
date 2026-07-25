@@ -73,7 +73,7 @@ function formatFunctionSignature (name: string, functionValue: Function): string
     .map((parameter) => `${parameter.name}${parameter.required ? '' : '?'}: ${parameter.type.format()}`)
     .join(', ')
 
-  return `${name}(${parametersText}) -> ${functionValue.returnType.format()}`
+  return `${name} = (${parametersText}): ${functionValue.returnType.format()}`
 }
 
 function getValueSummary (value: Value): string | undefined {

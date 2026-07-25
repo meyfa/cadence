@@ -757,13 +757,13 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject omitted lin starts when the inherited and explicit units differ', () => {
       assertErrorMessages('my_curve = ~[hold((-60).db):1.bar lin(120.bpm):1.bar]', [
-        'Expected type number(db), got number(bpm)'
+        'Expected type number.db, got number.bpm'
       ])
     })
 
     it('should use segment unit if only the segment length is invalid', () => {
       // If the first segment is entirely discarded by the compiler, then
-      // the second would emit a second error: 'Expected type number, got number(hz)',
+      // the second would emit a second error: 'Expected type number, got number.hz',
       // which is obviously not correct.
       assertErrorMessages('my_curve = ~[lin(10.hz, 20.hz):unknown lin(30.hz):1.bar]', [
         'Unknown identifier "unknown"'
@@ -772,7 +772,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject curves with invalid length units', () => {
       assertErrorMessages('my_curve = ~[hold((-60).db):42]', [
-        'Expected type number(beats) | number(s), got number'
+        'Expected type number.beats | number.s, got number'
       ])
     })
 
@@ -817,7 +817,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Expected type curve(hz) for argument "curve", got curve(db)'
+        'Expected type curve.hz for argument "curve", got curve.db'
       ])
     })
 
@@ -952,7 +952,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "bar" is already defined',
-        'Expected type number(hz) for argument "frequency", got number'
+        'Expected type number.hz for argument "frequency", got number'
       ])
     })
 
@@ -1008,7 +1008,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined',
-        'Expected type number(hz) for argument "frequency", got record(frequency, gate, velocity)'
+        'Expected type number.hz for argument "frequency", got record(frequency, gate, velocity)'
       ])
     })
 

@@ -35,7 +35,7 @@ describe('type-system/base', () => {
       expectTypeEquals<RuntimeNumeric<'db'>, typeof specificData>()
       assert.strictEqual(NumberFacet.format(), 'number')
       assert.strictEqual(NumberFacet.with(undefined).format(), 'number')
-      assert.strictEqual(decibelFacet.format(), 'number(db)')
+      assert.strictEqual(decibelFacet.format(), 'number.db')
       assert.strictEqual(NumberFacet.has(decibelValue), true)
       assert.strictEqual(decibelFacet.has(genericValue), false)
       assert.strictEqual(NumberFacet.detail(decibelType), 'db')

@@ -15,7 +15,7 @@ export const CurveFacet = {
 
     if (cached == null) {
       cached = makeFacet<typeof FACET_NAME, RelativeCurve<U>>(FACET_NAME, { unit }, {
-        format: () => unit == null ? FACET_NAME : `${FACET_NAME}(${unit})`
+        format: () => unit == null ? FACET_NAME : `${FACET_NAME}.${unit}`
       })
       cache.set(unit, cached)
     }

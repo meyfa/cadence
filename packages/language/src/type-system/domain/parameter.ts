@@ -15,7 +15,7 @@ export const ParameterFacet = {
 
     if (cached == null) {
       cached = makeFacet<typeof FACET_NAME, Parameter<U>>(FACET_NAME, { unit }, {
-        format: () => unit == null ? FACET_NAME : `${FACET_NAME}(${unit})`
+        format: () => unit == null ? FACET_NAME : `${FACET_NAME}.${unit}`
       })
       cache.set(unit, cached)
     }
