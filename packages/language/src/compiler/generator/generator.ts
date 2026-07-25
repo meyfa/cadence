@@ -333,10 +333,14 @@ function generateFunction (scope: Scope, expression: ast.Function): Value {
 
   const spec = scope.top.semantic.getFunctionSpec(expression)
 
-  // TODO Support parameters
-
-  const invoke: Function['invoke'] = (_context, _args) => {
+  const invoke: Function['invoke'] = (_context, args) => {
     const callScope = createLocalScope(frozenScope)
+
+    // Bind arguments to the call scope
+    for (const [name, value] of Object.entries(args)) {
+      assert(!callScope.resolutions.has(name))
+      callScope.resolutions.set(name, value as Value)
+    }
 
     let returnValue: Value | undefined
 

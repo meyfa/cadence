@@ -72,6 +72,44 @@ describe('model/analysis/references.ts', () => {
     assert.ok(references.includes(identifier))
   })
 
+  it('resolves parameters to their definition', () => {
+    const source = [
+      'my_function = (my_input: number.bpm) {',
+      '  & my_input * 2',
+      '}',
+      'bar = my_input // invalid reference',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('my_input:')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'my_input')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, position, 'my_input'.length))
+
+    const referencePosition = source.indexOf('& my_input') + '& '.length
+    const referenceIdentifier = model.identifiers.find((identifier) => identifier.range.offset === referencePosition)
+    assert.ok(referenceIdentifier != null)
+
+    const referenceResolution = model.resolutions.get(referenceIdentifier.id)
+    assert.deepStrictEqual(referenceResolution, resolution)
+
+    const invalidReferencePosition = source.indexOf('bar = my_input') + 'bar = '.length
+    const invalidReferenceIdentifier = model.identifiers.find((identifier) => identifier.range.offset === invalidReferencePosition)
+    assert.ok(invalidReferenceIdentifier != null)
+
+    const invalidReferenceResolution = model.resolutions.get(invalidReferenceIdentifier.id)
+    assert.strictEqual(invalidReferenceResolution, undefined)
+  })
+
   it('resolves bus inputs to variable definitions', () => {
     const source = [
       '& mixer {',

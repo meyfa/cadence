@@ -123,8 +123,11 @@ parameterList {
 }
 
 parameter {
-  ParameterName { word } ":"
-  ParameterType { word }
+  VariableDefinition ":" Type
+}
+
+Type {
+  word ("." word)*
 }
 
 primary {

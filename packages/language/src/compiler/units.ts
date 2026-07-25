@@ -1,10 +1,18 @@
-import type { Numeric, Unit } from '@meyfa/cadence-utility'
-import type { Value } from '../type-system/types.ts'
+import type { Numeric } from '@meyfa/cadence-utility'
 import { Numbers } from '../type-system/helpers.ts'
+import type { Value } from '../type-system/types.ts'
 
 interface Constants {
   readonly beatsPerBar: number
 }
+
+export const BaseUnits = [
+  'bpm',
+  'db',
+  'hz',
+  's',
+  'beats'
+] as const
 
 export const SyntaxUnits = [
   'bpm',
@@ -18,7 +26,12 @@ export const SyntaxUnits = [
   'bars'
 ] as const
 
+export type BaseUnit = typeof BaseUnits[number]
 export type SyntaxUnit = typeof SyntaxUnits[number]
+
+export function isBaseUnit (value: string): value is BaseUnit {
+  return BaseUnits.includes(value as BaseUnit)
+}
 
 export function isSyntaxUnit (value: string): value is SyntaxUnit {
   return SyntaxUnits.includes(value as SyntaxUnit)
@@ -46,7 +59,7 @@ export function toNumberValue (constants: Constants, unit: SyntaxUnit | undefine
 /**
  * Convert from the user-facing (syntax) unit to the base unit used internally.
  */
-export function toBaseUnit (unit: SyntaxUnit | undefined): Unit {
+export function toBaseUnit (unit: SyntaxUnit | undefined): BaseUnit | undefined {
   switch (unit) {
     case undefined:
     case 'bpm':

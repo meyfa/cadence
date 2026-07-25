@@ -234,6 +234,18 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept function definitions with parameters', () => {
+      const source = [
+        'my_function = (param0: number.hz, param1: number, param2: string) {',
+        '  & param0 * param1',
+        '}',
+        '',
+        'foo = my_function(440.hz, 2, "hello")'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should allow blocking calls in functions', () => {
       const source = [
         'use "instruments" as inst',
@@ -1104,6 +1116,20 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Function "blocking_function" may block and cannot be called from a realtime context'
+      ])
+    })
+
+    it('should reject invalid type expressions', () => {
+      const source = [
+        'func0 = (param: invalid_type) { & param }',
+        'func1 = (param: number.foo) { & param }',
+        'func2 = (param: string.hz) { & param }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown type "invalid_type"',
+        'Unknown type "number.foo"',
+        'Unknown type "string.hz"'
       ])
     })
 

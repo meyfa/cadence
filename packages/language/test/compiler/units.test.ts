@@ -1,9 +1,22 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { SyntaxUnits, isBaseUnit, isSyntaxUnit, toBaseUnit, toNumberValue } from '../../src/compiler/units.ts'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
-import { SyntaxUnits, isSyntaxUnit, toBaseUnit, toNumberValue } from '../../src/compiler/units.ts'
 
 describe('compiler/units.ts', () => {
+  describe('isBaseUnit()', () => {
+    it('should accept every declared base unit', () => {
+      for (const unit of ['bpm', 'db', 'hz', 's', 'beats'] as const) {
+        assert.strictEqual(isBaseUnit(unit), true)
+      }
+    })
+
+    it('should reject unknown units', () => {
+      assert.strictEqual(isBaseUnit('samples'), false)
+      assert.strictEqual(isBaseUnit(''), false)
+    })
+  })
+
   describe('isSyntaxUnit()', () => {
     it('should accept every declared syntax unit', () => {
       for (const unit of SyntaxUnits) {

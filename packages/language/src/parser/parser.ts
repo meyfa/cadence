@@ -337,10 +337,20 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
   }
 )
 
+const typeExpression_: p.Parser<Token, unknown, ast.TypeExpression> = p.ab(
+  identifier_,
+  p.many(
+    p.right(literal('.'), identifier_)
+  ),
+  (name, generics) => {
+    return ast.make('TypeExpression', combineSourceRanges(name, ...generics), { name, generics })
+  }
+)
+
 const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
   identifier_,
   literal(':'),
-  identifier_,
+  typeExpression_,
   (name, _colon, type) => {
     return ast.make('Parameter', combineSourceRanges(name, type), { name, parameterType: type })
   }
