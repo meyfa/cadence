@@ -19,21 +19,132 @@ describe('type-system/base', () => {
       assert.strictEqual(FunctionFacet.format(), 'function')
     })
 
-    it('should compare by identity', () => {
-      const spec: FunctionSpec = {
+    it('should compare based on parameters, return type, and effects', () => {
+      const noParametersReturnString = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
         effects: { blocking: false }
-      }
+      })
 
+      const noParametersReturnStringBlocking = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: true }
+      })
+
+      const oneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: true }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      const optionalParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: false }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      const noParametersReturnNumber = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: NumberFacet.type(),
+        effects: { blocking: false }
+      })
+
+      // same parameter count and type but different parameter name
+      const sameOneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'value', type: NumberFacet.with(undefined).type(), required: true }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      // same parameter count and name, but different parameter type
+      const otherOneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with('db').type(), required: true }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      // base facet is assignable from all of its specializations
       assert.strictEqual(FunctionFacet.is(FunctionFacet), true)
-      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet.with(spec)), true)
+      assert.strictEqual(FunctionFacet.is(noParametersReturnString), true)
+      assert.strictEqual(FunctionFacet.is(noParametersReturnStringBlocking), true)
+      assert.strictEqual(FunctionFacet.is(oneParameterReturnString), true)
+      assert.strictEqual(FunctionFacet.is(optionalParameterReturnString), true)
 
-      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet.with({ ...spec })), false)
-      assert.strictEqual(FunctionFacet.with({ ...spec }).is(FunctionFacet.with(spec)), false)
+      // specializations are not assignable to base facet
+      assert.strictEqual(noParametersReturnString.is(FunctionFacet), false)
+      assert.strictEqual(noParametersReturnStringBlocking.is(FunctionFacet), false)
+      assert.strictEqual(oneParameterReturnString.is(FunctionFacet), false)
+      assert.strictEqual(optionalParameterReturnString.is(FunctionFacet), false)
 
-      assert.strictEqual(FunctionFacet.is(FunctionFacet.with(spec)), true)
-      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet), false)
+      // specializations are assignable to themselves
+      assert.strictEqual(noParametersReturnString.is(noParametersReturnString), true)
+      assert.strictEqual(noParametersReturnStringBlocking.is(noParametersReturnStringBlocking), true)
+      assert.strictEqual(oneParameterReturnString.is(oneParameterReturnString), true)
+      assert.strictEqual(optionalParameterReturnString.is(optionalParameterReturnString), true)
+
+      // non-blocking is assignable to blocking, but not vice versa
+      assert.strictEqual(noParametersReturnStringBlocking.is(noParametersReturnString), true)
+      assert.strictEqual(noParametersReturnString.is(noParametersReturnStringBlocking), false)
+
+      // different parameter counts are not assignable
+      assert.strictEqual(noParametersReturnString.is(oneParameterReturnString), false)
+      assert.strictEqual(oneParameterReturnString.is(noParametersReturnString), false)
+
+      // different parameter names are not assignable
+      assert.strictEqual(oneParameterReturnString.is(sameOneParameterReturnString), false)
+      assert.strictEqual(sameOneParameterReturnString.is(oneParameterReturnString), false)
+
+      // different parameter types are not assignable
+      assert.strictEqual(oneParameterReturnString.is(otherOneParameterReturnString), false)
+      assert.strictEqual(otherOneParameterReturnString.is(oneParameterReturnString), false)
+
+      // optional parameter is assignable to required parameter, but not vice versa
+      assert.strictEqual(oneParameterReturnString.is(optionalParameterReturnString), true)
+      assert.strictEqual(optionalParameterReturnString.is(oneParameterReturnString), false)
+
+      // optional parameter is assignable to zero parameters, but not vice versa
+      assert.strictEqual(noParametersReturnString.is(optionalParameterReturnString), true)
+      assert.strictEqual(optionalParameterReturnString.is(noParametersReturnString), false)
+
+      // different return types are not assignable
+      assert.strictEqual(noParametersReturnNumber.is(noParametersReturnString), false)
+      assert.strictEqual(noParametersReturnString.is(noParametersReturnNumber), false)
+
+      const broadRecord = RecordFacet.with({ gain: NumberFacet.with('db').type() })
+      const narrowRecord = RecordFacet.with({ gain: NumberFacet.with('db').type(), frequency: NumberFacet.with('hz').type() })
+
+      const broadParameter = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'record', type: broadRecord.type(), required: true }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      const narrowParameter = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'record', type: narrowRecord.type(), required: true }]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+
+      // broad parameter is assignable to narrow parameter, but not vice versa (contravariant)
+      assert.strictEqual(narrowParameter.is(broadParameter), true)
+      assert.strictEqual(broadParameter.is(narrowParameter), false)
+
+      const broadReturn = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: broadRecord.type(),
+        effects: { blocking: false }
+      })
+
+      const narrowReturn = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: narrowRecord.type(),
+        effects: { blocking: false }
+      })
+
+      // narrow return is assignable to broad return, but not vice versa (covariant)
+      assert.strictEqual(broadReturn.is(narrowReturn), true)
+      assert.strictEqual(narrowReturn.is(broadReturn), false)
     })
 
     it('should create a single-facet type', () => {
@@ -79,9 +190,6 @@ describe('type-system/base', () => {
       expectTypeEquals<ValueForType<typeof returnType>, typeof result>()
 
       assert.strictEqual(typedFacet.is(FunctionFacet.with(spec)), true)
-
-      const identicalShapeSpec = { parameters: schema, returnType, effects }
-      assert.strictEqual(typedFacet.is(FunctionFacet.with(identicalShapeSpec)), false)
 
       assert.strictEqual(FunctionFacet.detail(typedType), spec)
       assert.strictEqual(StringFacet.get(result), 'fallback')
