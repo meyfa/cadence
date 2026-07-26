@@ -18,6 +18,7 @@ const tokenHighlighter = tagHighlighter([
   { tag: t.variableName, class: 'variable' },
   { tag: t.definition(t.propertyName), class: 'definition-property' },
   { tag: t.propertyName, class: 'property' },
+  { tag: t.typeName, class: 'type' },
   { tag: t.function(t.name), class: 'function' },
   { tag: t.definitionOperator, class: 'definition-operator' },
   { tag: t.operator, class: 'operator' },
@@ -74,6 +75,8 @@ describe('language-support.ts', () => {
       'pattern = [D4:2 - x]',
       'inst = sample("kick-{tempo}")',
       '',
+      'func = (num: number) { & num + 1 }',
+      '',
       '& track (tempo: 140.bpm) {',
       '  & part drums {',
       '    automate(lib.gain, ~[hold(-60.db) lin(-60.db, 0.db)])',
@@ -107,6 +110,7 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, 'tempo', source.indexOf('(tempo:') + 1, 'definition-property')
     assertHighlightAt(spans, source, 'lib', source.indexOf('lib', source.indexOf('as lib')), 'definition-variable')
     assertHighlightAt(spans, source, 'gain', source.indexOf('.gain') + 1, 'property')
+    assertHighlightAt(spans, source, 'number', source.indexOf(': number') + 2, 'type')
     assertHighlightAt(spans, source, 'sample', source.indexOf('sample("kick-'), 'function')
     assertHighlightAt(spans, source, 'hold', source.indexOf('hold('), 'function')
     assertHighlightAt(spans, source, 'pan', source.indexOf('.pan') + 1, 'function')

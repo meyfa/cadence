@@ -337,20 +337,61 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
   }
 )
 
-const typeExpression_: p.Parser<Token, unknown, ast.TypeExpression> = p.ab(
+const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
   identifier_,
   p.many(
     p.right(literal('.'), identifier_)
   ),
   (name, generics) => {
-    return ast.make('TypeExpression', combineSourceRanges(name, ...generics), { name, generics })
+    return ast.make('NamedType', combineSourceRanges(name, ...generics), { name, generics })
   }
+)
+
+const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.ab(
+  combine3(
+    literal('('),
+    p.recursive(() => parameterList_),
+    literal(')')
+  ),
+  combine2(
+    literal(':'),
+    p.recursive(() => atomicType_)
+  ),
+  ([_lp, parameters, _rp], [_colon, returnType]) => {
+    return ast.make('FunctionType', combineSourceRanges(_lp, returnType), { parameters, returnType })
+  }
+)
+
+const atomicType_: p.Parser<Token, unknown, ast.Type> = p.choice<Token, unknown, ast.Type>(
+  namedType_,
+  functionType_,
+  p.abc(
+    literal('('),
+    p.recursive((): p.Parser<Token, unknown, ast.Type> => type_),
+    literal(')'),
+    (_l, type, _r) => {
+      return ast.make(type.type, combineSourceRanges(_l, _r), { ...type })
+    }
+  )
+)
+
+const type_: p.Parser<Token, unknown, ast.Type> = p.leftAssoc2(
+  atomicType_,
+  p.map(
+    literal('+'),
+    () => (left: ast.Type, right: ast.Type) => {
+      return ast.make('CombinedType', combineSourceRanges(left, right), {
+        children: [left, right]
+      })
+    }
+  ),
+  atomicType_
 )
 
 const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
   identifier_,
   literal(':'),
-  typeExpression_,
+  type_,
   (name, _colon, type) => {
     return ast.make('Parameter', combineSourceRanges(name, type), { name, parameterType: type })
   }

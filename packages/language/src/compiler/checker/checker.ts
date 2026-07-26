@@ -26,7 +26,7 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeType, makeUnion } from '../../type-system/factory.ts'
 import type { Schema, SchemaItem } from '../../type-system/schema.ts'
 import { makeSchema } from '../../type-system/schema.ts'
-import type { FacetType, Type, Value } from '../../type-system/types.ts'
+import type { Facet, FacetType, Type, Value } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
 import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
@@ -544,27 +544,17 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   // The act of constructing a function does not have any effects.
   const effects = noEffects
 
-  const parameters: SchemaItem[] = []
-
-  for (const parameter of expression.parameters) {
-    const parameterCheck = checkParameter(functionScope, parameter)
-    errors.push(...parameterCheck.errors)
-
-    if (parameterCheck.result != null) {
-      functionScope.resolutions.set(parameter.name.name, parameterCheck.result)
-      parameters.push({
-        name: parameter.name.name,
-        type: parameterCheck.result,
-        required: true
-      })
-    }
-  }
+  const parameterCheck = checkParameters(expression.parameters)
+  errors.push(...parameterCheck.errors)
 
   // If the parameters are invalid, it makes no sense to continue checking the function body,
   // as it will produce a lot of irrelevant errors as a consequence.
-  if (errors.length > 0) {
+  if (parameterCheck.result == null) {
     return { errors, effects }
   }
+
+  const parameters = parameterCheck.result.schema
+  putAll(functionScope.resolutions, parameterCheck.result.types)
 
   let hasReturn = false
   let returnType: FacetType | undefined
@@ -597,38 +587,112 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
     return { errors, effects }
   }
 
-  const spec: FunctionSpec = {
-    parameters: makeSchema(parameters),
-    returnType,
-    effects: callEffects
-  }
-
+  const spec: FunctionSpec = { parameters, returnType, effects: callEffects }
   const result = FunctionFacet.with(spec).type()
   scope.top.semantic.functions.set(expression, spec)
 
   return { errors, effects, result }
 }
 
-function checkParameter (scope: Scope, expression: ast.Parameter): Checked<FacetType> {
-  const errors: CompileError[] = []
-
-  const { name } = expression.name
-
-  if (scope.resolutions.has(name)) {
-    errors.push(new CompileError(`Duplicate parameter name "${name}"`, expression.name.range))
-  }
-
-  const typeCheck = checkTypeExpression(expression.parameterType)
-  errors.push(...typeCheck.errors)
-
-  return { ...typeCheck, errors }
+interface Parameters {
+  readonly types: ReadonlyMap<string, FacetType>
+  readonly schema: Schema
 }
 
-function checkTypeExpression (expression: ast.TypeExpression): Checked<FacetType> {
+function checkParameters (expressions: readonly ast.Parameter[]): Checked<Parameters> {
+  const errors: CompileError[] = []
+  const effects = noEffects
+
+  const types = new Map<string, FacetType>()
+  const items: SchemaItem[] = []
+
+  for (const parameter of expressions) {
+    const parameterCheck = checkTypeExpression(parameter.parameterType)
+    errors.push(...parameterCheck.errors)
+
+    if (parameterCheck.result == null) {
+      continue
+    }
+
+    if (types.has(parameter.name.name)) {
+      errors.push(new CompileError(`Duplicate parameter name "${parameter.name.name}"`, parameter.name.range))
+      continue
+    }
+
+    types.set(parameter.name.name, parameterCheck.result)
+    items.push({
+      name: parameter.name.name,
+      type: parameterCheck.result,
+      required: true
+    })
+  }
+
+  if (errors.length > 0) {
+    return { errors, effects }
+  }
+
+  const result = { types, schema: makeSchema(items) }
+
+  return { errors, effects, result }
+}
+
+interface TypeComponent {
+  readonly facet: Facet
+  readonly range: SourceRange
+}
+
+function checkTypeExpression (expression: ast.Type): Checked<FacetType> {
+  const errors: CompileError[] = []
+  const effects = noEffects
+
+  const componentsCheck = checkTypeComponents(expression)
+  errors.push(...componentsCheck.errors)
+
+  if (componentsCheck.result == null) {
+    return { errors, effects }
+  }
+
+  const components = componentsCheck.result
+  if (components.length === 0) {
+    errors.push(new CompileError('Cannot combine zero types', expression.range))
+    return { errors, effects }
+  }
+
+  const facets = new Map<string, Facet>()
+
+  for (const component of components) {
+    const existing = facets.get(component.facet.name)
+    if (existing != null) {
+      errors.push(new CompileError(`Type conflict: (${existing.format()}) + (${component.facet.format()})`, component.range))
+      continue
+    }
+
+    facets.set(component.facet.name, component.facet)
+  }
+
+  const result = makeType(...facets.values())
+
+  return { errors, effects, result }
+}
+
+function checkTypeComponents (expression: ast.Type): Checked<readonly TypeComponent[]> {
+  switch (expression.type) {
+    case 'NamedType':
+      return checkNamedType(expression)
+
+    case 'FunctionType':
+      return checkFunctionType(expression)
+
+    case 'CombinedType':
+      return checkCombinedType(expression)
+  }
+}
+
+function checkNamedType (expression: ast.NamedType): Checked<readonly TypeComponent[]> {
   const effects = noEffects
 
   if (expression.generics.length > 1) {
-    return { errors: [new CompileError('Type expressions can have at most one generic', expression.range)], effects }
+    return { errors: [new CompileError('Types can have at most one generic', expression.range)], effects }
   }
 
   const generic = expression.generics.at(0)?.name
@@ -639,9 +703,60 @@ function checkTypeExpression (expression: ast.TypeExpression): Checked<FacetType
     return { errors: [new CompileError(`Unknown type "${typeName}"`, expression.range)], effects }
   }
 
-  const result = facet.type()
+  const result = [{ facet, range: expression.range }]
 
   return { errors: [], effects, result }
+}
+
+function checkFunctionType (expression: ast.FunctionType): Checked<readonly TypeComponent[]> {
+  const errors: CompileError[] = []
+  const effects = noEffects
+
+  const parameterCheck = checkParameters(expression.parameters)
+  errors.push(...parameterCheck.errors)
+
+  if (parameterCheck.result == null) {
+    return { errors, effects }
+  }
+
+  const returnTypeCheck = checkTypeExpression(expression.returnType)
+  errors.push(...returnTypeCheck.errors)
+
+  if (returnTypeCheck.result == null) {
+    return { errors, effects }
+  }
+
+  const facet = FunctionFacet.with({
+    parameters: parameterCheck.result.schema,
+    returnType: returnTypeCheck.result,
+    effects: noEffects
+  })
+
+  const result = [{ facet, range: expression.range }]
+
+  return { errors, effects, result }
+}
+
+function checkCombinedType (expression: ast.CombinedType): Checked<readonly TypeComponent[]> {
+  const errors: CompileError[] = []
+  const effects = noEffects
+
+  const result: TypeComponent[] = []
+
+  for (const child of expression.children) {
+    const childCheck = checkTypeComponents(child)
+    errors.push(...childCheck.errors)
+
+    if (childCheck.result != null) {
+      result.push(...childCheck.result)
+    }
+  }
+
+  if (errors.length > 0) {
+    return { errors, effects }
+  }
+
+  return { errors, effects, result }
 }
 
 function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<FacetType> {

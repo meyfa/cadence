@@ -42,7 +42,9 @@ export interface NodeByType {
   Parameter: Parameter
 
   // Type Expressions
-  TypeExpression: TypeExpression
+  NamedType: NamedType
+  FunctionType: FunctionType
+  CombinedType: CombinedType
 
   // Primitive Values
   Number: Number
@@ -170,15 +172,28 @@ export interface Argument extends ASTNode {
 export interface Parameter extends ASTNode {
   readonly type: 'Parameter'
   readonly name: Identifier
-  readonly parameterType: TypeExpression
+  readonly parameterType: Type
 }
 
 // Type Expressions
 
-export interface TypeExpression extends ASTNode {
-  readonly type: 'TypeExpression'
+export type Type = NamedType | FunctionType | CombinedType
+
+export interface NamedType extends ASTNode {
+  readonly type: 'NamedType'
   readonly name: Identifier
   readonly generics: readonly Identifier[]
+}
+
+export interface FunctionType extends ASTNode {
+  readonly type: 'FunctionType'
+  readonly parameters: readonly Parameter[]
+  readonly returnType: Type
+}
+
+export interface CombinedType extends ASTNode {
+  readonly type: 'CombinedType'
+  readonly children: readonly Type[]
 }
 
 // Primitive Values

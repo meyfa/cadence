@@ -850,7 +850,13 @@ describe('parser/parser.ts', () => {
   })
 
   it('should parse functions with parameters', () => {
-    const result = parse(lexSource('my_func = (param1: number.db, param2: string) { & param1, param2 }'))
+    const source = [
+      'my_func = (param1: number.db, param2: string) {',
+      '  & param1, param2',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
     assertResultComplete(result)
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
@@ -867,7 +873,7 @@ describe('parser/parser.ts', () => {
                 type: 'Parameter',
                 name: { type: 'Identifier', name: 'param1' },
                 parameterType: {
-                  type: 'TypeExpression',
+                  type: 'NamedType',
                   name: { type: 'Identifier', name: 'number' },
                   generics: [
                     { type: 'Identifier', name: 'db' }
@@ -878,7 +884,7 @@ describe('parser/parser.ts', () => {
                 type: 'Parameter',
                 name: { type: 'Identifier', name: 'param2' },
                 parameterType: {
-                  type: 'TypeExpression',
+                  type: 'NamedType',
                   name: { type: 'Identifier', name: 'string' },
                   generics: []
                 }
@@ -897,6 +903,147 @@ describe('parser/parser.ts', () => {
             ]
           }
         ]
+      }
+    ])
+  })
+
+  it('should parse complex type expressions', () => {
+    const source = [
+      'foo = (x: number.db + (format: string): string, fmt: string) {}',
+      'bar = (y: ((number.db) + (format: string): (string + string))) {}',
+      'baz = (z: (): string + string) {}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    const foo = result.value.children.at(0)?.values.at(0)
+    assert.strictEqual(foo?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(foo.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'x' },
+        parameterType: {
+          type: 'CombinedType',
+          children: [
+            {
+              type: 'NamedType',
+              name: { type: 'Identifier', name: 'number' },
+              generics: [
+                { type: 'Identifier', name: 'db' }
+              ]
+            },
+            {
+              type: 'FunctionType',
+              parameters: [
+                {
+                  type: 'Parameter',
+                  name: { type: 'Identifier', name: 'format' },
+                  parameterType: {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'string' },
+                    generics: []
+                  }
+                }
+              ],
+              returnType: {
+                type: 'NamedType',
+                name: { type: 'Identifier', name: 'string' },
+                generics: []
+              }
+            }
+          ]
+        }
+      },
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'fmt' },
+        parameterType: {
+          type: 'NamedType',
+          name: { type: 'Identifier', name: 'string' },
+          generics: []
+        }
+      }
+    ])
+
+    const bar = result.value.children.at(1)?.values.at(0)
+    assert.strictEqual(bar?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(bar.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'y' },
+        parameterType: {
+          type: 'CombinedType',
+          children: [
+            {
+              type: 'NamedType',
+              name: { type: 'Identifier', name: 'number' },
+              generics: [
+                { type: 'Identifier', name: 'db' }
+              ]
+            },
+            {
+              type: 'FunctionType',
+              parameters: [
+                {
+                  type: 'Parameter',
+                  name: { type: 'Identifier', name: 'format' },
+                  parameterType: {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'string' },
+                    generics: []
+                  }
+                }
+              ],
+              returnType: {
+                type: 'CombinedType',
+                children: [
+                  {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'string' },
+                    generics: []
+                  },
+                  {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'string' },
+                    generics: []
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ])
+
+    const baz = result.value.children.at(2)?.values.at(0)
+    assert.strictEqual(baz?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(baz.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'z' },
+        parameterType: {
+          type: 'CombinedType',
+          children: [
+            {
+              type: 'FunctionType',
+              parameters: [],
+              returnType: {
+                type: 'NamedType',
+                name: { type: 'Identifier', name: 'string' },
+                generics: []
+              }
+            },
+            {
+              type: 'NamedType',
+              name: { type: 'Identifier', name: 'string' },
+              generics: []
+            }
+          ]
+        }
       }
     ])
   })

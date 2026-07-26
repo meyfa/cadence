@@ -10,7 +10,7 @@ export const cadenceParserConfig: ParserConfig = {
       Number: t.number,
       String: t.string,
       Pattern: t.special(t.string),
-      CurveType: t.function(t.name),
+      CurveSegmentShape: t.function(t.name),
 
       keyword: t.keyword,
       unit: t.number,
@@ -32,7 +32,7 @@ export const cadenceParserConfig: ParserConfig = {
       VariableDefinition: t.definition(t.variableName),
       VariableName: t.variableName,
       ArgumentName: t.definition(t.propertyName),
-      Type: t.typeName,
+      NamedType: t.typeName,
       Member: t.propertyName,
 
       Callee: t.function(t.name)
