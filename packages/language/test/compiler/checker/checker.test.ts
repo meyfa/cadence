@@ -258,6 +258,16 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept record types', () => {
+      const source = [
+        'my_function = (param: { foo: number, bar: string }) {',
+        '  & param.foo',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should allow blocking calls in functions', () => {
       const source = [
         'use "instruments" as inst',
@@ -957,11 +967,11 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Module "instruments" has no export named "__proto__"',
-        'Type instrument + record(gain) has no property named "__proto__"',
+        'Type instrument + {gain: parameter.db} has no property named "__proto__"',
         'Module "instruments" has no export named "constructor"',
-        'Type instrument + record(gain) has no property named "constructor"',
+        'Type instrument + {gain: parameter.db} has no property named "constructor"',
         'Module "instruments" has no export named "toString"',
-        'Type instrument + record(gain) has no property named "toString"'
+        'Type instrument + {gain: parameter.db} has no property named "toString"'
       ])
     })
 
@@ -1061,7 +1071,7 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Identifier "note" is already defined',
-        'Expected type number.hz for argument "frequency", got record(frequency, gate, velocity)'
+        'Expected type number.hz for argument "frequency", got {frequency: number.hz, gate: number.beats, velocity: number}'
       ])
     })
 

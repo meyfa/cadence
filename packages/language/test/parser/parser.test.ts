@@ -907,11 +907,68 @@ describe('parser/parser.ts', () => {
     ])
   })
 
+  it('should parse empty record types', () => {
+    const result = parse(lexSource('func = (p: {}) { & 42 }'))
+    assertResultComplete(result)
+
+    const func = result.value.children.at(0)?.values.at(0)
+    assert.strictEqual(func?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(func.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'p' },
+        parameterType: {
+          type: 'RecordType',
+          parameters: []
+        }
+      }
+    ])
+  })
+
+  it('should parse named types', () => {
+    const result = parse(lexSource('foo = (x: track, y: part, z: instrument) {}'))
+    assertResultComplete(result)
+
+    const func = result.value.children.at(0)?.values.at(0)
+    assert.strictEqual(func?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(func.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'x' },
+        parameterType: {
+          type: 'NamedType',
+          name: { type: 'Identifier', name: 'track' },
+          generics: []
+        }
+      },
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'y' },
+        parameterType: {
+          type: 'NamedType',
+          name: { type: 'Identifier', name: 'part' },
+          generics: []
+        }
+      },
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'z' },
+        parameterType: {
+          type: 'NamedType',
+          name: { type: 'Identifier', name: 'instrument' },
+          generics: []
+        }
+      }
+    ])
+  })
+
   it('should parse complex type expressions', () => {
     const source = [
       'foo = (x: number.db + (format: string): string, fmt: string) {}',
       'bar = (y: ((number.db) + (format: string): (string + string))) {}',
-      'baz = (z: (): string + string) {}'
+      'baz = (z: (): instrument + {foo: number, bar: string}) {}'
     ].join('\n')
 
     const result = parse(lexSource(source))
@@ -1033,14 +1090,32 @@ describe('parser/parser.ts', () => {
               parameters: [],
               returnType: {
                 type: 'NamedType',
-                name: { type: 'Identifier', name: 'string' },
+                name: { type: 'Identifier', name: 'instrument' },
                 generics: []
               }
             },
             {
-              type: 'NamedType',
-              name: { type: 'Identifier', name: 'string' },
-              generics: []
+              type: 'RecordType',
+              parameters: [
+                {
+                  type: 'Parameter',
+                  name: { type: 'Identifier', name: 'foo' },
+                  parameterType: {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'number' },
+                    generics: []
+                  }
+                },
+                {
+                  type: 'Parameter',
+                  name: { type: 'Identifier', name: 'bar' },
+                  parameterType: {
+                    type: 'NamedType',
+                    name: { type: 'Identifier', name: 'string' },
+                    generics: []
+                  }
+                }
+              ]
             }
           ]
         }

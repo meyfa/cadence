@@ -42,7 +42,13 @@ export const RecordFacet = {
     const safeFields = cloneOwnProperties(fields)
 
     return makeFacet<typeof FACET_NAME, RecordDataForFields<Fields>>(FACET_NAME, safeFields, {
-      format: () => `${FACET_NAME}(${Object.keys(safeFields).join(', ')})`,
+      format: () => {
+        const fields = Object.entries(safeFields)
+          .map(([name, type]) => `${name}: ${type?.format()}`)
+          .join(', ')
+
+        return `{${fields}}`
+      },
       normalize: (data) => normalizeRecordData<Fields>(data)
     })
   },

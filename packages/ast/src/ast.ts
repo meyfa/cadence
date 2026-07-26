@@ -44,6 +44,7 @@ export interface NodeByType {
   // Type Expressions
   NamedType: NamedType
   FunctionType: FunctionType
+  RecordType: RecordType
   CombinedType: CombinedType
 
   // Primitive Values
@@ -177,7 +178,7 @@ export interface Parameter extends ASTNode {
 
 // Type Expressions
 
-export type Type = NamedType | FunctionType | CombinedType
+export type Type = NamedType | FunctionType | RecordType | CombinedType
 
 export interface NamedType extends ASTNode {
   readonly type: 'NamedType'
@@ -189,6 +190,11 @@ export interface FunctionType extends ASTNode {
   readonly type: 'FunctionType'
   readonly parameters: readonly Parameter[]
   readonly returnType: Type
+}
+
+export interface RecordType extends ASTNode {
+  readonly type: 'RecordType'
+  readonly parameters: readonly Parameter[]
 }
 
 export interface CombinedType extends ASTNode {
