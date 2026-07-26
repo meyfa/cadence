@@ -106,7 +106,7 @@ Curve {
 }
 
 curveSegment {
-  CurveType { word } ("(" argumentList? ")")? (":" AccessOrCall)?
+  CurveSegmentShape { word } ("(" argumentList? ")")? (":" AccessOrCall)?
 }
 
 argumentList {
@@ -127,7 +127,21 @@ parameter {
 }
 
 Type {
+  atomicType ("+" atomicType)*
+}
+
+atomicType {
+  NamedType | FunctionType | ("(" Type ")")
+}
+
+NamedType {
   word ("." word)*
+}
+
+FunctionType {
+  "(" parameterList? ")"
+  ":"
+  atomicType
 }
 
 primary {

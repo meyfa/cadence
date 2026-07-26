@@ -246,6 +246,18 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept higher-order functions', () => {
+      const source = [
+        'apply = (fn: (arg: number.bpm): number.bpm, value: number) {',
+        '  & fn(value.bpm)',
+        '}',
+        '',
+        'foo = apply((arg: number.bpm) { & arg * 2 }, 120)'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should allow blocking calls in functions', () => {
       const source = [
         'use "instruments" as inst',
@@ -1121,15 +1133,33 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject invalid type expressions', () => {
       const source = [
-        'func0 = (param: invalid_type) { & param }',
-        'func1 = (param: number.foo) { & param }',
-        'func2 = (param: string.hz) { & param }'
+        'func0 = (p: invalid_type) { & p }',
+        'func1 = (p: number.foo) { & p }',
+        'func2 = (p: string.hz) { & p }'
       ].join('\n')
 
       assertErrorMessages(source, [
         'Unknown type "invalid_type"',
         'Unknown type "number.foo"',
         'Unknown type "string.hz"'
+      ])
+    })
+
+    it('should reject invalid composite types', () => {
+      const source = [
+        'func0 = (p: number + number) { & p }',
+        'func1 = (p: number + number.hz) { & p }',
+        'func2 = (p: number.db + number.hz) { & p }',
+        'func3 = (p: string + string) { & p }',
+        'func4 = (p: ((a: number): number) + ((b: number): number)) { & p }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Type conflict: (number) + (number)',
+        'Type conflict: (number) + (number.hz)',
+        'Type conflict: (number.db) + (number.hz)',
+        'Type conflict: (string) + (string)',
+        'Type conflict: (function) + (function)'
       ])
     })
 
