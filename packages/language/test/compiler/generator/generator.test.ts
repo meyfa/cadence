@@ -410,6 +410,31 @@ describe('compiler/generator/generator.ts', () => {
     ])
   })
 
+  it('should interpolate curves and inherit their final segment value', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sample("synth.wav")',
+      'previous = ~[lin(-60.db, -30.db):1.bar lin(-30.db, -15.db):1.bar]',
+      '& track (120.bpm) {',
+      '  & part intro (4.bars) {',
+      '    & automate(synth.gain, ~[{previous} lin(0.db):1.bar])',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+
+    assert.strictEqual(result.automations.size, 1)
+    const [automation] = result.automations.values()
+
+    assert.deepStrictEqual(automation.points, [
+      { time: seconds(0), value: db(-60), shape: 'step' },
+      { time: seconds(2), value: db(-30), shape: 'linear' },
+      { time: seconds(4), value: db(-15), shape: 'linear' },
+      { time: seconds(6), value: db(0), shape: 'linear' }
+    ])
+  })
+
   it('should clip curve lengths to the part length', () => {
     const source = [
       'use "instruments" as *',

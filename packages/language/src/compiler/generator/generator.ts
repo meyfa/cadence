@@ -293,11 +293,6 @@ function generateStep (scope: Scope, expression: ast.Step): Step {
 }
 
 function generateCurve (scope: Scope, expression: ast.Curve): Value {
-  const segments = expression.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
-  const otherChildren = expression.children.filter((c) => c.type !== 'CurveSegment')
-  assert(segments.length > 0)
-  assert(otherChildren.length === 0)
-
   const generatedSegments: Array<RelativeCurveSegment<Unit>> = []
 
   const getPreviousSegmentEnd = (): RuntimeNumeric<Unit> => {
@@ -306,7 +301,14 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
     return definition.end(previous)
   }
 
-  for (const segment of segments) {
+  for (const child of expression.children) {
+    if (child.type !== 'CurveSegment') {
+      const curve = CurveFacet.get(resolve(scope, child))
+      generatedSegments.push(...curve.segments)
+      continue
+    }
+
+    const segment = child
     const args = segment.arguments.map((point) => {
       return NumberFacet.get(resolve(scope, point))
     })
@@ -324,6 +326,8 @@ function generateCurve (scope: Scope, expression: ast.Curve): Value {
 
     generatedSegments.push(createCurveSegment(segment.curveType, resolvedParameters, length))
   }
+
+  assert(generatedSegments.length > 0)
 
   return Curves.of(createCurve(generatedSegments))
 }
