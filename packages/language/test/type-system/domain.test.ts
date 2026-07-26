@@ -144,30 +144,57 @@ const automation: Automation = {
 
 describe('type-system/domain', () => {
   describe('AutomationFacet', () => {
-    it('should format and round-trip automation values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(AutomationFacet.format(), 'automation')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(AutomationFacet.is(AutomationFacet), true)
+      assert.strictEqual(AutomationFacet.is(BusFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = AutomationFacet.type().of(automation)
       const automationData = AutomationFacet.get(value)
 
       expectTypeEquals<Automation, typeof automationData>()
-      assert.strictEqual(AutomationFacet.format(), 'automation')
       assert.strictEqual(AutomationFacet.has(value), true)
       assert.strictEqual(automationData, automation)
     })
   })
 
   describe('BusFacet', () => {
-    it('should format and round-trip bus values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(BusFacet.format(), 'bus')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(BusFacet.is(BusFacet), true)
+      assert.strictEqual(BusFacet.is(EffectFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = BusFacet.type().of(bus)
       const busData = BusFacet.get(value)
 
       expectTypeEquals<Bus, typeof busData>()
-      assert.strictEqual(BusFacet.format(), 'bus')
       assert.strictEqual(BusFacet.has(value), true)
       assert.strictEqual(busData, bus)
     })
   })
 
   describe('CurveFacet', () => {
+    it('should format as facet name with unit suffix', () => {
+      assert.strictEqual(CurveFacet.format(), 'curve')
+      assert.strictEqual(CurveFacet.with(undefined).format(), 'curve')
+      assert.strictEqual(CurveFacet.with('db').format(), 'curve.db')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(CurveFacet.is(CurveFacet), true)
+      assert.strictEqual(CurveFacet.is(ParameterFacet), false)
+    })
+
     it('should support unit-specific curves and detail()', () => {
       const genericValue = CurveFacet.type().of(curve)
       const decibelFacet = CurveFacet.with('db')
@@ -176,9 +203,6 @@ describe('type-system/domain', () => {
       const curveData = decibelFacet.get(decibelValue)
 
       expectTypeEquals<RelativeCurve<'db'>, typeof curveData>()
-      assert.strictEqual(CurveFacet.format(), 'curve')
-      assert.strictEqual(CurveFacet.with(undefined).format(), 'curve')
-      assert.strictEqual(decibelFacet.format(), 'curve.db')
       assert.strictEqual(CurveFacet.has(decibelValue), true)
       assert.strictEqual(decibelFacet.has(genericValue), false)
       assert.strictEqual(CurveFacet.detail(decibelType), 'db')
@@ -189,24 +213,40 @@ describe('type-system/domain', () => {
   })
 
   describe('EffectFacet', () => {
-    it('should format and round-trip effect values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(EffectFacet.format(), 'effect')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(EffectFacet.is(EffectFacet), true)
+      assert.strictEqual(EffectFacet.is(InstrumentFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = EffectFacet.type().of(effect)
       const effectData = EffectFacet.get(value)
 
       expectTypeEquals<Effect, typeof effectData>()
-      assert.strictEqual(EffectFacet.format(), 'effect')
       assert.strictEqual(EffectFacet.has(value), true)
       assert.strictEqual(effectData, effect)
     })
   })
 
   describe('InstrumentFacet', () => {
-    it('should format and round-trip instrument values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(InstrumentFacet.format(), 'instrument')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(InstrumentFacet.is(InstrumentFacet), true)
+      assert.strictEqual(InstrumentFacet.is(MixerFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = InstrumentFacet.type().of(instrument)
       const instrumentData = InstrumentFacet.get(value)
 
       expectTypeEquals<Instrument, typeof instrumentData>()
-      assert.strictEqual(InstrumentFacet.format(), 'instrument')
       assert.strictEqual(InstrumentFacet.has(value), true)
       assert.strictEqual(instrumentData, instrument)
       assert.strictEqual(InstrumentFacet.has(BusFacet.type().of(bus)), false)
@@ -214,18 +254,37 @@ describe('type-system/domain', () => {
   })
 
   describe('MixerFacet', () => {
-    it('should format and round-trip mixer values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(MixerFacet.format(), 'mixer')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(MixerFacet.is(MixerFacet), true)
+      assert.strictEqual(MixerFacet.is(ParameterFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = MixerFacet.type().of(mixer)
       const mixerData = MixerFacet.get(value)
 
       expectTypeEquals<Mixer, typeof mixerData>()
-      assert.strictEqual(MixerFacet.format(), 'mixer')
       assert.strictEqual(MixerFacet.has(value), true)
       assert.strictEqual(mixerData, mixer)
     })
   })
 
   describe('ParameterFacet', () => {
+    it('should format as facet name with unit suffix', () => {
+      assert.strictEqual(ParameterFacet.format(), 'parameter')
+      assert.strictEqual(ParameterFacet.with(undefined).format(), 'parameter')
+      assert.strictEqual(ParameterFacet.with('db').format(), 'parameter.db')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(ParameterFacet.is(ParameterFacet), true)
+      assert.strictEqual(ParameterFacet.is(PartFacet), false)
+    })
+
     it('should support unit-specific parameters and detail()', () => {
       const genericValue = ParameterFacet.type().of(gainParameter)
       const decibelFacet = ParameterFacet.with('db')
@@ -234,9 +293,6 @@ describe('type-system/domain', () => {
       const parameterData = decibelFacet.get(decibelValue)
 
       expectTypeEquals<Parameter<'db'>, typeof parameterData>()
-      assert.strictEqual(ParameterFacet.format(), 'parameter')
-      assert.strictEqual(ParameterFacet.with(undefined).format(), 'parameter')
-      assert.strictEqual(decibelFacet.format(), 'parameter.db')
       assert.strictEqual(ParameterFacet.has(decibelValue), true)
       assert.strictEqual(decibelFacet.has(genericValue), false)
       assert.strictEqual(ParameterFacet.detail(decibelType), 'db')
@@ -246,24 +302,40 @@ describe('type-system/domain', () => {
   })
 
   describe('PartFacet', () => {
-    it('should format and round-trip part values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(PartFacet.format(), 'part')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(PartFacet.is(PartFacet), true)
+      assert.strictEqual(PartFacet.is(PatternFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = PartFacet.type().of(part)
       const partData = PartFacet.get(value)
 
       expectTypeEquals<Part, typeof partData>()
-      assert.strictEqual(PartFacet.format(), 'part')
       assert.strictEqual(PartFacet.has(value), true)
       assert.strictEqual(partData, part)
     })
   })
 
   describe('PatternFacet', () => {
-    it('should format and round-trip pattern values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(PatternFacet.format(), 'pattern')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(PatternFacet.is(PatternFacet), true)
+      assert.strictEqual(PatternFacet.is(RoutingFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = PatternFacet.type().of(pattern)
       const patternData = PatternFacet.get(value)
 
       expectTypeEquals<Pattern, typeof patternData>()
-      assert.strictEqual(PatternFacet.format(), 'pattern')
       assert.strictEqual(PatternFacet.has(value), true)
       assert.strictEqual(patternData, pattern)
       assert.deepStrictEqual(Array.from(patternData.evaluate()), Array.from(pattern.evaluate()))
@@ -271,48 +343,80 @@ describe('type-system/domain', () => {
   })
 
   describe('RoutingFacet', () => {
-    it('should format and round-trip routing values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(RoutingFacet.format(), 'routing')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(RoutingFacet.is(RoutingFacet), true)
+      assert.strictEqual(RoutingFacet.is(SourceFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = RoutingFacet.type().of(routing)
       const routingData = RoutingFacet.get(value)
 
       expectTypeEquals<InstrumentRouting, typeof routingData>()
-      assert.strictEqual(RoutingFacet.format(), 'routing')
       assert.strictEqual(RoutingFacet.has(value), true)
       assert.strictEqual(routingData, routing)
     })
   })
 
   describe('SourceFacet', () => {
-    it('should format and round-trip source values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(SourceFacet.format(), 'source')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(SourceFacet.is(SourceFacet), true)
+      assert.strictEqual(SourceFacet.is(TrackFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = SourceFacet.type().of(source)
       const sourceData = SourceFacet.get(value)
 
       expectTypeEquals<Source, typeof sourceData>()
-      assert.strictEqual(SourceFacet.format(), 'source')
       assert.strictEqual(SourceFacet.has(value), true)
       assert.strictEqual(sourceData, source)
     })
   })
 
   describe('TrackFacet', () => {
-    it('should format and round-trip track values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(TrackFacet.format(), 'track')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(TrackFacet.is(TrackFacet), true)
+      assert.strictEqual(TrackFacet.is(VoiceFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = TrackFacet.type().of(track)
       const trackData = TrackFacet.get(value)
 
       expectTypeEquals<Track, typeof trackData>()
-      assert.strictEqual(TrackFacet.format(), 'track')
       assert.strictEqual(TrackFacet.has(value), true)
       assert.strictEqual(trackData, track)
     })
   })
 
   describe('VoiceFacet', () => {
-    it('should format and round-trip voice values', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(VoiceFacet.format(), 'voice')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(VoiceFacet.is(VoiceFacet), true)
+      assert.strictEqual(VoiceFacet.is(AutomationFacet), false)
+    })
+
+    it('should round-trip values', () => {
       const value = VoiceFacet.type().of(voice)
       const voiceData = VoiceFacet.get(value)
 
       expectTypeEquals<Voice, typeof voiceData>()
-      assert.strictEqual(VoiceFacet.format(), 'voice')
       assert.strictEqual(VoiceFacet.has(value), true)
       assert.strictEqual(voiceData, voice)
     })
