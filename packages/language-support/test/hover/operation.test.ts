@@ -24,7 +24,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, position),
       {
         range: getRangeAt(source, source.indexOf('gain('), 'gain'.length),
-        title: 'gain = (gain: number.db): effect + record(gain)',
+        title: 'gain = (gain: number.db): effect + {gain: parameter.db}',
         summary: 'Applies a gain adjustment to the signal.',
         annotations: ['may block']
       }
@@ -104,7 +104,7 @@ describe('hover/operation.ts', () => {
       applySemanticOperationWithParser(getHoverInfo, cadenceParser, source, delayPosition),
       {
         range: getRangeAt(source, source.indexOf('delay('), 'delay'.length),
-        title: 'delay = (mix: number, time: number.beats | number.s, feedback: number, wet?: number.db): effect + record(feedback)',
+        title: 'delay = (mix: number, time: number.beats | number.s, feedback: number, wet?: number.db): effect + {feedback: parameter}',
         summary: 'Adds echoes with configurable mix, time, and feedback.',
         annotations: ['may block']
       }

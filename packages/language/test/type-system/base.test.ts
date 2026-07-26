@@ -307,9 +307,12 @@ describe('type-system/base', () => {
   })
 
   describe('RecordFacet', () => {
-    it('should format as facet name with field names', () => {
+    it('should format as facet name with field names and types', () => {
       const recordFacet = RecordFacet.with({ gain: NumberFacet.type(), label: StringFacet.type() })
-      assert.strictEqual(recordFacet.format(), 'record(gain, label)')
+      assert.strictEqual(recordFacet.format(), '{gain: number, label: string}')
+
+      const emptyRecordFacet = RecordFacet.with({})
+      assert.strictEqual(emptyRecordFacet.format(), '{}')
     })
 
     it('should compare by field assignability', () => {

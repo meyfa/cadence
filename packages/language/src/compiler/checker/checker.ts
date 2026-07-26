@@ -707,6 +707,9 @@ function checkTypeComponents (expression: ast.Type): Checked<readonly TypeCompon
     case 'FunctionType':
       return checkFunctionType(expression)
 
+    case 'RecordType':
+      return checkRecordType(expression)
+
     case 'CombinedType':
       return checkCombinedType(expression)
   }
@@ -756,6 +759,38 @@ function checkFunctionType (expression: ast.FunctionType): Checked<readonly Type
     effects: noEffects
   })
 
+  const result = [{ facet, range: expression.range }]
+
+  return { errors, effects, result }
+}
+
+function checkRecordType (expression: ast.RecordType): Checked<readonly TypeComponent[]> {
+  const errors: CompileError[] = []
+  const effects = noEffects
+
+  const properties = new Map<string, FacetType>()
+
+  for (const property of expression.parameters) {
+    const propertyCheck = checkTypeExpression(property.parameterType)
+    errors.push(...propertyCheck.errors)
+
+    if (propertyCheck.result == null) {
+      continue
+    }
+
+    if (properties.has(property.name.name)) {
+      errors.push(new CompileError(`Duplicate property name "${property.name.name}"`, property.name.range))
+      continue
+    }
+
+    properties.set(property.name.name, propertyCheck.result)
+  }
+
+  if (errors.length > 0) {
+    return { errors, effects }
+  }
+
+  const facet = RecordFacet.with(Object.fromEntries(properties))
   const result = [{ facet, range: expression.range }]
 
   return { errors, effects, result }

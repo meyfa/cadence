@@ -338,7 +338,10 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
 )
 
 const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
-  identifier_,
+  // Do not use identifier_ as it excludes keywords, but keywords are valid type names (e.g. "effect" and "instrument")
+  p.token((t) => {
+    return t.name === 'word' ? ast.make('Identifier', getSourceRange(t), { name: t.text }) : undefined
+  }),
   p.many(
     p.right(literal('.'), identifier_)
   ),
@@ -362,9 +365,19 @@ const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.ab(
   }
 )
 
+const recordType_: p.Parser<Token, unknown, ast.RecordType> = p.abc(
+  literal('{'),
+  p.recursive(() => parameterList_),
+  expectLiteral('}'),
+  (_l, parameters, _r) => {
+    return ast.make('RecordType', combineSourceRanges(_l, _r), { parameters })
+  }
+)
+
 const atomicType_: p.Parser<Token, unknown, ast.Type> = p.choice<Token, unknown, ast.Type>(
   namedType_,
   functionType_,
+  recordType_,
   p.abc(
     literal('('),
     p.recursive((): p.Parser<Token, unknown, ast.Type> => type_),

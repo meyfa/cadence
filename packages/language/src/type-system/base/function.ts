@@ -105,7 +105,7 @@ function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
   // - same parameter names
   //     Example: (a: string) is not assignable to (b: string)
   // - assignable parameter types (contravariant)
-  //     Example: (a: record(gain)) is assignable to (a: record(gain, pan)), but not vice versa
+  //     Example: (a: { gain }) is assignable to (a: { gain, pan }), but not vice versa
 
   // Note (future improvement): We could allow different parameter names by mapping from the
   // call-site parameter names to the function value's internal parameter names in the compiler.
