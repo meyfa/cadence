@@ -449,6 +449,24 @@ describe('compiler/checker/checker.ts', () => {
       assertValid('my_curve = ~[lin((-60).db, (-30).db):1.bar hold:1.bar]')
     })
 
+    it('should accept interpolated curves and inherit their final segment value', () => {
+      const source = [
+        'previous = ~[lin(-60.db, -30.db):1.bar]',
+        'my_curve = ~[{previous} lin(0.db):1.bar]'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept interpolation of curves without units', () => {
+      const source = [
+        'previous = ~[hold(0):1.bar]',
+        'my_curve = ~[{previous} lin(1):1.bar]'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept bus gain automation via explicit namespace', () => {
       const source = [
         '& mixer {',
@@ -764,6 +782,29 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject curves when the units differ between segments', () => {
       assertErrorMessages('my_curve = ~[hold(0.db):1.bar hold(100.hz):1.bar]', [
         'Curve segments must have the same unit'
+      ])
+    })
+
+    it('should reject curves when interpolation units differ from segments', () => {
+      const source = [
+        'previous = ~[hold(0.db):1.bar]',
+        'my_curve = ~[{previous} hold(100.hz):1.bar]'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Curve segments must have the same unit'
+      ])
+    })
+
+    it('should reject empty curves', () => {
+      assertErrorMessages('my_curve = ~[]', [
+        'Curve must have at least one segment'
+      ])
+    })
+
+    it('should reject interpolation of non-curves', () => {
+      assertErrorMessages('my_curve = ~[{42}]', [
+        'Expected type curve, got number'
       ])
     })
 

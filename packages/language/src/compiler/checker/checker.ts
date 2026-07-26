@@ -421,34 +421,64 @@ function checkStep (scope: Scope, expression: ast.Step): Checked<void> {
   return { errors, effects }
 }
 
+interface CurveDetail {
+  readonly unit: Unit
+}
+
 function checkCurve (scope: Scope, expression: ast.Curve): Checked<FacetType> {
   const errors: CompileError[] = []
   let effects = noEffects
 
-  const segments = expression.children.filter((c): c is ast.CurveSegment => c.type === 'CurveSegment')
-  const otherChildren = expression.children.filter((c) => c.type !== 'CurveSegment')
-
-  for (const child of otherChildren) {
-    // TODO Add support for interpolation in curves
-    errors.push(new CompileError('Curve interpolation is not supported yet', child.range))
-  }
-
-  if (segments.length === 0) {
+  if (expression.children.length === 0) {
     errors.push(new CompileError('Curve must have at least one segment', expression.range))
     return { errors, effects }
   }
 
-  const segmentChecks: Array<Checked<Unit>> = []
-  let previousUnit: Unit | undefined
+  let detail: CurveDetail | undefined
 
-  for (let i = 0; i < segments.length; ++i) {
-    const segmentCheck = checkCurveSegment(scope, segments[i], i > 0, previousUnit)
-    segmentChecks.push(segmentCheck)
-    errors.push(...segmentCheck.errors)
-    effects = mergeEffects(effects, segmentCheck.effects)
+  const append = (unit: Unit, range: SourceRange): void => {
+    if (detail == null) {
+      detail = { unit }
+      return
+    }
 
-    if (segmentCheck.result != null) {
-      previousUnit = segmentCheck.result
+    if (detail.unit !== unit) {
+      errors.push(new CompileError('Curve segments must have the same unit', range))
+    }
+  }
+
+  for (const item of expression.children) {
+    switch (item.type) {
+      case 'CurveSegment': {
+        const itemCheck = checkCurveSegment(scope, item, detail)
+        errors.push(...itemCheck.errors)
+        effects = mergeEffects(effects, itemCheck.effects)
+
+        if (itemCheck.result == null) {
+          break
+        }
+
+        append(itemCheck.result.unit, item.range)
+        break
+      }
+
+      default: {
+        const itemCheck = checkExpression(scope, item)
+        errors.push(...itemCheck.errors)
+        effects = mergeEffects(effects, itemCheck.effects)
+
+        if (itemCheck.result == null) {
+          break
+        }
+
+        if (!CurveFacet.is(itemCheck.result)) {
+          errors.push(...checkType(CurveFacet.type(), itemCheck.result, item.range))
+          break
+        }
+
+        append(CurveFacet.detail(itemCheck.result), item.range)
+        break
+      }
     }
   }
 
@@ -456,15 +486,7 @@ function checkCurve (scope: Scope, expression: ast.Curve): Checked<FacetType> {
     return { errors, effects }
   }
 
-  const firstUnit = segmentChecks[0].result
-
-  for (let i = 1; i < segmentChecks.length; ++i) {
-    if (segmentChecks[i].result !== firstUnit) {
-      errors.push(new CompileError('Curve segments must have the same unit', segments[i].range))
-    }
-  }
-
-  const result = CurveFacet.with(firstUnit).type()
+  const result = CurveFacet.with(detail?.unit).type()
 
   return { errors, effects, result }
 }
@@ -474,7 +496,7 @@ const curveSegmentLengthType = makeUnion(
   NumberFacet.with('s').type()
 )
 
-function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, hasPrevious: boolean, previousUnit: Unit | undefined): Checked<Unit> {
+function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?: CurveDetail): Checked<CurveDetail> {
   const errors: CompileError[] = []
   let effects = noEffects
 
@@ -494,7 +516,7 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, hasPrevi
   const actualParameters = expression.arguments.length
   const omittedFirstParameter = expectedParameters > 0 && actualParameters === expectedParameters - 1
 
-  if (omittedFirstParameter && !hasPrevious) {
+  if (omittedFirstParameter && detail == null) {
     return { errors: [new CompileError('First curve segment cannot omit its first argument', expression.range)], effects }
   }
 
@@ -524,14 +546,16 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, hasPrevi
     return { errors, effects }
   }
 
-  const firstUnit = omittedFirstParameter ? previousUnit : units[0]
+  const firstUnit = omittedFirstParameter ? detail?.unit : units[0]
 
   const expected = NumberFacet.with(firstUnit).type()
   for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
     errors.push(...checkType(expected, NumberFacet.with(units[i]).type(), expression.arguments[i].range))
   }
 
-  return { errors, effects, result: firstUnit }
+  const result = { unit: firstUnit }
+
+  return { errors, effects, result }
 }
 
 function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetType> {
