@@ -62,15 +62,13 @@ export const FunctionFacet = {
     const generic: FunctionSpecGeneric = {
       value: spec,
 
-      // identity check for now; if we ever want to support structural compatibility for functions,
-      // the schema and return type would have to be checked for assignability
       checkAssignableFrom: (other: unknown): boolean => {
         if (typeof other !== 'object' || other == null || !('value' in other)) {
           return false
         }
 
         const otherSpec = (other as FunctionSpecGeneric).value
-        return spec === otherSpec
+        return isAssignableFrom(spec, otherSpec)
       }
     }
 
@@ -85,4 +83,68 @@ export const FunctionFacet = {
 
     return (generics.spec as FunctionSpecGeneric).value
   }
+}
+
+function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
+  // Return type:
+  // - other return type must be assignable to spec return type (covariant)
+  if (!spec.returnType.is(other.returnType)) {
+    return false
+  }
+
+  // Effects:
+  // - non-blocking is assignable to blocking, but not vice versa
+  if (!spec.effects.blocking && other.effects.blocking) {
+    return false
+  }
+
+  // parameters:
+  // - same or compatible parameter count (accounting for optional tail parameters):
+  //     other can have equal or more optional parameters, not less
+  //     Example: (a: string, b?: number) is assignable to (a: string), but not vice versa
+  // - same parameter names
+  //     Example: (a: string) is not assignable to (b: string)
+  // - assignable parameter types (contravariant)
+  //     Example: (a: record(gain)) is assignable to (a: record(gain, pan)), but not vice versa
+
+  // Note (future improvement): We could allow different parameter names by mapping from the
+  // call-site parameter names to the function value's internal parameter names in the compiler.
+
+  if (spec.parameters.items.length > other.parameters.items.length) {
+    return false
+  }
+
+  let specIndex = 0
+  let otherIndex = 0
+
+  while (specIndex < spec.parameters.items.length && otherIndex < other.parameters.items.length) {
+    const specParam = spec.parameters.items[specIndex]
+    const otherParam = other.parameters.items[otherIndex]
+
+    if (specParam.name !== otherParam.name) {
+      return false
+    }
+
+    if (!otherParam.type.is(specParam.type)) {
+      return false
+    }
+
+    if (!specParam.required && otherParam.required) {
+      return false
+    }
+
+    ++specIndex
+    ++otherIndex
+  }
+
+  // if other has more parameters, they must all be optional
+  while (otherIndex < other.parameters.items.length) {
+    const otherParam = other.parameters.items[otherIndex]
+    if (otherParam.required) {
+      return false
+    }
+    ++otherIndex
+  }
+
+  return true
 }
