@@ -2,7 +2,7 @@ import type { RuntimeNumeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import type { Function } from '../../src/type-system/base/function.ts'
+import type { Function, FunctionSpec } from '../../src/type-system/base/function.ts'
 import { FunctionFacet } from '../../src/type-system/base/function.ts'
 import type { Module } from '../../src/type-system/base/module.ts'
 import { ModuleFacet } from '../../src/type-system/base/module.ts'
@@ -14,38 +14,41 @@ import type { ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
 
 describe('type-system/base', () => {
-  describe('StringFacet', () => {
-    it('should format and round-trip string values', () => {
-      const value = StringFacet.type().of('hello')
-
-      assert.strictEqual(StringFacet.format(), 'string')
-      assert.strictEqual(StringFacet.has(value), true)
-      assert.strictEqual(StringFacet.get(value), 'hello')
-    })
-  })
-
-  describe('NumberFacet', () => {
-    it('should support unit-specific facets and detail()', () => {
-      const genericValue = NumberFacet.type().of(runtimeNumeric('db', -3))
-      const decibelFacet = NumberFacet.with('db')
-      const decibelType = decibelFacet.type()
-      const decibelValue = decibelType.of(runtimeNumeric('db', -3))
-      const specificData = decibelFacet.get(decibelValue)
-
-      expectTypeEquals<RuntimeNumeric<'db'>, typeof specificData>()
-      assert.strictEqual(NumberFacet.format(), 'number')
-      assert.strictEqual(NumberFacet.with(undefined).format(), 'number')
-      assert.strictEqual(decibelFacet.format(), 'number.db')
-      assert.strictEqual(NumberFacet.has(decibelValue), true)
-      assert.strictEqual(decibelFacet.has(genericValue), false)
-      assert.strictEqual(NumberFacet.detail(decibelType), 'db')
-      assert.strictEqual(specificData.unit, 'db')
-      assert.strictEqual(specificData.value, -3)
-      assert.throws(() => NumberFacet.detail(NumberFacet.type()), /Invalid generics for number facet/)
-    })
-  })
-
   describe('FunctionFacet', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(FunctionFacet.format(), 'function')
+    })
+
+    it('should compare by identity', () => {
+      const spec: FunctionSpec = {
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      }
+
+      assert.strictEqual(FunctionFacet.is(FunctionFacet), true)
+      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet.with(spec)), true)
+
+      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet.with({ ...spec })), false)
+      assert.strictEqual(FunctionFacet.with({ ...spec }).is(FunctionFacet.with(spec)), false)
+
+      assert.strictEqual(FunctionFacet.is(FunctionFacet.with(spec)), true)
+      assert.strictEqual(FunctionFacet.with(spec).is(FunctionFacet), false)
+    })
+
+    it('should create a single-facet type', () => {
+      const functionType = FunctionFacet.type()
+      assert.deepStrictEqual([...functionType.facets.keys()], ['function'])
+
+      const spec: FunctionSpec = {
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      }
+      const functionTypeWithSpec = FunctionFacet.with(spec).type()
+      assert.deepStrictEqual([...functionTypeWithSpec.facets.keys()], ['function'])
+    })
+
     it('should preserve function specs through with() and detail()', () => {
       const amountType = NumberFacet.with('db').type()
       const returnType = StringFacet.type()
@@ -75,7 +78,6 @@ describe('type-system/base', () => {
       expectTypeEquals<Function<typeof schema, typeof returnType>, typeof loadedFunction>()
       expectTypeEquals<ValueForType<typeof returnType>, typeof result>()
 
-      assert.strictEqual(typedFacet.format(), 'function')
       assert.strictEqual(typedFacet.is(FunctionFacet.with(spec)), true)
 
       const identicalShapeSpec = { parameters: schema, returnType, effects }
@@ -88,12 +90,52 @@ describe('type-system/base', () => {
   })
 
   describe('ModuleFacet', () => {
+    it('should format as facet name with module name', () => {
+      const moduleValue: Module = {
+        name: 'demo',
+        exports: new Map([])
+      }
+
+      const typedFacet = ModuleFacet.with(moduleValue)
+      assert.strictEqual(typedFacet.format(), 'module("demo")')
+    })
+
+    it('should compare by identity', () => {
+      const moduleValue: Module = {
+        name: 'test',
+        exports: new Map([])
+      }
+
+      const typedFacetA = ModuleFacet.with(moduleValue)
+      const typedFacetB = ModuleFacet.with(moduleValue)
+      const typedFacetC = ModuleFacet.with({ ...moduleValue })
+
+      assert.strictEqual(ModuleFacet.is(ModuleFacet), true)
+
+      assert.strictEqual(typedFacetA.is(typedFacetA), true)
+      assert.strictEqual(typedFacetA.is(typedFacetB), true)
+      assert.strictEqual(typedFacetA.is(typedFacetC), false)
+
+      assert.strictEqual(ModuleFacet.is(StringFacet), false)
+    })
+
+    it('should create a single-facet type', () => {
+      const moduleType = ModuleFacet.type()
+      assert.deepStrictEqual([...moduleType.facets.keys()], ['module'])
+
+      const moduleValue: Module = {
+        name: 'demo',
+        exports: new Map([])
+      }
+      const moduleTypeWithValue = ModuleFacet.with(moduleValue).type()
+      assert.deepStrictEqual([...moduleTypeWithValue.facets.keys()], ['module'])
+    })
+
     it('should preserve module identity through with() and detail()', () => {
       const greeting = StringFacet.type().of('hello')
       const moduleValue: Module = {
         name: 'demo',
-        exports: new Map([['greeting', greeting]]),
-        summary: 'demo module'
+        exports: new Map([['greeting', greeting]])
       }
 
       const typedFacet = ModuleFacet.with(moduleValue)
@@ -102,16 +144,113 @@ describe('type-system/base', () => {
       const loadedModule = typedFacet.get(value)
 
       expectTypeEquals<Module, typeof loadedModule>()
-      assert.strictEqual(typedFacet.format(), 'module("demo")')
-      assert.strictEqual(typedFacet.is(ModuleFacet.with(moduleValue)), true)
-      assert.strictEqual(typedFacet.is(ModuleFacet.with({ ...moduleValue })), false)
       assert.strictEqual(ModuleFacet.detail(typedType), moduleValue)
       assert.strictEqual(loadedModule.exports.get('greeting'), greeting)
       assert.throws(() => ModuleFacet.detail(ModuleFacet.type()), /Invalid generics for module facet/)
     })
   })
 
+  describe('NumberFacet', () => {
+    it('should format as facet name with unit suffix', () => {
+      assert.strictEqual(NumberFacet.format(), 'number')
+      assert.strictEqual(NumberFacet.with(undefined).format(), 'number')
+      assert.strictEqual(NumberFacet.with('db').format(), 'number.db')
+    })
+
+    it('should compare based on unit', () => {
+      assert.strictEqual(NumberFacet.is(NumberFacet), true)
+
+      assert.strictEqual(NumberFacet.with(undefined).is(NumberFacet.with(undefined)), true)
+      assert.strictEqual(NumberFacet.with('db').is(NumberFacet.with('db')), true)
+
+      assert.strictEqual(NumberFacet.with('db').is(NumberFacet.with(undefined)), false)
+      assert.strictEqual(NumberFacet.with('db').is(NumberFacet.with('hz')), false)
+
+      assert.strictEqual(NumberFacet.is(NumberFacet.with('db')), true)
+      assert.strictEqual(NumberFacet.with('db').is(NumberFacet), false)
+
+      assert.strictEqual(NumberFacet.is(StringFacet), false)
+      assert.strictEqual(NumberFacet.with('db').is(StringFacet), false)
+    })
+
+    it('should create a single-facet type', () => {
+      const numberType = NumberFacet.type()
+      assert.deepStrictEqual([...numberType.facets.keys()], ['number'])
+
+      const numberTypeWithUnit = NumberFacet.with('db').type()
+      assert.deepStrictEqual([...numberTypeWithUnit.facets.keys()], ['number'])
+    })
+
+    it('should support unit-specific facets and detail()', () => {
+      const genericValue = NumberFacet.type().of(runtimeNumeric('db', -3))
+      const decibelFacet = NumberFacet.with('db')
+      const decibelType = decibelFacet.type()
+      const decibelValue = decibelType.of(runtimeNumeric('db', -3))
+      const specificData = decibelFacet.get(decibelValue)
+
+      expectTypeEquals<RuntimeNumeric<'db'>, typeof specificData>()
+      assert.strictEqual(NumberFacet.has(decibelValue), true)
+      assert.strictEqual(decibelFacet.has(genericValue), false)
+      assert.strictEqual(NumberFacet.detail(decibelType), 'db')
+      assert.strictEqual(specificData.unit, 'db')
+      assert.strictEqual(specificData.value, -3)
+      assert.throws(() => NumberFacet.detail(NumberFacet.type()), /Invalid generics for number facet/)
+    })
+  })
+
   describe('RecordFacet', () => {
+    it('should format as facet name with field names', () => {
+      const recordFacet = RecordFacet.with({ gain: NumberFacet.type(), label: StringFacet.type() })
+      assert.strictEqual(recordFacet.format(), 'record(gain, label)')
+    })
+
+    it('should compare by field assignability', () => {
+      const emptyRecordFacet = RecordFacet.with({})
+
+      const broadRecordFacet = RecordFacet.with({
+        gain: NumberFacet.type()
+      })
+
+      const narrowRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('db').type(),
+        label: StringFacet.type()
+      })
+
+      assert.strictEqual(RecordFacet.is(RecordFacet), true)
+      assert.strictEqual(RecordFacet.is(emptyRecordFacet), true)
+      assert.strictEqual(RecordFacet.is(broadRecordFacet), true)
+      assert.strictEqual(RecordFacet.is(narrowRecordFacet), true)
+
+      // RecordFacet without .with() has unknown generics. Hence, it cannot reasonably be assigned
+      // to anything except the empty record facet, since the empty record facet does not require any fields.
+      assert.strictEqual(emptyRecordFacet.is(RecordFacet), true)
+      assert.strictEqual(broadRecordFacet.is(RecordFacet), false)
+      assert.strictEqual(narrowRecordFacet.is(RecordFacet), false)
+
+      assert.strictEqual(emptyRecordFacet.is(emptyRecordFacet), true)
+      assert.strictEqual(broadRecordFacet.is(broadRecordFacet), true)
+      assert.strictEqual(narrowRecordFacet.is(narrowRecordFacet), true)
+
+      assert.strictEqual(emptyRecordFacet.is(broadRecordFacet), true)
+      assert.strictEqual(broadRecordFacet.is(emptyRecordFacet), false)
+
+      assert.strictEqual(broadRecordFacet.is(narrowRecordFacet), true)
+      assert.strictEqual(narrowRecordFacet.is(broadRecordFacet), false)
+
+      assert.strictEqual(RecordFacet.is(StringFacet), false)
+      assert.strictEqual(emptyRecordFacet.is(StringFacet), false)
+      assert.strictEqual(broadRecordFacet.is(StringFacet), false)
+    })
+
+    it('should create a single-facet type', () => {
+      const recordType = RecordFacet.type()
+      assert.deepStrictEqual([...recordType.facets.keys()], ['record'])
+
+      const recordFacetWithFields = RecordFacet.with({ gain: NumberFacet.type(), label: StringFacet.type() })
+      const recordTypeWithFields = recordFacetWithFields.type()
+      assert.deepStrictEqual([...recordTypeWithFields.facets.keys()], ['record'])
+    })
+
     it('should preserve field types and round-trip record values', () => {
       const gainType = NumberFacet.with('db').type()
       const labelType = StringFacet.type()
@@ -126,8 +265,6 @@ describe('type-system/base', () => {
       expectTypeEquals<ValueForType<typeof gainType>, typeof recordData.gain>()
       expectTypeEquals<ValueForType<typeof labelType>, typeof recordData.label>()
 
-      assert.strictEqual(RecordFacet.format(), 'record')
-      assert.strictEqual(recordFacet.format(), 'record(gain, label)')
       assert.strictEqual(RecordFacet.has(recordValue), true)
       assert.strictEqual(RecordFacet.detail(recordType).gain, gainType)
       assert.strictEqual(RecordFacet.detail(recordType).label, labelType)
@@ -172,6 +309,28 @@ describe('type-system/base', () => {
 
       assert.strictEqual(broadRecordFacet.is(narrowRecordFacet), true)
       assert.strictEqual(narrowRecordFacet.is(broadRecordFacet), false)
+    })
+  })
+
+  describe('StringFacet', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(StringFacet.format(), 'string')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(StringFacet.is(StringFacet), true)
+      assert.strictEqual(StringFacet.is(NumberFacet), false)
+    })
+
+    it('should round-trip values', () => {
+      const value = StringFacet.type().of('hello')
+      assert.strictEqual(StringFacet.has(value), true)
+      assert.strictEqual(StringFacet.get(value), 'hello')
+    })
+
+    it('should create a single-facet type', () => {
+      const stringType = StringFacet.type()
+      assert.deepStrictEqual([...stringType.facets.keys()], ['string'])
     })
   })
 })
