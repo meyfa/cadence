@@ -24,8 +24,12 @@ describe('model/analysis/base.ts', () => {
       'kick = sample("{base_path}/kick.wav")',
       'tempo = 120.bpm',
       '',
+      'record = {',
+      '  @record_property = 42',
+      '}',
+      '',
       'synth = instrument {',
-      '  @custom_property = 42',
+      '  @instrument_property = 42',
       '  & voice note {}',
       '}',
       '',
@@ -63,8 +67,10 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'root', name: 'base_path' },
         { kind: 'definition', scope: 'root', name: 'tempo' },
         { kind: 'plain', scope: 'root', name: 'bpm' },
+        { kind: 'definition', scope: 'root', name: 'record' },
+        { kind: 'definition', scope: 'record', name: 'record_property' },
         { kind: 'definition', scope: 'root', name: 'synth' },
-        { kind: 'definition', scope: 'instrument', name: 'custom_property' },
+        { kind: 'definition', scope: 'instrument', name: 'instrument_property' },
         { kind: 'definition', scope: 'voice', name: 'note' },
         { kind: 'definition', scope: 'root', name: 'double' },
         { kind: 'definition', scope: 'function', name: 'input' },
@@ -230,8 +236,12 @@ describe('model/analysis/base.ts', () => {
       '  & input * 2',
       '} // end function',
       '',
+      'my_record = {',
+      '  @record_property = 42',
+      '} // end record',
+      '',
       'my_instrument = instrument {',
-      '  @custom_property = 42',
+      '  @instrument_property = 42',
       '  foo = 42',
       '  bar = foo * 2',
       '  & voice note {',
@@ -265,6 +275,11 @@ describe('model/analysis/base.ts', () => {
     const functionBlockEnd = source.indexOf('} // end function') + '}'.length
     const functionRange = getRangeAt(source, functionBlockStart, functionBlockEnd - functionBlockStart)
     const functionScopeId = `function:${functionRange.offset}:${functionRange.length}`
+
+    const recordBlockStart = source.indexOf('{', source.indexOf('my_record'))
+    const recordBlockEnd = source.indexOf('} // end record') + '}'.length
+    const recordRange = getRangeAt(source, recordBlockStart, recordBlockEnd - recordBlockStart)
+    const recordScopeId = `record:${recordRange.offset}:${recordRange.length}`
 
     const instrumentBlockStart = source.indexOf('{', source.indexOf('my_instrument'))
     const instrumentBlockEnd = source.indexOf('} // end instrument') + '}'.length
@@ -306,6 +321,7 @@ describe('model/analysis/base.ts', () => {
       [
         { id: rootScopeId, kind: 'root', parentId: undefined },
         { id: functionScopeId, kind: 'function', parentId: rootScopeId },
+        { id: recordScopeId, kind: 'record', parentId: rootScopeId },
         { id: instrumentScopeId, kind: 'instrument', parentId: rootScopeId },
         { id: voiceScopeId, kind: 'voice', parentId: instrumentScopeId },
         { id: trackScopeId, kind: 'track', parentId: rootScopeId },
@@ -324,8 +340,10 @@ describe('model/analysis/base.ts', () => {
         { kind: 'regular', name: 'snare', declaredScopeId: undefined, isExposed: false },
         { kind: 'regular', name: 'my_function', declaredScopeId: undefined, isExposed: false },
         { kind: 'regular', name: 'input', declaredScopeId: undefined, isExposed: undefined },
+        { kind: 'regular', name: 'my_record', declaredScopeId: undefined, isExposed: false },
+        { kind: 'regular', name: 'record_property', declaredScopeId: undefined, isExposed: true },
         { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'custom_property', declaredScopeId: undefined, isExposed: true },
+        { kind: 'regular', name: 'instrument_property', declaredScopeId: undefined, isExposed: true },
         { kind: 'regular', name: 'foo', declaredScopeId: undefined, isExposed: false },
         { kind: 'regular', name: 'bar', declaredScopeId: undefined, isExposed: false },
         { kind: 'regular', name: 'note', declaredScopeId: undefined, isExposed: undefined },

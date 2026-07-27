@@ -268,6 +268,22 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept record values', () => {
+      const source = [
+        'empty_record = {}',
+        '',
+        'my_record = {',
+        '  @foo = 42',
+        '  @bar = "hello"',
+        '}',
+        '',
+        'access_foo = my_record.foo',
+        'access_bar = my_record.bar'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should allow blocking calls in functions', () => {
       const source = [
         'use "instruments" as inst',
@@ -701,6 +717,18 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Duplicate property "gain"'
+      ])
+    })
+
+    it('should reject emission in record values', () => {
+      const source = [
+        'my_record = {',
+        '  & 42',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Cannot emit values in records'
       ])
     })
 

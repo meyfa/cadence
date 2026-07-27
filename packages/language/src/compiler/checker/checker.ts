@@ -310,6 +310,9 @@ function checkExpression (scope: Scope, expression: ast.Expression): Checked<Fac
     case 'Function':
       return checkFunction(scope, expression)
 
+    case 'RecordValue':
+      return checkRecord(scope, expression)
+
     case 'Instrument':
       return checkInstrument(scope, expression)
 
@@ -814,6 +817,30 @@ function checkCombinedType (expression: ast.CombinedType): Checked<readonly Type
   if (errors.length > 0) {
     return { errors, effects }
   }
+
+  return { errors, effects, result }
+}
+
+function checkRecord (scope: Scope, expression: ast.RecordValue): Checked<FacetType> {
+  const errors: CompileError[] = []
+  let effects = noEffects
+
+  const recordScope = createLocalScope(scope)
+  const properties = new Map<string, FacetType>()
+
+  for (const child of expression.children) {
+    const statement = checkStatement(recordScope, child, properties)
+    errors.push(...statement.errors)
+    effects = mergeEffects(effects, statement.effects)
+
+    for (const emission of statement.emissions) {
+      errors.push(new CompileError('Cannot emit values in records', emission.range))
+    }
+
+    putAll(properties, statement.properties)
+  }
+
+  const result = RecordFacet.with(Object.fromEntries(properties)).type()
 
   return { errors, effects, result }
 }

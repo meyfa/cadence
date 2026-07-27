@@ -431,6 +431,15 @@ const function_: p.Parser<Token, unknown, ast.Function> = p.ab(
   }
 )
 
+const recordValue_: p.Parser<Token, unknown, ast.RecordValue> = p.abc(
+  literal('{'),
+  p.recursive(() => p.many(statement_)),
+  expectLiteral('}'),
+  (_l, children, _r) => {
+    return ast.make('RecordValue', combineSourceRanges(_l, _r), { children })
+  }
+)
+
 const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
   identifier_,
   number_,
@@ -438,6 +447,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   serialPattern_,
   curve_,
   function_,
+  recordValue_,
   p.recursive(() => instrument_),
   p.recursive(() => voice_),
   p.recursive(() => mixer_),

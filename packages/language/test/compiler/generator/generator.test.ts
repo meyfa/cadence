@@ -103,7 +103,17 @@ describe('compiler/generator/generator.ts', () => {
     ].join('\n')
 
     const result = generateSource(source)
-    assert.deepStrictEqual(result.track.tempo, 15)
+    assert.strictEqual(result.track.tempo, 15)
+  })
+
+  it('should support property exposure in record values', () => {
+    const source = [
+      'my_record = { @foo = 123 }',
+      '& track (tempo: my_record.foo.bpm) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.track.tempo, 123)
   })
 
   it('should support imported names', () => {

@@ -286,6 +286,101 @@ describe('parser/parser.ts', () => {
     ])
   })
 
+  it('should parse record values', () => {
+    const source = [
+      'empty_record = {}',
+      'one_field = { @key = "value" }',
+      'complex = {',
+      '  scratch = 42',
+      '  @foo = { @bar = scratch }',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'empty_record' },
+        values: [
+          {
+            type: 'RecordValue',
+            children: []
+          }
+        ]
+      },
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'one_field' },
+        values: [
+          {
+            type: 'RecordValue',
+            children: [
+              {
+                type: 'Statement',
+                emit: false,
+                expose: true,
+                name: { type: 'Identifier', name: 'key' },
+                values: [
+                  { type: 'String', parts: ['value'] }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'complex' },
+        values: [
+          {
+            type: 'RecordValue',
+            children: [
+              {
+                type: 'Statement',
+                emit: false,
+                expose: false,
+                name: { type: 'Identifier', name: 'scratch' },
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
+              },
+              {
+                type: 'Statement',
+                emit: false,
+                expose: true,
+                name: { type: 'Identifier', name: 'foo' },
+                values: [
+                  {
+                    type: 'RecordValue',
+                    children: [
+                      {
+                        type: 'Statement',
+                        emit: false,
+                        expose: true,
+                        name: { type: 'Identifier', name: 'bar' },
+                        values: [
+                          { type: 'Identifier', name: 'scratch' }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ])
+  })
+
   it('should parse a serial pattern', () => {
     const result = parse(lexSource('foo = [xx-D4:0.5-G4]'))
     assertResultComplete(result)

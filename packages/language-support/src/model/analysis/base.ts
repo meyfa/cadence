@@ -90,6 +90,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
+      case 'Record': {
+        const scope = addScope({ kind: 'record', range, parentId: scopeId })
+        nextScopeId = scope.id
+        break
+      }
+
       case 'TrackBlock': {
         const scope = addScope({ kind: 'track', range, parentId: scopeId })
         nextScopeId = scope.id
