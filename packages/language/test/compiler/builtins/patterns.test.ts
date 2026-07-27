@@ -97,7 +97,7 @@ describe('compiler/builtins/patterns.ts', () => {
 
       const result = invoke(loop, pattern, {})
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -114,7 +114,7 @@ describe('compiler/builtins/patterns.ts', () => {
         times: Numbers.of(runtimeNumeric(undefined, 3))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, beats(1.5 * 3))
+      assert.strictEqual(resultPattern.length, beats(1.5 * 3))
 
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
@@ -139,7 +139,7 @@ describe('compiler/builtins/patterns.ts', () => {
         times: Numbers.of(runtimeNumeric(undefined, 0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -156,7 +156,7 @@ describe('compiler/builtins/patterns.ts', () => {
         times: Numbers.of(runtimeNumeric(undefined, -2))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -173,7 +173,7 @@ describe('compiler/builtins/patterns.ts', () => {
         times: Numbers.of(runtimeNumeric(undefined, 0.5))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, beats(1.5 * 0.5))
+      assert.strictEqual(resultPattern.length, beats(1.5 * 0.5))
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
 
@@ -197,7 +197,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric(undefined, 2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, beats(2.0))
+      assert.strictEqual(resultPattern.length, beats(2.0))
 
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
@@ -219,7 +219,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', 2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, beats(2.0))
+      assert.strictEqual(resultPattern.length, beats(2.0))
 
       const events = renderPatternEvents(resultPattern, beats(5.0))
 
@@ -237,7 +237,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', 2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -254,7 +254,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', 0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -271,7 +271,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', -2.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -288,7 +288,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', Number.POSITIVE_INFINITY))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, 0)
+      assert.strictEqual(resultPattern.length, 0)
 
       const events = renderPatternEvents(resultPattern, beats(2.0))
       assert.deepStrictEqual(events, [])
@@ -304,7 +304,7 @@ describe('compiler/builtins/patterns.ts', () => {
         duration: Numbers.of(runtimeNumeric('beats', 4.0))
       })
       const resultPattern = PatternFacet.get(result)
-      assert.deepStrictEqual(resultPattern.length, beats(4.0))
+      assert.strictEqual(resultPattern.length, beats(4.0))
 
       const events = renderPatternEvents(resultPattern, beats(4.0))
 

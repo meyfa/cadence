@@ -140,10 +140,10 @@ describe('highlight-occurrences/operation.ts', () => {
     const endOfName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, endOfNamePosition)
     const afterName = applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, afterNamePosition)
 
-    assert.deepStrictEqual(beforeName.length, 0, 'before name')
-    assert.deepStrictEqual(startOfName.length, 2, 'start of name')
-    assert.deepStrictEqual(endOfName.length, 2, 'end of name')
-    assert.deepStrictEqual(afterName.length, 0, 'after name')
+    assert.strictEqual(beforeName.length, 0, 'before name')
+    assert.strictEqual(startOfName.length, 2, 'start of name')
+    assert.strictEqual(endOfName.length, 2, 'end of name')
+    assert.strictEqual(afterName.length, 0, 'after name')
   })
 
   it('returns the definition and reference also for incomplete syntax', () => {
