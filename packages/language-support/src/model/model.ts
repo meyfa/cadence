@@ -32,7 +32,7 @@ export interface Scope {
   readonly range: SourceRange
 }
 
-export type ScopeKind = 'root' | 'function' | 'track' | 'part' | 'mixer' | 'bus' | 'instrument' | 'voice'
+export type ScopeKind = 'root' | 'function' | 'record' | 'track' | 'part' | 'mixer' | 'bus' | 'instrument' | 'voice'
 
 // identifier
 

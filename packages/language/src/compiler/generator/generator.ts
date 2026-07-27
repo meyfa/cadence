@@ -186,6 +186,9 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Function':
       return generateFunction(scope, expression)
 
+    case 'RecordValue':
+      return generateRecord(scope, expression)
+
     case 'Instrument':
       return generateInstrument(scope, expression)
 
@@ -361,6 +364,19 @@ function generateFunction (scope: Scope, expression: ast.Function): Value {
   }
 
   return Functions.of(spec, { invoke })
+}
+
+function generateRecord (scope: Scope, expression: ast.RecordValue): Value {
+  const recordScope = createLocalScope(scope)
+  const recordBuilder = new RecordBuilder()
+
+  for (const child of expression.children) {
+    const { emissions, properties } = processStatement(recordScope, child)
+    assert(emissions.length === 0)
+    recordBuilder.putAll(properties)
+  }
+
+  return recordBuilder.facet.type().of(recordBuilder.record)
 }
 
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {

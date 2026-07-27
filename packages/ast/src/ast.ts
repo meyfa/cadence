@@ -57,6 +57,7 @@ export interface NodeByType {
 
   // Constructed Values
   Function: Function
+  RecordValue: RecordValue
   Mixer: Mixer
   Bus: Bus
   Track: Track
@@ -74,6 +75,7 @@ export type Value =
   Pattern |
   Curve |
   Function |
+  RecordValue |
   Mixer |
   Bus |
   Track |
@@ -244,6 +246,11 @@ export interface CurveSegment extends ASTNode {
 export interface Function extends ASTNode {
   readonly type: 'Function'
   readonly parameters: readonly Parameter[]
+  readonly children: readonly Statement[]
+}
+
+export interface RecordValue extends ASTNode {
+  readonly type: 'RecordValue'
   readonly children: readonly Statement[]
 }
 
