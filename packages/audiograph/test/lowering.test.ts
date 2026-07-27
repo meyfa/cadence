@@ -317,7 +317,7 @@ describe('lowering.ts', () => {
     ])
 
     assert.deepStrictEqual(graph.outputIds, [1 as NodeId])
-    assert.deepStrictEqual(graph.noteEvents.size, 0)
+    assert.strictEqual(graph.noteEvents.size, 0)
 
     const instrumentNode = graph.nodes.get(3 as NodeId) as InstrumentNode
     const voices = instrumentNode.trigger({
@@ -1689,8 +1689,8 @@ describe('lowering.ts', () => {
 
       const outputGainMeter = graph.nodes.get(outputMeters.gainMeterId)
       assert.strictEqual(outputGainMeter?.type, 'gain_meter')
-      assert.deepStrictEqual(outputGainMeter.key, outputKey)
-      assert.deepStrictEqual(outputGainMeter.interval, interval)
+      assert.strictEqual(outputGainMeter.key, outputKey)
+      assert.strictEqual(outputGainMeter.interval, interval)
 
       const busKey = createEntityKey({ type: 'bus', id: busId })
       const busMeters = graph.meters.get(busKey)
@@ -1698,8 +1698,8 @@ describe('lowering.ts', () => {
 
       const busGainMeter = graph.nodes.get(busMeters.gainMeterId)
       assert.strictEqual(busGainMeter?.type, 'gain_meter')
-      assert.deepStrictEqual(busGainMeter.key, busKey)
-      assert.deepStrictEqual(busGainMeter.interval, interval)
+      assert.strictEqual(busGainMeter.key, busKey)
+      assert.strictEqual(busGainMeter.interval, interval)
 
       const instrumentKey = createEntityKey({ type: 'instrument', id: instrumentId })
       const instrumentMeters = graph.meters.get(instrumentKey)
@@ -1707,8 +1707,8 @@ describe('lowering.ts', () => {
 
       const instrumentGainMeter = graph.nodes.get(instrumentMeters.gainMeterId)
       assert.strictEqual(instrumentGainMeter?.type, 'gain_meter')
-      assert.deepStrictEqual(instrumentGainMeter.key, instrumentKey)
-      assert.deepStrictEqual(instrumentGainMeter.interval, interval)
+      assert.strictEqual(instrumentGainMeter.key, instrumentKey)
+      assert.strictEqual(instrumentGainMeter.interval, interval)
     })
   })
 
