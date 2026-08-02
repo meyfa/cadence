@@ -194,7 +194,7 @@ describe('type-system', () => {
     })
 
     it('should format based on facets', () => {
-      assert.strictEqual(stringAndNumberType.format(), 'string + number')
+      assert.strictEqual(stringAndNumberType.format(), '(string + number)')
       assert.strictEqual(decibelType.format(), 'numeric(db)')
     })
 

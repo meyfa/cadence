@@ -12,11 +12,54 @@ import { StringFacet } from '../../src/type-system/base/string.ts'
 import { makeSchema } from '../../src/type-system/schema.ts'
 import type { ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
+import { makeType } from '../../src/type-system/factory.ts'
 
 describe('type-system/base', () => {
   describe('FunctionFacet', () => {
-    it('should format as facet name', () => {
-      assert.strictEqual(FunctionFacet.format(), 'function')
+    it('should format as function signature', () => {
+      const noParametersReturnString = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+      assert.strictEqual(
+        noParametersReturnString.format(),
+        '(): string'
+      )
+
+      const oneParameterReturnComplex = FunctionFacet.with({
+        parameters: makeSchema([
+          { name: 'amount', type: NumberFacet.with('db').type(), required: true }
+        ]),
+        returnType: makeType(StringFacet, RecordFacet.with({ gain: NumberFacet.with('db').type() })),
+        effects: { blocking: false }
+      })
+      assert.strictEqual(
+        oneParameterReturnComplex.format(),
+        '(amount: number.db): (string + {gain: number.db})'
+      )
+
+      const optionalParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([
+          { name: 'amount', type: NumberFacet.with('db').type(), required: false }
+        ]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      })
+      assert.strictEqual(
+        optionalParameterReturnString.format(),
+        '(amount?: number.db): string'
+      )
+
+      const blockingFunction = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: true }
+      })
+      assert.strictEqual(
+        blockingFunction.format(),
+        '(): string !may_block'
+      )
     })
 
     it('should compare based on parameters, return type, and effects', () => {
@@ -488,7 +531,7 @@ describe('type-system/base', () => {
       assert.strictEqual(mergedNested.name, 'record')
       assert.deepStrictEqual(Object.keys(mergedNested.generics), ['foo'])
 
-      assert.strictEqual(mergedNested.format(), '{foo: {a: string + number, b: number, c: number.db}}')
+      assert.strictEqual(mergedNested.format(), '{foo: {a: (string + number), b: number, c: number.db}}')
     })
 
     it('should create a single-facet type', () => {

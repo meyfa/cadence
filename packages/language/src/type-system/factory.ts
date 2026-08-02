@@ -81,7 +81,8 @@ export function makeType<const Facets extends readonly Facet[]> (
     facets: facetMap,
 
     format: () => {
-      return facets.map((facet) => facet.format()).join(' + ')
+      const merged = facets.map((facet) => facet.format()).join(' + ')
+      return facets.length > 1 ? `(${merged})` : merged
     },
 
     is: (other: Type): boolean => {

@@ -72,7 +72,18 @@ export const FunctionFacet = {
       }
     }
 
-    return makeFacet<typeof FACET_NAME, Function<S, R>>(FACET_NAME, { spec: generic })
+    return makeFacet<typeof FACET_NAME, Function<S, R>>(FACET_NAME, { spec: generic }, {
+      format: () => {
+        const parameters = spec.parameters.items.map((item) => {
+          const optional = item.required ? '' : '?'
+          return `${item.name}${optional}: ${item.type.format()}`
+        }).join(', ')
+
+        const effects = spec.effects.blocking ? ' !may_block' : ''
+
+        return `(${parameters}): ${spec.returnType.format()}${effects}`
+      }
+    })
   },
 
   detail: (type: FacetType): FunctionSpec => {

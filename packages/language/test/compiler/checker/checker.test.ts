@@ -1007,11 +1007,11 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Module "instruments" has no export named "__proto__"',
-        'Type instrument + {gain: parameter.db} has no property named "__proto__"',
+        'Type (instrument + {gain: parameter.db}) has no property named "__proto__"',
         'Module "instruments" has no export named "constructor"',
-        'Type instrument + {gain: parameter.db} has no property named "constructor"',
+        'Type (instrument + {gain: parameter.db}) has no property named "constructor"',
         'Module "instruments" has no export named "toString"',
-        'Type instrument + {gain: parameter.db} has no property named "toString"'
+        'Type (instrument + {gain: parameter.db}) has no property named "toString"'
       ])
     })
 
@@ -1247,7 +1247,7 @@ describe('compiler/checker/checker.ts', () => {
       assertErrorMessages(source, [
         'Type conflict: (number) + (number.hz)',
         'Type conflict: (number.db) + (number.hz)',
-        'Type conflict: (function) + (function)',
+        'Type conflict: ((a: number): number) + ((b: number): number)',
         'Type conflict: ({a: number.hz}) + ({a: number.db})'
       ])
     })

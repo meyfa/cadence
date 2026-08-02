@@ -1,5 +1,4 @@
 import { globalBuiltins } from '../compiler/builtins/global.ts'
-import type { Function } from '../type-system/base/function.ts'
 import { FunctionFacet } from '../type-system/base/function.ts'
 import type { Module } from '../type-system/base/module.ts'
 import { ModuleFacet } from '../type-system/base/module.ts'
@@ -9,7 +8,7 @@ import { getStandardModule } from './modules.ts'
 export interface Documentation {
   readonly title: string
   readonly summary?: string
-  readonly annotations?: string[]
+  readonly annotations?: readonly string[]
 }
 
 export function getGlobalDocumentation (name: string): Documentation | undefined {
@@ -47,33 +46,11 @@ function describeModule (definition: Module): Documentation {
 }
 
 function describeValue (name: string, value: Value): Documentation {
-  if (FunctionFacet.has(value)) {
-    const functionValue = FunctionFacet.get(value)
-
-    const annotations = []
-    if (functionValue.effects.blocking) {
-      annotations.push('may block')
-    }
-
-    return {
-      title: formatFunctionSignature(name, functionValue),
-      summary: functionValue.summary,
-      annotations
-    }
-  }
-
   return {
-    title: `${name}: ${value.type.format()}`,
-    summary: getValueSummary(value)
+    title: `${name} = ${value.type.format()}`,
+    summary: getValueSummary(value),
+    annotations: getValueAnnotations(value)
   }
-}
-
-function formatFunctionSignature (name: string, functionValue: Function): string {
-  const parametersText = functionValue.parameters.items
-    .map((parameter) => `${parameter.name}${parameter.required ? '' : '?'}: ${parameter.type.format()}`)
-    .join(', ')
-
-  return `${name} = (${parametersText}): ${functionValue.returnType.format()}`
 }
 
 function getValueSummary (value: Value): string | undefined {
@@ -86,4 +63,18 @@ function getValueSummary (value: Value): string | undefined {
   }
 
   return undefined
+}
+
+function getValueAnnotations (value: Value): readonly string[] | undefined {
+  const annotations = []
+
+  if (FunctionFacet.has(value)) {
+    const functionValue = FunctionFacet.get(value)
+
+    if (functionValue.effects.blocking) {
+      annotations.push('may block')
+    }
+  }
+
+  return annotations.length > 0 ? annotations : undefined
 }
