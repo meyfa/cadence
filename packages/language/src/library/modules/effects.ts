@@ -49,7 +49,7 @@ const gain = Functions.of({
     { name: 'gain', type: NumberFacet.with('db').type(), required: true }
   ]),
   returnType: GainEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Applies a gain adjustment to the signal.',
   invoke: (context: ParameterContext, args) => {
@@ -69,7 +69,7 @@ const pan = Functions.of({
     { name: 'pan', type: NumberFacet.with(undefined).type(), required: true }
   ]),
   returnType: PanEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Places the signal in the stereo field.',
   invoke: (context: ParameterContext, args) => {
@@ -89,7 +89,7 @@ const lowpass = Functions.of({
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
   returnType: LowpassEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Filters out frequencies above the cutoff.',
   invoke: (context: ParameterContext, args) => {
@@ -109,7 +109,7 @@ const highpass = Functions.of({
     { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
   ]),
   returnType: HighpassEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Filters out frequencies below the cutoff.',
   invoke: (context: ParameterContext, args) => {
@@ -129,7 +129,7 @@ const width = Functions.of({
     { name: 'width', type: NumberFacet.with(undefined).type(), required: true }
   ]),
   returnType: WidthEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Adjusts the stereo width of the signal.',
   invoke: (context: ParameterContext, args) => {
@@ -150,7 +150,7 @@ const delay = Functions.of({
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
   returnType: DelayEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Adds echoes with configurable mix, time, and feedback.',
   invoke: (context: ParameterContext, args) => {
@@ -175,7 +175,7 @@ const reverb = Functions.of({
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
   returnType: ReverbEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Adds reverberation with configurable mix and decay.',
   invoke: (context: ParameterContext, args) => {
@@ -195,7 +195,7 @@ const clip = Functions.of({
     { name: 'threshold', type: NumberFacet.with('db').type(), required: true }
   ]),
   returnType: ClipEffectType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Applies hard clipping to the signal at the specified threshold.',
   invoke: (context: ParameterContext, args) => {

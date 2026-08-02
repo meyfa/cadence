@@ -1,5 +1,5 @@
 import { ast } from '@meyfa/cadence-ast'
-import type { Effects, FunctionSpec } from '../../type-system/base/function.ts'
+import type { Capabilities, FunctionSpec } from '../../type-system/base/function.ts'
 import type { FacetType } from '../../type-system/types.ts'
 
 // scope types
@@ -8,7 +8,7 @@ export interface Scope {
   readonly top: GlobalScope
   readonly parent?: Scope
   readonly resolutions: ReadonlyMap<string, FacetType>
-  readonly allowedEffects: Effects
+  readonly allowedCapabilities: Capabilities
 }
 
 export interface GlobalScope extends Scope {
@@ -43,8 +43,8 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
 
     resolutions: new Map(initialResolutions),
 
-    allowedEffects: {
-      blocking: true
+    allowedCapabilities: {
+      mayBlock: true
     },
 
     // from GlobalScope
@@ -57,12 +57,12 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
   return scope
 }
 
-export function createLocalScope (parent: Scope, overrideEffects?: Effects): MutableScope {
+export function createLocalScope (parent: Scope, overrideCapabilities?: Capabilities): MutableScope {
   return {
     top: parent.top,
     parent,
     resolutions: new Map(),
-    allowedEffects: overrideEffects ?? parent.allowedEffects
+    allowedCapabilities: overrideCapabilities ?? parent.allowedCapabilities
   }
 }
 

@@ -258,7 +258,7 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
-    it('should accept effects on function-typed parameters', () => {
+    it('should accept capabilities on function-typed parameters', () => {
       const source = [
         'apply = (fn: (): instrument !may_block) {',
         '  & fn()',
@@ -377,14 +377,14 @@ describe('compiler/checker/checker.ts', () => {
       assert.deepStrictEqual(pureFunctionSpec, {
         parameters: makeSchema([]),
         returnType: NumberFacet.with(undefined).type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const blockingFunctionSpec = semanticModel.getFunctionSpec(blockingFunction)
       assert.deepStrictEqual(blockingFunctionSpec, {
         parameters: makeSchema([]),
         returnType: InstrumentFacet.type(),
-        effects: { blocking: true }
+        capabilities: { mayBlock: true }
       })
     })
 
@@ -1167,7 +1167,7 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should reject blocking effects in non-blocking contexts', () => {
+    it('should reject blocking calls in non-blocking contexts', () => {
       const source = [
         'use "instruments" as *',
         'use "sources" as src',
@@ -1238,13 +1238,23 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should reject duplicate function effects', () => {
+    it('should reject unknown capabilities', () => {
+      const source = [
+        'f = (p: (): instrument !unknown) { & p() }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Unknown capability "unknown"'
+      ])
+    })
+
+    it('should reject duplicate capabilities', () => {
       const source = [
         'f = (p: (): instrument !may_block !may_block) { & p() }'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Duplicate effect "may_block"'
+        'Duplicate capability "may_block"'
       ])
     })
 

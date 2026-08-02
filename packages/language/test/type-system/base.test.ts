@@ -20,7 +20,7 @@ describe('type-system/base', () => {
       const noParametersReturnString = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
       assert.strictEqual(
         noParametersReturnString.format(),
@@ -32,7 +32,7 @@ describe('type-system/base', () => {
           { name: 'amount', type: NumberFacet.with('db').type(), required: true }
         ]),
         returnType: makeType(StringFacet, RecordFacet.with({ gain: NumberFacet.with('db').type() })),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
       assert.strictEqual(
         oneParameterReturnComplex.format(),
@@ -44,67 +44,67 @@ describe('type-system/base', () => {
           { name: 'amount', type: NumberFacet.with('db').type(), required: false }
         ]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
       assert.strictEqual(
         optionalParameterReturnString.format(),
         '(amount?: number.db): string'
       )
 
-      const blockingFunction = FunctionFacet.with({
+      const mayBlockFunction = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: true }
+        capabilities: { mayBlock: true }
       })
       assert.strictEqual(
-        blockingFunction.format(),
+        mayBlockFunction.format(),
         '(): string !may_block'
       )
     })
 
-    it('should compare based on parameters, return type, and effects', () => {
+    it('should compare based on parameters, return type, and capabilities', () => {
       const noParametersReturnString = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const noParametersReturnStringBlocking = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: true }
+        capabilities: { mayBlock: true }
       })
 
       const oneParameterReturnString = FunctionFacet.with({
         parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: true }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const optionalParameterReturnString = FunctionFacet.with({
         parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: false }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const noParametersReturnNumber = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: NumberFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       // same parameter count and type but different parameter name
       const sameOneParameterReturnString = FunctionFacet.with({
         parameters: makeSchema([{ name: 'value', type: NumberFacet.with(undefined).type(), required: true }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       // same parameter count and name, but different parameter type
       const otherOneParameterReturnString = FunctionFacet.with({
         parameters: makeSchema([{ name: 'amount', type: NumberFacet.with('db').type(), required: true }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       // base facet is assignable from all of its specializations
@@ -126,7 +126,7 @@ describe('type-system/base', () => {
       assert.strictEqual(oneParameterReturnString.is(oneParameterReturnString), true)
       assert.strictEqual(optionalParameterReturnString.is(optionalParameterReturnString), true)
 
-      // non-blocking is assignable to blocking, but not vice versa
+      // non-mayBlock is assignable to mayBlock, but not vice versa
       assert.strictEqual(noParametersReturnStringBlocking.is(noParametersReturnString), true)
       assert.strictEqual(noParametersReturnString.is(noParametersReturnStringBlocking), false)
 
@@ -160,13 +160,13 @@ describe('type-system/base', () => {
       const broadParameter = FunctionFacet.with({
         parameters: makeSchema([{ name: 'record', type: broadRecord.type(), required: true }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const narrowParameter = FunctionFacet.with({
         parameters: makeSchema([{ name: 'record', type: narrowRecord.type(), required: true }]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       // broad parameter is assignable to narrow parameter, but not vice versa (contravariant)
@@ -176,13 +176,13 @@ describe('type-system/base', () => {
       const broadReturn = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: broadRecord.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       const narrowReturn = FunctionFacet.with({
         parameters: makeSchema([]),
         returnType: narrowRecord.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       })
 
       // narrow return is assignable to broad return, but not vice versa (covariant)
@@ -194,7 +194,7 @@ describe('type-system/base', () => {
       const spec: FunctionSpec = {
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       }
 
       const facetA = FunctionFacet.with(spec)
@@ -211,7 +211,7 @@ describe('type-system/base', () => {
           { name: 'amount', type: NumberFacet.with(undefined).type(), required: false }
         ]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       }
 
       const facetC = FunctionFacet.with(differentSpec)
@@ -230,7 +230,7 @@ describe('type-system/base', () => {
       const spec: FunctionSpec = {
         parameters: makeSchema([]),
         returnType: StringFacet.type(),
-        effects: { blocking: false }
+        capabilities: { mayBlock: false }
       }
       const functionTypeWithSpec = FunctionFacet.with(spec).type()
       assert.deepStrictEqual([...functionTypeWithSpec.facets.keys()], ['function'])
@@ -239,19 +239,19 @@ describe('type-system/base', () => {
     it('should preserve function specs through with() and detail()', () => {
       const amountType = NumberFacet.with('db').type()
       const returnType = StringFacet.type()
-      const effects = { blocking: true }
+      const capabilities = { mayBlock: true }
       const schema = makeSchema([
         { name: 'amount', type: amountType, required: true },
         { name: 'label', type: returnType, required: false }
       ])
-      const spec = { parameters: schema, returnType, effects }
+      const spec = { parameters: schema, returnType, capabilities }
       const typedFacet = FunctionFacet.with(spec)
       const typedType = typedFacet.type()
 
       const func: Function<typeof schema, typeof returnType> = {
         parameters: schema,
         returnType,
-        effects,
+        capabilities,
         invoke: (_context, args) => args.label ?? returnType.of('fallback'),
         summary: 'demo function'
       }

@@ -21,7 +21,7 @@ const loopSpec = {
     { name: 'times', type: NumberFacet.with(undefined).type(), required: false }
   ]),
   returnType: PatternFacet.type(),
-  effects: { blocking: false }
+  capabilities: { mayBlock: false }
 } satisfies FunctionSpec
 
 const loop: PatternBuiltin = {
@@ -57,7 +57,7 @@ const fillSpec = {
     { name: 'duration', type: NumberFacet.with('beats').type(), required: true }
   ]),
   returnType: PatternFacet.type(),
-  effects: { blocking: false }
+  capabilities: { mayBlock: false }
 } satisfies FunctionSpec
 
 const fill: PatternBuiltin = {

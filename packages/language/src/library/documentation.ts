@@ -69,9 +69,9 @@ function getValueAnnotations (value: Value): readonly string[] | undefined {
   const annotations = []
 
   if (FunctionFacet.has(value)) {
-    const functionValue = FunctionFacet.get(value)
+    const { capabilities } = FunctionFacet.get(value)
 
-    if (functionValue.effects.blocking) {
+    if (capabilities.mayBlock) {
       annotations.push('may block')
     }
   }

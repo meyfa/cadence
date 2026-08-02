@@ -57,7 +57,7 @@ Unit[@dynamicPrecedence=1] {
 @precedence {
   multiply @left,
   plus @left,
-  functionEffect @right
+  capability @right
 }
 
 @top Program {
@@ -145,7 +145,7 @@ FunctionType {
   "(" parameterList? ")"
   ":"
   atomicType
-  (!functionEffect "!" FunctionEffect { word })*
+  (!capability "!" Capability { word })*
 }
 
 RecordType {

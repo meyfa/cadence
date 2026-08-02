@@ -101,7 +101,7 @@ const sample = Functions.of({
     { name: 'length', type: NumberFacet.with('s').type(), required: false }
   ]),
   returnType: SampleInstrumentType,
-  effects: { blocking: true }
+  capabilities: { mayBlock: true }
 }, {
   summary: 'Creates a sample-backed instrument from a URL.',
   // eslint-disable-next-line camelcase
@@ -140,7 +140,7 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
       { name: 'gain', type: NumberFacet.with('db').type(), required: false }
     ]),
     returnType: OscillatorInstrumentType,
-    effects: { blocking: true }
+    capabilities: { mayBlock: true }
   }, {
     summary: `Creates an instrument that produces a ${shape} wave.`,
     invoke: (context: ParameterContext & InstrumentContext, { gain }) => {
