@@ -268,6 +268,18 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should merge identical and complementary composite types', () => {
+      const source = [
+        'func0 = (p: string + string) { & p }',
+        'func1 = (p: number.db + number.db) { & p }',
+        'func2 = (p: ((arg: number): number) + ((arg: number): number)) { & p(42) }',
+        'func4 = (p: { a: string } + { a: string }) { & p.a }',
+        'func3 = (p: { a: string } + { b: number }) { & { @c = p.a @d = p.b } }'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept record values', () => {
       const source = [
         'empty_record = {}',
@@ -1226,19 +1238,17 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject invalid composite types', () => {
       const source = [
-        'func0 = (p: number + number) { & p }',
-        'func1 = (p: number + number.hz) { & p }',
-        'func2 = (p: number.db + number.hz) { & p }',
-        'func3 = (p: string + string) { & p }',
-        'func4 = (p: ((a: number): number) + ((b: number): number)) { & p }'
+        'func0 = (p: number + number.hz) { & p }',
+        'func1 = (p: number.db + number.hz) { & p }',
+        'func2 = (p: ((a: number): number) + ((b: number): number)) { & p }',
+        'func3 = (p: {a: number.hz} + {a: number.db}) { & p }'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Type conflict: (number) + (number)',
         'Type conflict: (number) + (number.hz)',
         'Type conflict: (number.db) + (number.hz)',
-        'Type conflict: (string) + (string)',
-        'Type conflict: (function) + (function)'
+        'Type conflict: (function) + (function)',
+        'Type conflict: ({a: number.hz}) + ({a: number.db})'
       ])
     })
 

@@ -152,6 +152,25 @@ describe('type-system', () => {
       assert.strictEqual(numericFacet.get(narrowedFacetValue).unit, 'db')
     })
 
+    it('should merge facets', () => {
+      const collapsedFacet = stringFacet.merge(stringFacet)
+      assert.strictEqual(collapsedFacet, stringFacet)
+
+      const incompatibleFacet = stringFacet.merge(numberFacet)
+      assert.strictEqual(incompatibleFacet, undefined)
+
+      const customMergeFacet = makeFacet<'custom', unknown>('custom', { generic: 1 }, {
+        merge: (other) => {
+          const otherGeneric = (other.generics as { generic: number }).generic
+          return makeFacet<'custom', unknown>('custom', { generic: otherGeneric + 1 })
+        }
+      })
+
+      const mergedFacet = customMergeFacet.merge(customMergeFacet)
+      assert.strictEqual(mergedFacet?.name, 'custom')
+      assert.strictEqual((mergedFacet.generics as { generic: number }).generic, 2)
+    })
+
     it('should cache the single-facet type returned by type()', () => {
       const facetType = stringFacet.type()
       const facetValue = facetType.of('hello')
@@ -234,6 +253,26 @@ describe('type-system', () => {
       }
       const narrowedTypeValue: ValueForType<typeof decibelType> = maybeTypeValue
       assert.strictEqual(decibelFacet.get(narrowedTypeValue).unit, 'db')
+    })
+
+    it('should merge types with compatible facets', () => {
+      const stringType = makeType(stringFacet)
+      const numberType = makeType(numberFacet)
+
+      const stringAndNumberType = stringType.merge(numberType)
+      assert.ok(stringAndNumberType != null)
+      assert.deepStrictEqual([...stringAndNumberType.facets.keys()], ['string', 'number'])
+
+      const numberAndStringType = numberType.merge(stringType)
+      assert.ok(numberAndStringType != null)
+      assert.deepStrictEqual([...numberAndStringType.facets.keys()], ['number', 'string'])
+
+      const mergedSame = stringAndNumberType.merge(numberAndStringType)
+      assert.ok(mergedSame != null)
+      assert.deepStrictEqual([...mergedSame.facets.keys()], ['string', 'number'])
+
+      const incompatibleMerge = decibelType.merge(hertzType)
+      assert.strictEqual(incompatibleMerge, undefined)
     })
   })
 

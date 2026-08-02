@@ -4,6 +4,7 @@ import type { DataForFacets, Facet, FacetType, Generics, SpecificFacetDataForVal
 export interface FacetOptions<Data = unknown> {
   readonly format?: () => string
   readonly normalize?: (data: unknown) => Data
+  readonly merge?: (other: Facet) => Facet | undefined
 }
 
 export function makeFacet<const Name extends string, Data> (
@@ -38,6 +39,18 @@ export function makeFacet<const Name extends string, Data> (
 
       return value.data.get(facet.name) as SpecificFacetDataForValue<V, Name, Data>
     },
+
+    merge: options?.merge ?? ((other: Facet) => {
+      if (facet.name !== other.name) {
+        return undefined
+      }
+
+      if (isFacetAssignableFromFacet(facet, other) && isFacetAssignableFromFacet(other, facet)) {
+        return facet
+      }
+
+      return undefined
+    }),
 
     type: () => {
       cachedType ??= makeType(facet)
@@ -88,6 +101,33 @@ export function makeType<const Facets extends readonly Facet[]> (
       )
 
       return { type, data: dataMap }
+    },
+
+    merge: (other: FacetType): FacetType | undefined => {
+      if (other === type) {
+        return type
+      }
+
+      const mergedFacets: Facet[] = []
+
+      for (const name of new Set([...type.facets.keys(), ...other.facets.keys()])) {
+        const a = type.facets.get(name)
+        const b = other.facets.get(name)
+
+        if (a != null && b != null) {
+          const merged = a.merge(b)
+          if (merged == null) {
+            return undefined
+          }
+          mergedFacets.push(merged)
+        } else if (a != null) {
+          mergedFacets.push(a)
+        } else if (b != null) {
+          mergedFacets.push(b)
+        }
+      }
+
+      return makeType(...mergedFacets)
     },
 
     getFacet: (name: string): Facets[number] => {
