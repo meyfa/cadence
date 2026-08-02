@@ -147,6 +147,39 @@ describe('type-system/base', () => {
       assert.strictEqual(narrowReturn.is(broadReturn), false)
     })
 
+    it('should merge function facets with identical specs', () => {
+      const spec: FunctionSpec = {
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      }
+
+      const facetA = FunctionFacet.with(spec)
+      const facetB = FunctionFacet.with(spec)
+
+      const mergedAB = facetA.merge(facetB)
+      assert.strictEqual(mergedAB, facetA)
+
+      const mergedBA = facetB.merge(facetA)
+      assert.strictEqual(mergedBA, facetB)
+
+      const differentSpec: FunctionSpec = {
+        parameters: makeSchema([
+          { name: 'amount', type: NumberFacet.with(undefined).type(), required: false }
+        ]),
+        returnType: StringFacet.type(),
+        effects: { blocking: false }
+      }
+
+      const facetC = FunctionFacet.with(differentSpec)
+
+      const mergedAC = facetA.merge(facetC)
+      assert.strictEqual(mergedAC, undefined)
+
+      const mergedCA = facetC.merge(facetA)
+      assert.strictEqual(mergedCA, undefined)
+    })
+
     it('should create a single-facet type', () => {
       const functionType = FunctionFacet.type()
       assert.deepStrictEqual([...functionType.facets.keys()], ['function'])
@@ -281,6 +314,31 @@ describe('type-system/base', () => {
       assert.strictEqual(NumberFacet.with('db').is(StringFacet), false)
     })
 
+    it('should merge number facets with identical units', () => {
+      const facetA = NumberFacet.with('db')
+      const facetB = NumberFacet.with('db')
+      const facetC = NumberFacet.with('hz')
+      const facetD = NumberFacet.with(undefined)
+
+      const mergedAB = facetA.merge(facetB)
+      assert.strictEqual(mergedAB, facetA)
+
+      const mergedBA = facetB.merge(facetA)
+      assert.strictEqual(mergedBA, facetB)
+
+      const mergedAC = facetA.merge(facetC)
+      assert.strictEqual(mergedAC, undefined)
+
+      const mergedCA = facetC.merge(facetA)
+      assert.strictEqual(mergedCA, undefined)
+
+      const mergedAD = facetA.merge(facetD)
+      assert.strictEqual(mergedAD, undefined)
+
+      const mergedDA = facetD.merge(facetA)
+      assert.strictEqual(mergedDA, undefined)
+    })
+
     it('should create a single-facet type', () => {
       const numberType = NumberFacet.type()
       assert.deepStrictEqual([...numberType.facets.keys()], ['number'])
@@ -351,6 +409,86 @@ describe('type-system/base', () => {
       assert.strictEqual(RecordFacet.is(StringFacet), false)
       assert.strictEqual(emptyRecordFacet.is(StringFacet), false)
       assert.strictEqual(broadRecordFacet.is(StringFacet), false)
+    })
+
+    it('should merge record generics', () => {
+      const emptyRecordFacet = RecordFacet.with({})
+
+      const broadRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('db').type()
+      })
+
+      const narrowRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('db').type(),
+        label: StringFacet.type()
+      })
+
+      const incompatibleRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('hz').type(),
+        label: StringFacet.type()
+      })
+
+      const mergedEmptyEmpty = emptyRecordFacet.merge(emptyRecordFacet)
+      assert.ok(mergedEmptyEmpty != null)
+      assert.strictEqual(mergedEmptyEmpty.name, 'record')
+      assert.deepStrictEqual(mergedEmptyEmpty.generics, emptyRecordFacet.generics)
+
+      const mergedBroadBroad = broadRecordFacet.merge(broadRecordFacet)
+      assert.ok(mergedBroadBroad != null)
+      assert.strictEqual(mergedBroadBroad.name, 'record')
+      assert.deepStrictEqual(mergedBroadBroad.generics, broadRecordFacet.generics)
+
+      const mergedNarrowNarrow = narrowRecordFacet.merge(narrowRecordFacet)
+      assert.ok(mergedNarrowNarrow != null)
+      assert.strictEqual(mergedNarrowNarrow.name, 'record')
+      assert.deepStrictEqual(mergedNarrowNarrow.generics, narrowRecordFacet.generics)
+
+      const mergedBroadNarrow = broadRecordFacet.merge(narrowRecordFacet)
+      assert.ok(mergedBroadNarrow != null)
+      assert.strictEqual(mergedBroadNarrow.name, 'record')
+      assert.deepStrictEqual(mergedBroadNarrow.generics, narrowRecordFacet.generics)
+
+      const mergedNarrowBroad = narrowRecordFacet.merge(broadRecordFacet)
+      assert.ok(mergedNarrowBroad != null)
+      assert.strictEqual(mergedNarrowBroad.name, 'record')
+      assert.deepStrictEqual(mergedNarrowBroad.generics, narrowRecordFacet.generics)
+
+      const mergedBroadIncompatible = broadRecordFacet.merge(incompatibleRecordFacet)
+      assert.strictEqual(mergedBroadIncompatible, undefined)
+
+      const mergedIncompatibleBroad = incompatibleRecordFacet.merge(broadRecordFacet)
+      assert.strictEqual(mergedIncompatibleBroad, undefined)
+
+      const mergedEmptyOther = emptyRecordFacet.merge(StringFacet)
+      assert.strictEqual(mergedEmptyOther, undefined)
+
+      const mergedBroadOther = broadRecordFacet.merge(StringFacet)
+      assert.strictEqual(mergedBroadOther, undefined)
+
+      const stringType = StringFacet.type()
+      const numberType = NumberFacet.with(undefined).type()
+      const decibelType = NumberFacet.with('db').type()
+
+      const nestedRecordFacet0 = RecordFacet.with({
+        foo: RecordFacet.with({
+          a: stringType,
+          b: numberType
+        }).type()
+      })
+
+      const nestedRecordFacet1 = RecordFacet.with({
+        foo: RecordFacet.with({
+          a: numberType,
+          c: decibelType
+        }).type()
+      })
+
+      const mergedNested = nestedRecordFacet0.merge(nestedRecordFacet1)
+      assert.ok(mergedNested != null)
+      assert.strictEqual(mergedNested.name, 'record')
+      assert.deepStrictEqual(Object.keys(mergedNested.generics), ['foo'])
+
+      assert.strictEqual(mergedNested.format(), '{foo: {a: string + number, b: number, c: number.db}}')
     })
 
     it('should create a single-facet type', () => {
@@ -437,6 +575,11 @@ describe('type-system/base', () => {
       const value = StringFacet.type().of('hello')
       assert.strictEqual(StringFacet.has(value), true)
       assert.strictEqual(StringFacet.get(value), 'hello')
+    })
+
+    it('should merge by identity', () => {
+      assert.strictEqual(StringFacet.merge(StringFacet), StringFacet)
+      assert.strictEqual(StringFacet.merge(NumberFacet), undefined)
     })
 
     it('should create a single-facet type', () => {

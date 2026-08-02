@@ -690,7 +690,13 @@ function checkTypeExpression (expression: ast.Type): Checked<FacetType> {
   for (const component of components) {
     const existing = facets.get(component.facet.name)
     if (existing != null) {
-      errors.push(new CompileError(`Type conflict: (${existing.format()}) + (${component.facet.format()})`, component.range))
+      const merged = existing.merge(component.facet)
+      if (merged == null) {
+        errors.push(new CompileError(`Type conflict: (${existing.format()}) + (${component.facet.format()})`, component.range))
+        continue
+      }
+
+      facets.set(merged.name, merged)
       continue
     }
 

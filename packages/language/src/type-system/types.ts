@@ -9,6 +9,7 @@ export interface FacetType<Facets extends readonly Facet[] = readonly Facet[]> {
   readonly is: (other: Type) => boolean
   readonly has: (value: Value) => value is ValueForType<FacetType<Facets>>
   readonly of: (...data: DataForFacets<Facets>) => ValueForType<FacetType<Facets>>
+  readonly merge: (other: FacetType) => FacetType | undefined
   readonly getFacet: (name: string) => Facets[number]
 }
 
@@ -28,6 +29,7 @@ export interface Facet<Name extends string = string, Data = unknown> {
   readonly is: (other: Facet | Type) => boolean
   readonly has: (value: Value) => value is Value<Facet<Name, Data>>
   readonly get: <const V extends Value>(value: V) => SpecificFacetDataForValue<V, Name, Data>
+  readonly merge: (other: Facet) => Facet | undefined
 
   readonly type: () => FacetType<[Facet<Name, Data>]>
 

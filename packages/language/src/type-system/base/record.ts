@@ -1,5 +1,5 @@
 import { makeFacet } from '../factory.ts'
-import type { FacetType, ValueForType } from '../types.ts'
+import type { Facet, FacetType, ValueForType } from '../types.ts'
 
 type RecordGenerics = Readonly<Partial<Record<string, FacetType>>>
 
@@ -33,25 +33,61 @@ function normalizeRecordData<Fields extends RecordGenerics> (data: unknown): Rec
 
 const EMPTY_RECORD_GENERICS = cloneOwnProperties({} as Record<string, unknown>) as RecordGenerics
 
+function mergeRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGenerics | undefined {
+  const fields: Record<string, FacetType> = {}
+
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const aType = a[key]
+    const bType = b[key]
+
+    if (aType != null && bType != null) {
+      const mergedType = aType.merge(bType)
+      if (mergedType == null) {
+        return undefined
+      }
+      fields[key] = mergedType
+    } else if (aType != null) {
+      fields[key] = aType
+    } else if (bType != null) {
+      fields[key] = bType
+    }
+  }
+
+  return fields
+}
+
+function recordWith<const Fields extends RecordGenerics> (fields: Fields): Facet<typeof FACET_NAME, RecordDataForFields<Fields>> {
+  const safeFields = cloneOwnProperties(fields)
+
+  return makeFacet<typeof FACET_NAME, RecordDataForFields<Fields>>(FACET_NAME, safeFields, {
+    format: () => {
+      const fields = Object.entries(safeFields)
+        .map(([name, type]) => `${name}: ${type?.format()}`)
+        .join(', ')
+
+      return `{${fields}}`
+    },
+    normalize: (data) => normalizeRecordData<Fields>(data),
+    merge: (other: Facet) => {
+      if (other.name !== FACET_NAME) {
+        return undefined
+      }
+
+      const merged = mergeRecordGenerics(safeFields, other.generics as RecordGenerics)
+      return merged == null ? undefined : recordWith(merged)
+    }
+  })
+}
+
 export const RecordFacet = {
   ...makeFacet<typeof FACET_NAME, RecordDataForFields<RecordGenerics>>(FACET_NAME, EMPTY_RECORD_GENERICS, {
-    normalize: (data) => normalizeRecordData<RecordGenerics>(data)
+    normalize: (data) => normalizeRecordData<RecordGenerics>(data),
+    merge: (other: Facet) => {
+      return other.name === FACET_NAME ? other : undefined
+    }
   }),
 
-  with: <const Fields extends RecordGenerics> (fields: Fields) => {
-    const safeFields = cloneOwnProperties(fields)
-
-    return makeFacet<typeof FACET_NAME, RecordDataForFields<Fields>>(FACET_NAME, safeFields, {
-      format: () => {
-        const fields = Object.entries(safeFields)
-          .map(([name, type]) => `${name}: ${type?.format()}`)
-          .join(', ')
-
-        return `{${fields}}`
-      },
-      normalize: (data) => normalizeRecordData<Fields>(data)
-    })
-  },
+  with: recordWith,
 
   detail: (type: FacetType): RecordGenerics => {
     return type.getFacet(FACET_NAME).generics as RecordGenerics
