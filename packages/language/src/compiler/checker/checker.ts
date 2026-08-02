@@ -751,21 +751,37 @@ function checkFunctionType (expression: ast.FunctionType): Checked<readonly Type
   const parameterCheck = checkParameters(expression.parameters)
   errors.push(...parameterCheck.errors)
 
-  if (parameterCheck.result == null) {
-    return { errors, effects }
-  }
-
   const returnTypeCheck = checkTypeExpression(expression.returnType)
   errors.push(...returnTypeCheck.errors)
 
-  if (returnTypeCheck.result == null) {
+  const seenEffects = new Set<string>()
+
+  for (const effect of expression.effects) {
+    // TODO: The term "effect" is confusing due to the musical context.
+    // Rename to "capability" or "annotation"?
+    if (effect.name !== 'may_block') {
+      errors.push(new CompileError(`Unknown effect "${effect.name}"`, effect.range))
+      continue
+    }
+
+    if (seenEffects.has(effect.name)) {
+      errors.push(new CompileError(`Duplicate effect "${effect.name}"`, effect.range))
+      continue
+    }
+
+    seenEffects.add(effect.name)
+  }
+
+  if (parameterCheck.result == null || returnTypeCheck.result == null) {
     return { errors, effects }
   }
 
   const facet = FunctionFacet.with({
     parameters: parameterCheck.result.schema,
     returnType: returnTypeCheck.result,
-    effects: noEffects
+    effects: {
+      blocking: seenEffects.has('may_block')
+    }
   })
 
   const result = [{ facet, range: expression.range }]

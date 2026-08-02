@@ -41,6 +41,8 @@ const commonRules: Rules = [
   { name: '&' },
   { name: '@' },
 
+  { name: '!' },
+
   { name: '~[' },
   { name: '[' },
   { name: ']' },

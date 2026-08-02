@@ -30,6 +30,8 @@
   "&"
   "@"
 
+  "!"
+
   @precedence { Comment, "/" }
 }
 
@@ -54,7 +56,8 @@ Unit[@dynamicPrecedence=1] {
 
 @precedence {
   multiply @left,
-  plus @left
+  plus @left,
+  functionEffect @right
 }
 
 @top Program {
@@ -142,6 +145,7 @@ FunctionType {
   "(" parameterList? ")"
   ":"
   atomicType
+  (!functionEffect "!" FunctionEffect { word })*
 }
 
 RecordType {

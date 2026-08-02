@@ -1063,7 +1063,7 @@ describe('parser/parser.ts', () => {
     const source = [
       'foo = (x: number.db + (format: string): string, fmt: string) {}',
       'bar = (y: ((number.db) + (format: string): (string + string))) {}',
-      'baz = (z: (): instrument + {foo: number, bar: string}) {}'
+      'baz = (z: (): instrument !hello !world + {foo: number, bar: string}) {}'
     ].join('\n')
 
     const result = parse(lexSource(source))
@@ -1103,7 +1103,8 @@ describe('parser/parser.ts', () => {
                 type: 'NamedType',
                 name: { type: 'Identifier', name: 'string' },
                 generics: []
-              }
+              },
+              effects: []
             }
           ]
         }
@@ -1163,7 +1164,8 @@ describe('parser/parser.ts', () => {
                     generics: []
                   }
                 ]
-              }
+              },
+              effects: []
             }
           ]
         }
@@ -1187,7 +1189,11 @@ describe('parser/parser.ts', () => {
                 type: 'NamedType',
                 name: { type: 'Identifier', name: 'instrument' },
                 generics: []
-              }
+              },
+              effects: [
+                { type: 'Identifier', name: 'hello' },
+                { type: 'Identifier', name: 'world' }
+              ]
             },
             {
               type: 'RecordType',
@@ -1213,6 +1219,39 @@ describe('parser/parser.ts', () => {
               ]
             }
           ]
+        }
+      }
+    ])
+  })
+
+  it('should attach effects to the nearest function type', () => {
+    const result = parse(lexSource('f = (p: (): (): number !foo !bar) {}'))
+    assertResultComplete(result)
+
+    const func = result.value.children.at(0)?.values.at(0)
+    assert.strictEqual(func?.type, 'Function')
+
+    assert.deepStrictEqual(stripRanges(func.parameters), [
+      {
+        type: 'Parameter',
+        name: { type: 'Identifier', name: 'p' },
+        parameterType: {
+          type: 'FunctionType',
+          parameters: [],
+          returnType: {
+            type: 'FunctionType',
+            parameters: [],
+            returnType: {
+              type: 'NamedType',
+              name: { type: 'Identifier', name: 'number' },
+              generics: []
+            },
+            effects: [
+              { type: 'Identifier', name: 'foo' },
+              { type: 'Identifier', name: 'bar' }
+            ]
+          },
+          effects: []
         }
       }
     ])
