@@ -258,9 +258,25 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept effects on function-typed parameters', () => {
+      const source = [
+        'apply = (fn: (): instrument !may_block) {',
+        '  & fn()',
+        '}',
+        '',
+        'foo = apply(() { & instrument {} })',
+        '',
+        // calling with a non-blocking function should also be valid
+        'inst = instrument {}',
+        'bar = apply(() { & inst })'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept record types', () => {
       const source = [
-        'my_function = (param: { foo: number, bar: string }) {',
+        'my_function = (param: {foo: number, bar: string}) {',
         '  & param.foo',
         '}'
       ].join('\n')
@@ -1219,6 +1235,16 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Function "blocking_function" may block and cannot be called from a realtime context'
+      ])
+    })
+
+    it('should reject duplicate function effects', () => {
+      const source = [
+        'f = (p: (): instrument !may_block !may_block) { & p() }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate effect "may_block"'
       ])
     })
 

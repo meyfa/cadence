@@ -350,7 +350,7 @@ const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
   }
 )
 
-const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.ab(
+const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
   combine3(
     literal('('),
     p.recursive(() => parameterList_),
@@ -360,8 +360,19 @@ const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.ab(
     literal(':'),
     p.recursive(() => atomicType_)
   ),
-  ([_lp, parameters, _rp], [_colon, returnType]) => {
-    return ast.make('FunctionType', combineSourceRanges(_lp, returnType), { parameters, returnType })
+  p.many(
+    combine2(literal('!'), identifier_)
+  ),
+  ([_lp, parameters, _rp], [_colon, returnType], effectsTokens) => {
+    const lastToken = effectsTokens.at(-1)?.at(-1) ?? returnType
+
+    const effects = effectsTokens.map(([, effect]) => effect)
+
+    return ast.make('FunctionType', combineSourceRanges(_lp, lastToken), {
+      parameters,
+      returnType,
+      effects
+    })
   }
 )
 

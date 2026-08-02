@@ -207,6 +207,32 @@ describe('lexer/lexer.ts', () => {
     })
   })
 
+  it('should lex complex function signatures', () => {
+    const result = lex('apply = (fn: (a: number): number !may_block) {}')
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        { name: 'word', text: 'apply' },
+        { name: '=', text: '=' },
+        { name: '(', text: '(' },
+        { name: 'word', text: 'fn' },
+        { name: ':', text: ':' },
+        { name: '(', text: '(' },
+        { name: 'word', text: 'a' },
+        { name: ':', text: ':' },
+        { name: 'word', text: 'number' },
+        { name: ')', text: ')' },
+        { name: ':', text: ':' },
+        { name: 'word', text: 'number' },
+        { name: '!', text: '!' },
+        { name: 'word', text: 'may_block' },
+        { name: ')', text: ')' },
+        { name: '{', text: '{' },
+        { name: '}', text: '}' }
+      ]
+    })
+  })
+
   it('should lex simple patterns', () => {
     const result = lex('[x-x- --xx]')
     assert.deepStrictEqual(stripTokenMeta(result), {
