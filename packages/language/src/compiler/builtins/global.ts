@@ -15,7 +15,7 @@ const play = Functions.of({
     { name: 'pattern', type: PatternFacet.type(), required: true }
   ]),
   returnType: RoutingFacet.type(),
-  effects: { blocking: false }
+  capabilities: { mayBlock: false }
 }, {
   summary: 'Sends notes from a pattern to the target instrument.',
   invoke: (_context, { target, pattern }) => {
@@ -41,7 +41,7 @@ const automate = Functions.of({
     { name: 'curve', type: CurveFacet.type(), required: true }
   ]),
   returnType: AutomationFacet.type(),
-  effects: { blocking: false },
+  capabilities: { mayBlock: false },
   check: (args: ReadonlyMap<string, FacetType>) => {
     const errors: ParameterError[] = []
 

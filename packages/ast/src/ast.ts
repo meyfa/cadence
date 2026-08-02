@@ -192,7 +192,7 @@ export interface FunctionType extends ASTNode {
   readonly type: 'FunctionType'
   readonly parameters: readonly Parameter[]
   readonly returnType: Type
-  readonly effects: readonly Identifier[]
+  readonly capabilities: readonly Identifier[]
 }
 
 export interface RecordType extends ASTNode {

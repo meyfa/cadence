@@ -2,8 +2,8 @@ import { makeFacet } from '../factory.ts'
 import type { InferSchema, Schema } from '../schema.ts'
 import type { CustomComparable, FacetType, ValueForType } from '../types.ts'
 
-export interface Effects {
-  readonly blocking: boolean
+export interface Capabilities {
+  readonly mayBlock: boolean
 }
 
 export interface ParameterError {
@@ -17,7 +17,7 @@ export interface FunctionSpec<
 > {
   readonly parameters: S
   readonly returnType: R
-  readonly effects: Effects
+  readonly capabilities: Capabilities
 
   /**
    * Perform additional static checks on the argument types,
@@ -79,9 +79,9 @@ export const FunctionFacet = {
           return `${item.name}${optional}: ${item.type.format()}`
         }).join(', ')
 
-        const effects = spec.effects.blocking ? ' !may_block' : ''
+        const capabilities = spec.capabilities.mayBlock ? ' !may_block' : ''
 
-        return `(${parameters}): ${spec.returnType.format()}${effects}`
+        return `(${parameters}): ${spec.returnType.format()}${capabilities}`
       }
     })
   },
@@ -103,9 +103,9 @@ function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
     return false
   }
 
-  // Effects:
+  // Capabilities:
   // - non-blocking is assignable to blocking, but not vice versa
-  if (!spec.effects.blocking && other.effects.blocking) {
+  if (!spec.capabilities.mayBlock && other.capabilities.mayBlock) {
     return false
   }
 

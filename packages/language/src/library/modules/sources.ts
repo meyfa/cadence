@@ -11,7 +11,7 @@ function createOscillatorFunction (shape: Oscillator['shape']): Value {
       { name: 'frequency', type: NumberFacet.with('hz').type(), required: true }
     ]),
     returnType: SourceFacet.type(),
-    effects: { blocking: false }
+    capabilities: { mayBlock: false }
   }, {
     summary: `Creates a source that produces a ${shape} wave.`,
     invoke: (context, { frequency }) => {

@@ -1104,7 +1104,7 @@ describe('parser/parser.ts', () => {
                 name: { type: 'Identifier', name: 'string' },
                 generics: []
               },
-              effects: []
+              capabilities: []
             }
           ]
         }
@@ -1165,7 +1165,7 @@ describe('parser/parser.ts', () => {
                   }
                 ]
               },
-              effects: []
+              capabilities: []
             }
           ]
         }
@@ -1190,7 +1190,7 @@ describe('parser/parser.ts', () => {
                 name: { type: 'Identifier', name: 'instrument' },
                 generics: []
               },
-              effects: [
+              capabilities: [
                 { type: 'Identifier', name: 'hello' },
                 { type: 'Identifier', name: 'world' }
               ]
@@ -1224,7 +1224,7 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should attach effects to the nearest function type', () => {
+  it('should attach capabilities to the nearest function type', () => {
     const result = parse(lexSource('f = (p: (): (): number !foo !bar) {}'))
     assertResultComplete(result)
 
@@ -1246,12 +1246,12 @@ describe('parser/parser.ts', () => {
               name: { type: 'Identifier', name: 'number' },
               generics: []
             },
-            effects: [
+            capabilities: [
               { type: 'Identifier', name: 'foo' },
               { type: 'Identifier', name: 'bar' }
             ]
           },
-          effects: []
+          capabilities: []
         }
       }
     ])

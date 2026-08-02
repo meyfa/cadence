@@ -363,15 +363,15 @@ const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
   p.many(
     combine2(literal('!'), identifier_)
   ),
-  ([_lp, parameters, _rp], [_colon, returnType], effectsTokens) => {
-    const lastToken = effectsTokens.at(-1)?.at(-1) ?? returnType
+  ([_lp, parameters, _rp], [_colon, returnType], capabilitiesTokens) => {
+    const lastToken = capabilitiesTokens.at(-1)?.at(-1) ?? returnType
 
-    const effects = effectsTokens.map(([, effect]) => effect)
+    const capabilities = capabilitiesTokens.map(([, identifier]) => identifier)
 
     return ast.make('FunctionType', combineSourceRanges(_lp, lastToken), {
       parameters,
       returnType,
-      effects
+      capabilities
     })
   }
 )
