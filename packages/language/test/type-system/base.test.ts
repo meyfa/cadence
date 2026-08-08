@@ -2,6 +2,7 @@ import type { RuntimeNumeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import { BooleanFacet } from '../../src/type-system/base/boolean.ts'
 import type { Function, FunctionSpec } from '../../src/type-system/base/function.ts'
 import { FunctionFacet } from '../../src/type-system/base/function.ts'
 import type { Module } from '../../src/type-system/base/module.ts'
@@ -9,12 +10,41 @@ import { ModuleFacet } from '../../src/type-system/base/module.ts'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
 import { RecordFacet } from '../../src/type-system/base/record.ts'
 import { StringFacet } from '../../src/type-system/base/string.ts'
+import { makeType } from '../../src/type-system/factory.ts'
 import { makeSchema } from '../../src/type-system/schema.ts'
 import type { ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
-import { makeType } from '../../src/type-system/factory.ts'
 
 describe('type-system/base', () => {
+  describe('BooleanFacet', () => {
+    it('should format as facet name', () => {
+      assert.strictEqual(BooleanFacet.format(), 'boolean')
+    })
+
+    it('should compare by identity', () => {
+      assert.strictEqual(BooleanFacet.is(BooleanFacet), true)
+      assert.strictEqual(BooleanFacet.is(NumberFacet), false)
+    })
+
+    it('should round-trip values', () => {
+      for (const item of [true, false]) {
+        const value = BooleanFacet.type().of(item)
+        assert.strictEqual(BooleanFacet.has(value), true)
+        assert.strictEqual(BooleanFacet.get(value), item)
+      }
+    })
+
+    it('should merge by identity', () => {
+      assert.strictEqual(BooleanFacet.merge(BooleanFacet), BooleanFacet)
+      assert.strictEqual(BooleanFacet.merge(NumberFacet), undefined)
+    })
+
+    it('should create a single-facet type', () => {
+      const booleanType = BooleanFacet.type()
+      assert.deepStrictEqual([...booleanType.facets.keys()], ['boolean'])
+    })
+  })
+
   describe('FunctionFacet', () => {
     it('should format as function signature', () => {
       const noParametersReturnString = FunctionFacet.with({

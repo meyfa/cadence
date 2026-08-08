@@ -48,6 +48,7 @@ export interface NodeByType {
   CombinedType: CombinedType
 
   // Primitive Values
+  Boolean: Boolean
   Number: Number
   String: String
   Pattern: Pattern
@@ -70,6 +71,7 @@ export type AnyNode = NodeByType[keyof NodeByType]
 
 export type Value =
   Identifier |
+  Boolean |
   Number |
   String |
   Pattern |
@@ -206,6 +208,11 @@ export interface CombinedType extends ASTNode {
 }
 
 // Primitive Values
+
+export interface Boolean extends ASTNode {
+  readonly type: 'Boolean'
+  readonly value: boolean
+}
 
 export interface Number extends ASTNode {
   readonly type: 'Number'

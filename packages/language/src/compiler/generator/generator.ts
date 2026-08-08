@@ -4,6 +4,7 @@ import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPatte
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric, setAll } from '@meyfa/cadence-utility'
 import { getStandardModuleValue } from '../../library/modules.ts'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import type { Function } from '../../type-system/base/function.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
 import { ModuleFacet } from '../../type-system/base/module.ts'
@@ -168,8 +169,11 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
     case 'Identifier':
       return resolveIdentifier(scope, expression)
 
+    case 'Boolean':
+      return generateBoolean(scope, expression)
+
     case 'Number':
-      return toNumberValue(scope.top.options, undefined, expression.value)
+      return generateNumber(scope, expression)
 
     case 'String':
       return generateString(scope, expression)
@@ -220,6 +224,14 @@ function resolve (scope: Scope, expression: ast.Expression): Value {
 
 function resolveIdentifier (scope: Scope, expression: ast.Identifier): Value {
   return nonNull(resolveInScope(scope, expression.name))
+}
+
+function generateBoolean (scope: Scope, expression: ast.Boolean): Value {
+  return BooleanFacet.type().of(expression.value)
+}
+
+function generateNumber (scope: Scope, expression: ast.Number): Value {
+  return toNumberValue(scope.top.options, undefined, expression.value)
 }
 
 function generateString (scope: Scope, expression: ast.String): Value {
