@@ -891,7 +891,7 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject curves with invalid length units', () => {
       assertErrorMessages('my_curve = ~[hold((-60).db):42]', [
-        'Expected type number.beats | number.s, got number'
+        'Expected type (number.beats | number.s), got number'
       ])
     })
 
@@ -905,7 +905,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Expected type routing | automation, got number'
+        'Expected type (routing | automation), got number'
       ])
     })
 

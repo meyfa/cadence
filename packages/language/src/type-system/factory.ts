@@ -81,8 +81,8 @@ export function makeType<const Facets extends readonly Facet[]> (
     facets: facetMap,
 
     format: () => {
-      const merged = facets.map((facet) => facet.format()).join(' + ')
-      return facets.length > 1 ? `(${merged})` : merged
+      const joined = facets.map((facet) => facet.format()).join(' + ')
+      return facets.length > 1 ? `(${joined})` : joined
     },
 
     is: (other: Type): boolean => {
@@ -154,7 +154,8 @@ export function makeUnion<const Members extends readonly FacetType[]> (
     members,
 
     format: () => {
-      return members.map((member) => member.format()).join(' | ')
+      const joined = members.map((member) => member.format()).join(' | ')
+      return members.length > 1 ? `(${joined})` : joined
     },
 
     is: (other: Type): boolean => {
