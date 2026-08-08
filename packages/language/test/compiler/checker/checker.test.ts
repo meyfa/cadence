@@ -756,7 +756,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Cannot emit values in records'
+        'Cannot emit values in this context (record)'
       ])
     })
 
@@ -905,7 +905,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Expected type (routing | automation), got number'
+        'Unexpected emitted value of type number; expected one of: routing, automation'
       ])
     })
 
@@ -960,7 +960,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Duplicate bus named "foo"'
+        'Duplicate definition of "foo" in namespace "bus"'
       ])
     })
 
@@ -975,7 +975,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Duplicate bus named "foo"'
+        'Duplicate definition of "foo" in namespace "bus"'
       ])
     })
 
@@ -1085,8 +1085,8 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Voice is missing an envelope',
-        'Voice is missing an output'
+        'Expected at least one emission into slot "envelope" of type curve.db',
+        'Expected at least one emission into slot "output" of type source'
       ])
     })
 
@@ -1144,8 +1144,8 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple outputs in a voice',
-        'Voice is missing an envelope'
+        'Expected at least one emission into slot "envelope" of type curve.db',
+        'Duplicate emission into slot "output" of type source which accepts at most one value'
       ])
     })
 
@@ -1163,7 +1163,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple envelopes in a voice'
+        'Duplicate emission into slot "envelope" of type curve.db which accepts at most one value'
       ])
     })
 
@@ -1221,9 +1221,9 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Cannot construct an instrument in a realtime context',
-        'Cannot construct a mixer in a realtime context',
-        'Cannot construct a track in a realtime context'
+        'Constructing a value of type instrument may block, but blocking is not allowed in this context',
+        'Constructing a value of type mixer may block, but blocking is not allowed in this context',
+        'Constructing a value of type track may block, but blocking is not allowed in this context'
       ])
     })
 
