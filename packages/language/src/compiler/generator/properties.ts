@@ -6,16 +6,10 @@ export class RecordBuilder {
   private readonly types: Record<string, FacetType> = Object.create(null)
   private readonly values: Record<string, Value> = Object.create(null)
 
-  public put (name: string, value: Value): void {
+  public set (name: string, value: Value): void {
     assert(!Object.hasOwn(this.types, name))
     this.types[name] = value.type
     this.values[name] = value
-  }
-
-  public putAll (properties: Iterable<readonly [string, Value]>): void {
-    for (const [name, value] of properties) {
-      this.put(name, value)
-    }
   }
 
   get empty (): boolean {

@@ -1,6 +1,7 @@
 export type * from './brand/brand.ts'
 
 export * from './collections/arrays.ts'
+export * from './collections/maps.ts'
 export * from './collections/multimap.ts'
 
 export * from './disposable/disposable.ts'

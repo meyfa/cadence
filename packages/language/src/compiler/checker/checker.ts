@@ -1,6 +1,7 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast } from '@meyfa/cadence-ast'
 import type { Unit } from '@meyfa/cadence-utility'
+import { setAll } from '@meyfa/cadence-utility'
 import { getStandardModuleNames, getStandardModuleValue } from '../../library/modules.ts'
 import { CompoundError } from '../../result/errors.ts'
 import type { Result } from '../../result/result.ts'
@@ -138,12 +139,6 @@ function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {
   }
 
   return module
-}
-
-function putAll<K, V> (map: Map<K, V>, entries: Iterable<readonly [K, V]>): void {
-  for (const [key, value] of entries) {
-    map.set(key, value)
-  }
 }
 
 const noCapabilities: Capabilities = { mayBlock: false }
@@ -581,7 +576,7 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   }
 
   const parameters = parameterCheck.result.schema
-  putAll(functionScope.resolutions, parameterCheck.result.types)
+  setAll(functionScope.resolutions, parameterCheck.result.types)
 
   let hasReturn = false
   let returnType: FacetType | undefined
@@ -857,7 +852,7 @@ function checkRecord (scope: Scope, expression: ast.RecordValue): Checked<FacetT
       errors.push(new CompileError('Cannot emit values in records', emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = RecordFacet.with(Object.fromEntries(properties)).type()
@@ -885,7 +880,7 @@ function checkInstrument (scope: Scope, expression: ast.Instrument): Checked<Fac
       errors.push(...checkType(VoiceFacet.type(), emission.type, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = properties.size > 0
@@ -931,7 +926,7 @@ function checkVoice (scope: Scope, expression: ast.Voice): Checked<FacetType> {
       errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected envelope or output`, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   if (!hasEnvelope) {
@@ -972,7 +967,7 @@ function checkMixer (scope: Scope, expression: ast.Mixer): Checked<FacetType> {
       errors.push(...checkType(BusFacet.type(), emission.type, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = properties.size > 0
@@ -1010,7 +1005,7 @@ function checkBus (scope: Scope, expression: ast.Bus): Checked<FacetType> {
       errors.push(...checkType(busEmissionType, emission.type, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = makeType(BusFacet, RecordFacet.with(Object.fromEntries(properties)))
@@ -1051,7 +1046,7 @@ function checkTrack (scope: Scope, expression: ast.Track): Checked<FacetType> {
       errors.push(...checkType(PartFacet.type(), emission.type, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = properties.size > 0
@@ -1087,7 +1082,7 @@ function checkPart (scope: Scope, expression: ast.Part): Checked<FacetType> {
       errors.push(...checkType(partEmissionType, emission.type, emission.range))
     }
 
-    putAll(properties, statement.properties)
+    setAll(properties, statement.properties)
   }
 
   const result = properties.size > 0
