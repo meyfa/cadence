@@ -288,8 +288,11 @@ describe('type-system', () => {
 
     it('should format based on members', () => {
       const primitiveUnion = makeUnion(stringType, numberType)
-      assert.strictEqual(primitiveUnion.format(), 'string | number')
-      assert.strictEqual(numericUnion.format(), 'numeric(db) | numeric(hz)')
+      assert.strictEqual(primitiveUnion.format(), '(string | number)')
+      assert.strictEqual(numericUnion.format(), '(numeric(db) | numeric(hz))')
+
+      const singleMemberUnion = makeUnion(stringType)
+      assert.strictEqual(singleMemberUnion.format(), 'string')
     })
 
     it('should compare assignability against members and other unions', () => {
