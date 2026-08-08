@@ -2,7 +2,7 @@ import { ast } from '@meyfa/cadence-ast'
 import type { Automation, Bus, BusId, Effect, InstrumentId, InstrumentRouting, Mixer, MixerRouting, MixerSource, NoteData, Part, Pattern, Program, RelativeCurve, RelativeCurveSegment, Source, Step, Track, Voice, VoiceInstance } from '@meyfa/cadence-core'
 import { beatsToSeconds, concatPatterns, convertPitchToMidi, createParallelPattern, createSerialPattern, getMidiFrequency, mergePatterns } from '@meyfa/cadence-core'
 import type { Numeric, RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
-import { runtimeNumeric } from '@meyfa/cadence-utility'
+import { runtimeNumeric, setAll } from '@meyfa/cadence-utility'
 import { getStandardModuleValue } from '../../library/modules.ts'
 import type { Function } from '../../type-system/base/function.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
@@ -48,10 +48,9 @@ import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from
  * semantically checked and is valid.
  */
 export function generate (program: CheckedProgram, options: GenerateOptions): Program {
-  const initialResolutions = new Map(processImports(program.ast.imports))
-  for (const [name, value] of globalBuiltins) {
-    initialResolutions.set(name, value)
-  }
+  const initialResolutions = new Map<string, Value>()
+  setAll(initialResolutions, processImports(program.ast.imports))
+  setAll(initialResolutions, globalBuiltins)
 
   const top = createGlobalScope(options, program.semantic, initialResolutions)
 
@@ -125,9 +124,7 @@ function processImports (imports: readonly ast.Import[]): ReadonlyMap<string, Va
   for (const statement of imports) {
     if (statement.alias == null) {
       const { exports } = ModuleFacet.get(getModule(statement.library))
-      for (const [name, value] of exports) {
-        result.set(name, value)
-      }
+      setAll(result, exports)
     }
   }
 
@@ -373,7 +370,7 @@ function generateRecord (scope: Scope, expression: ast.RecordValue): Value {
   for (const child of expression.children) {
     const { emissions, properties } = processStatement(recordScope, child)
     assert(emissions.length === 0)
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   return recordBuilder.facet.type().of(recordBuilder.record)
@@ -390,7 +387,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
     for (const emission of emissions) {
       voices.push(VoiceFacet.get(emission))
     }
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   const gainParameter = scope.top.allocateParameter('db', 0 as Numeric<'db'>)
@@ -500,7 +497,7 @@ function generateMixer (scope: Scope, expression: ast.Mixer): Value {
       })))
     }
 
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   const mixer = { buses, routings }
@@ -562,8 +559,8 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
 
   const gain = scope.top.allocateParameter('db', gainData)
   const pan = scope.top.allocateParameter(undefined, panData)
-  recordBuilder.put('gain', Parameters.of(gain))
-  recordBuilder.put('pan', Parameters.of(pan))
+  recordBuilder.set('gain', Parameters.of(gain))
+  recordBuilder.set('pan', Parameters.of(pan))
 
   for (const child of expression.children) {
     const { emissions, properties } = processStatement(busScope, child)
@@ -580,7 +577,7 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
       }
     }
 
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   const bus = scope.top.allocateBus({ name, sources, gain, pan, effects })
@@ -631,7 +628,7 @@ function generateTrack (scope: Scope, expression: ast.Track): Value {
       currentTime = currentTime + part.length as Numeric<'beats'>
     }
 
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   const track = { tempo, parts }
@@ -666,7 +663,7 @@ function generatePart (scope: Scope, expression: ast.Part): Value {
       }
     }
 
-    recordBuilder.putAll(properties)
+    setAll(recordBuilder, properties)
   }
 
   const part = { name, length: length.value, routings, automations }
