@@ -1,4 +1,5 @@
 import type { Unit } from '@meyfa/cadence-utility'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import { AutomationFacet } from '../../type-system/domain/automation.ts'
@@ -26,6 +27,7 @@ export function getFacet (name: string, generic: string | undefined): Facet | un
 const facets: ReadonlyMap<string, FacetFactory> = new Map<string, FacetFactory>([
   // base facets
 
+  ['boolean', create(BooleanFacet)],
   ['number', createWithUnitGeneric(NumberFacet)],
   ['string', create(StringFacet)],
 

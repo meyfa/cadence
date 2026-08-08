@@ -2,6 +2,7 @@ import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast } from '@meyfa/cadence-ast'
 import type { Unit } from '@meyfa/cadence-utility'
 import { setAll } from '@meyfa/cadence-utility'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import type { Capabilities, FunctionSpec } from '../../type-system/base/function.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
 import { ModuleFacet } from '../../type-system/base/module.ts'
@@ -49,6 +50,9 @@ export function checkExpression (scope: Scope, expression: ast.Expression): Chec
   switch (expression.type) {
     case 'Identifier':
       return checkIdentifier(scope, expression)
+
+    case 'Boolean':
+      return checkBoolean(scope, expression)
 
     case 'Number':
       return checkNumber(scope, expression)
@@ -117,6 +121,10 @@ function checkIdentifier (scope: Scope, expression: ast.Identifier): Checked<Fac
   }
 
   return { errors: [], capabilities: noCapabilities, result: valueType }
+}
+
+function checkBoolean (scope: Scope, expression: ast.Boolean): Checked<FacetType> {
+  return { errors: [], capabilities: noCapabilities, result: BooleanFacet.type() }
 }
 
 function checkNumber (scope: Scope, expression: ast.Number): Checked<FacetType> {

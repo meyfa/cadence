@@ -83,6 +83,12 @@ const busNamespaceRoot_: p.Parser<Token, unknown, ast.Identifier> = p.map(
   (token) => ast.make('Identifier', getSourceRange(token), { name: token.text })
 )
 
+const boolean_: p.Parser<Token, unknown, ast.Boolean> = p.token((t) => {
+  return t.name === 'word' && (t.text === 'true' || t.text === 'false')
+    ? ast.make('Boolean', getSourceRange(t), { value: t.text === 'true' })
+    : undefined
+})
+
 const number_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
   return t.name === 'number'
     ? ast.make('Number', getSourceRange(t), { value: Number.parseFloat(t.text) })
@@ -453,6 +459,7 @@ const recordValue_: p.Parser<Token, unknown, ast.RecordValue> = p.abc(
 
 const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
   identifier_,
+  boolean_,
   number_,
   string_,
   serialPattern_,

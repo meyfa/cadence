@@ -74,6 +74,8 @@ VariableDefinition { word }
 VariableName { word }
 BusNamespace { kw<"bus"> }
 
+Boolean { kw<"true"> | kw<"false"> }
+
 Number { number }
 
 @skip {} {
@@ -156,6 +158,7 @@ primary {
   "(" expression ")" |
   Call |
   VariableName |
+  Boolean |
   Number |
   String |
   Function |

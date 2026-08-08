@@ -237,6 +237,47 @@ describe('parser/parser.ts', () => {
     ])
   })
 
+  it('should parse boolean literals', () => {
+    const source = [
+      'flag1 = true',
+      'flag2 = false'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'flag1' },
+        values: [
+          { type: 'Boolean', value: true }
+        ]
+      },
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'flag2' },
+        values: [
+          { type: 'Boolean', value: false }
+        ]
+      }
+    ])
+  })
+
+  it('should reject boolean literals on left-hand side of assignment', () => {
+    for (const lhs of ['true', 'false']) {
+      for (const rhs of ['true', 'false', '0', '1', '"string"']) {
+        const result = parse(lexSource(`${lhs} = ${rhs}`))
+        assert.strictEqual(result.complete, false)
+        assert.strictEqual(result.error.message, `Unexpected statement beginning with "${lhs}"`)
+      }
+    }
+  })
+
   it('should parse explicit bus parameter access', () => {
     const result = parse(lexSource('target = bus.main.gain'))
     assertResultComplete(result)
