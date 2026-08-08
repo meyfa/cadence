@@ -1167,6 +1167,24 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject exposing properties in a voice', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'my_instrument = instrument {',
+        '  & voice {',
+        '    @foo = 42',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Cannot expose properties in this context (voice)'
+      ])
+    })
+
     it('should reject blocking calls in non-blocking contexts', () => {
       const source = [
         'use "instruments" as *',
@@ -1348,25 +1366,6 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Unknown identifier "foo"'
-      ])
-    })
-
-    it('should reject property access for voices', () => {
-      // voices generate their value at runtime, so any properties accessed at compile time are invalid
-      const source = [
-        'use "sources" as src',
-        '',
-        'foo = voice {',
-        '  @voice_property = -6.db',
-        '  & ~[lin(0.db, -60.db):100.ms]',
-        '  & src.sine(440.hz)',
-        '}',
-        '',
-        'access_voice_property = foo.voice_property'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Type voice has no property named "voice_property"'
       ])
     })
   })

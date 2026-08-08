@@ -926,7 +926,9 @@ function checkVoice (scope: Scope, expression: ast.Voice): Checked<FacetType> {
       errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected envelope or output`, emission.range))
     }
 
-    setAll(properties, statement.properties)
+    if (statement.properties.size > 0) {
+      errors.push(new CompileError('Cannot expose properties in this context (voice)', child.range))
+    }
   }
 
   if (!hasEnvelope) {
