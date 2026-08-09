@@ -80,13 +80,8 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
+      case 'Block':
       case 'Function':
-      case 'Record':
-      case 'TrackBlock':
-      case 'PartBlock':
-      case 'MixerBlock':
-      case 'BusBlock':
-      case 'InstrumentBlock':
       case 'Voice': {
         const scope = addScope({ node: typeName, range, parentId: scopeId })
         nextScopeId = scope.id

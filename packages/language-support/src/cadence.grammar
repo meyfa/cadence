@@ -64,12 +64,6 @@ Unit[@dynamicPrecedence=1] {
   (Import | statement)*
 }
 
-interpolationExpression {
-  "{"
-  expression
-  "}"
-}
-
 VariableDefinition { word }
 VariableName { word }
 
@@ -83,6 +77,12 @@ Number { number }
     (stringEscape | stringContent | interpolationExpression)*
     stringDelimiter
   }
+}
+
+interpolationExpression {
+  "{"
+  expression
+  "}"
 }
 
 Pattern { serialPattern }
@@ -153,56 +153,13 @@ RecordType {
   "{" parameterList? "}"
 }
 
-primary {
-  "(" expression ")" |
-  Call |
-  VariableName |
-  Boolean |
-  Number |
-  String |
-  Function |
-  Record |
-  Bus |
-  Curve |
-  Instrument |
-  Mixer |
-  Part |
-  Pattern |
-  Track |
-  Voice
-}
-
-Call {
-  Callee { word }
-  "(" argumentList? ")"
-}
-
-AccessOrCall {
-  primary
-  (
-    "." Call |
-    "." Member { Unit | word }
-  )*
-}
-
-expression {
-  AccessOrCall | UnaryExpression | BinaryExpression
-}
-
-UnaryExpression {
-  ("+" | "-") expression
-}
-
-BinaryExpression {
-  (expression !plus "+" expression) |
-  (expression !plus "-" expression) |
-  (expression !multiply "*" expression) |
-  (expression !multiply "/" expression)
-}
-
 Import {
   kw<"use"> String
   kw<"as"> UseAlias { word | "*" }
+}
+
+statement {
+  Assignment | Emission | EmissionAssignment
 }
 
 Assignment {
@@ -223,65 +180,78 @@ EmissionAssignment {
   Assignment
 }
 
-statement {
-  Assignment | Emission | EmissionAssignment
+primary {
+  "(" expression ")" |
+  Call |
+  VariableName |
+  Boolean |
+  Number |
+  String |
+  Function |
+  Record |
+  Curve |
+  Pattern |
+  Builder<"bus"> |
+  Builder<"instrument"> |
+  Builder<"mixer"> |
+  Builder<"part"> |
+  Builder<"track"> |
+  Voice
+}
+
+expression {
+  AccessOrCall | UnaryExpression | BinaryExpression
+}
+
+AccessOrCall {
+  primary
+  (
+    "." Call |
+    "." Member { Unit | word }
+  )*
+}
+
+Call {
+  Callee { word }
+  "(" argumentList? ")"
+}
+
+UnaryExpression {
+  ("+" | "-") expression
+}
+
+BinaryExpression {
+  (expression !plus "+" expression) |
+  (expression !plus "-" expression) |
+  (expression !multiply "*" expression) |
+  (expression !multiply "/" expression)
 }
 
 Function {
   "(" parameterList? ")"
-  FunctionBlock[group=Block] {
-    "{" statement* "}"
-  }
+  FunctionBody
 }
 
-Record {
+FunctionBody {
   "{" statement* "}"
 }
 
-Track {
-  kw<"track">
-  ("(" argumentList? ")")?
-  TrackBlock[group=Block] {
-    "{" statement* "}"
-  }
+Record {
+  Block
 }
 
-Part {
-  kw<"part">
-  ("(" argumentList? ")")?
-  PartBlock[group=Block] {
-    "{" statement* "}"
-  }
+Block {
+  "{" statement* "}"
 }
 
-Mixer {
-  kw<"mixer">
+Builder<term> {
+  kw<term>
   ("(" argumentList? ")")?
-  MixerBlock[group=Block] {
-    "{" statement* "}"
-  }
-}
-
-Bus {
-  kw<"bus">
-  ("(" argumentList? ")")?
-  BusBlock[group=Block] {
-    "{" statement* "}"
-  }
-}
-
-Instrument {
-  kw<"instrument">
-  ("(" argumentList? ")")?
-  InstrumentBlock[group=Block] {
-    "{" statement* "}"
-  }
+  Block
 }
 
 Voice {
   kw<"voice">
   VariableDefinition?
-  VoiceBlock[group=Block] {
-    "{" statement* "}"
-  }
+  FunctionBody
 }
