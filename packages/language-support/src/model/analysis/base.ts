@@ -3,20 +3,16 @@ import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
 import type { SourceRange } from '../../utilities/range.ts'
 import type { TextLike } from '../../utilities/text.ts'
 import { toSourceRange } from '../../utilities/text.ts'
-import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId, ScopeKind } from '../model.ts'
+import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId } from '../model.ts'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
-  const rootRange = toSourceRange(document, 0, document.length)
-
-  const rootScopeId = scopeKey('root', rootRange)
-
-  const scopes: Scope[] = [{ id: rootScopeId, kind: 'root', range: rootRange }]
+  const scopes: Scope[] = []
   const identifiers: Identifier[] = []
   const bindings: Binding[] = []
   const imports: Import[] = []
 
   const addScope = (input: Omit<Scope, 'id'>): Scope => {
-    const scope = { ...input, id: scopeKey(input.kind, input.range) }
+    const scope = { ...input, id: scopeKey(input.node, input.range) }
     scopes.push(scope)
     return scope
   }
@@ -84,62 +80,35 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         break
       }
 
-      case 'Function': {
-        const scope = addScope({ kind: 'function', range, parentId: scopeId })
+      case 'Function':
+      case 'Record':
+      case 'TrackBlock':
+      case 'PartBlock':
+      case 'MixerBlock':
+      case 'InstrumentBlock':
+      case 'Voice':
+      {
+        const scope = addScope({ node: typeName, range, parentId: scopeId })
         nextScopeId = scope.id
         break
       }
 
-      case 'Record': {
-        const scope = addScope({ kind: 'record', range, parentId: scopeId })
-        nextScopeId = scope.id
-        break
-      }
-
-      case 'TrackBlock': {
-        const scope = addScope({ kind: 'track', range, parentId: scopeId })
-        nextScopeId = scope.id
-        break
-      }
-
-      case 'PartBlock': {
-        const scope = addScope({ kind: 'part', range, parentId: scopeId })
-        nextScopeId = scope.id
-        break
-      }
-
-      case 'MixerBlock': {
-        const scope = addScope({ kind: 'mixer', range, parentId: scopeId })
-        nextScopeId = scope.id
-        break
-      }
-
+      // Bus requires special handling because we need the declaredScopeId up front for the binding,
+      // but the scope only becomes effective after the BusBlock node is entered.
       case 'Bus': {
         const block = cursor.node.getChild('BusBlock')
         if (block != null) {
           const blockRange = toSourceRange(document, block.from, block.to)
-          nextPendingScope = addScope({ kind: 'bus', range: blockRange, parentId: scopeId })
+          nextPendingScope = addScope({ node: typeName, range: blockRange, parentId: scopeId })
         }
         break
       }
 
       case 'BusBlock': {
-        if (pendingScope?.kind === 'bus') {
+        if (pendingScope != null) {
           nextScopeId = pendingScope.id
           nextPendingScope = undefined
         }
-        break
-      }
-
-      case 'InstrumentBlock': {
-        const scope = addScope({ kind: 'instrument', range, parentId: scopeId })
-        nextScopeId = scope.id
-        break
-      }
-
-      case 'Voice': {
-        const scope = addScope({ kind: 'voice', range, parentId: scopeId })
-        nextScopeId = scope.id
         break
       }
 
@@ -176,7 +145,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           }
 
           case 'Bus': {
-            if (pendingScope?.kind === 'bus') {
+            if (pendingScope != null) {
               addBinding({ kind: 'bus', scopeId, name, range: nameRange, declaredScopeId: pendingScope.id })
             }
             break
@@ -252,6 +221,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     return accessChainTail
   }
 
+  const { id: rootScopeId } = addScope({
+    node: tree.topNode.name,
+    range: toSourceRange(document, 0, document.length)
+  })
+
   walk(cursor, undefined, rootScopeId, undefined, false, false)
 
   sortByOffset(scopes)
@@ -288,8 +262,8 @@ function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
     type === 'BusNamespace'
 }
 
-function scopeKey (kind: ScopeKind, range: SourceRange): ScopeId {
-  return `${kind}:${range.offset}:${range.length}` as ScopeId
+function scopeKey (node: string, range: SourceRange): ScopeId {
+  return `${node}:${range.offset}:${range.length}` as ScopeId
 }
 
 function identifierKey (kind: IdentifierKind, scopeId: string, range: SourceRange): IdentifierId {
