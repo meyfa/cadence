@@ -17,7 +17,6 @@ import { checkStatement } from './statements.ts'
 export interface BlockNode extends ast.ASTNode {
   readonly arguments?: readonly ast.Argument[]
   readonly children: readonly ast.Statement[]
-  readonly name?: ast.Identifier
 }
 
 export interface BlockSchema<TBlock extends BlockNode> {
