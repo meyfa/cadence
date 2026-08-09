@@ -610,14 +610,14 @@ describe('compiler/generator/generator.ts', () => {
     ])
   })
 
-  it('should automate bus gain via explicit namespace', () => {
+  it('should automate bus gain', () => {
     const source = [
-      '& mixer {',
-      '  & bus main {}',
+      '& m = mixer {',
+      '  & @test_bus = bus {}',
       '}',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    & automate(bus.main.gain, ~[lin((-20).db, 0.db):4.bars])',
+      '    & automate(m.test_bus.gain, ~[lin((-20).db, 0.db):4.bars])',
       '  }',
       '}'
     ].join('\n')
@@ -632,17 +632,17 @@ describe('compiler/generator/generator.ts', () => {
     ])
   })
 
-  it('should automate bus effect parameters via explicit namespace', () => {
+  it('should automate bus effect parameters', () => {
     const source = [
       'use "effects" as fx',
-      '& mixer {',
-      '  & bus main {',
+      '& m = mixer {',
+      '  & @test_bus = bus {',
       '    & @lp = fx.lowpass(123.hz)',
       '  }',
       '}',
       '& track (120.bpm) {',
       '  & part intro (4.bars) {',
-      '    & automate(bus.main.lp.frequency, ~[lin(100.hz, 4000.hz):4.bars])',
+      '    & automate(m.test_bus.lp.frequency, ~[lin(100.hz, 4000.hz):4.bars])',
       '  }',
       '}'
     ].join('\n')

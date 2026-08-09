@@ -37,8 +37,6 @@ export interface GlobalScope extends Scope, Context {
   readonly options: GenerateOptions
   readonly semantic: SemanticModel
 
-  readonly namespaces: Map<string, MutableNamespace>
-
   readonly buses: Map<BusId, Bus>
   readonly instruments: Map<InstrumentId, Instrument>
   readonly automations: Map<ParameterId, Curve<'s', Unit>>
@@ -46,16 +44,6 @@ export interface GlobalScope extends Scope, Context {
 }
 
 export interface MutableScope extends Scope {
-  readonly resolutions: Map<string, Value>
-}
-
-// namespace
-
-export interface Namespace {
-  readonly resolutions: ReadonlyMap<string, Value>
-}
-
-export interface MutableNamespace extends Namespace {
   readonly resolutions: Map<string, Value>
 }
 
@@ -76,7 +64,6 @@ export function createGlobalScope (
     // from GlobalScope
     options,
     semantic,
-    namespaces: new Map(),
     buses: new Map(),
     instruments: new Map(),
     automations: new Map(),
@@ -111,12 +98,6 @@ export function cloneScope (scope: Scope): MutableScope {
     top: scope.top,
     parent: scope.parent,
     resolutions: new Map(scope.resolutions)
-  }
-}
-
-export function createNamespace (): MutableNamespace {
-  return {
-    resolutions: new Map()
   }
 }
 

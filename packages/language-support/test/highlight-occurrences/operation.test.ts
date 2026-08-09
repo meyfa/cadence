@@ -49,30 +49,6 @@ describe('highlight-occurrences/operation.ts', () => {
     )
   })
 
-  it('normalizes explicit bus namespace references to the bus member range', () => {
-    const source = [
-      '& track (120.bpm) {',
-      '  & part foo {',
-      '    & automate(bus.foo.gain, ~[hold(-60.db):3 lin(0.db):1])',
-      '  }',
-      '}',
-      '& mixer {',
-      '  & bus foo {}',
-      '}',
-      ''
-    ].join('\n')
-
-    const position = source.indexOf('bus.foo.gain') + 'bus.'.length + 1
-
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
-      [
-        getRangeAt(source, source.indexOf('bus.foo.gain') + 'bus.'.length, 'foo'.length),
-        getRangeAt(source, source.indexOf('bus foo') + 'bus '.length, 'foo'.length)
-      ]
-    )
-  })
-
   it('does not highlight named argument keys', () => {
     const source = [
       'tempo = 128.bpm',

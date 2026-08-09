@@ -72,7 +72,6 @@ interpolationExpression {
 
 VariableDefinition { word }
 VariableName { word }
-BusNamespace { kw<"bus"> }
 
 Boolean { kw<"true"> | kw<"false"> }
 
@@ -179,7 +178,7 @@ Call {
 }
 
 AccessOrCall {
-  (primary | BusNamespace "." Member { Unit | word })
+  primary
   (
     "." Call |
     "." Member { Unit | word }
@@ -249,7 +248,7 @@ Track {
 
 Part {
   kw<"part">
-  VariableDefinition?
+  PartName { word }?
   ("(" argumentList? ")")?
   PartBlock[group=Block] {
     "{" statement* "}"
@@ -266,7 +265,7 @@ Mixer {
 
 Bus {
   kw<"bus">
-  VariableDefinition?
+  BusName { word }?
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
     "{" statement* "}"

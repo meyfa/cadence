@@ -65,28 +65,9 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
   const buses = new Map<string, Binding>()
   const byScopeAndName = new Map<string, Map<string, Binding>>()
 
-  const busNameByScopeId = new Map<string, string>()
-
   for (const binding of model.bindings) {
-    switch (binding.kind) {
-      case 'use-alias':
-        if (!namedImports.has(binding.name)) {
-          namedImports.set(binding.name, binding)
-        }
-        break
-
-      case 'bus':
-        if (!buses.has(binding.name)) {
-          buses.set(binding.name, binding)
-
-          if (binding.declaredScopeId != null) {
-            busNameByScopeId.set(binding.declaredScopeId, binding.name)
-          }
-        }
-        break
-
-      default:
-        break
+    if (binding.kind === 'use-alias' && !namedImports.has(binding.name)) {
+      namedImports.set(binding.name, binding)
     }
 
     let scopeMap = byScopeAndName.get(binding.scopeId)
@@ -95,12 +76,7 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
       byScopeAndName.set(binding.scopeId, scopeMap)
     }
 
-    // Only regular variables and use-aliases are available via plain lexical lookup.
-    // Part and bus names are not injected into scope and must be referenced via
-    // explicit assignment (regular binding) or namespace access (e.g. bus.foo).
-    if (binding.kind === 'regular' || binding.kind === 'use-alias') {
-      scopeMap.set(binding.name, binding)
-    }
+    scopeMap.set(binding.name, binding)
   }
 
   for (const imp of model.imports) {

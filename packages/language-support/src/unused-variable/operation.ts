@@ -30,12 +30,6 @@ function getUnusedImports (model: Model): readonly LanguageDiagnostic[] {
 }
 
 function isUnusedBinding (binding: Binding, model: ReferenceModel): boolean {
-  // Buses and parts are implicitly used by the runtime.
-  if (binding.kind === 'bus' || binding.kind === 'part') {
-    return false
-  }
-
-  // Do not report exposed properties as unused.
   if (binding.isExposed) {
     return false
   }

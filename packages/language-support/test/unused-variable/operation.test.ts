@@ -81,32 +81,6 @@ describe('unused-variable/operation.ts', () => {
     )
   })
 
-  it('does not treat explicit bus namespace access as an assignment reference', () => {
-    const source = [
-      'foo = sample("...")',
-      '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
-      '    & automate(bus.foo.gain, ~[hold(-60.db):3 lin(0.db):1])',
-      '  }',
-      '}',
-      '& mixer {',
-      '  & bus foo {}',
-      '}',
-      ''
-    ].join('\n')
-
-    assert.deepStrictEqual(
-      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
-      [
-        {
-          name: 'foo',
-          message: 'Unused variable "foo"',
-          range: getRangeAt(source, source.indexOf('foo ='), 'foo'.length)
-        }
-      ]
-    )
-  })
-
   it('reports unused named imports', () => {
     const source = [
       'use "instruments" as instruments',

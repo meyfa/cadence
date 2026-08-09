@@ -7,10 +7,9 @@ import { TrackFacet } from '../../type-system/domain/track.ts'
 import type { FacetType } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
 import { globalBuiltins } from '../builtins/global.ts'
-import { BUS_NAMESPACE } from '../common.ts'
 import { CompileError } from '../error.ts'
 import { checkImports } from './imports.ts'
-import { createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { createGlobalScope, createLocalScope } from './scopes.ts'
 import { checkStatement } from './statements.ts'
 
 export interface SemanticModel {
@@ -47,10 +46,6 @@ export function check (program: ast.Program): CheckResult {
   }
 
   const globalScope = createGlobalScope(initialResolutions)
-
-  const busNamespace = createNamespace()
-  globalScope.namespaces.set(BUS_NAMESPACE, busNamespace)
-
   const scope = createLocalScope(globalScope)
 
   const errors: CompileError[] = []

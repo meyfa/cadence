@@ -25,7 +25,7 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeUnion } from '../../type-system/factory.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
-import { BUS_NAMESPACE, busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
+import { busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
 import { CompileError } from '../error.ts'
 import { binaryOperations } from '../operators/binary.ts'
@@ -492,9 +492,7 @@ const checkBus = createBlockChecker<ast.Bus>({
       ['gain', ParameterFacet.with('db').type()],
       ['pan', ParameterFacet.with(undefined).type()]
     ])
-  },
-
-  namespace: BUS_NAMESPACE
+  }
 })
 
 const checkTrack = createBlockChecker<ast.Track>({
@@ -585,19 +583,6 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
 
 function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Checked<FacetType> {
   const errors: CompileError[] = []
-
-  if (expression.object.type === 'Identifier') {
-    const namespace = scope.top.namespaces.get(expression.object.name)
-    if (namespace != null) {
-      const propertyType = namespace.resolutions.get(expression.property.name)
-      if (propertyType == null) {
-        errors.push(new CompileError(`Namespace "${expression.object.name}" has no member named "${expression.property.name}"`, expression.property.range))
-        return { errors, capabilities: noCapabilities }
-      }
-
-      return { errors, capabilities: noCapabilities, result: propertyType }
-    }
-  }
 
   const objectCheck = checkExpression(scope, expression.object)
   errors.push(...objectCheck.errors)

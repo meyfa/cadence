@@ -4,7 +4,7 @@ import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { GenerateOptions } from '../../../src/compiler/generator/options.ts'
-import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/generator/scopes.ts'
+import { cloneScope, createGlobalScope, createLocalScope } from '../../../src/compiler/generator/scopes.ts'
 import type { SemanticModel } from '../../../src/index.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
 
@@ -193,14 +193,6 @@ describe('compiler/generator/scopes.ts', () => {
       localScope.resolutions.set('baz', Numbers.of(runtimeNumeric('db', 3)))
 
       assert.strictEqual(clonedScope.resolutions.get('baz'), undefined)
-    })
-  })
-
-  describe('createNamespace()', () => {
-    it('should create a namespace with empty resolutions', () => {
-      const namespace = createNamespace()
-
-      assert.strictEqual(namespace.resolutions.size, 0)
     })
   })
 })

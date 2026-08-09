@@ -278,31 +278,6 @@ describe('parser/parser.ts', () => {
     }
   })
 
-  it('should parse explicit bus parameter access', () => {
-    const result = parse(lexSource('target = bus.main.gain'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'Statement',
-        emit: false,
-        expose: false,
-        name: { type: 'Identifier', name: 'target' },
-        values: [
-          {
-            type: 'PropertyAccess',
-            object: {
-              type: 'PropertyAccess',
-              object: { type: 'Identifier', name: 'bus' },
-              property: { type: 'Identifier', name: 'main' }
-            },
-            property: { type: 'Identifier', name: 'gain' }
-          }
-        ]
-      }
-    ])
-  })
-
   it('should parse string literals with escapes and interpolations', () => {
     const result = parse(lexSource('foo = "a \\{ b {x} c"'))
     assertResultComplete(result)

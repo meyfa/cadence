@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { createGlobalScope, createLocalScope, createNamespace } from '../../../src/compiler/checker/scopes.ts'
+import { createGlobalScope, createLocalScope } from '../../../src/compiler/checker/scopes.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
 
 describe('compiler/checker/scopes.ts', () => {
@@ -14,8 +14,6 @@ describe('compiler/checker/scopes.ts', () => {
       assert.strictEqual(result.parent, undefined)
       assert.strictEqual(result.resolutions.get('foo'), foo)
       assert.deepStrictEqual(result.allowedCapabilities, { mayBlock: true })
-
-      assert.strictEqual(result.namespaces.size, 0)
     })
   })
 
@@ -54,14 +52,6 @@ describe('compiler/checker/scopes.ts', () => {
 
       const localScopeWithOverride = createLocalScope(globalScope, { mayBlock: false })
       assert.deepStrictEqual(localScopeWithOverride.allowedCapabilities, { mayBlock: false })
-    })
-  })
-
-  describe('createNamespace()', () => {
-    it('should create a namespace with empty resolutions', () => {
-      const namespace = createNamespace()
-
-      assert.strictEqual(namespace.resolutions.size, 0)
     })
   })
 })

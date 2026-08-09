@@ -55,11 +55,6 @@ export interface BlockSchema<TBlock extends BlockNode> {
   readonly properties?: PropertyOptions
 
   /**
-   * The namespace to which this block belongs (if any). This will take effect for blocks with a name field.
-   */
-  readonly namespace?: string
-
-  /**
    * Compute the bindings that are available inside this block, if any. These may not be overridden by statements within the block.
    */
   readonly getBindings?: (block: TBlock) => ReadonlyMap<string, FacetType>
@@ -144,10 +139,6 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
 
     const result = makeBlockType(schema.facet, properties)
 
-    if (schema.namespace != null) {
-      errors.push(...checkBlockName(scope, schema.namespace, block, result))
-    }
-
     return { errors, capabilities, result }
   }
 }
@@ -207,29 +198,6 @@ class EmissionCollector {
 
     return errors
   }
-}
-
-function checkBlockName (scope: Scope, namespace: string, block: BlockNode, type: FacetType): readonly CompileError[] {
-  const errors: CompileError[] = []
-  if (block.name == null) {
-    return errors
-  }
-
-  const namespaceObject = scope.top.namespaces.get(namespace)
-  if (namespaceObject == null) {
-    errors.push(new CompileError(`Namespace "${namespace}" is not defined`, block.range))
-    return errors
-  }
-
-  const duplicate = namespaceObject.resolutions.has(block.name.name)
-  if (duplicate) {
-    errors.push(new CompileError(`Duplicate definition of "${block.name.name}" in namespace "${namespace}"`, block.name.range))
-    return errors
-  }
-
-  namespaceObject.resolutions.set(block.name.name, type)
-
-  return errors
 }
 
 function makeBlockType (facet: Facet, properties: ReadonlyMap<string, FacetType>): FacetType {
