@@ -909,4 +909,15 @@ describe('compiler/generator/generator.ts', () => {
     const result = generateSource(source)
     assert.strictEqual(result.track.tempo, 123)
   })
+
+  it('should ignore empty if statements', () => {
+    const source = [
+      '& track {',
+      '  if true {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.deepStrictEqual(result.track.parts, [])
+  })
 })

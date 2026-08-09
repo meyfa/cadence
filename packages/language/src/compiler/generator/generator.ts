@@ -140,6 +140,16 @@ interface Statement {
 }
 
 function processStatement (scope: MutableScope, statement: ast.Statement): Statement {
+  switch (statement.type) {
+    case 'SimpleStatement':
+      return processSimpleStatement(scope, statement)
+
+    case 'IfStatement':
+      return processIfStatement(scope, statement)
+  }
+}
+
+function processSimpleStatement (scope: MutableScope, statement: ast.SimpleStatement): Statement {
   const values = statement.values.map((value) => resolve(scope, value))
 
   if (statement.name != null) {
@@ -152,6 +162,24 @@ function processStatement (scope: MutableScope, statement: ast.Statement): State
   const properties = statement.expose
     ? new Map([[statement.name.name, nonNull(values.at(0))]])
     : new Map<string, Value>()
+
+  return { emissions, properties }
+}
+
+function processIfStatement (scope: MutableScope, statement: ast.IfStatement): Statement {
+  const conditionValue = resolve(scope, statement.condition)
+  const condition = BooleanFacet.get(conditionValue)
+
+  const branch = condition ? statement.thenBranch : statement.elseBranch ?? []
+
+  const emissions: Value[] = []
+  const properties = new Map<string, Value>()
+
+  for (const child of branch) {
+    const { emissions: childEmissions, properties: childProperties } = processStatement(scope, child)
+    emissions.push(...childEmissions)
+    setAll(properties, childProperties)
+  }
 
   return { emissions, properties }
 }

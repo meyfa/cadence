@@ -95,7 +95,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -112,7 +112,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         values: [
@@ -128,7 +128,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -145,7 +145,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         values: [
@@ -173,7 +173,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: true,
         name: { type: 'Identifier', name: 'foo' },
@@ -200,7 +200,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'offset' },
@@ -217,7 +217,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'gain' },
@@ -248,7 +248,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'flag1' },
@@ -257,7 +257,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'flag2' },
@@ -284,7 +284,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -317,7 +317,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'empty_record' },
@@ -329,7 +329,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'one_field' },
@@ -338,7 +338,7 @@ describe('parser/parser.ts', () => {
             type: 'RecordValue',
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: true,
                 name: { type: 'Identifier', name: 'key' },
@@ -351,7 +351,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'complex' },
@@ -360,7 +360,7 @@ describe('parser/parser.ts', () => {
             type: 'RecordValue',
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: false,
                 name: { type: 'Identifier', name: 'scratch' },
@@ -369,7 +369,7 @@ describe('parser/parser.ts', () => {
                 ]
               },
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: true,
                 name: { type: 'Identifier', name: 'foo' },
@@ -378,7 +378,7 @@ describe('parser/parser.ts', () => {
                     type: 'RecordValue',
                     children: [
                       {
-                        type: 'Statement',
+                        type: 'SimpleStatement',
                         emit: false,
                         expose: true,
                         name: { type: 'Identifier', name: 'bar' },
@@ -403,7 +403,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -431,7 +431,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -457,7 +457,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -487,7 +487,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -521,7 +521,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -545,7 +545,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -580,7 +580,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -620,7 +620,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -671,7 +671,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'pattern' },
@@ -700,7 +700,7 @@ describe('parser/parser.ts', () => {
     assertResultComplete(result)
 
     const assignment = result.value.children[0]
-    assert.strictEqual(assignment.type, 'Statement')
+    assert.strictEqual(assignment.type, 'SimpleStatement')
     assert.strictEqual(assignment.values[0].type, 'Pattern')
     assert.strictEqual(assignment.values[0].children[1]?.range.filePath, 'track.cadence')
   })
@@ -711,7 +711,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         values: [
@@ -745,7 +745,7 @@ describe('parser/parser.ts', () => {
 
       assert.deepStrictEqual(stripRanges(result.value.children), [
         {
-          type: 'Statement',
+          type: 'SimpleStatement',
           emit: false,
           expose: false,
           name: { type: 'Identifier', name: 'x' },
@@ -771,7 +771,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -817,7 +817,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'foo' },
@@ -868,7 +868,7 @@ describe('parser/parser.ts', () => {
 
       assert.deepStrictEqual(stripRanges(result.value.children), [
         {
-          type: 'Statement',
+          type: 'SimpleStatement',
           emit: false,
           expose: false,
           name: { type: 'Identifier', name: 'x' },
@@ -902,7 +902,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'x' },
@@ -936,7 +936,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'my_func' },
@@ -946,7 +946,7 @@ describe('parser/parser.ts', () => {
             parameters: [],
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: true,
                 expose: false,
                 values: [
@@ -972,7 +972,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'my_func' },
@@ -1003,7 +1003,7 @@ describe('parser/parser.ts', () => {
             ],
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: true,
                 expose: false,
                 values: [
@@ -1022,7 +1022,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('func = (p: {}) { & 42 }'))
     assertResultComplete(result)
 
-    const func = result.value.children.at(0)?.values.at(0)
+    const statement = result.value.children.at(0)
+    assert.strictEqual(statement?.type, 'SimpleStatement')
+
+    const func = statement.values.at(0)
     assert.strictEqual(func?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(func.parameters), [
@@ -1041,7 +1044,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('foo = (x: track, y: part, z: instrument) {}'))
     assertResultComplete(result)
 
-    const func = result.value.children.at(0)?.values.at(0)
+    const statement = result.value.children.at(0)
+    assert.strictEqual(statement?.type, 'SimpleStatement')
+
+    const func = statement.values.at(0)
     assert.strictEqual(func?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(func.parameters), [
@@ -1085,7 +1091,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource(source))
     assertResultComplete(result)
 
-    const foo = result.value.children.at(0)?.values.at(0)
+    const fooStatement = result.value.children.at(0)
+    assert.strictEqual(fooStatement?.type, 'SimpleStatement')
+
+    const foo = fooStatement.values.at(0)
     assert.strictEqual(foo?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(foo.parameters), [
@@ -1136,7 +1145,10 @@ describe('parser/parser.ts', () => {
       }
     ])
 
-    const bar = result.value.children.at(1)?.values.at(0)
+    const barStatement = result.value.children.at(1)
+    assert.strictEqual(barStatement?.type, 'SimpleStatement')
+
+    const bar = barStatement.values.at(0)
     assert.strictEqual(bar?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(bar.parameters), [
@@ -1188,7 +1200,10 @@ describe('parser/parser.ts', () => {
       }
     ])
 
-    const baz = result.value.children.at(2)?.values.at(0)
+    const bazStatement = result.value.children.at(2)
+    assert.strictEqual(bazStatement?.type, 'SimpleStatement')
+
+    const baz = bazStatement.values.at(0)
     assert.strictEqual(baz?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(baz.parameters), [
@@ -1244,7 +1259,10 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource('f = (p: (): (): number !foo !bar) {}'))
     assertResultComplete(result)
 
-    const func = result.value.children.at(0)?.values.at(0)
+    const statement = result.value.children.at(0)
+    assert.strictEqual(statement?.type, 'SimpleStatement')
+
+    const func = statement.values.at(0)
     assert.strictEqual(func?.type, 'Function')
 
     assert.deepStrictEqual(stripRanges(func.parameters), [
@@ -1288,7 +1306,7 @@ describe('parser/parser.ts', () => {
     assertResultComplete(result)
 
     assert.strictEqual(result.value.children.length, 1)
-    assert.strictEqual(result.value.children[0].type, 'Statement')
+    assert.strictEqual(result.value.children[0].type, 'SimpleStatement')
 
     const emissions = result.value.children[0].values
 
@@ -1298,7 +1316,7 @@ describe('parser/parser.ts', () => {
         arguments: [],
         children: [
           {
-            type: 'Statement',
+            type: 'SimpleStatement',
             emit: true,
             expose: false,
             values: [
@@ -1317,7 +1335,7 @@ describe('parser/parser.ts', () => {
                 ],
                 children: [
                   {
-                    type: 'Statement',
+                    type: 'SimpleStatement',
                     emit: true,
                     expose: false,
                     values: [
@@ -1327,7 +1345,7 @@ describe('parser/parser.ts', () => {
                     ]
                   },
                   {
-                    type: 'Statement',
+                    type: 'SimpleStatement',
                     emit: true,
                     expose: false,
                     values: [
@@ -1348,7 +1366,7 @@ describe('parser/parser.ts', () => {
                     ]
                   },
                   {
-                    type: 'Statement',
+                    type: 'SimpleStatement',
                     emit: true,
                     expose: true,
                     name: { type: 'Identifier', name: 'lp' },
@@ -1393,7 +1411,7 @@ describe('parser/parser.ts', () => {
     const result = parse(lexSource(source))
     assertResultComplete(result)
 
-    assert.strictEqual(result.value.children[0].type, 'Statement')
+    assert.strictEqual(result.value.children[0].type, 'SimpleStatement')
     assert.strictEqual(result.value.children[0].emit, true)
 
     const emissions = result.value.children[0].values
@@ -1404,7 +1422,7 @@ describe('parser/parser.ts', () => {
         arguments: [],
         children: [
           {
-            type: 'Statement',
+            type: 'SimpleStatement',
             emit: true,
             expose: false,
             values: [
@@ -1425,7 +1443,7 @@ describe('parser/parser.ts', () => {
             ]
           },
           {
-            type: 'Statement',
+            type: 'SimpleStatement',
             emit: true,
             expose: false,
             values: [
@@ -1465,7 +1483,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         values: [
@@ -1474,7 +1492,7 @@ describe('parser/parser.ts', () => {
             arguments: [],
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: false,
                 name: { type: 'Identifier', name: 'foo' },
@@ -1487,7 +1505,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: true,
         expose: false,
         values: [
@@ -1496,7 +1514,7 @@ describe('parser/parser.ts', () => {
             arguments: [],
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: false,
                 name: { type: 'Identifier', name: 'bar' },
@@ -1529,7 +1547,7 @@ describe('parser/parser.ts', () => {
 
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'my_synth' },
@@ -1539,7 +1557,7 @@ describe('parser/parser.ts', () => {
             arguments: [],
             children: [
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: false,
                 expose: false,
                 name: { type: 'Identifier', name: 'foo' },
@@ -1556,7 +1574,7 @@ describe('parser/parser.ts', () => {
                 ]
               },
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: true,
                 expose: false,
                 values: [
@@ -1567,7 +1585,7 @@ describe('parser/parser.ts', () => {
                     },
                     children: [
                       {
-                        type: 'Statement',
+                        type: 'SimpleStatement',
                         emit: false,
                         expose: false,
                         name: { type: 'Identifier', name: 'bar' },
@@ -1584,7 +1602,7 @@ describe('parser/parser.ts', () => {
                 ]
               },
               {
-                type: 'Statement',
+                type: 'SimpleStatement',
                 emit: true,
                 expose: false,
                 values: [
@@ -1602,7 +1620,7 @@ describe('parser/parser.ts', () => {
         ]
       },
       {
-        type: 'Statement',
+        type: 'SimpleStatement',
         emit: false,
         expose: false,
         name: { type: 'Identifier', name: 'labeled_instrument' },
@@ -1619,6 +1637,75 @@ describe('parser/parser.ts', () => {
               }
             ],
             children: []
+          }
+        ]
+      }
+    ])
+  })
+
+  it('should parse if statements', () => {
+    const source = [
+      'if condition {',
+      '  & 42',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'IfStatement',
+        condition: { type: 'Identifier', name: 'condition' },
+        thenBranch: [
+          {
+            type: 'SimpleStatement',
+            emit: true,
+            expose: false,
+            values: [
+              { type: 'Number', value: 42 }
+            ]
+          }
+        ],
+        elseBranch: undefined
+      }
+    ])
+  })
+
+  it('should parse if-else statements', () => {
+    const source = [
+      'if condition {',
+      '  & 42',
+      '} else {',
+      '  & 43',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'IfStatement',
+        condition: { type: 'Identifier', name: 'condition' },
+        thenBranch: [
+          {
+            type: 'SimpleStatement',
+            emit: true,
+            expose: false,
+            values: [
+              { type: 'Number', value: 42 }
+            ]
+          }
+        ],
+        elseBranch: [
+          {
+            type: 'SimpleStatement',
+            emit: true,
+            expose: false,
+            values: [
+              { type: 'Number', value: 43 }
+            ]
           }
         ]
       }

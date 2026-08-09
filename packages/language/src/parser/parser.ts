@@ -633,7 +633,7 @@ const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
     expression_
   ),
   (expose, [key, _eq, value]) => {
-    return ast.make('Statement', combineSourceRanges(expose ?? key, value), {
+    return ast.make('SimpleStatement', combineSourceRanges(expose ?? key, value), {
       emit: false,
       expose: expose != null,
       name: key,
@@ -655,7 +655,7 @@ const plainEmission_: p.Parser<Token, unknown, ast.Statement> = p.abc(
     const restValues = rest.map(([, value]) => value)
     const lastValue = restValues.at(-1) ?? firstValue
 
-    return ast.make('Statement', combineSourceRanges(_amp, lastValue), {
+    return ast.make('SimpleStatement', combineSourceRanges(_amp, lastValue), {
       emit: true,
       expose: false,
       values: [firstValue, ...restValues]
@@ -672,7 +672,7 @@ const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
     expression_
   ),
   (_amp, expose, [key, _eq, value]) => {
-    return ast.make('Statement', combineSourceRanges(_amp, value), {
+    return ast.make('SimpleStatement', combineSourceRanges(_amp, value), {
       emit: true,
       expose: expose != null,
       name: key,
@@ -681,10 +681,48 @@ const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
   }
 )
 
-const statement_ = p.choice<Token, unknown, ast.Statement>(
+const simpleStatement_ = p.choice<Token, unknown, ast.Statement>(
   plainAssignment_,
   emissionAssignment_,
   plainEmission_
+)
+
+const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
+  combine2(
+    keyword('if'),
+    expression_
+  ),
+  combine3(
+    literal('{'),
+    p.recursive(() => p.many(statement_)),
+    expectLiteral('}')
+  ),
+  p.option(
+    combine2(
+      keyword('else'),
+      combine3(
+        literal('{'),
+        p.recursive(() => p.many(statement_)),
+        expectLiteral('}')
+      )
+    ),
+    undefined
+  ),
+  ([_if, condition], [_lb, thenBranch, _rb], elseClause) => {
+    const elseBranch = elseClause?.[1][1]
+    const lastToken = elseClause?.[1][2] ?? _rb
+
+    return ast.make('IfStatement', combineSourceRanges(_if, lastToken), {
+      condition,
+      thenBranch,
+      elseBranch
+    })
+  }
+)
+
+const statement_: p.Parser<Token, unknown, ast.Statement> = p.choice<Token, unknown, ast.Statement>(
+  simpleStatement_,
+  ifStatement_
 )
 
 interface BuilderFields {

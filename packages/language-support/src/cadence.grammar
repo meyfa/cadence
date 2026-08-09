@@ -173,6 +173,10 @@ Import {
 }
 
 statement {
+  simpleStatement | compoundStatement
+}
+
+simpleStatement {
   Assignment | Emission | EmissionAssignment
 }
 
@@ -192,6 +196,17 @@ Emission {
 EmissionAssignment {
   "&"
   Assignment
+}
+
+compoundStatement {
+  IfStatement
+}
+
+IfStatement {
+  kw<"if">
+  expression
+  Block
+  (kw<"else"> Block)?
 }
 
 primary {
