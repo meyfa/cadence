@@ -78,11 +78,6 @@ const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
     : undefined
 })
 
-const busNamespaceRoot_: p.Parser<Token, unknown, ast.Identifier> = p.map(
-  keyword('bus'),
-  (token) => ast.make('Identifier', getSourceRange(token), { name: token.text })
-)
-
 const boolean_: p.Parser<Token, unknown, ast.Boolean> = p.token((t) => {
   return t.name === 'word' && (t.text === 'true' || t.text === 'false')
     ? ast.make('Boolean', getSourceRange(t), { value: t.text === 'true' })
@@ -486,7 +481,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
 
 // Parse a primary value, a property access, or a call; chained as needed.
 const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
-  p.eitherOr(primary_, busNamespaceRoot_),
+  primary_,
   p.many(
     p.eitherOr(
       p.ab(

@@ -50,26 +50,6 @@ describe('go-to-definition/operation.ts', () => {
     }
   })
 
-  it('resolves bus references in mixer via bus namespace', () => {
-    const source = [
-      '& mixer {',
-      '  & bus a {}',
-      '  & bus {',
-      '    & bus.a',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const defPos = source.indexOf('bus a') + 'bus '.length
-    const refPos = source.indexOf('bus.a') + 'bus.'.length
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-
-    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'a'.length))
-    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'a'.length))
-  })
-
   it('does not resolve bus references in mixer via bus name', () => {
     const source = [
       '& mixer {',
@@ -146,28 +126,6 @@ describe('go-to-definition/operation.ts', () => {
 
     const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
     assert.strictEqual(result, undefined)
-  })
-
-  it('resolves explicit bus namespace access to the bus definition', () => {
-    const source = [
-      '& track (120.bpm) {',
-      '  & part foo {',
-      '    & automate(bus.foo.gain, ~[hold(-60.db):3 lin(0.db):1])',
-      '  }',
-      '}',
-      '& mixer {',
-      '  & bus foo {}',
-      '}',
-      ''
-    ].join('\n')
-
-    const defPos = source.indexOf('bus foo') + 'bus '.length
-    const refPos = source.indexOf('bus.foo.gain') + 'bus.'.length
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-
-    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
-    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
 
   it('does not resolve named argument keys', () => {

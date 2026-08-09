@@ -58,7 +58,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     const nextParentType = typeName
 
     let nextScopeId = scopeId
-    let nextPendingScope = pendingScope
+    const nextPendingScope = pendingScope
     let nextAssignmentHasEquals = assignmentHasEquals
     let nextAssignmentIsExposed = assignmentIsExposed
     let accessChainTail: Identifier | undefined
@@ -85,30 +85,11 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'TrackBlock':
       case 'PartBlock':
       case 'MixerBlock':
+      case 'BusBlock':
       case 'InstrumentBlock':
-      case 'Voice':
-      {
+      case 'Voice': {
         const scope = addScope({ node: typeName, range, parentId: scopeId })
         nextScopeId = scope.id
-        break
-      }
-
-      // Bus requires special handling because we need the declaredScopeId up front for the binding,
-      // but the scope only becomes effective after the BusBlock node is entered.
-      case 'Bus': {
-        const block = cursor.node.getChild('BusBlock')
-        if (block != null) {
-          const blockRange = toSourceRange(document, block.from, block.to)
-          nextPendingScope = addScope({ node: typeName, range: blockRange, parentId: scopeId })
-        }
-        break
-      }
-
-      case 'BusBlock': {
-        if (pendingScope != null) {
-          nextScopeId = pendingScope.id
-          nextPendingScope = undefined
-        }
         break
       }
 
@@ -134,23 +115,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
             break
           }
 
-          case 'Function': {
-            addBinding({ kind: 'regular', scopeId, name, range: nameRange })
-            break
-          }
-
-          case 'Part': {
-            addBinding({ kind: 'part', scopeId, name, range: nameRange })
-            break
-          }
-
-          case 'Bus': {
-            if (pendingScope != null) {
-              addBinding({ kind: 'bus', scopeId, name, range: nameRange, declaredScopeId: pendingScope.id })
-            }
-            break
-          }
-
+          case 'Function':
           case 'Voice': {
             addBinding({ kind: 'regular', scopeId, name, range: nameRange })
             break
@@ -167,8 +132,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
 
       case 'VariableName':
       case 'Callee':
-      case 'Member':
-      case 'BusNamespace': {
+      case 'Member': {
         const { name, range: nameRange } = getVariableName(document, from, to)
         accessChainTail = addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
         break
@@ -258,8 +222,7 @@ function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
     type === 'Callee' ||
     type === 'Call' ||
     type === 'Member' ||
-    type === 'VariableName' ||
-    type === 'BusNamespace'
+    type === 'VariableName'
 }
 
 function scopeKey (node: string, range: SourceRange): ScopeId {

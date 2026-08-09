@@ -78,7 +78,6 @@ describe('model/analysis/base.ts', () => {
         { kind: 'argument-name', scope: 'Program', name: 'tempo' },
         { kind: 'plain', scope: 'Program', name: 'double' },
         { kind: 'plain', scope: 'Program', name: 'bpm' },
-        { kind: 'definition', scope: 'TrackBlock', name: 'intro' },
         { kind: 'plain', scope: 'TrackBlock', name: 'bars' },
         { kind: 'plain', scope: 'PartBlock', name: 'play' },
         { kind: 'plain', scope: 'PartBlock', name: 'kick' },
@@ -87,13 +86,12 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'PartBlock', name: 'kick' },
         { kind: 'plain', scope: 'PartBlock', name: 'gain' },
         { kind: 'plain', scope: 'PartBlock', name: 'db' },
-        { kind: 'definition', scope: 'MixerBlock', name: 'drums' },
-        { kind: 'definition', scope: 'Bus', name: 'crush' },
-        { kind: 'plain', scope: 'Bus', name: 'fx' },
-        { kind: 'plain', scope: 'Bus', name: 'clip' },
-        { kind: 'plain', scope: 'Bus', name: 'db' },
-        { kind: 'plain', scope: 'Bus', name: 'kick' },
-        { kind: 'plain', scope: 'Bus', name: 'snare' }
+        { kind: 'definition', scope: 'BusBlock', name: 'crush' },
+        { kind: 'plain', scope: 'BusBlock', name: 'fx' },
+        { kind: 'plain', scope: 'BusBlock', name: 'clip' },
+        { kind: 'plain', scope: 'BusBlock', name: 'db' },
+        { kind: 'plain', scope: 'BusBlock', name: 'kick' },
+        { kind: 'plain', scope: 'BusBlock', name: 'snare' }
       ]
     )
   })
@@ -115,7 +113,6 @@ describe('model/analysis/base.ts', () => {
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
         { kind: 'plain', name: 'sample' },
-        { kind: 'definition', name: 'intro' },
         { kind: 'plain', name: 'kick' }
       ]
     )
@@ -169,7 +166,6 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map((identifier) => ({ kind: identifier.kind, name: identifier.name })),
       [
-        { kind: 'definition', name: 'main' },
         { kind: 'definition', name: 'foo' },
         { kind: 'plain', name: 'foo' }
       ]
@@ -250,16 +246,16 @@ describe('model/analysis/base.ts', () => {
       '} // end instrument',
       '',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & play(kick, [x---])',
       '  } // end part',
       '} // end track',
       '',
       '& mixer {',
-      '  & bus drums (gain: -1.5.db) {',
+      '  & drums = bus (gain: -1.5.db) {',
       '    & kick, snare',
       '  }',
-      '  & bus delay {',
+      '  & @delay = bus {',
       '    & fx.delay(mix: 0.75, time: 0.5.beats, feedback: 0.6)',
       '  }',
       '} // end mixer',
@@ -296,7 +292,7 @@ describe('model/analysis/base.ts', () => {
     const trackRange = getRangeAt(source, trackBlockStart, trackEnd - trackBlockStart)
     const trackScopeId = `TrackBlock:${trackRange.offset}:${trackRange.length}`
 
-    const partBlockStart = source.indexOf('{', source.indexOf('part intro'))
+    const partBlockStart = source.indexOf('{', source.indexOf('& part'))
     const partEnd = source.indexOf('} // end part') + '}'.length
     const partRange = getRangeAt(source, partBlockStart, partEnd - partBlockStart)
     const partScopeId = `PartBlock:${partRange.offset}:${partRange.length}`
@@ -306,15 +302,15 @@ describe('model/analysis/base.ts', () => {
     const mixerRange = getRangeAt(source, mixerBlockStart, mixerEnd - mixerBlockStart)
     const mixerScopeId = `MixerBlock:${mixerRange.offset}:${mixerRange.length}`
 
-    const drumsBusBlockStart = source.indexOf('{', source.indexOf('bus drums'))
-    const drumsBusEnd = source.indexOf('  }', source.indexOf('bus drums')) + '  }'.length
+    const drumsBusBlockStart = source.indexOf('{', source.indexOf('& drums = '))
+    const drumsBusEnd = source.indexOf('}', drumsBusBlockStart) + '}'.length
     const drumsBusRange = getRangeAt(source, drumsBusBlockStart, drumsBusEnd - drumsBusBlockStart)
-    const drumsBusScopeId = `Bus:${drumsBusRange.offset}:${drumsBusRange.length}`
+    const drumsBusScopeId = `BusBlock:${drumsBusRange.offset}:${drumsBusRange.length}`
 
-    const delayBusBlockStart = source.indexOf('{', source.indexOf('bus delay'))
-    const delayBusEnd = source.indexOf('  }', source.indexOf('bus delay')) + '  }'.length
+    const delayBusBlockStart = source.indexOf('{', source.indexOf('& @delay = '))
+    const delayBusEnd = source.indexOf('}', delayBusBlockStart) + '}'.length
     const delayBusRange = getRangeAt(source, delayBusBlockStart, delayBusEnd - delayBusBlockStart)
-    const delayBusScopeId = `Bus:${delayBusRange.offset}:${delayBusRange.length}`
+    const delayBusScopeId = `BusBlock:${delayBusRange.offset}:${delayBusRange.length}`
 
     assert.deepStrictEqual(
       model.scopes.map(({ id, node, parentId }) => ({ id, node, parentId })),
@@ -327,30 +323,29 @@ describe('model/analysis/base.ts', () => {
         { id: trackScopeId, node: 'TrackBlock', parentId: rootScopeId },
         { id: partScopeId, node: 'PartBlock', parentId: trackScopeId },
         { id: mixerScopeId, node: 'MixerBlock', parentId: rootScopeId },
-        { id: drumsBusScopeId, node: 'Bus', parentId: mixerScopeId },
-        { id: delayBusScopeId, node: 'Bus', parentId: mixerScopeId }
+        { id: drumsBusScopeId, node: 'BusBlock', parentId: mixerScopeId },
+        { id: delayBusScopeId, node: 'BusBlock', parentId: mixerScopeId }
       ]
     )
 
     assert.deepStrictEqual(
-      model.bindings.map(({ kind, name, declaredScopeId, isExposed }) => ({ kind, name, declaredScopeId, isExposed })),
+      model.bindings.map(({ kind, name, isExposed }) => ({ kind, name, isExposed })),
       [
-        { kind: 'use-alias', name: 'fx', declaredScopeId: undefined, isExposed: undefined },
-        { kind: 'regular', name: 'kick', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'snare', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'my_function', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'input', declaredScopeId: undefined, isExposed: undefined },
-        { kind: 'regular', name: 'my_record', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'record_property', declaredScopeId: undefined, isExposed: true },
-        { kind: 'regular', name: 'my_instrument', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'instrument_property', declaredScopeId: undefined, isExposed: true },
-        { kind: 'regular', name: 'foo', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'bar', declaredScopeId: undefined, isExposed: false },
-        { kind: 'regular', name: 'note', declaredScopeId: undefined, isExposed: undefined },
-        { kind: 'regular', name: 'baz', declaredScopeId: undefined, isExposed: false },
-        { kind: 'part', name: 'intro', declaredScopeId: undefined, isExposed: undefined },
-        { kind: 'bus', name: 'drums', declaredScopeId: drumsBusScopeId, isExposed: undefined },
-        { kind: 'bus', name: 'delay', declaredScopeId: delayBusScopeId, isExposed: undefined }
+        { kind: 'use-alias', name: 'fx', isExposed: undefined },
+        { kind: 'regular', name: 'kick', isExposed: false },
+        { kind: 'regular', name: 'snare', isExposed: false },
+        { kind: 'regular', name: 'my_function', isExposed: false },
+        { kind: 'regular', name: 'input', isExposed: undefined },
+        { kind: 'regular', name: 'my_record', isExposed: false },
+        { kind: 'regular', name: 'record_property', isExposed: true },
+        { kind: 'regular', name: 'my_instrument', isExposed: false },
+        { kind: 'regular', name: 'instrument_property', isExposed: true },
+        { kind: 'regular', name: 'foo', isExposed: false },
+        { kind: 'regular', name: 'bar', isExposed: false },
+        { kind: 'regular', name: 'note', isExposed: undefined },
+        { kind: 'regular', name: 'baz', isExposed: false },
+        { kind: 'regular', name: 'drums', isExposed: false },
+        { kind: 'regular', name: 'delay', isExposed: true }
       ]
     )
   })
@@ -367,13 +362,13 @@ describe('model/analysis/base.ts', () => {
       '}',
       '',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & @intro = part (4.bars) {',
       '    & play(kick, [x---])',
       '  }',
       '}',
       '',
       '& mixer {',
-      '  & bus drums (gain: -1.5.db) {',
+      '  & @drums = bus (gain: -1.5.db) {',
       '    & kick, snare',
       '  }',
       '}',
@@ -411,14 +406,14 @@ describe('model/analysis/base.ts', () => {
           range: getRangeAt(source, source.indexOf('bar ='), 'bar'.length)
         },
         {
-          kind: 'part',
+          kind: 'regular',
           name: 'intro',
-          range: getRangeAt(source, source.indexOf('intro (4.bars)'), 'intro'.length)
+          range: getRangeAt(source, source.indexOf('@intro') + 1, 'intro'.length)
         },
         {
-          kind: 'bus',
+          kind: 'regular',
           name: 'drums',
-          range: getRangeAt(source, source.indexOf('bus drums') + 'bus '.length, 'drums'.length)
+          range: getRangeAt(source, source.indexOf('@drums') + 1, 'drums'.length)
         }
       ]
     )

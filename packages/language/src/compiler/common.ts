@@ -5,8 +5,6 @@ import { makeSchema } from '../type-system/schema.ts'
 
 export const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
-export const BUS_NAMESPACE = 'bus'
-
 export const trackSchema = makeSchema([
   {
     name: 'tempo',

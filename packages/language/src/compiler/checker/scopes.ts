@@ -12,23 +12,12 @@ export interface Scope {
 }
 
 export interface GlobalScope extends Scope {
-  readonly namespaces: Map<string, MutableNamespace>
   readonly semantic: {
     readonly functions: Map<ast.Function, FunctionSpec>
   }
 }
 
 export interface MutableScope extends Scope {
-  readonly resolutions: Map<string, FacetType>
-}
-
-// namespace
-
-export interface Namespace {
-  readonly resolutions: ReadonlyMap<string, FacetType>
-}
-
-export interface MutableNamespace extends Namespace {
   readonly resolutions: Map<string, FacetType>
 }
 
@@ -48,7 +37,6 @@ export function createGlobalScope (initialResolutions: ReadonlyMap<string, Facet
     },
 
     // from GlobalScope
-    namespaces: new Map(),
     semantic: {
       functions: new Map()
     }
@@ -63,11 +51,5 @@ export function createLocalScope (parent: Scope, overrideCapabilities?: Capabili
     parent,
     resolutions: new Map(),
     allowedCapabilities: overrideCapabilities ?? parent.allowedCapabilities
-  }
-}
-
-export function createNamespace (): MutableNamespace {
-  return {
-    resolutions: new Map()
   }
 }

@@ -140,38 +140,6 @@ describe('model/analysis/references.ts', () => {
     assert.ok(references.includes(identifier))
   })
 
-  it('resolves explicit bus namespace access to the bus binding', () => {
-    const source = [
-      '& track (120.bpm) {',
-      '  & part foo (4.bars) {',
-      '    & automate(bus.foo.gain, ~[hold(0.db)])',
-      '  }',
-      '}',
-      '& mixer {',
-      '  & bus foo {}',
-      '}',
-      ''
-    ].join('\n')
-
-    const model = analyzeSource(source)
-
-    const position = source.indexOf('bus.foo.gain') + 'bus.'.length
-    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
-    assert.ok(identifier != null)
-
-    const resolution = model.resolutions.get(identifier.id)
-    assert.strictEqual(resolution?.kind, 'binding')
-
-    const binding = resolution.binding
-    assert.strictEqual(binding.kind, 'bus')
-    assert.strictEqual(binding.name, 'foo')
-    assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('bus foo') + 'bus '.length, 'foo'.length))
-
-    const references = model.bindingReferences.get(binding.id)
-    assert.ok(references != null)
-    assert.ok(references.includes(identifier))
-  })
-
   it('does not resolve named argument keys', () => {
     const source = [
       'tempo = 128.bpm',
@@ -245,30 +213,6 @@ describe('model/analysis/references.ts', () => {
 
     const model = analyzeSource(source)
     const position = source.indexOf('synth.gain') + 'synth.'.length
-
-    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
-    assert.ok(identifier != null)
-
-    const binding = model.resolutions.get(identifier.id)
-    assert.strictEqual(binding, undefined)
-  })
-
-  it('does not resolve member access of an explicit bus access', () => {
-    const source = [
-      '& track (120.bpm) {',
-      '  & part main (4.bars) {',
-      '    & automate(bus.foo.gain, ~[hold(0.db)])',
-      '  }',
-      '}',
-      '',
-      '& mixer {',
-      '  & bus foo {}',
-      '}',
-      ''
-    ].join('\n')
-
-    const model = analyzeSource(source)
-    const position = source.indexOf('bus.foo.gain') + 'bus.foo.'.length
 
     const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
     assert.ok(identifier != null)

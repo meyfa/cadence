@@ -32,7 +32,7 @@ import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import type { CheckedProgram } from '../checker/checker.ts'
 import type { NoteValue } from '../common.ts'
-import { BUS_NAMESPACE, busSchema, DEFAULT_ROOT_NOTE, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
+import { busSchema, DEFAULT_ROOT_NOTE, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import type { RenderCurveOptions } from '../curves.ts'
 import { createCurve, createCurveSegment, getCurveSegmentType, mergeCurvePoints, renderCurvePoints } from '../curves.ts'
 import { binaryOperations } from '../operators/binary.ts'
@@ -42,7 +42,7 @@ import { isSyntaxUnit, toNumberValue } from '../units.ts'
 import type { GenerateOptions } from './options.ts'
 import { RecordBuilder } from './properties.ts'
 import type { GlobalScope, MutableScope, Scope } from './scopes.ts'
-import { cloneScope, createGlobalScope, createLocalScope, createNamespace } from './scopes.ts'
+import { cloneScope, createGlobalScope, createLocalScope } from './scopes.ts'
 
 /**
  * Generate a runnable program from an AST. This assumes the AST has already been
@@ -54,11 +54,7 @@ export function generate (program: CheckedProgram, options: GenerateOptions): Pr
   setAll(initialResolutions, globalBuiltins)
 
   const top = createGlobalScope(options, program.semantic, initialResolutions)
-
   const scope = createLocalScope(top)
-
-  const busNamespace = createNamespace()
-  scope.top.namespaces.set(BUS_NAMESPACE, busNamespace)
 
   let mixer: Mixer | undefined
   let track: Track | undefined
@@ -595,12 +591,6 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
   const bus = scope.top.allocateBus({ name, sources, gain, pan, effects })
   const value = makeType(BusFacet, recordBuilder.facet).of(bus, recordBuilder.record)
 
-  if (name != null) {
-    const namespace = nonNull(scope.top.namespaces.get(BUS_NAMESPACE))
-    assert(!namespace.resolutions.has(name))
-    namespace.resolutions.set(name, value)
-  }
-
   return value
 }
 
@@ -709,13 +699,6 @@ function computeBinaryExpression (scope: Scope, expression: ast.BinaryExpression
 }
 
 function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): Value {
-  if (expression.object.type === 'Identifier') {
-    const namespace = scope.top.namespaces.get(expression.object.name)
-    if (namespace != null) {
-      return nonNull(namespace.resolutions.get(expression.property.name))
-    }
-  }
-
   const object = resolve(scope, expression.object)
   const property = expression.property.name
 
