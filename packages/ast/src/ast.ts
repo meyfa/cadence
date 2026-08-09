@@ -45,6 +45,7 @@ export interface NodeByType {
   NamedType: NamedType
   FunctionType: FunctionType
   RecordType: RecordType
+  RecordTypeProperty: RecordTypeProperty
   CombinedType: CombinedType
 
   // Primitive Values
@@ -199,7 +200,13 @@ export interface FunctionType extends ASTNode {
 
 export interface RecordType extends ASTNode {
   readonly type: 'RecordType'
-  readonly parameters: readonly Parameter[]
+  readonly properties: readonly RecordTypeProperty[]
+}
+
+export interface RecordTypeProperty extends ASTNode {
+  readonly type: 'RecordTypeProperty'
+  readonly name: Identifier
+  readonly propertyType: Type
 }
 
 export interface CombinedType extends ASTNode {

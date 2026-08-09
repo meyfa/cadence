@@ -1031,7 +1031,7 @@ describe('parser/parser.ts', () => {
         name: { type: 'Identifier', name: 'p' },
         parameterType: {
           type: 'RecordType',
-          parameters: []
+          properties: []
         }
       }
     ])
@@ -1213,20 +1213,20 @@ describe('parser/parser.ts', () => {
             },
             {
               type: 'RecordType',
-              parameters: [
+              properties: [
                 {
-                  type: 'Parameter',
+                  type: 'RecordTypeProperty',
                   name: { type: 'Identifier', name: 'foo' },
-                  parameterType: {
+                  propertyType: {
                     type: 'NamedType',
                     name: { type: 'Identifier', name: 'number' },
                     generics: []
                   }
                 },
                 {
-                  type: 'Parameter',
+                  type: 'RecordTypeProperty',
                   name: { type: 'Identifier', name: 'bar' },
-                  parameterType: {
+                  propertyType: {
                     type: 'NamedType',
                     name: { type: 'Identifier', name: 'string' },
                     generics: []

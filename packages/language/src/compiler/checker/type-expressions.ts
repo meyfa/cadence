@@ -147,8 +147,8 @@ function checkRecordType (expression: ast.RecordType): CheckedFacets {
 
   const properties = new Map<string, FacetType>()
 
-  for (const property of expression.parameters) {
-    const propertyCheck = checkType(property.parameterType)
+  for (const property of expression.properties) {
+    const propertyCheck = checkType(property.propertyType)
     errors.push(...propertyCheck.errors)
 
     if (propertyCheck.result == null) {
