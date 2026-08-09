@@ -126,7 +126,7 @@ function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Bin
 
   while (scopeId != null) {
     const binding = lookup.byScopeAndName.get(scopeId)?.get(occurrence.name)
-    if (binding != null) {
+    if (binding != null && isBindingVisibleAt(binding, occurrence.range.offset)) {
       return binding
     }
 
@@ -134,6 +134,10 @@ function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Bin
   }
 
   return undefined
+}
+
+function isBindingVisibleAt (binding: Binding, offset: number): boolean {
+  return binding.visibilityStartOffset == null || offset >= binding.visibilityStartOffset
 }
 
 const importCache = new WeakMap<BindingLookup, Map<string, Import | undefined>>()
