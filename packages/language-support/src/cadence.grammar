@@ -100,7 +100,9 @@ parallelPattern {
 }
 
 step {
-  (word | "-") ("(" argumentList? ")")? (":" AccessOrCall)?
+  (word | "-")
+  argumentList?
+  (":" AccessOrCall)?
 }
 
 Curve {
@@ -110,11 +112,15 @@ Curve {
 }
 
 curveSegment {
-  CurveSegmentShape { word } ("(" argumentList? ")")? (":" AccessOrCall)?
+  CurveSegmentShape { word }
+  argumentList?
+  (":" AccessOrCall)?
 }
 
 argumentList {
-  argument ("," argument)*
+  "("
+  (argument ("," argument)*)?
+  ")"
 }
 
 argument {
@@ -123,7 +129,9 @@ argument {
 }
 
 parameterList {
-  parameter ("," parameter)*
+  "("
+  (parameter ("," parameter)*)?
+  ")"
 }
 
 parameter {
@@ -143,14 +151,20 @@ NamedType {
 }
 
 FunctionType {
-  "(" parameterList? ")"
+  parameterList
   ":"
   atomicType
   (!capability "!" Capability { word })*
 }
 
 RecordType {
-  "{" parameterList? "}"
+  "{"
+  (recordTypeProperty ("," recordTypeProperty)*)?
+  "}"
+}
+
+recordTypeProperty {
+  VariableDefinition ":" Type
 }
 
 Import {
@@ -213,7 +227,7 @@ AccessOrCall {
 
 Call {
   Callee { word }
-  "(" argumentList? ")"
+  argumentList
 }
 
 UnaryExpression {
@@ -228,7 +242,7 @@ BinaryExpression {
 }
 
 Function {
-  "(" parameterList? ")"
+  parameterList
   FunctionBody
 }
 
@@ -246,7 +260,7 @@ Block {
 
 Builder<term> {
   kw<term>
-  ("(" argumentList? ")")?
+  argumentList?
   Block
 }
 

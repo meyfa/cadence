@@ -182,14 +182,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
     }
     return undefined
   }),
-  p.option(
-    combine3(
-      literal('('),
-      p.recursive(() => argumentList_),
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(p.recursive(() => argumentList_), undefined),
   p.option(
     combine2(
       literal(':'),
@@ -352,11 +345,7 @@ const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
 )
 
 const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
-  combine3(
-    literal('('),
-    p.recursive(() => parameterList_),
-    literal(')')
-  ),
+  p.recursive(() => parameterList_),
   combine2(
     literal(':'),
     p.recursive(() => atomicType_)
@@ -377,12 +366,24 @@ const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
   }
 )
 
+const recordTypeProperty_: p.Parser<Token, unknown, ast.RecordTypeProperty> = p.abc(
+  identifier_,
+  literal(':'),
+  p.recursive(() => type_),
+  (name, _colon, propertyType) => {
+    return ast.make('RecordTypeProperty', combineSourceRanges(name, propertyType), { name, propertyType })
+  }
+)
+
 const recordType_: p.Parser<Token, unknown, ast.RecordType> = p.abc(
   literal('{'),
-  p.recursive(() => parameterList_),
+  p.sepBy(
+    recordTypeProperty_,
+    literal(',')
+  ),
   expectLiteral('}'),
-  (_l, parameters, _r) => {
-    return ast.make('RecordType', combineSourceRanges(_l, _r), { parameters })
+  (_l, properties, _r) => {
+    return ast.make('RecordType', combineSourceRanges(_l, _r), { properties })
   }
 )
 
@@ -417,22 +418,24 @@ const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
   identifier_,
   literal(':'),
   type_,
-  (name, _colon, type) => {
-    return ast.make('Parameter', combineSourceRanges(name, type), { name, parameterType: type })
+  (name, _colon, parameterType) => {
+    return ast.make('Parameter', combineSourceRanges(name, parameterType), { name, parameterType })
   }
 )
 
-const parameterList_: p.Parser<Token, unknown, readonly ast.Parameter[]> = p.sepBy(
-  parameter_,
-  literal(',')
+type ParameterList = readonly [Token, readonly ast.Parameter[], Token]
+
+const parameterList_: p.Parser<Token, unknown, ParameterList> = combine3(
+  literal('('),
+  p.sepBy(
+    parameter_,
+    literal(',')
+  ),
+  literal(')')
 )
 
 const function_: p.Parser<Token, unknown, ast.Function> = p.ab(
-  combine3(
-    literal('('),
-    parameterList_,
-    literal(')')
-  ),
+  parameterList_,
   combine3(
     literal('{'),
     p.recursive(() => p.many(statement_)),
@@ -489,31 +492,29 @@ const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
         expect(identifier_, 'property name'),
         (_dot, property) => property
       ),
-      combine3(
-        literal('('),
-        p.recursive(() => argumentList_),
-        expectLiteral(')')
-      )
+      p.recursive(() => argumentList_)
     )
   ),
   (object, suffixes) => {
     let currentObject: ast.Expression = object
 
+    const isArgumentList = (suffix: ast.Identifier | ArgumentList): suffix is ArgumentList => {
+      return Array.isArray(suffix)
+    }
+
     for (const suffix of suffixes) {
-      // property access
-      if (!Array.isArray(suffix)) {
-        currentObject = ast.make('PropertyAccess', combineSourceRanges(currentObject, suffix), {
-          object: currentObject,
-          property: suffix
+      if (isArgumentList(suffix)) {
+        const [, args, _rp] = suffix
+        currentObject = ast.make('Call', combineSourceRanges(currentObject, _rp), {
+          callee: currentObject,
+          arguments: args
         })
         continue
       }
 
-      // call
-      const [, args, _rp] = suffix
-      currentObject = ast.make('Call', combineSourceRanges(currentObject, _rp), {
-        callee: currentObject,
-        arguments: args
+      currentObject = ast.make('PropertyAccess', combineSourceRanges(currentObject, suffix), {
+        object: currentObject,
+        property: suffix
       })
     }
 
@@ -591,9 +592,15 @@ const argument_: p.Parser<Token, unknown, ast.Argument> = p.eitherOr(
   })
 )
 
-const argumentList_: p.Parser<Token, unknown, readonly ast.Argument[]> = p.sepBy(
-  argument_,
-  literal(',')
+type ArgumentList = readonly [Token, readonly ast.Argument[], Token]
+
+const argumentList_: p.Parser<Token, unknown, ArgumentList> = combine3(
+  literal('('),
+  p.sepBy(
+    argument_,
+    literal(',')
+  ),
+  literal(')')
 )
 
 const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
@@ -682,14 +689,7 @@ const statement_ = p.choice<Token, unknown, ast.Statement>(
 
 const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
   keyword('part'),
-  p.option(
-    combine3(
-      literal('('),
-      argumentList_,
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(argumentList_, undefined),
   combine3(
     literal('{'),
     p.many(statement_),
@@ -705,14 +705,7 @@ const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
 
 const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
   keyword('track'),
-  p.option(
-    combine3(
-      literal('('),
-      argumentList_,
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(argumentList_, undefined),
   combine3(
     expectLiteral('{'),
     p.many(statement_),
@@ -728,14 +721,7 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
 
 const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
   keyword('bus'),
-  p.option(
-    combine3(
-      literal('('),
-      argumentList_,
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(argumentList_, undefined),
   combine3(
     literal('{'),
     p.many(statement_),
@@ -751,14 +737,7 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
 
 const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
   keyword('mixer'),
-  p.option(
-    combine3(
-      literal('('),
-      argumentList_,
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(argumentList_, undefined),
   combine3(
     expectLiteral('{'),
     p.many(statement_),
@@ -792,14 +771,7 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
 
 const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.abc(
   keyword('instrument'),
-  p.option(
-    combine3(
-      literal('('),
-      argumentList_,
-      expectLiteral(')')
-    ),
-    undefined
-  ),
+  p.option(argumentList_, undefined),
   combine3(
     expectLiteral('{'),
     p.many(statement_),
