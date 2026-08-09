@@ -464,12 +464,12 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   curve_,
   function_,
   recordValue_,
-  p.recursive(() => instrument_),
-  p.recursive(() => voice_),
   p.recursive(() => mixer_),
   p.recursive(() => bus_),
   p.recursive(() => track_),
-  p.recursive(() => part_)
+  p.recursive(() => part_),
+  p.recursive(() => instrument_),
+  p.recursive(() => voice_)
 )
 
 const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
@@ -687,69 +687,35 @@ const statement_ = p.choice<Token, unknown, ast.Statement>(
   plainEmission_
 )
 
-const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
-  keyword('part'),
-  p.option(argumentList_, undefined),
-  combine3(
-    literal('{'),
-    p.many(statement_),
-    expectLiteral('}')
-  ),
-  (_part, callChain, [_lp, children, _rp]) => {
-    return ast.make('Part', combineSourceRanges(_part, _rp), {
-      arguments: callChain == null ? [] : callChain[1],
-      children
-    })
-  }
-)
+interface BuilderFields {
+  readonly arguments: readonly ast.Argument[]
+  readonly children: readonly ast.Statement[]
+}
 
-const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
-  keyword('track'),
-  p.option(argumentList_, undefined),
-  combine3(
-    expectLiteral('{'),
-    p.many(statement_),
-    expectLiteral('}')
-  ),
-  (_track, callChain, [_lp, children, _rp]) => {
-    return ast.make('Track', combineSourceRanges(_track, _rp), {
-      arguments: callChain == null ? [] : callChain[1],
-      children
-    })
-  }
-)
+function makeBuilder<TNode extends ast.ASTNode> (
+  name: Keyword,
+  create: (range: SourceRange, fields: BuilderFields) => TNode
+): p.Parser<Token, unknown, TNode> {
+  return p.abc(
+    keyword(name),
+    p.option(argumentList_, undefined),
+    combine3(
+      expectLiteral('{'),
+      p.many(statement_),
+      expectLiteral('}')
+    ),
+    (_keyword, callChain, [_lb, children, _rb]) => {
+      const args = callChain == null ? [] : callChain[1]
+      return create(combineSourceRanges(_keyword, _rb), { arguments: args, children })
+    }
+  )
+}
 
-const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
-  keyword('bus'),
-  p.option(argumentList_, undefined),
-  combine3(
-    literal('{'),
-    p.many(statement_),
-    expectLiteral('}')
-  ),
-  (_bus, callChain, [_lp, children, _rp]) => {
-    return ast.make('Bus', combineSourceRanges(_bus, _rp), {
-      arguments: callChain == null ? [] : callChain[1],
-      children
-    })
-  }
-)
-
-const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
-  keyword('mixer'),
-  p.option(argumentList_, undefined),
-  combine3(
-    expectLiteral('{'),
-    p.many(statement_),
-    expectLiteral('}')
-  ),
-  (_mixer, callChain, [_lp, children, _rp]) => {
-    return ast.make('Mixer', combineSourceRanges(_mixer, _rp), {
-      arguments: callChain == null ? [] : callChain[1],
-      children
-    })
-  }
-)
+const mixer_ = makeBuilder('mixer', (range, fields) => ast.make('Mixer', range, fields))
+const bus_ = makeBuilder('bus', (range, fields) => ast.make('Bus', range, fields))
+const track_ = makeBuilder('track', (range, fields) => ast.make('Track', range, fields))
+const part_ = makeBuilder('part', (range, fields) => ast.make('Part', range, fields))
+const instrument_ = makeBuilder('instrument', (range, fields) => ast.make('Instrument', range, fields))
 
 const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   keyword('voice'),
@@ -765,22 +731,6 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
       bindings: {
         note
       }
-    })
-  }
-)
-
-const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.abc(
-  keyword('instrument'),
-  p.option(argumentList_, undefined),
-  combine3(
-    expectLiteral('{'),
-    p.many(statement_),
-    expectLiteral('}')
-  ),
-  (_instrument, callChain, [_lp, children, _rp]) => {
-    return ast.make('Instrument', combineSourceRanges(_instrument, _rp), {
-      arguments: callChain == null ? [] : callChain[1],
-      children
     })
   }
 )
