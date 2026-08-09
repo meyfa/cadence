@@ -77,6 +77,12 @@ export interface Binding {
    * For regular bindings, whether this is an exposed property.
    */
   readonly isExposed?: boolean
+
+  /**
+   * For bindings that should not resolve until later in the source,
+   * this marks the first offset where the binding is visible.
+   */
+  readonly visibilityStartOffset?: number
 }
 
 export type BindingKind = 'regular' | 'use-alias'

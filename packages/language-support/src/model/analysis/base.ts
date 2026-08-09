@@ -44,7 +44,6 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     cursor: TreeCursor,
     parentType: string | undefined,
     scopeId: string,
-    pendingScope: Scope | undefined,
     assignmentHasEquals: boolean,
     assignmentIsExposed: boolean,
     previousSibling?: Identifier
@@ -58,10 +57,10 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     const nextParentType = typeName
 
     let nextScopeId = scopeId
-    const nextPendingScope = pendingScope
     let nextAssignmentHasEquals = assignmentHasEquals
     let nextAssignmentIsExposed = assignmentIsExposed
     let accessChainTail: Identifier | undefined
+    let deferredBinding: Omit<Binding, 'id'> | undefined
 
     switch (typeName) {
       case 'Import': {
@@ -89,9 +88,22 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       }
 
       case 'Assignment': {
-        const { hasEquals, isExposed } = parseAssignment(cursor.node)
+        const { hasEquals, isExposed, variable } = parseAssignment(document, cursor.node)
         nextAssignmentHasEquals = hasEquals
         nextAssignmentIsExposed = isExposed
+
+        if (hasEquals && variable != null) {
+          // The binding cannot be referred to from the assignment's right-hand side.
+          deferredBinding = {
+            kind: 'regular',
+            scopeId,
+            name: variable.name,
+            range: variable.range,
+            isExposed,
+            visibilityStartOffset: to
+          }
+        }
+
         break
       }
 
@@ -101,7 +113,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
         switch (parentType) {
           case 'Assignment': {
             if (assignmentHasEquals) {
-              addBinding({ kind: 'regular', scopeId, name, range: nameRange, isExposed: assignmentIsExposed })
+              // Handled via deferredBinding in the Assignment case above.
               break
             }
             // Invalid/incomplete syntax encountered.
@@ -158,7 +170,6 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
           cursor,
           nextParentType,
           nextScopeId,
-          nextPendingScope,
           nextAssignmentHasEquals,
           nextAssignmentIsExposed,
           childPreviousSibling
@@ -177,6 +188,10 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       cursor.parent()
     }
 
+    if (deferredBinding != null) {
+      addBinding(deferredBinding)
+    }
+
     return accessChainTail
   }
 
@@ -185,7 +200,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     range: toSourceRange(document, 0, document.length)
   })
 
-  walk(cursor, undefined, rootScopeId, undefined, false, false)
+  walk(cursor, undefined, rootScopeId, false, false)
 
   sortByOffset(scopes)
   sortByOffset(identifiers)
@@ -195,7 +210,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   return { rootScopeId, scopes, identifiers, bindings, imports }
 }
 
-function getVariableName (document: TextLike, from: number, to: number): Readonly<{ name: string, range: SourceRange }> {
+interface VariableName {
+  readonly name: string
+  readonly range: SourceRange
+}
+
+function getVariableName (document: TextLike, from: number, to: number): VariableName {
   // The parser can produce nodes with trailing whitespace (possibly a bug).
   // Example (emits "kick " with a trailing space):
   //     track { part { kick } }
@@ -274,17 +294,22 @@ function parseImport (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> 
 interface AssignmentParseResult {
   readonly hasEquals: boolean
   readonly isExposed: boolean
+  readonly variable?: VariableName
 }
 
-function parseAssignment (node: SyntaxNode): AssignmentParseResult {
+function parseAssignment (document: TextLike, node: SyntaxNode): AssignmentParseResult {
   let hasEquals = false
   let isExposed = false
+  let variable: VariableName | undefined
 
   const cursor = node.cursor()
 
   if (cursor.firstChild()) {
     do {
       switch (cursor.type.name) {
+        case 'VariableDefinition':
+          variable = getVariableName(document, cursor.from, cursor.to)
+          break
         case '=':
           hasEquals = true
           break
@@ -295,5 +320,5 @@ function parseAssignment (node: SyntaxNode): AssignmentParseResult {
     } while (cursor.nextSibling())
   }
 
-  return { hasEquals, isExposed }
+  return { hasEquals, isExposed, variable }
 }

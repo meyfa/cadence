@@ -362,4 +362,31 @@ describe('model/analysis/references.ts', () => {
     const invalidReferenceResolution = model.resolutions.get(invalidReferenceIdentifier.id)
     assert.strictEqual(invalidReferenceResolution, undefined)
   })
+
+  it('prefers existing binding over binding in construction', () => {
+    const source = [
+      'use "instruments" as *',
+      'synth = sine()',
+      '& mixer {',
+      '  & @synth = bus {',
+      '    & synth // reference to global synth (bus is still being constructed)',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.lastIndexOf('synth // reference')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'synth')
+    assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('synth = sine()'), 'synth'.length))
+  })
 })
