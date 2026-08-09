@@ -327,7 +327,7 @@ describe('compiler/checker/checker.ts', () => {
       const pureFunction = ast.make('Function', getEmptySourceRange(), {
         parameters: [],
         children: [
-          ast.make('Statement', getEmptySourceRange(), {
+          ast.make('SimpleStatement', getEmptySourceRange(), {
             emit: true,
             expose: false,
             values: [
@@ -340,7 +340,7 @@ describe('compiler/checker/checker.ts', () => {
       const blockingFunction = ast.make('Function', getEmptySourceRange(), {
         parameters: [],
         children: [
-          ast.make('Statement', getEmptySourceRange(), {
+          ast.make('SimpleStatement', getEmptySourceRange(), {
             emit: true,
             expose: false,
             values: [
@@ -356,13 +356,13 @@ describe('compiler/checker/checker.ts', () => {
       const program = ast.make('Program', getEmptySourceRange(), {
         imports: [],
         children: [
-          ast.make('Statement', getEmptySourceRange(), {
+          ast.make('SimpleStatement', getEmptySourceRange(), {
             emit: false,
             expose: false,
             name: ast.make('Identifier', getEmptySourceRange(), { name: 'pure_function' }),
             values: [pureFunction]
           }),
-          ast.make('Statement', getEmptySourceRange(), {
+          ast.make('SimpleStatement', getEmptySourceRange(), {
             emit: false,
             expose: false,
             name: ast.make('Identifier', getEmptySourceRange(), { name: 'blocking_function' }),
@@ -1302,6 +1302,34 @@ describe('compiler/checker/checker.ts', () => {
 
       assertErrorMessages(source, [
         'Unknown identifier "foo"'
+      ])
+    })
+
+    it('should enforce boolean type for if statements', () => {
+      const source = [
+        'foo = 42',
+        'bar = ""',
+        'if foo {}',
+        'if bar {} else {}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Condition must be of type boolean, got number',
+        'Condition must be of type boolean, got string'
+      ])
+    })
+
+    it('should fail type checking for if statements with children', () => {
+      // TODO Remove this test once checking is implemented
+      const source = [
+        'if true { & 100 }',
+        'if false { & 200 } else { & 300 }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Conditional statements are not yet supported', // 100
+        'Conditional statements are not yet supported', // 200
+        'Conditional statements are not yet supported' // 300
       ])
     })
   })

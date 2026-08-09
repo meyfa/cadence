@@ -6,6 +6,7 @@ import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import { checkExpression } from './expressions.ts'
 import type { MutableScope } from './scopes.ts'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 
 export interface CheckedStatement {
   readonly errors: readonly CompileError[]
@@ -22,6 +23,20 @@ export interface Emission {
 export function checkStatement (
   scope: MutableScope,
   statement: ast.Statement,
+  existingProperties?: ReadonlyMap<string, FacetType>
+): CheckedStatement {
+  switch (statement.type) {
+    case 'SimpleStatement':
+      return checkSimpleStatement(scope, statement, existingProperties)
+
+    case 'IfStatement':
+      return checkIfStatement(scope, statement, existingProperties)
+  }
+}
+
+function checkSimpleStatement (
+  scope: MutableScope,
+  statement: ast.SimpleStatement,
   existingProperties?: ReadonlyMap<string, FacetType>
 ): CheckedStatement {
   const errors: CompileError[] = []
@@ -72,6 +87,37 @@ export function checkStatement (
     } else if (propertyValue != null) {
       properties.set(propertyName, values.at(0) ?? StringFacet.type())
     }
+  }
+
+  return { errors, capabilities, emissions, properties }
+}
+
+function checkIfStatement (
+  scope: MutableScope,
+  statement: ast.IfStatement,
+  existingProperties?: ReadonlyMap<string, FacetType>
+): CheckedStatement {
+  const errors: CompileError[] = []
+  let capabilities = noCapabilities
+  const emissions: Emission[] = []
+  const properties = new Map<string, FacetType>()
+
+  const conditionCheck = checkExpression(scope, statement.condition)
+  errors.push(...conditionCheck.errors)
+  capabilities = mergeCapabilities(capabilities, conditionCheck.capabilities)
+
+  if (conditionCheck.result != null && !BooleanFacet.is(conditionCheck.result)) {
+    errors.push(new CompileError(`Condition must be of type ${BooleanFacet.format()}, got ${conditionCheck.result.format()}`, statement.condition.range))
+  }
+
+  for (const child of statement.thenBranch) {
+    // TODO implement
+    errors.push(new CompileError(`Conditional statements are not yet supported`, child.range))
+  }
+
+  for (const child of statement.elseBranch ?? []) {
+    // TODO implement
+    errors.push(new CompileError(`Conditional statements are not yet supported`, child.range))
   }
 
   return { errors, capabilities, emissions, properties }

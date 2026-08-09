@@ -25,13 +25,15 @@ export function make<T extends keyof NodeByType> (
 }
 
 export interface NodeByType {
+  Identifier: Identifier
+
   // Root
   Program: Program
-
-  // Building Blocks
   Import: Import
-  Statement: Statement
-  Identifier: Identifier
+
+  // Statements
+  SimpleStatement: SimpleStatement
+  IfStatement: IfStatement
 
   // Value Expressions
   UnaryExpression: UnaryExpression
@@ -93,6 +95,11 @@ export type Expression =
   PropertyAccess |
   Call
 
+export interface Identifier extends ASTNode {
+  readonly type: 'Identifier'
+  readonly name: string
+}
+
 // Root
 
 export interface Program extends ASTNode {
@@ -100,8 +107,6 @@ export interface Program extends ASTNode {
   readonly imports: readonly Import[]
   readonly children: readonly Statement[]
 }
-
-// Building Blocks
 
 export interface Import extends ASTNode {
   readonly type: 'Import'
@@ -113,27 +118,34 @@ export interface Import extends ASTNode {
   readonly alias?: string
 }
 
-export type Statement = NamedStatement | UnnamedStatement
+// Statements
 
-interface NamedStatement extends ASTNode {
-  readonly type: 'Statement'
+export type Statement = SimpleStatement | CompoundStatement
+export type CompoundStatement = IfStatement
+
+export type SimpleStatement = NamedSimpleStatement | UnnamedSimpleStatement
+
+interface NamedSimpleStatement extends ASTNode {
+  readonly type: 'SimpleStatement'
   readonly emit: boolean
   readonly expose: boolean
   readonly name: Identifier
   readonly values: readonly [Expression]
 }
 
-interface UnnamedStatement extends ASTNode {
-  readonly type: 'Statement'
+interface UnnamedSimpleStatement extends ASTNode {
+  readonly type: 'SimpleStatement'
   readonly emit: true
   readonly expose: false
   readonly name?: undefined
   readonly values: readonly [Expression, ...Expression[]]
 }
 
-export interface Identifier extends ASTNode {
-  readonly type: 'Identifier'
-  readonly name: string
+export interface IfStatement extends ASTNode {
+  readonly type: 'IfStatement'
+  readonly condition: Expression
+  readonly thenBranch: readonly Statement[]
+  readonly elseBranch?: readonly Statement[]
 }
 
 // Value Expressions
