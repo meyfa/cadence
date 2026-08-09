@@ -272,6 +272,7 @@ Bus {
 
 Instrument {
   kw<"instrument">
+  ("(" argumentList? ")")?
   InstrumentBlock[group=Block] {
     "{" statement* "}"
   }

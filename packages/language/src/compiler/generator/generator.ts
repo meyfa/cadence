@@ -32,7 +32,7 @@ import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import type { CheckedProgram } from '../checker/checker.ts'
 import type { NoteValue } from '../common.ts'
-import { busSchema, DEFAULT_ROOT_NOTE, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
+import { busSchema, DEFAULT_ROOT_NOTE, instrumentSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import type { RenderCurveOptions } from '../curves.ts'
 import { createCurve, createCurveSegment, getCurveSegmentType, mergeCurvePoints, renderCurvePoints } from '../curves.ts'
 import { binaryOperations } from '../operators/binary.ts'
@@ -387,6 +387,9 @@ function generateRecord (scope: Scope, expression: ast.RecordValue): Value {
 function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrumentScope = createLocalScope(scope)
 
+  const args = resolveArgumentList(scope, expression.arguments, instrumentSchema)
+  const label = args.label != null ? StringFacet.get(args.label) : undefined
+
   const recordBuilder = new RecordBuilder()
   const voices: Voice[] = []
 
@@ -399,7 +402,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   }
 
   const gainParameter = scope.top.allocateParameter('db', 0 as Numeric<'db'>)
-  const instrument = scope.top.allocateInstrument({ gain: gainParameter, voices })
+  const instrument = scope.top.allocateInstrument({ label, gain: gainParameter, voices })
 
   return !recordBuilder.empty
     ? makeType(InstrumentFacet, recordBuilder.facet).of(instrument, recordBuilder.record)
@@ -550,14 +553,14 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
 }
 
 function generateBus (scope: Scope, expression: ast.Bus): Value {
+  const args = resolveArgumentList(scope, expression.arguments, busSchema)
+  const label = args.label != null ? StringFacet.get(args.label) : undefined
+
   const busScope = createLocalScope(scope)
 
   const recordBuilder = new RecordBuilder()
   const sources: MixerSource[] = []
   const effects: Effect[] = []
-
-  const args = resolveArgumentList(scope, expression.arguments, busSchema)
-  const label = args.label != null ? StringFacet.get(args.label) : undefined
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
@@ -596,16 +599,15 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
 function generateTrack (scope: Scope, expression: ast.Track): Value {
   const { options } = scope.top
 
+  const args = resolveArgumentList(scope, expression.arguments, trackSchema)
+  const tempo = args.tempo != null
+    ? clamped(NumberFacet.get(args.tempo), options.tempo.minimum, options.tempo.maximum).value
+    : options.tempo.default
+
   const trackScope = createLocalScope(scope)
 
   const recordBuilder = new RecordBuilder()
   const parts: Part[] = []
-
-  const args = resolveArgumentList(scope, expression.arguments, trackSchema)
-
-  const tempo = args.tempo != null
-    ? clamped(NumberFacet.get(args.tempo), options.tempo.minimum, options.tempo.maximum).value
-    : options.tempo.default
 
   let currentTime = 0 as Numeric<'beats'>
 
@@ -640,15 +642,15 @@ function generateTrack (scope: Scope, expression: ast.Track): Value {
 }
 
 function generatePart (scope: Scope, expression: ast.Part): Value {
+  const args = resolveArgumentList(scope, expression.arguments, partSchema)
+  const label = args.label != null ? StringFacet.get(args.label) : undefined
+  const length = clamped(NumberFacet.get(args.length), 0, Number.POSITIVE_INFINITY)
+
   const partScope = createLocalScope(scope)
 
   const recordBuilder = new RecordBuilder()
   const routings: InstrumentRouting[] = []
   const automations: Automation[] = []
-
-  const args = resolveArgumentList(scope, expression.arguments, partSchema)
-  const label = args.label != null ? StringFacet.get(args.label) : undefined
-  const length = clamped(NumberFacet.get(args.length), 0, Number.POSITIVE_INFINITY)
 
   for (const child of expression.children) {
     const { emissions, properties } = processStatement(partScope, child)

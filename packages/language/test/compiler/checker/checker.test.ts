@@ -344,7 +344,10 @@ describe('compiler/checker/checker.ts', () => {
             emit: true,
             expose: false,
             values: [
-              ast.make('Instrument', getEmptySourceRange(), { children: [] })
+              ast.make('Instrument', getEmptySourceRange(), {
+                arguments: [],
+                children: []
+              })
             ]
           })
         ]
@@ -584,6 +587,15 @@ describe('compiler/checker/checker.ts', () => {
         '  @foo = -6.db',
         '}',
         'access_foo = my_instrument.foo'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow label for instrument definitions', () => {
+      const source = [
+        'instrument0 = instrument ("My Instrument") {}',
+        'instrument1 = instrument (label: "My Instrument") {}'
       ].join('\n')
 
       assertValid(source)

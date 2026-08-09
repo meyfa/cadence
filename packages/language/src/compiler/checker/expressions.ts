@@ -25,7 +25,7 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeUnion } from '../../type-system/factory.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
-import { busSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
+import { busSchema, instrumentSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
 import { CompileError } from '../error.ts'
 import { binaryOperations } from '../operators/binary.ts'
@@ -406,6 +406,8 @@ const checkInstrument = createBlockChecker<ast.Instrument>({
 
   ownCapabilities: { mayBlock: true },
   allowedCapabilities: { mayBlock: true },
+
+  parameters: instrumentSchema,
 
   slots: [
     {

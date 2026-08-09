@@ -62,6 +62,14 @@ export const stepSchema = makeSchema([
   }
 ])
 
+export const instrumentSchema = makeSchema([
+  {
+    name: 'label',
+    type: StringFacet.type(),
+    required: false
+  }
+])
+
 export const noteType = RecordFacet.with({
   frequency: NumberFacet.with('hz').type(),
   gate: NumberFacet.with('beats').type(),

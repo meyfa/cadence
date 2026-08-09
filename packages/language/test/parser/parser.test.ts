@@ -1519,7 +1519,9 @@ describe('parser/parser.ts', () => {
       '    bar = 440.hz',
       '  }',
       '  & voice note {}',
-      '}'
+      '}',
+      '',
+      'labeled_instrument = instrument ("my_label") {}'
     ].join('\n')
 
     const result = parse(lexSource(source))
@@ -1534,6 +1536,7 @@ describe('parser/parser.ts', () => {
         values: [
           {
             type: 'Instrument',
+            arguments: [],
             children: [
               {
                 type: 'Statement',
@@ -1595,6 +1598,27 @@ describe('parser/parser.ts', () => {
                 ]
               }
             ]
+          }
+        ]
+      },
+      {
+        type: 'Statement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'labeled_instrument' },
+        values: [
+          {
+            type: 'Instrument',
+            arguments: [
+              {
+                type: 'Argument',
+                value: {
+                  type: 'String',
+                  parts: ['my_label']
+                }
+              }
+            ],
+            children: []
           }
         ]
       }

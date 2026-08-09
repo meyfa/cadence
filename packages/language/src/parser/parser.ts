@@ -790,15 +790,24 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   }
 )
 
-const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.ab(
+const instrument_: p.Parser<Token, unknown, ast.Instrument> = p.abc(
   keyword('instrument'),
+  p.option(
+    combine3(
+      literal('('),
+      argumentList_,
+      expectLiteral(')')
+    ),
+    undefined
+  ),
   combine3(
     expectLiteral('{'),
     p.many(statement_),
     expectLiteral('}')
   ),
-  (_instrument, [_lp, children, _rp]) => {
+  (_instrument, callChain, [_lp, children, _rp]) => {
     return ast.make('Instrument', combineSourceRanges(_instrument, _rp), {
+      arguments: callChain == null ? [] : callChain[1],
       children
     })
   }
