@@ -13,7 +13,7 @@ describe('analysis/query.ts', () => {
       scopes: [
         {
           id: 'root' as ScopeId,
-          kind: 'root',
+          node: 'root',
           range: getRangeAt(source, 0, source.length)
         }
       ],

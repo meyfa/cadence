@@ -56,44 +56,44 @@ describe('model/analysis/base.ts', () => {
     assert.deepStrictEqual(
       model.identifiers.map(({ kind, scopeId, name }) => ({
         kind,
-        scope: model.scopes.find((scope) => scope.id === scopeId)?.kind,
+        scope: model.scopes.find((scope) => scope.id === scopeId)?.node,
         name
       })),
       [
-        { kind: 'definition', scope: 'root', name: 'fx' },
-        { kind: 'definition', scope: 'root', name: 'base_path' },
-        { kind: 'definition', scope: 'root', name: 'kick' },
-        { kind: 'plain', scope: 'root', name: 'sample' },
-        { kind: 'plain', scope: 'root', name: 'base_path' },
-        { kind: 'definition', scope: 'root', name: 'tempo' },
-        { kind: 'plain', scope: 'root', name: 'bpm' },
-        { kind: 'definition', scope: 'root', name: 'record' },
-        { kind: 'definition', scope: 'record', name: 'record_property' },
-        { kind: 'definition', scope: 'root', name: 'synth' },
-        { kind: 'definition', scope: 'instrument', name: 'instrument_property' },
-        { kind: 'definition', scope: 'voice', name: 'note' },
-        { kind: 'definition', scope: 'root', name: 'double' },
-        { kind: 'definition', scope: 'function', name: 'input' },
-        { kind: 'plain', scope: 'function', name: 'input' },
-        { kind: 'argument-name', scope: 'root', name: 'tempo' },
-        { kind: 'plain', scope: 'root', name: 'double' },
-        { kind: 'plain', scope: 'root', name: 'bpm' },
-        { kind: 'definition', scope: 'track', name: 'intro' },
-        { kind: 'plain', scope: 'track', name: 'bars' },
-        { kind: 'plain', scope: 'part', name: 'play' },
-        { kind: 'plain', scope: 'part', name: 'kick' },
-        { kind: 'plain', scope: 'part', name: 'loop' },
-        { kind: 'plain', scope: 'part', name: 'automate' },
-        { kind: 'plain', scope: 'part', name: 'kick' },
-        { kind: 'plain', scope: 'part', name: 'gain' },
-        { kind: 'plain', scope: 'part', name: 'db' },
-        { kind: 'definition', scope: 'mixer', name: 'drums' },
-        { kind: 'definition', scope: 'bus', name: 'crush' },
-        { kind: 'plain', scope: 'bus', name: 'fx' },
-        { kind: 'plain', scope: 'bus', name: 'clip' },
-        { kind: 'plain', scope: 'bus', name: 'db' },
-        { kind: 'plain', scope: 'bus', name: 'kick' },
-        { kind: 'plain', scope: 'bus', name: 'snare' }
+        { kind: 'definition', scope: 'Program', name: 'fx' },
+        { kind: 'definition', scope: 'Program', name: 'base_path' },
+        { kind: 'definition', scope: 'Program', name: 'kick' },
+        { kind: 'plain', scope: 'Program', name: 'sample' },
+        { kind: 'plain', scope: 'Program', name: 'base_path' },
+        { kind: 'definition', scope: 'Program', name: 'tempo' },
+        { kind: 'plain', scope: 'Program', name: 'bpm' },
+        { kind: 'definition', scope: 'Program', name: 'record' },
+        { kind: 'definition', scope: 'Record', name: 'record_property' },
+        { kind: 'definition', scope: 'Program', name: 'synth' },
+        { kind: 'definition', scope: 'InstrumentBlock', name: 'instrument_property' },
+        { kind: 'definition', scope: 'Voice', name: 'note' },
+        { kind: 'definition', scope: 'Program', name: 'double' },
+        { kind: 'definition', scope: 'Function', name: 'input' },
+        { kind: 'plain', scope: 'Function', name: 'input' },
+        { kind: 'argument-name', scope: 'Program', name: 'tempo' },
+        { kind: 'plain', scope: 'Program', name: 'double' },
+        { kind: 'plain', scope: 'Program', name: 'bpm' },
+        { kind: 'definition', scope: 'TrackBlock', name: 'intro' },
+        { kind: 'plain', scope: 'TrackBlock', name: 'bars' },
+        { kind: 'plain', scope: 'PartBlock', name: 'play' },
+        { kind: 'plain', scope: 'PartBlock', name: 'kick' },
+        { kind: 'plain', scope: 'PartBlock', name: 'loop' },
+        { kind: 'plain', scope: 'PartBlock', name: 'automate' },
+        { kind: 'plain', scope: 'PartBlock', name: 'kick' },
+        { kind: 'plain', scope: 'PartBlock', name: 'gain' },
+        { kind: 'plain', scope: 'PartBlock', name: 'db' },
+        { kind: 'definition', scope: 'MixerBlock', name: 'drums' },
+        { kind: 'definition', scope: 'Bus', name: 'crush' },
+        { kind: 'plain', scope: 'Bus', name: 'fx' },
+        { kind: 'plain', scope: 'Bus', name: 'clip' },
+        { kind: 'plain', scope: 'Bus', name: 'db' },
+        { kind: 'plain', scope: 'Bus', name: 'kick' },
+        { kind: 'plain', scope: 'Bus', name: 'snare' }
       ]
     )
   })
@@ -269,66 +269,66 @@ describe('model/analysis/base.ts', () => {
     const model = analyzeSource(source)
 
     const rootRange = getRangeAt(source, 0, source.length)
-    const rootScopeId = `root:${rootRange.offset}:${rootRange.length}`
+    const rootScopeId = `Program:${rootRange.offset}:${rootRange.length}`
 
     const functionBlockStart = source.indexOf('(input: number.bpm) {')
     const functionBlockEnd = source.indexOf('} // end function') + '}'.length
     const functionRange = getRangeAt(source, functionBlockStart, functionBlockEnd - functionBlockStart)
-    const functionScopeId = `function:${functionRange.offset}:${functionRange.length}`
+    const functionScopeId = `Function:${functionRange.offset}:${functionRange.length}`
 
     const recordBlockStart = source.indexOf('{', source.indexOf('my_record'))
     const recordBlockEnd = source.indexOf('} // end record') + '}'.length
     const recordRange = getRangeAt(source, recordBlockStart, recordBlockEnd - recordBlockStart)
-    const recordScopeId = `record:${recordRange.offset}:${recordRange.length}`
+    const recordScopeId = `Record:${recordRange.offset}:${recordRange.length}`
 
     const instrumentBlockStart = source.indexOf('{', source.indexOf('my_instrument'))
     const instrumentBlockEnd = source.indexOf('} // end instrument') + '}'.length
     const instrumentRange = getRangeAt(source, instrumentBlockStart, instrumentBlockEnd - instrumentBlockStart)
-    const instrumentScopeId = `instrument:${instrumentRange.offset}:${instrumentRange.length}`
+    const instrumentScopeId = `InstrumentBlock:${instrumentRange.offset}:${instrumentRange.length}`
 
     const voiceBlockStart = source.indexOf('voice note')
     const voiceBlockEnd = source.indexOf('} // end voice') + '}'.length
     const voiceRange = getRangeAt(source, voiceBlockStart, voiceBlockEnd - voiceBlockStart)
-    const voiceScopeId = `voice:${voiceRange.offset}:${voiceRange.length}`
+    const voiceScopeId = `Voice:${voiceRange.offset}:${voiceRange.length}`
 
     const trackBlockStart = source.indexOf('{', source.indexOf('track'))
     const trackEnd = source.indexOf('} // end track') + '}'.length
     const trackRange = getRangeAt(source, trackBlockStart, trackEnd - trackBlockStart)
-    const trackScopeId = `track:${trackRange.offset}:${trackRange.length}`
+    const trackScopeId = `TrackBlock:${trackRange.offset}:${trackRange.length}`
 
     const partBlockStart = source.indexOf('{', source.indexOf('part intro'))
     const partEnd = source.indexOf('} // end part') + '}'.length
     const partRange = getRangeAt(source, partBlockStart, partEnd - partBlockStart)
-    const partScopeId = `part:${partRange.offset}:${partRange.length}`
+    const partScopeId = `PartBlock:${partRange.offset}:${partRange.length}`
 
     const mixerBlockStart = source.indexOf('{', source.indexOf('mixer'))
     const mixerEnd = source.indexOf('} // end mixer') + '}'.length
     const mixerRange = getRangeAt(source, mixerBlockStart, mixerEnd - mixerBlockStart)
-    const mixerScopeId = `mixer:${mixerRange.offset}:${mixerRange.length}`
+    const mixerScopeId = `MixerBlock:${mixerRange.offset}:${mixerRange.length}`
 
     const drumsBusBlockStart = source.indexOf('{', source.indexOf('bus drums'))
     const drumsBusEnd = source.indexOf('  }', source.indexOf('bus drums')) + '  }'.length
     const drumsBusRange = getRangeAt(source, drumsBusBlockStart, drumsBusEnd - drumsBusBlockStart)
-    const drumsBusScopeId = `bus:${drumsBusRange.offset}:${drumsBusRange.length}`
+    const drumsBusScopeId = `Bus:${drumsBusRange.offset}:${drumsBusRange.length}`
 
     const delayBusBlockStart = source.indexOf('{', source.indexOf('bus delay'))
     const delayBusEnd = source.indexOf('  }', source.indexOf('bus delay')) + '  }'.length
     const delayBusRange = getRangeAt(source, delayBusBlockStart, delayBusEnd - delayBusBlockStart)
-    const delayBusScopeId = `bus:${delayBusRange.offset}:${delayBusRange.length}`
+    const delayBusScopeId = `Bus:${delayBusRange.offset}:${delayBusRange.length}`
 
     assert.deepStrictEqual(
-      model.scopes.map(({ id, kind, parentId }) => ({ id, kind, parentId })),
+      model.scopes.map(({ id, node, parentId }) => ({ id, node, parentId })),
       [
-        { id: rootScopeId, kind: 'root', parentId: undefined },
-        { id: functionScopeId, kind: 'function', parentId: rootScopeId },
-        { id: recordScopeId, kind: 'record', parentId: rootScopeId },
-        { id: instrumentScopeId, kind: 'instrument', parentId: rootScopeId },
-        { id: voiceScopeId, kind: 'voice', parentId: instrumentScopeId },
-        { id: trackScopeId, kind: 'track', parentId: rootScopeId },
-        { id: partScopeId, kind: 'part', parentId: trackScopeId },
-        { id: mixerScopeId, kind: 'mixer', parentId: rootScopeId },
-        { id: drumsBusScopeId, kind: 'bus', parentId: mixerScopeId },
-        { id: delayBusScopeId, kind: 'bus', parentId: mixerScopeId }
+        { id: rootScopeId, node: 'Program', parentId: undefined },
+        { id: functionScopeId, node: 'Function', parentId: rootScopeId },
+        { id: recordScopeId, node: 'Record', parentId: rootScopeId },
+        { id: instrumentScopeId, node: 'InstrumentBlock', parentId: rootScopeId },
+        { id: voiceScopeId, node: 'Voice', parentId: instrumentScopeId },
+        { id: trackScopeId, node: 'TrackBlock', parentId: rootScopeId },
+        { id: partScopeId, node: 'PartBlock', parentId: trackScopeId },
+        { id: mixerScopeId, node: 'MixerBlock', parentId: rootScopeId },
+        { id: drumsBusScopeId, node: 'Bus', parentId: mixerScopeId },
+        { id: delayBusScopeId, node: 'Bus', parentId: mixerScopeId }
       ]
     )
 

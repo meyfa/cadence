@@ -27,12 +27,10 @@ export type ScopeId = Brand<string, 'language-support.ScopeId'>
 
 export interface Scope {
   readonly id: ScopeId
-  readonly kind: ScopeKind
+  readonly node: string
   readonly parentId?: string
   readonly range: SourceRange
 }
-
-export type ScopeKind = 'root' | 'function' | 'record' | 'track' | 'part' | 'mixer' | 'bus' | 'instrument' | 'voice'
 
 // identifier
 
