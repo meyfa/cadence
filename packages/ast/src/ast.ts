@@ -288,6 +288,7 @@ export interface Part extends ASTNode {
 
 export interface Instrument extends ASTNode {
   readonly type: 'Instrument'
+  readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
 

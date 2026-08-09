@@ -239,6 +239,18 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.mixer.buses[1].label, 'Second Bus')
   })
 
+  it('should support instrument labels', () => {
+    const source = [
+      'instrument0 = instrument ("First Instrument") {}',
+      'instrument1 = instrument ("Second Instrument") {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    const [instrument0, instrument1] = result.instruments.values()
+    assert.strictEqual(instrument0.label, 'First Instrument')
+    assert.strictEqual(instrument1.label, 'Second Instrument')
+  })
+
   it('should resolve variables in track scope', () => {
     const source = [
       'root_scope = 8.beats',
