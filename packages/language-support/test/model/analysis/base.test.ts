@@ -36,14 +36,14 @@ describe('model/analysis/base.ts', () => {
       'double = (input: number.bpm) { & input * 2 }',
       '',
       '& track (tempo: double(64.bpm)) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & play(kick, [x---].loop())',
       '    & automate(kick.gain, ~[hold(-60.db)])',
       '  }',
       '}',
       '',
       '& mixer {',
-      '  & bus drums {',
+      '  & bus {',
       '    & @crush = fx.clip(-6.db)',
       '    & kick, snare',
       '  }',
@@ -100,7 +100,7 @@ describe('model/analysis/base.ts', () => {
     const source = [
       'sample',
       '& track {',
-      '  & part intro {',
+      '  & part {',
       '    kick',
       '  }',
       '}',
@@ -154,7 +154,7 @@ describe('model/analysis/base.ts', () => {
 
   it('includes identifiers that are part of an incomplete statement', () => {
     const source = [
-      'part main {',
+      'part {',
       '  foo = 42',
       '  foo',
       '}',
@@ -202,7 +202,7 @@ describe('model/analysis/base.ts', () => {
       'use "effects" as fx',
       'delay = 1',
       '& mixer {',
-      '  & bus main {',
+      '  & bus {',
       '    & fx.delay(time: delay)',
       '  }',
       '}',

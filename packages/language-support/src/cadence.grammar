@@ -248,7 +248,6 @@ Track {
 
 Part {
   kw<"part">
-  PartName { word }?
   ("(" argumentList? ")")?
   PartBlock[group=Block] {
     "{" statement* "}"
@@ -265,7 +264,6 @@ Mixer {
 
 Bus {
   kw<"bus">
-  BusName { word }?
   ("(" argumentList? ")")?
   BusBlock[group=Block] {
     "{" statement* "}"

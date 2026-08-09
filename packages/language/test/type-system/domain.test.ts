@@ -49,7 +49,6 @@ const instrument: Instrument = {
 }
 
 const part: Part = {
-  name: 'intro',
   length: 4 as Numeric<'beats'>,
   routings: [
     {
@@ -68,7 +67,6 @@ const part: Part = {
 
 const bus: Bus = {
   id: 1 as BusId,
-  name: 'main',
   sources: [],
   pan: panParameter,
   gain: gainParameter,

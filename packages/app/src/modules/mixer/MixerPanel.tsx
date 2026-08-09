@@ -58,10 +58,10 @@ function getNodeLabel ({ data }: MixerFlowNode): string | undefined {
       return 'Main Output'
 
     case 'bus':
-      return data.object.name
+      return data.object.label ?? '(no label)'
 
     case 'instrument':
-      return data.object.label
+      return data.object.label ?? '(no label)'
   }
 }
 
@@ -255,7 +255,7 @@ const BusNodeInfo: FunctionComponent<{
 }> = ({ object }) => {
   return (
     <>
-      <div className='font-bold'>{object.name ?? '(unnamed bus)'}</div>
+      <div className='font-bold'>{object.label ?? '(no label)'}</div>
       <div>gain: {object.gain.initial.toFixed(2)} dB</div>
       <div>pan: {object.pan.initial.toFixed(2)}</div>
       {object.effects.length > 0 && (
@@ -272,7 +272,7 @@ const InstrumentNodeInfo: FunctionComponent<{
   return (
     <>
       <div className='font-bold'>(Instrument)</div>
-      <div>{object.label}</div>
+      <div>{object.label ?? '(no label)'}</div>
     </>
   )
 }

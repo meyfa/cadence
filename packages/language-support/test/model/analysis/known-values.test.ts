@@ -76,7 +76,7 @@ describe('model/analysis/known-values.ts', () => {
       'use "effects" as *',
       '',
       '& mixer {',
-      '  & bus main (gain: -3.db) {}',
+      '  & bus (gain: -3.db) {}',
       '}',
       '',
       // This is not valid, but sufficient for the test:

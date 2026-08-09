@@ -166,24 +166,14 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.track.tempo, 123)
   })
 
-  it('should allow parts and buses to shadow top-level variables', () => {
+  it('should clamp negative part lengths to 0', () => {
     const source = [
-      'foo = 42',
       '& track {',
-      '  & part foo (4.bars) {}',
-      '}',
-      '& mixer {',
-      '  & bus foo {}',
+      '  & part (-4.bars) {}',
       '}'
     ].join('\n')
 
     const result = generateSource(source)
-    assert.strictEqual(result.track.parts[0].name, 'foo')
-    assert.strictEqual(result.mixer.buses[0].name, 'foo')
-  })
-
-  it('should clamp negative part lengths to 0', () => {
-    const result = generateSource('& track { & part intro (-4.bars) {} }')
     assert.strictEqual(result.track.parts[0].length, 0)
   })
 
@@ -194,9 +184,9 @@ describe('compiler/generator/generator.ts', () => {
       '& track {',
       '  track_scope = root_scope + 1.beats',
       '  shadowed = 200.beats',
-      '  & part part0 (length: root_scope) {}',
-      '  & part part1 (length: track_scope) {}',
-      '  & part part2 (length: shadowed) {}',
+      '  & part (length: root_scope) {}',
+      '  & part (length: track_scope) {}',
+      '  & part (length: shadowed) {}',
       '}'
     ].join('\n')
 
@@ -209,10 +199,10 @@ describe('compiler/generator/generator.ts', () => {
   it('should support units: beat, beats, bar, bars', () => {
     const source = [
       '& track {',
-      '  & part part0 (length: 1.beat) {}',
-      '  & part part1 (length: 2.beats) {}',
-      '  & part part2 (length: 1.bar) {}',
-      '  & part part3 (length: 2.bars) {}',
+      '  & part (length: 1.beat) {}',
+      '  & part (length: 2.beats) {}',
+      '  & part (length: 1.bar) {}',
+      '  & part (length: 2.bars) {}',
       '}'
     ].join('\n')
 
@@ -223,6 +213,32 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.track.parts[3].length, 8)
   })
 
+  it('should support part labels', () => {
+    const source = [
+      '& track {',
+      '  & part (4.bars, "First Part") {}',
+      '  & part (4.bars, "Second Part") {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.track.parts[0].label, 'First Part')
+    assert.strictEqual(result.track.parts[1].label, 'Second Part')
+  })
+
+  it('should support bus labels', () => {
+    const source = [
+      '& mixer {',
+      '  & bus ("First Bus") {}',
+      '  & bus ("Second Bus") {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.mixer.buses[0].label, 'First Bus')
+    assert.strictEqual(result.mixer.buses[1].label, 'Second Bus')
+  })
+
   it('should resolve variables in track scope', () => {
     const source = [
       'root_scope = 8.beats',
@@ -230,9 +246,9 @@ describe('compiler/generator/generator.ts', () => {
       '& track {',
       '  track_scope = root_scope + 1.beats',
       '  shadowed = 200.beats',
-      '  & part part0 (length: root_scope) {}',
-      '  & part part1 (length: track_scope) {}',
-      '  & part part2 (length: shadowed) {}',
+      '  & part (length: root_scope) {}',
+      '  & part (length: track_scope) {}',
+      '  & part (length: shadowed) {}',
       '}'
     ].join('\n')
 
@@ -249,9 +265,9 @@ describe('compiler/generator/generator.ts', () => {
       '& mixer {',
       '  mixer_scope = root_scope + 1.db',
       '  shadowed = -200.db',
-      '  & bus bus0 (gain: root_scope) {}',
-      '  & bus bus1 (gain: mixer_scope) {}',
-      '  & bus bus2 (gain: shadowed) {}',
+      '  & bus (gain: root_scope) {}',
+      '  & bus (gain: mixer_scope) {}',
+      '  & bus (gain: shadowed) {}',
       '}'
     ].join('\n')
 
@@ -266,7 +282,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    my_pattern = [C4 D4]',
       '    & play(synth, my_pattern)',
       '  }',
@@ -286,7 +302,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
-      '  & bus main {',
+      '  & bus {',
       '    my_gain = -20.db',
       '    & gain(my_gain)',
       '  }',
@@ -380,7 +396,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[lin((-60).db, 0.db):2.bars])',
       '  }',
       '}'
@@ -402,7 +418,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[lin(-60.db, -30.db):2.bars lin(-30.db, 0.db):1.bar])',
       '  }',
       '}'
@@ -426,7 +442,7 @@ describe('compiler/generator/generator.ts', () => {
       'synth = sample("synth.wav")',
       'previous = ~[lin(-60.db, -30.db):1.bar lin(-30.db, -15.db):1.bar]',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[{previous} lin(0.db):1.bar])',
       '  }',
       '}'
@@ -450,7 +466,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.bars) {',
+      '  & part (8.bars) {',
       '    & automate(synth.gain, ~[hold(-60.db):5.bars lin(-60.db, 0.db):6.bars hold:2.bars])',
       '  }',
       '}'
@@ -473,7 +489,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.bars) {',
+      '  & part (8.bars) {',
       '    & automate(synth.gain, ~[hold((-60).db):6.bars lin(0.db):2.bars])',
       '  }',
       '}'
@@ -496,7 +512,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.bars) {',
+      '  & part (8.bars) {',
       '    & automate(synth.gain, ~[lin((-60).db, (-30).db):6.bars hold:2.bars])',
       '  }',
       '}'
@@ -519,7 +535,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[hold((-60).db):(-2.beats) lin((-60).db, (-30).db):0.s lin((-30).db, 0.db):4.bars])',
       '  }',
       '}'
@@ -541,10 +557,10 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.beats) {',
+      '  & part (8.beats) {',
       '    & automate(synth.gain, ~[lin(-60.db, 0.db):8.beats])',
       '  }',
-      '  & part outro (8.beats) {',
+      '  & part (8.beats) {',
       '    & automate(synth.gain, ~[lin(-15.db, -30.db):8.beats])',
       '  }',
       '}'
@@ -568,7 +584,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.beats) {',
+      '  & part (8.beats) {',
       '    & automate(synth.gain, ~[lin(-60.db, 0.db):8.beats])',
       '    & automate(synth.gain, ~[hold(-15.db):8.beats])',
       '  }',
@@ -591,7 +607,7 @@ describe('compiler/generator/generator.ts', () => {
       'use "instruments" as *',
       'synth = sample("synth.wav")',
       '& track (120.bpm) {',
-      '  & part intro (8.beats) {',
+      '  & part (8.beats) {',
       '    & automate(synth.gain, ~[lin(-60.db, 0.db):8.beats])',
       '    & automate(synth.gain, ~[hold(-15.db):4.beats])',
       '  }',
@@ -616,7 +632,7 @@ describe('compiler/generator/generator.ts', () => {
       '  & @test_bus = bus {}',
       '}',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(m.test_bus.gain, ~[lin((-20).db, 0.db):4.bars])',
       '  }',
       '}'
@@ -641,7 +657,7 @@ describe('compiler/generator/generator.ts', () => {
       '  }',
       '}',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(m.test_bus.lp.frequency, ~[lin(100.hz, 4000.hz):4.bars])',
       '  }',
       '}'
@@ -668,12 +684,12 @@ describe('compiler/generator/generator.ts', () => {
       'lp = fx.lowpass(200.hz)',
       '',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(lp.frequency, ~[lin(500.hz, 1000.hz):4.bars])',
       '  }',
       '}',
       '& mixer {',
-      '  & bus main {',
+      '  & bus {',
       '    & lp',
       '  }',
       '}'
@@ -736,17 +752,17 @@ describe('compiler/generator/generator.ts', () => {
   it('should support buses as sources in mixer', () => {
     const source = [
       '& mixer {',
-      '  & bus0 = bus bus0 {}',
-      '  & bus bus1 { & bus0 }',
+      '  & bus0 = bus ("Bus 0") {}',
+      '  & bus ("Bus 1") { & bus0 }',
       '}'
     ].join('\n')
 
     const result = generateSource(source)
 
-    const bus0 = result.mixer.buses.find((bus) => bus.name === 'bus0')
+    const bus0 = result.mixer.buses.find((bus) => bus.label === 'Bus 0')
     assert.ok(bus0 != null)
 
-    const bus1 = result.mixer.buses.find((bus) => bus.name === 'bus1')
+    const bus1 = result.mixer.buses.find((bus) => bus.label === 'Bus 1')
     assert.ok(bus1 != null)
 
     assert.deepStrictEqual(result.mixer.routings, [
@@ -767,7 +783,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "effects" as fx',
       '& mixer {',
-      '  & bus bus0 {',
+      '  & bus {',
       '    & fx.delay(mix: 0.25, time: 1.5.s, feedback: 0.4)',
       '  }',
       '}'
@@ -795,7 +811,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'use "effects" as fx',
       '& mixer {',
-      '  & bus bus0 {',
+      '  & bus {',
       '    & fx.reverb(mix: 0.25, decay: 2.beats)',
       '  }',
       '}'

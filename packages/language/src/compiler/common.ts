@@ -2,6 +2,7 @@ import { convertPitchToMidi } from '@meyfa/cadence-core'
 import { NumberFacet } from '../type-system/base/number.ts'
 import { RecordFacet } from '../type-system/base/record.ts'
 import { makeSchema } from '../type-system/schema.ts'
+import { StringFacet } from '../type-system/base/string.ts'
 
 export const DEFAULT_ROOT_NOTE = convertPitchToMidi('C5')
 
@@ -18,6 +19,11 @@ export const partSchema = makeSchema([
     name: 'length',
     type: NumberFacet.with('beats').type(),
     required: true
+  },
+  {
+    name: 'label',
+    type: StringFacet.type(),
+    required: false
   }
 ])
 
@@ -26,6 +32,11 @@ export const mixerSchema = makeSchema([
 ])
 
 export const busSchema = makeSchema([
+  {
+    name: 'label',
+    type: StringFacet.type(),
+    required: false
+  },
   {
     name: 'gain',
     type: NumberFacet.with('db').type(),

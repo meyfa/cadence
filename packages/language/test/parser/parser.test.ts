@@ -1273,10 +1273,10 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should parse mixer buses', () => {
+  it('should parse mixer and buses', () => {
     const source = [
       '& mixer {',
-      '  & bus mybus(gain: (-3).db) {',
+      '  & bus (gain: (-3).db) {',
       '    & kick, snare, hihat',
       '    & fx.pan(0.5)',
       '    & @lp = fx.lowpass(400.hz)',
@@ -1304,7 +1304,6 @@ describe('parser/parser.ts', () => {
             values: [
               {
                 type: 'Bus',
-                name: { type: 'Identifier', name: 'mybus' },
                 arguments: [
                   {
                     type: 'Argument',
@@ -1383,11 +1382,11 @@ describe('parser/parser.ts', () => {
     ])
   })
 
-  it('should allow named and unnamed parts', () => {
+  it('should parse track and parts', () => {
     const source = [
       '& track {',
       '  & part (4.bars) {}',
-      '  & part my_part (2.bars) {}',
+      '  & part (2.bars) {}',
       '}'
     ].join('\n')
 
@@ -1411,7 +1410,6 @@ describe('parser/parser.ts', () => {
             values: [
               {
                 type: 'Part',
-                name: undefined,
                 arguments: [
                   {
                     type: 'Argument',
@@ -1433,7 +1431,6 @@ describe('parser/parser.ts', () => {
             values: [
               {
                 type: 'Part',
-                name: { type: 'Identifier', name: 'my_part' },
                 arguments: [
                   {
                     type: 'Argument',
@@ -1441,78 +1438,6 @@ describe('parser/parser.ts', () => {
                       type: 'PropertyAccess',
                       object: { type: 'Number', value: 2 },
                       property: { type: 'Identifier', name: 'bars' }
-                    }
-                  }
-                ],
-                children: []
-              }
-            ]
-          }
-        ]
-      }
-    ])
-  })
-
-  it('should allow named and unnamed buses', () => {
-    const source = [
-      '& mixer {',
-      '  & bus (gain: (-3).db) {}',
-      '  & bus my_bus(gain: (-6).db) {}',
-      '}'
-    ].join('\n')
-
-    const result = parse(lexSource(source))
-    assertResultComplete(result)
-
-    assert.strictEqual(result.value.children[0].type, 'Statement')
-    assert.strictEqual(result.value.children[0].emit, true)
-
-    const emissions = result.value.children[0].values
-
-    assert.deepStrictEqual(stripRanges(emissions), [
-      {
-        type: 'Mixer',
-        arguments: [],
-        children: [
-          {
-            type: 'Statement',
-            emit: true,
-            expose: false,
-            values: [
-              {
-                type: 'Bus',
-                name: undefined,
-                arguments: [
-                  {
-                    type: 'Argument',
-                    name: { type: 'Identifier', name: 'gain' },
-                    value: {
-                      type: 'PropertyAccess',
-                      object: { type: 'Number', value: -3 },
-                      property: { type: 'Identifier', name: 'db' }
-                    }
-                  }
-                ],
-                children: []
-              }
-            ]
-          },
-          {
-            type: 'Statement',
-            emit: true,
-            expose: false,
-            values: [
-              {
-                type: 'Bus',
-                name: { type: 'Identifier', name: 'my_bus' },
-                arguments: [
-                  {
-                    type: 'Argument',
-                    name: { type: 'Identifier', name: 'gain' },
-                    value: {
-                      type: 'PropertyAccess',
-                      object: { type: 'Number', value: -6 },
-                      property: { type: 'Identifier', name: 'db' }
                     }
                   }
                 ],

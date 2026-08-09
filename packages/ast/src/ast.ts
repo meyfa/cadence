@@ -270,7 +270,6 @@ export interface Mixer extends ASTNode {
 
 export interface Bus extends ASTNode {
   readonly type: 'Bus'
-  readonly name?: Identifier
   readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
@@ -283,7 +282,6 @@ export interface Track extends ASTNode {
 
 export interface Part extends ASTNode {
   readonly type: 'Part'
-  readonly name?: Identifier
   readonly arguments: readonly Argument[]
   readonly children: readonly Statement[]
 }
