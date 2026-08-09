@@ -50,7 +50,7 @@ export interface Identifier {
   readonly previousSibling?: Identifier
 }
 
-export type IdentifierKind = 'plain' | 'definition' | 'parameter' | 'argument-name'
+export type IdentifierKind = 'plain' | 'definition' | 'parameter' | 'argument'
 
 // binding
 

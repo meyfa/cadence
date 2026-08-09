@@ -88,11 +88,11 @@ describe('model/analysis/known-values.ts', () => {
     const model = analyzeSource(source)
 
     const gainProperty = findIdentifierAt(model, source.indexOf('gain:'))
-    assert.strictEqual(gainProperty?.kind, 'argument-name')
+    assert.strictEqual(gainProperty?.kind, 'argument')
     assert.strictEqual(model.knownValues.get(gainProperty.id), undefined)
 
     const playProperty = findIdentifierAt(model, source.indexOf('play:'))
-    assert.strictEqual(playProperty?.kind, 'argument-name')
+    assert.strictEqual(playProperty?.kind, 'argument')
     assert.strictEqual(model.knownValues.get(playProperty.id), undefined)
   })
 

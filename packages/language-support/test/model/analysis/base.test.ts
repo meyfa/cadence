@@ -75,7 +75,7 @@ describe('model/analysis/base.ts', () => {
         { kind: 'definition', scope: 'Program', name: 'double' },
         { kind: 'definition', scope: 'Function', name: 'input' },
         { kind: 'plain', scope: 'Function', name: 'input' },
-        { kind: 'argument-name', scope: 'Program', name: 'tempo' },
+        { kind: 'argument', scope: 'Program', name: 'tempo' },
         { kind: 'plain', scope: 'Program', name: 'double' },
         { kind: 'plain', scope: 'Program', name: 'bpm' },
         { kind: 'plain', scope: 'TrackBlock', name: 'bars' },
