@@ -100,8 +100,8 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept a program with one track and unique parts', () => {
       const source = [
         '& track {',
-        '  & part intro (4.bars) {}',
-        '  & part main (length: 8.bars) {}',
+        '  & part (4.bars) {}',
+        '  & part (length: 8.bars) {}',
         '}'
       ].join('\n')
 
@@ -158,15 +158,15 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
-    it('should allow part and bus names equal to variables', () => {
+    it('should accept part and bus labels', () => {
       const source = [
         '& mixer {',
-        '  foo = 42',
-        '  & bus foo {}',
+        '  & bus ("Foo") {}',
+        '  & bus (label: "Bar") {}',
         '}',
         '& track {',
-        '  foo = 42',
-        '  & part foo (4.bars) {}',
+        '  & part (4.bars, "Foo") {}',
+        '  & part (4.bars, label: "Bar") {}',
         '}'
       ].join('\n')
 
@@ -175,22 +175,22 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should allow scoped assignments to shadow top-level variables', () => {
       const source = [
-        'shadowed_by_track = 100',
-        'shadowed_by_mixer = 200',
-        'shadowed_by_part = 300',
-        'shadowed_by_bus = 400',
+        'shadowed_in_track = 100',
+        'shadowed_in_mixer = 200',
+        'shadowed_in_part = 300',
+        'shadowed_in_bus = 400',
         '',
         '& track {',
-        '  shadowed_by_track = 101',
+        '  shadowed_in_track = 101',
         '  & part (4.bars) {',
-        '    shadowed_by_part = 301',
+        '    shadowed_in_part = 301',
         '  }',
         '}',
         '',
         '& mixer {',
-        '  shadowed_by_mixer = 201',
-        '  & bus foo {',
-        '    shadowed_by_bus = 401',
+        '  shadowed_in_mixer = 201',
+        '  & bus {',
+        '    shadowed_in_bus = 401',
         '  }',
         '}'
       ].join('\n')
@@ -496,10 +496,10 @@ describe('compiler/checker/checker.ts', () => {
     it('should accept bus gain automation', () => {
       const source = [
         '& m = mixer {',
-        '  & @test_bus = bus main {}',
+        '  & @test_bus = bus {}',
         '}',
         '& track {',
-        '  & part intro (4.bars) {',
+        '  & part (4.bars) {',
         '    & automate(m.test_bus.gain, ~[lin((-20).db, 0.db):4.bars])',
         '  }',
         '}'
@@ -517,7 +517,7 @@ describe('compiler/checker/checker.ts', () => {
         '  }',
         '}',
         '& track {',
-        '  & part intro (4.bars) {',
+        '  & part (4.bars) {',
         '    & automate(m.test_bus.lp.frequency, ~[lin(100.hz, 4000.hz):4.bars])',
         '  }',
         '}'
@@ -870,7 +870,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should reject part emissions that are not routing or automation', () => {
       const source = [
         '& track {',
-        '  & part intro (4.bars) {',
+        '  & part (4.bars) {',
         '    & 42',
         '  }',
         '}'
@@ -885,7 +885,7 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'some_value = ""',
         '& track {',
-        '  & part intro (4.bars) {',
+        '  & part (4.bars) {',
         '    & automate(some_value, ~[hold(-60):1.bar])',
         '  }',
         '}'
@@ -901,7 +901,7 @@ describe('compiler/checker/checker.ts', () => {
         'use "effects" as fx',
         'lp = fx.lowpass(1000.hz)',
         '& track {',
-        '  & part intro (4.bars) {',
+        '  & part (4.bars) {',
         '    & automate(lp.frequency, ~[hold(0.db):1.bar])',
         '  }',
         '}'
@@ -1264,7 +1264,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should enforce ordering within mixer', () => {
       const source = [
         '& mixer {',
-        '  & bus bus0 (gain: level) {}',
+        '  & bus (gain: level) {}',
         '  level = -6.db',
         '}'
       ].join('\n')

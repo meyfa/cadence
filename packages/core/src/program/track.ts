@@ -10,7 +10,7 @@ export interface Track {
 }
 
 export interface Part {
-  readonly name?: string
+  readonly label?: string
   readonly length: Numeric<'beats'>
   readonly routings: readonly InstrumentRouting[]
   readonly automations: readonly Automation[]

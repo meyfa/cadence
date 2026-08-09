@@ -50,38 +50,6 @@ describe('go-to-definition/operation.ts', () => {
     }
   })
 
-  it('does not resolve bus references in mixer via bus name', () => {
-    const source = [
-      '& mixer {',
-      '  & bus a {}',
-      '  & bus {',
-      '    & a',
-      '  }',
-      '}',
-      ''
-    ].join('\n')
-
-    const refPos = source.indexOf('& a') + '& '.length
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-    assert.strictEqual(result, undefined)
-  })
-
-  it('does not resolve part references in track via part name', () => {
-    const source = [
-      '& track (120.bpm) {',
-      '  & part a {}',
-      '  foo = a // reference',
-      '}',
-      ''
-    ].join('\n')
-
-    const refPos = source.indexOf('a // reference')
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-    assert.strictEqual(result, undefined)
-  })
-
   it('resolves import alias usage', () => {
     const source = [
       'use "std" as lib',
@@ -102,7 +70,7 @@ describe('go-to-definition/operation.ts', () => {
     const source = [
       '& mixer {',
       '  & a = bus {}',
-      '  & bus b {',
+      '  & bus {',
       '    & a'
     ].join('\n')
 
@@ -112,20 +80,6 @@ describe('go-to-definition/operation.ts', () => {
     const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
     assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'a'.length))
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'a'.length))
-  })
-
-  it('does not resolve incomplete input via bus name', () => {
-    const source = [
-      '& mixer {',
-      '  & bus a {}',
-      '  & bus b {',
-      '    & a'
-    ].join('\n')
-
-    const refPos = source.lastIndexOf('a')
-
-    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
-    assert.strictEqual(result, undefined)
   })
 
   it('does not resolve named argument keys', () => {
@@ -148,7 +102,7 @@ describe('go-to-definition/operation.ts', () => {
       'synth = sample("...")',
       '',
       '& track (120.bpm) {',
-      '  & part p {',
+      '  & part {',
       '    & automate(synth.gain, ~[hold(-60.db) lin(-60.db, 0.db)])',
       '  }',
       '}',

@@ -681,10 +681,7 @@ const statement_ = p.choice<Token, unknown, ast.Statement>(
 )
 
 const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
-  combine2(
-    keyword('part'),
-    p.option(identifier_, undefined)
-  ),
+  keyword('part'),
   p.option(
     combine3(
       literal('('),
@@ -698,12 +695,9 @@ const part_: p.Parser<Token, unknown, ast.Part> = p.abc(
     p.many(statement_),
     expectLiteral('}')
   ),
-  ([_part, name], callChain, [_lp, children, _rp]) => {
-    const args = callChain == null ? [] : callChain[1]
-
+  (_part, callChain, [_lp, children, _rp]) => {
     return ast.make('Part', combineSourceRanges(_part, _rp), {
-      name,
-      arguments: args,
+      arguments: callChain == null ? [] : callChain[1],
       children
     })
   }
@@ -725,20 +719,15 @@ const track_: p.Parser<Token, unknown, ast.Track> = p.abc(
     expectLiteral('}')
   ),
   (_track, callChain, [_lp, children, _rp]) => {
-    const args = callChain == null ? [] : callChain[1]
-
     return ast.make('Track', combineSourceRanges(_track, _rp), {
-      arguments: args,
+      arguments: callChain == null ? [] : callChain[1],
       children
     })
   }
 )
 
 const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
-  combine2(
-    keyword('bus'),
-    p.option(identifier_, undefined)
-  ),
+  keyword('bus'),
   p.option(
     combine3(
       literal('('),
@@ -752,12 +741,9 @@ const bus_: p.Parser<Token, unknown, ast.Bus> = p.abc(
     p.many(statement_),
     expectLiteral('}')
   ),
-  ([_bus, name], callChain, [_lp, children, _rp]) => {
-    const args = callChain == null ? [] : callChain[1]
-
+  (_bus, callChain, [_lp, children, _rp]) => {
     return ast.make('Bus', combineSourceRanges(_bus, _rp), {
-      name,
-      arguments: args,
+      arguments: callChain == null ? [] : callChain[1],
       children
     })
   }
@@ -779,10 +765,8 @@ const mixer_: p.Parser<Token, unknown, ast.Mixer> = p.abc(
     expectLiteral('}')
   ),
   (_mixer, callChain, [_lp, children, _rp]) => {
-    const args = callChain == null ? [] : callChain[1]
-
     return ast.make('Mixer', combineSourceRanges(_mixer, _rp), {
-      arguments: args,
+      arguments: callChain == null ? [] : callChain[1],
       children
     })
   }

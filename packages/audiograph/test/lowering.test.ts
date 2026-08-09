@@ -81,7 +81,6 @@ function createProgramWithEffect (effect: Effect): Program {
       buses: [
         {
           id: 100 as BusId,
-          name: 'Bus 1',
           sources: [],
           gain: {
             id: 400 as ParameterId,
@@ -229,7 +228,6 @@ describe('lowering.ts', () => {
         buses: [
           {
             id: busId,
-            name: 'Bus 1',
             sources: [],
             gain: {
               id: busGainId,
@@ -456,7 +454,6 @@ describe('lowering.ts', () => {
         tempo: bpm(120),
         parts: [
           {
-            name: 'Part 1',
             length: beats(4),
             routings: [
               {
@@ -476,7 +473,6 @@ describe('lowering.ts', () => {
             automations: []
           },
           {
-            name: 'Part 2',
             length: beats(4),
             routings: [
               {
@@ -1636,7 +1632,6 @@ describe('lowering.ts', () => {
           buses: [
             {
               id: busId,
-              name: 'Bus 1',
               sources: [],
               gain: {
                 id: 201 as ParameterId,

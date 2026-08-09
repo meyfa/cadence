@@ -377,8 +377,8 @@ describe('lexer/lexer.ts', () => {
   it('should lex a track', () => {
     const source = [
       '& track (128.bpm) {',
-      '  & part intro (4.bars) {}',
-      '  & part verse (8.bars) {}',
+      '  & part (4.bars) {}',
+      '  & part (8.bars) {}',
       '}'
     ].join('\n')
 
@@ -399,7 +399,6 @@ describe('lexer/lexer.ts', () => {
 
         { name: '&', text: '&' },
         { name: 'word', text: 'part' },
-        { name: 'word', text: 'intro' },
         { name: '(', text: '(' },
         { name: 'number', text: '4' },
         { name: '.', text: '.' },
@@ -410,7 +409,6 @@ describe('lexer/lexer.ts', () => {
 
         { name: '&', text: '&' },
         { name: 'word', text: 'part' },
-        { name: 'word', text: 'verse' },
         { name: '(', text: '(' },
         { name: 'number', text: '8' },
         { name: '.', text: '.' },

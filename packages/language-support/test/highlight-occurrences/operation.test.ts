@@ -12,7 +12,7 @@ describe('highlight-occurrences/operation.ts', () => {
       'foo = sample("/samples/foo.wav")',
       'bar = foo',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & play(foo, [x---])',
       '  }',
       '}',
@@ -68,7 +68,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'synth = sample("...")',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[hold(-60.db):3 lin(0.db):1])',
       '  }',
       '}',

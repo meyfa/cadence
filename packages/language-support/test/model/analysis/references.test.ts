@@ -46,7 +46,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'kick = sample("/samples/kick.wav")',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & play(kick, [x---])',
       '  }',
       '}',
@@ -113,7 +113,7 @@ describe('model/analysis/references.ts', () => {
   it('resolves bus inputs to variable definitions', () => {
     const source = [
       '& mixer {',
-      '  & my_bus = bus my_bus {}',
+      '  & my_bus = bus {}',
       '  & bus {',
       '    & my_bus',
       '  }',
@@ -204,7 +204,7 @@ describe('model/analysis/references.ts', () => {
       'synth = sample("...", gain: gain)',
       '',
       '& track (120.bpm) {',
-      '  & part intro (4.bars) {',
+      '  & part (4.bars) {',
       '    & automate(synth.gain, ~[hold(0.db)])',
       '  }',
       '}',
@@ -248,7 +248,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'use "effects" as *',
       '& mixer {',
-      '  & bus main {',
+      '  & bus {',
       '    & lowpass(1000.hz)',
       '  }',
       '}',
@@ -274,7 +274,7 @@ describe('model/analysis/references.ts', () => {
       'use "effects" as *',
       'gain = -3.db',
       '& mixer {',
-      '  & bus main (gain) {}',
+      '  & bus (gain) {}',
       '}',
       ''
     ].join('\n')

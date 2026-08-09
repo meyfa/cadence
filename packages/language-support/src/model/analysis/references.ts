@@ -54,7 +54,6 @@ function sortReferences<Id> (map: Map<Id, Identifier[]>): void {
 interface BindingLookup {
   readonly namedImports: ReadonlyMap<string, Binding>
   readonly defaultImports: ReadonlyMap<string, Import>
-  readonly buses: ReadonlyMap<string, Binding>
   readonly byScopeAndName: ReadonlyMap<string, ReadonlyMap<string, Binding>>
   readonly parentScopes: ReadonlyMap<string, string>
 }
@@ -62,7 +61,6 @@ interface BindingLookup {
 function buildBindingLookup (model: BaseModel): BindingLookup {
   const namedImports = new Map<string, Binding>()
   const defaultImports = new Map<string, Import>()
-  const buses = new Map<string, Binding>()
   const byScopeAndName = new Map<string, Map<string, Binding>>()
 
   for (const binding of model.bindings) {
@@ -92,7 +90,7 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
     }
   }
 
-  return { namedImports, defaultImports, buses, byScopeAndName, parentScopes }
+  return { namedImports, defaultImports, byScopeAndName, parentScopes }
 }
 
 function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
@@ -113,10 +111,7 @@ function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, loo
 }
 
 function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Binding | undefined {
-  if (isExplicitBusReference(occurrence)) {
-    return lookup.buses.get(occurrence.name)
-  }
-
+  // Skip if this is a member access (e.g. "bar" in "foo.bar").
   if (occurrence.previousSibling != null) {
     return undefined
   }
@@ -139,12 +134,6 @@ function findRegularBinding (occurrence: Identifier, lookup: BindingLookup): Bin
   }
 
   return undefined
-}
-
-function isExplicitBusReference (identifier: Identifier): boolean {
-  return identifier.previousSibling != null &&
-    identifier.previousSibling.name === 'bus' &&
-    identifier.previousSibling.previousSibling == null
 }
 
 const importCache = new WeakMap<BindingLookup, Map<string, Import | undefined>>()

@@ -552,13 +552,12 @@ function generateImplicitRoutings (scope: Scope, mixer: Mixer): readonly MixerRo
 function generateBus (scope: Scope, expression: ast.Bus): Value {
   const busScope = createLocalScope(scope)
 
-  const name = expression.name?.name
-
   const recordBuilder = new RecordBuilder()
   const sources: MixerSource[] = []
   const effects: Effect[] = []
 
   const args = resolveArgumentList(scope, expression.arguments, busSchema)
+  const label = args.label != null ? StringFacet.get(args.label) : undefined
 
   // These must always be allocated even if not explicitly set,
   // as they could still be automated.
@@ -588,7 +587,7 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
     setAll(recordBuilder, properties)
   }
 
-  const bus = scope.top.allocateBus({ name, sources, gain, pan, effects })
+  const bus = scope.top.allocateBus({ label, sources, gain, pan, effects })
   const value = makeType(BusFacet, recordBuilder.facet).of(bus, recordBuilder.record)
 
   return value
@@ -643,13 +642,12 @@ function generateTrack (scope: Scope, expression: ast.Track): Value {
 function generatePart (scope: Scope, expression: ast.Part): Value {
   const partScope = createLocalScope(scope)
 
-  const name = expression.name?.name
-
   const recordBuilder = new RecordBuilder()
   const routings: InstrumentRouting[] = []
   const automations: Automation[] = []
 
   const args = resolveArgumentList(scope, expression.arguments, partSchema)
+  const label = args.label != null ? StringFacet.get(args.label) : undefined
   const length = clamped(NumberFacet.get(args.length), 0, Number.POSITIVE_INFINITY)
 
   for (const child of expression.children) {
@@ -668,7 +666,7 @@ function generatePart (scope: Scope, expression: ast.Part): Value {
     setAll(recordBuilder, properties)
   }
 
-  const part = { name, length: length.value, routings, automations }
+  const part = { label, length: length.value, routings, automations }
 
   return !recordBuilder.empty
     ? makeType(PartFacet, recordBuilder.facet).of(part, recordBuilder.record)
