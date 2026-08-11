@@ -1,12 +1,17 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
+import type { Binding } from '../../../src/compiler/checker/scopes.ts'
 import { createGlobalScope, createLocalScope } from '../../../src/compiler/checker/scopes.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
 
 describe('compiler/checker/scopes.ts', () => {
   describe('createGlobalScope()', () => {
     it('should create a global scope with the provided initial resolutions', () => {
-      const foo = NumberFacet.with('db').type()
+      const foo: Binding = {
+        name: 'foo',
+        type: NumberFacet.with('db').type(),
+        definite: true
+      }
 
       const result = createGlobalScope(new Map([['foo', foo]]))
 
@@ -19,9 +24,13 @@ describe('compiler/checker/scopes.ts', () => {
 
   describe('createLocalScope()', () => {
     it('should create a local scope with the provided parent and empty resolutions', () => {
-      const globalScope = createGlobalScope(new Map([
-        ['foo', NumberFacet.with('db').type()]
-      ]))
+      const foo: Binding = {
+        name: 'foo',
+        type: NumberFacet.with('db').type(),
+        definite: true
+      }
+
+      const globalScope = createGlobalScope(new Map([['foo', foo]]))
 
       const localScope = createLocalScope(globalScope)
 
@@ -30,7 +39,12 @@ describe('compiler/checker/scopes.ts', () => {
       assert.strictEqual(localScope.resolutions.get('foo'), undefined)
       assert.deepStrictEqual(localScope.allowedCapabilities, globalScope.allowedCapabilities)
 
-      const bar = NumberFacet.with(undefined).type()
+      const bar: Binding = {
+        name: 'bar',
+        type: NumberFacet.with(undefined).type(),
+        definite: false
+      }
+
       localScope.resolutions.set('bar', bar)
       assert.strictEqual(localScope.resolutions.get('bar'), bar)
       assert.strictEqual(globalScope.resolutions.get('bar'), undefined)
@@ -43,9 +57,7 @@ describe('compiler/checker/scopes.ts', () => {
     })
 
     it('can override allowed capabilities', () => {
-      const globalScope = createGlobalScope(new Map([
-        ['foo', NumberFacet.with('db').type()]
-      ]))
+      const globalScope = createGlobalScope(new Map())
 
       const localScopeWithoutOverride = createLocalScope(globalScope)
       assert.deepStrictEqual(localScopeWithoutOverride.allowedCapabilities, { mayBlock: true })

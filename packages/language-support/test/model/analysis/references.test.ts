@@ -389,4 +389,114 @@ describe('model/analysis/references.ts', () => {
     assert.strictEqual(binding.name, 'synth')
     assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('synth = sine()'), 'synth'.length))
   })
+
+  it('resolves bindings in conditional branches', () => {
+    const source = [
+      'if true {',
+      '  foo = 128.bpm',
+      '} else {',
+      '  foo = 140.bpm',
+      '}',
+      '',
+      '& track (foo) {}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.lastIndexOf('foo)')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution?.kind, 'binding')
+
+    const binding = resolution.binding
+    assert.strictEqual(binding.kind, 'regular')
+    assert.strictEqual(binding.name, 'foo')
+  })
+
+  it('resolves non-definite bindings in conditional branches', () => {
+    const source = [
+      'if true {',
+      '  if false {',
+      '    foo = 60.bpm',
+      '  } else {',
+      '    bar = 70.bpm',
+      '  }',
+      '}',
+      '',
+      '& track (foo + bar) {}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    for (const name of ['foo', 'bar']) {
+      const position = source.lastIndexOf(name)
+
+      const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+      assert.ok(identifier != null)
+
+      const resolution = model.resolutions.get(identifier.id)
+      assert.strictEqual(resolution?.kind, 'binding')
+
+      const binding = resolution.binding
+      assert.strictEqual(binding.kind, 'regular')
+      assert.strictEqual(binding.name, name)
+    }
+  })
+
+  it('does not resolve bindings from within a different conditional branch', () => {
+    const source = [
+      'if true {',
+      '  foo = 128.bpm',
+      '} else {',
+      '  bar = foo // invalid reference',
+      '}',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+    const position = source.indexOf('foo // invalid reference')
+
+    const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+    assert.ok(identifier != null)
+
+    const resolution = model.resolutions.get(identifier.id)
+    assert.strictEqual(resolution, undefined)
+  })
+
+  it('prefers first definition over later definitions in conditional branches', () => {
+    const source = [
+      'foo = 1',
+      'bar = foo',
+      '',
+      'if true {',
+      '  foo = 2',
+      '} else {',
+      '  foo = 3',
+      '}',
+      '',
+      'baz = foo',
+      ''
+    ].join('\n')
+
+    const model = analyzeSource(source)
+
+    for (const name of ['bar', 'baz']) {
+      const position = source.indexOf(name) + name.length + ' = '.length
+
+      const identifier = model.identifiers.find((identifier) => identifier.range.offset === position)
+      assert.ok(identifier != null)
+
+      const resolution = model.resolutions.get(identifier.id)
+      assert.strictEqual(resolution?.kind, 'binding')
+
+      const binding = resolution.binding
+      assert.strictEqual(binding.kind, 'regular')
+      assert.strictEqual(binding.name, 'foo')
+      assert.deepStrictEqual(binding.range, getRangeAt(source, source.indexOf('foo = 1'), 'foo'.length))
+    }
+  })
 })

@@ -34,6 +34,10 @@ function isUnusedBinding (binding: Binding, model: ReferenceModel): boolean {
     return false
   }
 
+  if (binding.mergedFrom != null) {
+    return false
+  }
+
   const references = model.bindingReferences.get(binding.id)
 
   // At most one reference, which would be the definition itself.

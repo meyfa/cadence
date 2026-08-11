@@ -1,4 +1,5 @@
 import type { SourceRange, ast } from '@meyfa/cadence-ast'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import type { Capabilities } from '../../type-system/base/function.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import type { FacetType } from '../../type-system/types.ts'
@@ -6,7 +7,8 @@ import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import { checkExpression } from './expressions.ts'
 import type { MutableScope } from './scopes.ts'
-import { BooleanFacet } from '../../type-system/base/boolean.ts'
+import { createLocalScope } from './scopes.ts'
+import { nonNull } from '../assert.ts'
 
 export interface CheckedStatement {
   readonly errors: readonly CompileError[]
@@ -41,6 +43,7 @@ function checkSimpleStatement (
 ): CheckedStatement {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
+
   const emissions: Emission[] = []
   const properties = new Map<string, FacetType>()
 
@@ -67,14 +70,16 @@ function checkSimpleStatement (
   }
 
   if (statement.name != null) {
-    const duplicate = scope.resolutions.has(statement.name.name)
+    const name = statement.name.name
+    const type = values.at(0)
+
+    const duplicate = scope.resolutions.has(name)
     if (duplicate) {
-      errors.push(new CompileError(`Identifier "${statement.name.name}" is already defined`, statement.name.range))
+      errors.push(new CompileError(`Identifier "${name}" is already defined`, statement.name.range))
     }
 
-    const type = values.at(0)
     if (type != null && !duplicate) {
-      scope.resolutions.set(statement.name.name, type)
+      scope.resolutions.set(name, { name, type, definite: true })
     }
   }
 
@@ -99,6 +104,7 @@ function checkIfStatement (
 ): CheckedStatement {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
+
   const emissions: Emission[] = []
   const properties = new Map<string, FacetType>()
 
@@ -110,14 +116,79 @@ function checkIfStatement (
     errors.push(new CompileError(`Condition must be of type ${BooleanFacet.format()}, got ${conditionCheck.result.format()}`, statement.condition.range))
   }
 
-  for (const child of statement.thenBranch) {
-    // TODO implement
-    errors.push(new CompileError(`Conditional statements are not yet supported`, child.range))
+  const thenScope = createLocalScope(scope)
+  const elseScope = createLocalScope(scope)
+
+  const thenBranch = checkBranch(thenScope, statement.thenBranch, existingProperties)
+  errors.push(...thenBranch.errors)
+  capabilities = mergeCapabilities(capabilities, thenBranch.capabilities)
+
+  const elseBranch = checkBranch(elseScope, statement.elseBranch ?? [], existingProperties)
+  errors.push(...elseBranch.errors)
+  capabilities = mergeCapabilities(capabilities, elseBranch.capabilities)
+
+  const assignedNames = new Set<string>([...thenScope.resolutions.keys(), ...elseScope.resolutions.keys()])
+
+  for (const name of assignedNames) {
+    const thenBinding = thenScope.resolutions.get(name)
+    const elseBinding = elseScope.resolutions.get(name)
+
+    if (scope.resolutions.has(name)) {
+      const message = `Identifier "${name}" is already defined`
+      if (thenBinding != null) {
+        errors.push(new CompileError(message, thenBinding.range))
+      }
+      if (elseBinding != null) {
+        errors.push(new CompileError(message, elseBinding.range))
+      }
+      continue
+    }
+
+    if (thenBinding == null || elseBinding == null) {
+      const binding = nonNull(thenBinding ?? elseBinding)
+      scope.resolutions.set(name, { ...binding, definite: false })
+      continue
+    }
+
+    if (!thenBinding.type.is(elseBinding.type) || !elseBinding.type.is(thenBinding.type)) {
+      const range = elseBinding.range ?? thenBinding.range ?? statement.range
+      errors.push(new CompileError(`Incompatible types for "${name}" in conditional branches: ${thenBinding.type.format()} and ${elseBinding.type.format()}`, range))
+      continue
+    }
+
+    scope.resolutions.set(name, {
+      ...thenBinding,
+      definite: thenBinding.definite && elseBinding.definite,
+      range: undefined
+    })
   }
 
-  for (const child of statement.elseBranch ?? []) {
-    // TODO implement
-    errors.push(new CompileError(`Conditional statements are not yet supported`, child.range))
+  return { errors, capabilities, emissions, properties }
+}
+
+function checkBranch (
+  scope: MutableScope,
+  statements: readonly ast.Statement[],
+  existingProperties?: ReadonlyMap<string, FacetType>
+): CheckedStatement {
+  const errors: CompileError[] = []
+  let capabilities = noCapabilities
+
+  const emissions: Emission[] = []
+  const properties = new Map<string, FacetType>()
+
+  for (const child of statements) {
+    const statement = checkStatement(scope, child, existingProperties)
+    errors.push(...statement.errors)
+    capabilities = mergeCapabilities(capabilities, statement.capabilities)
+
+    if (statement.emissions.length > 0) {
+      errors.push(new CompileError('Emissions in conditional branches are not yet supported', child.range))
+    }
+
+    if (statement.properties.size > 0) {
+      errors.push(new CompileError('Property exposure in conditional branches is not yet supported', child.range))
+    }
   }
 
   return { errors, capabilities, emissions, properties }
