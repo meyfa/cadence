@@ -38,6 +38,40 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     return statement
   }
 
+  // A variable assigned in every reachable branch of a conditional is visible afterward,
+  // even though each assignment's own binding remains scoped to its own branch.
+  const mergeConditionalBindings = (parentScopeId: string, branchScopeIds: readonly string[], endOffset: number): void => {
+    const groups = new Map<string, Binding[]>()
+
+    for (const binding of bindings) {
+      if (binding.kind !== 'regular' || !branchScopeIds.includes(binding.scopeId)) {
+        continue
+      }
+
+      const group = groups.get(binding.name)
+      if (group == null) {
+        groups.set(binding.name, [binding])
+        continue
+      }
+
+      group.push(binding)
+    }
+
+    for (const [name, group] of groups) {
+      const firstDefinition = group.reduce((earliest, binding) => binding.range.offset < earliest.range.offset ? binding : earliest)
+
+      bindings.push({
+        id: conditionalBindingKey(parentScopeId, endOffset, name),
+        kind: 'regular',
+        scopeId: parentScopeId,
+        name,
+        range: firstDefinition.range,
+        visibilityStartOffset: endOffset,
+        mergedFrom: group.map((binding) => binding.id)
+      })
+    }
+  }
+
   const cursor = tree.cursor()
 
   const walk = (
@@ -61,6 +95,7 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     let nextAssignmentIsExposed = assignmentIsExposed
     let accessChainTail: Identifier | undefined
     let deferredBinding: Omit<Binding, 'id'> | undefined
+    let conditionalBranchScopeIds: string[] | undefined
 
     switch (typeName) {
       case 'Import': {
@@ -84,6 +119,12 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       case 'Voice': {
         const scope = addScope({ node: typeName, range, parentId: scopeId })
         nextScopeId = scope.id
+        break
+      }
+
+      case 'IfStatement': {
+        conditionalBranchScopeIds = cursor.node.getChildren('Block')
+          .map((block) => scopeKey('Block', toSourceRange(document, block.from, block.to)))
         break
       }
 
@@ -192,6 +233,10 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
       addBinding(deferredBinding)
     }
 
+    if (typeName === 'IfStatement' && conditionalBranchScopeIds != null) {
+      mergeConditionalBindings(scopeId, conditionalBranchScopeIds, to)
+    }
+
     return accessChainTail
   }
 
@@ -250,6 +295,10 @@ function identifierKey (kind: IdentifierKind, scopeId: string, range: SourceRang
 
 function bindingKey (kind: BindingKind, scopeId: string, range: SourceRange): BindingId {
   return `${kind}:${scopeId}:${range.offset}:${range.length}` as BindingId
+}
+
+function conditionalBindingKey (scopeId: string, endOffset: number, name: string): BindingId {
+  return `merge:${scopeId}:${endOffset}:${name}` as BindingId
 }
 
 function importKey (moduleName: string, range: SourceRange): ImportId {

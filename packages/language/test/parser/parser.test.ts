@@ -1711,4 +1711,16 @@ describe('parser/parser.ts', () => {
       }
     ])
   })
+
+  it('should reject imports within if statements', () => {
+    const source = [
+      'if condition {',
+      '  import "foo"',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.message, 'Unexpected "import"; expected "}"')
+  })
 })

@@ -130,4 +130,25 @@ describe('unused-variable/operation.ts', () => {
       ]
     )
   })
+
+  it('does not report conditional assignments that are referenced', () => {
+    const source = [
+      'if (true) {',
+      '  used = sample("sound.wav")',
+      '} else {',
+      '  used = sample("sound.wav")',
+      '}',
+      '& track (120.bpm) {',
+      '  & part (4.bars) {',
+      '    & play(used, [x---])',
+      '  }',
+      '}',
+      ''
+    ].join('\n')
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findUnusedVariables, cadenceParser, source),
+      []
+    )
+  })
 })

@@ -146,4 +146,25 @@ describe('go-to-definition/operation.ts', () => {
     assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
     assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
   })
+
+  it('resolves to first definition in conditional branches', () => {
+    const source = [
+      'if true {',
+      '  foo = 60.bpm',
+      '} else {',
+      '  foo = 70.bpm',
+      '}',
+      '',
+      '& track (foo) {}',
+      ''
+    ].join('\n')
+
+    const defPos = source.indexOf('foo = 60.bpm')
+    const refPos = source.lastIndexOf('foo)')
+
+    const result = applySemanticOperationWithParser(goToDefinition, cadenceParser, source, refPos)
+
+    assert.deepStrictEqual(result?.identifier.range, getRangeAt(source, refPos, 'foo'.length))
+    assert.deepStrictEqual(result.binding.range, getRangeAt(source, defPos, 'foo'.length))
+  })
 })

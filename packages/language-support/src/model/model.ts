@@ -83,6 +83,12 @@ export interface Binding {
    * this marks the first offset where the binding is visible.
    */
   readonly visibilityStartOffset?: number
+
+  /**
+   * For synthetic bindings representing a variable assigned in conditional branches,
+   * the bindings (one per branch) that were merged to produce this one.
+   */
+  readonly mergedFrom?: readonly BindingId[]
 }
 
 export type BindingKind = 'regular' | 'use-alias'

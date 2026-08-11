@@ -600,6 +600,33 @@ describe('compiler/checker/checker.ts', () => {
 
       assertValid(source)
     })
+
+    it('should allow empty if statements', () => {
+      const source = [
+        'if true {}',
+        'if false {} else {}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow assignments within if statements', () => {
+      const source = [
+        'if true {',
+        '  foo = 100',
+        '  bar = foo + 1', // 101
+        '} else {',
+        '  foo = 200',
+        '  bar = foo + 2', // 202
+        '}',
+        '',
+        'if true {',
+        '  baz = 200', // non-definite assignment
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
   })
 
   describe('invalid', () => {
@@ -1319,17 +1346,96 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
-    it('should fail type checking for if statements with children', () => {
-      // TODO Remove this test once checking is implemented
+    it('should reject reassignment of a variable defined before a conditional branch', () => {
       const source = [
-        'if true { & 100 }',
-        'if false { & 200 } else { & 300 }'
+        'foo = 42',
+        'if true {',
+        '  foo = 100',
+        '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Conditional statements are not yet supported', // 100
-        'Conditional statements are not yet supported', // 200
-        'Conditional statements are not yet supported' // 300
+        'Identifier "foo" is already defined'
+      ])
+    })
+
+    it('should reject reassignment of a variable inside a conditional branch', () => {
+      const source = [
+        'if true {',
+        '  foo = 42',
+        '  foo = 100',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "foo" is already defined'
+      ])
+    })
+
+    it('should reject access to non-definitely assigned variables', () => {
+      const source = [
+        'if true {',
+        '  foo = 42',
+        '}',
+        '',
+        'if true {',
+        '  x = 100',
+        '} else {',
+        '  y = 200',
+        '}',
+        '',
+        'bar = foo',
+        'baz = x + y'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "foo" is not definitely assigned',
+        'Identifier "x" is not definitely assigned',
+        'Identifier "y" is not definitely assigned'
+      ])
+    })
+
+    it('should reject incompatible types in conditional branches', () => {
+      const source = [
+        'if true {',
+        '  foo = 42',
+        '} else {',
+        '  foo = "test"',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Incompatible types for "foo" in conditional branches: number and string'
+      ])
+    })
+
+    it('should reject emissions within if statements', () => {
+      // TODO Remove this test once checking is implemented for emission
+      const source = [
+        'if true { & 100 }',
+        'if false { & 101 } else { & 102 }'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Emissions in conditional branches are not yet supported', // 100
+        'Emissions in conditional branches are not yet supported', // 101
+        'Emissions in conditional branches are not yet supported' // 102
+      ])
+    })
+
+    it('should reject exposure within if statements', () => {
+      // TODO Remove this test once checking is implemented for exposure
+      const source = [
+        '& mixer {',
+        '  if true { @foo = 200 }',
+        '  if false { @bar = 201 } else { @bar = 202 }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Property exposure in conditional branches is not yet supported', // 200
+        'Property exposure in conditional branches is not yet supported', // 201
+        'Property exposure in conditional branches is not yet supported' // 202
       ])
     })
   })

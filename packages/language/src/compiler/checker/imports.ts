@@ -1,12 +1,13 @@
 import type { ast } from '@meyfa/cadence-ast'
 import { getStandardModuleNames, getStandardModuleValue } from '../../library/modules.ts'
 import { ModuleFacet } from '../../type-system/base/module.ts'
-import type { FacetType, Value } from '../../type-system/types.ts'
+import type { Value } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
+import type { Binding } from './scopes.ts'
 
 export interface CheckedImports {
   readonly errors: readonly CompileError[]
-  readonly result: ReadonlyMap<string, FacetType>
+  readonly result: ReadonlyMap<string, Binding>
 }
 
 export function checkImports (imports: readonly ast.Import[]): CheckedImports {
@@ -47,7 +48,7 @@ export function checkImports (imports: readonly ast.Import[]): CheckedImports {
     aliases.set(statement.alias, libraryName)
   }
 
-  const result = new Map<string, FacetType>()
+  const result = new Map<string, Binding>()
 
   if (errors.length > 0) {
     return { errors, result }
@@ -56,14 +57,14 @@ export function checkImports (imports: readonly ast.Import[]): CheckedImports {
   // defaults must come before aliases to allow aliasing over default imports
   for (const importName of defaults) {
     const module = ensureStandardModule(importName)
-    for (const [name, value] of ModuleFacet.get(module).exports.entries()) {
-      result.set(name, value.type)
+    for (const [name, { type }] of ModuleFacet.get(module).exports.entries()) {
+      result.set(name, { name, type, definite: true })
     }
   }
 
   for (const [alias, importName] of aliases) {
-    const module = ensureStandardModule(importName)
-    result.set(alias, module.type)
+    const { type } = ensureStandardModule(importName)
+    result.set(alias, { name: alias, type, definite: true })
   }
 
   return { errors, result }

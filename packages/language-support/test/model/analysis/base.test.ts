@@ -48,6 +48,10 @@ describe('model/analysis/base.ts', () => {
       '    & kick, snare',
       '  }',
       '}',
+      '',
+      'if true {',
+      '  conditional_variable = 42',
+      '}',
       ''
     ].join('\n')
 
@@ -91,7 +95,8 @@ describe('model/analysis/base.ts', () => {
         { kind: 'plain', scope: 'Block', name: 'clip' },
         { kind: 'plain', scope: 'Block', name: 'db' },
         { kind: 'plain', scope: 'Block', name: 'kick' },
-        { kind: 'plain', scope: 'Block', name: 'snare' }
+        { kind: 'plain', scope: 'Block', name: 'snare' },
+        { kind: 'definition', scope: 'Block', name: 'conditional_variable' }
       ]
     )
   })

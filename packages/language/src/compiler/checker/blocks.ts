@@ -9,7 +9,7 @@ import type { Facet, FacetType, Type } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { checkArguments } from './arguments.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
-import type { Scope } from './scopes.ts'
+import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 import type { Emission } from './statements.ts'
 import { checkStatement } from './statements.ts'
@@ -56,7 +56,7 @@ export interface BlockSchema<TBlock extends BlockNode> {
   /**
    * Compute the bindings that are available inside this block, if any. These may not be overridden by statements within the block.
    */
-  readonly getBindings?: (block: TBlock) => ReadonlyMap<string, FacetType>
+  readonly getBindings?: (block: TBlock) => ReadonlyMap<string, Binding>
 }
 
 export interface Slot {

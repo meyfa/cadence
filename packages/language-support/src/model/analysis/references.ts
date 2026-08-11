@@ -29,6 +29,8 @@ export function computeReferenceModel (model: BaseModel): ReferenceModel {
     }
   }
 
+  mergeConditionalReferences(model.bindings, bindingReferences)
+
   sortReferences(bindingReferences)
   sortReferences(importReferences)
 
@@ -48,6 +50,27 @@ function addReference<Id> (map: Map<Id, Identifier[]>, id: Id, reference: Identi
 function sortReferences<Id> (map: Map<Id, Identifier[]>): void {
   for (const references of map.values()) {
     references.sort((a, b) => a.range.offset - b.range.offset)
+  }
+}
+
+// A merged binding has no references of its own yet.
+// Its per-branch bindings collect their own definitions. Only external usages resolve to it directly.
+function mergeConditionalReferences (bindings: readonly Binding[], bindingReferences: Map<BindingId, Identifier[]>): void {
+  for (const binding of bindings) {
+    if (binding.mergedFrom == null || binding.mergedFrom.length === 0) {
+      continue
+    }
+
+    const ownReferences = bindingReferences.get(binding.id) ?? []
+    const constituentDefinitions: Identifier[] = []
+
+    for (const constituentId of binding.mergedFrom) {
+      const constituentReferences = bindingReferences.get(constituentId) ?? []
+      constituentDefinitions.push(...constituentReferences)
+      bindingReferences.set(constituentId, [...constituentReferences, ...ownReferences])
+    }
+
+    bindingReferences.set(binding.id, [...constituentDefinitions, ...ownReferences])
   }
 }
 
@@ -74,7 +97,9 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
       byScopeAndName.set(binding.scopeId, scopeMap)
     }
 
-    scopeMap.set(binding.name, binding)
+    if (!scopeMap.has(binding.name)) {
+      scopeMap.set(binding.name, binding)
+    }
   }
 
   for (const imp of model.imports) {

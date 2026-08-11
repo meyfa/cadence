@@ -914,10 +914,28 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       '& track {',
       '  if true {}',
+      '  if false {} else {}',
       '}'
     ].join('\n')
 
     const result = generateSource(source)
     assert.deepStrictEqual(result.track.parts, [])
+  })
+
+  it('should resolve variables defined in if statements', () => {
+    for (const condition of ['true', 'false']) {
+      const source = [
+        `if ${condition} {`,
+        '  my_tempo = 90.bpm',
+        '} else {',
+        '  my_tempo = 150.bpm',
+        '}',
+        '',
+        '& track (tempo: my_tempo) {}'
+      ].join('\n')
+
+      const result = generateSource(source)
+      assert.strictEqual(result.track.tempo, condition === 'true' ? 90 : 150)
+    }
   })
 })

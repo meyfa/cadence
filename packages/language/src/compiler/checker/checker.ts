@@ -4,11 +4,11 @@ import type { Result } from '../../result/result.ts'
 import type { FunctionSpec } from '../../type-system/base/function.ts'
 import { MixerFacet } from '../../type-system/domain/mixer.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
-import type { FacetType } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
 import { globalBuiltins } from '../builtins/global.ts'
 import { CompileError } from '../error.ts'
 import { checkImports } from './imports.ts'
+import type { Binding } from './scopes.ts'
 import { createGlobalScope, createLocalScope } from './scopes.ts'
 import { checkStatement } from './statements.ts'
 
@@ -40,9 +40,9 @@ export function check (program: ast.Program): CheckResult {
   }
 
   // global builtins win over imported names
-  const initialResolutions = new Map<string, FacetType>(importResult.result)
-  for (const [name, value] of globalBuiltins) {
-    initialResolutions.set(name, value.type)
+  const initialResolutions = new Map<string, Binding>(importResult.result)
+  for (const [name, { type }] of globalBuiltins) {
+    initialResolutions.set(name, { name, type, definite: true })
   }
 
   const globalScope = createGlobalScope(initialResolutions)
@@ -56,10 +56,6 @@ export function check (program: ast.Program): CheckResult {
   for (const child of program.children) {
     const statement = checkStatement(scope, child)
     errors.push(...statement.errors)
-
-    if (statement.properties.size > 0) {
-      errors.push(new CompileError('Cannot expose properties in the global scope', child.range))
-    }
 
     for (const emission of statement.emissions) {
       if (MixerFacet.is(emission.type)) {
@@ -79,6 +75,10 @@ export function check (program: ast.Program): CheckResult {
       }
 
       errors.push(new CompileError(`Unexpected type ${emission.type.format()}, expected track or mixer`, emission.range))
+    }
+
+    if (statement.properties.size > 0) {
+      errors.push(new CompileError('Cannot expose properties in the global scope', child.range))
     }
   }
 

@@ -36,7 +36,7 @@ import { checkArguments } from './arguments.ts'
 import { createBlockChecker } from './blocks.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import { checkParameters } from './parameters.ts'
-import type { Scope } from './scopes.ts'
+import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 import { checkStatement } from './statements.ts'
 
@@ -115,12 +115,23 @@ function expectType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?
 }
 
 function checkIdentifier (scope: Scope, expression: ast.Identifier): Checked<FacetType> {
-  const valueType = resolveInScope(scope, expression.name)
-  if (valueType == null) {
-    return { errors: [new CompileError(`Unknown identifier "${expression.name}"`, expression.range)], capabilities: noCapabilities }
+  const errors: CompileError[] = []
+  const capabilities = noCapabilities
+
+  const binding = resolveInScope(scope, expression.name)
+  if (binding == null) {
+    errors.push(new CompileError(`Unknown identifier "${expression.name}"`, expression.range))
+    return { errors, capabilities }
   }
 
-  return { errors: [], capabilities: noCapabilities, result: valueType }
+  if (!binding.definite) {
+    errors.push(new CompileError(`Identifier "${expression.name}" is not definitely assigned`, expression.range))
+    return { errors, capabilities }
+  }
+
+  const result = binding.type
+
+  return { errors, capabilities, result }
 }
 
 function checkBoolean (scope: Scope, expression: ast.Boolean): Checked<FacetType> {
@@ -353,7 +364,10 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   }
 
   const parameters = parameterCheck.schema
-  setAll(functionScope.resolutions, parameterCheck.types)
+  const bindings = Array.from(parameterCheck.types.entries(), ([name, type]) => {
+    return [name, { name, type, definite: true }] as const
+  })
+  setAll(functionScope.resolutions, bindings)
 
   let hasReturn = false
   let returnType: FacetType | undefined
@@ -443,9 +457,18 @@ const checkVoice = createBlockChecker<ast.Voice>({
   ],
 
   getBindings: (expression) => {
-    return expression.bindings.note != null
-      ? new Map([[expression.bindings.note.name, noteType]])
-      : new Map()
+    const bindings = new Map<string, Binding>()
+
+    if (expression.bindings.note != null) {
+      bindings.set(expression.bindings.note.name, {
+        name: expression.bindings.note.name,
+        type: noteType,
+        definite: true,
+        range: expression.bindings.note.range
+      })
+    }
+
+    return bindings
   }
 })
 

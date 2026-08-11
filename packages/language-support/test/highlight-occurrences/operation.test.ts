@@ -188,4 +188,28 @@ describe('highlight-occurrences/operation.ts', () => {
       ]
     )
   })
+
+  it('highlights conditional bindings and their references', () => {
+    const source = [
+      'if true {',
+      '  foo = 42',
+      '} else {',
+      '  foo = 43',
+      '}',
+      '',
+      'bar = foo',
+      ''
+    ].join('\n')
+
+    const position = source.lastIndexOf('foo') + 1
+
+    assert.deepStrictEqual(
+      applySemanticOperationWithParser(findHighlightedOccurrences, cadenceParser, source, position),
+      [
+        getRangeAt(source, source.indexOf('foo = 42'), 'foo'.length),
+        getRangeAt(source, source.indexOf('foo = 43'), 'foo'.length),
+        getRangeAt(source, source.lastIndexOf('foo'), 'foo'.length)
+      ]
+    )
+  })
 })

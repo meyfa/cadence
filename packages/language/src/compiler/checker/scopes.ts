@@ -1,13 +1,11 @@
-import { ast } from '@meyfa/cadence-ast'
+import type { ast, SourceRange } from '@meyfa/cadence-ast'
 import type { Capabilities, FunctionSpec } from '../../type-system/base/function.ts'
 import type { FacetType } from '../../type-system/types.ts'
-
-// scope types
 
 export interface Scope {
   readonly top: GlobalScope
   readonly parent?: Scope
-  readonly resolutions: ReadonlyMap<string, FacetType>
+  readonly resolutions: ReadonlyMap<string, Binding>
   readonly allowedCapabilities: Capabilities
 }
 
@@ -18,12 +16,17 @@ export interface GlobalScope extends Scope {
 }
 
 export interface MutableScope extends Scope {
-  readonly resolutions: Map<string, FacetType>
+  readonly resolutions: Map<string, Binding>
 }
 
-// factory functions
+export interface Binding {
+  readonly name: string
+  readonly type: FacetType
+  readonly definite: boolean
+  readonly range?: SourceRange
+}
 
-export function createGlobalScope (initialResolutions: ReadonlyMap<string, FacetType>): GlobalScope {
+export function createGlobalScope (initialResolutions: ReadonlyMap<string, Binding>): GlobalScope {
   const scope: GlobalScope = {
     // from Scope
     get top (): GlobalScope {
