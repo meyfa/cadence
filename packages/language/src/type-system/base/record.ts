@@ -34,7 +34,7 @@ function normalizeRecordData<Fields extends RecordGenerics> (data: unknown): Rec
 const EMPTY_RECORD_GENERICS = cloneOwnProperties({} as Record<string, unknown>) as RecordGenerics
 
 function mergeRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGenerics | undefined {
-  const fields: Record<string, FacetType> = {}
+  const fields: Record<string, FacetType> = Object.create(null)
 
   for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
     const aType = a[key]
@@ -56,6 +56,25 @@ function mergeRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGener
   return fields
 }
 
+function intersectRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGenerics | undefined {
+  const fields: Record<string, FacetType> = Object.create(null)
+
+  for (const key of Object.keys(a)) {
+    const aType = a[key]
+    const bType = b[key]
+
+    const intersection = aType != null && bType != null
+      ? aType.intersect(bType)
+      : undefined
+
+    if (intersection != null) {
+      fields[key] = intersection
+    }
+  }
+
+  return fields
+}
+
 function recordWith<const Fields extends RecordGenerics> (fields: Fields): Facet<typeof FACET_NAME, RecordDataForFields<Fields>> {
   const safeFields = cloneOwnProperties(fields)
 
@@ -67,7 +86,9 @@ function recordWith<const Fields extends RecordGenerics> (fields: Fields): Facet
 
       return `{${fields}}`
     },
+
     normalize: (data) => normalizeRecordData<Fields>(data),
+
     merge: (other: Facet) => {
       if (other.name !== FACET_NAME) {
         return undefined
@@ -75,6 +96,15 @@ function recordWith<const Fields extends RecordGenerics> (fields: Fields): Facet
 
       const merged = mergeRecordGenerics(safeFields, other.generics as RecordGenerics)
       return merged == null ? undefined : recordWith(merged)
+    },
+
+    intersect: (other: Facet) => {
+      if (other.name !== FACET_NAME) {
+        return undefined
+      }
+
+      const intersected = intersectRecordGenerics(safeFields, other.generics as RecordGenerics)
+      return intersected == null ? undefined : recordWith(intersected)
     }
   })
 }
@@ -82,8 +112,17 @@ function recordWith<const Fields extends RecordGenerics> (fields: Fields): Facet
 export const RecordFacet = {
   ...makeFacet<typeof FACET_NAME, RecordDataForFields<RecordGenerics>>(FACET_NAME, EMPTY_RECORD_GENERICS, {
     normalize: (data) => normalizeRecordData<RecordGenerics>(data),
-    merge: (other: Facet) => {
+
+    merge: (other: Facet): Facet | undefined => {
+      // The generics of 'this' are unknown, so return the other facet such that
+      // merge(this, other) yields precisely the known fields of other as the most specific safe type.
       return other.name === FACET_NAME ? other : undefined
+    },
+
+    intersect: (other: Facet): Facet | undefined => {
+      // The generics of 'this' are unknown, which makes intersection generally impossible to compute,
+      // so return an empty record type as the most specific safe type.
+      return other.name === FACET_NAME ? recordWith(EMPTY_RECORD_GENERICS) : undefined
     }
   }),
 

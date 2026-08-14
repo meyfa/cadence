@@ -171,6 +171,25 @@ describe('type-system', () => {
       assert.strictEqual((mergedFacet.generics as { generic: number }).generic, 2)
     })
 
+    it('should intersect facets', () => {
+      const collapsedFacet = stringFacet.intersect(stringFacet)
+      assert.strictEqual(collapsedFacet, stringFacet)
+
+      const incompatibleFacet = stringFacet.intersect(numberFacet)
+      assert.strictEqual(incompatibleFacet, undefined)
+
+      const customIntersectFacet = makeFacet<'custom', unknown>('custom', { generic: 1 }, {
+        intersect: (other) => {
+          const otherGeneric = (other.generics as { generic: number }).generic
+          return makeFacet<'custom', unknown>('custom', { generic: otherGeneric + 1 })
+        }
+      })
+
+      const intersectedFacet = customIntersectFacet.intersect(customIntersectFacet)
+      assert.strictEqual(intersectedFacet?.name, 'custom')
+      assert.strictEqual((intersectedFacet.generics as { generic: number }).generic, 2)
+    })
+
     it('should cache the single-facet type returned by type()', () => {
       const facetType = stringFacet.type()
       const facetValue = facetType.of('hello')
@@ -256,9 +275,6 @@ describe('type-system', () => {
     })
 
     it('should merge types with compatible facets', () => {
-      const stringType = makeType(stringFacet)
-      const numberType = makeType(numberFacet)
-
       const stringAndNumberType = stringType.merge(numberType)
       assert.ok(stringAndNumberType != null)
       assert.deepStrictEqual([...stringAndNumberType.facets.keys()], ['string', 'number'])
@@ -273,6 +289,28 @@ describe('type-system', () => {
 
       const incompatibleMerge = decibelType.merge(hertzType)
       assert.strictEqual(incompatibleMerge, undefined)
+    })
+
+    it('should intersect types with compatible facets', () => {
+      const intersectedWithString = stringAndNumberType.intersect(stringType)
+      assert.ok(intersectedWithString != null)
+      assert.deepStrictEqual([...intersectedWithString.facets.keys()], ['string'])
+
+      const intersectedWithNumber = stringAndNumberType.intersect(numberType)
+      assert.ok(intersectedWithNumber != null)
+      assert.deepStrictEqual([...intersectedWithNumber.facets.keys()], ['number'])
+
+      const intersectedSame = stringAndNumberType.intersect(stringAndNumberType)
+      assert.ok(intersectedSame != null)
+      assert.deepStrictEqual([...intersectedSame.facets.keys()], ['string', 'number'])
+
+      const incompatibleIntersect = decibelType.intersect(hertzType)
+      assert.strictEqual(incompatibleIntersect, undefined)
+
+      const stringAndDecibelType = makeType(stringFacet, decibelFacet)
+      const intersectedWithDecibel = stringAndDecibelType.intersect(stringAndNumberType)
+      assert.ok(intersectedWithDecibel != null)
+      assert.deepStrictEqual([...intersectedWithDecibel.facets.keys()], ['string'])
     })
   })
 

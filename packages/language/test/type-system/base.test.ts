@@ -39,6 +39,11 @@ describe('type-system/base', () => {
       assert.strictEqual(BooleanFacet.merge(NumberFacet), undefined)
     })
 
+    it('should intersect by identity', () => {
+      assert.strictEqual(BooleanFacet.intersect(BooleanFacet), BooleanFacet)
+      assert.strictEqual(BooleanFacet.intersect(NumberFacet), undefined)
+    })
+
     it('should create a single-facet type', () => {
       const booleanType = BooleanFacet.type()
       assert.deepStrictEqual([...booleanType.facets.keys()], ['boolean'])
@@ -253,6 +258,129 @@ describe('type-system/base', () => {
       assert.strictEqual(mergedCA, undefined)
     })
 
+    it('should intersect function facets based on assignability of parameters and return types', () => {
+      const noParametersReturnString = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const noParametersReturnStringBlocking = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: true }
+      })
+
+      const oneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: true }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const optionalParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with(undefined).type(), required: false }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const noParametersReturnNumber = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: NumberFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const sameOneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'value', type: NumberFacet.with(undefined).type(), required: true }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const otherOneParameterReturnString = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'amount', type: NumberFacet.with('db').type(), required: true }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const identicalA = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const identicalB = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const broadRecord = RecordFacet.with({ gain: NumberFacet.with('db').type() })
+      const narrowRecord = RecordFacet.with({ gain: NumberFacet.with('db').type(), frequency: NumberFacet.with('hz').type() })
+
+      const broadParameter = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'record', type: broadRecord.type(), required: true }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const narrowParameter = FunctionFacet.with({
+        parameters: makeSchema([{ name: 'record', type: narrowRecord.type(), required: true }]),
+        returnType: StringFacet.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const broadReturn = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: broadRecord.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      const narrowReturn = FunctionFacet.with({
+        parameters: makeSchema([]),
+        returnType: narrowRecord.type(),
+        capabilities: { mayBlock: false }
+      })
+
+      assert.strictEqual(identicalA.intersect(identicalB), identicalA)
+      assert.strictEqual(identicalB.intersect(identicalA), identicalB)
+
+      const intersectedBaseSpecific = FunctionFacet.intersect(noParametersReturnString)
+      assert.ok(intersectedBaseSpecific != null)
+      assert.strictEqual(intersectedBaseSpecific.format(), FunctionFacet.format())
+      assert.strictEqual(intersectedBaseSpecific.is(FunctionFacet), true)
+      assert.strictEqual(FunctionFacet.is(intersectedBaseSpecific), true)
+
+      assert.strictEqual(noParametersReturnString.intersect(FunctionFacet), FunctionFacet)
+
+      assert.strictEqual(noParametersReturnStringBlocking.intersect(noParametersReturnString), noParametersReturnStringBlocking)
+      assert.strictEqual(noParametersReturnString.intersect(noParametersReturnStringBlocking), noParametersReturnStringBlocking)
+
+      assert.strictEqual(oneParameterReturnString.intersect(optionalParameterReturnString), oneParameterReturnString)
+      assert.strictEqual(optionalParameterReturnString.intersect(oneParameterReturnString), oneParameterReturnString)
+
+      assert.strictEqual(noParametersReturnString.intersect(optionalParameterReturnString), noParametersReturnString)
+      assert.strictEqual(optionalParameterReturnString.intersect(noParametersReturnString), noParametersReturnString)
+
+      assert.strictEqual(narrowParameter.intersect(broadParameter), narrowParameter)
+      assert.strictEqual(broadParameter.intersect(narrowParameter), narrowParameter)
+
+      assert.strictEqual(broadReturn.intersect(narrowReturn), broadReturn)
+      assert.strictEqual(narrowReturn.intersect(broadReturn), broadReturn)
+
+      assert.strictEqual(noParametersReturnString.intersect(oneParameterReturnString), undefined)
+      assert.strictEqual(oneParameterReturnString.intersect(noParametersReturnString), undefined)
+
+      assert.strictEqual(oneParameterReturnString.intersect(sameOneParameterReturnString), undefined)
+      assert.strictEqual(sameOneParameterReturnString.intersect(oneParameterReturnString), undefined)
+
+      assert.strictEqual(oneParameterReturnString.intersect(otherOneParameterReturnString), undefined)
+      assert.strictEqual(otherOneParameterReturnString.intersect(oneParameterReturnString), undefined)
+
+      assert.strictEqual(noParametersReturnString.intersect(noParametersReturnNumber), undefined)
+      assert.strictEqual(noParametersReturnNumber.intersect(noParametersReturnString), undefined)
+
+      assert.strictEqual(noParametersReturnString.intersect(StringFacet), undefined)
+    })
+
     it('should create a single-facet type', () => {
       const functionType = FunctionFacet.type()
       assert.deepStrictEqual([...functionType.facets.keys()], ['function'])
@@ -412,6 +540,31 @@ describe('type-system/base', () => {
       assert.strictEqual(mergedDA, undefined)
     })
 
+    it('should intersect number facets with identical units', () => {
+      const facetA = NumberFacet.with('db')
+      const facetB = NumberFacet.with('db')
+      const facetC = NumberFacet.with('hz')
+      const facetD = NumberFacet.with(undefined)
+
+      const intersectionAB = facetA.intersect(facetB)
+      assert.strictEqual(intersectionAB, facetA)
+
+      const intersectionBA = facetB.intersect(facetA)
+      assert.strictEqual(intersectionBA, facetB)
+
+      const intersectionAC = facetA.intersect(facetC)
+      assert.strictEqual(intersectionAC, undefined)
+
+      const intersectionCA = facetC.intersect(facetA)
+      assert.strictEqual(intersectionCA, undefined)
+
+      const intersectionAD = facetA.intersect(facetD)
+      assert.strictEqual(intersectionAD, undefined)
+
+      const intersectionDA = facetD.intersect(facetA)
+      assert.strictEqual(intersectionDA, undefined)
+    })
+
     it('should create a single-facet type', () => {
       const numberType = NumberFacet.type()
       assert.deepStrictEqual([...numberType.facets.keys()], ['number'])
@@ -564,6 +717,100 @@ describe('type-system/base', () => {
       assert.strictEqual(mergedNested.format(), '{foo: {a: (string + number), b: number, c: number.db}}')
     })
 
+    it('should intersect record generics', () => {
+      const emptyRecordFacet = RecordFacet.with({})
+
+      const broadRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('db').type()
+      })
+
+      const narrowRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('db').type(),
+        label: StringFacet.type()
+      })
+
+      const incompatibleRecordFacet = RecordFacet.with({
+        gain: NumberFacet.with('hz').type(),
+        label: StringFacet.type()
+      })
+
+      const labelRecordFacet = RecordFacet.with({
+        label: StringFacet.type()
+      })
+
+      const intersectedEmptyEmpty = emptyRecordFacet.intersect(emptyRecordFacet)
+      assert.ok(intersectedEmptyEmpty != null)
+      assert.strictEqual(intersectedEmptyEmpty.name, 'record')
+      assert.deepStrictEqual(intersectedEmptyEmpty.generics, emptyRecordFacet.generics)
+
+      const intersectedBroadBroad = broadRecordFacet.intersect(broadRecordFacet)
+      assert.ok(intersectedBroadBroad != null)
+      assert.strictEqual(intersectedBroadBroad.name, 'record')
+      assert.deepStrictEqual(intersectedBroadBroad.generics, broadRecordFacet.generics)
+
+      const intersectedNarrowNarrow = narrowRecordFacet.intersect(narrowRecordFacet)
+      assert.ok(intersectedNarrowNarrow != null)
+      assert.strictEqual(intersectedNarrowNarrow.name, 'record')
+      assert.deepStrictEqual(intersectedNarrowNarrow.generics, narrowRecordFacet.generics)
+
+      const intersectedBroadNarrow = broadRecordFacet.intersect(narrowRecordFacet)
+      assert.ok(intersectedBroadNarrow != null)
+      assert.strictEqual(intersectedBroadNarrow.name, 'record')
+      assert.deepStrictEqual(intersectedBroadNarrow.generics, broadRecordFacet.generics)
+
+      const intersectedNarrowBroad = narrowRecordFacet.intersect(broadRecordFacet)
+      assert.ok(intersectedNarrowBroad != null)
+      assert.strictEqual(intersectedNarrowBroad.name, 'record')
+      assert.deepStrictEqual(intersectedNarrowBroad.generics, broadRecordFacet.generics)
+
+      const intersectedBroadIncompatible = broadRecordFacet.intersect(incompatibleRecordFacet)
+      assert.ok(intersectedBroadIncompatible != null)
+      assert.strictEqual(intersectedBroadIncompatible.name, 'record')
+      assert.deepStrictEqual(intersectedBroadIncompatible.generics, emptyRecordFacet.generics)
+
+      const intersectedIncompatibleBroad = incompatibleRecordFacet.intersect(broadRecordFacet)
+      assert.ok(intersectedIncompatibleBroad != null)
+      assert.strictEqual(intersectedIncompatibleBroad.name, 'record')
+      assert.deepStrictEqual(intersectedIncompatibleBroad.generics, emptyRecordFacet.generics)
+
+      const intersectedNarrowIncompatible = narrowRecordFacet.intersect(incompatibleRecordFacet)
+      assert.ok(intersectedNarrowIncompatible != null)
+      assert.strictEqual(intersectedNarrowIncompatible.name, 'record')
+      assert.deepStrictEqual(intersectedNarrowIncompatible.generics, labelRecordFacet.generics)
+
+      const intersectedIncompatibleNarrow = incompatibleRecordFacet.intersect(narrowRecordFacet)
+      assert.ok(intersectedIncompatibleNarrow != null)
+      assert.strictEqual(intersectedIncompatibleNarrow.name, 'record')
+      assert.deepStrictEqual(intersectedIncompatibleNarrow.generics, labelRecordFacet.generics)
+
+      const intersectedEmptyOther = emptyRecordFacet.intersect(StringFacet)
+      assert.strictEqual(intersectedEmptyOther, undefined)
+
+      const intersectedBroadOther = broadRecordFacet.intersect(StringFacet)
+      assert.strictEqual(intersectedBroadOther, undefined)
+
+      const nestedRecordFacet0 = RecordFacet.with({
+        foo: RecordFacet.with({
+          a: StringFacet.type(),
+          b: NumberFacet.with(undefined).type()
+        }).type()
+      })
+
+      const nestedRecordFacet1 = RecordFacet.with({
+        foo: RecordFacet.with({
+          a: StringFacet.type(),
+          c: NumberFacet.with('db').type()
+        }).type()
+      })
+
+      const intersectedNested = nestedRecordFacet0.intersect(nestedRecordFacet1)
+      assert.ok(intersectedNested != null)
+      assert.strictEqual(intersectedNested.name, 'record')
+      assert.deepStrictEqual(Object.keys(intersectedNested.generics), ['foo'])
+
+      assert.strictEqual(intersectedNested.format(), '{foo: {a: string}}')
+    })
+
     it('should create a single-facet type', () => {
       const recordType = RecordFacet.type()
       assert.deepStrictEqual([...recordType.facets.keys()], ['record'])
@@ -653,6 +900,11 @@ describe('type-system/base', () => {
     it('should merge by identity', () => {
       assert.strictEqual(StringFacet.merge(StringFacet), StringFacet)
       assert.strictEqual(StringFacet.merge(NumberFacet), undefined)
+    })
+
+    it('should intersect by identity', () => {
+      assert.strictEqual(StringFacet.intersect(StringFacet), StringFacet)
+      assert.strictEqual(StringFacet.intersect(NumberFacet), undefined)
     })
 
     it('should create a single-facet type', () => {
