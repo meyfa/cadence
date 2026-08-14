@@ -5,6 +5,7 @@ export interface FacetOptions<Data = unknown> {
   readonly format?: () => string
   readonly normalize?: (data: unknown) => Data
   readonly merge?: (other: Facet) => Facet | undefined
+  readonly intersect?: (other: Facet) => Facet | undefined
 }
 
 export function makeFacet<const Name extends string, Data> (
@@ -40,17 +41,8 @@ export function makeFacet<const Name extends string, Data> (
       return value.data.get(facet.name) as SpecificFacetDataForValue<V, Name, Data>
     },
 
-    merge: options?.merge ?? ((other: Facet) => {
-      if (facet.name !== other.name) {
-        return undefined
-      }
-
-      if (isFacetAssignableFromFacet(facet, other) && isFacetAssignableFromFacet(other, facet)) {
-        return facet
-      }
-
-      return undefined
-    }),
+    merge: options?.merge ?? ((other: Facet) => mergeFacets(facet, other)),
+    intersect: options?.intersect ?? ((other: Facet) => intersectFacets(facet, other)),
 
     type: () => {
       cachedType ??= makeType(facet)
@@ -61,6 +53,34 @@ export function makeFacet<const Name extends string, Data> (
   }
 
   return facet
+}
+
+function mergeFacets (facet: Facet, other: Facet): Facet | undefined {
+  if (facet.name !== other.name) {
+    return undefined
+  }
+
+  if (isFacetAssignableFromFacet(facet, other) && isFacetAssignableFromFacet(other, facet)) {
+    return facet
+  }
+
+  return undefined
+}
+
+function intersectFacets (facet: Facet, other: Facet): Facet | undefined {
+  if (facet.name !== other.name) {
+    return undefined
+  }
+
+  if (isFacetAssignableFromFacet(facet, other)) {
+    return facet
+  }
+
+  if (isFacetAssignableFromFacet(other, facet)) {
+    return other
+  }
+
+  return undefined
 }
 
 export function makeType<const Facets extends readonly Facet[]> (
@@ -104,32 +124,8 @@ export function makeType<const Facets extends readonly Facet[]> (
       return { type, data: dataMap }
     },
 
-    merge: (other: FacetType): FacetType | undefined => {
-      if (other === type) {
-        return type
-      }
-
-      const mergedFacets: Facet[] = []
-
-      for (const name of new Set([...type.facets.keys(), ...other.facets.keys()])) {
-        const a = type.facets.get(name)
-        const b = other.facets.get(name)
-
-        if (a != null && b != null) {
-          const merged = a.merge(b)
-          if (merged == null) {
-            return undefined
-          }
-          mergedFacets.push(merged)
-        } else if (a != null) {
-          mergedFacets.push(a)
-        } else if (b != null) {
-          mergedFacets.push(b)
-        }
-      }
-
-      return makeType(...mergedFacets)
-    },
+    merge: (other: FacetType): FacetType | undefined => mergeFacetTypes(type, other),
+    intersect: (other: FacetType): FacetType | undefined => intersectFacetTypes(type, other),
 
     getFacet: (name: string): Facets[number] => {
       const facet = type.facets.get(name)
@@ -141,6 +137,61 @@ export function makeType<const Facets extends readonly Facet[]> (
   } satisfies FacetType<Facets>
 
   return type
+}
+
+function mergeFacetTypes (type: FacetType, other: FacetType): FacetType | undefined {
+  if (other === type) {
+    return type
+  }
+
+  const resultFacets: Facet[] = []
+
+  for (const name of new Set([...type.facets.keys(), ...other.facets.keys()])) {
+    const a = type.facets.get(name)
+    const b = other.facets.get(name)
+
+    if (a != null && b != null) {
+      const merged = a.merge(b)
+      if (merged == null) {
+        return undefined
+      }
+      resultFacets.push(merged)
+    } else if (a != null) {
+      resultFacets.push(a)
+    } else if (b != null) {
+      resultFacets.push(b)
+    }
+  }
+
+  return makeType(...resultFacets)
+}
+
+function intersectFacetTypes (type: FacetType, other: FacetType): FacetType | undefined {
+  if (other === type) {
+    return type
+  }
+
+  const resultFacets: Facet[] = []
+
+  for (const [name, a] of type.facets) {
+    const b = other.facets.get(name)
+    if (b == null) {
+      continue
+    }
+
+    const intersected = a.intersect(b)
+    if (intersected == null) {
+      continue
+    }
+
+    resultFacets.push(intersected)
+  }
+
+  if (resultFacets.length === 0) {
+    return undefined
+  }
+
+  return makeType(...resultFacets)
 }
 
 export function makeUnion<const Members extends readonly FacetType[]> (
