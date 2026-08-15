@@ -272,6 +272,20 @@ describe('compiler/checker/checker.ts', () => {
       assertValid(source)
     })
 
+    it('should accept function definitions with optional parameters', () => {
+      const source = [
+        'my_function = (param0: number.hz, param1?: number, param2?: string) {',
+        '  & param0',
+        '}',
+        '',
+        'foo = my_function(440.hz)',
+        'bar = my_function(440.hz, 2)',
+        'baz = my_function(440.hz, 2, "hello")'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
     it('should accept higher-order functions', () => {
       const source = [
         'apply = (fn: (arg: number.bpm): number.bpm, value: number) {',
@@ -279,6 +293,18 @@ describe('compiler/checker/checker.ts', () => {
         '}',
         '',
         'foo = apply((arg: number.bpm) { & arg * 2 }, 120)'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept higher-order functions with optional parameters', () => {
+      const source = [
+        'apply = (fn: (arg: number.bpm, optional_arg?: number): number.bpm, value: number) {',
+        '  & fn(value.bpm)',
+        '}',
+        '',
+        'foo = apply((arg: number.bpm, optional_arg?: number) { & arg * 2 }, 120)'
       ].join('\n')
 
       assertValid(source)
@@ -1415,6 +1441,18 @@ describe('compiler/checker/checker.ts', () => {
       ])
     })
 
+    it('should reject property exposure in functions', () => {
+      const source = [
+        'f = () {',
+        '  & @foo = 42',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Cannot expose properties in a function'
+      ])
+    })
+
     it('should reject invalid type expressions', () => {
       const source = [
         'func0 = (p: invalid_type) { & p }',
@@ -1548,6 +1586,19 @@ describe('compiler/checker/checker.ts', () => {
         'Identifier "foo" is not definitely assigned',
         'Identifier "x" is not definitely assigned',
         'Identifier "y" is not definitely assigned'
+      ])
+    })
+
+    it('should reject unchecked access to optional parameters', () => {
+      const source = [
+        'my_function = (a: number, b?: number) {',
+        '  & 42',
+        '  foo = a + b',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Identifier "b" is not definitely assigned'
       ])
     })
 

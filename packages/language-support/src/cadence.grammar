@@ -31,6 +31,7 @@
   "@"
 
   "!"
+  "?"
 
   @precedence { Comment, "/" }
 }
@@ -135,7 +136,7 @@ parameterList {
 }
 
 parameter {
-  VariableDefinition ":" Type
+  VariableDefinition "?"? ":" Type
 }
 
 Type {

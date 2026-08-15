@@ -415,11 +415,22 @@ const type_: p.Parser<Token, unknown, ast.Type> = p.leftAssoc2(
 )
 
 const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
-  identifier_,
+  combine2(
+    identifier_,
+    p.option(
+      literal('?'),
+      undefined
+    )
+  ),
   literal(':'),
   type_,
-  (name, _colon, parameterType) => {
-    return ast.make('Parameter', combineSourceRanges(name, parameterType), { name, parameterType })
+  ([name, _opt], _colon, parameterType) => {
+    const optional = _opt != null
+    return ast.make('Parameter', combineSourceRanges(name, parameterType), {
+      name,
+      parameterType,
+      optional
+    })
   }
 )
 
