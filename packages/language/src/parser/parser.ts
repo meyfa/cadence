@@ -538,6 +538,10 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
     p.eitherOr(literal('+'), literal('-')),
     p.recursive(() => unaryExpression_),
     (op, operand) => {
+      if (!ast.isUnaryOperator(op.text)) {
+        throw new ParseError(`Unexpected operator: "${op.text}"`, getSourceRange(op))
+      }
+
       // If it's a numeric literal, fold the unary operator directly
       if (operand.type === 'Number') {
         return ast.make('Number', combineSourceRanges(op, operand), {
@@ -546,7 +550,7 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
       }
 
       return ast.make('UnaryExpression', combineSourceRanges(op, operand), {
-        operator: op.text as ast.UnaryOperator,
+        operator: op.text,
         operand
       })
     }
@@ -555,8 +559,12 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
 )
 
 function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
+  if (!ast.isBinaryOperator(operator.text)) {
+    throw new ParseError(`Unexpected operator: "${operator.text}"`, getSourceRange(operator))
+  }
+
   return ast.make('BinaryExpression', combineSourceRanges(left, right), {
-    operator: operator.text as ast.BinaryOperator,
+    operator: operator.text,
     left,
     right
   })
@@ -582,8 +590,18 @@ const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAsso
   multiplicativeExpression_
 )
 
+// additive ((==|!=) additive)*
+const comparisonExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+  additiveExpression_,
+  p.map(
+    p.satisfy((t) => t.name === '==' || t.name === '!='),
+    (op) => makeBinaryExpression.bind(undefined, op)
+  ),
+  additiveExpression_
+)
+
 // The top-level expression parser
-const optionalExpression_: p.Parser<Token, unknown, ast.Expression> = additiveExpression_
+const optionalExpression_: p.Parser<Token, unknown, ast.Expression> = comparisonExpression_
 const expression_: p.Parser<Token, unknown, ast.Expression> = expect(
   optionalExpression_,
   'expression'

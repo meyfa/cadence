@@ -1027,4 +1027,62 @@ describe('compiler/generator/generator.ts', () => {
       assert.strictEqual(result.track.tempo, expected)
     }
   })
+
+  it('should support equality comparisons for numbers', () => {
+    type TestCase = readonly [number, number]
+
+    const testCases: readonly TestCase[] = [
+      [1, 100],
+      [2, 200],
+      [3, 300]
+    ]
+
+    for (const [input, expected] of testCases) {
+      const source = [
+        'fn_number = (x: number) {',
+        '  if x == 1 {',
+        '    & 100.bpm',
+        '  }, x == 2 {',
+        '    & 200.bpm',
+        '  }, else {',
+        '    & 300.bpm',
+        '  }',
+        '}',
+        '',
+        `& track (tempo: fn_number(${input})) {}`
+      ].join('\n')
+
+      const result = generateSource(source)
+      assert.strictEqual(result.track.tempo, expected)
+    }
+  })
+
+  it('should support equality comparisons for strings', () => {
+    type TestCase = readonly [string, number]
+
+    const testCases: readonly TestCase[] = [
+      ['one', 100],
+      ['two', 200],
+      ['three', 300]
+    ]
+
+    for (const [input, expected] of testCases) {
+      const source = [
+        'fn_string = (x: string) {',
+        '  if x == "one" {',
+        '    & 100.bpm',
+        '  }, x == "two" {',
+        '    & 200.bpm',
+        '  }, else {',
+        '    & 300.bpm',
+        '  }',
+        '}',
+        '',
+        `& track (tempo: fn_string("${input}")) {}`
+      ].join('\n')
+
+      const result = generateSource(source)
+      assert.strictEqual(result.track.tempo, expected)
+    }
+  })
 })

@@ -322,6 +322,138 @@ describe('parser/parser.ts', () => {
     ])
   })
 
+  it('should parse comparison expressions', () => {
+    const source = [
+      'a = 1 == 2',
+      'b = 3 != 4',
+      'c = 5 == 5 == true',
+      'c = 6 == 6 != false'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'a' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '==',
+            left: { type: 'Number', value: 1 },
+            right: { type: 'Number', value: 2 }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'b' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '!=',
+            left: { type: 'Number', value: 3 },
+            right: { type: 'Number', value: 4 }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'c' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '==',
+            left: {
+              type: 'BinaryExpression',
+              operator: '==',
+              left: { type: 'Number', value: 5 },
+              right: { type: 'Number', value: 5 }
+            },
+            right: { type: 'Boolean', value: true }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'c' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '!=',
+            left: {
+              type: 'BinaryExpression',
+              operator: '==',
+              left: { type: 'Number', value: 6 },
+              right: { type: 'Number', value: 6 }
+            },
+            right: { type: 'Boolean', value: false }
+          }
+        ]
+      }
+    ])
+  })
+
+  it('should use operator precedence for mixed binary expressions', () => {
+    const source = [
+      'a = 1 + 2 == 3',
+      'b = 4 == 5 + 6'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'a' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '==',
+            left: {
+              type: 'BinaryExpression',
+              operator: '+',
+              left: { type: 'Number', value: 1 },
+              right: { type: 'Number', value: 2 }
+            },
+            right: { type: 'Number', value: 3 }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'b' },
+        values: [
+          {
+            type: 'BinaryExpression',
+            operator: '==',
+            left: { type: 'Number', value: 4 },
+            right: {
+              type: 'BinaryExpression',
+              operator: '+',
+              left: { type: 'Number', value: 5 },
+              right: { type: 'Number', value: 6 }
+            }
+          }
+        ]
+      }
+    ])
+  })
+
   it('should parse unit suffixes', () => {
     const source = [
       'offset = -1.5.ms',

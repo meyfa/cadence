@@ -1,4 +1,5 @@
-import { ast, getEmptySourceRange, type SourceRange } from '@meyfa/cadence-ast'
+import type { SourceRange } from '@meyfa/cadence-ast'
+import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
@@ -786,6 +787,19 @@ describe('compiler/checker/checker.ts', () => {
         '    @bar = foo + 1',
         '  }',
         '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow valid equality comparisons', () => {
+      const source = [
+        'number_eq = 42 == 100',
+        'number_neq = 42 != 100',
+        'string_eq = "hello" == "world"',
+        'string_neq = "hello" != "world"',
+        'boolean_eq = true == false',
+        'boolean_neq = true != false'
       ].join('\n')
 
       assertValid(source)
@@ -1838,6 +1852,66 @@ describe('compiler/checker/checker.ts', () => {
       assertErrorMessages(source, [
         'Incompatible types for identifier "foo" in conditional branches: number, string',
         'Incompatible types for property "foo" in conditional branches: number, string'
+      ])
+    })
+
+    it('should reject invalid equality comparisons', () => {
+      const source = [
+        'number_string_eq = 42 == "hello"',
+        'number_string_neq = 42 != "hello"',
+
+        'string_number_eq = "hello" == 42',
+        'string_number_neq = "hello" != 42',
+
+        'boolean_string_eq = true == "hello"',
+        'boolean_string_neq = true != "hello"',
+
+        'number_boolean_eq = 42 == true',
+        'number_boolean_neq = 42 != true',
+
+        'number_generics_eq = 42 == 10.hz',
+        'number_generics_neq = 42 != 10.hz'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Incompatible operands for "==": number, string',
+        'Incompatible operands for "!=": number, string',
+
+        'Incompatible operands for "==": string, number',
+        'Incompatible operands for "!=": string, number',
+
+        'Incompatible operands for "==": boolean, string',
+        'Incompatible operands for "!=": boolean, string',
+
+        'Incompatible operands for "==": number, boolean',
+        'Incompatible operands for "!=": number, boolean',
+
+        'Incompatible operands for "==": number, number.hz',
+        'Incompatible operands for "!=": number, number.hz'
+      ])
+    })
+
+    it('should reject equality comparisons between records', () => {
+      const source = [
+        'record_record_eq = {} == {}',
+        'record_record_neq = {} != {}',
+
+        'empty = {}',
+        'empty_self_eq = empty == empty',
+        'empty_self_neq = empty != empty',
+        '',
+        'non_empty = { @foo = 42 }',
+        'non_empty_self_eq = non_empty == non_empty',
+        'non_empty_self_neq = non_empty != non_empty'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Incompatible operands for "==": {}, {}',
+        'Incompatible operands for "!=": {}, {}',
+        'Incompatible operands for "==": {}, {}',
+        'Incompatible operands for "!=": {}, {}',
+        'Incompatible operands for "==": {foo: number}, {foo: number}',
+        'Incompatible operands for "!=": {foo: number}, {foo: number}'
       ])
     })
   })
