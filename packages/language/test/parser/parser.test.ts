@@ -189,6 +189,139 @@ describe('parser/parser.ts', () => {
     assert.strictEqual(result.complete, false)
   })
 
+  it('should parse binary expressions', () => {
+    const source = [
+      'a = 1 + 2 * 3 + 4 / 5',
+      'b = 1 * 2 + 3 / 4 - 5'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'a' },
+        values: [
+          // 1 + 2 * 3 + 4 / 5
+          {
+            type: 'BinaryExpression',
+            operator: '+',
+            left: {
+              type: 'BinaryExpression',
+              operator: '+',
+              left: { type: 'Number', value: 1 },
+              right: {
+                type: 'BinaryExpression',
+                operator: '*',
+                left: { type: 'Number', value: 2 },
+                right: { type: 'Number', value: 3 }
+              }
+            },
+            right: {
+              type: 'BinaryExpression',
+              operator: '/',
+              left: { type: 'Number', value: 4 },
+              right: { type: 'Number', value: 5 }
+            }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'b' },
+        values: [
+          // 1 * 2 + 3 / 4 - 5
+          {
+            type: 'BinaryExpression',
+            operator: '-',
+            left: {
+              type: 'BinaryExpression',
+              operator: '+',
+              left: {
+                type: 'BinaryExpression',
+                operator: '*',
+                left: { type: 'Number', value: 1 },
+                right: { type: 'Number', value: 2 }
+              },
+              right: {
+                type: 'BinaryExpression',
+                operator: '/',
+                left: { type: 'Number', value: 3 },
+                right: { type: 'Number', value: 4 }
+              }
+            },
+            right: { type: 'Number', value: 5 }
+          }
+        ]
+      }
+    ])
+  })
+
+  it('should parse unary expressions', () => {
+    const source = [
+      'a = -(---3)',
+      'b = +4',
+      'c = -a',
+      'd = +b'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'a' },
+        values: [
+          // operators have been folded into the value itself
+          { type: 'Number', value: 3 }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'b' },
+        values: [
+          { type: 'Number', value: 4 }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'c' },
+        values: [
+          {
+            type: 'UnaryExpression',
+            operator: '-',
+            operand: { type: 'Identifier', name: 'a' }
+          }
+        ]
+      },
+      {
+        type: 'SimpleStatement',
+        emit: false,
+        expose: false,
+        name: { type: 'Identifier', name: 'd' },
+        values: [
+          {
+            type: 'UnaryExpression',
+            operator: '+',
+            operand: { type: 'Identifier', name: 'b' }
+          }
+        ]
+      }
+    ])
+  })
+
   it('should parse unit suffixes', () => {
     const source = [
       'offset = -1.5.ms',
