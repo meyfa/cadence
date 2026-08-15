@@ -208,7 +208,7 @@ describe('lexer/lexer.ts', () => {
   })
 
   it('should lex complex function signatures', () => {
-    const result = lex('apply = (fn: (a: number): number !may_block) {}')
+    const result = lex('apply = (fn: (a: number): number !may_block, param?: string) {}')
     assert.deepStrictEqual(stripTokenMeta(result), {
       complete: true,
       value: [
@@ -226,6 +226,11 @@ describe('lexer/lexer.ts', () => {
         { name: 'word', text: 'number' },
         { name: '!', text: '!' },
         { name: 'word', text: 'may_block' },
+        { name: ',', text: ',' },
+        { name: 'word', text: 'param' },
+        { name: '?', text: '?' },
+        { name: ':', text: ':' },
+        { name: 'word', text: 'string' },
         { name: ')', text: ')' },
         { name: '{', text: '{' },
         { name: '}', text: '}' }

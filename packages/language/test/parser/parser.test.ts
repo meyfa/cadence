@@ -989,7 +989,8 @@ describe('parser/parser.ts', () => {
                   generics: [
                     { type: 'Identifier', name: 'db' }
                   ]
-                }
+                },
+                optional: false
               },
               {
                 type: 'Parameter',
@@ -998,7 +999,8 @@ describe('parser/parser.ts', () => {
                   type: 'NamedType',
                   name: { type: 'Identifier', name: 'string' },
                   generics: []
-                }
+                },
+                optional: false
               }
             ],
             children: [
@@ -1035,7 +1037,8 @@ describe('parser/parser.ts', () => {
         parameterType: {
           type: 'RecordType',
           properties: []
-        }
+        },
+        optional: false
       }
     ])
   })
@@ -1058,7 +1061,8 @@ describe('parser/parser.ts', () => {
           type: 'NamedType',
           name: { type: 'Identifier', name: 'track' },
           generics: []
-        }
+        },
+        optional: false
       },
       {
         type: 'Parameter',
@@ -1067,7 +1071,8 @@ describe('parser/parser.ts', () => {
           type: 'NamedType',
           name: { type: 'Identifier', name: 'part' },
           generics: []
-        }
+        },
+        optional: false
       },
       {
         type: 'Parameter',
@@ -1076,14 +1081,15 @@ describe('parser/parser.ts', () => {
           type: 'NamedType',
           name: { type: 'Identifier', name: 'instrument' },
           generics: []
-        }
+        },
+        optional: false
       }
     ])
   })
 
   it('should parse complex type expressions', () => {
     const source = [
-      'foo = (x: number.db + (format: string): string, fmt: string) {}',
+      'foo = (x: number.db + (format: string): string, fmt?: string) {}',
       'bar = (y: ((number.db) + (format: string): (string + string))) {}',
       'baz = (z: (): instrument !hello !world + {foo: number, bar: string}) {}'
     ].join('\n')
@@ -1121,7 +1127,8 @@ describe('parser/parser.ts', () => {
                     type: 'NamedType',
                     name: { type: 'Identifier', name: 'string' },
                     generics: []
-                  }
+                  },
+                  optional: false
                 }
               ],
               returnType: {
@@ -1132,7 +1139,8 @@ describe('parser/parser.ts', () => {
               capabilities: []
             }
           ]
-        }
+        },
+        optional: false
       },
       {
         type: 'Parameter',
@@ -1141,7 +1149,8 @@ describe('parser/parser.ts', () => {
           type: 'NamedType',
           name: { type: 'Identifier', name: 'string' },
           generics: []
-        }
+        },
+        optional: true
       }
     ])
 
@@ -1175,7 +1184,8 @@ describe('parser/parser.ts', () => {
                     type: 'NamedType',
                     name: { type: 'Identifier', name: 'string' },
                     generics: []
-                  }
+                  },
+                  optional: false
                 }
               ],
               returnType: {
@@ -1196,7 +1206,8 @@ describe('parser/parser.ts', () => {
               capabilities: []
             }
           ]
-        }
+        },
+        optional: false
       }
     ])
 
@@ -1250,7 +1261,8 @@ describe('parser/parser.ts', () => {
               ]
             }
           ]
-        }
+        },
+        optional: false
       }
     ])
   })
@@ -1286,7 +1298,8 @@ describe('parser/parser.ts', () => {
             ]
           },
           capabilities: []
-        }
+        },
+        optional: false
       }
     ])
   })

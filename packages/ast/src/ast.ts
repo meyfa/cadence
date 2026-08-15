@@ -197,6 +197,7 @@ export interface Parameter extends ASTNode {
   readonly type: 'Parameter'
   readonly name: Identifier
   readonly parameterType: Type
+  readonly optional: boolean
 }
 
 // Type Expressions

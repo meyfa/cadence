@@ -382,10 +382,7 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   }
 
   const parameters = parameterCheck.schema
-  const bindings = Array.from(parameterCheck.types.entries(), ([name, type]) => {
-    return [name, { name, type, definite: true }] as const
-  })
-  setAll(functionScope.resolutions, bindings)
+  setAll(functionScope.resolutions, parameterCheck.bindings)
 
   const emissions: MutableEmissions = new Map()
   let callCapabilities = noCapabilities
