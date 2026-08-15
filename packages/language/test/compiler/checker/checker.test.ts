@@ -433,8 +433,10 @@ describe('compiler/checker/checker.ts', () => {
     it('should allow instruments as sources in bus', () => {
       const source = [
         'use "instruments" as *',
+        '',
         'kick = sample("kick.wav")',
         'synth = sample("synth.wav")',
+        '',
         '& mixer {',
         '  & bus {',
         '    & kick',
@@ -452,6 +454,21 @@ describe('compiler/checker/checker.ts', () => {
         '& mixer {',
         '  & bus0 = bus {}',
         '  & bus { & bus0 }',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should accept both instruments and buses as sources in bus', () => {
+      const source = [
+        'inst = instrument {}',
+        '& mixer {',
+        '  & bus0 = bus {}',
+        '  & bus {',
+        '    & inst',
+        '    & bus0',
+        '  }',
         '}'
       ].join('\n')
 
@@ -627,12 +644,73 @@ describe('compiler/checker/checker.ts', () => {
 
       assertValid(source)
     })
+
+    it('should allow emission within if statements', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'if true {',
+        '  & track (123.bpm) {}',
+        '} else {',
+        '  & track (234.bpm) {}',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should allow conditional function returns of the same type', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & 42',
+        '  } else {',
+        '    & 100',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertValid(source)
+    })
+
+    it('should intersect types of conditional function returns', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & instrument {',
+        '      @foo = 42',
+        '      @bar = "hello"',
+        '    }',
+        '  } else {',
+        '    & instrument {',
+        '      @foo = 100',
+        '      @baz = 3.db',
+        '    }',
+        '  }',
+        '}',
+        '',
+        'access_foo = my_function().foo',
+        'access_instrument = play(my_function(), [C5])'
+      ].join('\n')
+
+      assertValid(source)
+    })
   })
 
   describe('invalid', () => {
     it('should reject number literals with invalid units', () => {
       assertErrorMessages('foo = 120.unknownunit', [
         'Unknown unit "unknownunit"'
+      ])
+    })
+
+    it('should reject addition of incompatible types', () => {
+      const source = [
+        'foo = 42 + "hello"'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Incompatible operands for "+": number, string'
       ])
     })
 
@@ -778,7 +856,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple tracks'
+        'Duplicate emission into slot "track" of type track which accepts at most one value'
       ])
     })
 
@@ -958,7 +1036,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Multiple mixers'
+        'Duplicate emission into slot "mixer" of type mixer which accepts at most one value'
       ])
     })
 
@@ -1405,21 +1483,152 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Incompatible types for "foo" in conditional branches: number and string'
+        'Incompatible types for "foo" in conditional branches: number, string'
       ])
     })
 
-    it('should reject emissions within if statements', () => {
-      // TODO Remove this test once checking is implemented for emission
+    it('should reject conditional emission with minimum less than 1 for required slots', () => {
       const source = [
-        'if true { & 100 }',
-        'if false { & 101 } else { & 102 }'
+        'use "sources" as src',
+        '',
+        'foo = instrument {',
+        '  & voice {',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    if true { & src.sine(440.hz) }',
+        '  }',
+        '}'
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Emissions in conditional branches are not yet supported', // 100
-        'Emissions in conditional branches are not yet supported', // 101
-        'Emissions in conditional branches are not yet supported' // 102
+        'Expected at least one emission into slot "output" of type source'
+      ])
+    })
+
+    it('should reject conditional emission with maximum greater than 1 for single-value slots', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'foo = instrument {',
+        '  & voice {',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    if true {',
+        '      & src.sine(440.hz)',
+        '      & src.sine(880.hz)',
+        '    } else {',
+        '      & src.sine(1760.hz)',
+        '    }',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate emission into slot "output" of type source which accepts at most one value'
+      ])
+    })
+
+    it('should reject conditional emission when the maximum has already been reached', () => {
+      const source = [
+        'use "sources" as src',
+        '',
+        'foo = instrument {',
+        '  & voice {',
+        '    & ~[lin(0.db, -60.db):100.ms]',
+        '    & src.sine(440.hz)',
+        '    if true { & src.sine(880.hz) }',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Duplicate emission into slot "output" of type source which accepts at most one value'
+      ])
+    })
+
+    it('should reject functions that do not return a value in all conditional branches', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & 42',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Function must return exactly one value, but can return zero values'
+      ])
+    })
+
+    it('should reject functions that return more than one value in any conditional branch', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & 42',
+        '  } else {',
+        '    & 100',
+        '    & 200',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Function must return exactly one value, but can return more than one value'
+      ])
+    })
+
+    it('should reject functions that already return a value before a conditional return', () => {
+      const source = [
+        'my_function = () {',
+        '  & 42',
+        '  if true {',
+        '    & 100',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Function must return exactly one value, but can return more than one value'
+      ])
+    })
+
+    it('should reject incompatible function return types in conditional branches', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & 42.bpm',
+        '  } else {',
+        '    & 100.hz',
+        '  }',
+        '}'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Incompatible types for slot "return" in conditional branches: number.bpm, number.hz'
+      ])
+    })
+
+    it('should reject access to properties not part of the intersection of conditional branches', () => {
+      const source = [
+        'my_function = () {',
+        '  if true {',
+        '    & instrument {',
+        '      @foo = 42',
+        '      @bar = "hello"',
+        '    }',
+        '  } else {',
+        '    & instrument {',
+        '      @foo = 100',
+        '      @baz = 3.db',
+        '    }',
+        '  }',
+        '}',
+        '',
+        'access_bar = my_function().bar',
+        'access_baz = my_function().baz'
+      ].join('\n')
+
+      assertErrorMessages(source, [
+        'Type (instrument + {foo: number}) has no property named "bar"',
+        'Type (instrument + {foo: number}) has no property named "baz"'
       ])
     })
 

@@ -938,4 +938,47 @@ describe('compiler/generator/generator.ts', () => {
       assert.strictEqual(result.track.tempo, condition === 'true' ? 90 : 150)
     }
   })
+
+  it('should use emissions from conditional branches', () => {
+    const source = [
+      'if true {',
+      '  & track (123.bpm) {}',
+      '} else {',
+      '  & track (234.bpm) {}',
+      '}',
+      '',
+      '& mixer {',
+      '  if false {',
+      '    & bus (gain: -6.db) {}',
+      '  } else {',
+      '    & bus (gain: -12.db) {}',
+      '  }',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.track.tempo, 123)
+    assert.strictEqual(result.mixer.buses[0].gain.initial, db(-12))
+  })
+
+  it('should support conditional function returns', () => {
+    const source = [
+      'my_function = (condition: boolean) {',
+      '  if condition {',
+      '    & -6.db',
+      '  } else {',
+      '    & -10.db',
+      '  }',
+      '}',
+      '',
+      '& mixer {',
+      '  & bus (gain: my_function(true)) {}',
+      '  & bus (gain: my_function(false)) {}',
+      '}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.mixer.buses[0].gain.initial, db(-6))
+    assert.strictEqual(result.mixer.buses[1].gain.initial, db(-10))
+  })
 })

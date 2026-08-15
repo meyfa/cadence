@@ -24,6 +24,7 @@ import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeUnion } from '../../type-system/factory.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
+import { nonNull } from '../assert.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
 import { busSchema, instrumentSchema, mixerSchema, noteType, partSchema, stepSchema, trackSchema } from '../common.ts'
 import { getCurveSegmentType } from '../curves.ts'
@@ -35,9 +36,12 @@ import { isSyntaxUnit, toBaseUnit } from '../units.ts'
 import { checkArguments } from './arguments.ts'
 import { createBlockChecker } from './blocks.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
+import type { MutableEmissions, SlotName } from './emissions.ts'
+import { addEmission } from './emissions.ts'
 import { checkParameters } from './parameters.ts'
 import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
+import type { StatementOptions } from './statements.ts'
 import { checkStatement } from './statements.ts'
 
 export interface Checked<TValue> {
@@ -345,6 +349,20 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?:
   return { errors, capabilities, result }
 }
 
+const returnSlotName = 'return' as SlotName
+
+const functionStatementOptions: StatementOptions = {
+  context: 'function',
+  slots: [
+    {
+      name: returnSlotName,
+      type: 'infer',
+      required: true,
+      singular: true
+    }
+  ]
+}
+
 function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetType> {
   const errors: CompileError[] = []
 
@@ -369,22 +387,16 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
   })
   setAll(functionScope.resolutions, bindings)
 
-  let hasReturn = false
-  let returnType: FacetType | undefined
+  const emissions: MutableEmissions = new Map()
   let callCapabilities = noCapabilities
 
   for (const child of expression.children) {
-    const statement = checkStatement(functionScope, child)
+    const statement = checkStatement(functionScope, child, functionStatementOptions)
     errors.push(...statement.errors)
     callCapabilities = mergeCapabilities(callCapabilities, statement.capabilities)
 
-    for (const emission of statement.emissions) {
-      if (hasReturn) {
-        errors.push(new CompileError('Function has multiple return statements', emission.range))
-      }
-
-      hasReturn = true
-      returnType ??= emission.type
+    for (const emission of statement.emissions.values()) {
+      errors.push(...addEmission(emissions, emission))
     }
 
     if (statement.properties.size > 0) {
@@ -392,13 +404,23 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
     }
   }
 
-  if (!hasReturn) {
-    errors.push(new CompileError('Function is missing a return statement', expression.range))
-  }
-
-  if (!hasReturn || returnType == null) {
+  if (errors.length > 0) {
+    // If there are errors here, the return type most likely cannot be determined correctly.
     return { errors, capabilities }
   }
+
+  const returnEmission = emissions.get(returnSlotName)
+
+  if (returnEmission == null || returnEmission.minimum < 1) {
+    errors.push(new CompileError('Function must return exactly one value, but can return zero values', expression.range))
+    return { errors, capabilities }
+  }
+
+  if (returnEmission.maximum > 1) {
+    errors.push(new CompileError('Function must return exactly one value, but can return more than one value', expression.range))
+  }
+
+  const returnType = nonNull(returnEmission.type)
 
   const spec: FunctionSpec = { parameters, returnType, capabilities: callCapabilities }
   const result = FunctionFacet.with(spec).type()
@@ -425,7 +447,7 @@ const checkInstrument = createBlockChecker<ast.Instrument>({
 
   slots: [
     {
-      name: 'voice',
+      name: 'voice' as SlotName,
       type: VoiceFacet.type()
     }
   ],
@@ -443,13 +465,13 @@ const checkVoice = createBlockChecker<ast.Voice>({
 
   slots: [
     {
-      name: 'envelope',
+      name: 'envelope' as SlotName,
       type: CurveFacet.with('db').type(),
       required: true,
       singular: true
     },
     {
-      name: 'output',
+      name: 'output' as SlotName,
       type: SourceFacet.type(),
       required: true,
       singular: true
@@ -482,7 +504,7 @@ const checkMixer = createBlockChecker<ast.Mixer>({
 
   slots: [
     {
-      name: 'bus',
+      name: 'bus' as SlotName,
       type: BusFacet.type()
     }
   ],
@@ -502,11 +524,11 @@ const checkBus = createBlockChecker<ast.Bus>({
 
   slots: [
     {
-      name: 'input',
+      name: 'input' as SlotName,
       type: makeUnion(BusFacet.type(), InstrumentFacet.type())
     },
     {
-      name: 'effect',
+      name: 'effect' as SlotName,
       type: EffectFacet.type()
     }
   ],
@@ -530,7 +552,7 @@ const checkTrack = createBlockChecker<ast.Track>({
 
   slots: [
     {
-      name: 'part',
+      name: 'part' as SlotName,
       type: PartFacet.type()
     }
   ],
@@ -550,11 +572,11 @@ const checkPart = createBlockChecker<ast.Part>({
 
   slots: [
     {
-      name: 'routing',
+      name: 'routing' as SlotName,
       type: RoutingFacet.type()
     },
     {
-      name: 'automation',
+      name: 'automation' as SlotName,
       type: AutomationFacet.type()
     }
   ],
@@ -599,7 +621,7 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
 
   const result = binaryOperations[expression.operator].check(left, right)
   if (result == null) {
-    errors.push(new CompileError(`Incompatible operands for "${expression.operator}": ${left.format()} and ${right.format()}`, expression.range))
+    errors.push(new CompileError(`Incompatible operands for "${expression.operator}": ${left.format()}, ${right.format()}`, expression.range))
     return { errors, capabilities }
   }
 
