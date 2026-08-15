@@ -72,7 +72,7 @@ export type PropertyOptions =
      * Properties that are intrinsic to this block and are always present.
      * Statements within the block may not override these properties.
      */
-    readonly initial?: ReadonlyMap<string, FacetType>
+    readonly initial?: ReadonlyMap<string, Binding>
   }
 
 export type BlockChecker<TBlock extends BlockNode> = (scope: Scope, block: TBlock) => CheckedBlock
@@ -112,7 +112,7 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
     }
 
     const emissions: MutableEmissions = new Map()
-    const properties = new Map<string, FacetType>(initialProperties)
+    const properties = new Map<string, Binding>(initialProperties)
 
     for (const child of block.children) {
       const statement = checkStatement(blockScope, child, {
@@ -144,14 +144,26 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
 
 const emptySchema = makeSchema([])
 
-function makeBlockType (facet: Facet, properties: ReadonlyMap<string, FacetType>): FacetType {
-  if (facet === RecordFacet) {
-    return RecordFacet.with(Object.fromEntries(properties)).type()
+function makeBlockType (facet: Facet, properties: ReadonlyMap<string, Binding>): FacetType {
+  const fields: Record<string, FacetType> = Object.create(null)
+  let hasDefiniteProperties = false
+
+  for (const [name, binding] of properties) {
+    if (!binding.definite) {
+      continue
+    }
+
+    fields[name] = binding.type
+    hasDefiniteProperties = true
   }
 
-  if (properties.size === 0) {
+  if (facet === RecordFacet) {
+    return RecordFacet.with(fields).type()
+  }
+
+  if (!hasDefiniteProperties) {
     return facet.type()
   }
 
-  return makeType(facet, RecordFacet.with(Object.fromEntries(properties)))
+  return makeType(facet, RecordFacet.with(fields))
 }

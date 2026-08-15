@@ -526,9 +526,23 @@ const checkBus = createBlockChecker<ast.Bus>({
 
   properties: {
     allow: true,
-    initial: new Map<string, FacetType>([
-      ['gain', ParameterFacet.with('db').type()],
-      ['pan', ParameterFacet.with(undefined).type()]
+    initial: new Map<string, Binding>([
+      [
+        'gain',
+        {
+          name: 'gain',
+          type: ParameterFacet.with('db').type(),
+          definite: true
+        }
+      ],
+      [
+        'pan',
+        {
+          name: 'pan',
+          type: ParameterFacet.with(undefined).type(),
+          definite: true
+        }
+      ]
     ])
   }
 })

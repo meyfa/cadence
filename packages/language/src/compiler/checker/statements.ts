@@ -1,14 +1,14 @@
 import type { ast, SourceRange } from '@meyfa/cadence-ast'
+import { setAll } from '@meyfa/cadence-utility'
 import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import type { Capabilities } from '../../type-system/base/function.ts'
-import { StringFacet } from '../../type-system/base/string.ts'
 import type { FacetType } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import type { Emission, Emissions, MutableEmissions, Slot, SlotName, Slots } from './emissions.ts'
 import { addEmission } from './emissions.ts'
 import { checkExpression } from './expressions.ts'
-import type { MutableScope, Scope } from './scopes.ts'
+import type { Binding, MutableScope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 
 export interface StatementOptions {
@@ -27,7 +27,7 @@ export interface StatementOptions {
    * The properties that are already exposed in the current scope (if any).
    * The statement may not expose names already present in this map.
    */
-  readonly existingProperties?: ReadonlyMap<string, FacetType>
+  readonly existingProperties?: ReadonlyMap<string, Binding>
 }
 
 export interface CheckedStatement {
@@ -42,7 +42,7 @@ export interface CheckedStatement {
   /**
    * A map from property names to their types.
    */
-  readonly properties: ReadonlyMap<string, FacetType>
+  readonly properties: ReadonlyMap<string, Binding>
 }
 
 export function checkStatement (scope: MutableScope, statement: ast.Statement, options: StatementOptions): CheckedStatement {
@@ -60,7 +60,7 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
   let capabilities = noCapabilities
 
   const emissions: MutableEmissions = new Map()
-  const properties = new Map<string, FacetType>()
+  const properties = new Map<string, Binding>()
 
   const values: Array<FacetType | undefined> = []
 
@@ -98,12 +98,16 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
 
   if (statement.expose) {
     const propertyName = statement.name.name
-    const propertyValue = values.at(0)
+    const propertyType = values.at(0)
 
     if (options.existingProperties?.has(propertyName) === true) {
       errors.push(new CompileError(`Duplicate property "${propertyName}"`, statement.name.range))
-    } else if (propertyValue != null) {
-      properties.set(propertyName, values.at(0) ?? StringFacet.type())
+    } else if (propertyType != null) {
+      properties.set(propertyName, {
+        name: propertyName,
+        type: propertyType,
+        definite: true
+      })
     }
   }
 
@@ -142,7 +146,7 @@ function checkIfStatement (scope: MutableScope, statement: ast.IfStatement, opti
   let capabilities = noCapabilities
 
   const emissions: MutableEmissions = new Map()
-  const properties = new Map<string, FacetType>()
+  const properties = new Map<string, Binding>()
 
   const conditionCheck = checkExpression(scope, statement.condition)
   errors.push(...conditionCheck.errors)
@@ -163,15 +167,20 @@ function checkIfStatement (scope: MutableScope, statement: ast.IfStatement, opti
   errors.push(...elseBranch.errors)
   capabilities = mergeCapabilities(capabilities, elseBranch.capabilities)
 
-  errors.push(...applyBranchAssignments(scope, [
-    thenScope,
-    elseScope
-  ], statement.range))
-
   errors.push(...applyBranchEmissions(emissions, [
     thenBranch.emissions,
     elseBranch.emissions
   ], statement.range))
+
+  errors.push(...applyBranchBindings(scope.resolutions, [
+    thenScope.resolutions,
+    elseScope.resolutions
+  ], statement.range, 'identifier'))
+
+  errors.push(...applyBranchBindings(properties, [
+    thenBranch.properties,
+    elseBranch.properties
+  ], statement.range, 'property'))
 
   return { errors, capabilities, emissions, properties }
 }
@@ -181,10 +190,13 @@ function checkBranch (scope: MutableScope, statements: readonly ast.Statement[],
   let capabilities = noCapabilities
 
   const emissions: MutableEmissions = new Map()
-  const properties = new Map<string, FacetType>()
+  const properties = new Map<string, Binding>(options.existingProperties)
 
   for (const child of statements) {
-    const statement = checkStatement(scope, child, options)
+    const statement = checkStatement(scope, child, {
+      ...options,
+      existingProperties: properties
+    })
     errors.push(...statement.errors)
     capabilities = mergeCapabilities(capabilities, statement.capabilities)
 
@@ -192,57 +204,10 @@ function checkBranch (scope: MutableScope, statements: readonly ast.Statement[],
       errors.push(...addEmission(emissions, emission))
     }
 
-    if (statement.properties.size > 0) {
-      errors.push(new CompileError('Property exposure in conditional branches is not yet supported', child.range))
-    }
+    setAll(properties, statement.properties)
   }
 
   return { errors, capabilities, emissions, properties }
-}
-
-function applyBranchAssignments (
-  scope: MutableScope,
-  branches: readonly Scope[],
-  statementRange: SourceRange
-): readonly CompileError[] {
-  const errors: CompileError[] = []
-
-  const assignedNames = new Set(branches.flatMap((branch) => [...branch.resolutions.keys()]))
-
-  for (const name of assignedNames) {
-    const bindings = branches.map((branch) => branch.resolutions.get(name))
-
-    if (scope.resolutions.has(name)) {
-      const message = `Identifier "${name}" is already defined`
-      for (const binding of bindings) {
-        if (binding != null) {
-          errors.push(new CompileError(message, binding.range ?? statementRange))
-        }
-      }
-      continue
-    }
-
-    const definite = bindings.every((binding) => binding?.definite === true)
-
-    const types = bindings.map((binding) => binding?.type).filter((type) => type != null)
-    const type = intersectTypes(types)
-
-    const ranges = bindings.map((binding) => binding?.range).filter((range) => range != null)
-    const range = ranges.length === 1 ? ranges[0] : undefined
-
-    if (type == null) {
-      const typeStrings = bindings.map((binding) => binding?.type.format() ?? '?').join(', ')
-      const message = typeStrings !== ''
-        ? `Incompatible types for "${name}" in conditional branches: ${typeStrings}`
-        : `Incompatible types for "${name}" in conditional branches`
-      errors.push(new CompileError(message, range ?? statementRange))
-      continue
-    }
-
-    scope.resolutions.set(name, { name, type, definite, range })
-  }
-
-  return errors
 }
 
 function applyBranchEmissions (
@@ -285,6 +250,52 @@ function applyBranchEmissions (
     }
 
     target.set(slotName, { slot, type, minimum, maximum, ranges })
+  }
+
+  return errors
+}
+
+function applyBranchBindings (
+  target: Map<string, Binding>,
+  branches: ReadonlyArray<ReadonlyMap<string, Binding>>,
+  statementRange: SourceRange,
+  kind: 'identifier' | 'property'
+): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  const propertyNames = new Set(branches.flatMap((branch) => [...branch.keys()]))
+
+  for (const name of propertyNames) {
+    const bindings = branches.map((branch) => branch.get(name))
+
+    if (target.has(name)) {
+      const message = `${kind === 'property' ? 'Property' : 'Identifier'} "${name}" is already defined`
+      for (const binding of bindings) {
+        if (binding != null) {
+          errors.push(new CompileError(message, binding.range ?? statementRange))
+        }
+      }
+      continue
+    }
+
+    const definite = bindings.every((binding) => binding?.definite === true)
+
+    const types = bindings.map((binding) => binding?.type).filter((type) => type != null)
+    const type = intersectTypes(types)
+
+    const ranges = bindings.map((binding) => binding?.range).filter((range) => range != null)
+    const range = ranges.length === 1 ? ranges[0] : undefined
+
+    if (type == null) {
+      const typeStrings = bindings.map((binding) => binding?.type.format() ?? '?').join(', ')
+      const message = typeStrings !== ''
+        ? `Incompatible types for ${kind} "${name}" in conditional branches: ${typeStrings}`
+        : `Incompatible types for ${kind} "${name}" in conditional branches`
+      errors.push(new CompileError(message, range ?? statementRange))
+      continue
+    }
+
+    target.set(name, { name, type, definite, range })
   }
 
   return errors
