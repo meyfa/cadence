@@ -1,17 +1,18 @@
-import type { ast, SourceRange } from '@meyfa/cadence-ast'
+import type { ast } from '@meyfa/cadence-ast'
 import { setAll } from '@meyfa/cadence-utility'
 import type { Capabilities } from '../../type-system/base/function.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { makeType } from '../../type-system/factory.ts'
 import type { Schema } from '../../type-system/schema.ts'
 import { makeSchema } from '../../type-system/schema.ts'
-import type { Facet, FacetType, Type } from '../../type-system/types.ts'
+import type { Facet, FacetType } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { checkArguments } from './arguments.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
+import type { MutableEmissions, Slots } from './emissions.ts'
+import { addEmission, validateEmissions } from './emissions.ts'
 import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
-import type { Emission } from './statements.ts'
 import { checkStatement } from './statements.ts'
 
 export interface BlockNode extends ast.ASTNode {
@@ -24,6 +25,7 @@ export interface BlockSchema<TBlock extends BlockNode> {
    * The primary facet that identifies the type of this block.
    */
   readonly facet: Facet
+
   /**
    * The capabilities that are required to construct a value of this type (if any).
    * If the block is used in a context that does not allow these capabilities, an error will be reported.
@@ -45,7 +47,7 @@ export interface BlockSchema<TBlock extends BlockNode> {
    * The emissions that are allowed and expected within this block (if any). If not specified or empty, no emissions are allowed.
    * Required types must be emitted _at least_ once; singular types may be emitted _at most_ once.
    */
-  readonly slots?: readonly Slot[]
+  readonly slots?: Slots
 
   /**
    * The properties that are allowed to be exposed by statements within this block (if any).
@@ -57,13 +59,6 @@ export interface BlockSchema<TBlock extends BlockNode> {
    * Compute the bindings that are available inside this block, if any. These may not be overridden by statements within the block.
    */
   readonly getBindings?: (block: TBlock) => ReadonlyMap<string, Binding>
-}
-
-export interface Slot {
-  readonly name: string
-  readonly type: Type
-  readonly required?: boolean
-  readonly singular?: boolean
 }
 
 export type PropertyOptions =
@@ -92,6 +87,7 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
   const typeName = schema.facet.format()
   const ownCapabilities = schema.ownCapabilities ?? noCapabilities
   const parameters = schema.parameters ?? emptySchema
+  const slots = schema.slots ?? []
 
   const initialProperties = schema.properties?.allow === true && schema.properties.initial != null
     ? schema.properties.initial
@@ -115,16 +111,20 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
       setAll(blockScope.resolutions, schema.getBindings(block))
     }
 
-    const emissionCollector = new EmissionCollector(typeName, schema.slots ?? [])
+    const emissions: MutableEmissions = new Map()
     const properties = new Map<string, FacetType>(initialProperties)
 
     for (const child of block.children) {
-      const statement = checkStatement(blockScope, child, properties)
+      const statement = checkStatement(blockScope, child, {
+        context: typeName,
+        slots,
+        existingProperties: properties
+      })
       errors.push(...statement.errors)
       capabilities = mergeCapabilities(capabilities, statement.capabilities)
 
-      for (const emission of statement.emissions) {
-        errors.push(...emissionCollector.add(emission))
+      for (const emission of statement.emissions.values()) {
+        errors.push(...addEmission(emissions, emission))
       }
 
       if (schema.properties?.allow === true) {
@@ -134,7 +134,7 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
       }
     }
 
-    errors.push(...emissionCollector.validate(block.range))
+    errors.push(...validateEmissions(emissions, slots, block.range))
 
     const result = makeBlockType(schema.facet, properties)
 
@@ -142,62 +142,7 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
   }
 }
 
-// Private implementation
-
 const emptySchema = makeSchema([])
-
-class EmissionCollector {
-  private readonly typeName: string
-  private readonly slots: readonly Slot[]
-  private readonly emissions: Emission[][]
-
-  constructor (typeName: string, slots: readonly Slot[]) {
-    this.typeName = typeName
-    this.slots = slots
-    this.emissions = slots.map(() => [])
-  }
-
-  public add (emission: Emission): readonly CompileError[] {
-    const errors: CompileError[] = []
-
-    if (this.slots.length === 0) {
-      errors.push(new CompileError(`Cannot emit values in this context (${this.typeName})`, emission.range))
-      return errors
-    }
-
-    const slotIndex = this.slots.findIndex(({ type }) => type.is(emission.type))
-    if (slotIndex === -1) {
-      const expectedTypes = this.slots.map((slot) => slot.type.format()).join(', ')
-      errors.push(new CompileError(`Unexpected emitted value of type ${emission.type.format()}; expected one of: ${expectedTypes}`, emission.range))
-      return errors
-    }
-
-    this.emissions[slotIndex].push(emission)
-
-    return errors
-  }
-
-  public validate (range: SourceRange): readonly CompileError[] {
-    const errors: CompileError[] = []
-
-    for (const [index, slot] of this.slots.entries()) {
-      const emitted = this.emissions[index]
-
-      if (slot.required && emitted.length === 0) {
-        errors.push(new CompileError(`Expected at least one emission into slot "${slot.name}" of type ${slot.type.format()}`, range))
-        continue
-      }
-
-      if (slot.singular) {
-        for (let j = 1; j < emitted.length; ++j) {
-          errors.push(new CompileError(`Duplicate emission into slot "${slot.name}" of type ${slot.type.format()} which accepts at most one value`, emitted[j].range))
-        }
-      }
-    }
-
-    return errors
-  }
-}
 
 function makeBlockType (facet: Facet, properties: ReadonlyMap<string, FacetType>): FacetType {
   if (facet === RecordFacet) {
