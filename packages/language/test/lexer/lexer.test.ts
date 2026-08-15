@@ -501,4 +501,29 @@ describe('lexer/lexer.ts', () => {
       ]
     })
   })
+
+  it('should lex comparison operators', () => {
+    const source = [
+      'a == b',
+      'c != d'
+    ].join('\n')
+
+    const result = lex(source)
+    assert.strictEqual(result.complete, true)
+
+    assert.deepStrictEqual(stripTokenMeta(result), {
+      complete: true,
+      value: [
+        // a == b
+        { name: 'word', text: 'a' },
+        { name: '==', text: '==' },
+        { name: 'word', text: 'b' },
+
+        // c != d
+        { name: 'word', text: 'c' },
+        { name: '!=', text: '!=' },
+        { name: 'word', text: 'd' }
+      ]
+    })
+  })
 })

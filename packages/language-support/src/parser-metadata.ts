@@ -26,6 +26,7 @@ export const cadenceParserConfig: ParserConfig = {
       ':': t.separator,
 
       '+ - "*" "/"': t.arithmeticOperator,
+      '"==" "!="': t.compareOperator,
 
       '&': t.operator,
 

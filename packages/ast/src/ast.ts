@@ -159,8 +159,16 @@ export interface ConditionalBranch extends ASTNode {
 export const unaryOperators = ['+', '-'] as const
 export type UnaryOperator = typeof unaryOperators[number]
 
-export const binaryOperators = ['+', '-', '*', '/'] as const
+export const isUnaryOperator = (value: string): value is UnaryOperator => {
+  return unaryOperators.includes(value as UnaryOperator)
+}
+
+export const binaryOperators = ['+', '-', '*', '/', '==', '!='] as const
 export type BinaryOperator = typeof binaryOperators[number]
+
+export const isBinaryOperator = (value: string): value is BinaryOperator => {
+  return binaryOperators.includes(value as BinaryOperator)
+}
 
 export interface UnaryExpression extends ASTNode {
   readonly type: 'UnaryExpression'

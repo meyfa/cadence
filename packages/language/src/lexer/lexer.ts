@@ -38,6 +38,9 @@ const commonRules: Rules = [
 
   { name: '"', push: stringLexer },
 
+  { name: '==' },
+  { name: '!=' },
+
   { name: '&' },
   { name: '@' },
 

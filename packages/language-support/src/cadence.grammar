@@ -33,6 +33,9 @@
   "!"
   "?"
 
+  "=="
+  "!="
+
   @precedence { Comment, "/" }
 }
 
@@ -58,6 +61,7 @@ Unit[@dynamicPrecedence=1] {
 @precedence {
   multiply @left,
   plus @left,
+  comparison @left,
   capability @right
 }
 
@@ -254,7 +258,9 @@ BinaryExpression {
   (expression !plus "+" expression) |
   (expression !plus "-" expression) |
   (expression !multiply "*" expression) |
-  (expression !multiply "/" expression)
+  (expression !multiply "/" expression) |
+  (expression !comparison "==" expression) |
+  (expression !comparison "!=" expression)
 }
 
 Function {
