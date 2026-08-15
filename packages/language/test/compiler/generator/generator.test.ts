@@ -981,4 +981,20 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.mixer.buses[0].gain.initial, db(-6))
     assert.strictEqual(result.mixer.buses[1].gain.initial, db(-10))
   })
+
+  it('should support conditional property exposure', () => {
+    const source = [
+      'my_record = {',
+      '  if true {',
+      '    @foo = 123.bpm',
+      '  } else {',
+      '    @foo = 456.bpm',
+      '  }',
+      '}',
+      '& track (tempo: my_record.foo) {}'
+    ].join('\n')
+
+    const result = generateSource(source)
+    assert.strictEqual(result.track.tempo, 123)
+  })
 })
