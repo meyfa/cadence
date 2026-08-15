@@ -204,9 +204,9 @@ compoundStatement {
 
 IfStatement {
   kw<"if">
-  expression
-  Block
-  (kw<"else"> Block)?
+  expression Block
+  ("," expression Block)*
+  ("," kw<"else"> Block)?
 }
 
 primary {

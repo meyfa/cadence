@@ -1656,14 +1656,19 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
         type: 'IfStatement',
-        condition: { type: 'Identifier', name: 'condition' },
-        thenBranch: [
+        branches: [
           {
-            type: 'SimpleStatement',
-            emit: true,
-            expose: false,
-            values: [
-              { type: 'Number', value: 42 }
+            type: 'ConditionalBranch',
+            condition: { type: 'Identifier', name: 'condition' },
+            children: [
+              {
+                type: 'SimpleStatement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
+              }
             ]
           }
         ],
@@ -1676,7 +1681,7 @@ describe('parser/parser.ts', () => {
     const source = [
       'if condition {',
       '  & 42',
-      '} else {',
+      '}, else {',
       '  & 43',
       '}'
     ].join('\n')
@@ -1687,14 +1692,19 @@ describe('parser/parser.ts', () => {
     assert.deepStrictEqual(stripRanges(result.value.children), [
       {
         type: 'IfStatement',
-        condition: { type: 'Identifier', name: 'condition' },
-        thenBranch: [
+        branches: [
           {
-            type: 'SimpleStatement',
-            emit: true,
-            expose: false,
-            values: [
-              { type: 'Number', value: 42 }
+            type: 'ConditionalBranch',
+            condition: { type: 'Identifier', name: 'condition' },
+            children: [
+              {
+                type: 'SimpleStatement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
+              }
             ]
           }
         ],
@@ -1710,6 +1720,85 @@ describe('parser/parser.ts', () => {
         ]
       }
     ])
+  })
+
+  it('should parse if statements with multiple branches', () => {
+    const source = [
+      'if condition0 {',
+      '  & 42',
+      '}, condition1 {',
+      '  & 43',
+      '}, condition2 {',
+      '  & 44',
+      '}'
+    ].join('\n')
+
+    const result = parse(lexSource(source))
+    assertResultComplete(result)
+
+    assert.deepStrictEqual(stripRanges(result.value.children), [
+      {
+        type: 'IfStatement',
+        branches: [
+          {
+            type: 'ConditionalBranch',
+            condition: { type: 'Identifier', name: 'condition0' },
+            children: [
+              {
+                type: 'SimpleStatement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 42 }
+                ]
+              }
+            ]
+          },
+          {
+            type: 'ConditionalBranch',
+            condition: { type: 'Identifier', name: 'condition1' },
+            children: [
+              {
+                type: 'SimpleStatement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 43 }
+                ]
+              }
+            ]
+          },
+          {
+            type: 'ConditionalBranch',
+            condition: { type: 'Identifier', name: 'condition2' },
+            children: [
+              {
+                type: 'SimpleStatement',
+                emit: true,
+                expose: false,
+                values: [
+                  { type: 'Number', value: 44 }
+                ]
+              }
+            ]
+          }
+        ],
+        elseBranch: undefined
+      }
+    ])
+
+    assert.deepStrictEqual(result.value.children[0].range, {
+      offset: 0,
+      length: source.length,
+      line: 1,
+      column: 1
+    })
+  })
+
+  it('should reject if-else statements without comma', () => {
+    const result = parse(lexSource('if condition {} else {}'))
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.message, 'Unexpected statement beginning with "else"')
   })
 
   it('should reject imports within if statements', () => {

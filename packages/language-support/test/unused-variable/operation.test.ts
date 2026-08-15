@@ -135,7 +135,7 @@ describe('unused-variable/operation.ts', () => {
     const source = [
       'if (true) {',
       '  used = sample("sound.wav")',
-      '} else {',
+      '}, else {',
       '  used = sample("sound.wav")',
       '}',
       '& track (120.bpm) {',

@@ -34,6 +34,7 @@ export interface NodeByType {
   // Statements
   SimpleStatement: SimpleStatement
   IfStatement: IfStatement
+  ConditionalBranch: ConditionalBranch
 
   // Value Expressions
   UnaryExpression: UnaryExpression
@@ -143,9 +144,14 @@ interface UnnamedSimpleStatement extends ASTNode {
 
 export interface IfStatement extends ASTNode {
   readonly type: 'IfStatement'
-  readonly condition: Expression
-  readonly thenBranch: readonly Statement[]
+  readonly branches: readonly [ConditionalBranch, ...readonly ConditionalBranch[]]
   readonly elseBranch?: readonly Statement[]
+}
+
+export interface ConditionalBranch extends ASTNode {
+  readonly type: 'ConditionalBranch'
+  readonly condition: Expression
+  readonly children: readonly Statement[]
 }
 
 // Value Expressions

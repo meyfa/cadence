@@ -687,18 +687,24 @@ const simpleStatement_ = p.choice<Token, unknown, ast.Statement>(
   plainEmission_
 )
 
-const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
-  combine2(
-    keyword('if'),
-    expression_
-  ),
+const conditionalBranch_: p.Parser<Token, unknown, ast.ConditionalBranch> = p.ab(
+  optionalExpression_,
   combine3(
     literal('{'),
     p.recursive(() => p.many(statement_)),
     expectLiteral('}')
   ),
+  (condition, [_lb, children, _rb]) => {
+    return ast.make('ConditionalBranch', combineSourceRanges(condition, _rb), { condition, children })
+  }
+)
+
+const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
+  keyword('if'),
+  p.sepBy1(conditionalBranch_, literal(',')),
   p.option(
-    combine2(
+    combine3(
+      literal(','),
       keyword('else'),
       combine3(
         literal('{'),
@@ -708,15 +714,13 @@ const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
     ),
     undefined
   ),
-  ([_if, condition], [_lb, thenBranch, _rb], elseClause) => {
-    const elseBranch = elseClause?.[1][1]
-    const lastToken = elseClause?.[1][2] ?? _rb
+  (_if, branches, elseClause) => {
+    const elseBranch = elseClause?.[2][1]
 
-    return ast.make('IfStatement', combineSourceRanges(_if, lastToken), {
-      condition,
-      thenBranch,
-      elseBranch
-    })
+    // The final token or AST node, such that the combined source range covers the entire statement.
+    const lastItem = elseClause?.[2][2] ?? branches.at(-1) ?? _if
+
+    return ast.make('IfStatement', combineSourceRanges(_if, lastItem), { branches, elseBranch })
   }
 )
 

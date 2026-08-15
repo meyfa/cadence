@@ -151,7 +151,7 @@ describe('go-to-definition/operation.ts', () => {
     const source = [
       'if true {',
       '  foo = 60.bpm',
-      '} else {',
+      '}, else {',
       '  foo = 70.bpm',
       '}',
       '',

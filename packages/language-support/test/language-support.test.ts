@@ -90,7 +90,7 @@ describe('language-support.ts', () => {
       '  }',
       '}',
       '',
-      'if true {} else {}',
+      'if true {}, else {}',
       ''
     ].join('\n')
 
@@ -127,7 +127,7 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, ':', source.indexOf(':2'), 'separator')
     assertHighlightAt(spans, source, 'inst', useInstrumentStart, 'variable')
     assertHighlightAt(spans, source, 'fx', source.indexOf('fx.pan'), 'variable')
-    assertHighlightAt(spans, source, 'if', source.indexOf('if true {} else {}'), 'keyword')
+    assertHighlightAt(spans, source, 'if', source.indexOf('if true {}, else {}'), 'keyword')
     assertHighlightAt(spans, source, 'true', source.indexOf('true {}'), 'keyword')
     assertHighlightAt(spans, source, 'else', source.indexOf('else {}'), 'keyword')
   })

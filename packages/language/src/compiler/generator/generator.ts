@@ -167,16 +167,22 @@ function processSimpleStatement (scope: MutableScope, statement: ast.SimpleState
 }
 
 function processIfStatement (scope: MutableScope, statement: ast.IfStatement): Statement {
-  const conditionValue = resolve(scope, statement.condition)
-  const condition = BooleanFacet.get(conditionValue)
+  for (const branch of statement.branches) {
+    const conditionValue = resolve(scope, branch.condition)
+    if (BooleanFacet.get(conditionValue)) {
+      return processStatements(scope, branch.children)
+    }
+  }
 
-  const branch = condition ? statement.thenBranch : statement.elseBranch ?? []
+  return processStatements(scope, statement.elseBranch ?? [])
+}
 
+function processStatements (scope: MutableScope, statements: readonly ast.Statement[]): Statement {
   const emissions: Value[] = []
   const properties = new Map<string, Value>()
 
-  for (const child of branch) {
-    const { emissions: childEmissions, properties: childProperties } = processStatement(scope, child)
+  for (const statement of statements) {
+    const { emissions: childEmissions, properties: childProperties } = processStatement(scope, statement)
     emissions.push(...childEmissions)
     setAll(properties, childProperties)
   }
