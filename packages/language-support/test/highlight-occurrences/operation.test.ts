@@ -193,7 +193,7 @@ describe('highlight-occurrences/operation.ts', () => {
     const source = [
       'if true {',
       '  foo = 42',
-      '} else {',
+      '}, else {',
       '  foo = 43',
       '}',
       '',

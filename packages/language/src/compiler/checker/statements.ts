@@ -8,7 +8,7 @@ import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import type { Emission, Emissions, MutableEmissions, Slot, SlotName, Slots } from './emissions.ts'
 import { addEmission } from './emissions.ts'
 import { checkExpression } from './expressions.ts'
-import type { Binding, MutableScope } from './scopes.ts'
+import type { Binding, MutableScope, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 
 export interface StatementOptions {
@@ -148,39 +148,38 @@ function checkIfStatement (scope: MutableScope, statement: ast.IfStatement, opti
   const emissions: MutableEmissions = new Map()
   const properties = new Map<string, Binding>()
 
-  const conditionCheck = checkExpression(scope, statement.condition)
-  errors.push(...conditionCheck.errors)
-  capabilities = mergeCapabilities(capabilities, conditionCheck.capabilities)
+  const branchScopes: Scope[] = []
+  const branchChecks: CheckedStatement[] = []
 
-  if (conditionCheck.result != null && !BooleanFacet.is(conditionCheck.result)) {
-    errors.push(new CompileError(`Condition must be of type ${BooleanFacet.format()}, got ${conditionCheck.result.format()}`, statement.condition.range))
+  for (const branch of statement.branches) {
+    const conditionCheck = checkExpression(scope, branch.condition)
+    errors.push(...conditionCheck.errors)
+    capabilities = mergeCapabilities(capabilities, conditionCheck.capabilities)
+
+    if (conditionCheck.result != null && !BooleanFacet.is(conditionCheck.result)) {
+      errors.push(new CompileError(`Condition must be of type ${BooleanFacet.format()}, got ${conditionCheck.result.format()}`, branch.condition.range))
+    }
+
+    const branchScope = createLocalScope(scope)
+    branchScopes.push(branchScope)
+
+    const branchCheck = checkBranch(branchScope, branch.children, options)
+    errors.push(...branchCheck.errors)
+    capabilities = mergeCapabilities(capabilities, branchCheck.capabilities)
+    branchChecks.push(branchCheck)
   }
 
-  const thenScope = createLocalScope(scope)
   const elseScope = createLocalScope(scope)
-
-  const thenBranch = checkBranch(thenScope, statement.thenBranch, options)
-  errors.push(...thenBranch.errors)
-  capabilities = mergeCapabilities(capabilities, thenBranch.capabilities)
+  branchScopes.push(elseScope)
 
   const elseBranch = checkBranch(elseScope, statement.elseBranch ?? [], options)
   errors.push(...elseBranch.errors)
   capabilities = mergeCapabilities(capabilities, elseBranch.capabilities)
+  branchChecks.push(elseBranch)
 
-  errors.push(...applyBranchEmissions(emissions, [
-    thenBranch.emissions,
-    elseBranch.emissions
-  ], statement.range))
-
-  errors.push(...applyBranchBindings(scope.resolutions, [
-    thenScope.resolutions,
-    elseScope.resolutions
-  ], statement.range, 'identifier'))
-
-  errors.push(...applyBranchBindings(properties, [
-    thenBranch.properties,
-    elseBranch.properties
-  ], statement.range, 'property'))
+  errors.push(...applyBranchEmissions(emissions, branchChecks.map((item) => item.emissions), statement.range))
+  errors.push(...applyBranchBindings(scope.resolutions, branchScopes.map((item) => item.resolutions), statement.range, 'identifier'))
+  errors.push(...applyBranchBindings(properties, branchChecks.map((item) => item.properties), statement.range, 'property'))
 
   return { errors, capabilities, emissions, properties }
 }

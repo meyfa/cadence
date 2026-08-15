@@ -394,7 +394,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'if true {',
       '  foo = 128.bpm',
-      '} else {',
+      '}, else {',
       '  foo = 140.bpm',
       '}',
       '',
@@ -421,7 +421,7 @@ describe('model/analysis/references.ts', () => {
       'if true {',
       '  if false {',
       '    foo = 60.bpm',
-      '  } else {',
+      '  }, else {',
       '    bar = 70.bpm',
       '  }',
       '}',
@@ -451,7 +451,7 @@ describe('model/analysis/references.ts', () => {
     const source = [
       'if true {',
       '  foo = 128.bpm',
-      '} else {',
+      '}, else {',
       '  bar = foo // invalid reference',
       '}',
       ''
@@ -474,7 +474,7 @@ describe('model/analysis/references.ts', () => {
       '',
       'if true {',
       '  foo = 2',
-      '} else {',
+      '}, else {',
       '  foo = 3',
       '}',
       '',

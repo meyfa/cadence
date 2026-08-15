@@ -914,7 +914,7 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       '& track {',
       '  if true {}',
-      '  if false {} else {}',
+      '  if false {}, else {}',
       '}'
     ].join('\n')
 
@@ -927,7 +927,7 @@ describe('compiler/generator/generator.ts', () => {
       const source = [
         `if ${condition} {`,
         '  my_tempo = 90.bpm',
-        '} else {',
+        '}, else {',
         '  my_tempo = 150.bpm',
         '}',
         '',
@@ -943,14 +943,14 @@ describe('compiler/generator/generator.ts', () => {
     const source = [
       'if true {',
       '  & track (123.bpm) {}',
-      '} else {',
+      '}, else {',
       '  & track (234.bpm) {}',
       '}',
       '',
       '& mixer {',
       '  if false {',
       '    & bus (gain: -6.db) {}',
-      '  } else {',
+      '  }, else {',
       '    & bus (gain: -12.db) {}',
       '  }',
       '}'
@@ -966,7 +966,7 @@ describe('compiler/generator/generator.ts', () => {
       'my_function = (condition: boolean) {',
       '  if condition {',
       '    & -6.db',
-      '  } else {',
+      '  }, else {',
       '    & -10.db',
       '  }',
       '}',
@@ -987,7 +987,7 @@ describe('compiler/generator/generator.ts', () => {
       'my_record = {',
       '  if true {',
       '    @foo = 123.bpm',
-      '  } else {',
+      '  }, else {',
       '    @foo = 456.bpm',
       '  }',
       '}',
@@ -996,5 +996,35 @@ describe('compiler/generator/generator.ts', () => {
 
     const result = generateSource(source)
     assert.strictEqual(result.track.tempo, 123)
+  })
+
+  it('should support multiple conditional branches', () => {
+    type TestCase = readonly [boolean, boolean, number]
+
+    const testCases: readonly TestCase[] = [
+      [true, true, 100],
+      [true, false, 100],
+      [false, true, 200],
+      [false, false, 300]
+    ]
+
+    for (const [one, two, expected] of testCases) {
+      const source = [
+        'fn = (one: boolean, two: boolean) {',
+        '  if one {',
+        '    & 100.bpm',
+        '  }, two {',
+        '    & 200.bpm',
+        '  }, else {',
+        '    & 300.bpm',
+        '  }',
+        '}',
+        '',
+        `& track (tempo: fn(${one}, ${two})) {}`
+      ].join('\n')
+
+      const result = generateSource(source)
+      assert.strictEqual(result.track.tempo, expected)
+    }
   })
 })

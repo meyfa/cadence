@@ -647,7 +647,7 @@ describe('compiler/checker/checker.ts', () => {
     it('should allow empty if statements', () => {
       const source = [
         'if true {}',
-        'if false {} else {}'
+        'if false {}, else {}'
       ].join('\n')
 
       assertValid(source)
@@ -658,7 +658,7 @@ describe('compiler/checker/checker.ts', () => {
         'if true {',
         '  foo = 100',
         '  bar = foo + 1', // 101
-        '} else {',
+        '}, else {',
         '  foo = 200',
         '  bar = foo + 2', // 202
         '}',
@@ -677,7 +677,7 @@ describe('compiler/checker/checker.ts', () => {
         '',
         'if true {',
         '  & track (123.bpm) {}',
-        '} else {',
+        '}, else {',
         '  & track (234.bpm) {}',
         '}'
       ].join('\n')
@@ -690,7 +690,7 @@ describe('compiler/checker/checker.ts', () => {
         'my_function = () {',
         '  if true {',
         '    & 42',
-        '  } else {',
+        '  }, else {',
         '    & 100',
         '  }',
         '}'
@@ -707,7 +707,7 @@ describe('compiler/checker/checker.ts', () => {
         '      @foo = 42',
         '      @bar = "hello"',
         '    }',
-        '  } else {',
+        '  }, else {',
         '    & instrument {',
         '      @foo = 100',
         '      @baz = 3.db',
@@ -740,7 +740,7 @@ describe('compiler/checker/checker.ts', () => {
         '  if true {',
         '    @foo = { @bar = 42 @str = "hello" }',
         '    @x = 100.hz',
-        '  } else {',
+        '  }, else {',
         '    @foo = { @bar = 100 @num = 3.db }',
         '    @y = 200.hz',
         '  }',
@@ -1493,7 +1493,7 @@ describe('compiler/checker/checker.ts', () => {
         'foo = 42',
         'bar = ""',
         'if foo {}',
-        'if bar {} else {}'
+        'if bar {}, else {}'
       ].join('\n')
 
       assertErrorMessages(source, [
@@ -1536,7 +1536,7 @@ describe('compiler/checker/checker.ts', () => {
         '',
         'if true {',
         '  x = 100',
-        '} else {',
+        '}, else {',
         '  y = 200',
         '}',
         '',
@@ -1555,7 +1555,7 @@ describe('compiler/checker/checker.ts', () => {
       const source = [
         'if true {',
         '  foo = 42',
-        '} else {',
+        '}, else {',
         '  foo = "test"',
         '}'
       ].join('\n')
@@ -1592,7 +1592,7 @@ describe('compiler/checker/checker.ts', () => {
         '    if true {',
         '      & src.sine(100.hz)',
         '      & src.sine(200.hz)',
-        '    } else {',
+        '    }, else {',
         '      & src.sine(300.hz)',
         '    }',
         '  }',
@@ -1647,7 +1647,7 @@ describe('compiler/checker/checker.ts', () => {
         'my_function = () {',
         '  if true {',
         '    & 42',
-        '  } else {',
+        '  }, else {',
         '    & 100',
         '    & 200',
         '  }',
@@ -1679,7 +1679,7 @@ describe('compiler/checker/checker.ts', () => {
         'my_function = () {',
         '  if true {',
         '    & 42.bpm',
-        '  } else {',
+        '  }, else {',
         '    & 100.hz',
         '  }',
         '}'
@@ -1698,7 +1698,7 @@ describe('compiler/checker/checker.ts', () => {
         '      @foo = 42',
         '      @bar = "hello"',
         '    }',
-        '  } else {',
+        '  }, else {',
         '    & instrument {',
         '      @foo = 100',
         '      @baz = 3.db',
@@ -1722,7 +1722,7 @@ describe('compiler/checker/checker.ts', () => {
         '  if true {',
         '    @foo = { @bar = 42 @str = "" }',
         '    @x = 100.hz',
-        '  } else {',
+        '  }, else {',
         '    @foo = { @bar = 100 @num = 3.db }',
         '    @y = 200.hz',
         '  }',
@@ -1778,7 +1778,7 @@ describe('compiler/checker/checker.ts', () => {
         'my_record = {',
         '  if true {',
         '    @foo = 42',
-        '  } else {',
+        '  }, else {',
         '    @foo = "test"',
         '  }',
         '}'
