@@ -281,7 +281,6 @@ function applyBranchEmissions (
           ? `Incompatible types for slot "${slotName}" in conditional branches: ${typeStrings}`
           : `Incompatible types for slot "${slotName}" in conditional branches`
         errors.push(new CompileError(message, ranges.at(0) ?? statementRange))
-        continue
       }
     }
 

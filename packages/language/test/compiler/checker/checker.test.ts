@@ -1,8 +1,8 @@
-import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
+import { ast, getEmptySourceRange, type SourceRange } from '@meyfa/cadence-ast'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
-import type { CompileError } from '../../../src/compiler/error.ts'
+import { CompileError } from '../../../src/compiler/error.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
@@ -26,11 +26,37 @@ function assertValid (source: string): void {
   assert.deepStrictEqual(checkSource(source), [])
 }
 
-function assertErrorMessages (source: string, expectedMessages: string[]): void {
+function assertErrors (source: string, expectedErrors: readonly CompileError[]): void {
+  const actualErrors = checkSource(source)
+
+  // Cannot compare the objects directly due to differences in stack traces.
+  assert.deepStrictEqual(
+    actualErrors.map((error) => error.message),
+    expectedErrors.map((error) => error.message)
+  )
+
+  assert.deepStrictEqual(
+    actualErrors.map((error) => error.range),
+    expectedErrors.map((error) => error.range)
+  )
+}
+
+function assertErrorMessages (source: string, expectedMessages: readonly string[]): void {
   assert.deepStrictEqual(
     checkSource(source).map((error) => error.message),
     expectedMessages
   )
+}
+
+function rangeOf (source: string, substring: string, position?: number): SourceRange {
+  const offset = position ?? source.indexOf(substring)
+
+  return {
+    offset,
+    length: substring.length,
+    line: source.slice(0, offset).split('\n').length,
+    column: offset - source.lastIndexOf('\n', offset - 1)
+  }
 }
 
 describe('compiler/checker/checker.ts', () => {
@@ -851,12 +877,15 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject duplicate track emissions', () => {
       const source = [
-        '& track {}',
-        '& track {}'
+        '& track {} // 0',
+        '& track {} // 1'
       ].join('\n')
 
-      assertErrorMessages(source, [
-        'Duplicate emission into slot "track" of type track which accepts at most one value'
+      assertErrors(source, [
+        new CompileError(
+          'Duplicate emission into slot "track" of type track which accepts at most one value',
+          rangeOf(source, 'track {}', source.indexOf('track {} // 1'))
+        )
       ])
     })
 
@@ -1031,12 +1060,15 @@ describe('compiler/checker/checker.ts', () => {
 
     it('should reject duplicate mixer emissions', () => {
       const source = [
-        '& mixer {}',
-        '& mixer {}'
+        '& mixer {} // 0',
+        '& mixer {} // 1'
       ].join('\n')
 
-      assertErrorMessages(source, [
-        'Duplicate emission into slot "mixer" of type mixer which accepts at most one value'
+      assertErrors(source, [
+        new CompileError(
+          'Duplicate emission into slot "mixer" of type mixer which accepts at most one value',
+          rangeOf(source, 'mixer {}', source.indexOf('mixer {} // 1'))
+        )
       ])
     })
 
@@ -1205,8 +1237,8 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Expected at least one emission into slot "envelope" of type curve.db',
-        'Duplicate emission into slot "output" of type source which accepts at most one value'
+        'Duplicate emission into slot "output" of type source which accepts at most one value',
+        'Expected at least one emission into slot "envelope" of type curve.db'
       ])
     })
 
@@ -1216,15 +1248,18 @@ describe('compiler/checker/checker.ts', () => {
         '',
         'my_instrument = instrument {',
         '  & voice {',
-        '    & ~[lin(0.db, -60.db):100.ms]',
-        '    & ~[lin(-60.db, 0.db):100.ms]',
+        '    & ~[hold(0.db):100.ms]',
+        '    & ~[hold(0.db):200.ms]',
         '    & src.sine(440.hz)',
         '  }',
         '}'
       ].join('\n')
 
-      assertErrorMessages(source, [
-        'Duplicate emission into slot "envelope" of type curve.db which accepts at most one value'
+      assertErrors(source, [
+        new CompileError(
+          'Duplicate emission into slot "envelope" of type curve.db which accepts at most one value',
+          rangeOf(source, '~[hold(0.db):200.ms]')
+        )
       ])
     })
 
@@ -1512,17 +1547,20 @@ describe('compiler/checker/checker.ts', () => {
         '  & voice {',
         '    & ~[lin(0.db, -60.db):100.ms]',
         '    if true {',
-        '      & src.sine(440.hz)',
-        '      & src.sine(880.hz)',
+        '      & src.sine(100.hz)',
+        '      & src.sine(200.hz)',
         '    } else {',
-        '      & src.sine(1760.hz)',
+        '      & src.sine(300.hz)',
         '    }',
         '  }',
         '}'
       ].join('\n')
 
-      assertErrorMessages(source, [
-        'Duplicate emission into slot "output" of type source which accepts at most one value'
+      assertErrors(source, [
+        new CompileError(
+          'Duplicate emission into slot "output" of type source which accepts at most one value',
+          rangeOf(source, 'src.sine(200.hz)')
+        )
       ])
     })
 
@@ -1533,14 +1571,17 @@ describe('compiler/checker/checker.ts', () => {
         'foo = instrument {',
         '  & voice {',
         '    & ~[lin(0.db, -60.db):100.ms]',
-        '    & src.sine(440.hz)',
-        '    if true { & src.sine(880.hz) }',
+        '    & src.sine(100.hz)',
+        '    if true { & src.sine(200.hz) }',
         '  }',
         '}'
       ].join('\n')
 
-      assertErrorMessages(source, [
-        'Duplicate emission into slot "output" of type source which accepts at most one value'
+      assertErrors(source, [
+        new CompileError(
+          'Duplicate emission into slot "output" of type source which accepts at most one value',
+          rangeOf(source, 'src.sine(200.hz)')
+        )
       ])
     })
 
@@ -1554,7 +1595,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Function must return exactly one value, but can return zero values'
+        'Expected at least one emission into slot "return"'
       ])
     })
 
@@ -1571,7 +1612,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Function must return exactly one value, but can return more than one value'
+        'Duplicate emission into slot "return" which accepts at most one value'
       ])
     })
 
@@ -1586,7 +1627,7 @@ describe('compiler/checker/checker.ts', () => {
       ].join('\n')
 
       assertErrorMessages(source, [
-        'Function must return exactly one value, but can return more than one value'
+        'Duplicate emission into slot "return" which accepts at most one value'
       ])
     })
 
