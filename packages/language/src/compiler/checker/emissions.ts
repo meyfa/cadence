@@ -71,33 +71,41 @@ export function addEmission (target: MutableEmissions, emission: Emission): read
     return errors
   }
 
-  assert(existing.slot.type === emission.slot.type, `Slot "${existing.slot.name}" type mismatch when merging emissions`)
+  const { slot } = existing
+  assert(slot.type === emission.slot.type, `Slot "${slot.name}" type mismatch when merging emissions`)
 
   let type: FacetType | undefined
 
-  if (existing.slot.type === 'infer') {
+  if (slot.type === 'infer') {
     const intersection = intersectTypes(existing, emission)
-    if (!intersection.complete) {
+    if (intersection.complete) {
+      type = intersection.value
+    } else {
       errors.push(intersection.error)
-      return errors
     }
-
-    type = intersection.value
   }
 
-  target.set(emission.slot.name, {
-    slot: existing.slot,
-    type,
-    minimum: existing.minimum + emission.minimum,
-    maximum: existing.maximum + emission.maximum,
-    ranges: [...existing.ranges, ...emission.ranges]
-  })
+  const minimum = existing.minimum + emission.minimum
+  const maximum = existing.maximum + emission.maximum
+  const ranges = [...existing.ranges, ...emission.ranges]
+
+  if (slot.singular && existing.maximum <= 1 && maximum > 1) {
+    const message = slot.type === 'infer'
+      ? `Duplicate emission into slot "${slot.name}" which accepts at most one value`
+      : `Duplicate emission into slot "${slot.name}" of type ${slot.type.format()} which accepts at most one value`
+    errors.push(new CompileError(message, emission.ranges.at(0) ?? existing.ranges.at(0)))
+  }
+
+  target.set(emission.slot.name, { slot, type, minimum, maximum, ranges })
 
   return errors
 }
 
 export function validateEmissions (emissions: Emissions, slots: Slots, range: SourceRange): readonly CompileError[] {
   const errors: CompileError[] = []
+
+  // The maximum has already been validated when adding emissions.
+  // The minimum still needs to be checked for required slots.
 
   for (const slot of slots) {
     const emitted = emissions.get(slot.name)
@@ -106,13 +114,6 @@ export function validateEmissions (emissions: Emissions, slots: Slots, range: So
       const message = slot.type === 'infer'
         ? `Expected at least one emission into slot "${slot.name}"`
         : `Expected at least one emission into slot "${slot.name}" of type ${slot.type.format()}`
-      errors.push(new CompileError(message, range))
-    }
-
-    if (slot.singular && emitted != null && emitted.maximum > 1) {
-      const message = slot.type === 'infer'
-        ? `Duplicate emission into slot "${slot.name}" which accepts at most one value`
-        : `Duplicate emission into slot "${slot.name}" of type ${slot.type.format()} which accepts at most one value`
       errors.push(new CompileError(message, range))
     }
   }

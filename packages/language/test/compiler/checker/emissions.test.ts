@@ -44,7 +44,7 @@ describe('compiler/checker/emissions.ts', () => {
       })
     })
 
-    it('should reject incompatible inferred emission types and keep the original emission', () => {
+    it('should error for incompatible types', () => {
       const target = new Map<SlotName, Emission>()
 
       const inferredSlot: Slot = {
@@ -76,7 +76,16 @@ describe('compiler/checker/emissions.ts', () => {
       assert.strictEqual(errors.length, 1)
       assert.strictEqual(errors[0]?.message, 'Incompatible types for slot "inferred": number.hz, source')
       assert.strictEqual(errors[0]?.range, incompatible.ranges[0])
-      assert.strictEqual(target.get(inferredSlot.name), original)
+
+      // The emission should still be merged.
+      // This is to avoid errors about missing emissions for required slots when the type is incompatible.
+      assert.deepStrictEqual(target.get(inferredSlot.name), {
+        slot: inferredSlot,
+        type: undefined,
+        minimum: 2,
+        maximum: 2,
+        ranges: [...original.ranges, ...incompatible.ranges]
+      })
     })
   })
 
@@ -110,7 +119,9 @@ describe('compiler/checker/emissions.ts', () => {
       )
     })
 
-    it('should reject singular slots when their maximum emission count exceeds one', () => {
+    it('should not handle exceeding the maximum for singular slots', () => {
+      // Reason: The maximum has already been validated when adding emissions.
+
       const range = getEmptySourceRange()
 
       const slots: Slots = [
@@ -140,11 +151,8 @@ describe('compiler/checker/emissions.ts', () => {
       ])
 
       assert.deepStrictEqual(
-        validateEmissions(emissions, slots, range).map((error) => error.message),
-        [
-          'Duplicate emission into slot "typed" of type number.hz which accepts at most one value',
-          'Duplicate emission into slot "inferred" which accepts at most one value'
-        ]
+        validateEmissions(emissions, slots, range),
+        []
       )
     })
   })

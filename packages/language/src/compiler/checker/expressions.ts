@@ -37,7 +37,7 @@ import { checkArguments } from './arguments.ts'
 import { createBlockChecker } from './blocks.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import type { MutableEmissions, SlotName } from './emissions.ts'
-import { addEmission } from './emissions.ts'
+import { addEmission, validateEmissions } from './emissions.ts'
 import { checkParameters } from './parameters.ts'
 import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
@@ -404,23 +404,14 @@ function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetTy
     }
   }
 
+  errors.push(...validateEmissions(emissions, functionStatementOptions.slots ?? [], expression.range))
+
   if (errors.length > 0) {
     // If there are errors here, the return type most likely cannot be determined correctly.
     return { errors, capabilities }
   }
 
-  const returnEmission = emissions.get(returnSlotName)
-
-  if (returnEmission == null || returnEmission.minimum < 1) {
-    errors.push(new CompileError('Function must return exactly one value, but can return zero values', expression.range))
-    return { errors, capabilities }
-  }
-
-  if (returnEmission.maximum > 1) {
-    errors.push(new CompileError('Function must return exactly one value, but can return more than one value', expression.range))
-  }
-
-  const returnType = nonNull(returnEmission.type)
+  const returnType = nonNull(emissions.get(returnSlotName)?.type)
 
   const spec: FunctionSpec = { parameters, returnType, capabilities: callCapabilities }
   const result = FunctionFacet.with(spec).type()
