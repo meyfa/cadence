@@ -8,6 +8,14 @@ export class CompoundError<TError extends Error> extends Error {
     this.name = 'CompoundError'
     this.errors = errors
   }
+
+  toJSON (): Record<string, unknown> {
+    return {
+      name: this.name,
+      message: this.message,
+      errors: this.errors
+    }
+  }
 }
 
 export abstract class RangeError extends Error {
@@ -17,6 +25,19 @@ export abstract class RangeError extends Error {
     super(message)
     this.name = 'RangeError'
     this.range = range
+  }
+
+  toJSON (): Record<string, unknown> {
+    const json: Record<string, unknown> = {
+      name: this.name,
+      message: this.message
+    }
+
+    if (this.range != null) {
+      json.range = this.range
+    }
+
+    return json
   }
 }
 
