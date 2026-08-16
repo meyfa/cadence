@@ -1,0 +1,16 @@
+// test:get_property ["track"]
+
+fn = (x: number) {
+  if x == 1 {
+    & 100
+  }, x == 2 {
+    & 200
+  }, else {
+    & 300
+  }
+}
+
+& track (tempo: fn(3).bpm) {
+  & part (fn(1).beats) {}
+  & part (fn(2).beats) {}
+}

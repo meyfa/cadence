@@ -1,0 +1,14 @@
+number_string_eq = 42 == "hello"
+number_string_neq = 42 != "hello"
+
+string_number_eq = "hello" == 42
+string_number_neq = "hello" != 42
+
+boolean_string_eq = true == "hello"
+boolean_string_neq = true != "hello"
+
+number_boolean_eq = 42 == true
+number_boolean_neq = 42 != true
+
+number_generics_eq = 42 == 10.hz
+number_generics_neq = 42 != 10.hz

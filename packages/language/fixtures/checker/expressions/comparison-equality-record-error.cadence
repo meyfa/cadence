@@ -1,0 +1,10 @@
+record_record_eq = {} == {}
+record_record_neq = {} != {}
+
+empty = {}
+empty_self_eq = empty == empty
+empty_self_neq = empty != empty
+
+non_empty = { @foo = 42 }
+non_empty_self_eq = non_empty == non_empty
+non_empty_self_neq = non_empty != non_empty

@@ -101,7 +101,7 @@
         "emit": false,
         "expose": false,
         "name": {
-          "name": "c",
+          "name": "d",
           "type": "Identifier",
           "range": {"offset": 41, "length": 1, "line": 4, "column": 1, "filePath": "expressions-comparison.cadence"}
         },

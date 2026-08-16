@@ -1,0 +1,52 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"==\": number, string",
+    "range": {"offset": 19, "length": 13, "line": 1, "column": 20, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"!=\": number, string",
+    "range": {"offset": 53, "length": 13, "line": 2, "column": 21, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"==\": string, number",
+    "range": {"offset": 87, "length": 13, "line": 4, "column": 20, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"!=\": string, number",
+    "range": {"offset": 121, "length": 13, "line": 5, "column": 21, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"==\": boolean, string",
+    "range": {"offset": 156, "length": 15, "line": 7, "column": 21, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"!=\": boolean, string",
+    "range": {"offset": 193, "length": 15, "line": 8, "column": 22, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"==\": number, boolean",
+    "range": {"offset": 230, "length": 10, "line": 10, "column": 21, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"!=\": number, boolean",
+    "range": {"offset": 262, "length": 10, "line": 11, "column": 22, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"==\": number, number.hz",
+    "range": {"offset": 295, "length": 11, "line": 13, "column": 22, "filePath": "expressions/comparison-equality-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"!=\": number, number.hz",
+    "range": {"offset": 329, "length": 11, "line": 14, "column": 23, "filePath": "expressions/comparison-equality-error.cadence"}
+  }
+]
