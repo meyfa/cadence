@@ -1,0 +1,6 @@
+number_eq = 42 == 100
+number_neq = 42 != 100
+string_eq = "hello" == "world"
+string_neq = "hello" != "world"
+boolean_eq = true == false
+boolean_neq = true != false

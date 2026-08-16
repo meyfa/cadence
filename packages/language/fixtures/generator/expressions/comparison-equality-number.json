@@ -1,0 +1,15 @@
+{
+  "tempo": 300,
+  "parts": [
+    {
+      "length": 100,
+      "routings": [],
+      "automations": []
+    },
+    {
+      "length": 200,
+      "routings": [],
+      "automations": []
+    }
+  ]
+}
