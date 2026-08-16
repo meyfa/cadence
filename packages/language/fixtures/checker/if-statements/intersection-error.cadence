@@ -1,0 +1,7 @@
+my_record = {
+  if true {
+    @foo = 42
+  }, else {
+    @foo = "test"
+  }
+}

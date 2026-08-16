@@ -1,0 +1,17 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Identifier \"baz\" is not definitely assigned",
+    "range": {"offset": 249, "length": 3, "line": 17, "column": 8, "filePath": "if-statements/conditional-assignment.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Identifier \"x\" is not definitely assigned",
+    "range": {"offset": 307, "length": 1, "line": 25, "column": 5, "filePath": "if-statements/conditional-assignment.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Identifier \"y\" is not definitely assigned",
+    "range": {"offset": 311, "length": 1, "line": 25, "column": 9, "filePath": "if-statements/conditional-assignment.cadence"}
+  }
+]

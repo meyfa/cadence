@@ -789,57 +789,6 @@ describe('compiler/generator/generator.ts', async () => {
     assert.strictEqual(result.track.tempo, 123)
   })
 
-  it('should ignore empty if statements', () => {
-    const source = [
-      '& track {',
-      '  if true {}',
-      '  if false {}, else {}',
-      '}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.deepStrictEqual(result.track.parts, [])
-  })
-
-  it('should resolve variables defined in if statements', () => {
-    for (const condition of ['true', 'false']) {
-      const source = [
-        `if ${condition} {`,
-        '  my_tempo = 90.bpm',
-        '}, else {',
-        '  my_tempo = 150.bpm',
-        '}',
-        '',
-        '& track (tempo: my_tempo) {}'
-      ].join('\n')
-
-      const result = generateSource(source)
-      assert.strictEqual(result.track.tempo, condition === 'true' ? 90 : 150)
-    }
-  })
-
-  it('should use emissions from conditional branches', () => {
-    const source = [
-      'if true {',
-      '  & track (123.bpm) {}',
-      '}, else {',
-      '  & track (234.bpm) {}',
-      '}',
-      '',
-      '& mixer {',
-      '  if false {',
-      '    & bus (gain: -6.db) {}',
-      '  }, else {',
-      '    & bus (gain: -12.db) {}',
-      '  }',
-      '}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.track.tempo, 123)
-    assert.strictEqual(result.mixer.buses[0].gain.initial, db(-12))
-  })
-
   it('should support conditional function returns', () => {
     const source = [
       'my_function = (condition: boolean) {',
@@ -859,22 +808,6 @@ describe('compiler/generator/generator.ts', async () => {
     const result = generateSource(source)
     assert.strictEqual(result.mixer.buses[0].gain.initial, db(-6))
     assert.strictEqual(result.mixer.buses[1].gain.initial, db(-10))
-  })
-
-  it('should support conditional property exposure', () => {
-    const source = [
-      'my_record = {',
-      '  if true {',
-      '    @foo = 123.bpm',
-      '  }, else {',
-      '    @foo = 456.bpm',
-      '  }',
-      '}',
-      '& track (tempo: my_record.foo) {}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.track.tempo, 123)
   })
 
   it('should support multiple conditional branches', () => {

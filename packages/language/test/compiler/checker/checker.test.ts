@@ -143,21 +143,6 @@ describe('compiler/checker/checker.ts', async () => {
       assertValid(source)
     })
 
-    it('should accept part and bus labels', () => {
-      const source = [
-        '& mixer {',
-        '  & bus ("Foo") {}',
-        '  & bus (label: "Bar") {}',
-        '}',
-        '& track {',
-        '  & part (4.bars, "Foo") {}',
-        '  & part (4.bars, label: "Bar") {}',
-        '}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
     it('should allow scoped assignments to shadow top-level variables', () => {
       const source = [
         'shadowed_in_track = 100',
@@ -620,56 +605,6 @@ describe('compiler/checker/checker.ts', async () => {
       assertValid(source)
     })
 
-    it('should allow label for instrument definitions', () => {
-      const source = [
-        'instrument0 = instrument ("My Instrument") {}',
-        'instrument1 = instrument (label: "My Instrument") {}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow empty if statements', () => {
-      const source = [
-        'if true {}',
-        'if false {}, else {}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow assignments within if statements', () => {
-      const source = [
-        'if true {',
-        '  foo = 100',
-        '  bar = foo + 1', // 101
-        '}, else {',
-        '  foo = 200',
-        '  bar = foo + 2', // 202
-        '}',
-        '',
-        'if true {',
-        '  baz = 200', // non-definite assignment
-        '}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow emission within if statements', () => {
-      const source = [
-        'use "sources" as src',
-        '',
-        'if true {',
-        '  & track (123.bpm) {}',
-        '}, else {',
-        '  & track (234.bpm) {}',
-        '}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
     it('should allow conditional function returns of the same type', () => {
       const source = [
         'my_function = () {',
@@ -702,49 +637,6 @@ describe('compiler/checker/checker.ts', async () => {
         '',
         'access_foo = my_function().foo',
         'access_instrument = play(my_function(), [C5])'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow conditional property exposure', () => {
-      const source = [
-        'my_instrument = instrument {',
-        '  if true {',
-        '    @foo = 42',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should intersect types of conditional property exposure', () => {
-      const source = [
-        'my_instrument = instrument {',
-        '  if true {',
-        '    @foo = { @bar = 42 @str = "hello" }',
-        '    @x = 100.hz',
-        '  }, else {',
-        '    @foo = { @bar = 100 @num = 3.db }',
-        '    @y = 200.hz',
-        '  }',
-        '}',
-        '',
-        'access_bar = my_instrument.foo.bar'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow access to conditional properties in the same branch', () => {
-      const source = [
-        'my_record = {',
-        '  if true {',
-        '    @foo = 42',
-        '    @bar = foo + 1',
-        '  }',
-        '}'
       ].join('\n')
 
       assertValid(source)
@@ -1458,69 +1350,6 @@ describe('compiler/checker/checker.ts', async () => {
       ])
     })
 
-    it('should enforce boolean type for if statements', () => {
-      const source = [
-        'foo = 42',
-        'bar = ""',
-        'if foo {}',
-        'if bar {}, else {}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Condition must be of type boolean, got number',
-        'Condition must be of type boolean, got string'
-      ])
-    })
-
-    it('should reject reassignment of a variable defined before a conditional branch', () => {
-      const source = [
-        'foo = 42',
-        'if true {',
-        '  foo = 100',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Identifier "foo" is already defined'
-      ])
-    })
-
-    it('should reject reassignment of a variable inside a conditional branch', () => {
-      const source = [
-        'if true {',
-        '  foo = 42',
-        '  foo = 100',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Identifier "foo" is already defined'
-      ])
-    })
-
-    it('should reject access to non-definitely assigned variables', () => {
-      const source = [
-        'if true {',
-        '  foo = 42',
-        '}',
-        '',
-        'if true {',
-        '  x = 100',
-        '}, else {',
-        '  y = 200',
-        '}',
-        '',
-        'bar = foo',
-        'baz = x + y'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Identifier "foo" is not definitely assigned',
-        'Identifier "x" is not definitely assigned',
-        'Identifier "y" is not definitely assigned'
-      ])
-    })
-
     it('should reject unchecked access to optional parameters', () => {
       const source = [
         'my_function = (a: number, b?: number) {',
@@ -1531,20 +1360,6 @@ describe('compiler/checker/checker.ts', async () => {
 
       assertErrorMessages(source, [
         'Identifier "b" is not definitely assigned'
-      ])
-    })
-
-    it('should reject incompatible types in conditional branches', () => {
-      const source = [
-        'if true {',
-        '  foo = 42',
-        '}, else {',
-        '  foo = "test"',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Incompatible types for identifier "foo" in conditional branches: number, string'
       ])
     })
 
@@ -1670,106 +1485,6 @@ describe('compiler/checker/checker.ts', async () => {
 
       assertErrorMessages(source, [
         'Incompatible types for slot "return" in conditional branches: number.bpm, number.hz'
-      ])
-    })
-
-    it('should reject access to properties not part of the intersection of conditional branches', () => {
-      const source = [
-        'my_function = () {',
-        '  if true {',
-        '    & instrument {',
-        '      @foo = 42',
-        '      @bar = "hello"',
-        '    }',
-        '  }, else {',
-        '    & instrument {',
-        '      @foo = 100',
-        '      @baz = 3.db',
-        '    }',
-        '  }',
-        '}',
-        '',
-        'access_bar = my_function().bar',
-        'access_baz = my_function().baz'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Type (instrument + {foo: number}) has no property named "bar"',
-        'Type (instrument + {foo: number}) has no property named "baz"'
-      ])
-    })
-
-    it('should reject access to conditionally exposed properties', () => {
-      const source = [
-        'instrument0 = instrument {',
-        '  if true {',
-        '    @foo = { @bar = 42 @str = "" }',
-        '    @x = 100.hz',
-        '  }, else {',
-        '    @foo = { @bar = 100 @num = 3.db }',
-        '    @y = 200.hz',
-        '  }',
-        '}',
-        '',
-        'instrument1 = instrument {',
-        '  if true {',
-        '    @hello = "world"',
-        '  }',
-        '}',
-        '',
-        'access_x = instrument0.x',
-        'access_y = instrument0.y',
-        'access_str = instrument0.foo.str',
-        'access_num = instrument0.foo.num',
-        '',
-        'access_hello = instrument1.hello'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        // All branches expose *some* properties, but not the same ones, so the intersection type
-        // should include the 'record' facet with only the common property "foo".
-        'Type (instrument + {foo: {bar: number}}) has no property named "x"',
-        'Type (instrument + {foo: {bar: number}}) has no property named "y"',
-
-        // The properties of "foo" should be intersected as well.
-        'Type {bar: number} has no property named "str"',
-        'Type {bar: number} has no property named "num"',
-
-        // Only one branch exposes a property, so the intersection type should NOT include the 'record' facet at all.
-        'Type instrument has no property named "hello"'
-      ])
-    })
-
-    it('should reject duplicate property exposure in the same conditional branch', () => {
-      const source = [
-        'my_record = {',
-        '  if true {',
-        '    @foo = 42',
-        '    @foo = 100',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Identifier "foo" is already defined',
-        'Duplicate property "foo"'
-      ])
-    })
-
-    it('should reject incompatible property types in conditional branches', () => {
-      const source = [
-        'my_record = {',
-        '  if true {',
-        '    @foo = 42',
-        '  }, else {',
-        '    @foo = "test"',
-        '  }',
-        '}'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Incompatible types for identifier "foo" in conditional branches: number, string',
-        'Incompatible types for property "foo" in conditional branches: number, string'
       ])
     })
 

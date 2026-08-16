@@ -1,0 +1,15 @@
+// definite exposure
+record0 = {
+  if true {
+    @foo = 42
+  }, else {
+    @foo = 43
+  }
+}
+
+// non-definite exposure
+record1 = {
+  if true {
+    @foo = 42
+  }
+}

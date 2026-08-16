@@ -1,0 +1,23 @@
+if true {
+  foo = 42
+  foo = 43
+}
+
+record0 = {
+  if true {
+    @bar = "hello"
+    @bar = "world"
+  }
+}
+
+baz = "already defined before the if statement"
+if true {
+  baz = "redefined"
+}
+
+record1 = {
+  @qux = "already exposed before the if statement"
+  if true {
+    @qux = "redefined"
+  }
+}

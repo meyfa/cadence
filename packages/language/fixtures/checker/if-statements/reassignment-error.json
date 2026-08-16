@@ -1,0 +1,32 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Identifier \"foo\" is already defined",
+    "range": {"offset": 23, "length": 3, "line": 3, "column": 3, "filePath": "if-statements/reassignment-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Identifier \"bar\" is already defined",
+    "range": {"offset": 83, "length": 3, "line": 9, "column": 6, "filePath": "if-statements/reassignment-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Duplicate property \"bar\"",
+    "range": {"offset": 83, "length": 3, "line": 9, "column": 6, "filePath": "if-statements/reassignment-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Identifier \"baz\" is already defined",
+    "range": {"offset": 152, "length": 31, "line": 14, "column": 1, "filePath": "if-statements/reassignment-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Duplicate property \"qux\"",
+    "range": {"offset": 265, "length": 3, "line": 21, "column": 6, "filePath": "if-statements/reassignment-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Identifier \"qux\" is already defined",
+    "range": {"offset": 250, "length": 36, "line": 20, "column": 3, "filePath": "if-statements/reassignment-error.cadence"}
+  }
+]

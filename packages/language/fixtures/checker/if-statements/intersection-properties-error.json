@@ -1,0 +1,12 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Type {foo: number} has no property named \"bar\"",
+    "range": {"offset": 150, "length": 3, "line": 13, "column": 24, "filePath": "if-statements/intersection-properties-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Type {foo: number} has no property named \"baz\"",
+    "range": {"offset": 177, "length": 3, "line": 14, "column": 24, "filePath": "if-statements/intersection-properties-error.cadence"}
+  }
+]

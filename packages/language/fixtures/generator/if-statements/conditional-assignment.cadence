@@ -1,0 +1,17 @@
+// test:get_property ["track"]
+
+if true {
+  track_tempo = 90.bpm
+}, else {
+  track_tempo = 150.bpm
+}
+
+if false {
+  part_length = 4.beats
+}, else {
+  part_length = 8.beats
+}
+
+& track (track_tempo) {
+  & part (part_length) {}
+}

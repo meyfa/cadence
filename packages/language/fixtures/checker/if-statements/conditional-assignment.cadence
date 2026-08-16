@@ -1,0 +1,25 @@
+if true {
+  foo = 100
+  bar = foo + 1 // 101
+}, else {
+  foo = 200
+  bar = foo + 2 // 202
+}
+
+if true {
+  baz = 200 // non-definite assignment
+
+  // should be fine to access baz here
+  qux = baz + 1
+}
+
+// should be an error to access baz here
+qux2 = baz + 1
+
+if true {
+  x = 1000
+}, else {
+  y = 2000
+}
+
+z = x + y

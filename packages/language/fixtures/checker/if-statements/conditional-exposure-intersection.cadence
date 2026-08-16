@@ -1,0 +1,27 @@
+record0 = {
+  if true {
+    @foo = { @bar = 42 @str = "hello" }
+    @x = 100.hz
+  }, else {
+    @foo = { @bar = 100 @num = 3.db }
+    @y = 200.hz
+  }
+}
+
+// valid
+access_foo = record0.foo
+access_bar = record0.foo.bar
+
+// invalid
+access_x = record0.x
+access_y = record0.y
+access_str = record0.foo.str
+access_num = record0.foo.num
+
+record1 = {
+  if true {
+    @hello = "world"
+  }
+}
+
+access_hello = record1.hello

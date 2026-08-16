@@ -1,0 +1,27 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Type {foo: {bar: number}} has no property named \"x\"",
+    "range": {"offset": 247, "length": 1, "line": 16, "column": 20, "filePath": "if-statements/conditional-exposure-intersection.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Type {foo: {bar: number}} has no property named \"y\"",
+    "range": {"offset": 268, "length": 1, "line": 17, "column": 20, "filePath": "if-statements/conditional-exposure-intersection.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Type {bar: number} has no property named \"str\"",
+    "range": {"offset": 295, "length": 3, "line": 18, "column": 26, "filePath": "if-statements/conditional-exposure-intersection.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Type {bar: number} has no property named \"num\"",
+    "range": {"offset": 324, "length": 3, "line": 19, "column": 26, "filePath": "if-statements/conditional-exposure-intersection.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Type {} has no property named \"hello\"",
+    "range": {"offset": 404, "length": 5, "line": 27, "column": 24, "filePath": "if-statements/conditional-exposure-intersection.cadence"}
+  }
+]

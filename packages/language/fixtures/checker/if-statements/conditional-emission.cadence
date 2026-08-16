@@ -1,0 +1,11 @@
+// definite emission
+if true {
+  & track (123.bpm) {}
+}, else {
+  & track (234.bpm) {}
+}
+
+// non-definite emission
+if true {
+  & mixer {}
+}
