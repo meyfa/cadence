@@ -1,0 +1,155 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "my_synth",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 8, "line": 1, "column": 1, "filePath": "values-instrument.cadence"}
+        },
+        "values": [
+          {
+            "arguments": [],
+            "children": [
+              {
+                "emit": false,
+                "expose": false,
+                "name": {
+                  "name": "foo",
+                  "type": "Identifier",
+                  "range": {"offset": 26, "length": 3, "line": 2, "column": 3, "filePath": "values-instrument.cadence"}
+                },
+                "values": [
+                  {
+                    "operator": "-",
+                    "operand": {
+                      "object": {
+                        "value": 6,
+                        "type": "Number",
+                        "range": {"offset": 33, "length": 1, "line": 2, "column": 10, "filePath": "values-instrument.cadence"}
+                      },
+                      "property": {
+                        "name": "db",
+                        "type": "Identifier",
+                        "range": {"offset": 35, "length": 2, "line": 2, "column": 12, "filePath": "values-instrument.cadence"}
+                      },
+                      "type": "PropertyAccess",
+                      "range": {"offset": 33, "length": 4, "line": 2, "column": 10, "filePath": "values-instrument.cadence"}
+                    },
+                    "type": "UnaryExpression",
+                    "range": {"offset": 32, "length": 5, "line": 2, "column": 9, "filePath": "values-instrument.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 26, "length": 11, "line": 2, "column": 3, "filePath": "values-instrument.cadence"}
+              },
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "children": [
+                      {
+                        "emit": false,
+                        "expose": false,
+                        "name": {
+                          "name": "bar",
+                          "type": "Identifier",
+                          "range": {"offset": 54, "length": 3, "line": 4, "column": 5, "filePath": "values-instrument.cadence"}
+                        },
+                        "values": [
+                          {
+                            "object": {
+                              "value": 440,
+                              "type": "Number",
+                              "range": {"offset": 60, "length": 3, "line": 4, "column": 11, "filePath": "values-instrument.cadence"}
+                            },
+                            "property": {
+                              "name": "hz",
+                              "type": "Identifier",
+                              "range": {"offset": 64, "length": 2, "line": 4, "column": 15, "filePath": "values-instrument.cadence"}
+                            },
+                            "type": "PropertyAccess",
+                            "range": {"offset": 60, "length": 6, "line": 4, "column": 11, "filePath": "values-instrument.cadence"}
+                          }
+                        ],
+                        "type": "SimpleStatement",
+                        "range": {"offset": 54, "length": 12, "line": 4, "column": 5, "filePath": "values-instrument.cadence"}
+                      }
+                    ],
+                    "bindings": {},
+                    "type": "Voice",
+                    "range": {"offset": 42, "length": 28, "line": 3, "column": 5, "filePath": "values-instrument.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 40, "length": 30, "line": 3, "column": 3, "filePath": "values-instrument.cadence"}
+              },
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "children": [],
+                    "bindings": {
+                      "note": {
+                        "name": "note",
+                        "type": "Identifier",
+                        "range": {"offset": 81, "length": 4, "line": 6, "column": 11, "filePath": "values-instrument.cadence"}
+                      }
+                    },
+                    "type": "Voice",
+                    "range": {"offset": 75, "length": 13, "line": 6, "column": 5, "filePath": "values-instrument.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 73, "length": 15, "line": 6, "column": 3, "filePath": "values-instrument.cadence"}
+              }
+            ],
+            "type": "Instrument",
+            "range": {"offset": 11, "length": 79, "line": 1, "column": 12, "filePath": "values-instrument.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 90, "line": 1, "column": 1, "filePath": "values-instrument.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "labeled_instrument",
+          "type": "Identifier",
+          "range": {"offset": 92, "length": 18, "line": 9, "column": 1, "filePath": "values-instrument.cadence"}
+        },
+        "values": [
+          {
+            "arguments": [
+              {
+                "value": {
+                  "parts": [
+                    "my_label"
+                  ],
+                  "type": "String",
+                  "range": {"offset": 125, "length": 10, "line": 9, "column": 34, "filePath": "values-instrument.cadence"}
+                },
+                "type": "Argument",
+                "range": {"offset": 125, "length": 10, "line": 9, "column": 34, "filePath": "values-instrument.cadence"}
+              }
+            ],
+            "children": [],
+            "type": "Instrument",
+            "range": {"offset": 113, "length": 26, "line": 9, "column": 22, "filePath": "values-instrument.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 92, "length": 47, "line": 9, "column": 1, "filePath": "values-instrument.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 139, "line": 1, "column": 1, "filePath": "values-instrument.cadence"}
+  }
+}

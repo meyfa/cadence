@@ -1,0 +1,69 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "curve-segments-without-parameters.cadence"}
+        },
+        "values": [
+          {
+            "children": [
+              {
+                "curveType": "hold",
+                "arguments": [],
+                "length": {
+                  "object": {
+                    "value": 1,
+                    "type": "Number",
+                    "range": {"offset": 13, "length": 1, "line": 1, "column": 14, "filePath": "curve-segments-without-parameters.cadence"}
+                  },
+                  "property": {
+                    "name": "bar",
+                    "type": "Identifier",
+                    "range": {"offset": 15, "length": 3, "line": 1, "column": 16, "filePath": "curve-segments-without-parameters.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 13, "length": 5, "line": 1, "column": 14, "filePath": "curve-segments-without-parameters.cadence"}
+                },
+                "type": "CurveSegment",
+                "range": {"offset": 8, "length": 10, "line": 1, "column": 9, "filePath": "curve-segments-without-parameters.cadence"}
+              },
+              {
+                "curveType": "hold",
+                "arguments": [],
+                "length": {
+                  "object": {
+                    "value": 2,
+                    "type": "Number",
+                    "range": {"offset": 24, "length": 1, "line": 1, "column": 25, "filePath": "curve-segments-without-parameters.cadence"}
+                  },
+                  "property": {
+                    "name": "bars",
+                    "type": "Identifier",
+                    "range": {"offset": 26, "length": 4, "line": 1, "column": 27, "filePath": "curve-segments-without-parameters.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 24, "length": 6, "line": 1, "column": 25, "filePath": "curve-segments-without-parameters.cadence"}
+                },
+                "type": "CurveSegment",
+                "range": {"offset": 19, "length": 11, "line": 1, "column": 20, "filePath": "curve-segments-without-parameters.cadence"}
+              }
+            ],
+            "type": "Curve",
+            "range": {"offset": 6, "length": 25, "line": 1, "column": 7, "filePath": "curve-segments-without-parameters.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 31, "line": 1, "column": 1, "filePath": "curve-segments-without-parameters.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 31, "line": 1, "column": 1, "filePath": "curve-segments-without-parameters.cadence"}
+  }
+}

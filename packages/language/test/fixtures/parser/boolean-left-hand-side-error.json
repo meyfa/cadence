@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Unexpected statement beginning with \"true\"",
+    "range": {"offset": 0, "length": 4, "line": 1, "column": 1, "filePath": "boolean-left-hand-side-error.cadence"}
+  }
+}

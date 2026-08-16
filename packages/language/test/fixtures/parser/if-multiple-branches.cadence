@@ -1,0 +1,7 @@
+if condition0 {
+  & 42
+}, condition1 {
+  & 43
+}, condition2 {
+  & 44
+}

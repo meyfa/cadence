@@ -1,0 +1,62 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "pattern",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 7, "line": 1, "column": 1, "filePath": "pattern-single-named-parameter.cadence"}
+        },
+        "values": [
+          {
+            "mode": "serial",
+            "children": [
+              {
+                "value": "C4",
+                "length": {
+                  "value": 1.5,
+                  "type": "Number",
+                  "range": {"offset": 25, "length": 3, "line": 1, "column": 26, "filePath": "pattern-single-named-parameter.cadence"}
+                },
+                "arguments": [
+                  {
+                    "name": {
+                      "name": "gate",
+                      "type": "Identifier",
+                      "range": {"offset": 14, "length": 4, "line": 1, "column": 15, "filePath": "pattern-single-named-parameter.cadence"}
+                    },
+                    "value": {
+                      "value": 2,
+                      "type": "Number",
+                      "range": {"offset": 20, "length": 3, "line": 1, "column": 21, "filePath": "pattern-single-named-parameter.cadence"}
+                    },
+                    "type": "Argument",
+                    "range": {"offset": 14, "length": 9, "line": 1, "column": 15, "filePath": "pattern-single-named-parameter.cadence"}
+                  }
+                ],
+                "type": "Step",
+                "range": {"offset": 11, "length": 17, "line": 1, "column": 12, "filePath": "pattern-single-named-parameter.cadence"}
+              },
+              {
+                "value": "-",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 28, "length": 1, "line": 1, "column": 29, "filePath": "pattern-single-named-parameter.cadence"}
+              }
+            ],
+            "type": "Pattern",
+            "range": {"offset": 10, "length": 20, "line": 1, "column": 11, "filePath": "pattern-single-named-parameter.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 30, "line": 1, "column": 1, "filePath": "pattern-single-named-parameter.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 30, "line": 1, "column": 1, "filePath": "pattern-single-named-parameter.cadence"}
+  }
+}

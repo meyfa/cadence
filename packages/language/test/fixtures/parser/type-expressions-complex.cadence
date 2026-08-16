@@ -1,0 +1,3 @@
+foo = (x: number.db + (format: string): string, fmt?: string) {}
+bar = (y: ((number.db) + (format: string): (string + string))) {}
+baz = (z: (): instrument !hello !world + {foo: number, bar: string}) {}

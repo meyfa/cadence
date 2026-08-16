@@ -1,0 +1,9 @@
+my_synth = instrument {
+  foo = -6.db
+  & voice {
+    bar = 440.hz
+  }
+  & voice note {}
+}
+
+labeled_instrument = instrument ("my_label") {}

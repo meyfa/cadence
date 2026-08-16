@@ -1,0 +1,57 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "x",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 1, "line": 1, "column": 1, "filePath": "calling-result-of-call.cadence"}
+        },
+        "values": [
+          {
+            "callee": {
+              "callee": {
+                "name": "factory",
+                "type": "Identifier",
+                "range": {"offset": 4, "length": 7, "line": 1, "column": 5, "filePath": "calling-result-of-call.cadence"}
+              },
+              "arguments": [],
+              "type": "Call",
+              "range": {"offset": 4, "length": 9, "line": 1, "column": 5, "filePath": "calling-result-of-call.cadence"}
+            },
+            "arguments": [
+              {
+                "value": {
+                  "name": "arg1",
+                  "type": "Identifier",
+                  "range": {"offset": 14, "length": 4, "line": 1, "column": 15, "filePath": "calling-result-of-call.cadence"}
+                },
+                "type": "Argument",
+                "range": {"offset": 14, "length": 4, "line": 1, "column": 15, "filePath": "calling-result-of-call.cadence"}
+              },
+              {
+                "value": {
+                  "name": "arg2",
+                  "type": "Identifier",
+                  "range": {"offset": 20, "length": 4, "line": 1, "column": 21, "filePath": "calling-result-of-call.cadence"}
+                },
+                "type": "Argument",
+                "range": {"offset": 20, "length": 4, "line": 1, "column": 21, "filePath": "calling-result-of-call.cadence"}
+              }
+            ],
+            "type": "Call",
+            "range": {"offset": 4, "length": 21, "line": 1, "column": 5, "filePath": "calling-result-of-call.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 25, "line": 1, "column": 1, "filePath": "calling-result-of-call.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 25, "line": 1, "column": 1, "filePath": "calling-result-of-call.cadence"}
+  }
+}

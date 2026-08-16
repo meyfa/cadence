@@ -1,0 +1,73 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "f",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 1, "line": 1, "column": 1, "filePath": "types-function-nearest-capabilities.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "p",
+                  "type": "Identifier",
+                  "range": {"offset": 5, "length": 1, "line": 1, "column": 6, "filePath": "types-function-nearest-capabilities.cadence"}
+                },
+                "parameterType": {
+                  "parameters": [],
+                  "returnType": {
+                    "parameters": [],
+                    "returnType": {
+                      "name": {
+                        "name": "number",
+                        "type": "Identifier",
+                        "range": {"offset": 16, "length": 6, "line": 1, "column": 17, "filePath": "types-function-nearest-capabilities.cadence"}
+                      },
+                      "generics": [],
+                      "type": "NamedType",
+                      "range": {"offset": 16, "length": 6, "line": 1, "column": 17, "filePath": "types-function-nearest-capabilities.cadence"}
+                    },
+                    "capabilities": [
+                      {
+                        "name": "foo",
+                        "type": "Identifier",
+                        "range": {"offset": 24, "length": 3, "line": 1, "column": 25, "filePath": "types-function-nearest-capabilities.cadence"}
+                      },
+                      {
+                        "name": "bar",
+                        "type": "Identifier",
+                        "range": {"offset": 29, "length": 3, "line": 1, "column": 30, "filePath": "types-function-nearest-capabilities.cadence"}
+                      }
+                    ],
+                    "type": "FunctionType",
+                    "range": {"offset": 12, "length": 20, "line": 1, "column": 13, "filePath": "types-function-nearest-capabilities.cadence"}
+                  },
+                  "capabilities": [],
+                  "type": "FunctionType",
+                  "range": {"offset": 8, "length": 24, "line": 1, "column": 9, "filePath": "types-function-nearest-capabilities.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 5, "length": 27, "line": 1, "column": 6, "filePath": "types-function-nearest-capabilities.cadence"}
+              }
+            ],
+            "children": [],
+            "type": "Function",
+            "range": {"offset": 4, "length": 32, "line": 1, "column": 5, "filePath": "types-function-nearest-capabilities.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 36, "line": 1, "column": 1, "filePath": "types-function-nearest-capabilities.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 36, "line": 1, "column": 1, "filePath": "types-function-nearest-capabilities.cadence"}
+  }
+}

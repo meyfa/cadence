@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Curve segment \"hold\" is missing a length",
+    "range": {"offset": 8, "length": 4, "line": 1, "column": 9, "filePath": "curve-segments-missing-length-error.cadence"}
+  }
+}

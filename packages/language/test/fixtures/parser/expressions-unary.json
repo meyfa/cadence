@@ -1,0 +1,92 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "a",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 1, "line": 1, "column": 1, "filePath": "expressions-unary.cadence"}
+        },
+        "values": [
+          {
+            "value": 3,
+            "type": "Number",
+            "range": {"offset": 4, "length": 7, "line": 1, "column": 5, "filePath": "expressions-unary.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 11, "line": 1, "column": 1, "filePath": "expressions-unary.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "b",
+          "type": "Identifier",
+          "range": {"offset": 12, "length": 1, "line": 2, "column": 1, "filePath": "expressions-unary.cadence"}
+        },
+        "values": [
+          {
+            "value": 4,
+            "type": "Number",
+            "range": {"offset": 16, "length": 2, "line": 2, "column": 5, "filePath": "expressions-unary.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 12, "length": 6, "line": 2, "column": 1, "filePath": "expressions-unary.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "c",
+          "type": "Identifier",
+          "range": {"offset": 19, "length": 1, "line": 3, "column": 1, "filePath": "expressions-unary.cadence"}
+        },
+        "values": [
+          {
+            "operator": "-",
+            "operand": {
+              "name": "a",
+              "type": "Identifier",
+              "range": {"offset": 24, "length": 1, "line": 3, "column": 6, "filePath": "expressions-unary.cadence"}
+            },
+            "type": "UnaryExpression",
+            "range": {"offset": 23, "length": 2, "line": 3, "column": 5, "filePath": "expressions-unary.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 19, "length": 6, "line": 3, "column": 1, "filePath": "expressions-unary.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "d",
+          "type": "Identifier",
+          "range": {"offset": 26, "length": 1, "line": 4, "column": 1, "filePath": "expressions-unary.cadence"}
+        },
+        "values": [
+          {
+            "operator": "+",
+            "operand": {
+              "name": "b",
+              "type": "Identifier",
+              "range": {"offset": 31, "length": 1, "line": 4, "column": 6, "filePath": "expressions-unary.cadence"}
+            },
+            "type": "UnaryExpression",
+            "range": {"offset": 30, "length": 2, "line": 4, "column": 5, "filePath": "expressions-unary.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 26, "length": 6, "line": 4, "column": 1, "filePath": "expressions-unary.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 32, "line": 1, "column": 1, "filePath": "expressions-unary.cadence"}
+  }
+}

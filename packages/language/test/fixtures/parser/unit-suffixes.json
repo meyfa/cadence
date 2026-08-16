@@ -1,0 +1,79 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "offset",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 6, "line": 1, "column": 1, "filePath": "unit-suffixes.cadence"}
+        },
+        "values": [
+          {
+            "operator": "-",
+            "operand": {
+              "object": {
+                "value": 1.5,
+                "type": "Number",
+                "range": {"offset": 10, "length": 3, "line": 1, "column": 11, "filePath": "unit-suffixes.cadence"}
+              },
+              "property": {
+                "name": "ms",
+                "type": "Identifier",
+                "range": {"offset": 14, "length": 2, "line": 1, "column": 15, "filePath": "unit-suffixes.cadence"}
+              },
+              "type": "PropertyAccess",
+              "range": {"offset": 10, "length": 6, "line": 1, "column": 11, "filePath": "unit-suffixes.cadence"}
+            },
+            "type": "UnaryExpression",
+            "range": {"offset": 9, "length": 7, "line": 1, "column": 10, "filePath": "unit-suffixes.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 16, "line": 1, "column": 1, "filePath": "unit-suffixes.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "gain",
+          "type": "Identifier",
+          "range": {"offset": 17, "length": 4, "line": 2, "column": 1, "filePath": "unit-suffixes.cadence"}
+        },
+        "values": [
+          {
+            "object": {
+              "operator": "+",
+              "left": {
+                "value": -6,
+                "type": "Number",
+                "range": {"offset": 25, "length": 2, "line": 2, "column": 9, "filePath": "unit-suffixes.cadence"}
+              },
+              "right": {
+                "value": 3,
+                "type": "Number",
+                "range": {"offset": 30, "length": 1, "line": 2, "column": 14, "filePath": "unit-suffixes.cadence"}
+              },
+              "type": "BinaryExpression",
+              "range": {"offset": 24, "length": 8, "line": 2, "column": 8, "filePath": "unit-suffixes.cadence"}
+            },
+            "property": {
+              "name": "db",
+              "type": "Identifier",
+              "range": {"offset": 33, "length": 2, "line": 2, "column": 17, "filePath": "unit-suffixes.cadence"}
+            },
+            "type": "PropertyAccess",
+            "range": {"offset": 24, "length": 11, "line": 2, "column": 8, "filePath": "unit-suffixes.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 17, "length": 18, "line": 2, "column": 1, "filePath": "unit-suffixes.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 35, "line": 1, "column": 1, "filePath": "unit-suffixes.cadence"}
+  }
+}

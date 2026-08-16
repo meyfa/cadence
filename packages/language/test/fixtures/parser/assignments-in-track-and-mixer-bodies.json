@@ -1,0 +1,76 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": true,
+        "expose": false,
+        "values": [
+          {
+            "arguments": [],
+            "children": [
+              {
+                "emit": false,
+                "expose": false,
+                "name": {
+                  "name": "foo",
+                  "type": "Identifier",
+                  "range": {"offset": 12, "length": 3, "line": 2, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+                },
+                "values": [
+                  {
+                    "value": 42,
+                    "type": "Number",
+                    "range": {"offset": 18, "length": 2, "line": 2, "column": 9, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 12, "length": 8, "line": 2, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+              }
+            ],
+            "type": "Track",
+            "range": {"offset": 2, "length": 20, "line": 1, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 22, "line": 1, "column": 1, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+      },
+      {
+        "emit": true,
+        "expose": false,
+        "values": [
+          {
+            "arguments": [],
+            "children": [
+              {
+                "emit": false,
+                "expose": false,
+                "name": {
+                  "name": "bar",
+                  "type": "Identifier",
+                  "range": {"offset": 36, "length": 3, "line": 6, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+                },
+                "values": [
+                  {
+                    "value": 43,
+                    "type": "Number",
+                    "range": {"offset": 42, "length": 2, "line": 6, "column": 9, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 36, "length": 8, "line": 6, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+              }
+            ],
+            "type": "Mixer",
+            "range": {"offset": 26, "length": 20, "line": 5, "column": 3, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 24, "length": 22, "line": 5, "column": 1, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 46, "line": 1, "column": 1, "filePath": "assignments-in-track-and-mixer-bodies.cadence"}
+  }
+}

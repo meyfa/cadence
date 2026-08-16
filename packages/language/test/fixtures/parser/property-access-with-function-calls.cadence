@@ -1,0 +1,2 @@
+x = object.method1().method2()
+x = (object.method1()).method2()

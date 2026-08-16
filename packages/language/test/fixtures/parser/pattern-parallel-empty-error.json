@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Unexpected \"<\"; expected \"]\"",
+    "range": {"offset": 11, "length": 1, "line": 1, "column": 12, "filePath": "pattern-parallel-empty-error.cadence"}
+  }
+}

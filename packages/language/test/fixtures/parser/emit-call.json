@@ -1,0 +1,47 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": true,
+        "expose": false,
+        "values": [
+          {
+            "callee": {
+              "name": "play",
+              "type": "Identifier",
+              "range": {"offset": 2, "length": 4, "line": 1, "column": 3, "filePath": "emit-call.cadence"}
+            },
+            "arguments": [
+              {
+                "value": {
+                  "name": "drums",
+                  "type": "Identifier",
+                  "range": {"offset": 7, "length": 5, "line": 1, "column": 8, "filePath": "emit-call.cadence"}
+                },
+                "type": "Argument",
+                "range": {"offset": 7, "length": 5, "line": 1, "column": 8, "filePath": "emit-call.cadence"}
+              },
+              {
+                "value": {
+                  "name": "my_pattern",
+                  "type": "Identifier",
+                  "range": {"offset": 14, "length": 10, "line": 1, "column": 15, "filePath": "emit-call.cadence"}
+                },
+                "type": "Argument",
+                "range": {"offset": 14, "length": 10, "line": 1, "column": 15, "filePath": "emit-call.cadence"}
+              }
+            ],
+            "type": "Call",
+            "range": {"offset": 2, "length": 23, "line": 1, "column": 3, "filePath": "emit-call.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 25, "line": 1, "column": 1, "filePath": "emit-call.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 25, "line": 1, "column": 1, "filePath": "emit-call.cadence"}
+  }
+}

@@ -1,0 +1,7 @@
+& track {
+  foo = 42
+}
+
+& mixer {
+  bar = 43
+}

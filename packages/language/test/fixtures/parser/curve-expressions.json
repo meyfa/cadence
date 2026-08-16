@@ -1,0 +1,86 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "curve-expressions.cadence"}
+        },
+        "values": [
+          {
+            "children": [
+              {
+                "curveType": "hold",
+                "arguments": [
+                  {
+                    "value": 0,
+                    "type": "Number",
+                    "range": {"offset": 13, "length": 1, "line": 1, "column": 14, "filePath": "curve-expressions.cadence"}
+                  }
+                ],
+                "length": {
+                  "object": {
+                    "value": 1,
+                    "type": "Number",
+                    "range": {"offset": 16, "length": 1, "line": 1, "column": 17, "filePath": "curve-expressions.cadence"}
+                  },
+                  "property": {
+                    "name": "bar",
+                    "type": "Identifier",
+                    "range": {"offset": 18, "length": 3, "line": 1, "column": 19, "filePath": "curve-expressions.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 16, "length": 5, "line": 1, "column": 17, "filePath": "curve-expressions.cadence"}
+                },
+                "type": "CurveSegment",
+                "range": {"offset": 8, "length": 13, "line": 1, "column": 9, "filePath": "curve-expressions.cadence"}
+              },
+              {
+                "curveType": "lin",
+                "arguments": [
+                  {
+                    "value": 0,
+                    "type": "Number",
+                    "range": {"offset": 26, "length": 1, "line": 1, "column": 27, "filePath": "curve-expressions.cadence"}
+                  },
+                  {
+                    "value": 1,
+                    "type": "Number",
+                    "range": {"offset": 29, "length": 1, "line": 1, "column": 30, "filePath": "curve-expressions.cadence"}
+                  }
+                ],
+                "length": {
+                  "object": {
+                    "value": 2,
+                    "type": "Number",
+                    "range": {"offset": 32, "length": 1, "line": 1, "column": 33, "filePath": "curve-expressions.cadence"}
+                  },
+                  "property": {
+                    "name": "beats",
+                    "type": "Identifier",
+                    "range": {"offset": 34, "length": 5, "line": 1, "column": 35, "filePath": "curve-expressions.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 32, "length": 7, "line": 1, "column": 33, "filePath": "curve-expressions.cadence"}
+                },
+                "type": "CurveSegment",
+                "range": {"offset": 22, "length": 17, "line": 1, "column": 23, "filePath": "curve-expressions.cadence"}
+              }
+            ],
+            "type": "Curve",
+            "range": {"offset": 6, "length": 34, "line": 1, "column": 7, "filePath": "curve-expressions.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 40, "line": 1, "column": 1, "filePath": "curve-expressions.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 40, "line": 1, "column": 1, "filePath": "curve-expressions.cadence"}
+  }
+}

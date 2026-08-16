@@ -1,0 +1,175 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": true,
+        "expose": false,
+        "values": [
+          {
+            "arguments": [],
+            "children": [
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "arguments": [
+                      {
+                        "name": {
+                          "name": "gain",
+                          "type": "Identifier",
+                          "range": {"offset": 19, "length": 4, "line": 2, "column": 10, "filePath": "values-mixer-and-buses.cadence"}
+                        },
+                        "value": {
+                          "object": {
+                            "value": -3,
+                            "type": "Number",
+                            "range": {"offset": 25, "length": 4, "line": 2, "column": 16, "filePath": "values-mixer-and-buses.cadence"}
+                          },
+                          "property": {
+                            "name": "db",
+                            "type": "Identifier",
+                            "range": {"offset": 30, "length": 2, "line": 2, "column": 21, "filePath": "values-mixer-and-buses.cadence"}
+                          },
+                          "type": "PropertyAccess",
+                          "range": {"offset": 25, "length": 7, "line": 2, "column": 16, "filePath": "values-mixer-and-buses.cadence"}
+                        },
+                        "type": "Argument",
+                        "range": {"offset": 19, "length": 13, "line": 2, "column": 10, "filePath": "values-mixer-and-buses.cadence"}
+                      }
+                    ],
+                    "children": [
+                      {
+                        "emit": true,
+                        "expose": false,
+                        "values": [
+                          {
+                            "name": "kick",
+                            "type": "Identifier",
+                            "range": {"offset": 42, "length": 4, "line": 3, "column": 7, "filePath": "values-mixer-and-buses.cadence"}
+                          },
+                          {
+                            "name": "snare",
+                            "type": "Identifier",
+                            "range": {"offset": 48, "length": 5, "line": 3, "column": 13, "filePath": "values-mixer-and-buses.cadence"}
+                          },
+                          {
+                            "name": "hihat",
+                            "type": "Identifier",
+                            "range": {"offset": 55, "length": 5, "line": 3, "column": 20, "filePath": "values-mixer-and-buses.cadence"}
+                          }
+                        ],
+                        "type": "SimpleStatement",
+                        "range": {"offset": 40, "length": 20, "line": 3, "column": 5, "filePath": "values-mixer-and-buses.cadence"}
+                      },
+                      {
+                        "emit": true,
+                        "expose": false,
+                        "values": [
+                          {
+                            "callee": {
+                              "object": {
+                                "name": "fx",
+                                "type": "Identifier",
+                                "range": {"offset": 67, "length": 2, "line": 4, "column": 7, "filePath": "values-mixer-and-buses.cadence"}
+                              },
+                              "property": {
+                                "name": "pan",
+                                "type": "Identifier",
+                                "range": {"offset": 70, "length": 3, "line": 4, "column": 10, "filePath": "values-mixer-and-buses.cadence"}
+                              },
+                              "type": "PropertyAccess",
+                              "range": {"offset": 67, "length": 6, "line": 4, "column": 7, "filePath": "values-mixer-and-buses.cadence"}
+                            },
+                            "arguments": [
+                              {
+                                "value": {
+                                  "value": 0.5,
+                                  "type": "Number",
+                                  "range": {"offset": 74, "length": 3, "line": 4, "column": 14, "filePath": "values-mixer-and-buses.cadence"}
+                                },
+                                "type": "Argument",
+                                "range": {"offset": 74, "length": 3, "line": 4, "column": 14, "filePath": "values-mixer-and-buses.cadence"}
+                              }
+                            ],
+                            "type": "Call",
+                            "range": {"offset": 67, "length": 11, "line": 4, "column": 7, "filePath": "values-mixer-and-buses.cadence"}
+                          }
+                        ],
+                        "type": "SimpleStatement",
+                        "range": {"offset": 65, "length": 13, "line": 4, "column": 5, "filePath": "values-mixer-and-buses.cadence"}
+                      },
+                      {
+                        "emit": true,
+                        "expose": true,
+                        "name": {
+                          "name": "lp",
+                          "type": "Identifier",
+                          "range": {"offset": 86, "length": 2, "line": 5, "column": 8, "filePath": "values-mixer-and-buses.cadence"}
+                        },
+                        "values": [
+                          {
+                            "callee": {
+                              "object": {
+                                "name": "fx",
+                                "type": "Identifier",
+                                "range": {"offset": 91, "length": 2, "line": 5, "column": 13, "filePath": "values-mixer-and-buses.cadence"}
+                              },
+                              "property": {
+                                "name": "lowpass",
+                                "type": "Identifier",
+                                "range": {"offset": 94, "length": 7, "line": 5, "column": 16, "filePath": "values-mixer-and-buses.cadence"}
+                              },
+                              "type": "PropertyAccess",
+                              "range": {"offset": 91, "length": 10, "line": 5, "column": 13, "filePath": "values-mixer-and-buses.cadence"}
+                            },
+                            "arguments": [
+                              {
+                                "value": {
+                                  "object": {
+                                    "value": 400,
+                                    "type": "Number",
+                                    "range": {"offset": 102, "length": 3, "line": 5, "column": 24, "filePath": "values-mixer-and-buses.cadence"}
+                                  },
+                                  "property": {
+                                    "name": "hz",
+                                    "type": "Identifier",
+                                    "range": {"offset": 106, "length": 2, "line": 5, "column": 28, "filePath": "values-mixer-and-buses.cadence"}
+                                  },
+                                  "type": "PropertyAccess",
+                                  "range": {"offset": 102, "length": 6, "line": 5, "column": 24, "filePath": "values-mixer-and-buses.cadence"}
+                                },
+                                "type": "Argument",
+                                "range": {"offset": 102, "length": 6, "line": 5, "column": 24, "filePath": "values-mixer-and-buses.cadence"}
+                              }
+                            ],
+                            "type": "Call",
+                            "range": {"offset": 91, "length": 18, "line": 5, "column": 13, "filePath": "values-mixer-and-buses.cadence"}
+                          }
+                        ],
+                        "type": "SimpleStatement",
+                        "range": {"offset": 83, "length": 26, "line": 5, "column": 5, "filePath": "values-mixer-and-buses.cadence"}
+                      }
+                    ],
+                    "type": "Bus",
+                    "range": {"offset": 14, "length": 99, "line": 2, "column": 5, "filePath": "values-mixer-and-buses.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 12, "length": 101, "line": 2, "column": 3, "filePath": "values-mixer-and-buses.cadence"}
+              }
+            ],
+            "type": "Mixer",
+            "range": {"offset": 2, "length": 113, "line": 1, "column": 3, "filePath": "values-mixer-and-buses.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 115, "line": 1, "column": 1, "filePath": "values-mixer-and-buses.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 115, "line": 1, "column": 1, "filePath": "values-mixer-and-buses.cadence"}
+  }
+}

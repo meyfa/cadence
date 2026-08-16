@@ -9,35 +9,17 @@
         "name": {
           "name": "foo",
           "type": "Identifier",
-          "range": {
-            "offset": 0,
-            "length": 3,
-            "line": 1,
-            "column": 1,
-            "filePath": "simple-statement.cadence"
-          }
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "simple-statement.cadence"}
         },
         "values": [
           {
             "value": 42,
             "type": "Number",
-            "range": {
-              "offset": 6,
-              "length": 2,
-              "line": 1,
-              "column": 7,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 6, "length": 2, "line": 1, "column": 7, "filePath": "simple-statement.cadence"}
           }
         ],
         "type": "SimpleStatement",
-        "range": {
-          "offset": 0,
-          "length": 8,
-          "line": 1,
-          "column": 1,
-          "filePath": "simple-statement.cadence"
-        }
+        "range": {"offset": 0, "length": 8, "line": 1, "column": 1, "filePath": "simple-statement.cadence"}
       },
       {
         "emit": true,
@@ -46,23 +28,11 @@
           {
             "value": 42,
             "type": "Number",
-            "range": {
-              "offset": 12,
-              "length": 2,
-              "line": 3,
-              "column": 3,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 12, "length": 2, "line": 3, "column": 3, "filePath": "simple-statement.cadence"}
           }
         ],
         "type": "SimpleStatement",
-        "range": {
-          "offset": 10,
-          "length": 4,
-          "line": 3,
-          "column": 1,
-          "filePath": "simple-statement.cadence"
-        }
+        "range": {"offset": 10, "length": 4, "line": 3, "column": 1, "filePath": "simple-statement.cadence"}
       },
       {
         "emit": true,
@@ -70,35 +40,17 @@
         "name": {
           "name": "bar",
           "type": "Identifier",
-          "range": {
-            "offset": 17,
-            "length": 3,
-            "line": 4,
-            "column": 3,
-            "filePath": "simple-statement.cadence"
-          }
+          "range": {"offset": 17, "length": 3, "line": 4, "column": 3, "filePath": "simple-statement.cadence"}
         },
         "values": [
           {
             "value": 42,
             "type": "Number",
-            "range": {
-              "offset": 23,
-              "length": 2,
-              "line": 4,
-              "column": 9,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 23, "length": 2, "line": 4, "column": 9, "filePath": "simple-statement.cadence"}
           }
         ],
         "type": "SimpleStatement",
-        "range": {
-          "offset": 15,
-          "length": 10,
-          "line": 4,
-          "column": 1,
-          "filePath": "simple-statement.cadence"
-        }
+        "range": {"offset": 15, "length": 10, "line": 4, "column": 1, "filePath": "simple-statement.cadence"}
       },
       {
         "emit": true,
@@ -107,47 +59,23 @@
           {
             "value": 1,
             "type": "Number",
-            "range": {
-              "offset": 28,
-              "length": 1,
-              "line": 5,
-              "column": 3,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 28, "length": 1, "line": 5, "column": 3, "filePath": "simple-statement.cadence"}
           },
           {
             "parts": [
               "hello"
             ],
             "type": "String",
-            "range": {
-              "offset": 31,
-              "length": 7,
-              "line": 5,
-              "column": 6,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 31, "length": 7, "line": 5, "column": 6, "filePath": "simple-statement.cadence"}
           },
           {
             "name": "foo",
             "type": "Identifier",
-            "range": {
-              "offset": 40,
-              "length": 3,
-              "line": 5,
-              "column": 15,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 40, "length": 3, "line": 5, "column": 15, "filePath": "simple-statement.cadence"}
           }
         ],
         "type": "SimpleStatement",
-        "range": {
-          "offset": 26,
-          "length": 17,
-          "line": 5,
-          "column": 1,
-          "filePath": "simple-statement.cadence"
-        }
+        "range": {"offset": 26, "length": 17, "line": 5, "column": 1, "filePath": "simple-statement.cadence"}
       },
       {
         "emit": false,
@@ -155,44 +83,20 @@
         "name": {
           "name": "baz",
           "type": "Identifier",
-          "range": {
-            "offset": 46,
-            "length": 3,
-            "line": 7,
-            "column": 2,
-            "filePath": "simple-statement.cadence"
-          }
+          "range": {"offset": 46, "length": 3, "line": 7, "column": 2, "filePath": "simple-statement.cadence"}
         },
         "values": [
           {
             "value": 42,
             "type": "Number",
-            "range": {
-              "offset": 52,
-              "length": 2,
-              "line": 7,
-              "column": 8,
-              "filePath": "simple-statement.cadence"
-            }
+            "range": {"offset": 52, "length": 2, "line": 7, "column": 8, "filePath": "simple-statement.cadence"}
           }
         ],
         "type": "SimpleStatement",
-        "range": {
-          "offset": 45,
-          "length": 9,
-          "line": 7,
-          "column": 1,
-          "filePath": "simple-statement.cadence"
-        }
+        "range": {"offset": 45, "length": 9, "line": 7, "column": 1, "filePath": "simple-statement.cadence"}
       }
     ],
     "type": "Program",
-    "range": {
-      "offset": 0,
-      "length": 54,
-      "line": 1,
-      "column": 1,
-      "filePath": "simple-statement.cadence"
-    }
+    "range": {"offset": 0, "length": 54, "line": 1, "column": 1, "filePath": "simple-statement.cadence"}
   }
 }
