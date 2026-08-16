@@ -93,7 +93,7 @@ describe('language-support.ts', () => {
       'if true {}, else {}',
       'if mix == 0 {}, mix != 0, mix < 0, mix > 0, mix <= 0, mix >= 0 {}',
       '',
-      'if foo and bar or baz {}'
+      'if foo and bar or not baz {}'
     ].join('\n')
 
     const spans = getHighlightSpans(source)
@@ -138,8 +138,9 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, '>', source.indexOf('> 0'), 'operator')
     assertHighlightAt(spans, source, '<=', source.indexOf('<= 0'), 'operator')
     assertHighlightAt(spans, source, '>=', source.indexOf('>= 0'), 'operator')
-    assertHighlightAt(spans, source, 'and', source.indexOf('and'), 'keyword')
-    assertHighlightAt(spans, source, 'or', source.indexOf('or'), 'keyword')
+    assertHighlightAt(spans, source, 'and', source.indexOf('and bar'), 'keyword')
+    assertHighlightAt(spans, source, 'or', source.indexOf('or not baz'), 'keyword')
+    assertHighlightAt(spans, source, 'not', source.indexOf('not baz'), 'keyword')
   })
 
   it('higlights units only when used as members', () => {

@@ -90,9 +90,57 @@
         ],
         "type": "SimpleStatement",
         "range": {"offset": 0, "length": 44, "line": 1, "column": 1, "filePath": "expressions-logical.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "bar",
+          "type": "Identifier",
+          "range": {"offset": 45, "length": 3, "line": 2, "column": 1, "filePath": "expressions-logical.cadence"}
+        },
+        "values": [
+          {
+            "operator": "or",
+            "left": {
+              "operator": "and",
+              "left": {
+                "operator": "not",
+                "operand": {
+                  "name": "x",
+                  "type": "Identifier",
+                  "range": {"offset": 55, "length": 1, "line": 2, "column": 11, "filePath": "expressions-logical.cadence"}
+                },
+                "type": "UnaryExpression",
+                "range": {"offset": 51, "length": 5, "line": 2, "column": 7, "filePath": "expressions-logical.cadence"}
+              },
+              "right": {
+                "name": "y",
+                "type": "Identifier",
+                "range": {"offset": 61, "length": 1, "line": 2, "column": 17, "filePath": "expressions-logical.cadence"}
+              },
+              "type": "BinaryExpression",
+              "range": {"offset": 51, "length": 11, "line": 2, "column": 7, "filePath": "expressions-logical.cadence"}
+            },
+            "right": {
+              "operator": "not",
+              "operand": {
+                "name": "z",
+                "type": "Identifier",
+                "range": {"offset": 70, "length": 1, "line": 2, "column": 26, "filePath": "expressions-logical.cadence"}
+              },
+              "type": "UnaryExpression",
+              "range": {"offset": 66, "length": 5, "line": 2, "column": 22, "filePath": "expressions-logical.cadence"}
+            },
+            "type": "BinaryExpression",
+            "range": {"offset": 51, "length": 20, "line": 2, "column": 7, "filePath": "expressions-logical.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 45, "length": 26, "line": 2, "column": 1, "filePath": "expressions-logical.cadence"}
       }
     ],
     "type": "Program",
-    "range": {"offset": 0, "length": 44, "line": 1, "column": 1, "filePath": "expressions-logical.cadence"}
+    "range": {"offset": 0, "length": 71, "line": 1, "column": 1, "filePath": "expressions-logical.cadence"}
   }
 }

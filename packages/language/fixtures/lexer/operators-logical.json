@@ -3,6 +3,10 @@
   "value": [
     {
       "name": "word",
+      "text": "not"
+    },
+    {
+      "name": "word",
       "text": "foo"
     },
     {
@@ -16,6 +20,10 @@
     {
       "name": "word",
       "text": "or"
+    },
+    {
+      "name": "word",
+      "text": "not"
     },
     {
       "name": "word",

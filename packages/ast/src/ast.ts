@@ -158,7 +158,8 @@ export interface ConditionalBranch extends ASTNode {
 
 export const unaryOperators = [
   '+',
-  '-'
+  '-',
+  'not'
 ] as const
 export type UnaryOperator = typeof unaryOperators[number]
 

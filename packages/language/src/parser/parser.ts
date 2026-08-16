@@ -535,7 +535,7 @@ const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
 
 const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
   p.ab(
-    p.eitherOr(literal('+'), literal('-')),
+    p.choice(literal('+'), literal('-'), keyword('not')),
     p.recursive(() => unaryExpression_),
     (op, operand) => {
       if (!ast.isUnaryOperator(op.text)) {
@@ -543,7 +543,7 @@ const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
       }
 
       // If it's a numeric literal, fold the unary operator directly
-      if (operand.type === 'Number') {
+      if (operand.type === 'Number' && (op.text === '+' || op.text === '-')) {
         return ast.make('Number', combineSourceRanges(op, operand), {
           value: op.text === '+' ? operand.value : -operand.value
         })
