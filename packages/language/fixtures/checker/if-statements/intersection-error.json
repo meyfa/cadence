@@ -1,0 +1,12 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Incompatible types for identifier \"foo\" in conditional branches: number, string",
+    "range": {"offset": 16, "length": 57, "line": 2, "column": 3, "filePath": "if-statements/intersection-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible types for property \"foo\" in conditional branches: number, string",
+    "range": {"offset": 16, "length": 57, "line": 2, "column": 3, "filePath": "if-statements/intersection-error.cadence"}
+  }
+]

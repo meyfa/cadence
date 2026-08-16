@@ -1,0 +1,6 @@
+condition0 = false
+condition1 = true
+
+if condition0 {}
+if condition0 {}, else {}
+if condition0 {}, condition1 {}, else {}

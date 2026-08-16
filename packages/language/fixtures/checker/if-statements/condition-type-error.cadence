@@ -1,0 +1,7 @@
+foo = 42
+bar = "hello world"
+
+if foo {}
+if bar {}
+if foo {}, bar {}
+if true {}, foo {}

@@ -1,0 +1,14 @@
+if true {
+  my_record = {
+    @foo = 42
+    @bar = "hello"
+  }
+}, else {
+  my_record = {
+    @foo = 100
+    @baz = 3.db
+  }
+}
+
+access_bar = my_record.bar
+access_baz = my_record.baz

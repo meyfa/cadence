@@ -1,0 +1,19 @@
+// test:get_property ["track"]
+
+my_record = {
+  if true {
+    @foo = 123.bpm
+  }, else {
+    @foo = 456.bpm
+  }
+
+  if false {
+    @bar = 4.beats
+  }, else {
+    @bar = 8.beats
+  }
+}
+
+& track (tempo: my_record.foo) {
+  & part (length: my_record.bar) {}
+}

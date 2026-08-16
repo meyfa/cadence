@@ -1,0 +1,5 @@
+// test:get_property ["track", "parts"]
+& track {
+  if true {}
+  if false {}, else {}
+}

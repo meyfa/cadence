@@ -1,0 +1,27 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Condition must be of type boolean, got number",
+    "range": {"offset": 33, "length": 3, "line": 4, "column": 4, "filePath": "if-statements/condition-type-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Condition must be of type boolean, got string",
+    "range": {"offset": 43, "length": 3, "line": 5, "column": 4, "filePath": "if-statements/condition-type-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Condition must be of type boolean, got number",
+    "range": {"offset": 53, "length": 3, "line": 6, "column": 4, "filePath": "if-statements/condition-type-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Condition must be of type boolean, got string",
+    "range": {"offset": 61, "length": 3, "line": 6, "column": 12, "filePath": "if-statements/condition-type-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Condition must be of type boolean, got number",
+    "range": {"offset": 80, "length": 3, "line": 7, "column": 13, "filePath": "if-statements/condition-type-error.cadence"}
+  }
+]
