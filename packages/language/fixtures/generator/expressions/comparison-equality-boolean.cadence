@@ -1,0 +1,16 @@
+// test:get_property ["track", "parts"]
+
+fn = (x: boolean) {
+  if x == true {
+    & 10
+  }, x == false {
+    & 20
+  }, else {
+    & 30
+  }
+}
+
+& track {
+  & part (fn(true).beats) {}
+  & part (fn(false).beats) {}
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"and\": number, number",
+    "range": {"offset": 20, "length": 7, "line": 1, "column": 21, "filePath": "expressions/logical-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"or\": number, number",
+    "range": {"offset": 47, "length": 6, "line": 2, "column": 20, "filePath": "expressions/logical-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"and\": string, string",
+    "range": {"offset": 75, "length": 11, "line": 4, "column": 21, "filePath": "expressions/logical-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operands for \"or\": string, string",
+    "range": {"offset": 106, "length": 10, "line": 5, "column": 20, "filePath": "expressions/logical-error.cadence"}
+  }
+]

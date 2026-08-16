@@ -1,0 +1,15 @@
+// test:get_property ["track", "tempo"]
+
+if false and false {
+  result = 100
+}, false and true {
+  result = 110
+}, true and false {
+  result = 120
+}, true and true {
+  result = 130 // <-- expected
+}, else {
+  result = 140
+}
+
+& track (result.bpm) {}

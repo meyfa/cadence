@@ -1,0 +1,9 @@
+test_and_00 = false and false
+test_and_01 = false and true
+test_and_02 = true and false
+test_and_03 = true and true
+
+test_or_00 = false or false
+test_or_01 = false or true
+test_or_02 = true or false
+test_or_03 = true or true
