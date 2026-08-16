@@ -134,9 +134,121 @@
         ],
         "type": "SimpleStatement",
         "range": {"offset": 41, "length": 19, "line": 4, "column": 1, "filePath": "expressions-comparison.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "lt",
+          "type": "Identifier",
+          "range": {"offset": 62, "length": 2, "line": 6, "column": 1, "filePath": "expressions-comparison.cadence"}
+        },
+        "values": [
+          {
+            "operator": "<",
+            "left": {
+              "value": 1,
+              "type": "Number",
+              "range": {"offset": 67, "length": 1, "line": 6, "column": 6, "filePath": "expressions-comparison.cadence"}
+            },
+            "right": {
+              "value": 2,
+              "type": "Number",
+              "range": {"offset": 71, "length": 1, "line": 6, "column": 10, "filePath": "expressions-comparison.cadence"}
+            },
+            "type": "BinaryExpression",
+            "range": {"offset": 67, "length": 5, "line": 6, "column": 6, "filePath": "expressions-comparison.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 62, "length": 10, "line": 6, "column": 1, "filePath": "expressions-comparison.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "gt",
+          "type": "Identifier",
+          "range": {"offset": 73, "length": 2, "line": 7, "column": 1, "filePath": "expressions-comparison.cadence"}
+        },
+        "values": [
+          {
+            "operator": ">",
+            "left": {
+              "value": 3,
+              "type": "Number",
+              "range": {"offset": 78, "length": 1, "line": 7, "column": 6, "filePath": "expressions-comparison.cadence"}
+            },
+            "right": {
+              "value": 4,
+              "type": "Number",
+              "range": {"offset": 82, "length": 1, "line": 7, "column": 10, "filePath": "expressions-comparison.cadence"}
+            },
+            "type": "BinaryExpression",
+            "range": {"offset": 78, "length": 5, "line": 7, "column": 6, "filePath": "expressions-comparison.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 73, "length": 10, "line": 7, "column": 1, "filePath": "expressions-comparison.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "le",
+          "type": "Identifier",
+          "range": {"offset": 84, "length": 2, "line": 8, "column": 1, "filePath": "expressions-comparison.cadence"}
+        },
+        "values": [
+          {
+            "operator": "<=",
+            "left": {
+              "value": 5,
+              "type": "Number",
+              "range": {"offset": 89, "length": 1, "line": 8, "column": 6, "filePath": "expressions-comparison.cadence"}
+            },
+            "right": {
+              "value": 5,
+              "type": "Number",
+              "range": {"offset": 94, "length": 1, "line": 8, "column": 11, "filePath": "expressions-comparison.cadence"}
+            },
+            "type": "BinaryExpression",
+            "range": {"offset": 89, "length": 6, "line": 8, "column": 6, "filePath": "expressions-comparison.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 84, "length": 11, "line": 8, "column": 1, "filePath": "expressions-comparison.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "ge",
+          "type": "Identifier",
+          "range": {"offset": 96, "length": 2, "line": 9, "column": 1, "filePath": "expressions-comparison.cadence"}
+        },
+        "values": [
+          {
+            "operator": ">=",
+            "left": {
+              "value": 6,
+              "type": "Number",
+              "range": {"offset": 101, "length": 1, "line": 9, "column": 6, "filePath": "expressions-comparison.cadence"}
+            },
+            "right": {
+              "value": 6,
+              "type": "Number",
+              "range": {"offset": 106, "length": 1, "line": 9, "column": 11, "filePath": "expressions-comparison.cadence"}
+            },
+            "type": "BinaryExpression",
+            "range": {"offset": 101, "length": 6, "line": 9, "column": 6, "filePath": "expressions-comparison.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 96, "length": 11, "line": 9, "column": 1, "filePath": "expressions-comparison.cadence"}
       }
     ],
     "type": "Program",
-    "range": {"offset": 0, "length": 60, "line": 1, "column": 1, "filePath": "expressions-comparison.cadence"}
+    "range": {"offset": 0, "length": 107, "line": 1, "column": 1, "filePath": "expressions-comparison.cadence"}
   }
 }

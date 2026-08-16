@@ -590,11 +590,11 @@ const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAsso
   multiplicativeExpression_
 )
 
-// additive ((==|!=) additive)*
+// additive ((==|!=|<|>|<=|>=) additive)*
 const comparisonExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
   additiveExpression_,
   p.map(
-    p.satisfy((t) => t.name === '==' || t.name === '!='),
+    p.satisfy((t) => ['==', '!=', '<', '>', '<=', '>='].includes(t.name)),
     (op) => makeBinaryExpression.bind(undefined, op)
   ),
   additiveExpression_

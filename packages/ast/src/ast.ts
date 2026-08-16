@@ -163,7 +163,7 @@ export const isUnaryOperator = (value: string): value is UnaryOperator => {
   return unaryOperators.includes(value as UnaryOperator)
 }
 
-export const binaryOperators = ['+', '-', '*', '/', '==', '!='] as const
+export const binaryOperators = ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<='] as const
 export type BinaryOperator = typeof binaryOperators[number]
 
 export const isBinaryOperator = (value: string): value is BinaryOperator => {
