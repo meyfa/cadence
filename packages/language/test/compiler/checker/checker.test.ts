@@ -69,28 +69,6 @@ describe('compiler/checker/checker.ts', async () => {
   })
 
   describe('valid', () => {
-    it('should accept imports without alias', () => {
-      const source = [
-        'use "instruments" as *',
-        'use "effects" as *'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should accept imports with alias', () => {
-      assertValid('use "effects" as myalias')
-    })
-
-    it('should define names from imported libraries', () => {
-      const source = [
-        'use "instruments" as *',
-        'myinstrument = sample("piano.wav")'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
     it('should accept global builtins', () => {
       const source = [
         'foo = play',
@@ -128,15 +106,6 @@ describe('compiler/checker/checker.ts', async () => {
       const source = [
         'foo = 42',
         'bar = foo'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
-    it('should allow shadowing of imported names', () => {
-      const source = [
-        'use "effects" as *',
-        'gain = 3.db'
       ].join('\n')
 
       assertValid(source)
@@ -803,40 +772,6 @@ describe('compiler/checker/checker.ts', async () => {
 
       assertErrorMessages(source, [
         'Incompatible operands for "+": number, string'
-      ])
-    })
-
-    it('should reject imports of unknown libraries', () => {
-      assertErrorMessages('use "unknownlib" as *', [
-        'Unknown module "unknownlib"'
-      ])
-    })
-
-    it('should reject duplicate non-alias imports', () => {
-      const source = [
-        'use "effects" as *',
-        'use "effects" as *'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Duplicate import of "effects"'
-      ])
-    })
-
-    it('should not define names from non-imported libraries', () => {
-      assertErrorMessages('myinstrument = sample("piano.wav")', [
-        'Unknown identifier "sample"'
-      ])
-    })
-
-    it('should reject unknown module export access', () => {
-      const source = [
-        'use "instruments" as inst',
-        'myinstrument = inst.foobar'
-      ].join('\n')
-
-      assertErrorMessages(source, [
-        'Module "instruments" has no export named "foobar"'
       ])
     })
 

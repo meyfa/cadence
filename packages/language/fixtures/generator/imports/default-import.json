@@ -1,0 +1,19 @@
+{
+  "%Map%": [
+    [
+      0,
+      {
+        "label": "sample(kick.wav)",
+        "gain": {
+          "id": 0,
+          "unit": "db",
+          "initial": 0
+        },
+        "voices": [
+          {}
+        ],
+        "id": 0
+      }
+    ]
+  ]
+}

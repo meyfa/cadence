@@ -94,56 +94,6 @@ describe('compiler/generator/generator.ts', async () => {
     assert.strictEqual(result.track.tempo, 123)
   })
 
-  it('should support imported names', () => {
-    const source = [
-      'use "instruments" as *',
-      'kick = sample("kick.wav")'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.instruments.size, 1)
-
-    const [asset] = result.assets.values()
-    assert.strictEqual(asset.url, 'kick.wav')
-
-    const [instrument] = result.instruments.values()
-    assert.strictEqual(instrument.voices.length, 1)
-
-    const voice = instrument.voices[0].invoke({ velocity: scalar(1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voice.source.type, 'sample')
-    assert.strictEqual(voice.source.assetId, asset.id)
-  })
-
-  it('should support import aliases', () => {
-    const source = [
-      'use "instruments" as inst',
-      'kick = inst.sample("kick.wav")'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.instruments.size, 1)
-
-    const [asset] = result.assets.values()
-    assert.strictEqual(asset.url, 'kick.wav')
-
-    const [instrument] = result.instruments.values()
-    assert.strictEqual(instrument.voices.length, 1)
-
-    const voice = instrument.voices[0].invoke({ velocity: scalar(1) }, DEFAULT_TEMPO)
-    assert.strictEqual(voice.source.type, 'sample')
-  })
-
-  it('should support shadowing of imported names', () => {
-    const source = [
-      'use "effects" as *',
-      'gain = 123.bpm',
-      '& track (tempo: gain) {}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.track.tempo, 123)
-  })
-
   it('should support part lengths from variables', () => {
     const source = [
       'root_scope = 42.beats',

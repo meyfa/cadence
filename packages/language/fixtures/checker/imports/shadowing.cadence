@@ -1,0 +1,6 @@
+use "instruments" as *
+use "effects" as *
+
+sample = "test"
+gain = 3.db
+delay = 0.5.s

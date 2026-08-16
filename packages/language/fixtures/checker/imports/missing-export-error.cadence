@@ -1,0 +1,2 @@
+use "instruments" as inst
+myinstrument = inst.foobar

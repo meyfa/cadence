@@ -1,0 +1,3 @@
+// test:get_property ["instruments"]
+use "instruments" as inst
+kick = inst.sample("kick.wav")
