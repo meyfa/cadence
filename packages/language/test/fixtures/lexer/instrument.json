@@ -1,0 +1,93 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "word",
+      "text": "foo"
+    },
+    {
+      "name": "=",
+      "text": "="
+    },
+    {
+      "name": "word",
+      "text": "instrument"
+    },
+    {
+      "name": "{",
+      "text": "{"
+    },
+    {
+      "name": "&",
+      "text": "&"
+    },
+    {
+      "name": "word",
+      "text": "voice"
+    },
+    {
+      "name": "{",
+      "text": "{"
+    },
+    {
+      "name": "&",
+      "text": "&"
+    },
+    {
+      "name": "~[",
+      "text": "~["
+    },
+    {
+      "name": "word",
+      "text": "hold"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": "number",
+      "text": "0"
+    },
+    {
+      "name": ".",
+      "text": "."
+    },
+    {
+      "name": "word",
+      "text": "db"
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    },
+    {
+      "name": "&",
+      "text": "&"
+    },
+    {
+      "name": "word",
+      "text": "sine"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": "}",
+      "text": "}"
+    },
+    {
+      "name": "}",
+      "text": "}"
+    }
+  ]
+}

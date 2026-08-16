@@ -1,0 +1,6 @@
+foo = instrument {
+  & voice {
+    & ~[hold(0.db)]
+    & sine()
+  }
+}

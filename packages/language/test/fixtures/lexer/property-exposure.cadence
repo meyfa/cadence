@@ -1,0 +1,3 @@
+m = mixer {
+  @exposed_property = 42
+}

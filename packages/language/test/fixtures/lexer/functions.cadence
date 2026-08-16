@@ -1,0 +1,1 @@
+apply = (fn: (a: number): number !may_block, param?: string) {}

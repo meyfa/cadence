@@ -1,0 +1,53 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "~[",
+      "text": "~["
+    },
+    {
+      "name": "word",
+      "text": "hold"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": "number",
+      "text": "0"
+    },
+    {
+      "name": ".",
+      "text": "."
+    },
+    {
+      "name": "word",
+      "text": "db"
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "number",
+      "text": "1"
+    },
+    {
+      "name": ".",
+      "text": "."
+    },
+    {
+      "name": "word",
+      "text": "beat"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    }
+  ]
+}

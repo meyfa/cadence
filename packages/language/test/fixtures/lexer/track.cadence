@@ -1,0 +1,4 @@
+& track (128.bpm) {
+  & part (4.bars) {}
+  & part (8.bars) {}
+}

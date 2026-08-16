@@ -1,0 +1,53 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "word",
+      "text": "use"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "stringContent",
+      "text": "effects"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "word",
+      "text": "as"
+    },
+    {
+      "name": "word",
+      "text": "fx"
+    },
+    {
+      "name": "word",
+      "text": "use"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "stringContent",
+      "text": "instruments"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "word",
+      "text": "as"
+    },
+    {
+      "name": "*",
+      "text": "*"
+    }
+  ]
+}

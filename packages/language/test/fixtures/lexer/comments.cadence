@@ -1,0 +1,3 @@
+foo //first comment
+// second comment
+  = 42

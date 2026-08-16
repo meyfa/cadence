@@ -1,0 +1,29 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "word",
+      "text": "a"
+    },
+    {
+      "name": "==",
+      "text": "=="
+    },
+    {
+      "name": "word",
+      "text": "b"
+    },
+    {
+      "name": "word",
+      "text": "c"
+    },
+    {
+      "name": "!=",
+      "text": "!="
+    },
+    {
+      "name": "word",
+      "text": "d"
+    }
+  ]
+}
