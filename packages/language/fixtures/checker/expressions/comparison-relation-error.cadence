@@ -1,0 +1,7 @@
+different_generic_lt = 100.bpm < 200.hz
+different_generic_le = 100.bpm <= 200.hz
+
+string_relation = "1" < "2"
+
+number_string_lt = 42 < "43"
+number_string_le = 42 <= "43"

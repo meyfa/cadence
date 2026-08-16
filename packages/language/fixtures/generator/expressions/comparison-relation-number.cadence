@@ -1,0 +1,44 @@
+// test:get_property ["track", "parts"]
+
+lt = (x: number) {
+  if x < 10 {
+    & 1
+  }, else {
+    & 2
+  }
+}
+
+gt = (x: number) {
+  if x > 10 {
+    & 4
+  }, else {
+    & 8
+  }
+}
+
+le = (x: number) {
+  if x <= 10 {
+    & 16
+  }, else {
+    & 32
+  }
+}
+
+ge = (x: number) {
+  if x >= 10 {
+    & 64
+  }, else {
+    & 128
+  }
+}
+
+& track {
+  // 1 + 4 + 16 + 64 == 85
+  & part ((lt(5) + gt(15) + le(5) + ge(15)).beats) {}
+
+  // 2 + 8 + 32 + 128 == 170
+  & part ((lt(15) + gt(5) + le(15) + ge(5)).beats) {}
+
+  // 2 + 8 + 16 + 64 == 90
+  & part ((lt(10) + gt(10) + le(10) + ge(10)).beats) {}
+}

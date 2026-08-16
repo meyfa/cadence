@@ -91,7 +91,7 @@ describe('language-support.ts', () => {
       '}',
       '',
       'if true {}, else {}',
-      'if mix == 0.75 {}',
+      'if mix == 0 {}, mix != 0, mix < 0, mix > 0, mix <= 0, mix >= 0 {}',
       ''
     ].join('\n')
 
@@ -131,7 +131,12 @@ describe('language-support.ts', () => {
     assertHighlightAt(spans, source, 'if', source.indexOf('if true {}, else {}'), 'keyword')
     assertHighlightAt(spans, source, 'true', source.indexOf('true {}'), 'keyword')
     assertHighlightAt(spans, source, 'else', source.indexOf('else {}'), 'keyword')
-    assertHighlightAt(spans, source, '==', source.indexOf('=='), 'operator')
+    assertHighlightAt(spans, source, '==', source.indexOf('== 0'), 'operator')
+    assertHighlightAt(spans, source, '!=', source.indexOf('!= 0'), 'operator')
+    assertHighlightAt(spans, source, '<', source.indexOf('< 0'), 'operator')
+    assertHighlightAt(spans, source, '>', source.indexOf('> 0'), 'operator')
+    assertHighlightAt(spans, source, '<=', source.indexOf('<= 0'), 'operator')
+    assertHighlightAt(spans, source, '>=', source.indexOf('>= 0'), 'operator')
   })
 
   it('higlights units only when used as members', () => {

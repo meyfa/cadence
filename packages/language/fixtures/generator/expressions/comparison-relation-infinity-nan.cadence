@@ -1,0 +1,42 @@
+// test:get_property ["track", "tempo"]
+
+positive_infinity = 1 / 0
+negative_infinity = -1 / 0
+nan = 0 / 0
+
+// +Infinity should equal itself
+if positive_infinity <= positive_infinity {
+  if positive_infinity >= positive_infinity {
+    positive_infinity_result = 10
+  }, else {
+    positive_infinity_result = 0
+  }
+}, else {
+  positive_infinity_result = 0
+}
+
+// -Infinity should equal itself
+if negative_infinity <= negative_infinity {
+  if negative_infinity >= negative_infinity {
+    negative_infinity_result = 10
+  }, else {
+    negative_infinity_result = 0
+  }
+}, else {
+  negative_infinity_result = 0
+}
+
+// nan should NOT equal itself
+if nan <= nan {
+  nan_result = 0
+}, else {
+  if nan >= nan {
+    nan_result = 0
+  }, else {
+    nan_result = 10
+  }
+}
+
+// overall result: 3 * 10 = 30
+result = positive_infinity_result + negative_infinity_result + nan_result
+& track (tempo: result.bpm) {}

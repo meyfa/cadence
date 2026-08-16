@@ -1,13 +1,14 @@
 import type { ast } from '@meyfa/cadence-ast'
 import { concatPatterns, multiplyPattern } from '@meyfa/cadence-core'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { Numbers } from '../../type-system/helpers.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
 import { fail } from '../assert.ts'
-import { BooleanFacet } from '../../type-system/base/boolean.ts'
+import { areTypesEqualityComparable, areTypesRelationallyComparable, areValuesEqual, compareValues } from './comparison.ts'
 
 export interface BinaryOperation {
   readonly operator: ast.BinaryOperator
@@ -190,55 +191,61 @@ const divide: BinaryOperation = {
 
 const equal: BinaryOperation = {
   operator: '==',
-
   check: (left, right) => {
-    if (NumberFacet.is(left) && NumberFacet.is(right)) {
-      const leftUnit = NumberFacet.detail(left)
-      const rightUnit = NumberFacet.detail(right)
-      if (leftUnit === rightUnit) {
-        return BooleanFacet.type()
-      }
-    }
-
-    for (const facet of [BooleanFacet, StringFacet]) {
-      if (facet.is(left) && facet.is(right)) {
-        return BooleanFacet.type()
-      }
-    }
-
-    return undefined
+    return areTypesEqualityComparable(left, right) ? BooleanFacet.type() : undefined
   },
-
   compute: (left, right) => {
-    return BooleanFacet.type().of(compare(left, right))
+    return BooleanFacet.type().of(areValuesEqual(left, right))
   }
-}
-
-function compare (left: Value, right: Value): boolean {
-  if (NumberFacet.has(left) && NumberFacet.has(right)) {
-    const leftData = NumberFacet.get(left)
-    const rightData = NumberFacet.get(right)
-    return leftData.unit === rightData.unit && leftData.value === rightData.value
-  }
-
-  for (const facet of [BooleanFacet, StringFacet]) {
-    if (facet.has(left) && facet.has(right)) {
-      const leftData = facet.get(left)
-      const rightData = facet.get(right)
-      return leftData === rightData
-    }
-  }
-
-  fail()
 }
 
 const notEqual: BinaryOperation = {
   operator: '!=',
-
-  check: (left, right) => equal.check(left, right),
-
+  check: (left, right) => {
+    return areTypesEqualityComparable(left, right) ? BooleanFacet.type() : undefined
+  },
   compute: (left, right) => {
-    return BooleanFacet.type().of(!compare(left, right))
+    return BooleanFacet.type().of(!areValuesEqual(left, right))
+  }
+}
+
+const greaterThan: BinaryOperation = {
+  operator: '>',
+  check: (left, right) => {
+    return areTypesRelationallyComparable(left, right) ? BooleanFacet.type() : undefined
+  },
+  compute: (left, right) => {
+    return BooleanFacet.type().of(compareValues(left, right) > 0)
+  }
+}
+
+const lessThan: BinaryOperation = {
+  operator: '<',
+  check: (left, right) => {
+    return areTypesRelationallyComparable(left, right) ? BooleanFacet.type() : undefined
+  },
+  compute: (left, right) => {
+    return BooleanFacet.type().of(compareValues(left, right) < 0)
+  }
+}
+
+const greaterThanOrEqual: BinaryOperation = {
+  operator: '>=',
+  check: (left, right) => {
+    return areTypesRelationallyComparable(left, right) ? BooleanFacet.type() : undefined
+  },
+  compute: (left, right) => {
+    return BooleanFacet.type().of(compareValues(left, right) >= 0)
+  }
+}
+
+const lessThanOrEqual: BinaryOperation = {
+  operator: '<=',
+  check: (left, right) => {
+    return areTypesRelationallyComparable(left, right) ? BooleanFacet.type() : undefined
+  },
+  compute: (left, right) => {
+    return BooleanFacet.type().of(compareValues(left, right) <= 0)
   }
 }
 
@@ -248,5 +255,9 @@ export const binaryOperations: Readonly<Record<ast.BinaryOperator, BinaryOperati
   '*': multiply,
   '/': divide,
   '==': equal,
-  '!=': notEqual
+  '!=': notEqual,
+  '>': greaterThan,
+  '<': lessThan,
+  '>=': greaterThanOrEqual,
+  '<=': lessThanOrEqual
 }

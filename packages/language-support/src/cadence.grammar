@@ -35,6 +35,8 @@
 
   "=="
   "!="
+  ">="
+  "<="
 
   @precedence { Comment, "/" }
 }
@@ -260,7 +262,11 @@ BinaryExpression {
   (expression !multiply "*" expression) |
   (expression !multiply "/" expression) |
   (expression !comparison "==" expression) |
-  (expression !comparison "!=" expression)
+  (expression !comparison "!=" expression) |
+  (expression !comparison ">" expression) |
+  (expression !comparison "<" expression) |
+  (expression !comparison ">=" expression) |
+  (expression !comparison "<=" expression)
 }
 
 Function {
