@@ -1,0 +1,20 @@
+{
+  "beatsPerBar": 4,
+  "instruments": {
+    "%Map%": []
+  },
+  "automations": {
+    "%Map%": []
+  },
+  "assets": {
+    "%Map%": []
+  },
+  "track": {
+    "tempo": 120,
+    "parts": []
+  },
+  "mixer": {
+    "buses": [],
+    "routings": []
+  }
+}

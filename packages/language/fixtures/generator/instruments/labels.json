@@ -1,0 +1,30 @@
+{
+  "%Map%": [
+    [
+      0,
+      {
+        "label": "First Instrument",
+        "gain": {
+          "id": 0,
+          "unit": "db",
+          "initial": 0
+        },
+        "voices": [],
+        "id": 0
+      }
+    ],
+    [
+      1,
+      {
+        "label": "Second Instrument",
+        "gain": {
+          "id": 1,
+          "unit": "db",
+          "initial": 0
+        },
+        "voices": [],
+        "id": 1
+      }
+    ]
+  ]
+}

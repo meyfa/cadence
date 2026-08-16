@@ -10,9 +10,10 @@ import { NumberFacet } from '../../../src/type-system/base/number.ts'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.ts'
 import { makeSchema } from '../../../src/type-system/schema.ts'
 import { assertResultComplete } from '../../test-utils.ts'
+import { collapseRanges, createFixtureTests } from '../../fixture-utils.ts'
 
-function checkSource (source: string): readonly CompileError[] {
-  const tokens = lex(source)
+function checkSource (source: string, fileName?: string): readonly CompileError[] {
+  const tokens = lex(source, fileName)
   assertResultComplete(tokens)
 
   const ast = parse(tokens.value)
@@ -60,26 +61,14 @@ function rangeOf (source: string, substring: string, position?: number): SourceR
   }
 }
 
-describe('compiler/checker/checker.ts', () => {
+describe('compiler/checker/checker.ts', async () => {
+  await createFixtureTests({
+    component: 'checker',
+    compute: (fixture) => checkSource(fixture.source, fixture.name),
+    postProcess: collapseRanges
+  })
+
   describe('valid', () => {
-    it('should accept an empty program', () => {
-      assertValid('')
-    })
-
-    it('should accept number literals with valid units', () => {
-      const source = [
-        'foo1 = 120.bpm',
-        'foo2 = -6.db',
-        'foo3 = 440.hz',
-        'foo4 = 2.s',
-        'foo5 = 3.beats',
-        'foo6 = 250.ms',
-        'foo7 = 2.bars'
-      ].join('\n')
-
-      assertValid(source)
-    })
-
     it('should accept imports without alias', () => {
       const source = [
         'use "instruments" as *',
@@ -807,12 +796,6 @@ describe('compiler/checker/checker.ts', () => {
   })
 
   describe('invalid', () => {
-    it('should reject number literals with invalid units', () => {
-      assertErrorMessages('foo = 120.unknownunit', [
-        'Unknown unit "unknownunit"'
-      ])
-    })
-
     it('should reject addition of incompatible types', () => {
       const source = [
         'foo = 42 + "hello"'

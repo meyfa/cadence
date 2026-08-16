@@ -1,0 +1,2 @@
+// test:get_property ["track"]
+& track (tempo: 140.bpm) {}

@@ -1,0 +1,5 @@
+// test:get_property ["track", "parts"]
+& track {
+  & part (4.bars, "First Part") {}
+  & part (4.bars, "Second Part") {}
+}
