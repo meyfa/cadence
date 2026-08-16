@@ -64,6 +64,8 @@ Unit[@dynamicPrecedence=1] {
   multiply @left,
   plus @left,
   comparison @left,
+  conjunction @left,
+  disjunction @left,
   capability @right
 }
 
@@ -266,7 +268,9 @@ BinaryExpression {
   (expression !comparison ">" expression) |
   (expression !comparison "<" expression) |
   (expression !comparison ">=" expression) |
-  (expression !comparison "<=" expression)
+  (expression !comparison "<=" expression) |
+  (expression !conjunction kw<"and"> expression) |
+  (expression !disjunction kw<"or"> expression)
 }
 
 Function {

@@ -1,6 +1,8 @@
 export const keywords = Object.freeze([
   'true',
   'false',
+  'and',
+  'or',
   'use',
   'as',
   'if',

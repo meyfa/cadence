@@ -249,6 +249,50 @@ const lessThanOrEqual: BinaryOperation = {
   }
 }
 
+const logicalAnd: BinaryOperation = {
+  operator: 'and',
+
+  check: (left, right) => {
+    if (BooleanFacet.is(left) && BooleanFacet.is(right)) {
+      return BooleanFacet.type()
+    }
+
+    return undefined
+  },
+
+  compute: (left, right) => {
+    if (BooleanFacet.has(left) && BooleanFacet.has(right)) {
+      const leftData = BooleanFacet.get(left)
+      const rightData = BooleanFacet.get(right)
+      return BooleanFacet.type().of(leftData && rightData)
+    }
+
+    fail()
+  }
+}
+
+const logicalOr: BinaryOperation = {
+  operator: 'or',
+
+  check: (left, right) => {
+    if (BooleanFacet.is(left) && BooleanFacet.is(right)) {
+      return BooleanFacet.type()
+    }
+
+    return undefined
+  },
+
+  compute: (left, right) => {
+    if (BooleanFacet.has(left) && BooleanFacet.has(right)) {
+      const leftData = BooleanFacet.get(left)
+      const rightData = BooleanFacet.get(right)
+      return BooleanFacet.type().of(leftData || rightData)
+    }
+
+    fail()
+  }
+}
+
 export const binaryOperations: Readonly<Record<ast.BinaryOperator, BinaryOperation>> = {
   '+': add,
   '-': subtract,
@@ -259,5 +303,7 @@ export const binaryOperations: Readonly<Record<ast.BinaryOperator, BinaryOperati
   '>': greaterThan,
   '<': lessThan,
   '>=': greaterThanOrEqual,
-  '<=': lessThanOrEqual
+  '<=': lessThanOrEqual,
+  and: logicalAnd,
+  or: logicalOr
 }

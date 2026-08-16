@@ -1,0 +1,30 @@
+// test:get_property ["track", "tempo"]
+
+if false or false {
+  or_00 = 1
+}, else {
+  or_00 = 2
+}
+
+if false or true {
+  or_01 = 4
+}, else {
+  or_01 = 8
+}
+
+if true or false {
+  or_02 = 16
+}, else {
+  or_02 = 32
+}
+
+if true or true {
+  or_03 = 64
+}, else {
+  or_03 = 128
+}
+
+// expected: 2 + 4 + 16 + 64 = 86
+result = or_00 + or_01 + or_02 + or_03
+
+& track (result.bpm) {}
