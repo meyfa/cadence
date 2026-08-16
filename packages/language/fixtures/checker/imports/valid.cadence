@@ -1,0 +1,6 @@
+use "instruments" as *
+use "effects" as *
+use "effects" as myalias
+
+// using a function from an imported module
+my_instrument = sample("piano.wav")

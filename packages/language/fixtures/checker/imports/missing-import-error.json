@@ -1,0 +1,7 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Unknown identifier \"sample\"",
+    "range": {"offset": 16, "length": 6, "line": 1, "column": 17, "filePath": "imports/missing-import-error.cadence"}
+  }
+]

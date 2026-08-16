@@ -1,0 +1,4 @@
+// test:get_property ["track"]
+use "effects" as *
+gain = 148.bpm
+& track (tempo: gain) {}

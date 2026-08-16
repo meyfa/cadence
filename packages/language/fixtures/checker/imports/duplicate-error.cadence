@@ -1,0 +1,5 @@
+use "effects" as *
+use "effects" as *
+
+use "instruments" as my_alias
+use "instruments" as my_alias

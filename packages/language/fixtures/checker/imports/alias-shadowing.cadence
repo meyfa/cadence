@@ -1,0 +1,2 @@
+use "sources" as src
+src = "foo"

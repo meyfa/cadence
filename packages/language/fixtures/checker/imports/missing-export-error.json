@@ -1,0 +1,7 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Module \"instruments\" has no export named \"foobar\"",
+    "range": {"offset": 46, "length": 6, "line": 2, "column": 21, "filePath": "imports/missing-export-error.cadence"}
+  }
+]
