@@ -1,0 +1,32 @@
+[
+  {
+    "label": "First Bus",
+    "sources": [],
+    "gain": {
+      "id": 0,
+      "unit": "db",
+      "initial": 0
+    },
+    "pan": {
+      "id": 1,
+      "initial": 0
+    },
+    "effects": [],
+    "id": 0
+  },
+  {
+    "label": "Second Bus",
+    "sources": [],
+    "gain": {
+      "id": 2,
+      "unit": "db",
+      "initial": 0
+    },
+    "pan": {
+      "id": 3,
+      "initial": 0
+    },
+    "effects": [],
+    "id": 1
+  }
+]

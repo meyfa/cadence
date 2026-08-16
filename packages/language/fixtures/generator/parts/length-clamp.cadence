@@ -1,0 +1,4 @@
+// test:get_property ["track", "parts"]
+& track {
+  & part (-4.bars) {}
+}

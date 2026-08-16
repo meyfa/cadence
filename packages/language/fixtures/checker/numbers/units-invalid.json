@@ -1,0 +1,7 @@
+[
+  {
+    "name": "CompileError",
+    "message": "Unknown unit \"unknownunit\"",
+    "range": {"offset": 10, "length": 11, "line": 1, "column": 11, "filePath": "numbers/units-invalid.cadence"}
+  }
+]

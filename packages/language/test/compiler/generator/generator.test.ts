@@ -9,6 +9,7 @@ import { generate } from '../../../src/compiler/generator/generator.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
 import { assertResultComplete } from '../../test-utils.ts'
+import { createFixtureTests } from '../../fixture-utils.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const beats = (value: number) => value as Numeric<'beats'>
@@ -18,8 +19,8 @@ const hz = (value: number) => value as Numeric<'hz'>
 
 const DEFAULT_TEMPO = 120 as Numeric<'bpm'>
 
-function generateSource (source: string) {
-  const tokens = lex(source)
+function generateSource (source: string, fileName?: string): Program {
+  const tokens = lex(source, fileName)
   assertResultComplete(tokens)
 
   const ast = parse(tokens.value)
@@ -38,33 +39,10 @@ function generateSource (source: string) {
   })
 }
 
-describe('compiler/generator/generator.ts', () => {
-  it('should produce a correct empty program', () => {
-    const result = generateSource('')
-    assert.deepStrictEqual(result, {
-      beatsPerBar: 4,
-      instruments: new Map(),
-      automations: new Map(),
-      assets: new Map(),
-      track: {
-        tempo: DEFAULT_TEMPO,
-        parts: []
-      },
-      mixer: {
-        buses: [],
-        routings: []
-      }
-    } satisfies Program)
-  })
-
-  it('should set track tempo from AST', () => {
-    const result = generateSource('& track (tempo: 140.bpm) {}')
-    assert.strictEqual(result.track.tempo, 140)
-  })
-
-  it('should clamp track tempo to maximum', () => {
-    const result = generateSource('& track (tempo: 400.bpm) {}')
-    assert.strictEqual(result.track.tempo, 300)
+describe('compiler/generator/generator.ts', async () => {
+  await createFixtureTests({
+    component: 'generator',
+    compute: (fixture) => generateSource(fixture.source, fixture.name)
   })
 
   it('should support tempo from a variable', () => {
@@ -166,17 +144,6 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.track.tempo, 123)
   })
 
-  it('should clamp negative part lengths to 0', () => {
-    const source = [
-      '& track {',
-      '  & part (-4.bars) {}',
-      '}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.track.parts[0].length, 0)
-  })
-
   it('should support part lengths from variables', () => {
     const source = [
       'root_scope = 42.beats',
@@ -211,44 +178,6 @@ describe('compiler/generator/generator.ts', () => {
     assert.strictEqual(result.track.parts[1].length, 2)
     assert.strictEqual(result.track.parts[2].length, 4)
     assert.strictEqual(result.track.parts[3].length, 8)
-  })
-
-  it('should support part labels', () => {
-    const source = [
-      '& track {',
-      '  & part (4.bars, "First Part") {}',
-      '  & part (4.bars, "Second Part") {}',
-      '}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.track.parts[0].label, 'First Part')
-    assert.strictEqual(result.track.parts[1].label, 'Second Part')
-  })
-
-  it('should support bus labels', () => {
-    const source = [
-      '& mixer {',
-      '  & bus ("First Bus") {}',
-      '  & bus ("Second Bus") {}',
-      '}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    assert.strictEqual(result.mixer.buses[0].label, 'First Bus')
-    assert.strictEqual(result.mixer.buses[1].label, 'Second Bus')
-  })
-
-  it('should support instrument labels', () => {
-    const source = [
-      'instrument0 = instrument ("First Instrument") {}',
-      'instrument1 = instrument ("Second Instrument") {}'
-    ].join('\n')
-
-    const result = generateSource(source)
-    const [instrument0, instrument1] = result.instruments.values()
-    assert.strictEqual(instrument0.label, 'First Instrument')
-    assert.strictEqual(instrument1.label, 'Second Instrument')
   })
 
   it('should resolve variables in track scope', () => {
