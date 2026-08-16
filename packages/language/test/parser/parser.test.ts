@@ -1,10 +1,10 @@
 import { getEmptySourceRange } from '@meyfa/cadence-ast'
 import type { Token } from 'leac'
 import assert from 'node:assert'
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { describe, it, test } from 'node:test'
+import { describe, it } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
 import { parse } from '../../src/parser/parser.ts'
+import { createFixtureTests } from '../fixture-utils.ts'
 
 /**
  * Lex the given string and return the resulting tokens. This assumes that the lexer
@@ -15,50 +15,6 @@ function lexSource (input: string, filePath?: string): Token[] {
   assert.ok(result.complete, result.complete ? undefined : result.error)
 
   return result.value
-}
-
-const GENERATE_FIXTURES = process.env.GENERATE_FIXTURES === 'parser'
-
-const FIXTURES_DIRECTORY = new URL('../fixtures/parser/', import.meta.url)
-
-const FIXTURE_NAMES = await (async () => {
-  const fileNames = await readdir(FIXTURES_DIRECTORY)
-
-  const sourceFileNames = fileNames.filter((name) => name.endsWith('.cadence')).sort()
-  const expectedFileNames = fileNames.filter((name) => name.endsWith('.json')).sort()
-
-  if (!GENERATE_FIXTURES) {
-    assert.deepStrictEqual(
-      sourceFileNames.map((name) => name.replace(/\.cadence$/, '.json')),
-      expectedFileNames,
-      'Mismatch between source files and expected output files. Run the tests with GENERATE_FIXTURES=parser to generate the expected output.'
-    )
-  }
-
-  return Object.freeze(sourceFileNames)
-})()
-
-interface Fixture {
-  readonly name: string
-  readonly source: string
-  readonly expected: object
-}
-
-async function loadFixture (name: string): Promise<Fixture> {
-  const sourcePath = new URL(name, FIXTURES_DIRECTORY)
-  const expectedPath = new URL(name.replace(/\.cadence$/, '.json'), FIXTURES_DIRECTORY)
-
-  const source = await readFile(sourcePath, 'utf-8')
-
-  if (GENERATE_FIXTURES) {
-    const expected = parse(lexSource(source, name))
-    const string = postProcess(JSON.stringify(expected, null, 2)) + '\n'
-    await writeFile(expectedPath, string, 'utf-8')
-  }
-
-  const expected = JSON.parse(await readFile(expectedPath, 'utf-8'))
-
-  return { name, source, expected }
 }
 
 /**
@@ -93,7 +49,16 @@ function postProcess (json: string): string {
   return outputLines.join('\n')
 }
 
-describe('parser/parser.ts', () => {
+describe('parser/parser.ts', async () => {
+  await createFixtureTests({
+    component: 'parser',
+    compute: (fixture) => {
+      const tokens = lexSource(fixture.source, fixture.name)
+      return parse(tokens)
+    },
+    postProcess
+  })
+
   it('should accept empty token array', () => {
     const result = parse([])
 
@@ -107,16 +72,4 @@ describe('parser/parser.ts', () => {
       }
     })
   })
-
-  for (const fixtureName of FIXTURE_NAMES) {
-    test(`fixture: ${fixtureName}`, async () => {
-      const fixture = await loadFixture(fixtureName)
-      const result = parse(lexSource(fixture.source, fixture.name))
-
-      // Round-trip the result to remove non-serializable properties (like error stack traces)
-      // before comparing to the fixture (which will not have those properties).
-      const normalized = JSON.parse(JSON.stringify(result))
-      assert.deepStrictEqual(normalized, fixture.expected)
-    })
-  }
 })
