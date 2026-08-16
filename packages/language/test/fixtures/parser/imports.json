@@ -1,0 +1,62 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [
+      {
+        "library": {
+          "parts": [
+            "mylib"
+          ],
+          "type": "String",
+          "range": {
+            "offset": 4,
+            "length": 7,
+            "line": 1,
+            "column": 5,
+            "filePath": "imports.cadence"
+          }
+        },
+        "alias": "myalias",
+        "type": "Import",
+        "range": {
+          "offset": 0,
+          "length": 22,
+          "line": 1,
+          "column": 1,
+          "filePath": "imports.cadence"
+        }
+      },
+      {
+        "library": {
+          "parts": [
+            "otherlib"
+          ],
+          "type": "String",
+          "range": {
+            "offset": 27,
+            "length": 10,
+            "line": 2,
+            "column": 5,
+            "filePath": "imports.cadence"
+          }
+        },
+        "type": "Import",
+        "range": {
+          "offset": 23,
+          "length": 19,
+          "line": 2,
+          "column": 1,
+          "filePath": "imports.cadence"
+        }
+      }
+    ],
+    "children": [],
+    "type": "Program",
+    "range": {
+      "offset": 0,
+      "length": 0,
+      "line": 1,
+      "column": 1
+    }
+  }
+}

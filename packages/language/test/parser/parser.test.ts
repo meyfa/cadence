@@ -1,6 +1,7 @@
 import type { Token } from 'leac'
 import assert from 'node:assert'
-import { describe, it } from 'node:test'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import test, { describe, it } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
 import { parse } from '../../src/parser/parser.ts'
 import { assertResultComplete } from '../test-utils.ts'
@@ -35,8 +36,48 @@ function stripRanges (node: unknown): unknown {
   return node
 }
 
+const GENERATE_FIXTURES = process.env.GENERATE_FIXTURES === 'parser'
+
+const FIXTURES_DIRECTORY = new URL('../fixtures/parser/', import.meta.url)
+const FIXTURE_NAMES = await (async () => {
+  const fileNames = await readdir(FIXTURES_DIRECTORY)
+  const items = fileNames.filter((name) => name.endsWith('.cadence')).sort()
+  return Object.freeze(items)
+})()
+
+interface Fixture {
+  readonly name: string
+  readonly source: string
+  readonly expected: object
+}
+
+async function loadFixture (name: string): Promise<Fixture> {
+  const sourcePath = new URL(name, FIXTURES_DIRECTORY)
+  const expectedPath = new URL(name.replace(/\.cadence$/, '.json'), FIXTURES_DIRECTORY)
+
+  const source = await readFile(sourcePath, 'utf-8')
+
+  if (GENERATE_FIXTURES) {
+    const expected = parse(lexSource(source, name))
+    const string = JSON.stringify(expected, null, 2) + '\n'
+    await writeFile(expectedPath, string, 'utf-8')
+  }
+
+  try {
+    const expected = JSON.parse(await readFile(expectedPath, 'utf-8'))
+
+    return { name, source, expected }
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      throw new Error(`Missing expected output for fixture "${name}". Run the tests with GENERATE_FIXTURES=parser to generate the expected output.`)
+    }
+
+    throw error
+  }
+}
+
 describe('parser/parser.ts', () => {
-  it('should accept empty input', () => {
+  it('should accept empty token array', () => {
     const result = parse([])
 
     assert.deepStrictEqual(stripRanges(result), {
@@ -47,146 +88,6 @@ describe('parser/parser.ts', () => {
         children: []
       }
     })
-  })
-
-  it('should parse imports', () => {
-    const source = [
-      'use "mylib" as myalias',
-      'use "otherlib" as *'
-    ].join('\n')
-
-    const result = parse(lexSource(source))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.imports), [
-      {
-        type: 'Import',
-        library: {
-          type: 'String',
-          parts: ['mylib']
-        },
-        alias: 'myalias'
-      },
-      {
-        type: 'Import',
-        library: {
-          type: 'String',
-          parts: ['otherlib']
-        }
-      }
-    ])
-  })
-
-  it('should reject imports after other statements', () => {
-    const source = [
-      'foo = 42',
-      'use "mylib" as myalias'
-    ].join('\n')
-
-    const result = parse(lexSource(source))
-
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.message, 'Unexpected statement beginning with "use"')
-  })
-
-  it('should parse a simple assignment', () => {
-    const result = parse(lexSource('foo = 42'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'SimpleStatement',
-        emit: false,
-        expose: false,
-        name: { type: 'Identifier', name: 'foo' },
-        values: [
-          { type: 'Number', value: 42 }
-        ]
-      }
-    ])
-  })
-
-  it('should parse a simple emission', () => {
-    const result = parse(lexSource('& 42'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'SimpleStatement',
-        emit: true,
-        expose: false,
-        values: [
-          { type: 'Number', value: 42 }
-        ]
-      }
-    ])
-  })
-
-  it('should parse an emission assignment', () => {
-    const result = parse(lexSource('& foo = 42'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'SimpleStatement',
-        emit: true,
-        expose: false,
-        name: { type: 'Identifier', name: 'foo' },
-        values: [
-          { type: 'Number', value: 42 }
-        ]
-      }
-    ])
-  })
-
-  it('should parse a statement with multiple values', () => {
-    const result = parse(lexSource('& 1, "hello", foo'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'SimpleStatement',
-        emit: true,
-        expose: false,
-        values: [
-          { type: 'Number', value: 1 },
-          { type: 'String', parts: ['hello'] },
-          { type: 'Identifier', name: 'foo' }
-        ]
-      }
-    ])
-  })
-
-  it('should reject assignments with multiple values', () => {
-    const result = parse(lexSource('foo = 1, 2'))
-    assert.strictEqual(result.complete, false)
-  })
-
-  it('should reject emission-assignments with multiple values', () => {
-    const result = parse(lexSource('& foo = 1, 2'))
-    assert.strictEqual(result.complete, false)
-  })
-
-  it('should parse exposed property assignments', () => {
-    const result = parse(lexSource('@foo = 42'))
-    assertResultComplete(result)
-
-    assert.deepStrictEqual(stripRanges(result.value.children), [
-      {
-        type: 'SimpleStatement',
-        emit: false,
-        expose: true,
-        name: { type: 'Identifier', name: 'foo' },
-        values: [
-          { type: 'Number', value: 42 }
-        ]
-      }
-    ])
-  })
-
-  it('should reject exposed property assignments with multiple values', () => {
-    const result = parse(lexSource('@foo = 1, 2'))
-    assert.strictEqual(result.complete, false)
   })
 
   it('should parse binary expressions', () => {
@@ -2090,4 +1991,16 @@ describe('parser/parser.ts', () => {
     assert.strictEqual(result.complete, false)
     assert.strictEqual(result.error.message, 'Unexpected "import"; expected "}"')
   })
+
+  for (const fixtureName of FIXTURE_NAMES) {
+    test(`fixture: ${fixtureName}`, async () => {
+      const fixture = await loadFixture(fixtureName)
+      const result = parse(lexSource(fixture.source, fixture.name))
+
+      // Round-trip the result to remove non-serializable properties (like error stack traces)
+      // before comparing to the fixture (which will not have those properties).
+      const normalized = JSON.parse(JSON.stringify(result))
+      assert.deepStrictEqual(normalized, fixture.expected)
+    })
+  }
 })
