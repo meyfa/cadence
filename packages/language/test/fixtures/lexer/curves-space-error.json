@@ -1,0 +1,14 @@
+{
+  "complete": false,
+  "error": {
+    "name": "LexError",
+    "message": "Unexpected input \"~ [hold(0.db)]\n\"",
+    "range": {
+      "offset": 0,
+      "length": 1,
+      "filePath": "curves-space-error.cadence",
+      "line": 1,
+      "column": 1
+    }
+  }
+}

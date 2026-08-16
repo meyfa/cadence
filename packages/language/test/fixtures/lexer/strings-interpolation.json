@@ -1,0 +1,89 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "stringContent",
+      "text": "value is "
+    },
+    {
+      "name": "{",
+      "text": "{"
+    },
+    {
+      "name": "word",
+      "text": "x"
+    },
+    {
+      "name": "+",
+      "text": "+"
+    },
+    {
+      "name": "number",
+      "text": "1"
+    },
+    {
+      "name": "}",
+      "text": "}"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    },
+    {
+      "name": "stringContent",
+      "text": "multiple "
+    },
+    {
+      "name": "{",
+      "text": "{"
+    },
+    {
+      "name": "word",
+      "text": "a"
+    },
+    {
+      "name": "}",
+      "text": "}"
+    },
+    {
+      "name": "stringContent",
+      "text": " and "
+    },
+    {
+      "name": "{",
+      "text": "{"
+    },
+    {
+      "name": "word",
+      "text": "b"
+    },
+    {
+      "name": "*",
+      "text": "*"
+    },
+    {
+      "name": "number",
+      "text": "2"
+    },
+    {
+      "name": "}",
+      "text": "}"
+    },
+    {
+      "name": "stringContent",
+      "text": " interpolations"
+    },
+    {
+      "name": "\"",
+      "text": "\""
+    }
+  ]
+}

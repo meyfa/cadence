@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "word",
+      "text": "foo"
+    },
+    {
+      "name": "=",
+      "text": "="
+    },
+    {
+      "name": "number",
+      "text": "42"
+    }
+  ]
+}

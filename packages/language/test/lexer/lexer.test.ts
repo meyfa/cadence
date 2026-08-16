@@ -1,6 +1,7 @@
 import type { Token } from 'leac'
 import assert from 'node:assert'
-import { describe, it } from 'node:test'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { describe, it, test } from 'node:test'
 import type { LexError } from '../../src/lexer/error.ts'
 import type { LexResult } from '../../src/lexer/lexer.ts'
 import { lex } from '../../src/lexer/lexer.ts'
@@ -24,89 +25,63 @@ function stripTokenMeta (result: LexResult): LexResultWithoutMeta {
   }
 }
 
+const GENERATE_FIXTURES = process.env.GENERATE_FIXTURES === 'lexer'
+
+const FIXTURES_DIRECTORY = new URL('../fixtures/lexer/', import.meta.url)
+
+const FIXTURE_NAMES = await (async () => {
+  const fileNames = await readdir(FIXTURES_DIRECTORY)
+
+  const sourceFileNames = fileNames.filter((name) => name.endsWith('.cadence')).sort()
+  const expectedFileNames = fileNames.filter((name) => name.endsWith('.json')).sort()
+
+  if (!GENERATE_FIXTURES) {
+    assert.deepStrictEqual(
+      sourceFileNames.map((name) => name.replace(/\.cadence$/, '.json')),
+      expectedFileNames,
+      'Mismatch between source files and expected output files. Run the tests with GENERATE_FIXTURES=lexer to generate the expected output.'
+    )
+  }
+
+  return Object.freeze(sourceFileNames)
+})()
+
+interface Fixture {
+  readonly name: string
+  readonly source: string
+  readonly expected: object
+}
+
+async function loadFixture (name: string): Promise<Fixture> {
+  const sourcePath = new URL(name, FIXTURES_DIRECTORY)
+  const expectedPath = new URL(name.replace(/\.cadence$/, '.json'), FIXTURES_DIRECTORY)
+
+  const source = await readFile(sourcePath, 'utf-8')
+
+  if (GENERATE_FIXTURES) {
+    const expected = stripTokenMeta(lex(source, name))
+    const string = JSON.stringify(expected, null, 2) + '\n'
+    await writeFile(expectedPath, string, 'utf-8')
+  }
+
+  const expected = JSON.parse(await readFile(expectedPath, 'utf-8'))
+
+  return { name, source, expected }
+}
+
 describe('lexer/lexer.ts', () => {
   it('should accept empty input', () => {
     const result = lex('')
     assert.deepStrictEqual(stripTokenMeta(result), { complete: true, value: [] })
   })
 
-  it('should lex a simple input', () => {
-    const result = lex('foo = 42')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'foo' },
-        { name: '=', text: '=' },
-        { name: 'number', text: '42' }
-      ]
-    })
-  })
-
-  it('should lex identifiers', () => {
-    const result = lex('x_#1 yVar _anotherVar')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'x_#1' },
-        { name: 'word', text: 'yVar' },
-        { name: 'word', text: '_anotherVar' }
-      ]
-    })
-  })
-
-  it('should lex number literals', () => {
-    const result = lex('42 3.14 0.001 1000.0')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'number', text: '42' },
-        { name: 'number', text: '3.14' },
-        { name: 'number', text: '0.001' },
-        { name: 'number', text: '1000.0' }
-      ]
-    })
-  })
-
-  it('should lex number literals with unit attachments', () => {
-    const result = lex('120.bpm 1.5.s 0.5s')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'number', text: '120' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'bpm' },
-        { name: 'number', text: '1.5' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 's' },
-        { name: 'number', text: '0.5' },
-        { name: 'word', text: 's' }
-      ]
-    })
-  })
-
-  it('should lex string literals', () => {
-    const result = lex('"hello world" "" "string with escaped \\"quotes\\", \\\\ backslashes, and \\{braces}"')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'hello world' },
-        { name: '"', text: '"' },
-        { name: '"', text: '"' },
-        { name: '"', text: '"' },
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'string with escaped ' },
-        { name: 'stringEscape', text: '\\"' },
-        { name: 'stringContent', text: 'quotes' },
-        { name: 'stringEscape', text: '\\"' },
-        { name: 'stringContent', text: ', ' },
-        { name: 'stringEscape', text: '\\\\' },
-        { name: 'stringContent', text: ' backslashes, and ' },
-        { name: 'stringEscape', text: '\\{' },
-        { name: 'stringContent', text: 'braces}' },
-        { name: '"', text: '"' }
-      ]
-    })
+  it('should handle invalid input', () => {
+    const result = lex('foo = 42 $', 'track.cadence')
+    assert.strictEqual(result.complete, false)
+    assert.strictEqual(result.error.name, 'LexError')
+    assert.strictEqual(result.error.message, 'Unexpected input "$"')
+    assert.deepStrictEqual(result.error.range, { offset: 9, length: 1, line: 1, column: 10, filePath: 'track.cadence' })
+    assert.strictEqual(result.error.range.filePath, 'track.cadence')
   })
 
   it('should fail to lex strings with LF and/or CR characters', () => {
@@ -129,401 +104,21 @@ describe('lexer/lexer.ts', () => {
     assert.deepStrictEqual(crlf.error.range, { offset: 6, length: 2, line: 1, column: 7, filePath: undefined })
   })
 
-  it('should lex string literals with interpolations', () => {
-    const result = lex('"value is {x + 1}" "multiple {a} and {b * 2} interpolations"')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'value is ' },
-        { name: '{', text: '{' },
-        { name: 'word', text: 'x' },
-        { name: '+', text: '+' },
-        { name: 'number', text: '1' },
-        { name: '}', text: '}' },
-        { name: '"', text: '"' },
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'multiple ' },
-        { name: '{', text: '{' },
-        { name: 'word', text: 'a' },
-        { name: '}', text: '}' },
-        { name: 'stringContent', text: ' and ' },
-        { name: '{', text: '{' },
-        { name: 'word', text: 'b' },
-        { name: '*', text: '*' },
-        { name: 'number', text: '2' },
-        { name: '}', text: '}' },
-        { name: 'stringContent', text: ' interpolations' },
-        { name: '"', text: '"' }
-      ]
-    })
-  })
-
-  it('should handle invalid input', () => {
-    const result = lex('foo = 42 $', 'track.cadence')
-    assert.strictEqual(result.complete, false)
-    assert.strictEqual(result.error.name, 'LexError')
-    assert.strictEqual(result.error.message, 'Unexpected input "$"')
-    assert.deepStrictEqual(result.error.range, { offset: 9, length: 1, line: 1, column: 10, filePath: 'track.cadence' })
-    assert.strictEqual(result.error.range.filePath, 'track.cadence')
-  })
-
   it('should annotate tokens with the source file path', () => {
     const result = lex('foo = 42', 'track.cadence')
     assert.strictEqual(result.complete, true)
     assert.strictEqual((result.value[0] as any)?.filePath, 'track.cadence')
   })
 
-  it('should ignore whitespace and comments', () => {
-    const result = lex(`foo //first comment\n// second comment\n  = 42`)
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'foo' },
-        { name: '=', text: '=' },
-        { name: 'number', text: '42' }
-      ]
+  for (const fixtureName of FIXTURE_NAMES) {
+    test(`fixture: ${fixtureName}`, async () => {
+      const fixture = await loadFixture(fixtureName)
+      const result = stripTokenMeta(lex(fixture.source, fixture.name))
+
+      // Round-trip the result to remove non-serializable properties (like error stack traces)
+      // before comparing to the fixture (which will not have those properties).
+      const normalized = JSON.parse(JSON.stringify(result))
+      assert.deepStrictEqual(normalized, fixture.expected)
     })
-  })
-
-  it('should lex use statements', () => {
-    const result = lex('use "effects" as fx\nuse "instruments" as *')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'use' },
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'effects' },
-        { name: '"', text: '"' },
-        { name: 'word', text: 'as' },
-        { name: 'word', text: 'fx' },
-        { name: 'word', text: 'use' },
-        { name: '"', text: '"' },
-        { name: 'stringContent', text: 'instruments' },
-        { name: '"', text: '"' },
-        { name: 'word', text: 'as' },
-        { name: '*', text: '*' }
-      ]
-    })
-  })
-
-  it('should lex complex function signatures', () => {
-    const result = lex('apply = (fn: (a: number): number !may_block, param?: string) {}')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'apply' },
-        { name: '=', text: '=' },
-        { name: '(', text: '(' },
-        { name: 'word', text: 'fn' },
-        { name: ':', text: ':' },
-        { name: '(', text: '(' },
-        { name: 'word', text: 'a' },
-        { name: ':', text: ':' },
-        { name: 'word', text: 'number' },
-        { name: ')', text: ')' },
-        { name: ':', text: ':' },
-        { name: 'word', text: 'number' },
-        { name: '!', text: '!' },
-        { name: 'word', text: 'may_block' },
-        { name: ',', text: ',' },
-        { name: 'word', text: 'param' },
-        { name: '?', text: '?' },
-        { name: ':', text: ':' },
-        { name: 'word', text: 'string' },
-        { name: ')', text: ')' },
-        { name: '{', text: '{' },
-        { name: '}', text: '}' }
-      ]
-    })
-  })
-
-  it('should lex simple patterns', () => {
-    const result = lex('[x-x- --xx]')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '[', text: '[' },
-
-        { name: 'word', text: 'x' },
-        { name: '-', text: '-' },
-        { name: 'word', text: 'x' },
-        { name: '-', text: '-' },
-
-        { name: '-', text: '-' },
-        { name: '-', text: '-' },
-        { name: 'word', text: 'xx' },
-
-        { name: ']', text: ']' }
-      ]
-    })
-  })
-
-  it('should lex complex patterns', () => {
-    const result = lex('[C4 -- E4 :0.5 Eb4G#4:1.0 - : 1 ]')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '[', text: '[' },
-
-        { name: 'word', text: 'C4' },
-        { name: '-', text: '-' },
-        { name: '-', text: '-' },
-        { name: 'word', text: 'E4' },
-        { name: ':', text: ':' },
-        { name: 'number', text: '0.5' },
-
-        { name: 'word', text: 'Eb4G#4' },
-        { name: ':', text: ':' },
-        { name: 'number', text: '1.0' },
-
-        { name: '-', text: '-' },
-        { name: ':', text: ':' },
-        { name: 'number', text: '1' },
-
-        { name: ']', text: ']' }
-      ]
-    })
-  })
-
-  it('should lex patterns with expressions', () => {
-    const result = lex('[x:(foo([x:bar])+1.0) -:(baz)]')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '[', text: '[' },
-
-        { name: 'word', text: 'x' },
-        { name: ':', text: ':' },
-        { name: '(', text: '(' },
-        { name: 'word', text: 'foo' },
-        { name: '(', text: '(' },
-        { name: '[', text: '[' },
-
-        { name: 'word', text: 'x' },
-        { name: ':', text: ':' },
-        { name: 'word', text: 'bar' },
-
-        { name: ']', text: ']' },
-        { name: ')', text: ')' },
-        { name: '+', text: '+' },
-        { name: 'number', text: '1.0' },
-        { name: ')', text: ')' },
-
-        { name: '-', text: '-' },
-        { name: ':', text: ':' },
-        { name: '(', text: '(' },
-        { name: 'word', text: 'baz' },
-        { name: ')', text: ')' },
-
-        { name: ']', text: ']' }
-      ]
-    })
-  })
-
-  it('should lex patterns with interpolations', () => {
-    const result = lex('[C4{some_chord * 2}-]')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '[', text: '[' },
-        { name: 'word', text: 'C4' },
-        { name: '{', text: '{' },
-        { name: 'word', text: 'some_chord' },
-        { name: '*', text: '*' },
-        { name: 'number', text: '2' },
-        { name: '}', text: '}' },
-        { name: '-', text: '-' },
-        { name: ']', text: ']' }
-      ]
-    })
-  })
-
-  it('should lex property access', () => {
-    const result = lex('(object.foo).bar')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '(', text: '(' },
-        { name: 'word', text: 'object' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'foo' },
-        { name: ')', text: ')' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'bar' }
-      ]
-    })
-  })
-
-  it('should lex curves', () => {
-    const result = lex('~[hold(0.db)]')
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '~[', text: '~[' },
-
-        { name: 'word', text: 'hold' },
-        { name: '(', text: '(' },
-        { name: 'number', text: '0' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'db' },
-        { name: ')', text: ')' },
-
-        { name: ']', text: ']' }
-      ]
-    })
-  })
-
-  it('should not lex curves when tilde and bracket are separated by whitespace', () => {
-    const result = lex('~ [hold(0.db)]')
-    assert.strictEqual(result.complete, false)
-  })
-
-  it('should lex a track', () => {
-    const source = [
-      '& track (128.bpm) {',
-      '  & part (4.bars) {}',
-      '  & part (8.bars) {}',
-      '}'
-    ].join('\n')
-
-    const result = lex(source)
-    assert.strictEqual(result.complete, true)
-
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: '&', text: '&' },
-        { name: 'word', text: 'track' },
-        { name: '(', text: '(' },
-        { name: 'number', text: '128' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'bpm' },
-        { name: ')', text: ')' },
-        { name: '{', text: '{' },
-
-        { name: '&', text: '&' },
-        { name: 'word', text: 'part' },
-        { name: '(', text: '(' },
-        { name: 'number', text: '4' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'bars' },
-        { name: ')', text: ')' },
-        { name: '{', text: '{' },
-        { name: '}', text: '}' },
-
-        { name: '&', text: '&' },
-        { name: 'word', text: 'part' },
-        { name: '(', text: '(' },
-        { name: 'number', text: '8' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'bars' },
-        { name: ')', text: ')' },
-        { name: '{', text: '{' },
-        { name: '}', text: '}' },
-
-        { name: '}', text: '}' }
-      ]
-    })
-  })
-
-  it('should lex emission', () => {
-    const source = [
-      'foo = instrument {',
-      '  & voice {',
-      '    & ~[hold(0.db)]',
-      '    & sine()',
-      '  }',
-      '}'
-    ].join('\n')
-
-    const result = lex(source)
-    assert.strictEqual(result.complete, true)
-
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'foo' },
-        { name: '=', text: '=' },
-        { name: 'word', text: 'instrument' },
-        { name: '{', text: '{' },
-
-        { name: '&', text: '&' },
-        { name: 'word', text: 'voice' },
-        { name: '{', text: '{' },
-
-        { name: '&', text: '&' },
-        { name: '~[', text: '~[' },
-        { name: 'word', text: 'hold' },
-        { name: '(', text: '(' },
-        { name: 'number', text: '0' },
-        { name: '.', text: '.' },
-        { name: 'word', text: 'db' },
-        { name: ')', text: ')' },
-        { name: ']', text: ']' },
-
-        { name: '&', text: '&' },
-        { name: 'word', text: 'sine' },
-        { name: '(', text: '(' },
-        { name: ')', text: ')' },
-
-        { name: '}', text: '}' },
-
-        { name: '}', text: '}' }
-      ]
-    })
-  })
-
-  it('should lex exposed properties', () => {
-    const source = [
-      'm = mixer {',
-      '  @exposed_property = 42',
-      '}'
-    ].join('\n')
-
-    const result = lex(source)
-    assert.strictEqual(result.complete, true)
-
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        { name: 'word', text: 'm' },
-        { name: '=', text: '=' },
-        { name: 'word', text: 'mixer' },
-        { name: '{', text: '{' },
-
-        { name: '@', text: '@' },
-        { name: 'word', text: 'exposed_property' },
-        { name: '=', text: '=' },
-        { name: 'number', text: '42' },
-
-        { name: '}', text: '}' }
-      ]
-    })
-  })
-
-  it('should lex comparison operators', () => {
-    const source = [
-      'a == b',
-      'c != d'
-    ].join('\n')
-
-    const result = lex(source)
-    assert.strictEqual(result.complete, true)
-
-    assert.deepStrictEqual(stripTokenMeta(result), {
-      complete: true,
-      value: [
-        // a == b
-        { name: 'word', text: 'a' },
-        { name: '==', text: '==' },
-        { name: 'word', text: 'b' },
-
-        // c != d
-        { name: 'word', text: 'c' },
-        { name: '!=', text: '!=' },
-        { name: 'word', text: 'd' }
-      ]
-    })
-  })
+  }
 })

@@ -1,0 +1,61 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "[",
+      "text": "["
+    },
+    {
+      "name": "word",
+      "text": "C4"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "word",
+      "text": "E4"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "number",
+      "text": "0.5"
+    },
+    {
+      "name": "word",
+      "text": "Eb4G#4"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "number",
+      "text": "1.0"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "number",
+      "text": "1"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    }
+  ]
+}

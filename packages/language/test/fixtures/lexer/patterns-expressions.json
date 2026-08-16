@@ -1,0 +1,89 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "[",
+      "text": "["
+    },
+    {
+      "name": "word",
+      "text": "x"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": "word",
+      "text": "foo"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": "[",
+      "text": "["
+    },
+    {
+      "name": "word",
+      "text": "x"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "word",
+      "text": "bar"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": "+",
+      "text": "+"
+    },
+    {
+      "name": "number",
+      "text": "1.0"
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": ":",
+      "text": ":"
+    },
+    {
+      "name": "(",
+      "text": "("
+    },
+    {
+      "name": "word",
+      "text": "baz"
+    },
+    {
+      "name": ")",
+      "text": ")"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { getEmptySourceRange } from '@meyfa/cadence-ast'
 import type { Token } from 'leac'
 import assert from 'node:assert'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
-import test, { describe, it } from 'node:test'
+import { describe, it, test } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
 import { parse } from '../../src/parser/parser.ts'
 

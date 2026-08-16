@@ -1,0 +1,41 @@
+{
+  "complete": true,
+  "value": [
+    {
+      "name": "[",
+      "text": "["
+    },
+    {
+      "name": "word",
+      "text": "x"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "word",
+      "text": "x"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "-",
+      "text": "-"
+    },
+    {
+      "name": "word",
+      "text": "xx"
+    },
+    {
+      "name": "]",
+      "text": "]"
+    }
+  ]
+}
