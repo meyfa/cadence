@@ -3,6 +3,7 @@ export const keywords = Object.freeze([
   'false',
   'and',
   'or',
+  'not',
   'use',
   'as',
   'if',

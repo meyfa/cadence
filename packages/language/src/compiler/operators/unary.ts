@@ -1,5 +1,6 @@
 import type { ast } from '@meyfa/cadence-ast'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
+import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { Numbers } from '../../type-system/helpers.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
@@ -23,6 +24,15 @@ export const unaryOperations: Readonly<Record<ast.UnaryOperator, UnaryOperation>
     compute: (operand) => {
       const { unit, value } = NumberFacet.get(operand)
       return Numbers.of({ unit, value: -(value as number) as Numeric<Unit> })
+    }
+  },
+
+  not: {
+    operator: 'not',
+    check: (operand) => BooleanFacet.is(operand) ? BooleanFacet.type() : undefined,
+    compute: (operand) => {
+      const value = BooleanFacet.get(operand)
+      return BooleanFacet.type().of(!value)
     }
   }
 }

@@ -3,3 +3,6 @@ number_or_number = 1 or 2
 
 string_and_string = "a" and "b"
 string_or_string = "a" or "b"
+
+not_number = not 1
+not_string = not "a"

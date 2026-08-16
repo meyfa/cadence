@@ -61,6 +61,8 @@ Unit[@dynamicPrecedence=1] {
 }
 
 @precedence {
+  unaryPlusMinus @right,
+  unaryNot @right,
   multiply @left,
   plus @left,
   comparison @left,
@@ -255,7 +257,9 @@ Call {
 }
 
 UnaryExpression {
-  ("+" | "-") expression
+  (!unaryPlusMinus "+" expression) |
+  (!unaryPlusMinus "-" expression) |
+  (!unaryNot kw<"not"> expression)
 }
 
 BinaryExpression {

@@ -7,3 +7,6 @@ test_or_00 = false or false
 test_or_01 = false or true
 test_or_02 = true or false
 test_or_03 = true or true
+
+test_not_0 = not false
+test_not_1 = not true

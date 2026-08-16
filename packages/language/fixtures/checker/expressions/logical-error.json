@@ -18,5 +18,15 @@
     "name": "CompileError",
     "message": "Incompatible operands for \"or\": string, string",
     "range": {"offset": 106, "length": 10, "line": 5, "column": 20, "filePath": "expressions/logical-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operand for \"not\": number",
+    "range": {"offset": 131, "length": 5, "line": 7, "column": 14, "filePath": "expressions/logical-error.cadence"}
+  },
+  {
+    "name": "CompileError",
+    "message": "Incompatible operand for \"not\": string",
+    "range": {"offset": 150, "length": 7, "line": 8, "column": 14, "filePath": "expressions/logical-error.cadence"}
   }
 ]
