@@ -1,0 +1,7 @@
+& mixer {
+  & bus (gain: (-3).db) {
+    & kick, snare, hihat
+    & fx.pan(0.5)
+    & @lp = fx.lowpass(400.hz)
+  }
+}

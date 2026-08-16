@@ -1,0 +1,141 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "empty_record",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 12, "line": 1, "column": 1, "filePath": "values-record.cadence"}
+        },
+        "values": [
+          {
+            "children": [],
+            "type": "RecordValue",
+            "range": {"offset": 15, "length": 2, "line": 1, "column": 16, "filePath": "values-record.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 17, "line": 1, "column": 1, "filePath": "values-record.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "one_field",
+          "type": "Identifier",
+          "range": {"offset": 18, "length": 9, "line": 2, "column": 1, "filePath": "values-record.cadence"}
+        },
+        "values": [
+          {
+            "children": [
+              {
+                "emit": false,
+                "expose": true,
+                "name": {
+                  "name": "key",
+                  "type": "Identifier",
+                  "range": {"offset": 33, "length": 3, "line": 2, "column": 16, "filePath": "values-record.cadence"}
+                },
+                "values": [
+                  {
+                    "parts": [
+                      "value"
+                    ],
+                    "type": "String",
+                    "range": {"offset": 39, "length": 7, "line": 2, "column": 22, "filePath": "values-record.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 32, "length": 14, "line": 2, "column": 15, "filePath": "values-record.cadence"}
+              }
+            ],
+            "type": "RecordValue",
+            "range": {"offset": 30, "length": 18, "line": 2, "column": 13, "filePath": "values-record.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 18, "length": 30, "line": 2, "column": 1, "filePath": "values-record.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "complex",
+          "type": "Identifier",
+          "range": {"offset": 49, "length": 7, "line": 3, "column": 1, "filePath": "values-record.cadence"}
+        },
+        "values": [
+          {
+            "children": [
+              {
+                "emit": false,
+                "expose": false,
+                "name": {
+                  "name": "scratch",
+                  "type": "Identifier",
+                  "range": {"offset": 63, "length": 7, "line": 4, "column": 3, "filePath": "values-record.cadence"}
+                },
+                "values": [
+                  {
+                    "value": 42,
+                    "type": "Number",
+                    "range": {"offset": 73, "length": 2, "line": 4, "column": 13, "filePath": "values-record.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 63, "length": 12, "line": 4, "column": 3, "filePath": "values-record.cadence"}
+              },
+              {
+                "emit": false,
+                "expose": true,
+                "name": {
+                  "name": "foo",
+                  "type": "Identifier",
+                  "range": {"offset": 79, "length": 3, "line": 5, "column": 4, "filePath": "values-record.cadence"}
+                },
+                "values": [
+                  {
+                    "children": [
+                      {
+                        "emit": false,
+                        "expose": true,
+                        "name": {
+                          "name": "bar",
+                          "type": "Identifier",
+                          "range": {"offset": 88, "length": 3, "line": 5, "column": 13, "filePath": "values-record.cadence"}
+                        },
+                        "values": [
+                          {
+                            "name": "scratch",
+                            "type": "Identifier",
+                            "range": {"offset": 94, "length": 7, "line": 5, "column": 19, "filePath": "values-record.cadence"}
+                          }
+                        ],
+                        "type": "SimpleStatement",
+                        "range": {"offset": 87, "length": 14, "line": 5, "column": 12, "filePath": "values-record.cadence"}
+                      }
+                    ],
+                    "type": "RecordValue",
+                    "range": {"offset": 85, "length": 18, "line": 5, "column": 10, "filePath": "values-record.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 78, "length": 25, "line": 5, "column": 3, "filePath": "values-record.cadence"}
+              }
+            ],
+            "type": "RecordValue",
+            "range": {"offset": 59, "length": 46, "line": 3, "column": 11, "filePath": "values-record.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 49, "length": 56, "line": 3, "column": 1, "filePath": "values-record.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 105, "line": 1, "column": 1, "filePath": "values-record.cadence"}
+  }
+}

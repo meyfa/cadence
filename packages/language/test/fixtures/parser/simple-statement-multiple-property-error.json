@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Unexpected statement beginning with \",\"",
+    "range": {"offset": 8, "length": 1, "line": 1, "column": 9, "filePath": "simple-statement-multiple-property-error.cadence"}
+  }
+}

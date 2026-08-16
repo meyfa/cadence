@@ -1,0 +1,65 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "pattern",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 7, "line": 1, "column": 1, "filePath": "pattern-parallel-steps.cadence"}
+        },
+        "values": [
+          {
+            "mode": "serial",
+            "children": [
+              {
+                "mode": "parallel",
+                "children": [
+                  {
+                    "value": "C4",
+                    "length": {
+                      "value": 0.75,
+                      "type": "Number",
+                      "range": {"offset": 15, "length": 4, "line": 1, "column": 16, "filePath": "pattern-parallel-steps.cadence"}
+                    },
+                    "arguments": [],
+                    "type": "Step",
+                    "range": {"offset": 12, "length": 7, "line": 1, "column": 13, "filePath": "pattern-parallel-steps.cadence"}
+                  },
+                  {
+                    "value": "-",
+                    "length": {
+                      "value": 0.25,
+                      "type": "Number",
+                      "range": {"offset": 21, "length": 4, "line": 1, "column": 22, "filePath": "pattern-parallel-steps.cadence"}
+                    },
+                    "arguments": [],
+                    "type": "Step",
+                    "range": {"offset": 19, "length": 6, "line": 1, "column": 20, "filePath": "pattern-parallel-steps.cadence"}
+                  }
+                ],
+                "type": "Pattern",
+                "range": {"offset": 11, "length": 15, "line": 1, "column": 12, "filePath": "pattern-parallel-steps.cadence"}
+              },
+              {
+                "value": "E4",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 26, "line": 1, "column": 27, "length": 2, "filePath": "pattern-parallel-steps.cadence"}
+              }
+            ],
+            "type": "Pattern",
+            "range": {"offset": 10, "length": 19, "line": 1, "column": 11, "filePath": "pattern-parallel-steps.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 29, "line": 1, "column": 1, "filePath": "pattern-parallel-steps.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 29, "line": 1, "column": 1, "filePath": "pattern-parallel-steps.cadence"}
+  }
+}

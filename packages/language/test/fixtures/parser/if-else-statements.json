@@ -1,0 +1,55 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "branches": [
+          {
+            "condition": {
+              "name": "condition",
+              "type": "Identifier",
+              "range": {"offset": 3, "length": 9, "line": 1, "column": 4, "filePath": "if-else-statements.cadence"}
+            },
+            "children": [
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "value": 42,
+                    "type": "Number",
+                    "range": {"offset": 19, "length": 2, "line": 2, "column": 5, "filePath": "if-else-statements.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 17, "length": 4, "line": 2, "column": 3, "filePath": "if-else-statements.cadence"}
+              }
+            ],
+            "type": "ConditionalBranch",
+            "range": {"offset": 3, "length": 20, "line": 1, "column": 4, "filePath": "if-else-statements.cadence"}
+          }
+        ],
+        "elseBranch": [
+          {
+            "emit": true,
+            "expose": false,
+            "values": [
+              {
+                "value": 43,
+                "type": "Number",
+                "range": {"offset": 36, "length": 2, "line": 4, "column": 5, "filePath": "if-else-statements.cadence"}
+              }
+            ],
+            "type": "SimpleStatement",
+            "range": {"offset": 34, "length": 4, "line": 4, "column": 3, "filePath": "if-else-statements.cadence"}
+          }
+        ],
+        "type": "IfStatement",
+        "range": {"offset": 0, "length": 40, "line": 1, "column": 1, "filePath": "if-else-statements.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 40, "line": 1, "column": 1, "filePath": "if-else-statements.cadence"}
+  }
+}

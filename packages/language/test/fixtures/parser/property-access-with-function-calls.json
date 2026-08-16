@@ -1,0 +1,102 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "x",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 1, "line": 1, "column": 1, "filePath": "property-access-with-function-calls.cadence"}
+        },
+        "values": [
+          {
+            "callee": {
+              "object": {
+                "callee": {
+                  "object": {
+                    "name": "object",
+                    "type": "Identifier",
+                    "range": {"offset": 4, "length": 6, "line": 1, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+                  },
+                  "property": {
+                    "name": "method1",
+                    "type": "Identifier",
+                    "range": {"offset": 11, "length": 7, "line": 1, "column": 12, "filePath": "property-access-with-function-calls.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 4, "length": 14, "line": 1, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+                },
+                "arguments": [],
+                "type": "Call",
+                "range": {"offset": 4, "length": 16, "line": 1, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+              },
+              "property": {
+                "name": "method2",
+                "type": "Identifier",
+                "range": {"offset": 21, "length": 7, "line": 1, "column": 22, "filePath": "property-access-with-function-calls.cadence"}
+              },
+              "type": "PropertyAccess",
+              "range": {"offset": 4, "length": 24, "line": 1, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+            },
+            "arguments": [],
+            "type": "Call",
+            "range": {"offset": 4, "length": 26, "line": 1, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 30, "line": 1, "column": 1, "filePath": "property-access-with-function-calls.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "x",
+          "type": "Identifier",
+          "range": {"offset": 31, "length": 1, "line": 2, "column": 1, "filePath": "property-access-with-function-calls.cadence"}
+        },
+        "values": [
+          {
+            "callee": {
+              "object": {
+                "callee": {
+                  "object": {
+                    "name": "object",
+                    "type": "Identifier",
+                    "range": {"offset": 36, "length": 6, "line": 2, "column": 6, "filePath": "property-access-with-function-calls.cadence"}
+                  },
+                  "property": {
+                    "name": "method1",
+                    "type": "Identifier",
+                    "range": {"offset": 43, "length": 7, "line": 2, "column": 13, "filePath": "property-access-with-function-calls.cadence"}
+                  },
+                  "type": "PropertyAccess",
+                  "range": {"offset": 36, "length": 14, "line": 2, "column": 6, "filePath": "property-access-with-function-calls.cadence"}
+                },
+                "arguments": [],
+                "type": "Call",
+                "range": {"offset": 35, "length": 18, "line": 2, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+              },
+              "property": {
+                "name": "method2",
+                "type": "Identifier",
+                "range": {"offset": 54, "length": 7, "line": 2, "column": 24, "filePath": "property-access-with-function-calls.cadence"}
+              },
+              "type": "PropertyAccess",
+              "range": {"offset": 35, "length": 26, "line": 2, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+            },
+            "arguments": [],
+            "type": "Call",
+            "range": {"offset": 35, "length": 28, "line": 2, "column": 5, "filePath": "property-access-with-function-calls.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 31, "length": 32, "line": 2, "column": 1, "filePath": "property-access-with-function-calls.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 63, "line": 1, "column": 1, "filePath": "property-access-with-function-calls.cadence"}
+  }
+}

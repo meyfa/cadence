@@ -1,0 +1,95 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "my_func",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 7, "line": 1, "column": 1, "filePath": "functions-with-parameters.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "param1",
+                  "type": "Identifier",
+                  "range": {"offset": 11, "length": 6, "line": 1, "column": 12, "filePath": "functions-with-parameters.cadence"}
+                },
+                "parameterType": {
+                  "name": {
+                    "name": "number",
+                    "type": "Identifier",
+                    "range": {"offset": 19, "length": 6, "line": 1, "column": 20, "filePath": "functions-with-parameters.cadence"}
+                  },
+                  "generics": [
+                    {
+                      "name": "db",
+                      "type": "Identifier",
+                      "range": {"offset": 26, "length": 2, "line": 1, "column": 27, "filePath": "functions-with-parameters.cadence"}
+                    }
+                  ],
+                  "type": "NamedType",
+                  "range": {"offset": 19, "length": 9, "line": 1, "column": 20, "filePath": "functions-with-parameters.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 11, "length": 17, "line": 1, "column": 12, "filePath": "functions-with-parameters.cadence"}
+              },
+              {
+                "name": {
+                  "name": "param2",
+                  "type": "Identifier",
+                  "range": {"offset": 30, "length": 6, "line": 1, "column": 31, "filePath": "functions-with-parameters.cadence"}
+                },
+                "parameterType": {
+                  "name": {
+                    "name": "string",
+                    "type": "Identifier",
+                    "range": {"offset": 38, "length": 6, "line": 1, "column": 39, "filePath": "functions-with-parameters.cadence"}
+                  },
+                  "generics": [],
+                  "type": "NamedType",
+                  "range": {"offset": 38, "length": 6, "line": 1, "column": 39, "filePath": "functions-with-parameters.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 30, "length": 14, "line": 1, "column": 31, "filePath": "functions-with-parameters.cadence"}
+              }
+            ],
+            "children": [
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "name": "param1",
+                    "type": "Identifier",
+                    "range": {"offset": 52, "length": 6, "line": 2, "column": 5, "filePath": "functions-with-parameters.cadence"}
+                  },
+                  {
+                    "name": "param2",
+                    "type": "Identifier",
+                    "range": {"offset": 60, "length": 6, "line": 2, "column": 13, "filePath": "functions-with-parameters.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 50, "length": 16, "line": 2, "column": 3, "filePath": "functions-with-parameters.cadence"}
+              }
+            ],
+            "type": "Function",
+            "range": {"offset": 10, "length": 58, "line": 1, "column": 11, "filePath": "functions-with-parameters.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 68, "line": 1, "column": 1, "filePath": "functions-with-parameters.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 68, "line": 1, "column": 1, "filePath": "functions-with-parameters.cadence"}
+  }
+}

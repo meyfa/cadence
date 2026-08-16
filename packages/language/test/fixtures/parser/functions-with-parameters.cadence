@@ -1,0 +1,3 @@
+my_func = (param1: number.db, param2: string) {
+  & param1, param2
+}

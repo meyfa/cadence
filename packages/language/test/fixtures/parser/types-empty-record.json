@@ -1,0 +1,59 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "func",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 4, "line": 1, "column": 1, "filePath": "types-empty-record.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "p",
+                  "type": "Identifier",
+                  "range": {"offset": 8, "length": 1, "line": 1, "column": 9, "filePath": "types-empty-record.cadence"}
+                },
+                "parameterType": {
+                  "properties": [],
+                  "type": "RecordType",
+                  "range": {"offset": 11, "length": 2, "line": 1, "column": 12, "filePath": "types-empty-record.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 8, "length": 5, "line": 1, "column": 9, "filePath": "types-empty-record.cadence"}
+              }
+            ],
+            "children": [
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "value": 42,
+                    "type": "Number",
+                    "range": {"offset": 19, "length": 2, "line": 1, "column": 20, "filePath": "types-empty-record.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 17, "length": 4, "line": 1, "column": 18, "filePath": "types-empty-record.cadence"}
+              }
+            ],
+            "type": "Function",
+            "range": {"offset": 7, "length": 16, "line": 1, "column": 8, "filePath": "types-empty-record.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 23, "line": 1, "column": 1, "filePath": "types-empty-record.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 23, "line": 1, "column": 1, "filePath": "types-empty-record.cadence"}
+  }
+}

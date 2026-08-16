@@ -1,0 +1,6 @@
+empty_record = {}
+one_field = { @key = "value" }
+complex = {
+  scratch = 42
+  @foo = { @bar = scratch }
+}

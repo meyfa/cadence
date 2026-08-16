@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Unexpected \"import\"; expected \"}\"",
+    "range": {"offset": 17, "length": 6, "line": 2, "column": 3, "filePath": "imports-within-if-error.cadence"}
+  }
+}

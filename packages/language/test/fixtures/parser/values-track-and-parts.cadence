@@ -1,0 +1,4 @@
+& track {
+  & part (4.bars) {}
+  & part (2.bars) {}
+}

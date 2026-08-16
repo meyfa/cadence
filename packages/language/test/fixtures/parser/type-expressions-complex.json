@@ -1,0 +1,331 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "type-expressions-complex.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "x",
+                  "type": "Identifier",
+                  "range": {"offset": 7, "length": 1, "line": 1, "column": 8, "filePath": "type-expressions-complex.cadence"}
+                },
+                "parameterType": {
+                  "children": [
+                    {
+                      "name": {
+                        "name": "number",
+                        "type": "Identifier",
+                        "range": {"offset": 10, "length": 6, "line": 1, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                      },
+                      "generics": [
+                        {
+                          "name": "db",
+                          "type": "Identifier",
+                          "range": {"offset": 17, "length": 2, "line": 1, "column": 18, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "type": "NamedType",
+                      "range": {"offset": 10, "length": 9, "line": 1, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                    },
+                    {
+                      "parameters": [
+                        {
+                          "name": {
+                            "name": "format",
+                            "type": "Identifier",
+                            "range": {"offset": 23, "length": 6, "line": 1, "column": 24, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "parameterType": {
+                            "name": {
+                              "name": "string",
+                              "type": "Identifier",
+                              "range": {"offset": 31, "length": 6, "line": 1, "column": 32, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 31, "length": 6, "line": 1, "column": 32, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "optional": false,
+                          "type": "Parameter",
+                          "range": {"offset": 23, "length": 14, "line": 1, "column": 24, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "returnType": {
+                        "name": {
+                          "name": "string",
+                          "type": "Identifier",
+                          "range": {"offset": 40, "length": 6, "line": 1, "column": 41, "filePath": "type-expressions-complex.cadence"}
+                        },
+                        "generics": [],
+                        "type": "NamedType",
+                        "range": {"offset": 40, "length": 6, "line": 1, "column": 41, "filePath": "type-expressions-complex.cadence"}
+                      },
+                      "capabilities": [],
+                      "type": "FunctionType",
+                      "range": {"offset": 22, "length": 24, "line": 1, "column": 23, "filePath": "type-expressions-complex.cadence"}
+                    }
+                  ],
+                  "type": "CombinedType",
+                  "range": {"offset": 10, "length": 36, "line": 1, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 7, "length": 39, "line": 1, "column": 8, "filePath": "type-expressions-complex.cadence"}
+              },
+              {
+                "name": {
+                  "name": "fmt",
+                  "type": "Identifier",
+                  "range": {"offset": 48, "length": 3, "line": 1, "column": 49, "filePath": "type-expressions-complex.cadence"}
+                },
+                "parameterType": {
+                  "name": {
+                    "name": "string",
+                    "type": "Identifier",
+                    "range": {"offset": 54, "length": 6, "line": 1, "column": 55, "filePath": "type-expressions-complex.cadence"}
+                  },
+                  "generics": [],
+                  "type": "NamedType",
+                  "range": {"offset": 54, "length": 6, "line": 1, "column": 55, "filePath": "type-expressions-complex.cadence"}
+                },
+                "optional": true,
+                "type": "Parameter",
+                "range": {"offset": 48, "length": 12, "line": 1, "column": 49, "filePath": "type-expressions-complex.cadence"}
+              }
+            ],
+            "children": [],
+            "type": "Function",
+            "range": {"offset": 6, "length": 58, "line": 1, "column": 7, "filePath": "type-expressions-complex.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 64, "line": 1, "column": 1, "filePath": "type-expressions-complex.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "bar",
+          "type": "Identifier",
+          "range": {"offset": 65, "length": 3, "line": 2, "column": 1, "filePath": "type-expressions-complex.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "y",
+                  "type": "Identifier",
+                  "range": {"offset": 72, "length": 1, "line": 2, "column": 8, "filePath": "type-expressions-complex.cadence"}
+                },
+                "parameterType": {
+                  "children": [
+                    {
+                      "name": {
+                        "name": "number",
+                        "type": "Identifier",
+                        "range": {"offset": 77, "length": 6, "line": 2, "column": 13, "filePath": "type-expressions-complex.cadence"}
+                      },
+                      "generics": [
+                        {
+                          "name": "db",
+                          "type": "Identifier",
+                          "range": {"offset": 84, "length": 2, "line": 2, "column": 20, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "type": "NamedType",
+                      "range": {"offset": 76, "length": 11, "line": 2, "column": 12, "filePath": "type-expressions-complex.cadence"}
+                    },
+                    {
+                      "parameters": [
+                        {
+                          "name": {
+                            "name": "format",
+                            "type": "Identifier",
+                            "range": {"offset": 91, "length": 6, "line": 2, "column": 27, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "parameterType": {
+                            "name": {
+                              "name": "string",
+                              "type": "Identifier",
+                              "range": {"offset": 99, "length": 6, "line": 2, "column": 35, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 99, "length": 6, "line": 2, "column": 35, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "optional": false,
+                          "type": "Parameter",
+                          "range": {"offset": 91, "length": 14, "line": 2, "column": 27, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "returnType": {
+                        "children": [
+                          {
+                            "name": {
+                              "name": "string",
+                              "type": "Identifier",
+                              "range": {"offset": 109, "length": 6, "line": 2, "column": 45, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 109, "length": 6, "line": 2, "column": 45, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          {
+                            "name": {
+                              "name": "string",
+                              "type": "Identifier",
+                              "range": {"offset": 118, "length": 6, "line": 2, "column": 54, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 118, "length": 6, "line": 2, "column": 54, "filePath": "type-expressions-complex.cadence"}
+                          }
+                        ],
+                        "type": "CombinedType",
+                        "range": {"offset": 108, "length": 17, "line": 2, "column": 44, "filePath": "type-expressions-complex.cadence"}
+                      },
+                      "capabilities": [],
+                      "type": "FunctionType",
+                      "range": {"offset": 90, "length": 35, "line": 2, "column": 26, "filePath": "type-expressions-complex.cadence"}
+                    }
+                  ],
+                  "type": "CombinedType",
+                  "range": {"offset": 75, "length": 51, "line": 2, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 72, "length": 54, "line": 2, "column": 8, "filePath": "type-expressions-complex.cadence"}
+              }
+            ],
+            "children": [],
+            "type": "Function",
+            "range": {"offset": 71, "length": 59, "line": 2, "column": 7, "filePath": "type-expressions-complex.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 65, "length": 65, "line": 2, "column": 1, "filePath": "type-expressions-complex.cadence"}
+      },
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "baz",
+          "type": "Identifier",
+          "range": {"offset": 131, "length": 3, "line": 3, "column": 1, "filePath": "type-expressions-complex.cadence"}
+        },
+        "values": [
+          {
+            "parameters": [
+              {
+                "name": {
+                  "name": "z",
+                  "type": "Identifier",
+                  "range": {"offset": 138, "length": 1, "line": 3, "column": 8, "filePath": "type-expressions-complex.cadence"}
+                },
+                "parameterType": {
+                  "children": [
+                    {
+                      "parameters": [],
+                      "returnType": {
+                        "name": {
+                          "name": "instrument",
+                          "type": "Identifier",
+                          "range": {"offset": 145, "length": 10, "line": 3, "column": 15, "filePath": "type-expressions-complex.cadence"}
+                        },
+                        "generics": [],
+                        "type": "NamedType",
+                        "range": {"offset": 145, "length": 10, "line": 3, "column": 15, "filePath": "type-expressions-complex.cadence"}
+                      },
+                      "capabilities": [
+                        {
+                          "name": "hello",
+                          "type": "Identifier",
+                          "range": {"offset": 157, "length": 5, "line": 3, "column": 27, "filePath": "type-expressions-complex.cadence"}
+                        },
+                        {
+                          "name": "world",
+                          "type": "Identifier",
+                          "range": {"offset": 164, "length": 5, "line": 3, "column": 34, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "type": "FunctionType",
+                      "range": {"offset": 141, "length": 28, "line": 3, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                    },
+                    {
+                      "properties": [
+                        {
+                          "name": {
+                            "name": "foo",
+                            "type": "Identifier",
+                            "range": {"offset": 173, "length": 3, "line": 3, "column": 43, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "propertyType": {
+                            "name": {
+                              "name": "number",
+                              "type": "Identifier",
+                              "range": {"offset": 178, "length": 6, "line": 3, "column": 48, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 178, "length": 6, "line": 3, "column": 48, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "type": "RecordTypeProperty",
+                          "range": {"offset": 173, "length": 11, "line": 3, "column": 43, "filePath": "type-expressions-complex.cadence"}
+                        },
+                        {
+                          "name": {
+                            "name": "bar",
+                            "type": "Identifier",
+                            "range": {"offset": 186, "length": 3, "line": 3, "column": 56, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "propertyType": {
+                            "name": {
+                              "name": "string",
+                              "type": "Identifier",
+                              "range": {"offset": 191, "length": 6, "line": 3, "column": 61, "filePath": "type-expressions-complex.cadence"}
+                            },
+                            "generics": [],
+                            "type": "NamedType",
+                            "range": {"offset": 191, "length": 6, "line": 3, "column": 61, "filePath": "type-expressions-complex.cadence"}
+                          },
+                          "type": "RecordTypeProperty",
+                          "range": {"offset": 186, "length": 11, "line": 3, "column": 56, "filePath": "type-expressions-complex.cadence"}
+                        }
+                      ],
+                      "type": "RecordType",
+                      "range": {"offset": 172, "length": 26, "line": 3, "column": 42, "filePath": "type-expressions-complex.cadence"}
+                    }
+                  ],
+                  "type": "CombinedType",
+                  "range": {"offset": 141, "length": 57, "line": 3, "column": 11, "filePath": "type-expressions-complex.cadence"}
+                },
+                "optional": false,
+                "type": "Parameter",
+                "range": {"offset": 138, "length": 60, "line": 3, "column": 8, "filePath": "type-expressions-complex.cadence"}
+              }
+            ],
+            "children": [],
+            "type": "Function",
+            "range": {"offset": 137, "length": 65, "line": 3, "column": 7, "filePath": "type-expressions-complex.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 131, "length": 71, "line": 3, "column": 1, "filePath": "type-expressions-complex.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 202, "line": 1, "column": 1, "filePath": "type-expressions-complex.cadence"}
+  }
+}

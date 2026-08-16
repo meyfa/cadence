@@ -1,0 +1,29 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "pattern-empty.cadence"}
+        },
+        "values": [
+          {
+            "mode": "serial",
+            "children": [],
+            "type": "Pattern",
+            "range": {"offset": 6, "length": 2, "line": 1, "column": 7, "filePath": "pattern-empty.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 8, "line": 1, "column": 1, "filePath": "pattern-empty.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 8, "line": 1, "column": 1, "filePath": "pattern-empty.cadence"}
+  }
+}

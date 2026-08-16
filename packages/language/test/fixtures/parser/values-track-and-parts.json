@@ -1,0 +1,91 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": true,
+        "expose": false,
+        "values": [
+          {
+            "arguments": [],
+            "children": [
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "arguments": [
+                      {
+                        "value": {
+                          "object": {
+                            "value": 4,
+                            "type": "Number",
+                            "range": {"offset": 20, "length": 1, "line": 2, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                          },
+                          "property": {
+                            "name": "bars",
+                            "type": "Identifier",
+                            "range": {"offset": 22, "length": 4, "line": 2, "column": 13, "filePath": "values-track-and-parts.cadence"}
+                          },
+                          "type": "PropertyAccess",
+                          "range": {"offset": 20, "length": 6, "line": 2, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                        },
+                        "type": "Argument",
+                        "range": {"offset": 20, "length": 6, "line": 2, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                      }
+                    ],
+                    "children": [],
+                    "type": "Part",
+                    "range": {"offset": 14, "length": 16, "line": 2, "column": 5, "filePath": "values-track-and-parts.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 12, "length": 18, "line": 2, "column": 3, "filePath": "values-track-and-parts.cadence"}
+              },
+              {
+                "emit": true,
+                "expose": false,
+                "values": [
+                  {
+                    "arguments": [
+                      {
+                        "value": {
+                          "object": {
+                            "value": 2,
+                            "type": "Number",
+                            "range": {"offset": 41, "length": 1, "line": 3, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                          },
+                          "property": {
+                            "name": "bars",
+                            "type": "Identifier",
+                            "range": {"offset": 43, "length": 4, "line": 3, "column": 13, "filePath": "values-track-and-parts.cadence"}
+                          },
+                          "type": "PropertyAccess",
+                          "range": {"offset": 41, "length": 6, "line": 3, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                        },
+                        "type": "Argument",
+                        "range": {"offset": 41, "length": 6, "line": 3, "column": 11, "filePath": "values-track-and-parts.cadence"}
+                      }
+                    ],
+                    "children": [],
+                    "type": "Part",
+                    "range": {"offset": 35, "length": 16, "line": 3, "column": 5, "filePath": "values-track-and-parts.cadence"}
+                  }
+                ],
+                "type": "SimpleStatement",
+                "range": {"offset": 33, "length": 18, "line": 3, "column": 3, "filePath": "values-track-and-parts.cadence"}
+              }
+            ],
+            "type": "Track",
+            "range": {"offset": 2, "length": 51, "line": 1, "column": 3, "filePath": "values-track-and-parts.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 53, "line": 1, "column": 1, "filePath": "values-track-and-parts.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 53, "line": 1, "column": 1, "filePath": "values-track-and-parts.cadence"}
+  }
+}

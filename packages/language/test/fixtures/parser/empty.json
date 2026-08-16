@@ -4,11 +4,6 @@
     "imports": [],
     "children": [],
     "type": "Program",
-    "range": {
-      "offset": 0,
-      "length": 0,
-      "line": 1,
-      "column": 1
-    }
+    "range": {"offset": 0, "length": 0, "line": 1, "column": 1}
   }
 }

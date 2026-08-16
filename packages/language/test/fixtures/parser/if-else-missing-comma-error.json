@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "error": {
+    "name": "ParseError",
+    "message": "Unexpected statement beginning with \"else\"",
+    "range": {"offset": 16, "length": 4, "line": 1, "column": 17, "filePath": "if-else-missing-comma-error.cadence"}
+  }
+}

@@ -1,0 +1,2 @@
+x = object.foo.bar
+x = (object.foo).bar

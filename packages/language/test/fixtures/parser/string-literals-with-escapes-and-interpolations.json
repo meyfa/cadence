@@ -1,0 +1,36 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "string-literals-with-escapes-and-interpolations.cadence"}
+        },
+        "values": [
+          {
+            "parts": [
+              "a { b ",
+              {
+                "name": "x",
+                "type": "Identifier",
+                "range": {"offset": 14, "length": 3, "line": 1, "column": 15, "filePath": "string-literals-with-escapes-and-interpolations.cadence"}
+              },
+              " c"
+            ],
+            "type": "String",
+            "range": {"offset": 6, "length": 14, "line": 1, "column": 7, "filePath": "string-literals-with-escapes-and-interpolations.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 20, "line": 1, "column": 1, "filePath": "string-literals-with-escapes-and-interpolations.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 20, "line": 1, "column": 1, "filePath": "string-literals-with-escapes-and-interpolations.cadence"}
+  }
+}

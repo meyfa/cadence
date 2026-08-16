@@ -1,0 +1,71 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "foo",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 3, "line": 1, "column": 1, "filePath": "pattern-serial.cadence"}
+        },
+        "values": [
+          {
+            "mode": "serial",
+            "children": [
+              {
+                "value": "x",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 7, "line": 1, "column": 8, "length": 1, "filePath": "pattern-serial.cadence"}
+              },
+              {
+                "value": "x",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 8, "line": 1, "column": 9, "length": 1, "filePath": "pattern-serial.cadence"}
+              },
+              {
+                "value": "-",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 9, "length": 1, "line": 1, "column": 10, "filePath": "pattern-serial.cadence"}
+              },
+              {
+                "value": "D4",
+                "length": {
+                  "value": 0.5,
+                  "type": "Number",
+                  "range": {"offset": 13, "length": 3, "line": 1, "column": 14, "filePath": "pattern-serial.cadence"}
+                },
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 10, "length": 6, "line": 1, "column": 11, "filePath": "pattern-serial.cadence"}
+              },
+              {
+                "value": "-",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 16, "length": 1, "line": 1, "column": 17, "filePath": "pattern-serial.cadence"}
+              },
+              {
+                "value": "G4",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 17, "line": 1, "column": 18, "length": 2, "filePath": "pattern-serial.cadence"}
+              }
+            ],
+            "type": "Pattern",
+            "range": {"offset": 6, "length": 14, "line": 1, "column": 7, "filePath": "pattern-serial.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 20, "line": 1, "column": 1, "filePath": "pattern-serial.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 20, "line": 1, "column": 1, "filePath": "pattern-serial.cadence"}
+  }
+}

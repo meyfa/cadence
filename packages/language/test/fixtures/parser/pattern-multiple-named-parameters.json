@@ -1,0 +1,76 @@
+{
+  "complete": true,
+  "value": {
+    "imports": [],
+    "children": [
+      {
+        "emit": false,
+        "expose": false,
+        "name": {
+          "name": "pattern",
+          "type": "Identifier",
+          "range": {"offset": 0, "length": 7, "line": 1, "column": 1, "filePath": "pattern-multiple-named-parameters.cadence"}
+        },
+        "values": [
+          {
+            "mode": "serial",
+            "children": [
+              {
+                "value": "C4",
+                "length": {
+                  "value": 1.5,
+                  "type": "Number",
+                  "range": {"offset": 36, "length": 3, "line": 1, "column": 37, "filePath": "pattern-multiple-named-parameters.cadence"}
+                },
+                "arguments": [
+                  {
+                    "name": {
+                      "name": "vel",
+                      "type": "Identifier",
+                      "range": {"offset": 14, "length": 3, "line": 1, "column": 15, "filePath": "pattern-multiple-named-parameters.cadence"}
+                    },
+                    "value": {
+                      "value": 0.75,
+                      "type": "Number",
+                      "range": {"offset": 19, "length": 4, "line": 1, "column": 20, "filePath": "pattern-multiple-named-parameters.cadence"}
+                    },
+                    "type": "Argument",
+                    "range": {"offset": 14, "length": 9, "line": 1, "column": 15, "filePath": "pattern-multiple-named-parameters.cadence"}
+                  },
+                  {
+                    "name": {
+                      "name": "gate",
+                      "type": "Identifier",
+                      "range": {"offset": 25, "length": 4, "line": 1, "column": 26, "filePath": "pattern-multiple-named-parameters.cadence"}
+                    },
+                    "value": {
+                      "value": 2,
+                      "type": "Number",
+                      "range": {"offset": 31, "length": 3, "line": 1, "column": 32, "filePath": "pattern-multiple-named-parameters.cadence"}
+                    },
+                    "type": "Argument",
+                    "range": {"offset": 25, "length": 9, "line": 1, "column": 26, "filePath": "pattern-multiple-named-parameters.cadence"}
+                  }
+                ],
+                "type": "Step",
+                "range": {"offset": 11, "length": 28, "line": 1, "column": 12, "filePath": "pattern-multiple-named-parameters.cadence"}
+              },
+              {
+                "value": "-",
+                "arguments": [],
+                "type": "Step",
+                "range": {"offset": 39, "length": 1, "line": 1, "column": 40, "filePath": "pattern-multiple-named-parameters.cadence"}
+              }
+            ],
+            "type": "Pattern",
+            "range": {"offset": 10, "length": 31, "line": 1, "column": 11, "filePath": "pattern-multiple-named-parameters.cadence"}
+          }
+        ],
+        "type": "SimpleStatement",
+        "range": {"offset": 0, "length": 41, "line": 1, "column": 1, "filePath": "pattern-multiple-named-parameters.cadence"}
+      }
+    ],
+    "type": "Program",
+    "range": {"offset": 0, "length": 41, "line": 1, "column": 1, "filePath": "pattern-multiple-named-parameters.cadence"}
+  }
+}
