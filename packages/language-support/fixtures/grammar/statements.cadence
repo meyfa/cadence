@@ -1,0 +1,17 @@
+world = "World"
+
+my_record = {
+  @foo = "Hello, {world}!"
+}
+
+if my_record.foo == "Hello, World!" {
+  ok = true
+}, else {
+  ok = false
+}
+
+fn = (x: number, y: number) {
+  & x * y
+}
+
+z = fn(16, 8)

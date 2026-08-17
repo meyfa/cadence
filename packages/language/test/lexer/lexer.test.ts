@@ -1,3 +1,4 @@
+import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
@@ -5,7 +6,6 @@ import type { LexError } from '../../src/lexer/error.ts'
 import type { LexResult } from '../../src/lexer/lexer.ts'
 import { lex } from '../../src/lexer/lexer.ts'
 import type { Result } from '../../src/result/result.ts'
-import { createFixtureTests } from '../fixture-utils.ts'
 
 type LexResultWithoutMeta = Result<ReadonlyArray<Omit<Token, 'state' | 'offset' | 'len' | 'line' | 'column'>>, LexError>
 
@@ -26,12 +26,17 @@ function stripTokenMeta (result: LexResult): LexResultWithoutMeta {
 }
 
 describe('lexer/lexer.ts', async () => {
-  await createFixtureTests({
-    component: 'lexer',
-    compute: (fixture) => {
-      const result = lex(fixture.source, fixture.name)
-      return stripTokenMeta(result)
-    }
+  describe('fixtures', async () => {
+    await createFixtureTests({
+      directory: new URL('../../fixtures/lexer/', import.meta.url),
+      inputFileSuffix: '.cadence',
+      outputFileSuffix: '.json',
+      compute: (fixture) => {
+        const result = lex(fixture.source, fixture.name)
+        return stripTokenMeta(result)
+      },
+      instructionExtractor: fromLineComment
+    })
   })
 
   it('should accept empty input', () => {

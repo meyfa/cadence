@@ -1,0 +1,508 @@
+{
+  "text": "world = \"World\"\n\nmy_record = {\n  @foo = \"Hello, {world}!\"\n}\n\nif my_record.foo == \"Hello, World!\" {\n  ok = true\n}, else {\n  ok = false\n}\n\nfn = (x: number, y: number) {\n  & x * y\n}\n\nz = fn(16, 8)\n",
+  "type": "Program",
+  "children": [
+    {
+      "text": "world = \"World\"",
+      "type": "Assignment",
+      "children": [
+        {
+          "text": "world",
+          "type": "VariableDefinition",
+          "children": []
+        },
+        {
+          "text": "=",
+          "type": "=",
+          "children": []
+        },
+        {
+          "text": "\"World\"",
+          "type": "AccessOrCall",
+          "children": [
+            {
+              "text": "\"World\"",
+              "type": "String",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "text": "my_record = {\n  @foo = \"Hello, {world}!\"\n}",
+      "type": "Assignment",
+      "children": [
+        {
+          "text": "my_record",
+          "type": "VariableDefinition",
+          "children": []
+        },
+        {
+          "text": "=",
+          "type": "=",
+          "children": []
+        },
+        {
+          "text": "{\n  @foo = \"Hello, {world}!\"\n}",
+          "type": "AccessOrCall",
+          "children": [
+            {
+              "text": "{\n  @foo = \"Hello, {world}!\"\n}",
+              "type": "Record",
+              "children": [
+                {
+                  "text": "{\n  @foo = \"Hello, {world}!\"\n}",
+                  "type": "Block",
+                  "children": [
+                    {
+                      "text": "{",
+                      "type": "{",
+                      "children": []
+                    },
+                    {
+                      "text": "@foo = \"Hello, {world}!\"",
+                      "type": "Assignment",
+                      "children": [
+                        {
+                          "text": "@",
+                          "type": "@",
+                          "children": []
+                        },
+                        {
+                          "text": "foo",
+                          "type": "VariableDefinition",
+                          "children": []
+                        },
+                        {
+                          "text": "=",
+                          "type": "=",
+                          "children": []
+                        },
+                        {
+                          "text": "\"Hello, {world}!\"",
+                          "type": "AccessOrCall",
+                          "children": [
+                            {
+                              "text": "\"Hello, {world}!\"",
+                              "type": "String",
+                              "children": [
+                                {
+                                  "text": "{",
+                                  "type": "{",
+                                  "children": []
+                                },
+                                {
+                                  "text": "world",
+                                  "type": "AccessOrCall",
+                                  "children": [
+                                    {
+                                      "text": "world",
+                                      "type": "VariableName",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "text": "}",
+                                  "type": "}",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "text": "}",
+                      "type": "}",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "text": "if my_record.foo == \"Hello, World!\" {\n  ok = true\n}, else {\n  ok = false\n}",
+      "type": "IfStatement",
+      "children": [
+        {
+          "text": "if",
+          "type": "keyword",
+          "children": []
+        },
+        {
+          "text": "my_record.foo == \"Hello, World!\"",
+          "type": "BinaryExpression",
+          "children": [
+            {
+              "text": "my_record.foo",
+              "type": "AccessOrCall",
+              "children": [
+                {
+                  "text": "my_record",
+                  "type": "VariableName",
+                  "children": []
+                },
+                {
+                  "text": ".",
+                  "type": ".",
+                  "children": []
+                },
+                {
+                  "text": "foo",
+                  "type": "Member",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "text": "==",
+              "type": "==",
+              "children": []
+            },
+            {
+              "text": "\"Hello, World!\"",
+              "type": "AccessOrCall",
+              "children": [
+                {
+                  "text": "\"Hello, World!\"",
+                  "type": "String",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "{\n  ok = true\n}",
+          "type": "Block",
+          "children": [
+            {
+              "text": "{",
+              "type": "{",
+              "children": []
+            },
+            {
+              "text": "ok = true",
+              "type": "Assignment",
+              "children": [
+                {
+                  "text": "ok",
+                  "type": "VariableDefinition",
+                  "children": []
+                },
+                {
+                  "text": "=",
+                  "type": "=",
+                  "children": []
+                },
+                {
+                  "text": "true",
+                  "type": "AccessOrCall",
+                  "children": [
+                    {
+                      "text": "true",
+                      "type": "Boolean",
+                      "children": [
+                        {
+                          "text": "true",
+                          "type": "keyword",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "text": "}",
+              "type": "}",
+              "children": []
+            }
+          ]
+        },
+        {
+          "text": ",",
+          "type": ",",
+          "children": []
+        },
+        {
+          "text": "else",
+          "type": "keyword",
+          "children": []
+        },
+        {
+          "text": "{\n  ok = false\n}",
+          "type": "Block",
+          "children": [
+            {
+              "text": "{",
+              "type": "{",
+              "children": []
+            },
+            {
+              "text": "ok = false",
+              "type": "Assignment",
+              "children": [
+                {
+                  "text": "ok",
+                  "type": "VariableDefinition",
+                  "children": []
+                },
+                {
+                  "text": "=",
+                  "type": "=",
+                  "children": []
+                },
+                {
+                  "text": "false",
+                  "type": "AccessOrCall",
+                  "children": [
+                    {
+                      "text": "false",
+                      "type": "Boolean",
+                      "children": [
+                        {
+                          "text": "false",
+                          "type": "keyword",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "text": "}",
+              "type": "}",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "text": "fn = (x: number, y: number) {\n  & x * y\n}",
+      "type": "Assignment",
+      "children": [
+        {
+          "text": "fn",
+          "type": "VariableDefinition",
+          "children": []
+        },
+        {
+          "text": "=",
+          "type": "=",
+          "children": []
+        },
+        {
+          "text": "(x: number, y: number) {\n  & x * y\n}",
+          "type": "AccessOrCall",
+          "children": [
+            {
+              "text": "(x: number, y: number) {\n  & x * y\n}",
+              "type": "Function",
+              "children": [
+                {
+                  "text": "(",
+                  "type": "(",
+                  "children": []
+                },
+                {
+                  "text": "x",
+                  "type": "VariableDefinition",
+                  "children": []
+                },
+                {
+                  "text": ":",
+                  "type": ":",
+                  "children": []
+                },
+                {
+                  "text": "number",
+                  "type": "Type",
+                  "children": [
+                    {
+                      "text": "number",
+                      "type": "NamedType",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "text": ",",
+                  "type": ",",
+                  "children": []
+                },
+                {
+                  "text": "y",
+                  "type": "VariableDefinition",
+                  "children": []
+                },
+                {
+                  "text": ":",
+                  "type": ":",
+                  "children": []
+                },
+                {
+                  "text": "number",
+                  "type": "Type",
+                  "children": [
+                    {
+                      "text": "number",
+                      "type": "NamedType",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "text": ")",
+                  "type": ")",
+                  "children": []
+                },
+                {
+                  "text": "{\n  & x * y\n}",
+                  "type": "FunctionBody",
+                  "children": [
+                    {
+                      "text": "{",
+                      "type": "{",
+                      "children": []
+                    },
+                    {
+                      "text": "& x * y",
+                      "type": "Emission",
+                      "children": [
+                        {
+                          "text": "&",
+                          "type": "&",
+                          "children": []
+                        },
+                        {
+                          "text": "x * y",
+                          "type": "BinaryExpression",
+                          "children": [
+                            {
+                              "text": "x",
+                              "type": "AccessOrCall",
+                              "children": [
+                                {
+                                  "text": "x",
+                                  "type": "VariableName",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "text": "*",
+                              "type": "*",
+                              "children": []
+                            },
+                            {
+                              "text": "y",
+                              "type": "AccessOrCall",
+                              "children": [
+                                {
+                                  "text": "y",
+                                  "type": "VariableName",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "text": "}",
+                      "type": "}",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "text": "z = fn(16, 8)",
+      "type": "Assignment",
+      "children": [
+        {
+          "text": "z",
+          "type": "VariableDefinition",
+          "children": []
+        },
+        {
+          "text": "=",
+          "type": "=",
+          "children": []
+        },
+        {
+          "text": "fn(16, 8)",
+          "type": "AccessOrCall",
+          "children": [
+            {
+              "text": "fn(16, 8)",
+              "type": "Call",
+              "children": [
+                {
+                  "text": "fn",
+                  "type": "Callee",
+                  "children": []
+                },
+                {
+                  "text": "(",
+                  "type": "(",
+                  "children": []
+                },
+                {
+                  "text": "16",
+                  "type": "AccessOrCall",
+                  "children": [
+                    {
+                      "text": "16",
+                      "type": "Number",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "text": ",",
+                  "type": ",",
+                  "children": []
+                },
+                {
+                  "text": "8",
+                  "type": "AccessOrCall",
+                  "children": [
+                    {
+                      "text": "8",
+                      "type": "Number",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "text": ")",
+                  "type": ")",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
