@@ -4,7 +4,7 @@ import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
 import { parse } from '../../src/parser/parser.ts'
-import { collapseRanges, createFixtureTests } from '../fixture-utils.ts'
+import { collapseKey, fromLineComment, createFixtureTests } from '@meyfa/cadence-snapshot-testing'
 
 /**
  * Lex the given string and return the resulting tokens. This assumes that the lexer
@@ -18,13 +18,18 @@ function lexSource (input: string, filePath?: string): Token[] {
 }
 
 describe('parser/parser.ts', async () => {
-  await createFixtureTests({
-    component: 'parser',
-    compute: (fixture) => {
-      const tokens = lexSource(fixture.source, fixture.name)
-      return parse(tokens)
-    },
-    postProcess: collapseRanges
+  describe('fixtures', async () => {
+    await createFixtureTests({
+      directory: new URL('../../fixtures/parser/', import.meta.url),
+      inputFileSuffix: '.cadence',
+      outputFileSuffix: '.json',
+      compute: (fixture) => {
+        const tokens = lexSource(fixture.source, fixture.name)
+        return parse(tokens)
+      },
+      postProcess: collapseKey('range'),
+      instructionExtractor: fromLineComment
+    })
   })
 
   it('should accept empty token array', () => {

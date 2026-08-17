@@ -1,5 +1,6 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
+import { collapseKey, createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
@@ -10,7 +11,6 @@ import { NumberFacet } from '../../../src/type-system/base/number.ts'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.ts'
 import { makeSchema } from '../../../src/type-system/schema.ts'
 import { assertResultComplete } from '../../test-utils.ts'
-import { collapseRanges, createFixtureTests } from '../../fixture-utils.ts'
 
 function checkSource (source: string, fileName?: string): readonly CompileError[] {
   const tokens = lex(source, fileName)
@@ -62,10 +62,15 @@ function rangeOf (source: string, substring: string, position?: number): SourceR
 }
 
 describe('compiler/checker/checker.ts', async () => {
-  await createFixtureTests({
-    component: 'checker',
-    compute: (fixture) => checkSource(fixture.source, fixture.name),
-    postProcess: collapseRanges
+  describe('fixtures', async () => {
+    await createFixtureTests({
+      directory: new URL('../../../fixtures/checker/', import.meta.url),
+      inputFileSuffix: '.cadence',
+      outputFileSuffix: '.json',
+      compute: (fixture) => checkSource(fixture.source, fixture.name),
+      postProcess: collapseKey('range'),
+      instructionExtractor: fromLineComment
+    })
   })
 
   describe('valid', () => {

@@ -1,5 +1,6 @@
 import type { Program } from '@meyfa/cadence-core'
 import { convertPitchToMidi, getMidiFrequency } from '@meyfa/cadence-core'
+import { collapseKey, createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
@@ -9,7 +10,6 @@ import { generate } from '../../../src/compiler/generator/generator.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
 import { assertResultComplete } from '../../test-utils.ts'
-import { createFixtureTests } from '../../fixture-utils.ts'
 
 const scalar = (value: number) => value as Numeric<undefined>
 const beats = (value: number) => value as Numeric<'beats'>
@@ -40,9 +40,15 @@ function generateSource (source: string, fileName?: string): Program {
 }
 
 describe('compiler/generator/generator.ts', async () => {
-  await createFixtureTests({
-    component: 'generator',
-    compute: (fixture) => generateSource(fixture.source, fixture.name)
+  describe('fixtures', async () => {
+    await createFixtureTests({
+      directory: new URL('../../../fixtures/generator/', import.meta.url),
+      inputFileSuffix: '.cadence',
+      outputFileSuffix: '.json',
+      compute: (fixture) => generateSource(fixture.source, fixture.name),
+      postProcess: collapseKey('range'),
+      instructionExtractor: fromLineComment
+    })
   })
 
   it('should support tempo from a variable', () => {

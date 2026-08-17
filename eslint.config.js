@@ -64,7 +64,8 @@ const packages = [
     dependencies: [
       'ast',
       'core',
-      'utility'
+      'utility',
+      'snapshot-testing'
     ]
   },
   {
@@ -73,8 +74,13 @@ const packages = [
       'ast',
       'core',
       'language',
-      'utility'
+      'utility',
+      'snapshot-testing'
     ]
+  },
+  {
+    name: 'snapshot-testing',
+    dependencies: []
   },
   {
     name: 'utility',
