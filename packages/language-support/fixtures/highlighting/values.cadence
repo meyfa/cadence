@@ -1,0 +1,4 @@
+n = 0.5 + 0.25
+bpm = 128.bpm
+pattern = [D4:2 - x]
+string = "kick-{tempo}"

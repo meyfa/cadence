@@ -1,0 +1,194 @@
+[
+  {
+    "from": 0,
+    "to": 1,
+    "text": "n",
+    "classes": [
+      "definition-variable"
+    ]
+  },
+  {
+    "from": 2,
+    "to": 3,
+    "text": "=",
+    "classes": [
+      "definition-operator"
+    ]
+  },
+  {
+    "from": 4,
+    "to": 7,
+    "text": "0.5",
+    "classes": [
+      "number"
+    ]
+  },
+  {
+    "from": 8,
+    "to": 9,
+    "text": "+",
+    "classes": [
+      "arithmetic-operator"
+    ]
+  },
+  {
+    "from": 10,
+    "to": 14,
+    "text": "0.25",
+    "classes": [
+      "number"
+    ]
+  },
+  {
+    "from": 15,
+    "to": 18,
+    "text": "bpm",
+    "classes": [
+      "definition-variable"
+    ]
+  },
+  {
+    "from": 19,
+    "to": 20,
+    "text": "=",
+    "classes": [
+      "definition-operator"
+    ]
+  },
+  {
+    "from": 21,
+    "to": 24,
+    "text": "128",
+    "classes": [
+      "number"
+    ]
+  },
+  {
+    "from": 25,
+    "to": 28,
+    "text": "bpm",
+    "classes": [
+      "number"
+    ]
+  },
+  {
+    "from": 29,
+    "to": 36,
+    "text": "pattern",
+    "classes": [
+      "definition-variable"
+    ]
+  },
+  {
+    "from": 37,
+    "to": 38,
+    "text": "=",
+    "classes": [
+      "definition-operator"
+    ]
+  },
+  {
+    "from": 40,
+    "to": 42,
+    "text": "D4",
+    "classes": [
+      "pattern"
+    ]
+  },
+  {
+    "from": 42,
+    "to": 43,
+    "text": ":",
+    "classes": [
+      "separator"
+    ]
+  },
+  {
+    "from": 43,
+    "to": 44,
+    "text": "2",
+    "classes": [
+      "number"
+    ]
+  },
+  {
+    "from": 44,
+    "to": 45,
+    "text": " ",
+    "classes": [
+      "pattern"
+    ]
+  },
+  {
+    "from": 45,
+    "to": 46,
+    "text": "-",
+    "classes": [
+      "arithmetic-operator"
+    ]
+  },
+  {
+    "from": 46,
+    "to": 48,
+    "text": " x",
+    "classes": [
+      "pattern"
+    ]
+  },
+  {
+    "from": 50,
+    "to": 56,
+    "text": "string",
+    "classes": [
+      "definition-variable"
+    ]
+  },
+  {
+    "from": 57,
+    "to": 58,
+    "text": "=",
+    "classes": [
+      "definition-operator"
+    ]
+  },
+  {
+    "from": 59,
+    "to": 65,
+    "text": "\"kick-",
+    "classes": [
+      "string"
+    ]
+  },
+  {
+    "from": 65,
+    "to": 66,
+    "text": "{",
+    "classes": [
+      "brace"
+    ]
+  },
+  {
+    "from": 66,
+    "to": 71,
+    "text": "tempo",
+    "classes": [
+      "variable"
+    ]
+  },
+  {
+    "from": 71,
+    "to": 72,
+    "text": "}",
+    "classes": [
+      "brace"
+    ]
+  },
+  {
+    "from": 72,
+    "to": 73,
+    "text": "\"",
+    "classes": [
+      "string"
+    ]
+  }
+]

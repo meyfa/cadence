@@ -1,0 +1,10 @@
+func = (num: number) {
+  & num + 1
+}
+
+& track (tempo: 140.bpm) {
+  & part {
+    foo = bar
+    & baz
+  }
+}
