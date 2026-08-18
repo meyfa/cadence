@@ -1,6 +1,6 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
-import { collapseKey, createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
+import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
@@ -68,7 +68,9 @@ describe('compiler/checker/checker.ts', async () => {
       inputFileSuffix: '.cadence',
       outputFileSuffix: '.json',
       compute: (fixture) => checkSource(fixture.source, fixture.name),
-      postProcess: collapseKey('range'),
+      serialization: {
+        shouldCollapse: (key) => key === 'range'
+      },
       instructionExtractor: fromLineComment
     })
   })

@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 
-export function getProperty (object: object, path: readonly string[]): object {
+export function getProperty (object: unknown, path: readonly string[]): unknown {
   let current: unknown = object
 
   for (const key of path) {

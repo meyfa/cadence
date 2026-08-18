@@ -1,10 +1,10 @@
 import { getEmptySourceRange } from '@meyfa/cadence-ast'
+import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
 import { parse } from '../../src/parser/parser.ts'
-import { collapseKey, fromLineComment, createFixtureTests } from '@meyfa/cadence-snapshot-testing'
 
 /**
  * Lex the given string and return the resulting tokens. This assumes that the lexer
@@ -27,7 +27,9 @@ describe('parser/parser.ts', async () => {
         const tokens = lexSource(fixture.source, fixture.name)
         return parse(tokens)
       },
-      postProcess: collapseKey('range'),
+      serialization: {
+        shouldCollapse: (key) => key === 'range'
+      },
       instructionExtractor: fromLineComment
     })
   })

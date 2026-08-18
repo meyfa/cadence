@@ -1,258 +1,34 @@
 [
-  {
-    "from": 0,
-    "to": 4,
-    "text": "func",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 5,
-    "to": 6,
-    "text": "=",
-    "classes": [
-      "definition-operator"
-    ]
-  },
-  {
-    "from": 7,
-    "to": 8,
-    "text": "(",
-    "classes": [
-      "paren"
-    ]
-  },
-  {
-    "from": 8,
-    "to": 11,
-    "text": "num",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 11,
-    "to": 12,
-    "text": ":",
-    "classes": [
-      "separator"
-    ]
-  },
-  {
-    "from": 13,
-    "to": 19,
-    "text": "number",
-    "classes": [
-      "type"
-    ]
-  },
-  {
-    "from": 19,
-    "to": 20,
-    "text": ")",
-    "classes": [
-      "paren"
-    ]
-  },
-  {
-    "from": 21,
-    "to": 22,
-    "text": "{",
-    "classes": [
-      "brace"
-    ]
-  },
-  {
-    "from": 25,
-    "to": 26,
-    "text": "&",
-    "classes": [
-      "operator"
-    ]
-  },
-  {
-    "from": 27,
-    "to": 30,
-    "text": "num",
-    "classes": [
-      "variable"
-    ]
-  },
-  {
-    "from": 31,
-    "to": 32,
-    "text": "+",
-    "classes": [
-      "arithmetic-operator"
-    ]
-  },
-  {
-    "from": 33,
-    "to": 34,
-    "text": "1",
-    "classes": [
-      "number"
-    ]
-  },
-  {
-    "from": 35,
-    "to": 36,
-    "text": "}",
-    "classes": [
-      "brace"
-    ]
-  },
-  {
-    "from": 38,
-    "to": 39,
-    "text": "&",
-    "classes": [
-      "operator"
-    ]
-  },
-  {
-    "from": 40,
-    "to": 45,
-    "text": "track",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 46,
-    "to": 47,
-    "text": "(",
-    "classes": [
-      "paren"
-    ]
-  },
-  {
-    "from": 47,
-    "to": 52,
-    "text": "tempo",
-    "classes": [
-      "definition-property"
-    ]
-  },
-  {
-    "from": 52,
-    "to": 53,
-    "text": ":",
-    "classes": [
-      "separator"
-    ]
-  },
-  {
-    "from": 54,
-    "to": 57,
-    "text": "140",
-    "classes": [
-      "number"
-    ]
-  },
-  {
-    "from": 58,
-    "to": 61,
-    "text": "bpm",
-    "classes": [
-      "number"
-    ]
-  },
-  {
-    "from": 61,
-    "to": 62,
-    "text": ")",
-    "classes": [
-      "paren"
-    ]
-  },
-  {
-    "from": 63,
-    "to": 64,
-    "text": "{",
-    "classes": [
-      "brace"
-    ]
-  },
-  {
-    "from": 67,
-    "to": 68,
-    "text": "&",
-    "classes": [
-      "operator"
-    ]
-  },
-  {
-    "from": 69,
-    "to": 73,
-    "text": "part",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 74,
-    "to": 75,
-    "text": "{",
-    "classes": [
-      "brace"
-    ]
-  },
-  {
-    "from": 80,
-    "to": 83,
-    "text": "foo",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 84,
-    "to": 85,
-    "text": "=",
-    "classes": [
-      "definition-operator"
-    ]
-  },
-  {
-    "from": 86,
-    "to": 89,
-    "text": "bar",
-    "classes": [
-      "variable"
-    ]
-  },
-  {
-    "from": 94,
-    "to": 95,
-    "text": "&",
-    "classes": [
-      "operator"
-    ]
-  },
-  {
-    "from": 96,
-    "to": 99,
-    "text": "baz",
-    "classes": [
-      "variable"
-    ]
-  },
-  {
-    "from": 102,
-    "to": 103,
-    "text": "}",
-    "classes": [
-      "brace"
-    ]
-  },
-  {
-    "from": 104,
-    "to": 105,
-    "text": "}",
-    "classes": [
-      "brace"
-    ]
-  }
+  {"from": 0, "to": 4, "text": "func", "classes": ["definition-variable"]},
+  {"from": 5, "to": 6, "text": "=", "classes": ["definition-operator"]},
+  {"from": 7, "to": 8, "text": "(", "classes": ["paren"]},
+  {"from": 8, "to": 11, "text": "num", "classes": ["definition-variable"]},
+  {"from": 11, "to": 12, "text": ":", "classes": ["separator"]},
+  {"from": 13, "to": 19, "text": "number", "classes": ["type"]},
+  {"from": 19, "to": 20, "text": ")", "classes": ["paren"]},
+  {"from": 21, "to": 22, "text": "{", "classes": ["brace"]},
+  {"from": 25, "to": 26, "text": "&", "classes": ["operator"]},
+  {"from": 27, "to": 30, "text": "num", "classes": ["variable"]},
+  {"from": 31, "to": 32, "text": "+", "classes": ["arithmetic-operator"]},
+  {"from": 33, "to": 34, "text": "1", "classes": ["number"]},
+  {"from": 35, "to": 36, "text": "}", "classes": ["brace"]},
+  {"from": 38, "to": 39, "text": "&", "classes": ["operator"]},
+  {"from": 40, "to": 45, "text": "track", "classes": ["keyword"]},
+  {"from": 46, "to": 47, "text": "(", "classes": ["paren"]},
+  {"from": 47, "to": 52, "text": "tempo", "classes": ["definition-property"]},
+  {"from": 52, "to": 53, "text": ":", "classes": ["separator"]},
+  {"from": 54, "to": 57, "text": "140", "classes": ["number"]},
+  {"from": 58, "to": 61, "text": "bpm", "classes": ["number"]},
+  {"from": 61, "to": 62, "text": ")", "classes": ["paren"]},
+  {"from": 63, "to": 64, "text": "{", "classes": ["brace"]},
+  {"from": 67, "to": 68, "text": "&", "classes": ["operator"]},
+  {"from": 69, "to": 73, "text": "part", "classes": ["keyword"]},
+  {"from": 74, "to": 75, "text": "{", "classes": ["brace"]},
+  {"from": 80, "to": 83, "text": "foo", "classes": ["definition-variable"]},
+  {"from": 84, "to": 85, "text": "=", "classes": ["definition-operator"]},
+  {"from": 86, "to": 89, "text": "bar", "classes": ["variable"]},
+  {"from": 94, "to": 95, "text": "&", "classes": ["operator"]},
+  {"from": 96, "to": 99, "text": "baz", "classes": ["variable"]},
+  {"from": 102, "to": 103, "text": "}", "classes": ["brace"]},
+  {"from": 104, "to": 105, "text": "}", "classes": ["brace"]}
 ]

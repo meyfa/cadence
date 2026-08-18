@@ -1,66 +1,10 @@
 [
-  {
-    "from": 0,
-    "to": 3,
-    "text": "use",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 4,
-    "to": 13,
-    "text": "\"effects\"",
-    "classes": [
-      "string"
-    ]
-  },
-  {
-    "from": 14,
-    "to": 16,
-    "text": "as",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 17,
-    "to": 19,
-    "text": "fx",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 20,
-    "to": 23,
-    "text": "use",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 24,
-    "to": 37,
-    "text": "\"instruments\"",
-    "classes": [
-      "string"
-    ]
-  },
-  {
-    "from": 38,
-    "to": 40,
-    "text": "as",
-    "classes": [
-      "keyword"
-    ]
-  },
-  {
-    "from": 41,
-    "to": 42,
-    "text": "*",
-    "classes": [
-      "keyword"
-    ]
-  }
+  {"from": 0, "to": 3, "text": "use", "classes": ["keyword"]},
+  {"from": 4, "to": 13, "text": "\"effects\"", "classes": ["string"]},
+  {"from": 14, "to": 16, "text": "as", "classes": ["keyword"]},
+  {"from": 17, "to": 19, "text": "fx", "classes": ["definition-variable"]},
+  {"from": 20, "to": 23, "text": "use", "classes": ["keyword"]},
+  {"from": 24, "to": 37, "text": "\"instruments\"", "classes": ["string"]},
+  {"from": 38, "to": 40, "text": "as", "classes": ["keyword"]},
+  {"from": 41, "to": 42, "text": "*", "classes": ["keyword"]}
 ]

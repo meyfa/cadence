@@ -54,6 +54,9 @@ describe('language-support.ts', () => {
       inputFileSuffix: '.cadence',
       outputFileSuffix: '.json',
       compute: (fixture) => getHighlightSpans(fixture.source),
+      serialization: {
+        shouldCollapse: (key, value) => !Array.isArray(value)
+      },
       instructionExtractor: fromLineComment
     })
   })
