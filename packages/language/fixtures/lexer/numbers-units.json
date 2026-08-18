@@ -1,37 +1,13 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "number",
-      "text": "120"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "bpm"
-    },
-    {
-      "name": "number",
-      "text": "1.5"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "s"
-    },
-    {
-      "name": "number",
-      "text": "0.5"
-    },
-    {
-      "name": "word",
-      "text": "s"
-    }
+    {"name": "number", "text": "120"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "bpm"},
+    {"name": "number", "text": "1.5"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "s"},
+    {"name": "number", "text": "0.5"},
+    {"name": "word", "text": "s"}
   ]
 }

@@ -1,77 +1,23 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "word",
-      "text": "a"
-    },
-    {
-      "name": "==",
-      "text": "=="
-    },
-    {
-      "name": "word",
-      "text": "b"
-    },
-    {
-      "name": "word",
-      "text": "c"
-    },
-    {
-      "name": "!=",
-      "text": "!="
-    },
-    {
-      "name": "word",
-      "text": "d"
-    },
-    {
-      "name": "number",
-      "text": "1"
-    },
-    {
-      "name": "<",
-      "text": "<"
-    },
-    {
-      "name": "number",
-      "text": "2"
-    },
-    {
-      "name": "number",
-      "text": "3"
-    },
-    {
-      "name": ">",
-      "text": ">"
-    },
-    {
-      "name": "number",
-      "text": "4"
-    },
-    {
-      "name": "number",
-      "text": "5"
-    },
-    {
-      "name": "<=",
-      "text": "<="
-    },
-    {
-      "name": "number",
-      "text": "5"
-    },
-    {
-      "name": "number",
-      "text": "6"
-    },
-    {
-      "name": ">=",
-      "text": ">="
-    },
-    {
-      "name": "number",
-      "text": "6"
-    }
+    {"name": "word", "text": "a"},
+    {"name": "==", "text": "=="},
+    {"name": "word", "text": "b"},
+    {"name": "word", "text": "c"},
+    {"name": "!=", "text": "!="},
+    {"name": "word", "text": "d"},
+    {"name": "number", "text": "1"},
+    {"name": "<", "text": "<"},
+    {"name": "number", "text": "2"},
+    {"name": "number", "text": "3"},
+    {"name": ">", "text": ">"},
+    {"name": "number", "text": "4"},
+    {"name": "number", "text": "5"},
+    {"name": "<=", "text": "<="},
+    {"name": "number", "text": "5"},
+    {"name": "number", "text": "6"},
+    {"name": ">=", "text": ">="},
+    {"name": "number", "text": "6"}
   ]
 }

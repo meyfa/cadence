@@ -1,17 +1,8 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "word",
-      "text": "x_#1"
-    },
-    {
-      "name": "word",
-      "text": "yVar"
-    },
-    {
-      "name": "word",
-      "text": "_anotherVar"
-    }
+    {"name": "word", "text": "x_#1"},
+    {"name": "word", "text": "yVar"},
+    {"name": "word", "text": "_anotherVar"}
   ]
 }

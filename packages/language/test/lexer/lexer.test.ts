@@ -35,6 +35,12 @@ describe('lexer/lexer.ts', async () => {
         const result = lex(fixture.source, fixture.name)
         return stripTokenMeta(result)
       },
+      serialization: {
+        shouldCollapse: (key, value) => {
+          // Serialize each token to a single line to make the output more readable.
+          return typeof value === 'object' && value !== null && Object.hasOwn(value, 'name') && Object.hasOwn(value, 'text')
+        }
+      },
       instructionExtractor: fromLineComment
     })
   })

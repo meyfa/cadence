@@ -1,33 +1,12 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "(",
-      "text": "("
-    },
-    {
-      "name": "word",
-      "text": "object"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "foo"
-    },
-    {
-      "name": ")",
-      "text": ")"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "bar"
-    }
+    {"name": "(", "text": "("},
+    {"name": "word", "text": "object"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "foo"},
+    {"name": ")", "text": ")"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "bar"}
   ]
 }

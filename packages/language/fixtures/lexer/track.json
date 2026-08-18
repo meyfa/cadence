@@ -1,113 +1,32 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "&",
-      "text": "&"
-    },
-    {
-      "name": "word",
-      "text": "track"
-    },
-    {
-      "name": "(",
-      "text": "("
-    },
-    {
-      "name": "number",
-      "text": "128"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "bpm"
-    },
-    {
-      "name": ")",
-      "text": ")"
-    },
-    {
-      "name": "{",
-      "text": "{"
-    },
-    {
-      "name": "&",
-      "text": "&"
-    },
-    {
-      "name": "word",
-      "text": "part"
-    },
-    {
-      "name": "(",
-      "text": "("
-    },
-    {
-      "name": "number",
-      "text": "4"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "bars"
-    },
-    {
-      "name": ")",
-      "text": ")"
-    },
-    {
-      "name": "{",
-      "text": "{"
-    },
-    {
-      "name": "}",
-      "text": "}"
-    },
-    {
-      "name": "&",
-      "text": "&"
-    },
-    {
-      "name": "word",
-      "text": "part"
-    },
-    {
-      "name": "(",
-      "text": "("
-    },
-    {
-      "name": "number",
-      "text": "8"
-    },
-    {
-      "name": ".",
-      "text": "."
-    },
-    {
-      "name": "word",
-      "text": "bars"
-    },
-    {
-      "name": ")",
-      "text": ")"
-    },
-    {
-      "name": "{",
-      "text": "{"
-    },
-    {
-      "name": "}",
-      "text": "}"
-    },
-    {
-      "name": "}",
-      "text": "}"
-    }
+    {"name": "&", "text": "&"},
+    {"name": "word", "text": "track"},
+    {"name": "(", "text": "("},
+    {"name": "number", "text": "128"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "bpm"},
+    {"name": ")", "text": ")"},
+    {"name": "{", "text": "{"},
+    {"name": "&", "text": "&"},
+    {"name": "word", "text": "part"},
+    {"name": "(", "text": "("},
+    {"name": "number", "text": "4"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "bars"},
+    {"name": ")", "text": ")"},
+    {"name": "{", "text": "{"},
+    {"name": "}", "text": "}"},
+    {"name": "&", "text": "&"},
+    {"name": "word", "text": "part"},
+    {"name": "(", "text": "("},
+    {"name": "number", "text": "8"},
+    {"name": ".", "text": "."},
+    {"name": "word", "text": "bars"},
+    {"name": ")", "text": ")"},
+    {"name": "{", "text": "{"},
+    {"name": "}", "text": "}"},
+    {"name": "}", "text": "}"}
   ]
 }
