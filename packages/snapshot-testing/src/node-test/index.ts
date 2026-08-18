@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { test } from 'node:test'
+import { applyInstructions } from '../instructions/index.ts'
 import { deserialize, serialize } from '../serialization/index.ts'
 import type { Fixture, FixtureOptions } from '../types.ts'
 
@@ -51,12 +52,7 @@ async function loadFixture (options: FixtureOptions, name: string): Promise<Fixt
   if (shouldGenerateFixtures()) {
     const result = options.compute({ name, source })
 
-    let string = serialize(result, instructions)
-    if (options.postProcess != null) {
-      string = options.postProcess(string)
-    }
-    string = string.trimEnd() + '\n'
-
+    const string = serialize(applyInstructions(result, instructions), options.serialization)
     await writeFile(expectedPath, string, 'utf-8')
   }
 
@@ -66,23 +62,27 @@ async function loadFixture (options: FixtureOptions, name: string): Promise<Fixt
 }
 
 export async function createFixtureTests (options: FixtureOptions): Promise<void> {
-  const directory = ensureTrailingSlash(options.directory)
-  const normalizedOptions = { ...options, directory }
+  options = {
+    ...options,
+    directory: ensureTrailingSlash(options.directory)
+  }
 
-  const fixtureNames = await getFixtureNames(normalizedOptions)
-  assert(fixtureNames.length > 0, `No fixtures found in: ${directory}`)
+  const fixtureNames = await getFixtureNames(options)
+  assert(fixtureNames.length > 0, `No fixtures found in: ${options.directory}`)
 
   for (const name of fixtureNames) {
     test(name, async () => {
-      const fixture = await loadFixture(normalizedOptions, name)
+      const { source, expected, instructions } = await loadFixture(options, name)
 
-      const result = normalizedOptions.compute(fixture)
+      const result = options.compute({ name, source })
 
       // Round-trip the result to remove non-serializable properties (like error stack traces)
       // before comparing to the fixture (which will not have those properties).
-      const normalized = deserialize(serialize(result, fixture.instructions))
+      const normalized = deserialize(
+        serialize(applyInstructions(result, instructions), options.serialization)
+      )
 
-      assert.deepStrictEqual(normalized, fixture.expected)
+      assert.deepStrictEqual(normalized, expected)
     })
   }
 }

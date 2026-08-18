@@ -1,66 +1,10 @@
 [
-  {
-    "from": 0,
-    "to": 10,
-    "text": "// comment",
-    "classes": [
-      "comment"
-    ]
-  },
-  {
-    "from": 11,
-    "to": 12,
-    "text": "a",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 13,
-    "to": 14,
-    "text": "=",
-    "classes": [
-      "definition-operator"
-    ]
-  },
-  {
-    "from": 15,
-    "to": 16,
-    "text": "b",
-    "classes": [
-      "variable"
-    ]
-  },
-  {
-    "from": 17,
-    "to": 35,
-    "text": "// another comment",
-    "classes": [
-      "comment"
-    ]
-  },
-  {
-    "from": 36,
-    "to": 37,
-    "text": "c",
-    "classes": [
-      "definition-variable"
-    ]
-  },
-  {
-    "from": 38,
-    "to": 39,
-    "text": "=",
-    "classes": [
-      "definition-operator"
-    ]
-  },
-  {
-    "from": 40,
-    "to": 41,
-    "text": "d",
-    "classes": [
-      "variable"
-    ]
-  }
+  {"from": 0, "to": 10, "text": "// comment", "classes": ["comment"]},
+  {"from": 11, "to": 12, "text": "a", "classes": ["definition-variable"]},
+  {"from": 13, "to": 14, "text": "=", "classes": ["definition-operator"]},
+  {"from": 15, "to": 16, "text": "b", "classes": ["variable"]},
+  {"from": 17, "to": 35, "text": "// another comment", "classes": ["comment"]},
+  {"from": 36, "to": 37, "text": "c", "classes": ["definition-variable"]},
+  {"from": 38, "to": 39, "text": "=", "classes": ["definition-operator"]},
+  {"from": 40, "to": 41, "text": "d", "classes": ["variable"]}
 ]

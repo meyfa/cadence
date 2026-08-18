@@ -1,6 +1,6 @@
 import type { Program } from '@meyfa/cadence-core'
 import { convertPitchToMidi, getMidiFrequency } from '@meyfa/cadence-core'
-import { collapseKey, createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
+import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
@@ -46,7 +46,9 @@ describe('compiler/generator/generator.ts', async () => {
       inputFileSuffix: '.cadence',
       outputFileSuffix: '.json',
       compute: (fixture) => generateSource(fixture.source, fixture.name),
-      postProcess: collapseKey('range'),
+      serialization: {
+        shouldCollapse: (key) => key === 'range'
+      },
       instructionExtractor: fromLineComment
     })
   })
