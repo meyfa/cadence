@@ -1,33 +1,12 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "word",
-      "text": "not"
-    },
-    {
-      "name": "word",
-      "text": "foo"
-    },
-    {
-      "name": "word",
-      "text": "and"
-    },
-    {
-      "name": "word",
-      "text": "bar"
-    },
-    {
-      "name": "word",
-      "text": "or"
-    },
-    {
-      "name": "word",
-      "text": "not"
-    },
-    {
-      "name": "word",
-      "text": "baz"
-    }
+    {"name": "word", "text": "not"},
+    {"name": "word", "text": "foo"},
+    {"name": "word", "text": "and"},
+    {"name": "word", "text": "bar"},
+    {"name": "word", "text": "or"},
+    {"name": "word", "text": "not"},
+    {"name": "word", "text": "baz"}
   ]
 }

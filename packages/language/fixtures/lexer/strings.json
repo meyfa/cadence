@@ -1,69 +1,21 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "\"",
-      "text": "\""
-    },
-    {
-      "name": "stringContent",
-      "text": "hello world"
-    },
-    {
-      "name": "\"",
-      "text": "\""
-    },
-    {
-      "name": "\"",
-      "text": "\""
-    },
-    {
-      "name": "\"",
-      "text": "\""
-    },
-    {
-      "name": "\"",
-      "text": "\""
-    },
-    {
-      "name": "stringContent",
-      "text": "string with escaped "
-    },
-    {
-      "name": "stringEscape",
-      "text": "\\\""
-    },
-    {
-      "name": "stringContent",
-      "text": "quotes"
-    },
-    {
-      "name": "stringEscape",
-      "text": "\\\""
-    },
-    {
-      "name": "stringContent",
-      "text": ", "
-    },
-    {
-      "name": "stringEscape",
-      "text": "\\\\"
-    },
-    {
-      "name": "stringContent",
-      "text": " backslashes, and "
-    },
-    {
-      "name": "stringEscape",
-      "text": "\\{"
-    },
-    {
-      "name": "stringContent",
-      "text": "braces}"
-    },
-    {
-      "name": "\"",
-      "text": "\""
-    }
+    {"name": "\"", "text": "\""},
+    {"name": "stringContent", "text": "hello world"},
+    {"name": "\"", "text": "\""},
+    {"name": "\"", "text": "\""},
+    {"name": "\"", "text": "\""},
+    {"name": "\"", "text": "\""},
+    {"name": "stringContent", "text": "string with escaped "},
+    {"name": "stringEscape", "text": "\\\""},
+    {"name": "stringContent", "text": "quotes"},
+    {"name": "stringEscape", "text": "\\\""},
+    {"name": "stringContent", "text": ", "},
+    {"name": "stringEscape", "text": "\\\\"},
+    {"name": "stringContent", "text": " backslashes, and "},
+    {"name": "stringEscape", "text": "\\{"},
+    {"name": "stringContent", "text": "braces}"},
+    {"name": "\"", "text": "\""}
   ]
 }

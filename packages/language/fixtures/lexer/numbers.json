@@ -1,21 +1,9 @@
 {
   "complete": true,
   "value": [
-    {
-      "name": "number",
-      "text": "42"
-    },
-    {
-      "name": "number",
-      "text": "3.14"
-    },
-    {
-      "name": "number",
-      "text": "0.001"
-    },
-    {
-      "name": "number",
-      "text": "1000.0"
-    }
+    {"name": "number", "text": "42"},
+    {"name": "number", "text": "3.14"},
+    {"name": "number", "text": "0.001"},
+    {"name": "number", "text": "1000.0"}
   ]
 }
