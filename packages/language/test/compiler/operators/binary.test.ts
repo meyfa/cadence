@@ -12,6 +12,7 @@ import { PatternFacet } from '../../../src/type-system/domain/pattern.ts'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import { RecordFacet } from '../../../src/type-system/base/record.ts'
 import { FunctionFacet } from '../../../src/type-system/base/function.ts'
+import { makeUnion } from '../../../src/type-system/factory.ts'
 
 describe('compiler/operators/binary.ts', () => {
   it('should be defined for all operators', () => {
@@ -84,6 +85,45 @@ describe('compiler/operators/binary.ts', () => {
       const resultType = binaryOperations['+'].check(leftType, rightType)
       assert.strictEqual(resultType, undefined)
     })
+
+    it('should accept UnionType exactly if both sides are compatible', () => {
+      const testCases = [
+        // operand, expected
+        [
+          makeUnion(NumberFacet.with(undefined).type()),
+          NumberFacet.with(undefined).type()
+        ],
+        [
+          makeUnion(NumberFacet.with('hz').type()),
+          NumberFacet.with('hz').type()
+        ],
+        [
+          makeUnion(StringFacet.type()),
+          StringFacet.type()
+        ],
+        [
+          makeUnion(PatternFacet.type()),
+          PatternFacet.type()
+        ]
+      ]
+
+      for (const [operand, expected] of testCases) {
+        const result = binaryOperations['+'].check(operand, operand)
+        assert.strictEqual(result?.kind, 'FacetType', `Expected operator "+" to accept operands: ${operand.format()}, ${operand.format()}`)
+        assert.deepStrictEqual(result, expected)
+      }
+
+      for (const [left] of testCases) {
+        for (const [right] of testCases) {
+          if (left === right) {
+            continue
+          }
+
+          const result = binaryOperations['+'].check(left, right)
+          assert.strictEqual(result, undefined, `Expected operator "+" to reject operands: ${left.format()}, ${right.format()}`)
+        }
+      }
+    })
   })
 
   describe('operator "-"', () => {
@@ -116,6 +156,41 @@ describe('compiler/operators/binary.ts', () => {
       const rightType = BooleanFacet.type()
       const resultType = binaryOperations['-'].check(leftType, rightType)
       assert.strictEqual(resultType, undefined)
+    })
+
+    it('should accept UnionType exactly if both sides are compatible', () => {
+      const testCases = [
+        // operand, expected
+        [
+          makeUnion(NumberFacet.with(undefined).type()),
+          NumberFacet.with(undefined).type()
+        ],
+        [
+          makeUnion(NumberFacet.with('hz').type()),
+          NumberFacet.with('hz').type()
+        ],
+        [
+          makeUnion(NumberFacet.with('db').type()),
+          NumberFacet.with('db').type()
+        ]
+      ]
+
+      for (const [operand, expected] of testCases) {
+        const result = binaryOperations['-'].check(operand, operand)
+        assert.strictEqual(result?.kind, 'FacetType', `Expected operator "-" to accept operands: ${operand.format()}, ${operand.format()}`)
+        assert.deepStrictEqual(result, expected)
+      }
+
+      for (const [left] of testCases) {
+        for (const [right] of testCases) {
+          if (left === right) {
+            continue
+          }
+
+          const result = binaryOperations['-'].check(left, right)
+          assert.strictEqual(result, undefined, `Expected operator "-" to reject operands: ${left.format()}, ${right.format()}`)
+        }
+      }
     })
   })
 
@@ -180,7 +255,7 @@ describe('compiler/operators/binary.ts', () => {
 
       for (const [leftType, rightType] of testCases) {
         const resultType = binaryOperations['*'].check(leftType, rightType)
-        assert.strictEqual(resultType, undefined)
+        assert.strictEqual(resultType, undefined, `Expected operator "*" to reject operands: ${leftType.format()}, ${rightType.format()}`)
       }
     })
 
@@ -198,7 +273,54 @@ describe('compiler/operators/binary.ts', () => {
 
       for (const [leftType, rightType] of testCases) {
         const resultType = binaryOperations['*'].check(leftType, rightType)
-        assert.strictEqual(resultType, undefined)
+        assert.strictEqual(resultType, undefined, `Expected operator "*" to reject operands: ${leftType.format()}, ${rightType.format()}`)
+      }
+    })
+
+    it('should accept UnionType exactly if all members are valid operands', () => {
+      const validTestCases = [
+        // first, second, expected result
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          NumberFacet.with(undefined).type(),
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+        ],
+        [
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          NumberFacet.with(undefined).type(),
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type())
+        ]
+      ] as const
+
+      for (const [first, second, expectedResult] of validTestCases) {
+        for (const [left, right] of [[first, second], [second, first]] as const) {
+          const result = binaryOperations['*'].check(left, right)
+          assert.strictEqual(result?.kind, 'UnionType')
+          assert.deepStrictEqual(result.members, expectedResult.members)
+        }
+      }
+
+      const invalidTestCases = [
+        // first, second
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          NumberFacet.with('hz').type()
+        ],
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+        ],
+        [
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          NumberFacet.with('hz').type()
+        ]
+      ] as const
+
+      for (const [first, second] of invalidTestCases) {
+        for (const [left, right] of [[first, second], [second, first]] as const) {
+          const result = binaryOperations['*'].check(left, right)
+          assert.strictEqual(result, undefined, `Expected operator "*" to reject operands: ${left.format()}, ${right.format()}`)
+        }
       }
     })
   })
@@ -291,6 +413,54 @@ describe('compiler/operators/binary.ts', () => {
         assert.strictEqual(resultType, undefined)
       }
     })
+
+    it('should accept UnionType exactly if all members are valid operands', () => {
+      const validTestCases = [
+        // left, right, expected result
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          NumberFacet.with(undefined).type(),
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+        ],
+        [
+          NumberFacet.with('hz').type(),
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnion(NumberFacet.with('hz').type(), NumberFacet.with(undefined).type())
+        ],
+        [
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          NumberFacet.with(undefined).type(),
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type())
+        ]
+      ] as const
+
+      for (const [left, right, expectedResult] of validTestCases) {
+        const result = binaryOperations['/'].check(left, right)
+        assert.strictEqual(result?.kind, 'UnionType', `Expected operator "/" to accept operands: ${left.format()}, ${right.format()}`)
+        assert.deepStrictEqual(result.members, expectedResult.members)
+      }
+
+      const invalidTestCases = [
+        // left, right
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          NumberFacet.with('hz').type()
+        ],
+        [
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+        ],
+        [
+          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          NumberFacet.with('hz').type()
+        ]
+      ] as const
+
+      for (const [left, right] of invalidTestCases) {
+        const result = binaryOperations['/'].check(left, right)
+        assert.strictEqual(result, undefined, `Expected operator "/" to reject operands: ${left.format()}, ${right.format()}`)
+      }
+    })
   })
 
   for (const operator of ['==', '!='] as const) {
@@ -341,6 +511,11 @@ describe('compiler/operators/binary.ts', () => {
         const testCases = [
           [Numbers.of(runtimeNumeric('hz', 440)), Numbers.of(runtimeNumeric('hz', 440)), true],
           [Numbers.of(runtimeNumeric('hz', 440)), Numbers.of(runtimeNumeric('hz', 220)), false],
+          [Numbers.of(runtimeNumeric(undefined, Number.NaN)), Numbers.of(runtimeNumeric(undefined, Number.NaN)), false],
+          [Numbers.of(runtimeNumeric(undefined, Infinity)), Numbers.of(runtimeNumeric(undefined, Infinity)), true],
+          [Numbers.of(runtimeNumeric(undefined, -Infinity)), Numbers.of(runtimeNumeric(undefined, -Infinity)), true],
+          [Numbers.of(runtimeNumeric(undefined, Infinity)), Numbers.of(runtimeNumeric(undefined, -Infinity)), false],
+          [Numbers.of(runtimeNumeric('hz', 440)), Numbers.of(runtimeNumeric('hz', 440)), true],
           [StringFacet.type().of('Hello'), StringFacet.type().of('Hello'), true],
           [StringFacet.type().of('Hello'), StringFacet.type().of('World'), false],
           [BooleanFacet.type().of(true), BooleanFacet.type().of(true), true],
@@ -352,6 +527,53 @@ describe('compiler/operators/binary.ts', () => {
 
           const expectedResult = operator === '==' ? expectedEqual : !expectedEqual
           assert.strictEqual(BooleanFacet.get(resultValue), expectedResult)
+        }
+      })
+
+      it('should accept UnionType if all members are comparable to all members of the other operand', () => {
+        const testCases = [
+          // first, second
+          [
+            makeUnion(NumberFacet.with(undefined).type()),
+            makeUnion(NumberFacet.with(undefined).type())
+          ],
+          [
+            makeUnion(StringFacet.type()),
+            makeUnion(StringFacet.type())
+          ],
+          [
+            makeUnion(BooleanFacet.type()),
+            makeUnion(BooleanFacet.type())
+          ]
+        ]
+
+        for (const [first, second] of testCases) {
+          for (const [left, right] of [[first, second], [second, first]] as const) {
+            const result = binaryOperations[operator].check(left, right)
+            assert.strictEqual(result?.kind, 'FacetType')
+            assert.deepStrictEqual([...result.facets.keys()], [BooleanFacet.name])
+          }
+        }
+      })
+
+      it('should reject UnionType if any member is not comparable to any member of the other operand', () => {
+        const testCases = [
+          // first, second
+          [
+            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type()),
+            NumberFacet.with(undefined).type()
+          ],
+          [
+            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type()),
+            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type())
+          ]
+        ]
+
+        for (const [first, second] of testCases) {
+          for (const [left, right] of [[first, second], [second, first]] as const) {
+            const result = binaryOperations[operator].check(left, right)
+            assert.strictEqual(result, undefined)
+          }
         }
       })
     })
@@ -484,78 +706,103 @@ describe('compiler/operators/binary.ts', () => {
           assert.strictEqual(BooleanFacet.get(resultValue), expectedResult, `Failed for operator "${operator}" with left=${testCase.left} and right=${testCase.right}`)
         }
       })
+
+      it('should accept UnionType if all members are comparable to all members of the other operand', () => {
+        const testCases = [
+          // first, second
+          [
+            makeUnion(NumberFacet.with(undefined).type()),
+            makeUnion(NumberFacet.with(undefined).type())
+          ],
+          [
+            makeUnion(NumberFacet.with('hz').type()),
+            makeUnion(NumberFacet.with('hz').type())
+          ]
+        ]
+
+        for (const [first, second] of testCases) {
+          for (const [left, right] of [[first, second], [second, first]] as const) {
+            const result = binaryOperations[operator].check(left, right)
+            assert.strictEqual(result?.kind, 'FacetType')
+            assert.deepStrictEqual([...result.facets.keys()], [BooleanFacet.name])
+          }
+        }
+      })
+
+      it('should reject UnionType if any member is not comparable to any member of the other operand', () => {
+        const testCases = [
+          // first, second
+          [
+            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+            NumberFacet.with(undefined).type()
+          ],
+          [
+            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+          ]
+        ]
+
+        for (const [first, second] of testCases) {
+          for (const [left, right] of [[first, second], [second, first]] as const) {
+            const result = binaryOperations[operator].check(left, right)
+            assert.strictEqual(result, undefined)
+          }
+        }
+      })
     })
   }
 
-  describe('operator "and"', () => {
-    it('should accept boolean FacetType', () => {
-      const result = binaryOperations.and.check(BooleanFacet.type(), BooleanFacet.type())
-      assert.strictEqual(result, BooleanFacet.type())
+  for (const operator of ['and', 'or'] as const) {
+    describe(`operator "${operator}"`, () => {
+      it('should accept boolean FacetType', () => {
+        const result = binaryOperations[operator].check(BooleanFacet.type(), BooleanFacet.type())
+        assert.strictEqual(result, BooleanFacet.type())
+      })
+
+      it('should reject non-boolean FacetType', () => {
+        const operands = [
+          StringFacet.type(),
+          NumberFacet.with(undefined).type()
+        ]
+
+        for (const operand of operands) {
+          const result = binaryOperations[operator].check(operand, operand)
+          assert.strictEqual(result, undefined)
+        }
+      })
+
+      it('should return the logical and value', () => {
+        const truthTable = {
+          and: (a: boolean, b: boolean) => a && b,
+          or: (a: boolean, b: boolean) => a || b
+        }
+
+        for (const left of [false, true]) {
+          for (const right of [false, true]) {
+            const leftValue = BooleanFacet.type().of(left)
+            const rightValue = BooleanFacet.type().of(right)
+
+            const result = binaryOperations[operator].compute(leftValue, rightValue)
+            assert.strictEqual(
+              BooleanFacet.get(result),
+              truthTable[operator](left, right),
+              `Failed for operator "${operator}" with left=${left} and right=${right}`
+            )
+          }
+        }
+      })
+
+      it('should reject UnionType if any member is not boolean', () => {
+        const validOperand = makeUnion(BooleanFacet.type())
+        const invalidOperand = makeUnion(BooleanFacet.type(), StringFacet.type())
+
+        // same operand on both sides
+        assert.strictEqual(binaryOperations[operator].check(invalidOperand, invalidOperand), undefined)
+
+        // valid operand on one side, invalid operand on the other
+        assert.strictEqual(binaryOperations[operator].check(validOperand, invalidOperand), undefined)
+        assert.strictEqual(binaryOperations[operator].check(invalidOperand, validOperand), undefined)
+      })
     })
-
-    it('should reject non-boolean FacetType', () => {
-      const operands = [
-        StringFacet.type(),
-        NumberFacet.with(undefined).type()
-      ]
-
-      for (const operand of operands) {
-        const result = binaryOperations.and.check(operand, operand)
-        assert.strictEqual(result, undefined)
-      }
-    })
-
-    it('should return the logical and value', () => {
-      const testCases = [
-        // left, right, expected
-        [false, false, false],
-        [false, true, false],
-        [true, false, false],
-        [true, true, true]
-      ]
-
-      for (const [left, right, expected] of testCases) {
-        const leftValue = BooleanFacet.type().of(left)
-        const rightValue = BooleanFacet.type().of(right)
-        const result = binaryOperations.and.compute(leftValue, rightValue)
-        assert.strictEqual(BooleanFacet.get(result), expected)
-      }
-    })
-  })
-
-  describe('operator "or"', () => {
-    it('should accept boolean FacetType', () => {
-      const result = binaryOperations.or.check(BooleanFacet.type(), BooleanFacet.type())
-      assert.strictEqual(result, BooleanFacet.type())
-    })
-
-    it('should reject non-boolean FacetType', () => {
-      const operands = [
-        StringFacet.type(),
-        NumberFacet.with(undefined).type()
-      ]
-
-      for (const operand of operands) {
-        const result = binaryOperations.or.check(operand, operand)
-        assert.strictEqual(result, undefined)
-      }
-    })
-
-    it('should return the logical or value', () => {
-      const testCases = [
-        // left, right, expected
-        [false, false, false],
-        [false, true, true],
-        [true, false, true],
-        [true, true, true]
-      ]
-
-      for (const [left, right, expected] of testCases) {
-        const leftValue = BooleanFacet.type().of(left)
-        const rightValue = BooleanFacet.type().of(right)
-        const result = binaryOperations.or.compute(leftValue, rightValue)
-        assert.strictEqual(BooleanFacet.get(result), expected)
-      }
-    })
-  })
+  }
 })

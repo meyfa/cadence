@@ -7,6 +7,7 @@ import { BooleanFacet } from '../../../src/type-system/base/boolean.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
 import { StringFacet } from '../../../src/type-system/base/string.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
+import { makeUnion } from '../../../src/type-system/factory.ts'
 
 function createNumericTestCases (operator: ast.UnaryOperator): void {
   it('should accept numeric FacetType', () => {
@@ -33,6 +34,26 @@ function createNumericTestCases (operator: ast.UnaryOperator): void {
       const result = unaryOperations[operator].check(operand)
       assert.strictEqual(result, undefined)
     }
+  })
+
+  it('should accept UnionType exactly if all members are numeric FacetType', () => {
+    const validOperand = makeUnion(
+      NumberFacet.with(undefined).type(),
+      NumberFacet.with('hz').type(),
+      NumberFacet.with('db').type()
+    )
+
+    const result = unaryOperations[operator].check(validOperand)
+    assert.strictEqual(result?.kind, 'UnionType')
+    assert.deepStrictEqual(result.members, validOperand.members)
+
+    const invalidOperand = makeUnion(
+      NumberFacet.with(undefined).type(),
+      NumberFacet.with('hz').type(),
+      StringFacet.type()
+    )
+
+    assert.strictEqual(unaryOperations[operator].check(invalidOperand), undefined)
   })
 }
 
@@ -81,6 +102,24 @@ describe('compiler/operators/unary.ts', () => {
         const result = unaryOperations.not.check(operand)
         assert.strictEqual(result, undefined)
       }
+    })
+
+    it('should accept UnionType exactly if all members are boolean FacetType', () => {
+      const validOperand = makeUnion(
+        BooleanFacet.type(),
+        BooleanFacet.type()
+      )
+
+      const result = unaryOperations.not.check(validOperand)
+      assert.strictEqual(result?.kind, 'FacetType')
+      assert.deepStrictEqual([...result.facets.keys()], [BooleanFacet.name])
+
+      const invalidOperand = makeUnion(
+        BooleanFacet.type(),
+        StringFacet.type()
+      )
+
+      assert.strictEqual(unaryOperations.not.check(invalidOperand), undefined)
     })
 
     it('should return the negated value', () => {

@@ -23,6 +23,7 @@ import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeUnion } from '../../type-system/factory.ts'
+import { isFacetType } from '../../type-system/guards.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
@@ -599,7 +600,9 @@ function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): C
   }
 
   const result = unaryOperations[expression.operator].check(operand)
-  if (result == null) {
+
+  // TODO: Support non-FacetType
+  if (result == null || !isFacetType(result)) {
     errors.push(new CompileError(`Incompatible operand for "${expression.operator}": ${operand.format()}`, expression.range))
     return { errors, capabilities }
   }
@@ -622,7 +625,9 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
   }
 
   const result = binaryOperations[expression.operator].check(left, right)
-  if (result == null) {
+
+  // TODO: Support non-FacetType
+  if (result == null || !isFacetType(result)) {
     errors.push(new CompileError(`Incompatible operands for "${expression.operator}": ${left.format()}, ${right.format()}`, expression.range))
     return { errors, capabilities }
   }

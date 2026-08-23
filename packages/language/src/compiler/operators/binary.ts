@@ -6,38 +6,39 @@ import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { Numbers } from '../../type-system/helpers.ts'
-import type { FacetType, Value } from '../../type-system/types.ts'
+import type { Type, Value } from '../../type-system/types.ts'
 import { fail } from '../assert.ts'
 import { areTypesEqualityComparable, areTypesRelationallyComparable, areValuesEqual, compareValues } from './comparison.ts'
+import { liftOverFacetTypes } from './lifting.ts'
 
 export interface BinaryOperation {
   readonly operator: ast.BinaryOperator
-  readonly check: (left: FacetType, right: FacetType) => FacetType | undefined
+  readonly check: (left: Type, right: Type) => Type | undefined
   readonly compute: (left: Value, right: Value) => Value
 }
 
 const add: BinaryOperation = {
   operator: '+',
 
-  check: (left, right) => {
+  check: (left, right) => liftOverFacetTypes(left, right, (left, right) => {
     if (StringFacet.is(left) && StringFacet.is(right)) {
-      return left
+      return StringFacet.type()
     }
 
     if (PatternFacet.is(left) && PatternFacet.is(right)) {
-      return left
+      return PatternFacet.type()
     }
 
     if (NumberFacet.is(left) && NumberFacet.is(right)) {
       const leftUnit = NumberFacet.detail(left)
       const rightUnit = NumberFacet.detail(right)
       if (leftUnit === rightUnit) {
-        return left
+        return NumberFacet.with(leftUnit).type()
       }
     }
 
     return undefined
-  },
+  }),
 
   compute: (left, right) => {
     if (StringFacet.has(left) && StringFacet.has(right)) {
@@ -68,17 +69,17 @@ const add: BinaryOperation = {
 const subtract: BinaryOperation = {
   operator: '-',
 
-  check: (left, right) => {
+  check: (left, right) => liftOverFacetTypes(left, right, (left, right) => {
     if (NumberFacet.is(left) && NumberFacet.is(right)) {
       const leftUnit = NumberFacet.detail(left)
       const rightUnit = NumberFacet.detail(right)
       if (leftUnit === rightUnit) {
-        return left
+        return NumberFacet.with(leftUnit).type()
       }
     }
 
     return undefined
-  },
+  }),
 
   compute: (left, right) => {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {
@@ -97,7 +98,7 @@ const subtract: BinaryOperation = {
 const multiply: BinaryOperation = {
   operator: '*',
 
-  check: (left, right) => {
+  check: (left, right) => liftOverFacetTypes(left, right, (left, right) => {
     if (NumberFacet.is(left) && NumberFacet.is(right)) {
       const leftUnit = NumberFacet.detail(left)
       const rightUnit = NumberFacet.detail(right)
@@ -114,7 +115,7 @@ const multiply: BinaryOperation = {
     }
 
     return undefined
-  },
+  }),
 
   compute: (left, right) => {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {
@@ -145,7 +146,7 @@ const multiply: BinaryOperation = {
 const divide: BinaryOperation = {
   operator: '/',
 
-  check: (left, right) => {
+  check: (left, right) => liftOverFacetTypes(left, right, (left, right) => {
     if (NumberFacet.is(left) && NumberFacet.is(right)) {
       const leftUnit = NumberFacet.detail(left)
       const rightUnit = NumberFacet.detail(right)
@@ -156,16 +157,16 @@ const divide: BinaryOperation = {
       }
 
       if (rightUnit == null) {
-        return left
+        return NumberFacet.with(leftUnit).type()
       }
     }
 
     if (PatternFacet.is(left) && NumberFacet.with(undefined).is(right)) {
-      return left
+      return PatternFacet.type()
     }
 
     return undefined
-  },
+  }),
 
   compute: (left, right) => {
     if (NumberFacet.has(left) && NumberFacet.has(right)) {

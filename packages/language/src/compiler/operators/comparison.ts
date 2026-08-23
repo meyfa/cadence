@@ -1,13 +1,26 @@
 import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
-import type { FacetType, Value } from '../../type-system/types.ts'
+import type { FacetType, Type, Value } from '../../type-system/types.ts'
 import { fail } from '../assert.ts'
+import { getTypeAtoms } from './lifting.ts'
 
 /**
  * Returns a boolean indicating whether the two types can be compared for equality.
  */
-export function areTypesEqualityComparable (left: FacetType, right: FacetType): boolean {
+export function areTypesEqualityComparable (left: Type, right: Type): boolean {
+  for (const leftFacet of getTypeAtoms(left)) {
+    for (const rightFacet of getTypeAtoms(right)) {
+      if (!areFacetTypesEqualityComparable(leftFacet, rightFacet)) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+function areFacetTypesEqualityComparable (left: FacetType, right: FacetType): boolean {
   if (NumberFacet.is(left) && NumberFacet.is(right)) {
     const leftUnit = NumberFacet.detail(left)
     const rightUnit = NumberFacet.detail(right)
@@ -51,7 +64,19 @@ export function areValuesEqual (left: Value, right: Value): boolean {
  * Returns a boolean indicating whether the two types can be compared for relational ordering
  * (i.e., less than, greater than, less than or equal to, greater than or equal to).
  */
-export function areTypesRelationallyComparable (left: FacetType, right: FacetType): boolean {
+export function areTypesRelationallyComparable (left: Type, right: Type): boolean {
+  for (const leftFacet of getTypeAtoms(left)) {
+    for (const rightFacet of getTypeAtoms(right)) {
+      if (!areFacetTypesRelationallyComparable(leftFacet, rightFacet)) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+function areFacetTypesRelationallyComparable (left: FacetType, right: FacetType): boolean {
   if (NumberFacet.is(left) && NumberFacet.is(right)) {
     const leftUnit = NumberFacet.detail(left)
     const rightUnit = NumberFacet.detail(right)
