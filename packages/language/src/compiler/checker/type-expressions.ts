@@ -1,15 +1,15 @@
 import type { ast, SourceRange } from '@meyfa/cadence-ast'
-import type { Facet, FacetType } from '../../type-system/types.ts'
-import { CompileError } from '../error.ts'
-import { RecordFacet } from '../../type-system/base/record.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
-import { checkParameters } from './parameters.ts'
+import { RecordFacet } from '../../type-system/base/record.ts'
 import { makeFacetType } from '../../type-system/factory.ts'
+import type { Facet, Type } from '../../type-system/types.ts'
+import { CompileError } from '../error.ts'
+import { checkParameters } from './parameters.ts'
 import { getFacet } from './type-facets.ts'
 
 export interface CheckedType {
   readonly errors: readonly CompileError[]
-  readonly result?: FacetType
+  readonly result?: Type
 }
 
 export function checkType (expression: ast.Type): CheckedType {
@@ -145,7 +145,7 @@ function checkRecordType (expression: ast.RecordType): CheckedFacets {
   const errors: CompileError[] = []
   const facets: FacetWithRange[] = []
 
-  const properties = new Map<string, FacetType>()
+  const properties: Record<string, Type> = Object.create(null)
 
   for (const property of expression.properties) {
     const propertyCheck = checkType(property.propertyType)
@@ -155,15 +155,15 @@ function checkRecordType (expression: ast.RecordType): CheckedFacets {
       continue
     }
 
-    if (properties.has(property.name.name)) {
+    if (Object.hasOwn(properties, property.name.name)) {
       errors.push(new CompileError(`Duplicate property name "${property.name.name}"`, property.name.range))
       continue
     }
 
-    properties.set(property.name.name, propertyCheck.result)
+    properties[property.name.name] = propertyCheck.result
   }
 
-  const facet = RecordFacet.with(Object.fromEntries(properties))
+  const facet = RecordFacet.with(properties)
   facets.push({ facet, range: expression.range })
 
   return { errors, facets }

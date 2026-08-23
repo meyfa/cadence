@@ -1,7 +1,7 @@
 import type { ast, SourceRange } from '@meyfa/cadence-ast'
 import type { Capabilities } from '../../type-system/base/function.ts'
 import type { Schema, SchemaItem } from '../../type-system/schema.ts'
-import type { FacetType } from '../../type-system/types.ts'
+import type { Type } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import { checkExpression } from './expressions.ts'
@@ -10,7 +10,7 @@ import type { Scope } from './scopes.ts'
 export interface CheckedArguments {
   readonly errors: readonly CompileError[]
   readonly capabilities: Capabilities
-  readonly types: ReadonlyMap<string, FacetType>
+  readonly types: ReadonlyMap<string, Type>
   readonly ranges: ReadonlyMap<string, SourceRange>
 }
 
@@ -22,7 +22,7 @@ export function checkArguments (
 ): CheckedArguments {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
-  const types = new Map<string, FacetType>()
+  const types = new Map<string, Type>()
   const ranges = new Map<string, SourceRange>()
 
   const seen = new Set<string>()

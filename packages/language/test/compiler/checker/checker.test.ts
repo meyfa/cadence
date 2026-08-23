@@ -4,12 +4,19 @@ import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-tes
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { check } from '../../../src/compiler/checker/checker.ts'
+import { checkExpression } from '../../../src/compiler/checker/expressions.ts'
+import { createGlobalScope, createLocalScope } from '../../../src/compiler/checker/scopes.ts'
+import { checkStatement } from '../../../src/compiler/checker/statements.ts'
 import { CompileError } from '../../../src/compiler/error.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
+import { FunctionFacet } from '../../../src/type-system/base/function.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
+import { RecordFacet } from '../../../src/type-system/base/record.ts'
 import { InstrumentFacet } from '../../../src/type-system/domain/instrument.ts'
+import { makeFacetType, makeUnionType } from '../../../src/type-system/factory.ts'
 import { makeSchema } from '../../../src/type-system/schema.ts'
+import type { Type } from '../../../src/type-system/types.ts'
 import { assertResultComplete } from '../../test-utils.ts'
 
 function checkSource (source: string, fileName?: string): readonly CompileError[] {
@@ -1480,6 +1487,123 @@ describe('compiler/checker/checker.ts', async () => {
       assertErrorMessages(source, [
         'Incompatible types for slot "return" in conditional branches: number.bpm, number.hz'
       ])
+    })
+  })
+
+  describe('union types', () => {
+    const range = getEmptySourceRange()
+
+    const identifier = (name: string) => ast.make('Identifier', range, { name })
+
+    const resolve = (name: string, type: Type) => {
+      return { name, type, definite: true }
+    }
+
+    it('should lift property access over all union members', () => {
+      const valueType = makeUnionType(
+        RecordFacet.with({ value: NumberFacet.with('bpm').type() }).type(),
+        RecordFacet.with({ value: NumberFacet.with('hz').type() }).type()
+      )
+      const scope = createLocalScope(createGlobalScope(new Map([
+        ['item', { name: 'item', type: valueType, definite: true }]
+      ])))
+      const expression = ast.make('PropertyAccess', range, {
+        object: identifier('item'),
+        property: identifier('value')
+      })
+
+      const result = checkExpression(scope, expression)
+
+      assert.deepStrictEqual(result.errors, [])
+      assert.strictEqual(result.result?.format(), '(number.bpm | number.hz)')
+    })
+
+    it('should lift calls over all union members', () => {
+      const functionType = makeUnionType(
+        makeFacetType(FunctionFacet.with({
+          parameters: makeSchema([]),
+          returnType: NumberFacet.with('bpm').type(),
+          capabilities: { mayBlock: false }
+        })),
+        makeFacetType(FunctionFacet.with({
+          parameters: makeSchema([]),
+          returnType: NumberFacet.with('hz').type(),
+          capabilities: { mayBlock: false }
+        }))
+      )
+      const scope = createLocalScope(createGlobalScope(new Map([
+        ['func', { name: 'func', type: functionType, definite: true }]
+      ])))
+      const expression = ast.make('Call', range, {
+        callee: identifier('func'),
+        arguments: []
+      })
+
+      const result = checkExpression(scope, expression)
+
+      assert.deepStrictEqual(result.errors, [])
+      assert.strictEqual(result.result?.format(), '(number.bpm | number.hz)')
+    })
+
+    it('should intersect union types assigned in conditional branches', () => {
+      const scope = createLocalScope(createGlobalScope(new Map([
+        ['left', resolve('left', makeUnionType(
+          NumberFacet.with('bpm').type(),
+          NumberFacet.with('hz').type()
+        ))],
+        ['right', resolve('right', makeUnionType(
+          NumberFacet.with('bpm').type(),
+          NumberFacet.with('db').type()
+        ))]
+      ])))
+      const statement = ast.make('IfStatement', range, {
+        branches: [ast.make('ConditionalBranch', range, {
+          condition: ast.make('Boolean', range, { value: true }),
+          children: [ast.make('SimpleStatement', range, {
+            emit: false,
+            expose: false,
+            name: identifier('result'),
+            values: [identifier('left')]
+          })]
+        })],
+        elseBranch: [ast.make('SimpleStatement', range, {
+          emit: false,
+          expose: false,
+          name: identifier('result'),
+          values: [identifier('right')]
+        })]
+      })
+
+      const result = checkStatement(scope, statement, { context: 'test' })
+
+      assert.deepStrictEqual(result.errors, [])
+      assert.strictEqual(scope.resolutions.get('result')?.type.format(), 'number.bpm')
+    })
+
+    it('should reject curve points with incompatible possible units', () => {
+      const pointType = makeUnionType(
+        NumberFacet.with('bpm').type(),
+        NumberFacet.with('hz').type()
+      )
+      const scope = createLocalScope(createGlobalScope(new Map([
+        ['point', { name: 'point', type: pointType, definite: true }],
+        ['length', { name: 'length', type: NumberFacet.with('beats').type(), definite: true }]
+      ])))
+      const expression = ast.make('Curve', range, {
+        children: [ast.make('CurveSegment', range, {
+          curveType: 'hold',
+          arguments: [identifier('point')],
+          length: identifier('length')
+        })]
+      })
+
+      const result = checkExpression(scope, expression)
+
+      assert.deepStrictEqual(
+        result.errors.map((error) => error.message),
+        ['Expected type number.bpm, got number.hz']
+      )
+      assert.strictEqual(result.result, undefined)
     })
   })
 })

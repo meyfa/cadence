@@ -5,6 +5,7 @@ import type { Emission, Slot, SlotName, Slots } from '../../../src/compiler/chec
 import { addEmission, validateEmissions } from '../../../src/compiler/checker/emissions.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
 import { SourceFacet } from '../../../src/type-system/domain/source.ts'
+import { makeUnionType } from '../../../src/type-system/factory.ts'
 
 describe('compiler/checker/emissions.ts', () => {
   describe('addEmission()', () => {
@@ -86,6 +87,39 @@ describe('compiler/checker/emissions.ts', () => {
         maximum: 2,
         ranges: [...original.ranges, ...incompatible.ranges]
       })
+    })
+
+    it('should infer the shared member of compatible union emissions', () => {
+      const target = new Map<SlotName, Emission>()
+      const inferredSlot: Slot = {
+        name: 'inferred' as SlotName,
+        type: 'infer'
+      }
+
+      const first = addEmission(target, {
+        slot: inferredSlot,
+        type: makeUnionType(
+          NumberFacet.with('bpm').type(),
+          NumberFacet.with('hz').type()
+        ),
+        minimum: 1,
+        maximum: 1,
+        ranges: [getEmptySourceRange()]
+      })
+      const second = addEmission(target, {
+        slot: inferredSlot,
+        type: makeUnionType(
+          NumberFacet.with('bpm').type(),
+          NumberFacet.with('db').type()
+        ),
+        minimum: 1,
+        maximum: 1,
+        ranges: [getEmptySourceRange()]
+      })
+
+      assert.deepStrictEqual(first, [])
+      assert.deepStrictEqual(second, [])
+      assert.strictEqual(target.get(inferredSlot.name)?.type?.format(), 'number.bpm')
     })
   })
 
