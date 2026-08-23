@@ -1,12 +1,5 @@
-import type { CustomComparable, Facet, GenericValue, Type, UnionType } from './types.ts'
-
-const isGenericType = (value: GenericValue): value is Type => {
-  return typeof value === 'object' && ('facets' in value || 'members' in value)
-}
-
-const isCustomComparable = (value: GenericValue): value is CustomComparable => {
-  return typeof value === 'object' && 'checkAssignableFrom' in value
-}
+import { isGenericCustomComparable, isGenericType, isUnionType } from './guards.ts'
+import type { Facet, GenericValue, Type } from './types.ts'
 
 export function isGenericValueAssignableFrom (target: GenericValue, other: GenericValue): boolean {
   if (target === other) {
@@ -17,7 +10,7 @@ export function isGenericValueAssignableFrom (target: GenericValue, other: Gener
     return isTypeAssignableFromType(target, other)
   }
 
-  if (isCustomComparable(target)) {
+  if (isGenericCustomComparable(target)) {
     return target.checkAssignableFrom(other)
   }
 
@@ -30,16 +23,12 @@ export function isFacetAssignableFromFacet (target: Facet, other: Facet): boolea
   }
 
   return other.name === target.name && Object.keys(target.generics).every((key) => {
-    if (!(key in other.generics)) {
+    if (!Object.hasOwn(other.generics, key)) {
       return false
     }
 
     return isGenericValueAssignableFrom(target.generics[key], other.generics[key])
   })
-}
-
-const isUnionType = (type: Type): type is UnionType => {
-  return 'members' in type
 }
 
 export function isFacetAssignableFromType (target: Facet, type: Type): boolean {
