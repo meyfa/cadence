@@ -8,7 +8,7 @@ import { NumberFacet } from './base/number.ts'
 import { RecordFacet } from './base/record.ts'
 import { CurveFacet } from './domain/curve.ts'
 import { ParameterFacet } from './domain/parameter.ts'
-import { makeType } from './factory.ts'
+import { makeFacetType } from './factory.ts'
 import type { Schema } from './schema.ts'
 import type { Facet, FacetType, Value } from './types.ts'
 
@@ -32,7 +32,7 @@ export const Modules = {
       exportValues[name] = exportValue
     }
 
-    return makeType(
+    return makeFacetType(
       ModuleFacet.with(value),
       RecordFacet.with(exportTypes)
     ).of(

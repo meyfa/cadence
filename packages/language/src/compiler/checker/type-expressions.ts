@@ -4,7 +4,7 @@ import { CompileError } from '../error.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { FunctionFacet } from '../../type-system/base/function.ts'
 import { checkParameters } from './parameters.ts'
-import { makeType } from '../../type-system/factory.ts'
+import { makeFacetType } from '../../type-system/factory.ts'
 import { getFacet } from './type-facets.ts'
 
 export interface CheckedType {
@@ -44,7 +44,7 @@ export function checkType (expression: ast.Type): CheckedType {
     facets.set(facet.name, facet)
   }
 
-  const result = makeType(...facets.values())
+  const result = makeFacetType(...facets.values())
 
   return { errors, result }
 }

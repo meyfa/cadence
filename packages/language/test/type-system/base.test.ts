@@ -10,7 +10,7 @@ import { ModuleFacet } from '../../src/type-system/base/module.ts'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
 import { RecordFacet } from '../../src/type-system/base/record.ts'
 import { StringFacet } from '../../src/type-system/base/string.ts'
-import { makeType } from '../../src/type-system/factory.ts'
+import { makeFacetType } from '../../src/type-system/factory.ts'
 import { makeSchema } from '../../src/type-system/schema.ts'
 import type { ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
@@ -66,7 +66,7 @@ describe('type-system/base', () => {
         parameters: makeSchema([
           { name: 'amount', type: NumberFacet.with('db').type(), required: true }
         ]),
-        returnType: makeType(StringFacet, RecordFacet.with({ gain: NumberFacet.with('db').type() })),
+        returnType: makeFacetType(StringFacet, RecordFacet.with({ gain: NumberFacet.with('db').type() })),
         capabilities: { mayBlock: false }
       })
       assert.strictEqual(

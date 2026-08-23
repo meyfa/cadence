@@ -22,7 +22,7 @@ import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
-import { makeUnion } from '../../type-system/factory.ts'
+import { makeUnionType } from '../../type-system/factory.ts'
 import { isFacetType } from '../../type-system/guards.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
@@ -283,7 +283,7 @@ function checkCurve (scope: Scope, expression: ast.Curve): Checked<FacetType> {
   return { errors, capabilities, result }
 }
 
-const curveSegmentLengthType = makeUnion(
+const curveSegmentLengthType = makeUnionType(
   NumberFacet.with('beats').type(),
   NumberFacet.with('s').type()
 )
@@ -514,7 +514,7 @@ const checkBus = createBlockChecker<ast.Bus>({
   slots: [
     {
       name: 'input' as SlotName,
-      type: makeUnion(BusFacet.type(), InstrumentFacet.type())
+      type: makeUnionType(BusFacet.type(), InstrumentFacet.type())
     },
     {
       name: 'effect' as SlotName,

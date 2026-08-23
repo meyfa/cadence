@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
 import { RecordFacet } from '../../src/type-system/base/record.ts'
 import { StringFacet } from '../../src/type-system/base/string.ts'
-import { makeType, makeUnion } from '../../src/type-system/factory.ts'
+import { makeFacetType, makeUnionType } from '../../src/type-system/factory.ts'
 import { isFacet, isType } from '../../src/type-system/guards.ts'
 
 describe('type-system/guards.ts', () => {
@@ -17,16 +17,16 @@ describe('type-system/guards.ts', () => {
 
     it('should return false for Type', () => {
       assert.strictEqual(isFacet(NumberFacet.type()), false)
-      assert.strictEqual(isFacet(makeType(NumberFacet, RecordFacet)), false)
-      assert.strictEqual(isFacet(makeUnion(NumberFacet.type(), RecordFacet.type())), false)
+      assert.strictEqual(isFacet(makeFacetType(NumberFacet, RecordFacet)), false)
+      assert.strictEqual(isFacet(makeUnionType(NumberFacet.type(), RecordFacet.type())), false)
     })
   })
 
   describe('isType', () => {
     it('should return true for Type', () => {
       assert.strictEqual(isType(NumberFacet.type()), true)
-      assert.strictEqual(isType(makeType(NumberFacet, RecordFacet)), true)
-      assert.strictEqual(isType(makeUnion(NumberFacet.type(), RecordFacet.type())), true)
+      assert.strictEqual(isType(makeFacetType(NumberFacet, RecordFacet)), true)
+      assert.strictEqual(isType(makeUnionType(NumberFacet.type(), RecordFacet.type())), true)
     })
 
     it('should return false for Facet', () => {

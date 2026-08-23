@@ -2,7 +2,7 @@ import type { RuntimeNumeric, Unit } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { makeFacet, makeType, makeUnion } from '../../src/type-system/factory.ts'
+import { makeFacet, makeFacetType, makeUnionType } from '../../src/type-system/factory.ts'
 import type { DataForFacet, DataForFacets, Value, ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
 
@@ -16,14 +16,14 @@ const hertzFacet = makeFacet<'numeric', RuntimeNumeric<'hz'>>('numeric', { unit:
   format: () => 'numeric(hz)'
 })
 
-const stringType = makeType(stringFacet)
-const numberType = makeType(numberFacet)
-const stringAndNumberType = makeType(stringFacet, numberFacet)
-const numericType = makeType(numericFacet)
-const decibelType = makeType(decibelFacet)
-const hertzType = makeType(hertzFacet)
+const stringType = makeFacetType(stringFacet)
+const numberType = makeFacetType(numberFacet)
+const stringAndNumberType = makeFacetType(stringFacet, numberFacet)
+const numericType = makeFacetType(numericFacet)
+const decibelType = makeFacetType(decibelFacet)
+const hertzType = makeFacetType(hertzFacet)
 
-const numericUnion = makeUnion(decibelType, hertzType)
+const numericUnion = makeUnionType(decibelType, hertzType)
 
 describe('type-system', () => {
   describe('DataForFacet', () => {
@@ -95,10 +95,10 @@ describe('type-system', () => {
       assert.strictEqual(customComparableFacetA.is(customComparableFacetB), false)
 
       const unionGenericFacetA = makeFacet<'generic', unknown>('generic', {
-        foobar: makeUnion(decibelType, hertzType)
+        foobar: makeUnionType(decibelType, hertzType)
       })
       const unionGenericFacetB = makeFacet<'generic', unknown>('generic', {
-        foobar: makeUnion(decibelType, hertzType)
+        foobar: makeUnionType(decibelType, hertzType)
       })
 
       assert.strictEqual(unionGenericFacetA.is(unionGenericFacetB), true)
@@ -203,7 +203,7 @@ describe('type-system', () => {
 
   describe('FacetType', () => {
     it('should throw if given zero facets', () => {
-      assert.throws(() => makeType(), /Expected at least one facet/)
+      assert.throws(() => makeFacetType(), /Expected at least one facet/)
     })
 
     it('should store facets', () => {
@@ -261,8 +261,8 @@ describe('type-system', () => {
     it('should reject missing or duplicate names', () => {
       const duplicateStringFacet = makeFacet<'string', number>('string', { variant: true })
 
-      assert.throws(() => makeType(stringFacet, duplicateStringFacet), /Duplicate facet names are not allowed in a type/)
-      assert.throws(() => makeType(decibelFacet, hertzFacet), /Duplicate facet names are not allowed in a type/)
+      assert.throws(() => makeFacetType(stringFacet, duplicateStringFacet), /Duplicate facet names are not allowed in a type/)
+      assert.throws(() => makeFacetType(decibelFacet, hertzFacet), /Duplicate facet names are not allowed in a type/)
     })
 
     it('should narrow values through has()', () => {
@@ -307,7 +307,7 @@ describe('type-system', () => {
       const incompatibleIntersect = decibelType.intersect(hertzType)
       assert.strictEqual(incompatibleIntersect, undefined)
 
-      const stringAndDecibelType = makeType(stringFacet, decibelFacet)
+      const stringAndDecibelType = makeFacetType(stringFacet, decibelFacet)
       const intersectedWithDecibel = stringAndDecibelType.intersect(stringAndNumberType)
       assert.ok(intersectedWithDecibel != null)
       assert.deepStrictEqual([...intersectedWithDecibel.facets.keys()], ['string'])
@@ -316,27 +316,27 @@ describe('type-system', () => {
 
   describe('UnionType', () => {
     it('should throw if given zero members', () => {
-      assert.throws(() => makeUnion(), /Expected at least one member/)
+      assert.throws(() => makeUnionType(), /Expected at least one member/)
     })
 
     it('should store members', () => {
-      const primitiveUnion = makeUnion(stringType, numberType)
+      const primitiveUnion = makeUnionType(stringType, numberType)
       assert.deepStrictEqual(primitiveUnion.members, [stringType, numberType])
     })
 
     it('should format based on members', () => {
-      const primitiveUnion = makeUnion(stringType, numberType)
+      const primitiveUnion = makeUnionType(stringType, numberType)
       assert.strictEqual(primitiveUnion.format(), '(string | number)')
       assert.strictEqual(numericUnion.format(), '(numeric(db) | numeric(hz))')
 
-      const singleMemberUnion = makeUnion(stringType)
+      const singleMemberUnion = makeUnionType(stringType)
       assert.strictEqual(singleMemberUnion.format(), 'string')
     })
 
     it('should compare assignability against members and other unions', () => {
-      const primitiveUnion = makeUnion(stringType, numberType)
-      const widerUnion = makeUnion(stringType, numberType, decibelType)
-      const narrowerUnion = makeUnion(stringType)
+      const primitiveUnion = makeUnionType(stringType, numberType)
+      const widerUnion = makeUnionType(stringType, numberType, decibelType)
+      const narrowerUnion = makeUnionType(stringType)
 
       assert.strictEqual(primitiveUnion.is(primitiveUnion), true)
       assert.strictEqual(primitiveUnion.is(stringType), true)
@@ -349,7 +349,7 @@ describe('type-system', () => {
     })
 
     it('should accept values from any compatible member type', () => {
-      const primitiveUnion = makeUnion(stringType, numberType)
+      const primitiveUnion = makeUnionType(stringType, numberType)
       const stringValue = stringType.of('hello')
       const pairValue = stringAndNumberType.of('hello', 42)
       const decibelValue = decibelType.of(runtimeNumeric('db', 42))
