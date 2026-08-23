@@ -2,15 +2,15 @@ import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import type { FacetType, Type, Value } from '../../type-system/types.ts'
+import { getPossibleTypeAtoms } from '../../type-system/union.ts'
 import { fail } from '../assert.ts'
-import { getTypeAtoms } from './lifting.ts'
 
 /**
  * Returns a boolean indicating whether the two types can be compared for equality.
  */
 export function areTypesEqualityComparable (left: Type, right: Type): boolean {
-  for (const leftFacet of getTypeAtoms(left)) {
-    for (const rightFacet of getTypeAtoms(right)) {
+  for (const leftFacet of getPossibleTypeAtoms(left)) {
+    for (const rightFacet of getPossibleTypeAtoms(right)) {
       if (!areFacetTypesEqualityComparable(leftFacet, rightFacet)) {
         return false
       }
@@ -65,8 +65,8 @@ export function areValuesEqual (left: Value, right: Value): boolean {
  * (i.e., less than, greater than, less than or equal to, greater than or equal to).
  */
 export function areTypesRelationallyComparable (left: Type, right: Type): boolean {
-  for (const leftFacet of getTypeAtoms(left)) {
-    for (const rightFacet of getTypeAtoms(right)) {
+  for (const leftFacet of getPossibleTypeAtoms(left)) {
+    for (const rightFacet of getPossibleTypeAtoms(right)) {
       if (!areFacetTypesRelationallyComparable(leftFacet, rightFacet)) {
         return false
       }
