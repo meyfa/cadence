@@ -26,7 +26,7 @@ import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeFacetType } from '../../type-system/factory.ts'
 import { Curves, Functions, Numbers, Parameters } from '../../type-system/helpers.ts'
 import type { InferSchema, Schema } from '../../type-system/schema.ts'
-import type { FacetType, Value } from '../../type-system/types.ts'
+import type { Type, Value } from '../../type-system/types.ts'
 import { assert, assertNever, fail, nonNull } from '../assert.ts'
 import { globalBuiltins } from '../builtins/global.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
@@ -759,7 +759,7 @@ function resolvePropertyAccess (scope: Scope, expression: ast.PropertyAccess): V
 
 function resolveCall (scope: Scope, expression: ast.Call): Value {
   // cast due to context type
-  const func = FunctionFacet.get(resolve(scope, expression.callee)) as Function<Schema, FacetType, GlobalScope>
+  const func = FunctionFacet.get(resolve(scope, expression.callee)) as Function<Schema, Type, GlobalScope>
   const args = resolveArgumentList(scope, expression.arguments, func.parameters)
 
   return func.invoke(scope.top, args)

@@ -7,7 +7,8 @@ import { PatternFacet } from '../../type-system/domain/pattern.ts'
 import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { Functions } from '../../type-system/helpers.ts'
 import { makeSchema } from '../../type-system/schema.ts'
-import type { FacetType, Value } from '../../type-system/types.ts'
+import { getPossibleTypeAtoms } from '../../type-system/transforms.ts'
+import type { Type, Value } from '../../type-system/types.ts'
 
 const play = Functions.of({
   parameters: makeSchema([
@@ -42,7 +43,7 @@ const automate = Functions.of({
   ]),
   returnType: AutomationFacet.type(),
   capabilities: { mayBlock: false },
-  check: (args: ReadonlyMap<string, FacetType>) => {
+  check: (args: ReadonlyMap<string, Type>) => {
     const errors: ParameterError[] = []
 
     const targetType = args.get('target')
@@ -52,14 +53,19 @@ const automate = Functions.of({
       return errors
     }
 
-    const targetUnit = ParameterFacet.detail(targetType)
-    const curveUnit = CurveFacet.detail(curveType)
-
-    if (targetUnit !== curveUnit) {
-      errors.push({
-        parameter: 'curve',
-        message: `Expected type ${CurveFacet.with(targetUnit).format()} for argument "curve", got ${curveType.format()}`
+    for (const targetAtom of getPossibleTypeAtoms(targetType)) {
+      const targetUnit = ParameterFacet.detail(targetAtom)
+      const match = getPossibleTypeAtoms(curveType).every((curveAtom) => {
+        return CurveFacet.detail(curveAtom) === targetUnit
       })
+
+      if (!match) {
+        errors.push({
+          parameter: 'curve',
+          message: `Expected type ${CurveFacet.with(targetUnit).format()} for argument "curve", got ${curveType.format()}`
+        })
+        break
+      }
     }
 
     return errors

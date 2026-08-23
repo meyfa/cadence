@@ -10,10 +10,10 @@ import { CurveFacet } from './domain/curve.ts'
 import { ParameterFacet } from './domain/parameter.ts'
 import { makeFacetType } from './factory.ts'
 import type { Schema } from './schema.ts'
-import type { Facet, FacetType, Value } from './types.ts'
+import type { Facet, FacetType, Type, Value } from './types.ts'
 
 export const Functions = {
-  of: <const S extends Schema, const R extends FacetType, const Context> (
+  of: <const S extends Schema, const R extends Type, const Context> (
     spec: FunctionSpec<S, R>,
     runtime: FunctionRuntime<S, R, Context>
   ): Value => {

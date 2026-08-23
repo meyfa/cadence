@@ -23,7 +23,6 @@ import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
 import { makeUnionType } from '../../type-system/factory.ts'
-import { isFacetType } from '../../type-system/guards.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 import { nonNull } from '../assert.ts'
 import { patternBuiltins } from '../builtins/patterns.ts'
@@ -44,6 +43,7 @@ import type { Binding, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 import type { StatementOptions } from './statements.ts'
 import { checkStatement } from './statements.ts'
+import { computeTypeUnion, getPossibleTypeAtoms } from '../../type-system/transforms.ts'
 
 export interface Checked<TValue> {
   readonly errors: readonly CompileError[]
@@ -51,7 +51,7 @@ export interface Checked<TValue> {
   readonly result?: TValue
 }
 
-export function checkExpression (scope: Scope, expression: ast.Expression): Checked<FacetType> {
+export function checkExpression (scope: Scope, expression: ast.Expression): Checked<Type> {
   switch (expression.type) {
     case 'Identifier':
       return checkIdentifier(scope, expression)
@@ -119,7 +119,7 @@ function expectType (expected: Pick<Type, 'is' | 'format'>, actual: Type, range?
   return []
 }
 
-function checkIdentifier (scope: Scope, expression: ast.Identifier): Checked<FacetType> {
+function checkIdentifier (scope: Scope, expression: ast.Identifier): Checked<Type> {
   const errors: CompileError[] = []
   const capabilities = noCapabilities
 
@@ -139,15 +139,15 @@ function checkIdentifier (scope: Scope, expression: ast.Identifier): Checked<Fac
   return { errors, capabilities, result }
 }
 
-function checkBoolean (scope: Scope, expression: ast.Boolean): Checked<FacetType> {
+function checkBoolean (scope: Scope, expression: ast.Boolean): Checked<Type> {
   return { errors: [], capabilities: noCapabilities, result: BooleanFacet.type() }
 }
 
-function checkNumber (scope: Scope, expression: ast.Number): Checked<FacetType> {
+function checkNumber (scope: Scope, expression: ast.Number): Checked<Type> {
   return { errors: [], capabilities: noCapabilities, result: NumberFacet.with(undefined).type() }
 }
 
-function checkString (scope: Scope, expression: ast.String): Checked<FacetType> {
+function checkString (scope: Scope, expression: ast.String): Checked<Type> {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
@@ -168,7 +168,7 @@ function checkString (scope: Scope, expression: ast.String): Checked<FacetType> 
   return { errors, capabilities, result: StringFacet.type() }
 }
 
-function checkPattern (scope: Scope, expression: ast.Pattern): Checked<FacetType> {
+function checkPattern (scope: Scope, expression: ast.Pattern): Checked<Type> {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
@@ -217,7 +217,7 @@ interface CurveDetail {
   readonly unit: Unit
 }
 
-function checkCurve (scope: Scope, expression: ast.Curve): Checked<FacetType> {
+function checkCurve (scope: Scope, expression: ast.Curve): Checked<Type> {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
@@ -268,7 +268,9 @@ function checkCurve (scope: Scope, expression: ast.Curve): Checked<FacetType> {
           break
         }
 
-        append(CurveFacet.detail(itemCheck.result), item.range)
+        for (const itemType of getPossibleTypeAtoms(itemCheck.result)) {
+          append(CurveFacet.detail(itemType), item.range)
+        }
         break
       }
     }
@@ -317,7 +319,7 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?:
     return { errors: [new CompileError(message, expression.range)], capabilities }
   }
 
-  const units: Array<Unit | undefined> = []
+  const units: Array<{ readonly unit: Unit | undefined, readonly range: SourceRange }> = []
 
   for (const point of expression.arguments) {
     const pointCheck = checkExpression(scope, point)
@@ -329,7 +331,9 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?:
       errors.push(...typeErrors)
 
       if (typeErrors.length === 0) {
-        units.push(NumberFacet.detail(pointCheck.result))
+        for (const pointType of getPossibleTypeAtoms(pointCheck.result)) {
+          units.push({ unit: NumberFacet.detail(pointType), range: point.range })
+        }
       }
     }
   }
@@ -338,11 +342,11 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?:
     return { errors, capabilities }
   }
 
-  const firstUnit = omittedFirstParameter ? detail?.unit : units[0]
+  const firstUnit = omittedFirstParameter ? detail?.unit : units[0]?.unit
 
   const expected = NumberFacet.with(firstUnit).type()
   for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
-    errors.push(...expectType(expected, NumberFacet.with(units[i]).type(), expression.arguments[i].range))
+    errors.push(...expectType(expected, NumberFacet.with(units[i].unit).type(), units[i].range))
   }
 
   const result = { unit: firstUnit }
@@ -364,7 +368,7 @@ const functionStatementOptions: StatementOptions = {
   ]
 }
 
-function checkFunction (scope: Scope, expression: ast.Function): Checked<FacetType> {
+function checkFunction (scope: Scope, expression: ast.Function): Checked<Type> {
   const errors: CompileError[] = []
 
   // Allow blocking calls inside the function. If a blocking call is encountered,
@@ -589,7 +593,7 @@ const checkPart = createBlockChecker<ast.Part>({
   }
 })
 
-function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<FacetType> {
+function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): Checked<Type> {
   const operandCheck = checkExpression(scope, expression.operand)
   const errors = [...operandCheck.errors]
   const capabilities = operandCheck.capabilities
@@ -601,8 +605,7 @@ function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): C
 
   const result = unaryOperations[expression.operator].check(operand)
 
-  // TODO: Support non-FacetType
-  if (result == null || !isFacetType(result)) {
+  if (result == null) {
     errors.push(new CompileError(`Incompatible operand for "${expression.operator}": ${operand.format()}`, expression.range))
     return { errors, capabilities }
   }
@@ -610,7 +613,7 @@ function checkUnaryExpression (scope: Scope, expression: ast.UnaryExpression): C
   return { errors, capabilities, result }
 }
 
-function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Checked<FacetType> {
+function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression): Checked<Type> {
   const leftCheck = checkExpression(scope, expression.left)
   const rightCheck = checkExpression(scope, expression.right)
 
@@ -626,8 +629,7 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
 
   const result = binaryOperations[expression.operator].check(left, right)
 
-  // TODO: Support non-FacetType
-  if (result == null || !isFacetType(result)) {
+  if (result == null) {
     errors.push(new CompileError(`Incompatible operands for "${expression.operator}": ${left.format()}, ${right.format()}`, expression.range))
     return { errors, capabilities }
   }
@@ -635,13 +637,13 @@ function checkBinaryExpression (scope: Scope, expression: ast.BinaryExpression):
   return { errors, capabilities, result }
 }
 
-function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Checked<FacetType> {
+function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Checked<Type> {
   const errors: CompileError[] = []
+  let capabilities = noCapabilities
 
   const objectCheck = checkExpression(scope, expression.object)
   errors.push(...objectCheck.errors)
-
-  const capabilities = objectCheck.capabilities
+  capabilities = mergeCapabilities(capabilities, objectCheck.capabilities)
 
   if (objectCheck.result == null) {
     return { errors, capabilities }
@@ -649,6 +651,22 @@ function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Che
 
   const { property } = expression
   const object = objectCheck.result
+
+  const lifted = liftOverFacetType(object, (facetType) => {
+    return checkPropertyAccessWithObjectAtom(facetType, property)
+  })
+  errors.push(...lifted.errors)
+  capabilities = mergeCapabilities(capabilities, lifted.capabilities)
+
+  return { errors, capabilities, result: lifted.result }
+}
+
+function checkPropertyAccessWithObjectAtom (
+  object: FacetType,
+  property: ast.Identifier
+): Checked<Type> {
+  const errors: CompileError[] = []
+  const capabilities = noCapabilities
 
   if (NumberFacet.is(object)) {
     if (!isSyntaxUnit(property.name)) {
@@ -675,15 +693,7 @@ function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Che
   if (RecordFacet.is(object)) {
     const record = RecordFacet.detail(object)
     if (Object.hasOwn(record, property.name)) {
-      const result = record[property.name]
-
-      // TODO: Support non-FacetType
-      if (result != null && !isFacetType(result)) {
-        errors.push(new CompileError(`Property "${property.name}" has non-definite type`, property.range))
-        return { errors, capabilities }
-      }
-
-      return { errors, capabilities, result }
+      return { errors, capabilities, result: record[property.name] }
     }
 
     // Improve error messages for modules
@@ -700,7 +710,7 @@ function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Che
   return { errors, capabilities }
 }
 
-function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
+function checkCall (scope: Scope, expression: ast.Call): Checked<Type> {
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
@@ -717,6 +727,23 @@ function checkCall (scope: Scope, expression: ast.Call): Checked<FacetType> {
     errors.push(new CompileError(`Cannot call value of type ${callee.format()}`, expression.range))
     return { errors, capabilities }
   }
+
+  const lifted = liftOverFacetType(callee, (facetType) => {
+    return checkCallWithCalleeAtom(scope, expression, facetType)
+  })
+  errors.push(...lifted.errors)
+  capabilities = mergeCapabilities(capabilities, lifted.capabilities)
+
+  return { errors, capabilities, result: lifted.result }
+}
+
+function checkCallWithCalleeAtom (
+  scope: Scope,
+  expression: ast.Call,
+  callee: FacetType
+): Checked<Type> {
+  const errors: CompileError[] = []
+  let capabilities = noCapabilities
 
   const {
     parameters,
@@ -760,4 +787,36 @@ function tryGetFunctionName (callee: ast.Expression): string | undefined {
   }
 
   return undefined
+}
+
+// TODO: De-duplicate this function with the one in operators/lifting.ts
+function liftOverFacetType (
+  type: Type,
+  check: (facetType: FacetType) => Checked<Type>
+): Checked<Type> {
+  const errors: CompileError[] = []
+  let capabilities = noCapabilities
+
+  const atoms = getPossibleTypeAtoms(type)
+  const resultTypes: Type[] = []
+
+  for (const atom of atoms) {
+    const checkResult = check(atom)
+    errors.push(...checkResult.errors)
+    capabilities = mergeCapabilities(capabilities, checkResult.capabilities)
+
+    if (checkResult.result != null) {
+      resultTypes.push(checkResult.result)
+    }
+  }
+
+  // If any of the atoms failed to produce a result, we cannot determine a useful
+  // result type for the union.
+  if (resultTypes.length < atoms.length) {
+    return { errors, capabilities }
+  }
+
+  const result = computeTypeUnion(resultTypes)
+
+  return { errors, capabilities, result }
 }

@@ -2,7 +2,8 @@ import type { ast, SourceRange } from '@meyfa/cadence-ast'
 import { setAll } from '@meyfa/cadence-utility'
 import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import type { Capabilities } from '../../type-system/base/function.ts'
-import type { FacetType } from '../../type-system/types.ts'
+import { intersectTypes } from '../../type-system/transforms.ts'
+import type { Type } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import type { Emission, Emissions, MutableEmissions, Slot, SlotName, Slots } from './emissions.ts'
@@ -62,7 +63,7 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
   const emissions: MutableEmissions = new Map()
   const properties = new Map<string, Binding>()
 
-  const values: Array<FacetType | undefined> = []
+  const values: Array<Type | undefined> = []
 
   for (const value of statement.values) {
     const valueCheck = checkExpression(scope, value)
@@ -114,7 +115,7 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
   return { errors, capabilities, emissions, properties }
 }
 
-function checkEmission (emissions: MutableEmissions, type: FacetType, range: SourceRange, options: StatementOptions): readonly CompileError[] {
+function checkEmission (emissions: MutableEmissions, type: Type, range: SourceRange, options: StatementOptions): readonly CompileError[] {
   const { context, slots = [] } = options
 
   if (slots.length === 0) {
@@ -124,7 +125,7 @@ function checkEmission (emissions: MutableEmissions, type: FacetType, range: Sou
   const slot = slots.find((slot) => slot.type == 'infer' || slot.type.is(type))
   if (slot == null) {
     const expectedTypes = slots
-      .filter((slot): slot is Slot & { type: FacetType } => slot.type != 'infer')
+      .filter((slot): slot is Slot & { type: Type } => slot.type != 'infer')
       .map((slot) => slot.type.format())
       .join(', ')
     return [new CompileError(`Unexpected emitted value of type ${type.format()}; expected one of: ${expectedTypes}`, range)]
@@ -233,11 +234,11 @@ function applyBranchEmissions (
 
     const ranges = emissions.flatMap((item) => item.ranges)
 
-    let type: FacetType | undefined
+    let type: Type | undefined
 
     if (slot.type === 'infer') {
       const types = emissions.map((item) => item.type).filter((item) => item != null)
-      type = intersectTypes(types)
+      type = intersectManyTypes(types)
 
       if (type == null) {
         const typeStrings = types.map((type) => type.format()).join(', ')
@@ -280,7 +281,7 @@ function applyBranchBindings (
     const definite = bindings.every((binding) => binding?.definite === true)
 
     const types = bindings.map((binding) => binding?.type).filter((type) => type != null)
-    const type = intersectTypes(types)
+    const type = intersectManyTypes(types)
 
     const ranges = bindings.map((binding) => binding?.range).filter((range) => range != null)
     const range = ranges.length === 1 ? ranges[0] : undefined
@@ -300,6 +301,6 @@ function applyBranchBindings (
   return errors
 }
 
-function intersectTypes (types: readonly FacetType[]): FacetType | undefined {
-  return types.reduce((acc, type) => acc?.intersect(type), types.at(0))
+function intersectManyTypes (types: readonly Type[]): Type | undefined {
+  return types.reduce((acc, type) => acc == null ? undefined : intersectTypes(acc, type), types.at(0))
 }

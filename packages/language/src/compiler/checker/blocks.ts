@@ -5,7 +5,7 @@ import { RecordFacet } from '../../type-system/base/record.ts'
 import { makeFacetType } from '../../type-system/factory.ts'
 import type { Schema } from '../../type-system/schema.ts'
 import { makeSchema } from '../../type-system/schema.ts'
-import type { Facet, FacetType } from '../../type-system/types.ts'
+import type { Facet, FacetType, Type } from '../../type-system/types.ts'
 import { CompileError } from '../error.ts'
 import { checkArguments } from './arguments.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
@@ -145,7 +145,7 @@ export function createBlockChecker<TBlock extends BlockNode> (schema: BlockSchem
 const emptySchema = makeSchema([])
 
 function makeBlockType (facet: Facet, properties: ReadonlyMap<string, Binding>): FacetType {
-  const fields: Record<string, FacetType> = Object.create(null)
+  const fields: Record<string, Type> = Object.create(null)
   let hasDefiniteProperties = false
 
   for (const [name, binding] of properties) {

@@ -1,6 +1,6 @@
 import { makeFacet } from '../factory.ts'
 import type { InferSchema, Schema } from '../schema.ts'
-import type { CustomComparable, FacetType, ValueForType } from '../types.ts'
+import type { CustomComparable, FacetType, Type, ValueForType } from '../types.ts'
 
 export interface Capabilities {
   readonly mayBlock: boolean
@@ -13,7 +13,7 @@ export interface ParameterError {
 
 export interface FunctionSpec<
   S extends Schema = Schema,
-  R extends FacetType = FacetType
+  R extends Type = Type
 > {
   readonly parameters: S
   readonly returnType: R
@@ -25,12 +25,12 @@ export interface FunctionSpec<
    *
    * If an argument is missing from the map, do not report an error; this will already be handled by the schema validation.
    */
-  readonly check?: (args: ReadonlyMap<string, FacetType>) => readonly ParameterError[]
+  readonly check?: (args: ReadonlyMap<string, Type>) => readonly ParameterError[]
 }
 
 export interface FunctionRuntime<
   S extends Schema = Schema,
-  R extends FacetType = FacetType,
+  R extends Type = Type,
   Context = never
 > {
   /**
@@ -44,7 +44,7 @@ export interface FunctionRuntime<
 
 export interface Function<
   S extends Schema = Schema,
-  R extends FacetType = FacetType,
+  R extends Type = Type,
   Context = never
 > extends FunctionSpec<S, R>, FunctionRuntime<S, R, Context> {
 }
@@ -58,7 +58,7 @@ const FACET_NAME = 'function'
 export const FunctionFacet = {
   ...makeFacet<typeof FACET_NAME, Function>(FACET_NAME, {}),
 
-  with: <const S extends Schema, const R extends FacetType> (spec: FunctionSpec<S, R>) => {
+  with: <const S extends Schema, const R extends Type> (spec: FunctionSpec<S, R>) => {
     const generic: FunctionSpecGeneric = {
       value: spec,
 

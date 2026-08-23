@@ -1,6 +1,6 @@
 import type { ast, SourceRange } from '@meyfa/cadence-ast'
 import type { Capabilities, FunctionSpec } from '../../type-system/base/function.ts'
-import type { FacetType } from '../../type-system/types.ts'
+import type { Type } from '../../type-system/types.ts'
 
 export interface Scope {
   readonly top: GlobalScope
@@ -21,7 +21,7 @@ export interface MutableScope extends Scope {
 
 export interface Binding {
   readonly name: string
-  readonly type: FacetType
+  readonly type: Type
   readonly definite: boolean
   readonly range?: SourceRange
 }

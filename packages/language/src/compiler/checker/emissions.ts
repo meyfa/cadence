@@ -1,7 +1,8 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
 import type { Brand } from '@meyfa/cadence-utility'
 import type { Result } from '../../result/result.ts'
-import type { FacetType, Type } from '../../type-system/types.ts'
+import { intersectTypes } from '../../type-system/transforms.ts'
+import type { Type } from '../../type-system/types.ts'
 import { assert } from '../assert.ts'
 import { CompileError } from '../error.ts'
 
@@ -44,7 +45,7 @@ export interface Emission {
   /**
    * For inferred slots, the type of the emitted value. For typed slots, this field is absent.
    */
-  readonly type?: FacetType
+  readonly type?: Type
 
   /**
    * The minimum amount of emissions into the slot over all conditional branches.
@@ -74,10 +75,10 @@ export function addEmission (target: MutableEmissions, emission: Emission): read
   const { slot } = existing
   assert(slot.type === emission.slot.type, `Slot "${slot.name}" type mismatch when merging emissions`)
 
-  let type: FacetType | undefined
+  let type: Type | undefined
 
   if (slot.type === 'infer') {
-    const intersection = intersectTypes(existing, emission)
+    const intersection = intersectEmissionTypes(existing, emission)
     if (intersection.complete) {
       type = intersection.value
     } else {
@@ -121,12 +122,12 @@ export function validateEmissions (emissions: Emissions, slots: Slots, range: So
   return errors
 }
 
-function intersectTypes (existing: Emission, emission: Emission): Result<FacetType | undefined, CompileError> {
+function intersectEmissionTypes (existing: Emission, emission: Emission): Result<Type | undefined, CompileError> {
   if (existing.type == null || emission.type == null) {
     return { complete: true, value: existing.type ?? emission.type }
   }
 
-  const intersection = existing.type.intersect(emission.type)
+  const intersection = intersectTypes(existing.type, emission.type)
   if (intersection == null) {
     const types = [existing.type.format(), emission.type.format()].join(', ')
     const message = `Incompatible types for slot "${emission.slot.name}": ${types}`
