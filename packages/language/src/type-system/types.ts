@@ -3,6 +3,7 @@ export type Type = FacetType | UnionType
 declare const facetDataType: unique symbol
 
 export interface FacetType<Facets extends readonly Facet[] = readonly Facet[]> {
+  readonly kind: 'FacetType'
   readonly facets: ReadonlyMap<string, Facet>
 
   readonly format: () => string
@@ -17,6 +18,7 @@ export interface FacetType<Facets extends readonly Facet[] = readonly Facet[]> {
 }
 
 export interface UnionType<Members extends readonly FacetType[] = readonly FacetType[]> {
+  readonly kind: 'UnionType'
   readonly members: Members
 
   readonly format: () => string
@@ -25,6 +27,7 @@ export interface UnionType<Members extends readonly FacetType[] = readonly Facet
 }
 
 export interface Facet<Name extends string = string, Data = unknown> {
+  readonly kind: 'Facet'
   readonly name: Name
   readonly generics: Generics
 

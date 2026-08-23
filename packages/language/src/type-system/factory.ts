@@ -1,4 +1,5 @@
 import { isFacetAssignableFromFacet, isFacetAssignableFromType, isTypeAssignableFromType } from './assignability.ts'
+import { isFacet } from './guards.ts'
 import type { DataForFacets, Facet, FacetType, Generics, SpecificFacetDataForValue, Type, UnionType, Value, ValueForType } from './types.ts'
 
 export interface FacetOptions<Data = unknown> {
@@ -16,13 +17,15 @@ export function makeFacet<const Name extends string, Data> (
   let cachedType: FacetType<[Facet<Name, Data>]> | undefined = undefined
 
   const facet: Facet<Name, Data> = {
+    kind: 'Facet',
+
     name,
     generics,
 
     format: options?.format ?? (() => name),
 
     is: (other: Facet | Type): boolean => {
-      if ('name' in other && 'generics' in other) {
+      if (isFacet(other)) {
         return isFacetAssignableFromFacet(facet, other)
       } else {
         return isFacetAssignableFromType(facet, other)
@@ -98,6 +101,8 @@ export function makeType<const Facets extends readonly Facet[]> (
   }
 
   const type = {
+    kind: 'FacetType',
+
     facets: facetMap,
 
     format: () => {
@@ -202,6 +207,8 @@ export function makeUnion<const Members extends readonly FacetType[]> (
   }
 
   const type = {
+    kind: 'UnionType',
+
     members,
 
     format: () => {
