@@ -1,7 +1,8 @@
 import { makeFacet } from '../factory.ts'
-import type { Facet, FacetType, ValueForType } from '../types.ts'
+import { intersectTypes, mergeTypes } from '../transforms.ts'
+import type { Facet, FacetType, Type, ValueForType } from '../types.ts'
 
-type RecordGenerics = Readonly<Partial<Record<string, FacetType>>>
+type RecordGenerics = Readonly<Partial<Record<string, Type>>>
 
 type RecordDataForFields<Fields extends RecordGenerics> = {
   readonly [K in keyof Fields]: ValueForType<Fields[K]>
@@ -34,14 +35,14 @@ function normalizeRecordData<Fields extends RecordGenerics> (data: unknown): Rec
 const EMPTY_RECORD_GENERICS = cloneOwnProperties({} as Record<string, unknown>) as RecordGenerics
 
 function mergeRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGenerics | undefined {
-  const fields: Record<string, FacetType> = Object.create(null)
+  const fields: Record<string, Type> = Object.create(null)
 
   for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
     const aType = a[key]
     const bType = b[key]
 
     if (aType != null && bType != null) {
-      const mergedType = aType.merge(bType)
+      const mergedType = mergeTypes(aType, bType)
       if (mergedType == null) {
         return undefined
       }
@@ -57,14 +58,14 @@ function mergeRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGener
 }
 
 function intersectRecordGenerics (a: RecordGenerics, b: RecordGenerics): RecordGenerics | undefined {
-  const fields: Record<string, FacetType> = Object.create(null)
+  const fields: Record<string, Type> = Object.create(null)
 
   for (const key of Object.keys(a)) {
     const aType = a[key]
     const bType = b[key]
 
     const intersection = aType != null && bType != null
-      ? aType.intersect(bType)
+      ? intersectTypes(aType, bType)
       : undefined
 
     if (intersection != null) {

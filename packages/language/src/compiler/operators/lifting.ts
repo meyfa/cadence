@@ -1,5 +1,5 @@
 import type { FacetType, Type } from '../../type-system/types.ts'
-import { computeTypeUnion, getPossibleTypeAtoms } from '../../type-system/union.ts'
+import { computeTypeUnion, getPossibleTypeAtoms } from '../../type-system/transforms.ts'
 
 type CheckUnary = (type: FacetType) => Type | undefined
 type CheckBinary = (left: FacetType, right: FacetType) => Type | undefined

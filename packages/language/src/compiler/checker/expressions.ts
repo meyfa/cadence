@@ -675,7 +675,15 @@ function checkPropertyAccess (scope: Scope, expression: ast.PropertyAccess): Che
   if (RecordFacet.is(object)) {
     const record = RecordFacet.detail(object)
     if (Object.hasOwn(record, property.name)) {
-      return { errors, capabilities, result: record[property.name] }
+      const result = record[property.name]
+
+      // TODO: Support non-FacetType
+      if (result != null && !isFacetType(result)) {
+        errors.push(new CompileError(`Property "${property.name}" has non-definite type`, property.range))
+        return { errors, capabilities }
+      }
+
+      return { errors, capabilities, result }
     }
 
     // Improve error messages for modules

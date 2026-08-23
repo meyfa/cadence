@@ -1,12 +1,12 @@
-import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { getPossibleTypeAtoms, computeTypeUnion } from '../../src/type-system/union.ts'
-import { makeFacetType, makeUnionType } from '../../src/type-system/factory.ts'
+import { describe, it } from 'node:test'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
 import { RecordFacet } from '../../src/type-system/base/record.ts'
 import { StringFacet } from '../../src/type-system/base/string.ts'
+import { makeFacetType, makeUnionType } from '../../src/type-system/factory.ts'
+import { computeTypeUnion, getPossibleTypeAtoms, intersectTypes, mergeTypes } from '../../src/type-system/transforms.ts'
 
-describe('type-system/union.ts', () => {
+describe('type-system/transforms.ts', () => {
   describe('getTypeAtoms()', () => {
     it('should return the type itself for a FacetType', () => {
       const facetType = makeFacetType(NumberFacet.with('hz'), RecordFacet.with({
@@ -149,6 +149,65 @@ describe('type-system/union.ts', () => {
       assert.strictEqual(unionType.members[0], facetType1)
       assert.strictEqual(unionType.members[1], facetType2)
       assert.strictEqual(unionType.members[2], facetType3)
+    })
+  })
+
+  describe('mergeTypes()', () => {
+    it('should merge two compatible facet types', () => {
+      const stringType = StringFacet.type()
+      const numberType = NumberFacet.with('hz').type()
+
+      const merged = mergeTypes(stringType, numberType)
+
+      assert.ok(merged != null)
+      assert.strictEqual(merged.format(), '(string + number.hz)')
+    })
+
+    it('should distribute merges over unions and normalize the result', () => {
+      const stringType = StringFacet.type()
+      const hertzType = NumberFacet.with('hz').type()
+      const decibelType = NumberFacet.with('db').type()
+      const numericUnion = makeUnionType(hertzType, decibelType)
+
+      const merged = mergeTypes(stringType, numericUnion)
+
+      assert.strictEqual(merged?.format(), '((string + number.hz) | (string + number.db))')
+    })
+
+    it('should return undefined when no atomic pair can be merged', () => {
+      const hertzType = NumberFacet.with('hz').type()
+      const decibelType = NumberFacet.with('db').type()
+
+      assert.strictEqual(mergeTypes(hertzType, decibelType), undefined)
+    })
+  })
+
+  describe('intersectTypes()', () => {
+    it('should intersect two compatible facet types', () => {
+      const stringType = StringFacet.type()
+      const stringAndNumberType = makeFacetType(StringFacet, NumberFacet.with('hz'))
+
+      const intersected = intersectTypes(stringType, stringAndNumberType)
+
+      assert.strictEqual(intersected?.format(), 'string')
+    })
+
+    it('should distribute intersections over unions and normalize the result', () => {
+      const hertzType = NumberFacet.with('hz').type()
+      const decibelType = NumberFacet.with('db').type()
+      const numericUnion = makeUnionType(hertzType, decibelType)
+      const numberType = NumberFacet.type()
+
+      const intersected = intersectTypes(numericUnion, numberType)
+
+      assert.strictEqual(intersected?.format(), 'number')
+    })
+
+    it('should return undefined when no atomic pair can be intersected', () => {
+      const stringType = StringFacet.type()
+      const numberType = NumberFacet.type()
+
+      assert.strictEqual(intersectTypes(stringType, numberType), undefined)
     })
   })
 })

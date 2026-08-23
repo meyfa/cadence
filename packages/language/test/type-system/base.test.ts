@@ -10,7 +10,7 @@ import { ModuleFacet } from '../../src/type-system/base/module.ts'
 import { NumberFacet } from '../../src/type-system/base/number.ts'
 import { RecordFacet } from '../../src/type-system/base/record.ts'
 import { StringFacet } from '../../src/type-system/base/string.ts'
-import { makeFacetType } from '../../src/type-system/factory.ts'
+import { makeFacetType, makeUnionType } from '../../src/type-system/factory.ts'
 import { makeSchema } from '../../src/type-system/schema.ts'
 import type { ValueForType } from '../../src/type-system/types.ts'
 import { expectTypeEquals } from '../test-utils.ts'
@@ -715,6 +715,20 @@ describe('type-system/base', () => {
       assert.deepStrictEqual(Object.keys(mergedNested.generics), ['foo'])
 
       assert.strictEqual(mergedNested.format(), '{foo: {a: (string + number), b: number, c: number.db}}')
+
+      const numericUnion = makeUnionType(
+        NumberFacet.with('db').type(),
+        NumberFacet.with('hz').type()
+      )
+      const unionRecordFacet = RecordFacet.with({ value: numericUnion })
+      const stringRecordFacet = RecordFacet.with({ value: StringFacet.type() })
+
+      const mergedUnion = unionRecordFacet.merge(stringRecordFacet)
+      assert.ok(mergedUnion != null)
+      assert.strictEqual(
+        mergedUnion.format(),
+        '{value: ((number.db + string) | (number.hz + string))}'
+      )
     })
 
     it('should intersect record generics', () => {
@@ -809,6 +823,17 @@ describe('type-system/base', () => {
       assert.deepStrictEqual(Object.keys(intersectedNested.generics), ['foo'])
 
       assert.strictEqual(intersectedNested.format(), '{foo: {a: string}}')
+
+      const numericUnion = makeUnionType(
+        NumberFacet.with('db').type(),
+        NumberFacet.with('hz').type()
+      )
+      const unionRecordFacet = RecordFacet.with({ value: numericUnion })
+      const numberRecordFacet = RecordFacet.with({ value: NumberFacet.type() })
+
+      const intersectedUnion = unionRecordFacet.intersect(numberRecordFacet)
+      assert.ok(intersectedUnion != null)
+      assert.strictEqual(intersectedUnion.format(), '{value: number}')
     })
 
     it('should create a single-facet type', () => {
