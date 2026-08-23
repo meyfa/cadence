@@ -7,7 +7,7 @@ import { RecordFacet } from '../../type-system/base/record.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import { InstrumentFacet } from '../../type-system/domain/instrument.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
-import { makeType } from '../../type-system/factory.ts'
+import { makeFacetType } from '../../type-system/factory.ts'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.ts'
 import { makeSchema } from '../../type-system/schema.ts'
 import type { Value } from '../../type-system/types.ts'
@@ -25,11 +25,11 @@ const ENVELOPE_DECLICK: Envelope = {
   release: 0.003 as Numeric<'s'>
 }
 
-const SampleInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
+const SampleInstrumentType = makeFacetType(InstrumentFacet, RecordFacet.with({
   gain: ParameterFacet.with('db').type()
 }))
 
-const OscillatorInstrumentType = makeType(InstrumentFacet, RecordFacet.with({
+const OscillatorInstrumentType = makeFacetType(InstrumentFacet, RecordFacet.with({
   gain: ParameterFacet.with('db').type()
 }))
 

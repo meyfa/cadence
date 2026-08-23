@@ -5,7 +5,7 @@ import { NumberFacet } from '../../type-system/base/number.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
 import { EffectFacet } from '../../type-system/domain/effect.ts'
 import { ParameterFacet } from '../../type-system/domain/parameter.ts'
-import { makeType, makeUnion } from '../../type-system/factory.ts'
+import { makeFacetType, makeUnionType } from '../../type-system/factory.ts'
 import { Functions, Modules, Parameters } from '../../type-system/helpers.ts'
 import { makeSchema } from '../../type-system/schema.ts'
 import type { Value } from '../../type-system/types.ts'
@@ -14,31 +14,31 @@ const UNITY_GAIN = 0 as Numeric<'db'>
 
 // types
 
-const GainEffectType = makeType(EffectFacet, RecordFacet.with({
+const GainEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   gain: ParameterFacet.with('db').type()
 }))
 
-const PanEffectType = makeType(EffectFacet, RecordFacet.with({
+const PanEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   pan: ParameterFacet.with(undefined).type()
 }))
 
-const LowpassEffectType = makeType(EffectFacet, RecordFacet.with({
+const LowpassEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   frequency: ParameterFacet.with('hz').type()
 }))
 
-const HighpassEffectType = makeType(EffectFacet, RecordFacet.with({
+const HighpassEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   frequency: ParameterFacet.with('hz').type()
 }))
 
-const WidthEffectType = makeType(EffectFacet)
+const WidthEffectType = makeFacetType(EffectFacet)
 
-const DelayEffectType = makeType(EffectFacet, RecordFacet.with({
+const DelayEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   feedback: ParameterFacet.with(undefined).type()
 }))
 
-const ReverbEffectType = makeType(EffectFacet)
+const ReverbEffectType = makeFacetType(EffectFacet)
 
-const ClipEffectType = makeType(EffectFacet, RecordFacet.with({
+const ClipEffectType = makeFacetType(EffectFacet, RecordFacet.with({
   threshold: ParameterFacet.with('db').type()
 }))
 
@@ -145,7 +145,7 @@ const width = Functions.of({
 const delay = Functions.of({
   parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
-    { name: 'time', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
+    { name: 'time', type: makeUnionType(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'feedback', type: NumberFacet.with(undefined).type(), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
@@ -171,7 +171,7 @@ const delay = Functions.of({
 const reverb = Functions.of({
   parameters: makeSchema([
     { name: 'mix', type: NumberFacet.with(undefined).type(), required: true },
-    { name: 'decay', type: makeUnion(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
+    { name: 'decay', type: makeUnionType(NumberFacet.with('beats').type(), NumberFacet.with('s').type()), required: true },
     { name: 'wet', type: NumberFacet.with('db').type(), required: false }
   ]),
   returnType: ReverbEffectType,

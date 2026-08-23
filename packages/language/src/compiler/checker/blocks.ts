@@ -2,7 +2,7 @@ import type { ast } from '@meyfa/cadence-ast'
 import { setAll } from '@meyfa/cadence-utility'
 import type { Capabilities } from '../../type-system/base/function.ts'
 import { RecordFacet } from '../../type-system/base/record.ts'
-import { makeType } from '../../type-system/factory.ts'
+import { makeFacetType } from '../../type-system/factory.ts'
 import type { Schema } from '../../type-system/schema.ts'
 import { makeSchema } from '../../type-system/schema.ts'
 import type { Facet, FacetType } from '../../type-system/types.ts'
@@ -165,5 +165,5 @@ function makeBlockType (facet: Facet, properties: ReadonlyMap<string, Binding>):
     return facet.type()
   }
 
-  return makeType(facet, RecordFacet.with(fields))
+  return makeFacetType(facet, RecordFacet.with(fields))
 }

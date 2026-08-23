@@ -48,7 +48,7 @@ export function makeFacet<const Name extends string, Data> (
     intersect: options?.intersect ?? ((other: Facet) => intersectFacets(facet, other)),
 
     type: () => {
-      cachedType ??= makeType(facet)
+      cachedType ??= makeFacetType(facet)
       return cachedType
     },
 
@@ -86,7 +86,7 @@ function intersectFacets (facet: Facet, other: Facet): Facet | undefined {
   return undefined
 }
 
-export function makeType<const Facets extends readonly Facet[]> (
+export function makeFacetType<const Facets extends readonly Facet[]> (
   ...facets: Facets
 ): FacetType<Facets> {
   if (facets.length === 0) {
@@ -168,7 +168,7 @@ function mergeFacetTypes (type: FacetType, other: FacetType): FacetType | undefi
     }
   }
 
-  return makeType(...resultFacets)
+  return makeFacetType(...resultFacets)
 }
 
 function intersectFacetTypes (type: FacetType, other: FacetType): FacetType | undefined {
@@ -196,10 +196,10 @@ function intersectFacetTypes (type: FacetType, other: FacetType): FacetType | un
     return undefined
   }
 
-  return makeType(...resultFacets)
+  return makeFacetType(...resultFacets)
 }
 
-export function makeUnion<const Members extends readonly FacetType[]> (
+export function makeUnionType<const Members extends readonly FacetType[]> (
   ...members: Members
 ): UnionType<Members> {
   if (members.length === 0) {

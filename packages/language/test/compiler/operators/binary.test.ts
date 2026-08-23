@@ -12,7 +12,7 @@ import { PatternFacet } from '../../../src/type-system/domain/pattern.ts'
 import { createSerialPattern } from '@meyfa/cadence-core'
 import { RecordFacet } from '../../../src/type-system/base/record.ts'
 import { FunctionFacet } from '../../../src/type-system/base/function.ts'
-import { makeUnion } from '../../../src/type-system/factory.ts'
+import { makeUnionType } from '../../../src/type-system/factory.ts'
 
 describe('compiler/operators/binary.ts', () => {
   it('should be defined for all operators', () => {
@@ -90,19 +90,19 @@ describe('compiler/operators/binary.ts', () => {
       const testCases = [
         // operand, expected
         [
-          makeUnion(NumberFacet.with(undefined).type()),
+          makeUnionType(NumberFacet.with(undefined).type()),
           NumberFacet.with(undefined).type()
         ],
         [
-          makeUnion(NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with('hz').type()),
           NumberFacet.with('hz').type()
         ],
         [
-          makeUnion(StringFacet.type()),
+          makeUnionType(StringFacet.type()),
           StringFacet.type()
         ],
         [
-          makeUnion(PatternFacet.type()),
+          makeUnionType(PatternFacet.type()),
           PatternFacet.type()
         ]
       ]
@@ -162,15 +162,15 @@ describe('compiler/operators/binary.ts', () => {
       const testCases = [
         // operand, expected
         [
-          makeUnion(NumberFacet.with(undefined).type()),
+          makeUnionType(NumberFacet.with(undefined).type()),
           NumberFacet.with(undefined).type()
         ],
         [
-          makeUnion(NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with('hz').type()),
           NumberFacet.with('hz').type()
         ],
         [
-          makeUnion(NumberFacet.with('db').type()),
+          makeUnionType(NumberFacet.with('db').type()),
           NumberFacet.with('db').type()
         ]
       ]
@@ -281,14 +281,14 @@ describe('compiler/operators/binary.ts', () => {
       const validTestCases = [
         // first, second, expected result
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
           NumberFacet.with(undefined).type(),
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
         ],
         [
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type()),
           NumberFacet.with(undefined).type(),
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type())
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type())
         ]
       ] as const
 
@@ -303,15 +303,15 @@ describe('compiler/operators/binary.ts', () => {
       const invalidTestCases = [
         // first, second
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
           NumberFacet.with('hz').type()
         ],
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
         ],
         [
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type()),
           NumberFacet.with('hz').type()
         ]
       ] as const
@@ -418,19 +418,19 @@ describe('compiler/operators/binary.ts', () => {
       const validTestCases = [
         // left, right, expected result
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
           NumberFacet.with(undefined).type(),
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
         ],
         [
           NumberFacet.with('hz').type(),
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
-          makeUnion(NumberFacet.with('hz').type(), NumberFacet.with(undefined).type())
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with('hz').type(), NumberFacet.with(undefined).type())
         ],
         [
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type()),
           NumberFacet.with(undefined).type(),
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type())
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type())
         ]
       ] as const
 
@@ -443,15 +443,15 @@ describe('compiler/operators/binary.ts', () => {
       const invalidTestCases = [
         // left, right
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
           NumberFacet.with('hz').type()
         ],
         [
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
-          makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+          makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
         ],
         [
-          makeUnion(PatternFacet.type(), NumberFacet.with(undefined).type()),
+          makeUnionType(PatternFacet.type(), NumberFacet.with(undefined).type()),
           NumberFacet.with('hz').type()
         ]
       ] as const
@@ -534,16 +534,16 @@ describe('compiler/operators/binary.ts', () => {
         const testCases = [
           // first, second
           [
-            makeUnion(NumberFacet.with(undefined).type()),
-            makeUnion(NumberFacet.with(undefined).type())
+            makeUnionType(NumberFacet.with(undefined).type()),
+            makeUnionType(NumberFacet.with(undefined).type())
           ],
           [
-            makeUnion(StringFacet.type()),
-            makeUnion(StringFacet.type())
+            makeUnionType(StringFacet.type()),
+            makeUnionType(StringFacet.type())
           ],
           [
-            makeUnion(BooleanFacet.type()),
-            makeUnion(BooleanFacet.type())
+            makeUnionType(BooleanFacet.type()),
+            makeUnionType(BooleanFacet.type())
           ]
         ]
 
@@ -560,12 +560,12 @@ describe('compiler/operators/binary.ts', () => {
         const testCases = [
           // first, second
           [
-            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type()),
+            makeUnionType(NumberFacet.with(undefined).type(), StringFacet.type()),
             NumberFacet.with(undefined).type()
           ],
           [
-            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type()),
-            makeUnion(NumberFacet.with(undefined).type(), StringFacet.type())
+            makeUnionType(NumberFacet.with(undefined).type(), StringFacet.type()),
+            makeUnionType(NumberFacet.with(undefined).type(), StringFacet.type())
           ]
         ]
 
@@ -711,12 +711,12 @@ describe('compiler/operators/binary.ts', () => {
         const testCases = [
           // first, second
           [
-            makeUnion(NumberFacet.with(undefined).type()),
-            makeUnion(NumberFacet.with(undefined).type())
+            makeUnionType(NumberFacet.with(undefined).type()),
+            makeUnionType(NumberFacet.with(undefined).type())
           ],
           [
-            makeUnion(NumberFacet.with('hz').type()),
-            makeUnion(NumberFacet.with('hz').type())
+            makeUnionType(NumberFacet.with('hz').type()),
+            makeUnionType(NumberFacet.with('hz').type())
           ]
         ]
 
@@ -733,12 +733,12 @@ describe('compiler/operators/binary.ts', () => {
         const testCases = [
           // first, second
           [
-            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+            makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
             NumberFacet.with(undefined).type()
           ],
           [
-            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
-            makeUnion(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
+            makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type()),
+            makeUnionType(NumberFacet.with(undefined).type(), NumberFacet.with('hz').type())
           ]
         ]
 
@@ -793,8 +793,8 @@ describe('compiler/operators/binary.ts', () => {
       })
 
       it('should reject UnionType if any member is not boolean', () => {
-        const validOperand = makeUnion(BooleanFacet.type())
-        const invalidOperand = makeUnion(BooleanFacet.type(), StringFacet.type())
+        const validOperand = makeUnionType(BooleanFacet.type())
+        const invalidOperand = makeUnionType(BooleanFacet.type(), StringFacet.type())
 
         // same operand on both sides
         assert.strictEqual(binaryOperations[operator].check(invalidOperand, invalidOperand), undefined)

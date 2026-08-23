@@ -7,7 +7,7 @@ import { BooleanFacet } from '../../../src/type-system/base/boolean.ts'
 import { NumberFacet } from '../../../src/type-system/base/number.ts'
 import { StringFacet } from '../../../src/type-system/base/string.ts'
 import { Numbers } from '../../../src/type-system/helpers.ts'
-import { makeUnion } from '../../../src/type-system/factory.ts'
+import { makeUnionType } from '../../../src/type-system/factory.ts'
 
 function createNumericTestCases (operator: ast.UnaryOperator): void {
   it('should accept numeric FacetType', () => {
@@ -37,7 +37,7 @@ function createNumericTestCases (operator: ast.UnaryOperator): void {
   })
 
   it('should accept UnionType exactly if all members are numeric FacetType', () => {
-    const validOperand = makeUnion(
+    const validOperand = makeUnionType(
       NumberFacet.with(undefined).type(),
       NumberFacet.with('hz').type(),
       NumberFacet.with('db').type()
@@ -47,7 +47,7 @@ function createNumericTestCases (operator: ast.UnaryOperator): void {
     assert.strictEqual(result?.kind, 'UnionType')
     assert.deepStrictEqual(result.members, validOperand.members)
 
-    const invalidOperand = makeUnion(
+    const invalidOperand = makeUnionType(
       NumberFacet.with(undefined).type(),
       NumberFacet.with('hz').type(),
       StringFacet.type()
@@ -105,7 +105,7 @@ describe('compiler/operators/unary.ts', () => {
     })
 
     it('should accept UnionType exactly if all members are boolean FacetType', () => {
-      const validOperand = makeUnion(
+      const validOperand = makeUnionType(
         BooleanFacet.type(),
         BooleanFacet.type()
       )
@@ -114,7 +114,7 @@ describe('compiler/operators/unary.ts', () => {
       assert.strictEqual(result?.kind, 'FacetType')
       assert.deepStrictEqual([...result.facets.keys()], [BooleanFacet.name])
 
-      const invalidOperand = makeUnion(
+      const invalidOperand = makeUnionType(
         BooleanFacet.type(),
         StringFacet.type()
       )

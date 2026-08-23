@@ -23,7 +23,7 @@ import { RoutingFacet } from '../../type-system/domain/routing.ts'
 import { SourceFacet } from '../../type-system/domain/source.ts'
 import { TrackFacet } from '../../type-system/domain/track.ts'
 import { VoiceFacet } from '../../type-system/domain/voice.ts'
-import { makeType } from '../../type-system/factory.ts'
+import { makeFacetType } from '../../type-system/factory.ts'
 import { Curves, Functions, Numbers, Parameters } from '../../type-system/helpers.ts'
 import type { InferSchema, Schema } from '../../type-system/schema.ts'
 import type { FacetType, Value } from '../../type-system/types.ts'
@@ -439,7 +439,7 @@ function generateInstrument (scope: Scope, expression: ast.Instrument): Value {
   const instrument = scope.top.allocateInstrument({ label, gain: gainParameter, voices })
 
   return !recordBuilder.empty
-    ? makeType(InstrumentFacet, recordBuilder.facet).of(instrument, recordBuilder.record)
+    ? makeFacetType(InstrumentFacet, recordBuilder.facet).of(instrument, recordBuilder.record)
     : InstrumentFacet.type().of(instrument)
 }
 
@@ -548,7 +548,7 @@ function generateMixer (scope: Scope, expression: ast.Mixer): Value {
   const mixer = { buses, routings }
 
   return !recordBuilder.empty
-    ? makeType(MixerFacet, recordBuilder.facet).of(mixer, recordBuilder.record)
+    ? makeFacetType(MixerFacet, recordBuilder.facet).of(mixer, recordBuilder.record)
     : MixerFacet.type().of(mixer)
 }
 
@@ -625,7 +625,7 @@ function generateBus (scope: Scope, expression: ast.Bus): Value {
   }
 
   const bus = scope.top.allocateBus({ label, sources, gain, pan, effects })
-  const value = makeType(BusFacet, recordBuilder.facet).of(bus, recordBuilder.record)
+  const value = makeFacetType(BusFacet, recordBuilder.facet).of(bus, recordBuilder.record)
 
   return value
 }
@@ -671,7 +671,7 @@ function generateTrack (scope: Scope, expression: ast.Track): Value {
   const track = { tempo, parts }
 
   return !recordBuilder.empty
-    ? makeType(TrackFacet, recordBuilder.facet).of(track, recordBuilder.record)
+    ? makeFacetType(TrackFacet, recordBuilder.facet).of(track, recordBuilder.record)
     : TrackFacet.type().of(track)
 }
 
@@ -705,7 +705,7 @@ function generatePart (scope: Scope, expression: ast.Part): Value {
   const part = { label, length: length.value, routings, automations }
 
   return !recordBuilder.empty
-    ? makeType(PartFacet, recordBuilder.facet).of(part, recordBuilder.record)
+    ? makeFacetType(PartFacet, recordBuilder.facet).of(part, recordBuilder.record)
     : PartFacet.type().of(part)
 }
 

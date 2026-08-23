@@ -1,4 +1,4 @@
-import { makeUnion } from '../../type-system/factory.ts'
+import { makeUnionType } from '../../type-system/factory.ts'
 import { isFacetType } from '../../type-system/guards.ts'
 import type { FacetType, Type } from '../../type-system/types.ts'
 
@@ -37,7 +37,7 @@ function combineTypes (types: readonly Type[]): Type {
     return flattened[0]
   }
 
-  return makeUnion(...flattened)
+  return makeUnionType(...flattened)
 }
 
 export function liftOverFacetTypes (left: Type, right: Type, check: CheckBinary): Type | undefined {
