@@ -2,7 +2,7 @@ import { BooleanFacet } from '../../type-system/base/boolean.ts'
 import { NumberFacet } from '../../type-system/base/number.ts'
 import { StringFacet } from '../../type-system/base/string.ts'
 import type { FacetType, Type, Value } from '../../type-system/types.ts'
-import { getPossibleTypeAtoms } from '../../type-system/union.ts'
+import { getPossibleTypeAtoms } from '../../type-system/transforms.ts'
 import { fail } from '../assert.ts'
 
 /**
