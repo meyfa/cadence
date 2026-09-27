@@ -1,9 +1,9 @@
 import type { Part, Program } from '@meyfa/cadence-core'
 import { calculateTotalLength } from '@meyfa/cadence-core'
 import { useGlobalMouseMove, useGlobalMouseUp } from '@meyfa/cadence-editor'
-import { Warning } from '@mui/icons-material'
 import type { Numeric, Observable } from '@meyfa/cadence-utility'
 import type { BeatRange } from '@meyfa/cadence-webaudio'
+import { WarningAmberSharp } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent } from 'react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -322,7 +322,7 @@ const TimeRuler: FunctionComponent<{
       {limited && (
         <div className='pointer-events-none absolute inset-0'>
           <div className='sticky top-0 left-0 z-10 inline-flex h-6 items-center px-2 text-sm text-content-100'>
-            <Warning className='mr-1' fontSize='inherit' />
+            <WarningAmberSharp className='mr-1' fontSize='inherit' />
             Track exceeds rendering limit
           </div>
         </div>
