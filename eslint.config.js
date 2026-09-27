@@ -4,6 +4,9 @@ import pluginReact from 'eslint-plugin-react'
 import pluginReactHooks from 'eslint-plugin-react-hooks'
 import { defineConfig } from 'eslint/config'
 
+// eslint-disable-next-line import/extensions
+import localRules from './eslint-rules/describe-matches-source-file.js'
+
 const packages = [
   {
     name: 'app',
@@ -284,5 +287,19 @@ export default defineConfig([
   crossPackageRelativeImportRestrictions,
 
   // monorepo: Prevent packages from importing themselves via their @ alias (use relative imports instead)
-  ...selfImportRestrictions
+  ...selfImportRestrictions,
+
+  // monorepo: Keep root describe() titles in test files synced with the source file under test.
+  {
+    files: [
+      'packages/*/test/**/*.{test,spec}.{ts,tsx}',
+      'packages/*/test-browser/**/*.{test,spec}.{ts,tsx}'
+    ],
+    plugins: {
+      local: localRules
+    },
+    rules: {
+      'local/describe-matches-source-file': 'error'
+    }
+  }
 ])
