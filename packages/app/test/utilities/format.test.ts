@@ -1,7 +1,7 @@
 import type { Numeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { formatBytes, formatDuration } from '../../src/utilities/format.ts'
+import { formatBeatDuration, formatBeatDurationAsWords, formatBytes, formatDuration, pluralize } from '../../src/utilities/format.ts'
 
 describe('utilities/format.ts', () => {
   describe('formatDuration', () => {
@@ -56,6 +56,65 @@ describe('utilities/format.ts', () => {
         const result = formatBytes(input as Numeric<'bytes'>)
         assert.strictEqual(result, expected, `Expected formatBytes(${input}) to return "${expected}", got "${result}"`)
       }
+    })
+  })
+
+  describe('pluralize', () => {
+    it('uses the singular form for a count of 1', () => {
+      assert.strictEqual(pluralize(1, 'bar'), '1 bar')
+    })
+
+    it('uses the default plural form (appending "s") for other counts', () => {
+      assert.strictEqual(pluralize(0, 'bar'), '0 bars')
+      assert.strictEqual(pluralize(2, 'bar'), '2 bars')
+    })
+
+    it('appends "es" instead of "s" when the singular already ends in "s"', () => {
+      assert.strictEqual(pluralize(2, 'bus'), '2 buses')
+    })
+
+    it('uses an explicit plural form when given', () => {
+      assert.strictEqual(pluralize(2, 'child', 'children'), '2 children')
+    })
+  })
+
+  describe('formatBeatDuration', () => {
+    it('formats durations shorter than a bar as beats only', () => {
+      assert.strictEqual(formatBeatDuration(0 as Numeric<'beats'>, 4), '0:0.00')
+      assert.strictEqual(formatBeatDuration(2.5 as Numeric<'beats'>, 4), '0:2.50')
+    })
+
+    it('formats durations spanning multiple bars', () => {
+      assert.strictEqual(formatBeatDuration(4 as Numeric<'beats'>, 4), '1:0.00')
+      assert.strictEqual(formatBeatDuration(6.25 as Numeric<'beats'>, 4), '1:2.25')
+    })
+
+    it('prefixes negative durations with a minus sign', () => {
+      assert.strictEqual(formatBeatDuration(-6.25 as Numeric<'beats'>, 4), '-1:2.25')
+    })
+  })
+
+  describe('formatBeatDurationAsWords', () => {
+    it('returns "0 beats" for a zero duration', () => {
+      assert.strictEqual(formatBeatDurationAsWords(0 as Numeric<'beats'>, 4), '0 beats')
+    })
+
+    it('describes durations shorter than a bar in beats only', () => {
+      assert.strictEqual(formatBeatDurationAsWords(1 as Numeric<'beats'>, 4), '1 beat')
+      assert.strictEqual(formatBeatDurationAsWords(2 as Numeric<'beats'>, 4), '2 beats')
+    })
+
+    it('describes durations of whole bars in bars only', () => {
+      assert.strictEqual(formatBeatDurationAsWords(4 as Numeric<'beats'>, 4), '1 bar')
+      assert.strictEqual(formatBeatDurationAsWords(8 as Numeric<'beats'>, 4), '2 bars')
+    })
+
+    it('describes durations combining bars and beats', () => {
+      assert.strictEqual(formatBeatDurationAsWords(6 as Numeric<'beats'>, 4), '1 bar 2 beats')
+    })
+
+    it('prefixes negative durations with a minus sign', () => {
+      assert.strictEqual(formatBeatDurationAsWords(-6 as Numeric<'beats'>, 4), '-1 bar 2 beats')
     })
   })
 })
