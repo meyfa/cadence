@@ -35,7 +35,7 @@ function simplify (cursor: TreeCursor, source: string): SimplifiedNode {
   }
 }
 
-describe('grammar.cadence', () => {
+describe('cadence.grammar', () => {
   describe('fixtures', async () => {
     await createFixtureTests({
       directory: new URL('../fixtures/grammar/', import.meta.url),

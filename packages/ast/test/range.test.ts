@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import type { SourceRange } from '../src/range.ts'
 import { combineSourceRanges, getEmptySourceRange, getSourceRange } from '../src/range.ts'
 
-describe('ast/range.ts', () => {
+describe('range.ts', () => {
   describe('getEmptySourceRange()', () => {
     it('should return a source range with zero length at the beginning of the file', () => {
       const range = getEmptySourceRange()
