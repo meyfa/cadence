@@ -27,7 +27,7 @@ function createEnvelope (values: { attack: number, decay: number, sustain: numbe
   }
 }
 
-describe('envelope.ts', () => {
+describe('library/envelope.ts', () => {
   describe('applyEnvelope()', () => {
     it('emits attack and decay without release when hold duration is absent', () => {
       const result = applyEnvelope(createEnvelope({ attack: 1, decay: 2, sustain: -6, release: 3 }), {

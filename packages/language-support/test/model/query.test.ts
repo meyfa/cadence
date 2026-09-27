@@ -4,7 +4,7 @@ import type { BaseModel, IdentifierId, ScopeId } from '../../src/model/model.ts'
 import { findIdentifierAt } from '../../src/model/query.ts'
 import { getRangeAt } from '../helpers.ts'
 
-describe('analysis/query.ts', () => {
+describe('model/query.ts', () => {
   describe('findIdentifierAt()', () => {
     const source = '  foo = bar(baz: qux)  '
 

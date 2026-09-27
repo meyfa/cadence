@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import type { MidiNote } from '../../src/conversion/midi.ts'
 import { convertPitchToMidi, getMidiFrequency } from '../../src/conversion/midi.ts'
 
-describe('midi.ts', () => {
+describe('conversion/midi.ts', () => {
   describe('convertPitchToMidi()', () => {
     it('maps pitches to standard MIDI note numbers', () => {
       assert.strictEqual(convertPitchToMidi('C0'), 12)

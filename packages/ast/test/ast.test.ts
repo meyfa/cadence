@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { make } from '../src/ast.ts'
 import type { SourceRange } from '../src/range.ts'
 
-describe('ast/ast.ts', () => {
+describe('ast.ts', () => {
   describe('make()', () => {
     it('should create a node with the given type, range, and properties', () => {
       const range: SourceRange = { offset: 10, length: 3, line: 2, column: 11 }
