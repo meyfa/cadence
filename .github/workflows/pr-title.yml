@@ -20,7 +20,7 @@ jobs:
       PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.0.0
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24.21.0
           package-manager-cache: false
