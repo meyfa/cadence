@@ -1,4 +1,4 @@
-import type { Bus, BusId, Effect, Instrument, InstrumentId, MixerRouting, Oscillator, Program, Sample, Track, VoiceInstance } from '@meyfa/cadence-core'
+import type { Bus, BusId, ClipEffect, DelayEffect, Effect, GainEffect, HighpassEffect, Instrument, InstrumentId, LowpassEffect, MixerRouting, Oscillator, PanEffect, Program, ReverbEffect, Sample, Track, VoiceInstance, WidthEffect } from '@meyfa/cadence-core'
 import { calculateTotalLength, dbToGain, renderPatternEvents, timeToSeconds } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { computeParameterCurve, feedbackTransform, frequencyTransform, gainTransform, panTransform, transformCurve } from './automation.ts'
@@ -189,129 +189,146 @@ function createOscillatorSourceNode (voice: VoiceInstance<Oscillator>): SourceNo
 
 function createEffect (program: Program, effect: Effect, builder: Builder): SubGraph {
   switch (effect.type) {
-    case 'gain': {
-      return toSubGraph(builder.addNode<GainNode>('gain', {
-        gain: computeParameterCurve(effect.gain, program, gainTransform)
-      }))
+    case 'gain':
+      return createGainEffect(program, effect, builder)
+    case 'pan':
+      return createPanEffect(program, effect, builder)
+    case 'lowpass':
+      return createLowpassEffect(program, effect, builder)
+    case 'highpass':
+      return createHighpassEffect(program, effect, builder)
+    case 'width':
+      return createWidthEffect(program, effect, builder)
+    case 'delay':
+      return createDelayEffect(program, effect, builder)
+    case 'reverb':
+      return createReverbEffect(program, effect, builder)
+    case 'clip':
+      return createClipEffect(program, effect, builder)
+  }
+}
+
+function createGainEffect (program: Program, effect: GainEffect, builder: Builder): SubGraph {
+  return toSubGraph(builder.addNode<GainNode>('gain', {
+    gain: computeParameterCurve(effect.gain, program, gainTransform)
+  }))
+}
+
+function createPanEffect (program: Program, effect: PanEffect, builder: Builder): SubGraph {
+  return toSubGraph(builder.addNode<PanNode>('pan', {
+    pan: computeParameterCurve(effect.pan, program, panTransform)
+  }))
+}
+
+function createLowpassEffect (program: Program, effect: LowpassEffect, builder: Builder): SubGraph {
+  return toSubGraph(builder.addNode<BiquadNode>('biquad', {
+    filterType: 'lowpass',
+    frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
+    // TODO configurable rolloff
+    rolloffPerOctave: 12 as Numeric<'db'>
+  }))
+}
+
+function createHighpassEffect (program: Program, effect: HighpassEffect, builder: Builder): SubGraph {
+  return toSubGraph(builder.addNode<BiquadNode>('biquad', {
+    filterType: 'highpass',
+    frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
+    // TODO configurable rolloff
+    rolloffPerOctave: 12 as Numeric<'db'>
+  }))
+}
+
+function createWidthEffect (program: Program, effect: WidthEffect, builder: Builder): SubGraph {
+  if (Number.isNaN(effect.width)) {
+    throw new Error(`Invalid width: ${effect.width}`)
+  }
+
+  return toSubGraph(builder.addNode<WidthNode>('width', {
+    // TODO time variant
+    width: Math.max(0, Math.min(1, effect.width)) as Numeric<undefined>
+  }))
+}
+
+function createDelayEffect (program: Program, effect: DelayEffect, builder: Builder): SubGraph {
+  if (Number.isNaN(effect.feedback.initial)) {
+    throw new Error(`Invalid feedback: ${effect.feedback.initial}`)
+  }
+
+  if (!Number.isFinite(effect.time.value)) {
+    throw new Error(`Invalid time: ${effect.time.value}`)
+  }
+
+  const delayNodeId = builder.addNode<DelayNode>('delay', {
+    // TODO time variant
+    time: timeToSeconds(effect.time, program.track.tempo)
+  })
+
+  if (effect.feedback.initial > 0 || program.automations.has(effect.feedback.id)) {
+    const feedbackGainId = builder.addNode<GainNode>('gain', {
+      gain: computeParameterCurve(effect.feedback, program, feedbackTransform)
+    })
+
+    builder.addEdge(delayNodeId, feedbackGainId)
+    builder.addEdge(feedbackGainId, delayNodeId)
+  }
+
+  return createDryWetMix(delayNodeId, effect.mix, effect.wet, builder)
+}
+
+function createReverbEffect (program: Program, effect: ReverbEffect, builder: Builder): SubGraph {
+  if (!Number.isFinite(effect.decay.value)) {
+    throw new Error(`Invalid decay: ${effect.decay.value}`)
+  }
+
+  const mix = Math.max(0, Math.min(1, effect.mix))
+  if (mix <= 0) {
+    return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
+  }
+
+  const reverbId = builder.addNode<ReverbNode>('reverb', {
+    // TODO time variant
+    decay: timeToSeconds(effect.decay, program.track.tempo)
+  })
+
+  return createDryWetMix(reverbId, mix, effect.wet, builder)
+}
+
+function createClipEffect (program: Program, effect: ClipEffect, builder: Builder): SubGraph {
+  // The wave shaper curve is not time-variant. Hence, we use two gain nodes to implement the threshold,
+  // one in front of the wave shaper with gain of -threshold, and one after with gain of +threshold to compensate.
+  // If the threshold is -Infinity, we must of course not apply a +Infinity gain, which would be illegal.
+
+  const invert = (value: Numeric<undefined>): Numeric<undefined> => {
+    if (value === 0) {
+      throw new Error('Invalid gain')
     }
 
-    case 'pan': {
-      return toSubGraph(builder.addNode<PanNode>('pan', {
-        pan: computeParameterCurve(effect.pan, program, panTransform)
-      }))
+    return (1 / value) as Numeric<undefined>
+  }
+
+  const thresholdGain = computeParameterCurve(effect.threshold, program, gainTransform)
+
+  const inputId = builder.addNode<GainNode>('gain', {
+    gain: {
+      initial: invert(thresholdGain.initial),
+      points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: invert(value), shape }))
     }
+  })
 
-    case 'lowpass': {
-      return toSubGraph(builder.addNode<BiquadNode>('biquad', {
-        filterType: 'lowpass',
-        frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
-        // TODO configurable rolloff
-        rolloffPerOctave: 12 as Numeric<'db'>
-      }))
-    }
+  const waveShaperId = builder.addNode<WaveShaperNode>('wave_shaper', {
+    curve: new Float32Array([-1, 0, 1])
+  })
 
-    case 'highpass': {
-      return toSubGraph(builder.addNode<BiquadNode>('biquad', {
-        filterType: 'highpass',
-        frequency: computeParameterCurve(effect.frequency, program, frequencyTransform),
-        // TODO configurable rolloff
-        rolloffPerOctave: 12 as Numeric<'db'>
-      }))
-    }
+  const outputId = builder.addNode<GainNode>('gain', {
+    gain: thresholdGain
+  })
 
-    case 'width': {
-      if (Number.isNaN(effect.width)) {
-        throw new Error(`Invalid width: ${effect.width}`)
-      }
+  builder.addEdge(inputId, waveShaperId)
+  builder.addEdge(waveShaperId, outputId)
 
-      return toSubGraph(builder.addNode<WidthNode>('width', {
-        // TODO time variant
-        width: Math.max(0, Math.min(1, effect.width)) as Numeric<undefined>
-      }))
-    }
-
-    case 'delay': {
-      if (Number.isNaN(effect.feedback.initial)) {
-        throw new Error(`Invalid feedback: ${effect.feedback.initial}`)
-      }
-
-      if (!Number.isFinite(effect.time.value)) {
-        throw new Error(`Invalid time: ${effect.time.value}`)
-      }
-
-      const delayNodeId = builder.addNode<DelayNode>('delay', {
-        // TODO time variant
-        time: timeToSeconds(effect.time, program.track.tempo)
-      })
-
-      if (effect.feedback.initial > 0 || program.automations.has(effect.feedback.id)) {
-        const feedbackGainId = builder.addNode<GainNode>('gain', {
-          gain: computeParameterCurve(effect.feedback, program, feedbackTransform)
-        })
-
-        builder.addEdge(delayNodeId, feedbackGainId)
-        builder.addEdge(feedbackGainId, delayNodeId)
-      }
-
-      return createDryWetMix(delayNodeId, effect.mix, effect.wet, builder)
-    }
-
-    case 'reverb': {
-      if (!Number.isFinite(effect.decay.value)) {
-        throw new Error(`Invalid decay: ${effect.decay.value}`)
-      }
-
-      const mix = Math.max(0, Math.min(1, effect.mix))
-      if (mix <= 0) {
-        return toSubGraph(builder.addNode<IdentityNode>('identity', {}))
-      }
-
-      const reverbId = builder.addNode<ReverbNode>('reverb', {
-        // TODO time variant
-        decay: timeToSeconds(effect.decay, program.track.tempo)
-      })
-
-      return createDryWetMix(reverbId, mix, effect.wet, builder)
-    }
-
-    case 'clip': {
-      // The wave shaper curve is not time-variant. Hence, we use two gain nodes to implement the threshold,
-      // one in front of the wave shaper with gain of -threshold, and one after with gain of +threshold to compensate.
-      // If the threshold is -Infinity, we must of course not apply a +Infinity gain, which would be illegal.
-
-      const invert = (value: Numeric<undefined>): Numeric<undefined> => {
-        if (value === 0) {
-          throw new Error('Invalid gain')
-        }
-
-        return (1 / value) as Numeric<undefined>
-      }
-
-      const thresholdGain = computeParameterCurve(effect.threshold, program, gainTransform)
-
-      const inputId = builder.addNode<GainNode>('gain', {
-        gain: {
-          initial: invert(thresholdGain.initial),
-          points: thresholdGain.points.map(({ time, value, shape }) => ({ time, value: invert(value), shape }))
-        }
-      })
-
-      const waveShaperId = builder.addNode<WaveShaperNode>('wave_shaper', {
-        curve: new Float32Array([-1, 0, 1])
-      })
-
-      const outputId = builder.addNode<GainNode>('gain', {
-        gain: thresholdGain
-      })
-
-      builder.addEdge(inputId, waveShaperId)
-      builder.addEdge(waveShaperId, outputId)
-
-      return {
-        inputs: [inputId],
-        outputs: [outputId]
-      }
-    }
+  return {
+    inputs: [inputId],
+    outputs: [outputId]
   }
 }
 
