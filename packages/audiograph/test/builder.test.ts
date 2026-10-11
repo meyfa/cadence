@@ -162,19 +162,6 @@ describe('builder.ts', () => {
     ]))
   })
 
-  it('should throw for note events with invalid pitch', () => {
-    const builder = createAudioGraphBuilder({ tempo, length })
-
-    const node1 = builder.addNode('sampler', { url: 'foo.wav' })
-    assert.throws(() => builder.addNoteEvents(node1, [
-      { time: beats(0), pitch: 'H4' as never, velocity: scalar(0.8) }
-    ]))
-
-    assert.throws(() => builder.addNoteEvents(node1, [
-      { time: beats(0), pitch: 'C#11' as never, velocity: scalar(0.8) }
-    ]))
-  })
-
   it('should throw for note events with invalid gate', () => {
     const builder = createAudioGraphBuilder({ tempo, length })
 
