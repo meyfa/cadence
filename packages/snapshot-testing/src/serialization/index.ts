@@ -35,15 +35,6 @@ const reviver = (key: string | undefined, value: unknown) => {
   return value
 }
 
-function stringifyListLike (prefix: string, suffix: string, items: readonly string[], level: number, collapse: boolean): string {
-  if (items.length === 0 || collapse) {
-    return `${prefix}${items.join(', ')}${suffix}`
-  }
-
-  const indent = SPACE.repeat(level)
-  return `${prefix}\n${items.map((item) => `${indent}${SPACE}${item}`).join(',\n')}\n${indent}${suffix}`
-}
-
 /**
  * Serialize the data similarly to JSON.stringify, but with support for some additional types (like Map and Set)
  * and with advanced formatting options (like collapsing certain properties onto a single line).
@@ -55,40 +46,32 @@ export function serialize (data: unknown, options?: SerializationOptions): strin
 
   const stringify = (key: string | undefined, value: unknown, level: number, collapse = false): string | undefined => {
     collapse ||= shouldCollapse(key, value)
+    value = transformValue(key, value)
 
-    if (value != null && (typeof value === 'object' || typeof value === 'function')) {
-      const toJSON = (value as { toJSON?: (key: string) => unknown }).toJSON
-      if (typeof toJSON === 'function') {
-        value = toJSON.call(value, key ?? '')
-      }
-    }
-
-    value = replacer(key, value)
-
-    // non-serializable (undefined, function, symbol)
-    if (value === undefined || typeof value === 'function' || typeof value === 'symbol') {
+    if (isUnserializedValue(value)) {
       return undefined
     }
 
-    // primitive (string, number, boolean, null)
-    // and boxed primitives (String, Number, Boolean)
-    if (value === null || typeof value !== 'object' || value instanceof String || value instanceof Number || value instanceof Boolean) {
+    if (isIllegalValue(value)) {
+      throw new TypeError(`Value of type ${getTypeName(value)} cannot be serialized`)
+    }
+
+    if (isPrimitiveValue(value)) {
       return JSON.stringify(value)
     }
 
-    // array
     if (Array.isArray(value)) {
       const items = Array.from(value, (value, key) => stringify(`${key}`, value, level + 1, collapse) ?? 'null')
       return stringifyListLike('[', ']', items, level, collapse)
     }
 
-    // object
     const items = Object.entries(value)
       .map(([key, value]) => {
         const string = stringify(key, value, level + 1, collapse)
         return string == null ? undefined : `${JSON.stringify(key)}: ${string}`
       })
       .filter((item) => item != null)
+
     return stringifyListLike('{', '}', items, level, collapse)
   }
 
@@ -101,4 +84,67 @@ export function serialize (data: unknown, options?: SerializationOptions): strin
  */
 export function deserialize (json: string): unknown {
   return JSON.parse(json, reviver)
+}
+
+function transformValue (key: string | undefined, value: unknown): unknown {
+  if (value != null && (typeof value === 'object' || typeof value === 'function')) {
+    const toJSON = (value as { toJSON?: (key: string) => unknown }).toJSON
+    if (typeof toJSON === 'function') {
+      value = toJSON.call(value, key ?? '')
+    }
+  }
+
+  return replacer(key, value)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+type UnserializedValue = undefined | Function | symbol
+
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+type IllegalValue = bigint | BigInt
+
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+type PrimitiveValue = null | string | number | boolean | String | Number | Boolean
+
+function isUnserializedValue (value: unknown): value is UnserializedValue {
+  return value === undefined ||
+    typeof value === 'function' ||
+    typeof value === 'symbol'
+}
+
+function isIllegalValue (value: unknown): value is IllegalValue {
+  return typeof value === 'bigint' ||
+    value instanceof BigInt
+}
+
+function isPrimitiveValue (value: unknown): value is PrimitiveValue {
+  return value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof String ||
+    value instanceof Number ||
+    value instanceof Boolean
+}
+
+function getTypeName (value: unknown): string {
+  if (value === null) {
+    return 'null'
+  }
+
+  const type = typeof value
+  if (type === 'object') {
+    return Object.prototype.toString.call(value).slice(8, -1)
+  }
+
+  return type
+}
+
+function stringifyListLike (prefix: string, suffix: string, items: readonly string[], level: number, collapse: boolean): string {
+  if (items.length === 0 || collapse) {
+    return `${prefix}${items.join(', ')}${suffix}`
+  }
+
+  const indent = SPACE.repeat(level)
+  return `${prefix}\n${items.map((item) => `${indent}${SPACE}${item}`).join(',\n')}\n${indent}${suffix}`
 }
