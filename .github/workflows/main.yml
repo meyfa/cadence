@@ -77,5 +77,9 @@ jobs:
           node-version: 24.21.0
           cache: npm
       - run: npm ci
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
