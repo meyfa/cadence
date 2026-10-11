@@ -196,7 +196,18 @@ describe('serialization/index.ts', () => {
 
       assert.throws(() => serialize(input), {
         name: 'TypeError',
-        message: 'Do not know how to serialize a BigInt'
+        message: 'Value of type bigint cannot be serialized'
+      })
+    })
+
+    it('throws for boxed BigInt values', () => {
+      const input = {
+        bigInt: Object(1n)
+      }
+
+      assert.throws(() => serialize(input), {
+        name: 'TypeError',
+        message: 'Value of type BigInt cannot be serialized'
       })
     })
 
