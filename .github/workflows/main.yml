@@ -7,8 +7,8 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: Build
+  container:
+    name: Container
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -16,21 +16,28 @@ jobs:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/setup-buildx-action@v4.4.1
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.4.1
-
-      - name: Build
-        id: docker-build
-        uses: docker/build-push-action@v7.4.0
+      - uses: docker/build-push-action@v7.4.0
         with:
           context: ./
           file: ./container/Containerfile
           push: false
+          load: true
+          tags: cadence:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.21.0
+      - run: docker run --detach --name cadence-ci --publish 127.0.0.1:8080:80 cadence:ci
+      - run: npm run container-test
+      - if: always()
+        run: docker logs cadence-ci
+      - if: always()
+        run: docker rm --force cadence-ci || true
 
   lint:
     name: Lint

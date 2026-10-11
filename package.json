@@ -15,7 +15,8 @@
     "build": "npm run --workspace=packages/app build --",
     "test": "npm run --workspaces --if-present test --",
     "test:browser": "npm run --workspaces --if-present test:browser --",
-    "license-check": "node scripts/license-check.ts"
+    "license-check": "node scripts/license-check.ts",
+    "container-test": "node --test \"container/test/**/*.test.ts\""
   },
   "repository": {
     "type": "git",
