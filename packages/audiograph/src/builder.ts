@@ -1,5 +1,4 @@
 import type { Asset, AssetId, NoteEvent } from '@meyfa/cadence-core'
-import { isPitch } from '@meyfa/cadence-core'
 import type { Numeric } from '@meyfa/cadence-utility'
 import type { EntityKey } from './entities.ts'
 import type { AnyNode, AudioGraph, Edge, Meters, NodeId } from './graph.ts'
@@ -110,22 +109,18 @@ export function createAudioGraphBuilder<TNode extends AnyNode = AnyNode> (meta: 
 
 function validateNoteEvent (event: NoteEvent): void {
   if (!Number.isFinite(event.time) || event.time < 0) {
-    throw invalidNoteEvent(event)
-  }
-
-  if (event.pitch != null && !isPitch(event.pitch)) {
-    throw invalidNoteEvent(event)
+    throw createNoteEventError(event)
   }
 
   if (!Number.isFinite(event.velocity) || event.velocity < 0 || event.velocity > 1) {
-    throw invalidNoteEvent(event)
+    throw createNoteEventError(event)
   }
 
   if (event.gate != null && (!Number.isFinite(event.gate) || event.gate < 0)) {
-    throw invalidNoteEvent(event)
+    throw createNoteEventError(event)
   }
 }
 
-function invalidNoteEvent (event: NoteEvent): Error {
+function createNoteEventError (event: NoteEvent): Error {
   return new Error(`Invalid note event: ${JSON.stringify(event)}`)
 }
