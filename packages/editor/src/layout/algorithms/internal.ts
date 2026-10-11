@@ -1,4 +1,4 @@
-import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, TabId } from '../types.ts'
+import type { DockLayout, LayoutNode, LayoutNodeId, PaneNode, SplitNode, SplitOrientation, TabId } from '../types.ts'
 
 export type NodeUpdates = ReadonlyMap<LayoutNodeId, LayoutNode>
 
@@ -43,76 +43,87 @@ export function updateNodesInLayout (layout: DockLayout, updates: NodeUpdates, o
 }
 
 function normalizeLayout (layout: DockLayout): DockLayout {
-  const normalizePaneNode = (node: PaneNode): LayoutNode | undefined => {
-    if (node.tabs.length === 0) {
-      return undefined
-    }
-
-    if (!node.tabs.some((tab) => tab.id === node.activeTabId)) {
-      return { ...node, activeTabId: node.tabs[0].id }
-    }
-
-    return node
-  }
-
-  const normalizeSplitNode = (node: SplitNode): LayoutNode | undefined => {
-    const children: LayoutNode[] = []
-    const sizes: number[] = []
-
-    for (const [index, child] of node.children.entries()) {
-      const normalized = normalizeNode(child)
-      if (normalized != null) {
-        children.push(normalized)
-        sizes.push(node.sizes[index] ?? 1)
-      }
-    }
-
-    // If no children remain, remove this node
-    if (children.length === 0) {
-      return undefined
-    }
-
-    // Merge child splits with the same orientation
-    const mergedChildren: LayoutNode[] = []
-    const mergedSizes: number[] = []
-
-    for (const [index, child] of children.entries()) {
-      const size = sizes.at(index) ?? 1
-
-      if (child.type === 'split' && child.orientation === node.orientation) {
-        for (const [otherIndex, otherChild] of child.children.entries()) {
-          mergedChildren.push(otherChild)
-          mergedSizes.push(size * (child.sizes.at(otherIndex) ?? 1))
-        }
-      } else {
-        mergedChildren.push(child)
-        mergedSizes.push(size)
-      }
-    }
-
-    // If only one child remains, lift it up
-    if (mergedChildren.length === 1) {
-      return mergedChildren[0]
-    }
-
-    // Normalize sizes
-    const totalSize = mergedSizes.reduce((sum, size) => sum + size, 0)
-    const normalizedSizes = mergedSizes.map((size) => size / totalSize)
-
-    return { ...node, children: mergedChildren, sizes: normalizedSizes }
-  }
-
-  const normalizeNode = (node: LayoutNode): LayoutNode | undefined => {
-    switch (node.type) {
-      case 'pane':
-        return normalizePaneNode(node)
-      case 'split':
-        return normalizeSplitNode(node)
-    }
-  }
-
   return {
     ...layout,
     main: layout.main != null ? normalizeNode(layout.main) : layout.main
   }
+}
+
+function normalizeNode (node: LayoutNode): LayoutNode | undefined {
+  switch (node.type) {
+    case 'pane':
+      return normalizePaneNode(node)
+    case 'split':
+      return normalizeSplitNode(node)
+  }
+}
+
+function normalizePaneNode (node: PaneNode): LayoutNode | undefined {
+  if (node.tabs.length === 0) {
+    return undefined
+  }
+
+  if (!node.tabs.some((tab) => tab.id === node.activeTabId)) {
+    return { ...node, activeTabId: node.tabs[0].id }
+  }
+
+  return node
+}
+
+function normalizeSplitNode (node: SplitNode): LayoutNode | undefined {
+  const normalized = normalizeChildren(node)
+  if (normalized.children.length === 0) {
+    // the split node can be removed
+    return undefined
+  }
+
+  const merged = mergeSplitsWithOrientation(normalized, node.orientation)
+  if (merged.children.length === 1) {
+    // lift the single child up
+    return merged.children[0]
+  }
+
+  const totalSize = merged.sizes.reduce((sum, size) => sum + size, 0)
+  const normalizedSizes = merged.sizes.map((size) => size / totalSize)
+
+  return { ...node, children: merged.children, sizes: normalizedSizes }
+}
+
+type ChildrenWithSize = Pick<SplitNode, 'children' | 'sizes'>
+
+function normalizeChildren (input: ChildrenWithSize): ChildrenWithSize {
+  const children: LayoutNode[] = []
+  const sizes: number[] = []
+
+  for (const [index, child] of input.children.entries()) {
+    const normalized = normalizeNode(child)
+    if (normalized != null) {
+      children.push(normalized)
+      sizes.push(input.sizes[index] ?? 1)
+    }
+  }
+
+  return { children, sizes }
+}
+
+function mergeSplitsWithOrientation (input: ChildrenWithSize, orientation: SplitOrientation): ChildrenWithSize {
+  const children: LayoutNode[] = []
+  const sizes: number[] = []
+
+  for (const [index, child] of input.children.entries()) {
+    const size = input.sizes.at(index) ?? 1
+
+    if (child.type !== 'split' || child.orientation !== orientation) {
+      children.push(child)
+      sizes.push(size)
+      continue
+    }
+
+    for (const [otherIndex, otherChild] of child.children.entries()) {
+      children.push(otherChild)
+      sizes.push(size * (child.sizes.at(otherIndex) ?? 1))
+    }
+  }
+
+  return { children, sizes }
 }
