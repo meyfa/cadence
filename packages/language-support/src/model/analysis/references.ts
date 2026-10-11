@@ -82,19 +82,46 @@ interface BindingLookup {
 }
 
 function buildBindingLookup (model: BaseModel): BindingLookup {
-  const namedImports = new Map<string, Binding>()
-  const defaultImports = new Map<string, Import>()
-  const byScopeAndName = new Map<string, Map<string, Binding>>()
+  return {
+    namedImports: getNamedImports(model),
+    defaultImports: getDefaultImports(model),
+    byScopeAndName: getBindingsByScopeAndName(model),
+    parentScopes: getParentScopes(model)
+  }
+}
+
+function getNamedImports (model: BaseModel): ReadonlyMap<string, Binding> {
+  const result = new Map<string, Binding>()
 
   for (const binding of model.bindings) {
-    if (binding.kind === 'use-alias' && !namedImports.has(binding.name)) {
-      namedImports.set(binding.name, binding)
+    if (binding.kind === 'use-alias' && !result.has(binding.name)) {
+      result.set(binding.name, binding)
     }
+  }
 
-    let scopeMap = byScopeAndName.get(binding.scopeId)
+  return result
+}
+
+function getDefaultImports (model: BaseModel): ReadonlyMap<string, Import> {
+  const result = new Map<string, Import>()
+
+  for (const imp of model.imports) {
+    if (imp.alias == null && !result.has(imp.moduleName)) {
+      result.set(imp.moduleName, imp)
+    }
+  }
+
+  return result
+}
+
+function getBindingsByScopeAndName (model: BaseModel): ReadonlyMap<string, ReadonlyMap<string, Binding>> {
+  const result = new Map<string, Map<string, Binding>>()
+
+  for (const binding of model.bindings) {
+    let scopeMap = result.get(binding.scopeId)
     if (scopeMap == null) {
       scopeMap = new Map<string, Binding>()
-      byScopeAndName.set(binding.scopeId, scopeMap)
+      result.set(binding.scopeId, scopeMap)
     }
 
     if (!scopeMap.has(binding.name)) {
@@ -102,20 +129,19 @@ function buildBindingLookup (model: BaseModel): BindingLookup {
     }
   }
 
-  for (const imp of model.imports) {
-    if (imp.alias == null && !defaultImports.has(imp.moduleName)) {
-      defaultImports.set(imp.moduleName, imp)
-    }
-  }
+  return result
+}
 
-  const parentScopes = new Map<string, string>()
+function getParentScopes (model: BaseModel): ReadonlyMap<string, string> {
+  const result = new Map<string, string>()
+
   for (const scope of model.scopes) {
     if (scope.parentId != null) {
-      parentScopes.set(scope.id, scope.parentId)
+      result.set(scope.id, scope.parentId)
     }
   }
 
-  return { namedImports, defaultImports, byScopeAndName, parentScopes }
+  return result
 }
 
 function resolveDefinitionBinding (occurrence: Identifier, model: BaseModel, lookup: BindingLookup): Binding | undefined {
