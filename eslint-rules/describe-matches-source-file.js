@@ -72,7 +72,7 @@ const describeMatchesSourceFile = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Enforce that the root describe() title of a test file refers to an existing source file.'
+      description: 'Enforce that the root describe() title and test file name match the source file.'
     },
     schema: []
   },
@@ -84,6 +84,8 @@ const describeMatchesSourceFile = {
     }
 
     const sourceDirectory = path.join(packageRoot, 'src')
+    const testFileName = path.basename(context.filename)
+    const testFileSuffix = /(\.(?:test|spec)\.(?:ts|tsx))$/.exec(testFileName)?.[1]
 
     const astPath = 'Program > ExpressionStatement > CallExpression[callee.name="describe"]'
 
@@ -96,14 +98,23 @@ const describeMatchesSourceFile = {
       const title = titleNode.value
 
       const { files, directories } = getSourceFiles(sourceDirectory)
-      if (files.has(title) || directories.has(title)) {
+      if (!files.has(title) && !directories.has(title)) {
+        context.report({
+          node: titleNode,
+          message: `describe() title "${title}" does not match any file or directory in src/.`
+        })
         return
       }
 
-      context.report({
-        node: titleNode,
-        message: `describe() title "${title}" does not match any file or directory in src/.`
-      })
+      const expectedBaseName = path.parse(title).name
+
+      const expectedTestFileName = `${expectedBaseName}${testFileSuffix}`
+      if (testFileName !== expectedTestFileName) {
+        context.report({
+          node: titleNode,
+          message: `Test file name "${testFileName}" does not match ${files.has(title) ? 'source file' : 'source directory'} "${title}"; expected "${expectedTestFileName}".`
+        })
+      }
     }
 
     return { [astPath]: listener }
