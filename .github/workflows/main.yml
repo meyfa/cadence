@@ -26,8 +26,9 @@ jobs:
           push: false
           load: true
           tags: cadence:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # prevent different architectures overwriting each other's cache
+          cache-from: type=gha,scope=cadence-${{ runner.arch }}
+          cache-to: type=gha,scope=cadence-${{ runner.arch }},mode=max
 
       - uses: actions/setup-node@v7.1.0
         with:
