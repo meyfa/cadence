@@ -5,7 +5,7 @@ import type { PanelProps } from '@meyfa/cadence-editor'
 import { useNonNullValue, useService } from '@meyfa/cadence-editor'
 import { Flowchart } from '@meyfa/cadence-flowchart'
 import clsx from 'clsx'
-import type { CSSProperties, FunctionComponent, PropsWithChildren } from 'react'
+import type { CSSProperties, FunctionComponent, PropsWithChildren, RefObject } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.tsx'
 import { Popover } from '../../components/popover/Popover.tsx'
@@ -216,19 +216,21 @@ const StereoMeter: FunctionComponent<{
   const peakRRef = useRef<SVGRectElement>(null)
 
   useEffect(() => {
+    const renderRMS = (ref: RefObject<SVGRectElement | null>, value: number) => {
+      ref.current?.setAttribute('y', (1 - value) * 100 + '%')
+      ref.current?.setAttribute('height', value * 100 + '%')
+    }
+
+    const renderPeak = (ref: RefObject<SVGRectElement | null>, value: number) => {
+      ref.current?.setAttribute('y', (1 - value) * 100 + '%')
+      ref.current?.setAttribute('fill', value > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)')
+    }
+
     return meteringService?.subscribeToGain(entityKey, (measurement) => {
-      const [peakLeft, peakRight] = measurement.peak
-      const [rmsLeft, rmsRight] = measurement.rms
-
-      rmsLRef.current?.setAttribute('y', (1 - rmsLeft) * 100 + '%')
-      rmsLRef.current?.setAttribute('height', rmsLeft * 100 + '%')
-      rmsRRef.current?.setAttribute('y', (1 - rmsRight) * 100 + '%')
-      rmsRRef.current?.setAttribute('height', rmsRight * 100 + '%')
-
-      peakLRef.current?.setAttribute('y', (1 - peakLeft) * 100 + '%')
-      peakLRef.current?.setAttribute('fill', peakLeft > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)')
-      peakRRef.current?.setAttribute('y', (1 - peakRight) * 100 + '%')
-      peakRRef.current?.setAttribute('fill', peakRight > 1 ? 'var(--color-error-surface)' : 'var(--color-content-300)')
+      renderRMS(rmsLRef, measurement.rms[0])
+      renderRMS(rmsRRef, measurement.rms[1])
+      renderPeak(peakLRef, measurement.peak[0])
+      renderPeak(peakRRef, measurement.peak[1])
     })
   }, [meteringService, entityKey])
 
