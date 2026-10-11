@@ -310,21 +310,17 @@ function parseImport (document: TextLike, node: SyntaxNode): Omit<Import, 'id'> 
   let alias: string | undefined
   let aliasRange: SourceRange | undefined
 
-  const cursor = node.cursor()
-
-  if (cursor.firstChild()) {
-    do {
-      switch (cursor.type.name) {
-        case 'String':
-          moduleName ??= parseStringLiteral(document.sliceString(cursor.from, cursor.to))
-          break
-        case 'UseAlias':
-          alias ??= document.sliceString(cursor.from, cursor.to)
-          aliasRange ??= toSourceRange(document, cursor.from, cursor.to)
-          break
-      }
-    } while (cursor.nextSibling())
-  }
+  forEachChildNode(node, (cursor) => {
+    switch (cursor.type.name) {
+      case 'String':
+        moduleName ??= parseStringLiteral(document.sliceString(cursor.from, cursor.to))
+        break
+      case 'UseAlias':
+        alias ??= document.sliceString(cursor.from, cursor.to)
+        aliasRange ??= toSourceRange(document, cursor.from, cursor.to)
+        break
+    }
+  })
 
   if (moduleName == null || alias == null || aliasRange == null) {
     return undefined
@@ -351,23 +347,29 @@ function parseAssignment (document: TextLike, node: SyntaxNode): AssignmentParse
   let isExposed = false
   let variable: VariableName | undefined
 
+  forEachChildNode(node, (cursor) => {
+    switch (cursor.type.name) {
+      case 'VariableDefinition':
+        variable = getVariableName(document, cursor.from, cursor.to)
+        break
+      case '=':
+        hasEquals = true
+        break
+      case '@':
+        isExposed = true
+        break
+    }
+  })
+
+  return { hasEquals, isExposed, variable }
+}
+
+function forEachChildNode (node: SyntaxNode, callback: (cursor: TreeCursor) => void): void {
   const cursor = node.cursor()
 
   if (cursor.firstChild()) {
     do {
-      switch (cursor.type.name) {
-        case 'VariableDefinition':
-          variable = getVariableName(document, cursor.from, cursor.to)
-          break
-        case '=':
-          hasEquals = true
-          break
-        case '@':
-          isExposed = true
-          break
-      }
+      callback(cursor)
     } while (cursor.nextSibling())
   }
-
-  return { hasEquals, isExposed, variable }
 }
