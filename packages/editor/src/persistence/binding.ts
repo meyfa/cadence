@@ -138,13 +138,12 @@ export function usePersistentBinding<T> (
     const localChanged = !compare(value, previousLocalValue)
     const persistedChanged = !compare(persistedValue, previousPersistedValue)
     const valuesMatch = compare(value, persistedValue)
-
-    const conflictCleared = previousConflict != null && meta.conflict == null
+    const conflictExists = previousConflict != null
 
     if (meta.loaded && meta.conflict == null && !valuesMatch) {
       if (!previousLoaded || (persistedChanged && !localChanged)) {
         applyValueRef.current(persistedValue)
-      } else if (!persistedChanged && (localChanged || conflictCleared)) {
+      } else if (!persistedChanged && (localChanged || conflictExists)) {
         setPersistedValue(value)
       }
     }

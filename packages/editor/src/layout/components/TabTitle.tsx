@@ -10,7 +10,7 @@ import { usePanelById } from './panel-lookup.ts'
 
 const MOUSE_BUTTON_MIDDLE = 1
 
-type TabTitleState = 'inactive' | 'active' | 'focused' | 'dragging'
+export type TabTitleState = 'inactive' | 'active' | 'focused' | 'dragging'
 type TabDropPosition = 'before' | 'after'
 
 function getTabDropTargetId (tab: Tab, position: TabDropPosition): string {

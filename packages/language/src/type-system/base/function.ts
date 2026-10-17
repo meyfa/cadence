@@ -1,5 +1,5 @@
 import { makeFacet } from '../factory.ts'
-import type { InferSchema, Schema } from '../schema.ts'
+import type { InferSchema, Schema, SchemaItem } from '../schema.ts'
 import type { CustomComparable, FacetType, Type, ValueForType } from '../types.ts'
 
 export interface Capabilities {
@@ -97,19 +97,26 @@ export const FunctionFacet = {
 }
 
 function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
-  // Return type:
-  // - other return type must be assignable to spec return type (covariant)
-  if (!spec.returnType.is(other.returnType)) {
-    return false
-  }
+  return isReturnTypeAssignableFrom(spec, other) &&
+    areCapabilitiesAssignableFrom(spec, other) &&
+    areParametersAssignableFrom(spec, other)
+}
 
-  // Capabilities:
-  // - non-blocking is assignable to blocking, but not vice versa
+function isReturnTypeAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
+  // covariant: the other return type must be assignable to spec return type
+  return spec.returnType.is(other.returnType)
+}
+
+function areCapabilitiesAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
+  // non-blocking is assignable to blocking, but not vice versa
   if (!spec.capabilities.mayBlock && other.capabilities.mayBlock) {
     return false
   }
 
-  // parameters:
+  return true
+}
+
+function areParametersAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
   // - same or compatible parameter count (accounting for optional tail parameters):
   //     other can have equal or more optional parameters, not less
   //     Example: (a: string, b?: number) is assignable to (a: string), but not vice versa
@@ -132,15 +139,7 @@ function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
     const specParam = spec.parameters.items[specIndex]
     const otherParam = other.parameters.items[otherIndex]
 
-    if (specParam.name !== otherParam.name) {
-      return false
-    }
-
-    if (!otherParam.type.is(specParam.type)) {
-      return false
-    }
-
-    if (!specParam.required && otherParam.required) {
+    if (!isParameterAssignableFrom(specParam, otherParam)) {
       return false
     }
 
@@ -155,6 +154,22 @@ function isAssignableFrom (spec: FunctionSpec, other: FunctionSpec): boolean {
       return false
     }
     ++otherIndex
+  }
+
+  return true
+}
+
+function isParameterAssignableFrom (spec: SchemaItem, other: SchemaItem): boolean {
+  if (spec.name !== other.name) {
+    return false
+  }
+
+  if (!other.type.is(spec.type)) {
+    return false
+  }
+
+  if (!spec.required && other.required) {
+    return false
   }
 
   return true
