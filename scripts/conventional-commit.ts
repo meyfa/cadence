@@ -17,23 +17,24 @@ const scopes = [
 const limit = 72
 
 function validateMessage (message: string): readonly string[] {
-  const errors: string[] = []
+  if (message.length > limit) {
+    return [`Commit message length ${message.length} exceeds ${limit} characters`]
+  }
 
   if (message.trim() === '') {
-    errors.push('Commit message cannot be empty')
-    return errors
+    return ['Commit message cannot be empty']
   }
 
-  if (message.length > limit) {
-    errors.push(`Commit message length ${message.length} exceeds ${limit} characters`)
-  }
+  return validateMessageFormat(message)
+}
 
+function validateMessageFormat (message: string): readonly string[] {
   const match = /^([a-z]+)(\([^)]*\))?(!)?: (.+)$/i.exec(message)
-
   if (match === null) {
-    errors.push('Commit message does not match the required format: <type>[scope][!]: <description>')
-    return errors
+    return ['Commit message does not match the required format: <type>[scope][!]: <description>']
   }
+
+  const errors: string[] = []
 
   const type = match.at(1)
   const scope = match.at(2)?.slice(1, -1)

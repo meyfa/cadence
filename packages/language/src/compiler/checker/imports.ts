@@ -48,11 +48,13 @@ export function checkImports (imports: readonly ast.Import[]): CheckedImports {
     aliases.set(statement.alias, libraryName)
   }
 
-  const result = new Map<string, Binding>()
+  return errors.length === 0
+    ? { errors, result: getImportBindings(defaults, aliases) }
+    : { errors, result: new Map<string, Binding>() }
+}
 
-  if (errors.length > 0) {
-    return { errors, result }
-  }
+function getImportBindings (defaults: ReadonlySet<string>, aliases: ReadonlyMap<string, string>): ReadonlyMap<string, Binding> {
+  const result = new Map<string, Binding>()
 
   // defaults must come before aliases to allow aliasing over default imports
   for (const importName of defaults) {
@@ -67,7 +69,7 @@ export function checkImports (imports: readonly ast.Import[]): CheckedImports {
     result.set(alias, { name: alias, type, definite: true })
   }
 
-  return { errors, result }
+  return result
 }
 
 function ensureStandardModule (moduleName: string): Value<typeof ModuleFacet> {

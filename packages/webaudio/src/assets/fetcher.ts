@@ -86,26 +86,28 @@ export async function fetchAudioBuffer (
     readonly audioBufferCache?: AssetCache<AudioBuffer>
   }
 ): Promise<AudioBuffer> {
+  const arrayBufferCache = caches?.arrayBufferCache
+  const audioBufferCache = caches?.audioBufferCache
   const key = url.toString()
 
-  const cached = caches?.audioBufferCache?.get(key)
+  const cached = audioBufferCache?.get(key)
   if (cached != null) {
     if (cached.sampleRate == ctx.sampleRate) {
       return cached
     }
 
     // sample rate has changed
-    caches?.audioBufferCache?.delete(key)
+    audioBufferCache?.delete(key)
   }
 
-  const arrayBuffer = await fetchArrayBuffer(url, signal, caches?.arrayBufferCache)
+  const arrayBuffer = await fetchArrayBuffer(url, signal, arrayBufferCache)
 
   // The spec suggests that the ArrayBuffer should become "detached" during decoding.
   // If we cache the ArrayBuffer, decode from a copy to keep the cached value intact.
-  const decodeInput = caches?.arrayBufferCache != null ? arrayBuffer.slice(0) : arrayBuffer
+  const decodeInput = arrayBufferCache != null ? arrayBuffer.slice(0) : arrayBuffer
 
   const audioBuffer = await ctx.decodeAudioData(decodeInput)
-  caches?.audioBufferCache?.set(key, audioBuffer)
+  audioBufferCache?.set(key, audioBuffer)
 
   return audioBuffer
 }

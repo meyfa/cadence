@@ -29,7 +29,7 @@ export * from './layout/algorithms/find.ts'
 export * from './layout/algorithms/mutate.ts'
 export * from './layout/components/LayoutContext.tsx'
 export * from './layout/components/DockLayoutView.tsx'
-export type { TabTitleProps } from './layout/components/TabTitle.ts'
+export type { TabTitleProps, TabTitleState } from './layout/components/TabTitle.ts'
 
 // modules
 export type * from './modules/types.ts'
