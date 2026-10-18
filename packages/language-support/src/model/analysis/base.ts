@@ -1,8 +1,9 @@
-import { parseStringLiteral } from '@meyfa/cadence-language'
 import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
+import { parseStringLiteral } from '@meyfa/cadence-language'
 import type { SourceRange } from '../../utilities/range.ts'
 import type { TextLike } from '../../utilities/text.ts'
 import { toSourceRange } from '../../utilities/text.ts'
+import { forEachChildNode } from '../../utilities/tree.ts'
 import type { BaseModel, Binding, BindingId, BindingKind, Identifier, IdentifierId, IdentifierKind, Import, ImportId, Scope, ScopeId } from '../model.ts'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
@@ -362,14 +363,4 @@ function parseAssignment (document: TextLike, node: SyntaxNode): AssignmentParse
   })
 
   return { hasEquals, isExposed, variable }
-}
-
-function forEachChildNode (node: SyntaxNode, callback: (cursor: TreeCursor) => void): void {
-  const cursor = node.cursor()
-
-  if (cursor.firstChild()) {
-    do {
-      callback(cursor)
-    } while (cursor.nextSibling())
-  }
 }
