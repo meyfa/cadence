@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import { useLayoutEffect, useMemo, useState } from 'react'
+import type { Layout } from '../layout.ts'
 import { computeLayout } from '../layout.ts'
 import { getMarkerKey, getMarkerPath } from '../markers.ts'
 import { getEdgeStyle } from '../style.ts'
@@ -70,12 +71,69 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
     return map
   }, [edges, highlightEdges])
 
-  // Determine which markers are needed and with which colors.
-  // This is required because markers do not inherit their fill color from the line's stroke,
-  // and the CSS value "context-stroke" is not yet widely supported.
-  type MarkerDefinition = Readonly<{ id: string, marker: Marker, stroke: string }>
+  return (
+    <div className='relative' style={{ width: layout.totalWidth, height: layout.totalHeight }}>
+      <FlowchartNodes
+        layout={layout}
+        highlightNodes={highlightNodes}
+        onHover={setHoveredNodeId}
+        NodeComponent={NodeComponent}
+      />
 
-  const markers = useMemo<MarkerDefinition[]>(() => {
+      <FlowchartEdges
+        layout={layout}
+        highlightEdges={highlightEdges}
+        resolvedEdgeStyle={resolvedEdgeStyle}
+      />
+    </div>
+  )
+}
+
+interface FlowchartNodesProps<TNodeData> {
+  readonly layout: Layout<TNodeData>
+  readonly highlightNodes: ReadonlySet<FlowNodeId>
+  readonly onHover: (hoveredNodeId: FlowNodeId | undefined) => void
+  readonly NodeComponent: FlowNodeComponent<TNodeData>
+}
+
+function FlowchartNodes<TNodeData> ({ layout, highlightNodes, onHover, NodeComponent }: FlowchartNodesProps<TNodeData>): ReactElement {
+  return (
+    <>
+      {layout.nodes.map((node) => (
+        <div
+          key={node.node.id}
+          style={{
+            position: 'absolute',
+            left: node.x,
+            top: node.y,
+            width: node.node.width,
+            height: node.node.height
+          }}
+          onMouseEnter={() => onHover(node.node.id)}
+          onMouseLeave={() => onHover(undefined)}
+        >
+          <NodeComponent node={node.node} highlight={highlightNodes.has(node.node.id)} />
+        </div>
+      ))}
+    </>
+  )
+}
+
+interface MarkerDefinition {
+  readonly id: string
+  readonly marker: Marker
+  readonly stroke: string
+}
+
+interface FlowchartEdgesProps<TEdgeData> {
+  readonly layout: Layout<unknown, TEdgeData>
+  readonly highlightEdges: ReadonlySet<FlowEdgeId>
+  readonly resolvedEdgeStyle: ReadonlyMap<FlowEdgeId, FlowEdgeStyle>
+}
+
+function FlowchartEdges<TEdgeData> ({ layout, highlightEdges, resolvedEdgeStyle }: FlowchartEdgesProps<TEdgeData>): ReactElement {
+  // Markers need explicit colors because SVG markers do not inherit the line's stroke.
+  const markers = useMemo<readonly MarkerDefinition[]>(() => {
     const markerDefinitions = new Map<string, MarkerDefinition>()
 
     for (const style of resolvedEdgeStyle.values()) {
@@ -98,74 +156,46 @@ export function Flowchart<TNodeData = unknown, TEdgeData = unknown> ({
     return Array.from(markerDefinitions.values())
   }, [resolvedEdgeStyle])
 
+  const renderEdges = (highlighted: boolean) => {
+    return layout.edges
+      .filter(({ edge }) => highlightEdges.has(edge.id) === highlighted)
+      .map((edge) => {
+        const style = resolvedEdgeStyle.get(edge.edge.id)
+        return style != null ? <FlowchartEdge key={edge.edge.id} edge={edge} style={style} /> : null
+      })
+  }
+
   return (
-    <div className='relative' style={{ width: layout.totalWidth, height: layout.totalHeight }}>
-      {layout.nodes.map((node) => (
-        <div
-          key={node.node.id}
-          style={{
-            position: 'absolute',
-            left: node.x,
-            top: node.y,
-            width: node.node.width,
-            height: node.node.height
-          }}
-          onMouseEnter={() => setHoveredNodeId(node.node.id)}
-          onMouseLeave={() => setHoveredNodeId(undefined)}
-        >
-          <NodeComponent node={node.node} highlight={highlightNodes.has(node.node.id)} />
-        </div>
-      ))}
-
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          overflow: 'visible'
-        }}
-      >
-        <defs>
-          {markers.map((marker) => (
-            <marker
-              key={marker.id}
-              id={marker.id}
-              markerWidth='5'
-              markerHeight='5'
-              refX='5'
-              refY='2.5'
-              orient='auto'
-              markerUnits='strokeWidth'
-            >
-              <path d={getMarkerPath(marker.marker)} fill={marker.stroke} />
-            </marker>
-          ))}
-        </defs>
-
-        {/* draw non-highlighted edges first */}
-        {
-          layout.edges
-            .filter(({ edge }) => !highlightEdges.has(edge.id))
-            .map((edge) => {
-              const style = resolvedEdgeStyle.get(edge.edge.id)
-              return style != null ? (<FlowchartEdge key={edge.edge.id} edge={edge} style={style} />) : null
-            })
-        }
-
-        {/* draw highlighted edges on top */}
-        {
-          highlightEdges.size > 0 && layout.edges
-            .filter(({ edge }) => highlightEdges.has(edge.id))
-            .map((edge) => {
-              const style = resolvedEdgeStyle.get(edge.edge.id)
-              return style != null ? (<FlowchartEdge key={edge.edge.id} edge={edge} style={style} />) : null
-            })
-        }
-      </svg>
-    </div>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        overflow: 'visible'
+      }}
+    >
+      <defs>
+        {markers.map((marker) => (
+          <marker
+            key={marker.id}
+            id={marker.id}
+            markerWidth='5'
+            markerHeight='5'
+            refX='5'
+            refY='2.5'
+            orient='auto'
+            markerUnits='strokeWidth'
+          >
+            <path d={getMarkerPath(marker.marker)} fill={marker.stroke} />
+          </marker>
+        ))}
+      </defs>
+      {renderEdges(false)}
+      {highlightEdges.size > 0 && renderEdges(true)}
+    </svg>
   )
 }
