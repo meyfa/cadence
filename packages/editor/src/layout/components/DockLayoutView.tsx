@@ -1,4 +1,4 @@
-import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
+import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, Modifier, SensorDescriptor, SensorOptions } from '@dnd-kit/core'
 import { DndContext, DragOverlay, MouseSensor, pointerWithin, useSensor, useSensors } from '@dnd-kit/core'
 import { getEventCoordinates } from '@dnd-kit/utilities'
 import type { ComponentType, FunctionComponent } from 'react'
@@ -40,6 +40,69 @@ const snapOverlayTopLeftToCursor: Modifier = ({
   }
 }
 
+const collisionDetection: CollisionDetection = (args) => {
+  const collisions = pointerWithin(args)
+  if (collisions.length === 0) {
+    return collisions
+  }
+
+  const tabDropCollision = collisions.find((collision) => parseTabDropTarget(collision.id.toString()) != null)
+  if (tabDropCollision != null) {
+    return [tabDropCollision]
+  }
+
+  const tabListCollision = collisions.find((collision) => {
+    const dropTarget = parsePaneNodeDropTarget(collision.id.toString())
+    return dropTarget?.target === 'tab-list'
+  })
+  if (tabListCollision != null) {
+    return [tabListCollision]
+  }
+
+  return collisions
+}
+
+function useDragAndDropSensors (): Array<SensorDescriptor<SensorOptions>> {
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10
+    }
+  })
+
+  return useSensors(mouseSensor)
+}
+
+function updateLayoutOnDragEnd (layout: DockLayout, event: DragEndEvent): DockLayout {
+  if (event.over == null) {
+    return layout
+  }
+
+  const { active, over } = event
+  const activeId = active.id.toString() as TabId
+  const tabDropTarget = parseTabDropTarget(over.id.toString())
+
+  if (tabDropTarget != null) {
+    return moveTabBetweenPanes(layout, activeId, tabDropTarget.tabId, tabDropTarget.position)
+  }
+
+  const dropTarget = parsePaneNodeDropTarget(over.id.toString())
+  const overPane = dropTarget != null ? findPaneById(layout, dropTarget.nodeId) : undefined
+
+  if (dropTarget != null && overPane != null) {
+    if (dropTarget.target === 'center') {
+      return moveTabIntoPane(layout, activeId, overPane.id)
+    }
+
+    if (dropTarget.target === 'tab-list') {
+      return moveTabToPaneEnd(layout, activeId, overPane.id)
+    }
+
+    return moveTabToSplit(layout, activeId, overPane.id, dropTarget.target)
+  }
+
+  return moveTabBetweenPanes(layout, activeId, over.id.toString() as TabId)
+}
+
 export interface DockLayoutStyles {
   readonly highlightColor: string
   readonly tabListBackgroundColor: string
@@ -77,35 +140,7 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
   const [draggedTab, setDraggedTab] = useState<Tab | undefined>(undefined)
   const [currentDropTargetId, setCurrentDropTargetId] = useState<string | undefined>(undefined)
 
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 10
-    }
-  })
-
-  const sensors = useSensors(mouseSensor)
-
-  const collisionDetection: CollisionDetection = useCallback((args) => {
-    const collisions = pointerWithin(args)
-    if (collisions.length === 0) {
-      return collisions
-    }
-
-    const tabDropCollision = collisions.find((collision) => parseTabDropTarget(collision.id.toString()) != null)
-    if (tabDropCollision != null) {
-      return [tabDropCollision]
-    }
-
-    const tabListCollision = collisions.find((collision) => {
-      const dropTarget = parsePaneNodeDropTarget(collision.id.toString())
-      return dropTarget?.target === 'tab-list'
-    })
-    if (tabListCollision != null) {
-      return [tabListCollision]
-    }
-
-    return collisions
-  }, [])
+  const sensors = useDragAndDropSensors()
 
   const onDragStart = useCallback(({ active }: DragStartEvent) => {
     const activeId = active.id.toString() as TabId
@@ -126,37 +161,8 @@ const InternalDockLayoutView: FunctionComponent<DockLayoutViewProps> = ({
     })
   }, [])
 
-  const onDragEnd = useCallback(({ active, over }: DragEndEvent) => {
-    dispatch((layout) => {
-      if (over == null) {
-        return layout
-      }
-
-      const activeId = active.id.toString() as TabId
-      const tabDropTarget = parseTabDropTarget(over.id.toString())
-
-      if (tabDropTarget != null) {
-        return moveTabBetweenPanes(layout, activeId, tabDropTarget.tabId, tabDropTarget.position)
-      }
-
-      const dropTarget = parsePaneNodeDropTarget(over.id.toString())
-      const overPane = dropTarget != null ? findPaneById(layout, dropTarget.nodeId) : undefined
-
-      if (dropTarget != null && overPane != null) {
-        if (dropTarget.target === 'center') {
-          return moveTabIntoPane(layout, activeId, overPane.id)
-        }
-
-        if (dropTarget.target === 'tab-list') {
-          return moveTabToPaneEnd(layout, activeId, overPane.id)
-        }
-
-        return moveTabToSplit(layout, activeId, overPane.id, dropTarget.target)
-      }
-
-      return moveTabBetweenPanes(layout, activeId, over.id.toString() as TabId)
-    })
-
+  const onDragEnd = useCallback((event: DragEndEvent) => {
+    dispatch((layout) => updateLayoutOnDragEnd(layout, event))
     finalizeDrag()
   }, [dispatch, finalizeDrag])
 
