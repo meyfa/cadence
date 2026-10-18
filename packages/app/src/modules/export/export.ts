@@ -1,87 +1,51 @@
 import type { AudioGraph, Node } from '@meyfa/cadence-audiograph'
-import type { AIFFEncodingOptions, AIFFFormat, AudioBufferTransform, WAVEncodingOptions, WAVFormat } from '@meyfa/cadence-codecs'
-import { AudioBufferLike, AudioDescription, encodeAIFF, encodeWAV, estimateAIFFSize, estimateWAVSize } from '@meyfa/cadence-codecs'
-import type { Program } from '@meyfa/cadence-core'
-import { beatsToSeconds, calculateTotalLength } from '@meyfa/cadence-core'
+import type { AudioBufferLike, AudioBufferTransform } from '@meyfa/cadence-codecs'
+import { createLeadingSilenceTransform } from '@meyfa/cadence-codecs'
 import type { Numeric } from '@meyfa/cadence-utility'
 import { createAudioRenderer } from '@meyfa/cadence-webaudio'
-import type { Option } from '../../components/dropdown/Dropdown.ts'
 import { saveFile } from '../../utilities/files.ts'
-
-const ASSET_LOAD_TIMEOUT = 30 as Numeric<'s'>
+import type { ExportFileType, ExportForm } from './form.ts'
+import { getDefaultFileName, getEncodingOptions, getFileType, getLeadingSilence, getSampleRate } from './form.ts'
 
 export const MAX_EXPORT_DURATION = (60 * 60) as Numeric<'s'> // 1 hour
-export const RENDER_CHANNELS = 2 // stereo
+export const EXPORT_CHANNELS = 2 // stereo
+const ASSET_LOAD_TIMEOUT = 30 as Numeric<'s'>
 
-export type FileType = 'wav' | 'aiff'
-export type SampleRate = '44100' | '48000' | '96000'
+export type ProgressCallback = (progress: number) => void
 
-interface ExportFileType<TEncodingOptions = never> {
-  readonly extension: string
-  readonly mimeType: string
-  readonly estimateSize: (audio: AudioDescription, options: TEncodingOptions) => Numeric<'bytes'>
-  readonly encode: (audio: AudioBufferLike, options: TEncodingOptions) => ArrayBuffer
+export async function exportAudio (graph: AudioGraph<Node>, form: ExportForm, onProgress: ProgressCallback): Promise<readonly Error[]> {
+  const type = getFileType(form)
+  const encodingOptions = getEncodingOptions(form, type)
+  const sampleRate = getSampleRate(form)
+  const leadingSilence = getLeadingSilence(form)
+
+  const transforms = [
+    createLeadingSilenceTransform(leadingSilence)
+  ]
+
+  const filename = getDefaultFileName(type)
+  const { errors, content } = await renderAudio(graph, type, encodingOptions, sampleRate, transforms, onProgress)
+
+  if (content != null) {
+    saveFile({ content, filename })
+  }
+
+  return errors
 }
 
-export const WAV: ExportFileType<WAVEncodingOptions> = {
-  extension: 'wav',
-  mimeType: 'audio/wav',
-  estimateSize: estimateWAVSize,
-  encode: encodeWAV
+interface RenderResult {
+  readonly errors: readonly Error[]
+  readonly content?: Blob
 }
 
-export const AIFF: ExportFileType<AIFFEncodingOptions> = {
-  extension: 'aiff',
-  mimeType: 'audio/aiff',
-  estimateSize: estimateAIFFSize,
-  encode: encodeAIFF
-}
-
-export const FILE_TYPE_OPTIONS: readonly Option[] = [
-  { label: 'WAV', value: 'wav' },
-  { label: 'AIFF', value: 'aiff' }
-]
-
-export const WAV_FORMAT_OPTIONS: readonly Option[] = [
-  { label: 'Float 32-bit', value: 'float32' },
-  { label: 'PCM 16-bit', value: 'pcm16' },
-  { label: 'PCM 24-bit', value: 'pcm24' },
-  { label: 'PCM 32-bit', value: 'pcm32' }
-]
-
-export const AIFF_FORMAT_OPTIONS: readonly Option[] = [
-  { label: 'Float 32-bit', value: 'float32' },
-  { label: 'PCM 16-bit', value: 'pcm16' },
-  { label: 'PCM 24-bit', value: 'pcm24' },
-  { label: 'PCM 32-bit', value: 'pcm32' }
-]
-
-export const SAMPLE_RATE_OPTIONS: readonly Option[] = [
-  { label: '44.1 kHz', value: '44100' },
-  { label: '48 kHz', value: '48000' },
-  { label: '96 kHz', value: '96000' }
-]
-
-export const LEADING_SILENCE_OPTIONS: readonly Option[] = [
-  { label: 'None', value: '0.000' },
-  { label: '0.100s', value: '0.100' },
-  { label: '0.250s', value: '0.250' },
-  { label: '0.500s', value: '0.500' },
-  { label: '1.000s', value: '1.000' }
-]
-
-function getDefaultFileName (type: ExportFileType): string {
-  return `track.${type.extension}`
-}
-
-export async function renderAndSave<TEncodingOptions> (
+async function renderAudio<TEncodingOptions> (
   graph: AudioGraph<Node>,
+  type: ExportFileType<TEncodingOptions>,
+  options: TEncodingOptions,
   sampleRate: number,
   transforms: readonly AudioBufferTransform[],
-  onProgress: (progress: number) => void,
-  type: ExportFileType<TEncodingOptions>,
-  options: TEncodingOptions
-): Promise<readonly Error[]> {
+  onProgress: (progress: number) => void
+): Promise<RenderResult> {
   const renderer = createAudioRenderer({
     assetLoadTimeout: ASSET_LOAD_TIMEOUT,
     cacheLimits: {
@@ -91,67 +55,21 @@ export async function renderAndSave<TEncodingOptions> (
   })
 
   const { audioBuffer, errors } = await renderer.render(graph, {
-    channels: RENDER_CHANNELS,
+    channels: EXPORT_CHANNELS,
     sampleRate,
     onProgress
   })
   if (audioBuffer == null || errors.length > 0) {
-    return errors
+    return { errors }
   }
 
-  const transformedBuffer = transforms.reduce<AudioBufferLike>((buffer, transform) => transform(buffer), audioBuffer)
-
-  const encoded = type.encode(transformedBuffer, options)
-
+  const transformed = applyTransforms(audioBuffer, transforms)
+  const encoded = type.encode(transformed, options)
   const content = new Blob([encoded], { type: type.mimeType })
-  const filename = getDefaultFileName(type)
 
-  saveFile({ content, filename })
-
-  return errors
+  return { errors, content }
 }
 
-export interface ExportMetrics {
-  readonly duration: Numeric<'s'>
-  readonly fileSize: Numeric<'bytes'>
-}
-
-export function computeExportMetrics (program: Program, options: {
-  readonly sampleRate: SampleRate
-  readonly leadingSilence: Numeric<'s'>
-  readonly type: FileType
-  readonly wavFormat: WAVFormat
-  readonly aiffFormat: AIFFFormat
-}): ExportMetrics {
-  const trackLength = computeTrackDuration(program)
-  const duration = (trackLength + options.leadingSilence) as Numeric<'s'>
-
-  const fileSize = estimateFileSize({ ...options, duration })
-
-  return { duration, fileSize }
-}
-
-function computeTrackDuration (program: Program): Numeric<'s'> {
-  const lengthInBeats = calculateTotalLength(program)
-  return beatsToSeconds(lengthInBeats, program.track.tempo)
-}
-
-function estimateFileSize (options: {
-  readonly duration: Numeric<'s'>
-  readonly sampleRate: SampleRate
-  readonly type: FileType
-  readonly wavFormat: WAVFormat
-  readonly aiffFormat: AIFFFormat
-}): Numeric<'bytes'> {
-  const { duration, sampleRate, type, wavFormat, aiffFormat } = options
-
-  const exportType = type === 'wav' ? WAV : AIFF
-  const format = type === 'wav' ? wavFormat : aiffFormat
-
-  const description: AudioDescription = {
-    length: Math.ceil(duration * Number.parseInt(sampleRate, 10)),
-    numberOfChannels: RENDER_CHANNELS
-  }
-
-  return exportType.estimateSize(description, { format })
+function applyTransforms (buffer: AudioBuffer, transforms: readonly AudioBufferTransform[]): AudioBufferLike {
+  return transforms.reduce<AudioBufferLike>((buf, transform) => transform(buf), buffer)
 }
