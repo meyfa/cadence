@@ -75,11 +75,19 @@ export function checkArguments (
     }
   }
 
+  errors.push(...checkRequiredArguments(schema, seen, range))
+
+  return { errors, capabilities, types, ranges }
+}
+
+function checkRequiredArguments (schema: Schema, seen: ReadonlySet<string>, range: SourceRange): readonly CompileError[] {
+  const errors: CompileError[] = []
+
   for (const spec of schema.items) {
     if (spec.required && !seen.has(spec.name)) {
       errors.push(new CompileError(`Missing required argument "${spec.name}"`, range))
     }
   }
 
-  return { errors, capabilities, types, ranges }
+  return errors
 }
