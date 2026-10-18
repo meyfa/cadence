@@ -1,67 +1,50 @@
-import type { SyntaxNode } from '@lezer/common'
-import type { TextLike } from '../../../utilities/text.ts'
-import { forEachChildNode } from '../../../utilities/tree.ts'
-import type { Binding } from '../../model.ts'
-import type { BaseModelBuilder } from '../builder.ts'
+import type { SyntaxNode, TreeCursor } from '@lezer/common'
+import { forEachChild } from '../../../utilities/tree.ts'
+import type { WalkContext } from '../context.ts'
+import { NodeTypes, Tokens } from '../grammar.ts'
 import type { VariableName } from './variables.ts'
 import { getVariableName } from './variables.ts'
 
-export interface WalkAssignmentResult {
-  readonly hasEquals: boolean
-  readonly isExposed: boolean
-  readonly binding?: Omit<Binding, 'id'>
+/**
+ * Whether the assignment has an '=', as opposed to being the parser's fallback for incomplete syntax.
+ */
+export function isCompleteAssignment (node: SyntaxNode): boolean {
+  return node.getChild(Tokens.Equal) != null
 }
 
-export function walkAssignment (
-  builder: BaseModelBuilder,
-  document: TextLike,
-  node: SyntaxNode,
-  scopeId: string
-): WalkAssignmentResult {
-  const { hasEquals, isExposed, variable } = parseAssignment(document, node)
-
-  let binding: Omit<Binding, 'id'> | undefined
-
-  if (hasEquals && variable != null) {
-    binding = {
-      kind: 'regular',
-      scopeId,
-      name: variable.name,
-      range: variable.range,
-      isExposed,
-
-      // The binding cannot be referred to from the assignment's right-hand side.
-      visibilityStartOffset: node.to
-    }
-  }
-
-  return { hasEquals, isExposed, binding }
-}
-
-interface AssignmentParseResult {
-  readonly hasEquals: boolean
-  readonly isExposed: boolean
-  readonly variable?: VariableName
-}
-
-function parseAssignment (document: TextLike, node: SyntaxNode): AssignmentParseResult {
-  let hasEquals = false
-  let isExposed = false
+export function walkAssignment (context: WalkContext, cursor: TreeCursor, scopeId: string): void {
   let variable: VariableName | undefined
+  let isExposed = false
 
-  forEachChildNode(node, (cursor) => {
+  forEachChild(cursor, () => {
     switch (cursor.type.name) {
-      case 'VariableDefinition':
-        variable = getVariableName(document, cursor.from, cursor.to)
+      // The variable is bound below, once the right-hand side has been walked.
+      case NodeTypes.VariableDefinition:
+        variable = getVariableName(context.document, cursor.from, cursor.to)
         break
-      case '=':
-        hasEquals = true
-        break
-      case '@':
+
+      case Tokens.Exposure:
         isExposed = true
+        break
+
+      default:
+        context.walk(cursor, scopeId)
         break
     }
   })
 
-  return { hasEquals, isExposed, variable }
+  if (variable == null) {
+    return
+  }
+
+  context.builder.addBinding({
+    kind: 'regular',
+    scopeId,
+    name: variable.name,
+    range: variable.range,
+    isExposed,
+
+    // The binding cannot be referred to from the assignment's right-hand side.
+    visibilityStartOffset: cursor.to
+  })
 }

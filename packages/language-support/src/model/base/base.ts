@@ -1,12 +1,17 @@
-import type { SyntaxNode, Tree, TreeCursor } from '@lezer/common'
+import type { Tree, TreeCursor } from '@lezer/common'
 import type { TextLike } from '../../utilities/text.ts'
 import { toSourceRange } from '../../utilities/text.ts'
-import type { BaseModel, Binding, Identifier } from '../model.ts'
+import type { BaseModel } from '../model.ts'
 import { BaseModelBuilder } from './builder.ts'
-import { scopeKey } from './keys.ts'
-import { walkAssignment } from './nodes/assignment.ts'
+import type { WalkContext } from './context.ts'
+import { walkChildren } from './context.ts'
+import { NodeTypes } from './grammar.ts'
+import { walkChainElement, walkIncompleteAssignment } from './nodes/access-chain.ts'
+import { walkArgumentName } from './nodes/argument.ts'
+import { isCompleteAssignment, walkAssignment } from './nodes/assignment.ts'
+import { walkIfStatement } from './nodes/conditional.ts'
 import { walkImport } from './nodes/import.ts'
-import { getVariableName } from './nodes/variables.ts'
+import { walkBlock, walkCallable } from './nodes/scope.ts'
 
 export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
   const builder = new BaseModelBuilder({
@@ -14,182 +19,57 @@ export function computeBaseModel (tree: Tree, document: TextLike): BaseModel {
     range: toSourceRange(document, 0, document.length)
   })
 
-  walk({
+  const context: WalkContext = {
     builder,
     document,
-    cursor: tree.cursor(),
-    scopeId: builder.rootScopeId,
-    assignmentHasEquals: false,
-    assignmentIsExposed: false
-  })
+    walk: (cursor, scopeId) => walk(context, cursor, scopeId)
+  }
+
+  context.walk(tree.cursor(), builder.rootScopeId)
 
   return builder.build()
 }
 
-interface WalkContext {
-  readonly builder: BaseModelBuilder
-  readonly document: TextLike
-  readonly cursor: TreeCursor
-  readonly parentType?: string
-  readonly scopeId: string
-  readonly assignmentHasEquals: boolean
-  readonly assignmentIsExposed: boolean
-  readonly previousSibling?: Identifier
-}
-
-function walk ({
-  builder,
-  document,
-  cursor,
-  parentType,
-  scopeId,
-  assignmentHasEquals,
-  assignmentIsExposed,
-  previousSibling
-}: WalkContext): Identifier | undefined {
-  const typeName = cursor.type.name
-  const from = cursor.from
-  const to = cursor.to
-
-  const range = toSourceRange(document, from, to)
-
-  const nextParentType = typeName
-
-  let nextScopeId = scopeId
-  let nextAssignmentHasEquals = assignmentHasEquals
-  let nextAssignmentIsExposed = assignmentIsExposed
-  let accessChainTail: Identifier | undefined
-  let deferredBinding: Omit<Binding, 'id'> | undefined
-  let conditionalBranchScopeIds: string[] | undefined
-
-  switch (typeName) {
-    case 'Import': {
-      walkImport(builder, document, cursor.node, scopeId)
+function walk (context: WalkContext, cursor: TreeCursor, scopeId: string): void {
+  switch (cursor.type.name) {
+    case NodeTypes.AccessOrCall:
+    case NodeTypes.Call:
+    case NodeTypes.Callee:
+    case NodeTypes.Member:
+    case NodeTypes.VariableName:
+      walkChainElement(context, cursor, scopeId, undefined)
       break
-    }
 
-    case 'Block':
-    case 'Function':
-    case 'Voice': {
-      const scope = builder.addScope({ node: typeName, range, parentId: scopeId })
-      nextScopeId = scope.id
+    case NodeTypes.Import:
+      walkImport(context, cursor, scopeId)
       break
-    }
 
-    case 'IfStatement': {
-      conditionalBranchScopeIds = cursor.node.getChildren('Block')
-        .map((block) => scopeKey('Block', toSourceRange(document, block.from, block.to)))
+    case NodeTypes.Block:
+      walkBlock(context, cursor, scopeId)
       break
-    }
 
-    case 'Assignment': {
-      const { hasEquals, isExposed, binding } = walkAssignment(builder, document, cursor.node, scopeId)
-      deferredBinding = binding
-      nextAssignmentHasEquals = hasEquals
-      nextAssignmentIsExposed = isExposed
+    case NodeTypes.Function:
+    case NodeTypes.Voice:
+      walkCallable(context, cursor, scopeId)
       break
-    }
 
-    case 'VariableDefinition': {
-      const { name, range: nameRange } = getVariableName(document, from, to)
+    case NodeTypes.IfStatement:
+      walkIfStatement(context, cursor, scopeId)
+      break
 
-      switch (parentType) {
-        case 'Assignment': {
-          if (assignmentHasEquals) {
-            // Handled via deferredBinding in the Assignment case above.
-            break
-          }
-          // Invalid/incomplete syntax encountered.
-          // We still add an identifier as a best-effort approach to provide some level of functionality.
-          accessChainTail = builder.addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
-          break
-        }
-
-        case 'Function':
-        case 'Voice': {
-          builder.addBinding({ kind: 'regular', scopeId, name, range: nameRange })
-          break
-        }
+    case NodeTypes.Assignment:
+      if (isCompleteAssignment(cursor.node)) {
+        walkAssignment(context, cursor, scopeId)
+      } else {
+        walkIncompleteAssignment(context, cursor, scopeId)
       }
       break
-    }
 
-    case 'ArgumentName': {
-      const name = document.sliceString(from, to)
-      builder.addIdentifier({ kind: 'argument', scopeId, name, range })
+    case NodeTypes.ArgumentName:
+      walkArgumentName(context, cursor, scopeId)
       break
-    }
 
-    case 'VariableName':
-    case 'Callee':
-    case 'Member': {
-      const { name, range: nameRange } = getVariableName(document, from, to)
-      accessChainTail = builder.addIdentifier({ kind: 'plain', scopeId, name, range: nameRange, previousSibling })
-      break
-    }
+    default:
+      walkChildren(context, cursor, scopeId)
   }
-
-  // The parser defaults to 'Assignment' for incomplete syntax (e.g. standalone 'fx.delay'),
-  // so we use heuristics to still collect identifiers in that case.
-  const trackAccessChain = typeName === 'AccessOrCall' || (typeName === 'Assignment' && !nextAssignmentHasEquals)
-
-  let nextPreviousSibling = previousSibling
-
-  if (cursor.firstChild()) {
-    do {
-      const childTypeName = cursor.type.name
-
-      const childPreviousSibling = (() => {
-        if (typeName === 'Call') {
-          return childTypeName === 'Callee' ? previousSibling : undefined
-        }
-
-        return trackAccessChain && shouldKeepPreviousSibling(cursor.node)
-          ? nextPreviousSibling
-          : undefined
-      })()
-
-      const childAccessChainTail = walk({
-        builder,
-        document,
-        cursor,
-        parentType: nextParentType,
-        scopeId: nextScopeId,
-        assignmentHasEquals: nextAssignmentHasEquals,
-        assignmentIsExposed: nextAssignmentIsExposed,
-        previousSibling: childPreviousSibling
-      })
-
-      if (typeName === 'Call') {
-        accessChainTail ??= childAccessChainTail
-        continue
-      }
-
-      if (trackAccessChain && childAccessChainTail != null) {
-        nextPreviousSibling = childAccessChainTail
-        accessChainTail = childAccessChainTail
-      }
-    } while (cursor.nextSibling())
-    cursor.parent()
-  }
-
-  if (deferredBinding != null) {
-    builder.addBinding(deferredBinding)
-  }
-
-  if (typeName === 'IfStatement' && conditionalBranchScopeIds != null) {
-    builder.addConditionalBinding(scopeId, conditionalBranchScopeIds, to)
-  }
-
-  return accessChainTail
-}
-
-function shouldKeepPreviousSibling (node: SyntaxNode): boolean {
-  const type = node.type.name
-
-  return type === 'AccessOrCall' ||
-    type === 'Callee' ||
-    type === 'Call' ||
-    type === 'Member' ||
-    type === 'VariableName'
 }
