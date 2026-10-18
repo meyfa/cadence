@@ -1,11 +1,39 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { forEachChildNode } from '../../src/utilities/tree.ts'
+import { forEachChild, forEachChildNode } from '../../src/utilities/tree.ts'
 import { getCadenceParser } from '../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 
 describe('utilities/tree.ts', () => {
+  describe('forEachChild()', () => {
+    it('invokes the callback for each direct child and restores the cursor', () => {
+      const tree = cadenceParser.parse('foo = 1\nbar = foo\n')
+      const cursor = tree.cursor()
+      const names: string[] = []
+
+      forEachChild(cursor, () => {
+        names.push(cursor.name)
+      })
+
+      assert.deepStrictEqual(names, ['Assignment', 'Assignment'])
+      assert.strictEqual(cursor.name, 'Program')
+    })
+
+    it('does not invoke the callback for a node without children', () => {
+      const tree = cadenceParser.parse('')
+      const cursor = tree.cursor()
+      let calls = 0
+
+      forEachChild(cursor, () => {
+        calls++
+      })
+
+      assert.strictEqual(calls, 0)
+      assert.strictEqual(cursor.name, 'Program')
+    })
+  })
+
   describe('forEachChildNode()', () => {
     it('invokes the callback for each direct child in source order', () => {
       const source = [

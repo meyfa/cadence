@@ -1,6 +1,5 @@
 import type { SourceRange } from '../../utilities/range.ts'
-import type { Import, Scope, Identifier, Binding, ScopeId, BaseModel } from '../model.ts'
-import { importKey, scopeKey, identifierKey, bindingKey, conditionalBindingKey } from './keys.ts'
+import type { BaseModel, Binding, BindingId, Identifier, IdentifierId, Import, ImportId, Scope, ScopeId } from '../model.ts'
 
 export class BaseModelBuilder {
   #imports: Import[] = []
@@ -13,22 +12,6 @@ export class BaseModelBuilder {
   constructor (rootScope: Omit<Scope, 'id'>) {
     const { id: rootScopeId } = this.addScope(rootScope)
     this.#rootScopeId = rootScopeId
-  }
-
-  get imports (): readonly Import[] {
-    return this.#imports
-  }
-
-  get scopes (): readonly Scope[] {
-    return this.#scopes
-  }
-
-  get identifiers (): readonly Identifier[] {
-    return this.#identifiers
-  }
-
-  get bindings (): readonly Binding[] {
-    return this.#bindings
   }
 
   get rootScopeId (): ScopeId {
@@ -51,25 +34,29 @@ export class BaseModelBuilder {
   }
 
   addImport (input: Omit<Import, 'id'>): Import {
-    const statement = { ...input, id: importKey(input.moduleName, input.range) }
+    const id = `${input.moduleName}:${input.range.offset}:${input.range.length}` as ImportId
+    const statement = { ...input, id }
     this.#imports.push(statement)
     return statement
   }
 
   addScope (input: Omit<Scope, 'id'>): Scope {
-    const entry = { ...input, id: scopeKey(input.node, input.range) }
+    const id = `${input.node}:${input.range.offset}:${input.range.length}` as ScopeId
+    const entry = { ...input, id }
     this.#scopes.push(entry)
     return entry
   }
 
   addIdentifier (input: Omit<Identifier, 'id'>): Identifier {
-    const entry = { ...input, id: identifierKey(input.kind, input.scopeId, input.range) }
+    const id = `${input.kind}:${input.scopeId}:${input.range.offset}:${input.range.length}` as IdentifierId
+    const entry = { ...input, id }
     this.#identifiers.push(entry)
     return entry
   }
 
   addBinding (input: Omit<Binding, 'id'>): Binding {
-    const entry = { ...input, id: bindingKey(input.kind, input.scopeId, input.range) }
+    const id = `${input.kind}:${input.scopeId}:${input.range.offset}:${input.range.length}` as BindingId
+    const entry = { ...input, id }
     this.#bindings.push(entry)
 
     this.addIdentifier({
@@ -86,14 +73,14 @@ export class BaseModelBuilder {
    * A variable assigned in every reachable branch of a conditional is visible afterward,
    * even though each assignment's own binding remains scoped to its own branch.
    */
-  addConditionalBinding (parentScopeId: string, branchScopeIds: readonly string[], endOffset: number): void {
+  addConditionalBinding (parentScopeId: string, branchScopeIds: ReadonlySet<string>, endOffset: number): void {
     for (const [name, group] of this.collectBindingsByName(branchScopeIds)) {
       const firstDefinition = group.reduce((earliest, binding) => {
         return binding.range.offset < earliest.range.offset ? binding : earliest
       })
 
       this.#bindings.push({
-        id: conditionalBindingKey(parentScopeId, endOffset, name),
+        id: `merge:${parentScopeId}:${endOffset}:${name}` as BindingId,
         kind: 'regular',
         scopeId: parentScopeId,
         name,
@@ -104,11 +91,11 @@ export class BaseModelBuilder {
     }
   }
 
-  private collectBindingsByName (scopeIds: readonly string[]): ReadonlyMap<string, Binding[]> {
+  private collectBindingsByName (scopeIds: ReadonlySet<string>): ReadonlyMap<string, Binding[]> {
     const groups = new Map<string, Binding[]>()
 
     for (const binding of this.#bindings) {
-      if (binding.kind !== 'regular' || !scopeIds.includes(binding.scopeId)) {
+      if (binding.kind !== 'regular' || !scopeIds.has(binding.scopeId)) {
         continue
       }
 
