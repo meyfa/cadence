@@ -15,6 +15,7 @@ export * from './editor/components/Editor.tsx'
 // hooks
 export * from './hooks/debounced-value.ts'
 export * from './hooks/global-events.ts'
+export * from './hooks/identity-token.ts'
 export * from './hooks/latest-ref.ts'
 export * from './hooks/non-null-value.ts'
 export * from './hooks/observable.ts'
