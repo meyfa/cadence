@@ -60,9 +60,6 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
-  const emissions: MutableEmissions = new Map()
-  const properties = new Map<string, Binding>()
-
   const values: Array<Type | undefined> = []
 
   for (const value of statement.values) {
@@ -72,47 +69,35 @@ function checkSimpleStatement (scope: MutableScope, statement: ast.SimpleStateme
     capabilities = mergeCapabilities(capabilities, valueCheck.capabilities)
   }
 
-  if (statement.emit) {
-    for (let i = 0; i < values.length; ++i) {
-      const { range } = statement.values[i]
+  const { emissions, errors: emissionErrors } = checkEmissions(values, statement, options)
+  errors.push(...emissionErrors)
 
-      const type = values[i]
-      if (type != null) {
-        errors.push(...checkEmission(emissions, type, range, options))
-      }
-    }
-  }
+  errors.push(...checkBindings(scope, values, statement))
 
-  if (statement.name != null) {
-    const name = statement.name.name
-    const type = values.at(0)
-
-    const duplicate = scope.resolutions.has(name)
-    if (duplicate) {
-      errors.push(new CompileError(`Identifier "${name}" is already defined`, statement.name.range))
-    }
-
-    if (type != null && !duplicate) {
-      scope.resolutions.set(name, { name, type, definite: true })
-    }
-  }
-
-  if (statement.expose) {
-    const propertyName = statement.name.name
-    const propertyType = values.at(0)
-
-    if (options.existingProperties?.has(propertyName) === true) {
-      errors.push(new CompileError(`Duplicate property "${propertyName}"`, statement.name.range))
-    } else if (propertyType != null) {
-      properties.set(propertyName, {
-        name: propertyName,
-        type: propertyType,
-        definite: true
-      })
-    }
-  }
+  const { properties, errors: propertyErrors } = checkProperties(values, statement, options)
+  errors.push(...propertyErrors)
 
   return { errors, capabilities, emissions, properties }
+}
+
+function checkEmissions (types: ReadonlyArray<Type | undefined>, statement: ast.SimpleStatement, options: StatementOptions): Pick<CheckedStatement, 'errors' | 'emissions'> {
+  const errors: CompileError[] = []
+  const emissions: MutableEmissions = new Map()
+
+  if (!statement.emit) {
+    return { errors, emissions }
+  }
+
+  for (let i = 0; i < types.length; ++i) {
+    const { range } = statement.values[i]
+
+    const type = types[i]
+    if (type != null) {
+      errors.push(...checkEmission(emissions, type, range, options))
+    }
+  }
+
+  return { errors, emissions }
 }
 
 function checkEmission (emissions: MutableEmissions, type: Type, range: SourceRange, options: StatementOptions): readonly CompileError[] {
@@ -140,6 +125,52 @@ function checkEmission (emissions: MutableEmissions, type: Type, range: SourceRa
   }
 
   return addEmission(emissions, emission)
+}
+
+function checkBindings (scope: MutableScope, types: ReadonlyArray<Type | undefined>, statement: ast.SimpleStatement): readonly CompileError[] {
+  const errors: CompileError[] = []
+
+  if (statement.name == null) {
+    return errors
+  }
+
+  const name = statement.name.name
+  const type = types.at(0)
+
+  const duplicate = scope.resolutions.has(name)
+  if (duplicate) {
+    errors.push(new CompileError(`Identifier "${name}" is already defined`, statement.name.range))
+  }
+
+  if (type != null && !duplicate) {
+    scope.resolutions.set(name, { name, type, definite: true })
+  }
+
+  return errors
+}
+
+function checkProperties (types: ReadonlyArray<Type | undefined>, statement: ast.SimpleStatement, options: StatementOptions): Pick<CheckedStatement, 'errors' | 'properties'> {
+  const errors: CompileError[] = []
+  const properties = new Map<string, Binding>()
+
+  if (!statement.expose) {
+    return { errors, properties }
+  }
+
+  const propertyName = statement.name.name
+  const propertyType = types.at(0)
+
+  if (options.existingProperties?.has(propertyName) === true) {
+    errors.push(new CompileError(`Duplicate property "${propertyName}"`, statement.name.range))
+  } else if (propertyType != null) {
+    properties.set(propertyName, {
+      name: propertyName,
+      type: propertyType,
+      definite: true
+    })
+  }
+
+  return { errors, properties }
 }
 
 function checkIfStatement (scope: MutableScope, statement: ast.IfStatement, options: StatementOptions): CheckedStatement {
@@ -255,11 +286,17 @@ function applyBranchEmissions (
   return errors
 }
 
+type BindingKind = 'identifier' | 'property'
+
+function capitalizeBindingKind (kind: BindingKind): string {
+  return kind === 'property' ? 'Property' : 'Identifier'
+}
+
 function applyBranchBindings (
   target: Map<string, Binding>,
   branches: ReadonlyArray<ReadonlyMap<string, Binding>>,
   statementRange: SourceRange,
-  kind: 'identifier' | 'property'
+  kind: BindingKind
 ): readonly CompileError[] {
   const errors: CompileError[] = []
 
@@ -269,11 +306,9 @@ function applyBranchBindings (
     const bindings = branches.map((branch) => branch.get(name))
 
     if (target.has(name)) {
-      const message = `${kind === 'property' ? 'Property' : 'Identifier'} "${name}" is already defined`
-      for (const binding of bindings) {
-        if (binding != null) {
-          errors.push(new CompileError(message, binding.range ?? statementRange))
-        }
+      const message = `${capitalizeBindingKind(kind)} "${name}" is already defined`
+      for (const binding of bindings.filter((item) => item != null)) {
+        errors.push(new CompileError(message, binding.range ?? statementRange))
       }
       continue
     }

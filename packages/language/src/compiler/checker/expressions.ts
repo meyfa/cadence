@@ -294,64 +294,109 @@ function checkCurveSegment (scope: Scope, expression: ast.CurveSegment, detail?:
   const errors: CompileError[] = []
   let capabilities = noCapabilities
 
-  const lengthCheck = checkExpression(scope, expression.length)
+  const { omittedFirstParameter, errors: arityErrors } = resolveCurveSegmentArity(expression, detail != null)
+  errors.push(...arityErrors)
+  if (omittedFirstParameter == null) {
+    return { errors, capabilities }
+  }
+
+  const lengthCheck = checkCurveSegmentLength(scope, expression)
   errors.push(...lengthCheck.errors)
   capabilities = mergeCapabilities(capabilities, lengthCheck.capabilities)
 
-  if (lengthCheck.result != null) {
-    errors.push(...expectType(curveSegmentLengthType, lengthCheck.result, expression.length.range))
-  }
+  const pointsCheck = checkCurveSegmentPoints(scope, expression.arguments)
+  errors.push(...pointsCheck.errors)
+  capabilities = mergeCapabilities(capabilities, pointsCheck.capabilities)
 
-  const expectedParameters = getCurveSegmentType(expression.curveType)?.parameterCount
-  if (expectedParameters == null) {
-    return { errors: [new CompileError(`Unknown curve type "${expression.curveType}"`, expression.range)], capabilities }
-  }
-
-  const actualParameters = expression.arguments.length
-  const omittedFirstParameter = expectedParameters > 0 && actualParameters === expectedParameters - 1
-
-  if (omittedFirstParameter && detail == null) {
-    return { errors: [new CompileError('First curve segment cannot omit its first argument', expression.range)], capabilities }
-  }
-
-  if (!omittedFirstParameter && actualParameters !== expectedParameters) {
-    const message = `Expected ${expectedParameters} ${expectedParameters === 1 ? 'argument' : 'arguments'} for ${expression.curveType} curve, got ${expression.arguments.length}`
-    return { errors: [new CompileError(message, expression.range)], capabilities }
-  }
-
-  const units: Array<{ readonly unit: Unit | undefined, readonly range: SourceRange }> = []
-
-  for (const point of expression.arguments) {
-    const pointCheck = checkExpression(scope, point)
-    errors.push(...pointCheck.errors)
-    capabilities = mergeCapabilities(capabilities, pointCheck.capabilities)
-
-    if (pointCheck.result != null) {
-      const typeErrors = expectType(NumberFacet.type(), pointCheck.result, point.range)
-      errors.push(...typeErrors)
-
-      if (typeErrors.length === 0) {
-        for (const pointType of getPossibleTypeAtoms(pointCheck.result)) {
-          units.push({ unit: NumberFacet.detail(pointType), range: point.range })
-        }
-      }
-    }
-  }
-
+  const units = pointsCheck.result ?? []
   if (!omittedFirstParameter && units.length === 0) {
     return { errors, capabilities }
   }
 
   const firstUnit = omittedFirstParameter ? detail?.unit : units[0]?.unit
+  const remainingUnits = omittedFirstParameter ? units : units.slice(1)
+  errors.push(...expectPointUnits(firstUnit, remainingUnits))
 
-  const expected = NumberFacet.with(firstUnit).type()
-  for (let i = omittedFirstParameter ? 0 : 1; i < units.length; ++i) {
-    errors.push(...expectType(expected, NumberFacet.with(units[i].unit).type(), units[i].range))
+  return { errors, capabilities, result: { unit: firstUnit } }
+}
+
+function checkCurveSegmentLength (scope: Scope, expression: ast.CurveSegment): Checked<void> {
+  const lengthCheck = checkExpression(scope, expression.length)
+  const errors = [...lengthCheck.errors]
+
+  if (lengthCheck.result != null) {
+    errors.push(...expectType(curveSegmentLengthType, lengthCheck.result, expression.length.range))
   }
 
-  const result = { unit: firstUnit }
+  return { errors, capabilities: lengthCheck.capabilities }
+}
 
-  return { errors, capabilities, result }
+interface CheckedCurveSegmentArity {
+  readonly errors: CompileError[]
+  readonly omittedFirstParameter?: boolean
+}
+
+function resolveCurveSegmentArity (expression: ast.CurveSegment, hasPreviousSegment: boolean): CheckedCurveSegmentArity {
+  const expectedParameters = getCurveSegmentType(expression.curveType)?.parameterCount
+  if (expectedParameters == null) {
+    return { errors: [new CompileError(`Unknown curve type "${expression.curveType}"`, expression.range)] }
+  }
+
+  const actualParameters = expression.arguments.length
+  const omittedFirstParameter = expectedParameters > 0 && actualParameters === expectedParameters - 1
+
+  if (omittedFirstParameter && !hasPreviousSegment) {
+    return { errors: [new CompileError('First curve segment cannot omit its first argument', expression.range)] }
+  }
+
+  if (!omittedFirstParameter && actualParameters !== expectedParameters) {
+    const object = expectedParameters === 1 ? 'argument' : 'arguments'
+    const message = `Expected ${expectedParameters} ${object} for ${expression.curveType} curve, got ${actualParameters}`
+    return { errors: [new CompileError(message, expression.range)] }
+  }
+
+  return { errors: [], omittedFirstParameter }
+}
+
+interface PointUnit {
+  readonly unit: Unit | undefined
+  readonly range: SourceRange
+}
+
+function checkCurveSegmentPoints (scope: Scope, points: readonly ast.Expression[]): Checked<readonly PointUnit[]> {
+  const errors: CompileError[] = []
+  let capabilities = noCapabilities
+  const units: PointUnit[] = []
+
+  for (const point of points) {
+    const pointCheck = checkExpression(scope, point)
+    errors.push(...pointCheck.errors)
+    capabilities = mergeCapabilities(capabilities, pointCheck.capabilities)
+
+    if (pointCheck.result == null) {
+      continue
+    }
+
+    const typeErrors = expectType(NumberFacet.type(), pointCheck.result, point.range)
+    errors.push(...typeErrors)
+
+    if (typeErrors.length > 0) {
+      continue
+    }
+
+    for (const pointType of getPossibleTypeAtoms(pointCheck.result)) {
+      units.push({ unit: NumberFacet.detail(pointType), range: point.range })
+    }
+  }
+
+  return { errors, capabilities, result: units }
+}
+
+function expectPointUnits (expectedUnit: Unit | undefined, points: readonly PointUnit[]): readonly CompileError[] {
+  const expected = NumberFacet.with(expectedUnit).type()
+  return points.flatMap(({ unit, range }) => {
+    return expectType(expected, NumberFacet.with(unit).type(), range)
+  })
 }
 
 const returnSlotName = 'return' as SlotName
