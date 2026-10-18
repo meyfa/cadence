@@ -1,12 +1,12 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { computeBaseModel } from '../../../src/model/analysis/base.ts'
-import { computeKnownValueModel } from '../../../src/model/analysis/known-values.ts'
-import { computeReferenceModel } from '../../../src/model/analysis/references.ts'
-import type { BaseModel, KnownValueModel, ReferenceModel } from '../../../src/model/model.ts'
-import { findIdentifierAt } from '../../../src/model/query.ts'
-import { textFromString } from '../../../src/utilities/text.ts'
-import { getCadenceParser } from '../../helpers.ts'
+import { computeBaseModel } from '../../../../src/model/base/base.ts'
+import { computeKnownValueModel } from '../../../../src/model/known-values/known-values.ts'
+import type { BaseModel, KnownValueModel, ReferenceModel } from '../../../../src/model/model.ts'
+import { findIdentifierAt } from '../../../../src/model/query.ts'
+import { computeReferenceModel } from '../../../../src/model/references/references.ts'
+import { textFromString } from '../../../../src/utilities/text.ts'
+import { getCadenceParser } from '../../../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 
@@ -21,7 +21,7 @@ function analyzeSource (source: string): BaseModel & ReferenceModel & KnownValue
   return { ...base, ...references, ...knownValues }
 }
 
-describe('model/analysis/known-values.ts', () => {
+describe('model/known-values/known-values.ts', () => {
   it('resolves known values for identifiers', () => {
     const source = [
       'use "instruments" as *',
