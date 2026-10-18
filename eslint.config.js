@@ -212,6 +212,7 @@ export default defineConfig([
       complexity: ['error', { variant: 'modified', max: 10 }],
       'max-depth': ['error', { max: 3 }],
       'max-params': ['error', { max: 6 }],
+      'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
 
       'react/no-typos': ['error'],
       'react/style-prop-object': ['warn'],
@@ -294,6 +295,7 @@ export default defineConfig([
   ...selfImportRestrictions,
 
   // monorepo: Keep root describe() titles in test files synced with the source file under test.
+  // Disable some rules that are not relevant for test files.
   {
     files: [
       'packages/*/test/**/*.{test,spec}.{ts,tsx}',
@@ -303,7 +305,8 @@ export default defineConfig([
       local: localRules
     },
     rules: {
-      'local/describe-matches-source-file': 'error'
+      'local/describe-matches-source-file': 'error',
+      'max-lines-per-function': 'off'
     }
   }
 ])

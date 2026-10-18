@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '../hooks/latest-ref.ts'
 import { usePersistenceContext } from './components/PersistenceContext.tsx'
+import type { PersistenceEngine } from './engine.ts'
 import type { PersistenceDomain, PersistenceEvent } from './types.ts'
 
 const STORAGE_DEBOUNCE = 0.25 as Numeric<'s'>
@@ -49,14 +50,6 @@ export function usePersistentBinding<T> (
   const [meta, setMeta] = useState<PersistentStateMeta<T>>({ loaded: false })
   const [dirty, setDirty] = useState(false)
 
-  const previousLocalValueRef = useRef(value)
-  const previousPersistedValueRef = useRef(persistedValue)
-  const previousLoadedRef = useRef(meta.loaded)
-  const previousConflictRef = useRef(meta.conflict)
-
-  const applyValueRef = useLatestRef(applyValue)
-  const areEqualRef = useLatestRef(areEqual)
-
   const { loaded, conflict } = meta
 
   const setPersistedValue = useCallback((action: SetStateAction<T>) => {
@@ -98,7 +91,43 @@ export function usePersistentBinding<T> (
     }
   }, [domain, engine, onConflict])
 
-  // Save on changes with debounce
+  useDebouncedSave(engine, domain, persistedValue, { loaded, conflict, dirty }, setDirty, setMeta)
+
+  useReconcile(value, persistedValue, meta, areEqual, applyValue, setPersistedValue)
+
+  // Controls for manual conflict resolution
+  const controls: PersistentStateControls = useMemo(() => ({
+    acceptRemote: () => {
+      if (conflict != null) {
+        setPersistedValueInternal(conflict.remoteValue ?? domain.fallbackValue)
+        setDirty(false)
+        setMeta((prevMeta) => ({ ...prevMeta, conflict: undefined }))
+      }
+    },
+
+    keepLocal: () => {
+      if (conflict != null) {
+        setDirty(true)
+        setMeta((prevMeta) => ({ ...prevMeta, conflict: undefined }))
+      }
+    }
+  }), [domain, conflict])
+
+  return { meta, controls }
+}
+
+type SaveStateMeta<T> = Pick<PersistentStateMeta<T>, 'loaded' | 'conflict'> & {
+  readonly dirty: boolean
+}
+
+function useDebouncedSave<T> (
+  engine: PersistenceEngine,
+  domain: PersistenceDomain<T>,
+  persistedValue: T,
+  { loaded, conflict, dirty }: SaveStateMeta<T>,
+  setDirty: Dispatch<SetStateAction<boolean>>,
+  setMeta: Dispatch<SetStateAction<PersistentStateMeta<T>>>
+): void {
   useEffect(() => {
     if (!loaded || conflict != null || !dirty) {
       return
@@ -124,9 +153,28 @@ export function usePersistentBinding<T> (
       cancelled = true
       clearTimeout(timeout)
     }
-  }, [conflict, dirty, domain, engine, loaded, persistedValue])
+  }, [conflict, dirty, domain, engine, loaded, persistedValue, setDirty, setMeta])
+}
 
-  // Reconcile external changes
+/**
+ * Reconciles changes of the local value and the persisted value, applying whichever side changed.
+ */
+function useReconcile<T> (
+  value: T,
+  persistedValue: T,
+  meta: PersistentStateMeta<T>,
+  areEqual: (a: T, b: T) => boolean,
+  applyValue: (value: T) => void,
+  setPersistedValue: (value: T) => void
+): void {
+  const previousLocalValueRef = useRef(value)
+  const previousPersistedValueRef = useRef(persistedValue)
+  const previousLoadedRef = useRef(meta.loaded)
+  const previousConflictRef = useRef(meta.conflict)
+
+  const applyValueRef = useLatestRef(applyValue)
+  const areEqualRef = useLatestRef(areEqual)
+
   useEffect(() => {
     const compare = areEqualRef.current
 
@@ -153,26 +201,6 @@ export function usePersistentBinding<T> (
     previousLoadedRef.current = meta.loaded
     previousConflictRef.current = meta.conflict
   }, [meta.conflict, meta.loaded, persistedValue, setPersistedValue, value])
-
-  // Controls for manual conflict resolution
-  const controls: PersistentStateControls = useMemo(() => ({
-    acceptRemote: () => {
-      if (conflict != null) {
-        setPersistedValueInternal(conflict.remoteValue ?? domain.fallbackValue)
-        setDirty(false)
-        setMeta((prevMeta) => ({ ...prevMeta, conflict: undefined }))
-      }
-    },
-
-    keepLocal: () => {
-      if (conflict != null) {
-        setDirty(true)
-        setMeta((prevMeta) => ({ ...prevMeta, conflict: undefined }))
-      }
-    }
-  }), [domain, conflict])
-
-  return { meta, controls }
 }
 
 function applyConflictPolicy<T> (
