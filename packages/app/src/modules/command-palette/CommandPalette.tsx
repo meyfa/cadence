@@ -1,15 +1,14 @@
-import type { Command, CommandId } from '@meyfa/cadence-editor'
-import { useCommandRegistry, useGlobalEscapePress, useRegisterCommand } from '@meyfa/cadence-editor'
+import type { Command, KeyboardShortcut } from '@meyfa/cadence-editor'
+import { useGlobalEscapePress, useRegisterCommand } from '@meyfa/cadence-editor'
 import { Search } from '@mui/icons-material'
 import clsx from 'clsx'
 import type { FunctionComponent, ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ShortcutKeys } from '../../components/commands/ShortcutKeys.tsx'
-import { fuzzyMatch } from '../../utilities/fuzzy-match.ts'
+import { createShowPaletteCommand } from './commands.ts'
+import { useCommandSearch } from './search.ts'
 
 export const CommandPalette: FunctionComponent = () => {
-  const { commands } = useCommandRegistry()
-
   const paletteRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -26,21 +25,9 @@ export const CommandPalette: FunctionComponent = () => {
     setSearch('')
   }, [])
 
-  const showCommand = useRegisterCommand(() => ({
-    id: 'commands.show-all' as CommandId,
-    label: 'Show all commands',
-    keyboardShortcuts: [
-      // Ctrl-Shift-P may be reserved by some browsers
-      'Ctrl+P',
-      'Ctrl+Shift+P',
-      'F1'
-    ],
-    run: showPalette
-  }), [showPalette])
-
-  const sortedCommands = useMemo(() => {
-    return [...commands].sort((a, b) => a.label.localeCompare(b.label))
-  }, [commands])
+  const showCommand = useRegisterCommand(() => {
+    return createShowPaletteCommand(showPalette)
+  }, [showPalette])
 
   // Close palette if focus moves outside
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
@@ -57,23 +44,7 @@ export const CommandPalette: FunctionComponent = () => {
     }
   }, [open])
 
-  const searchResults = useMemo<readonly SearchResult[]>(() => {
-    const query = search.trim()
-    if (query === '') {
-      return sortedCommands.map((command) => ({ command }))
-    }
-
-    const results: SearchResult[] = []
-
-    for (const command of sortedCommands) {
-      const match = fuzzyMatch({ text: command.label, query })
-      if (match != null) {
-        results.push({ command, matchIndices: match.indices })
-      }
-    }
-
-    return results
-  }, [sortedCommands, search])
+  const searchResults = useCommandSearch(search)
 
   const dispatchCommandAndClose = useCallback((command: Command) => {
     // Important: close before calling action, in case action needs to open the palette
@@ -99,27 +70,11 @@ export const CommandPalette: FunctionComponent = () => {
   })
 
   if (!open) {
-    const shortcut = showCommand.keyboardShortcuts?.at(0)
-
     return (
-      <button
-        type='button'
-        title='Open command palette'
-        className={clsx(
-          'px-2 h-8 cursor-pointer flex items-center justify-center gap-2 w-full text-sm whitespace-nowrap outline-none overflow-hidden',
-          'bg-surface-200 text-content-200 rounded-md border border-frame-200 hocus:bg-surface-300 hocus:text-content-300'
-        )}
+      <ClosedCommandPalette
+        shortcut={showCommand.keyboardShortcuts?.at(0)}
         onClick={showPalette}
-      >
-        <Search />
-        Commands…
-
-        {shortcut != null && (
-          <div className='ml-auto hidden md:block'>
-            <ShortcutKeys shortcut={shortcut} />
-          </div>
-        )}
-      </button>
+      />
     )
   }
 
@@ -167,9 +122,30 @@ export const CommandPalette: FunctionComponent = () => {
   )
 }
 
-interface SearchResult {
-  readonly command: Command
-  readonly matchIndices?: readonly number[]
+const ClosedCommandPalette: FunctionComponent<{
+  shortcut?: KeyboardShortcut
+  onClick: () => void
+}> = ({ shortcut, onClick }) => {
+  return (
+    <button
+      type='button'
+      title='Open command palette'
+      className={clsx(
+        'px-2 h-8 cursor-pointer flex items-center justify-center gap-2 w-full text-sm whitespace-nowrap outline-none overflow-hidden',
+        'bg-surface-200 text-content-200 rounded-md border border-frame-200 hocus:bg-surface-300 hocus:text-content-300'
+      )}
+      onClick={onClick}
+    >
+      <Search />
+      Commands…
+
+      {shortcut != null && (
+        <div className='ml-auto hidden md:block'>
+          <ShortcutKeys shortcut={shortcut} />
+        </div>
+      )}
+    </button>
+  )
 }
 
 const CommandPaletteItem: FunctionComponent<{

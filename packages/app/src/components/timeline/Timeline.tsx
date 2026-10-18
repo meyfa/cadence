@@ -9,29 +9,8 @@ import type { FunctionComponent } from 'react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatBeatDuration, formatBeatDurationAsWords } from '../../utilities/format.ts'
 import { Popover } from '../popover/Popover.tsx'
-
-const TIMELINE_ZOOM_MIN = 4
-const TIMELINE_ZOOM_MAX = 64
-const TIMELINE_ZOOM_DEFAULT = 16
-
-const TIMELINE_ZOOM_STEP = 2
-
-const TIMELINE_TRANSITION_DURATION = '100ms'
-const TIMELINE_TRANSITION_EASING = 'ease'
-
-// When one step is at least this wide, then selection works at step granularity.
-// Otherwise, when one beat is at least this wide, selection works at beat granularity.
-// Otherwise, selection works at bar granularity.
-const SELECTION_PIXELS_PER_NOTCH = 10
-
-// When zoomed far out, minor ticks (non-bar) become noisy and expensive.
-const MINOR_TICKS_MIN_BEAT_WIDTH = 10
-
-// When zoomed far out, bar labels are reduced to every N bars (stride).
-const SPARSE_BAR_LABELS_STRIDE_BARS = 4
-
-// If this beat count is exceeded, then rendering will be limited to preserve performance.
-const RENDERING_LIMIT_BEATS = 4096
+import { TIMELINE_TRANSITION_DURATION, TIMELINE_TRANSITION_EASING, TIMELINE_ZOOM_DEFAULT, TIMELINE_ZOOM_MAX, TIMELINE_ZOOM_MIN, TIMELINE_ZOOM_STEP } from './constants.ts'
+import { getBeatFromPosition, useRuler } from './ruler.ts'
 
 export const Timeline: FunctionComponent<{
   program: Program
@@ -173,47 +152,17 @@ const TimeRuler: FunctionComponent<{
   selection: BeatRange
   onSelect: (range: BeatRange) => void
 }> = ({ beatsPerBar, trackLength, beatWidth, selection, onSelect }) => {
-  const totalBeats = Math.ceil(trackLength)
-
-  const limited = totalBeats > RENDERING_LIMIT_BEATS
-
-  const { majorTickPath, minorTickPath, barLabelBeats } = useMemo(() => {
-    if (limited) {
-      return {
-        majorTickPath: '',
-        minorTickPath: '',
-        barLabelBeats: []
-      }
-    }
-
-    const isZoomedFarOut = beatWidth < MINOR_TICKS_MIN_BEAT_WIDTH
-    const majorStrideBeats = beatsPerBar * (isZoomedFarOut ? SPARSE_BAR_LABELS_STRIDE_BARS : 1)
-    const minorStrideBeats = isZoomedFarOut ? beatsPerBar : 1
-
-    const majorTicks: string[] = []
-    const minorTicks: string[] = []
-    const labels: number[] = []
-
-    for (let beat = 0; beat <= totalBeats; beat += minorStrideBeats) {
-      const x = beat * beatWidth
-      if (beat % majorStrideBeats === 0) {
-        majorTicks.push(`M${x} 0 V16`)
-        labels.push(beat)
-      } else {
-        minorTicks.push(`M${x} 0 V4`)
-      }
-    }
-
-    return {
-      majorTickPath: majorTicks.join(' '),
-      minorTickPath: minorTicks.join(' '),
-      barLabelBeats: labels
-    }
-  }, [beatsPerBar, totalBeats, beatWidth])
-
   const timelineRef = useRef<HTMLDivElement>(null)
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectionStart, setSelectionStart] = useState<Numeric<'beats'> | undefined>(undefined)
+
+  const totalBeats = Math.ceil(trackLength)
+
+  const { limited, majorTickPath, minorTickPath, barLabelBeats } = useRuler({
+    beatsPerBar,
+    totalBeats,
+    beatWidth
+  })
 
   const computeTimeFromEvent = useCallback((event: MouseEvent | React.MouseEvent): Numeric<'beats'> | undefined => {
     const rect = timelineRef.current?.getBoundingClientRect()
@@ -221,18 +170,14 @@ const TimeRuler: FunctionComponent<{
       return undefined
     }
 
-    const granularityBeats = beatWidth >= SELECTION_PIXELS_PER_NOTCH
-      ? 1
-      : beatsPerBar
-
-    const positionInPixels = event.clientX - rect.left
-    const positionInBeats = positionInPixels / beatWidth
-
-    const snappedIndex = Math.round(positionInBeats / granularityBeats) * granularityBeats
-    const clampedIndex = Math.max(0, Math.min(snappedIndex, trackLength))
-
-    return clampedIndex as Numeric<'beats'>
-  }, [beatsPerBar, beatWidth, trackLength])
+    return getBeatFromPosition({
+      positionInPixels: event.clientX - rect.left,
+      beatsPerBar,
+      // Prevent selection beyond the track length.
+      totalBeats: trackLength,
+      beatWidth
+    })
+  }, [beatsPerBar, trackLength, beatWidth])
 
   const updateSelection = useCallback((event: MouseEvent | React.MouseEvent) => {
     const position = computeTimeFromEvent(event)
@@ -295,8 +240,6 @@ const TimeRuler: FunctionComponent<{
 
       <svg
         className='block'
-        width={totalBeats * beatWidth}
-        height={16}
         style={{
           width: totalBeats * beatWidth,
           height: 16,
@@ -307,26 +250,48 @@ const TimeRuler: FunctionComponent<{
         <path d={majorTickPath} stroke='currentColor' strokeWidth={1} />
 
         {barLabelBeats.map((beat) => (
-          <text
+          <RulerLabel
             key={beat}
-            x={beat * beatWidth + 4}
-            y={12}
-            fill='currentColor'
-            style={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}
-          >
-            {beat / beatsPerBar}
-          </text>
+            beat={beat}
+            beatsPerBar={beatsPerBar}
+            beatWidth={beatWidth}
+          />
         ))}
       </svg>
 
-      {limited && (
-        <div className='pointer-events-none absolute inset-0'>
-          <div className='sticky top-0 left-0 z-10 inline-flex h-6 items-center px-2 text-sm text-content-100'>
-            <WarningAmberSharp className='mr-1' fontSize='inherit' />
-            Track exceeds rendering limit
-          </div>
-        </div>
-      )}
+      {limited && (<RenderingLimitExceededWarning />)}
+    </div>
+  )
+}
+
+const RulerLabel: FunctionComponent<{
+  beat: number
+  beatsPerBar: number
+  beatWidth: number
+}> = ({ beat, beatsPerBar, beatWidth }) => {
+  return (
+    <text
+      x={beat * beatWidth + 4}
+      y={12}
+      style={{
+        fill: 'currentColor',
+        fontSize: 12,
+        fontWeight: 700,
+        fontFamily: 'inherit'
+      }}
+    >
+      {beat / beatsPerBar}
+    </text>
+  )
+}
+
+const RenderingLimitExceededWarning: FunctionComponent = () => {
+  return (
+    <div className='pointer-events-none absolute inset-0'>
+      <div className='sticky top-0 left-0 z-10 inline-flex h-6 items-center px-2 text-sm text-content-100'>
+        <WarningAmberSharp className='mr-1' fontSize='inherit' />
+        Track exceeds rendering limit
+      </div>
     </div>
   )
 }
