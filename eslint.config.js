@@ -209,6 +209,10 @@ export default defineConfig([
 
       'no-console': ['error'],
 
+      complexity: ['error', { variant: 'modified', max: 10 }],
+      'max-depth': ['error', { max: 3 }],
+      'max-params': ['error', { max: 6 }],
+
       'react/no-typos': ['error'],
       'react/style-prop-object': ['warn'],
       'react/jsx-pascal-case': ['warn', {

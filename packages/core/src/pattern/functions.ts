@@ -174,11 +174,13 @@ export function mergePatterns (patterns: readonly Pattern[]): Pattern {
         let earliestTime: number | undefined
 
         for (const nextEvent of nextEvents) {
-          if (!nextEvent.done) {
-            const eventTime = nextEvent.value.time
-            if (earliestTime == null || eventTime < earliestTime) {
-              earliestTime = eventTime
-            }
+          if (nextEvent.done) {
+            continue
+          }
+
+          const eventTime = nextEvent.value.time
+          if (earliestTime == null || eventTime < earliestTime) {
+            earliestTime = eventTime
           }
         }
 
