@@ -8,13 +8,16 @@ export interface DialogComponentProps {
   readonly onClose: () => void
 }
 
+export type ShowDialog = <P extends DialogComponentProps>(
+  component: ComponentType<P>,
+  props: Omit<P, 'open' | 'onClose'>
+) => DisposeDialog
+
+export type CloseDialog = (id: DialogId) => void
+
 type DisposeDialog = () => void
 
 export interface DialogService {
-  readonly showDialog: <P extends DialogComponentProps>(
-    component: ComponentType<P>,
-    props: Omit<P, 'open' | 'onClose'>
-  ) => DisposeDialog
-
-  readonly closeDialog: (id: DialogId) => void
+  readonly showDialog: ShowDialog
+  readonly closeDialog: CloseDialog
 }

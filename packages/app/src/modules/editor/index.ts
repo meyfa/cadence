@@ -1,61 +1,34 @@
-import { syntaxTree } from '@codemirror/language'
-import { EditorSelection } from '@codemirror/state'
-import type { CommandId, MenuId, MenuSectionId, Module, ModuleId, PanelId, Problem } from '@meyfa/cadence-editor'
-import { activateTabOfType, getProjectFileContent, setProjectFileContent, useDialogService, useLatestRef, useLayout, useLayoutDispatch, useProjectSource, useProjectSourceDispatch, useProvideProblems, useRegisterCommand } from '@meyfa/cadence-editor'
-import { applySemanticOperation, goToDefinition } from '@meyfa/cadence-language-support'
+import type { FooterInsert, MenuId, MenuSectionId, Module, Problem } from '@meyfa/cadence-editor'
+import { useDialogService, useLayout, useLayoutDispatch, useProvideProblems, useRegisterCommand } from '@meyfa/cadence-editor'
 import type { FunctionComponent } from 'react'
 import { useMemo } from 'react'
 import { useCompilationState } from '../../compilation/CompilationContext.tsx'
-import { TRACK_FILE_PATH } from '../../persistence/constants.ts'
-import { openFiles, readFileAsText, saveTextFile } from '../../utilities/files.ts'
 import { getFocusedEditorCaret } from './caret.ts'
+import { createFileOpenCommand, createFileSaveCommand, createGoToDefinitionCommand, createLoadDemoCommand, createShowEditorCommand, fileOpenId, fileSaveId, useEditorRef, viewEditorId } from './commands.ts'
 import { EditorPanel } from './components/EditorPanel.tsx'
-import { LoadDemoDialog } from './components/LoadDemoDialog.tsx'
 import { ResetProjectSettingsCard } from './components/ResetProjectSettingsCard.tsx'
-import type { EditorPanelProps } from './panel-props.ts'
+import { editorPanelId, moduleId } from './ids.ts'
 import { getEditorPanelProps } from './panel-props.ts'
-import { EditorProvider, useEditor, useEditorDispatch, useEditorRuntime } from './provider.tsx'
-
-const DEFAULT_FILENAME = TRACK_FILE_PATH
-const FILE_TYPES = [
-  {
-    description: 'Cadence files',
-    accept: {
-      'text/plain': ['.cadence']
-    }
-  }
-]
-
-const moduleId = 'editor' as ModuleId
-export const editorPanelId = `${moduleId}.editor` as PanelId
+import { EditorProvider, useEditor } from './provider.tsx'
 
 const fileMenuId = 'file' as MenuId
 const viewShowSectionId = 'view.show' as MenuSectionId
 const fileSaveSectionId = 'file.save' as MenuSectionId
 
-const viewEditorId = `${moduleId}.view.editor` as CommandId
-const fileOpenId = `${moduleId}.file.open` as CommandId
-const fileSaveId = `${moduleId}.file.save` as CommandId
-const loadDemoId = `${moduleId}.load-demo` as CommandId
-const goToDefinitionId = `${moduleId}.go-to-definition` as CommandId
-
 const GlobalHooks: FunctionComponent = () => {
   const layoutDispatch = useLayoutDispatch()
   const { showDialog } = useDialogService()
 
-  const source = useProjectSource()
-  const sourceDispatch = useProjectSourceDispatch()
-  const editorDispatch = useEditorDispatch()
-  const editorRuntime = useEditorRuntime()
+  const editorRef = useEditorRef()
 
-  const editorRef = useLatestRef({
-    source,
-    sourceDispatch,
-    editorDispatch,
-    editorRuntime
-  })
+  useRegisterCommand(() => createShowEditorCommand(layoutDispatch), [layoutDispatch])
+  useRegisterCommand(() => createFileOpenCommand(editorRef), [])
+  useRegisterCommand(() => createFileSaveCommand(editorRef), [])
+  useRegisterCommand(() => createLoadDemoCommand(showDialog), [showDialog])
+  useRegisterCommand(() => createGoToDefinitionCommand(editorRef), [])
 
   const { result: { errors } } = useCompilationState()
+
   const problems = useMemo(() => {
     return errors.map((error): Problem => ({
       kind: 'error',
@@ -66,93 +39,20 @@ const GlobalHooks: FunctionComponent = () => {
     }))
   }, [errors])
 
-  useRegisterCommand(() => ({
-    id: viewEditorId,
-    label: 'Show view: Editor',
-    run: () => {
-      layoutDispatch((layout) => activateTabOfType(layout, editorPanelId, () => ({
-        type: editorPanelId,
-        props: { filePath: TRACK_FILE_PATH } satisfies EditorPanelProps
-      })))
-    }
-  }), [layoutDispatch])
-
-  useRegisterCommand(() => ({
-    id: fileOpenId,
-    label: 'File: Open',
-    keyboardShortcuts: [
-      'Ctrl+O'
-    ],
-    run: () => {
-      openFiles({ types: FILE_TYPES }).then(async (files) => {
-        return files.length > 0 ? await readFileAsText(files[0]) : undefined
-      }).then((content) => {
-        if (content != null) {
-          editorRef.current.sourceDispatch((state) => setProjectFileContent(state, TRACK_FILE_PATH, content))
-          editorRef.current.editorDispatch((state) => ({
-            ...state,
-            carets: {}
-          }))
-        }
-      }).catch(() => {
-        // ignore errors
-      })
-    }
-  }), [])
-
-  useRegisterCommand(() => ({
-    id: fileSaveId,
-    label: 'File: Save',
-    keyboardShortcuts: [
-      'Ctrl+S'
-    ],
-    run: () => {
-      saveTextFile({
-        filename: DEFAULT_FILENAME,
-        content: getProjectFileContent(editorRef.current.source, TRACK_FILE_PATH) ?? ''
-      })
-    }
-  }), [])
-
-  useRegisterCommand(() => ({
-    id: loadDemoId,
-    label: 'File: Load demo project',
-    run: () => {
-      showDialog(LoadDemoDialog, { editorPanelId })
-    }
-  }), [showDialog])
-
-  useRegisterCommand(() => ({
-    id: goToDefinitionId,
-    label: 'Go to definition',
-    keyboardShortcuts: [
-      'F12'
-    ],
-    run: () => {
-      const runtime = editorRef.current.editorRuntime
-      const view = runtime.viewRef.current
-      if (view == null) {
-        return
-      }
-
-      const tree = syntaxTree(view.state)
-      const caret = view.state.selection.main.head
-
-      const target = applySemanticOperation(goToDefinition, tree, view.state.doc, caret)?.binding
-      if (target == null) {
-        view.focus()
-        return
-      }
-
-      const selection = EditorSelection.single(target.range.offset)
-      view.dispatch({ selection, scrollIntoView: true })
-      view.focus()
-    }
-  }), [])
-
   useProvideProblems(problems)
 
   return null
+}
+
+const caretFooterInsert: FooterInsert = {
+  commandId: viewEditorId,
+  position: 'end',
+  Label: () => {
+    const layout = useLayout()
+    const editor = useEditor()
+    const caret = getFocusedEditorCaret(layout, editorPanelId, editor.carets)
+    return `Ln ${caret?.line ?? '-'}, Col ${caret?.column ?? '-'}`
+  }
 }
 
 export const editorModule: Module = {
@@ -209,16 +109,7 @@ export const editorModule: Module = {
 
   inserts: {
     footer: [
-      {
-        commandId: viewEditorId,
-        position: 'end',
-        Label: () => {
-          const layout = useLayout()
-          const editor = useEditor()
-          const caret = getFocusedEditorCaret(layout, editorPanelId, editor.carets)
-          return `Ln ${caret?.line ?? '-'}, Col ${caret?.column ?? '-'}`
-        }
-      }
+      caretFooterInsert
     ]
   }
 }

@@ -1,11 +1,11 @@
 import type { DockLayout, LayoutNodeId, TabId } from '@meyfa/cadence-editor'
-import { editorPanelId } from '../modules/editor/index.ts'
+import { editorPanelId } from '../modules/editor/ids.ts'
 import type { EditorPanelProps } from '../modules/editor/panel-props.ts'
 import { mixerPanelId } from '../modules/mixer/index.ts'
 import { timelinePanelId } from '../modules/playback/index.ts'
 import { problemsPanelId } from '../modules/problems/index.ts'
-import { TRACK_FILE_PATH } from '../persistence/constants.ts'
 import { settingsPanelId } from '../modules/settings/index.ts'
+import { TRACK_FILE_PATH } from '../persistence/constants.ts'
 
 export const defaultLayout: DockLayout = {
   main: {

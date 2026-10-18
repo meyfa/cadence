@@ -8,7 +8,7 @@ import clsx from 'clsx'
 import type { FunctionComponent, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useCallback, useMemo } from 'react'
 import { TRACK_FILE_PATH } from '../../persistence/constants.ts'
-import { editorPanelId } from '../editor/index.ts'
+import { editorPanelId } from '../editor/ids.ts'
 import type { EditorPanelProps } from '../editor/panel-props.ts'
 import { useEditorRuntime } from '../editor/provider.tsx'
 
