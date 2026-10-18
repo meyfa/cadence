@@ -2,9 +2,9 @@ import type { Tree } from '@lezer/common'
 import type { LRParser } from '@lezer/lr'
 import type { TextLike } from '../utilities/text.ts'
 import { textFromString } from '../utilities/text.ts'
-import { computeBaseModel } from './analysis/base.ts'
-import { computeKnownValueModel } from './analysis/known-values.ts'
-import { computeReferenceModel } from './analysis/references.ts'
+import { computeBaseModel } from './base/base.ts'
+import { computeKnownValueModel } from './known-values/known-values.ts'
+import { computeReferenceModel } from './references/references.ts'
 import type { Model } from './model.ts'
 
 interface CachedModel {

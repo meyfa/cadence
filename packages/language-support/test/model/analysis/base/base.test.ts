@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { computeBaseModel } from '../../../src/model/analysis/base.ts'
-import type { BaseModel } from '../../../src/model/model.ts'
-import { textFromString } from '../../../src/utilities/text.ts'
-import { getCadenceParser, getRangeAt } from '../../helpers.ts'
+import { computeBaseModel } from '../../../../src/model/base/base.ts'
+import type { BaseModel } from '../../../../src/model/model.ts'
+import { textFromString } from '../../../../src/utilities/text.ts'
+import { getCadenceParser, getRangeAt } from '../../../helpers.ts'
 
 const cadenceParser = await getCadenceParser()
 
@@ -14,7 +14,7 @@ function analyzeSource (source: string): BaseModel {
   return computeBaseModel(tree, document)
 }
 
-describe('model/analysis/base.ts', () => {
+describe('model/base/base.ts', () => {
   it('builds a sorted list of identifiers', () => {
     const source = [
       'use "instruments" as *',
