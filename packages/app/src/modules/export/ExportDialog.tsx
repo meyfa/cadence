@@ -11,7 +11,7 @@ import { Dropdown } from '../../components/dropdown/Dropdown.tsx'
 import { ProgressBar } from '../../components/progress-bar/ProgressBar.tsx'
 import { formatBytes, formatDuration } from '../../utilities/format.ts'
 import { MAX_EXPORT_DURATION, exportAudio } from './export.ts'
-import type { ExportForm } from './form.ts'
+import type { ExportForm, ExportField } from './form.ts'
 import { getExportFields, getExportFormValue, updateExportForm } from './form.ts'
 import type { ExportMetrics } from './metrics.ts'
 import { computeExportMetrics } from './metrics.ts'
@@ -29,51 +29,36 @@ function useExportMetrics (program: Program | undefined, form: ExportForm): Expo
   }, [program, form])
 }
 
-export const ExportDialog: FunctionComponent<{
-  open: boolean
-  onClose: () => void
-}> = ({ open, onClose }) => {
-  const { loading, program } = useExportProgram()
+interface ExportHandler {
+  readonly exporting: boolean
+  readonly progress: number | undefined
+  readonly exportErrors: readonly Error[]
+  readonly start: () => void
+  readonly reset: () => void
+  readonly cancel: () => void
+}
 
+function useExportHandler (program: Program | undefined, form: ExportForm, onClose: () => void): ExportHandler {
   // Track the current async operation to avoid setting state after the
   // component has been unmounted or a new export was started.
   const token = useIdentityToken()
 
-  const [form, setForm] = useState<ExportForm>({})
   const [exporting, setExporting] = useState(false)
   const [progress, setProgress] = useState<number | undefined>(undefined)
   const [exportErrors, setExportErrors] = useState<readonly Error[]>([])
 
   const reset = useCallback(() => {
-    setForm({})
     setExporting(false)
     setProgress(undefined)
     setExportErrors([])
   }, [])
 
-  useLayoutEffect(() => {
-    if (open) {
-      reset()
-    } else {
-      token.next()
-    }
-  }, [open, token, reset])
+  const cancel = useCallback(() => {
+    token.next()
+  }, [token])
 
-  const metrics = useExportMetrics(program, form)
-
-  const exceedsMaxDuration = metrics != null && metrics.duration > MAX_EXPORT_DURATION
-
-  const canCancel = !exporting
-  const canExport = program != null && !exceedsMaxDuration && !exporting
-
-  const onCancel = useCallback(() => {
-    if (canCancel) {
-      onClose()
-    }
-  }, [canCancel, onClose])
-
-  const onExport = useCallback(() => {
-    if (!canExport) {
+  const start = useCallback(() => {
+    if (program == null || exporting) {
       return
     }
 
@@ -107,7 +92,55 @@ export const ExportDialog: FunctionComponent<{
         onComplete([error])
       }
     })()
-  }, [token, program, form, canExport, onClose])
+  }, [token, program, exporting, form, onClose])
+
+  return { exporting, progress, exportErrors, start, reset, cancel }
+}
+
+export const ExportDialog: FunctionComponent<{
+  open: boolean
+  onClose: () => void
+}> = ({ open, onClose }) => {
+  const { loading, program } = useExportProgram()
+
+  const [form, setForm] = useState<ExportForm>({})
+
+  const {
+    exporting,
+    progress,
+    exportErrors,
+    start,
+    reset,
+    cancel
+  } = useExportHandler(program, form, onClose)
+
+  useLayoutEffect(() => {
+    if (open) {
+      setForm({})
+      reset()
+    } else {
+      cancel()
+    }
+  }, [open, reset, cancel])
+
+  const metrics = useExportMetrics(program, form)
+
+  const exceedsMaxDuration = metrics != null && metrics.duration > MAX_EXPORT_DURATION
+
+  const canCancel = !exporting
+  const canExport = program != null && !exceedsMaxDuration && !exporting
+
+  const onCancel = useCallback(() => {
+    if (canCancel) {
+      onClose()
+    }
+  }, [canCancel, onClose])
+
+  const onExport = useCallback(() => {
+    if (canExport) {
+      start()
+    }
+  }, [canExport, start])
 
   const fields = getExportFields(form)
 
@@ -149,14 +182,13 @@ export const ExportDialog: FunctionComponent<{
       </ExportErrorMessage>
 
       {fields.map((field) => (
-        <ExportField key={field.key} label={field.label}>
-          <Dropdown
-            options={field.options}
-            value={getExportFormValue(form, field)}
-            onChange={(value) => setForm((form) => updateExportForm(form, field, value))}
-            disabled={exporting}
-          />
-        </ExportField>
+        <ExportFieldView
+          key={field.key}
+          form={form}
+          field={field}
+          onChange={(value) => setForm((form) => updateExportForm(form, field, value))}
+          disabled={exporting}
+        />
       ))}
 
       {metrics != null && (
@@ -182,15 +214,24 @@ const ExportErrorMessage: FunctionComponent<PropsWithChildren<{
   )
 }
 
-const ExportField: FunctionComponent<PropsWithChildren<{
-  label: string
-}>> = ({ label, children }) => {
+const ExportFieldView: FunctionComponent<{
+  form: ExportForm
+  field: ExportField
+  onChange: (value: string) => void
+  disabled?: boolean
+}> = ({ form, field, onChange, disabled }) => {
   return (
     <Field className='mb-4'>
       <Label className='mb-1 block text-sm font-medium text-content-100'>
-        {label}
+        {field.label}
       </Label>
-      {children}
+
+      <Dropdown
+        options={field.options}
+        value={getExportFormValue(form, field)}
+        onChange={onChange}
+        disabled={disabled}
+      />
     </Field>
   )
 }
