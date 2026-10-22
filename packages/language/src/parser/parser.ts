@@ -3,74 +3,12 @@ import { ast, combineSourceRanges, getSourceRange } from '@meyfa/cadence-ast'
 import { isStepValue } from '@meyfa/cadence-core'
 import type { Token } from 'leac'
 import * as p from 'peberminta'
-import { truncateString } from '../result/errors.ts'
 import type { Result } from '../result/result.ts'
-import type { Keyword } from './constants.ts'
-import { isKeyword } from './constants.ts'
-import { ParseError } from './error.ts'
+import { getErrorContext, ParseError } from './error.ts'
+import type { Keyword } from './keywords.ts'
+import { isKeyword } from './keywords.ts'
 import { parseStringEscape } from './string.ts'
-
-const ERROR_CONTEXT_LIMIT = 16
-
-// Parser helpers
-
-function combine2<TToken, TOptions, TValueA, TValueB> (
-  a: p.Parser<TToken, TOptions, TValueA>,
-  b: p.Parser<TToken, TOptions, TValueB>
-): p.Parser<TToken, TOptions, [TValueA, TValueB]> {
-  return p.ab(a, b, (a, b) => [a, b])
-}
-
-function combine3<TToken, TOptions, TValueA, TValueB, TValueC> (
-  a: p.Parser<TToken, TOptions, TValueA>,
-  b: p.Parser<TToken, TOptions, TValueB>,
-  c: p.Parser<TToken, TOptions, TValueC>
-): p.Parser<TToken, TOptions, [TValueA, TValueB, TValueC]> {
-  return p.abc(a, b, c, (a, b, c) => [a, b, c])
-}
-
-function literal (name: string): p.Parser<Token, unknown, Token> {
-  return p.satisfy((t) => t.name === name)
-}
-
-function keyword (keyword: Keyword): p.Parser<Token, unknown, Token> {
-  return p.satisfy((t) => t.name === 'word' && t.text === keyword)
-}
-
-// Error helpers
-
-/**
- * A parser that expects the given parser to succeed, or else throws a `ParseError`
- * with a message including the given expected description. Both end-of-input and
- * non-matching tokens are considered errors.
- *
- * @param parser The parser to expect
- * @param expected A description of what was expected, for use in the error message
- * @returns A parser that produces the same value as the given parser, or throws a `ParseError`
- */
-function expect<TValue> (
-  parser: p.Parser<Token, unknown, TValue>,
-  expected: string
-): p.Parser<Token, unknown, TValue> {
-  return p.eitherOr(
-    parser,
-    p.eitherOr(
-      p.map(p.end, () => {
-        throw new ParseError(`Unexpected end of input; expected ${expected}`)
-      }),
-      p.map(p.any, (token) => {
-        const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected "${context}"; expected ${expected}`, getSourceRange(token))
-      })
-    )
-  )
-}
-
-function expectLiteral (name: string, printable = `"${name}"`): p.Parser<Token, unknown, Token> {
-  return expect(literal(name), printable)
-}
-
-// Grammar
+import { combine2, combine3, expect, expectLiteral, keyword, literal } from './utilities.ts'
 
 const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
   return t.name === 'word' && !isKeyword(t.text)
@@ -778,6 +716,14 @@ const statement_: p.Parser<Token, unknown, ast.Statement> = p.choice<Token, unkn
   ifStatement_
 )
 
+const expectStatement_: p.Parser<Token, unknown, ast.Statement> = p.eitherOr(
+  statement_,
+  p.map(p.any, (token) => {
+    const context = getErrorContext(token)
+    throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))
+  })
+)
+
 interface BuilderFields {
   readonly arguments: readonly ast.Argument[]
   readonly children: readonly ast.Statement[]
@@ -828,15 +774,7 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
 
 const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
   p.many(import_),
-  p.many(
-    p.eitherOr(
-      statement_,
-      p.map(p.any, (token) => {
-        const context = truncateString(token.text, ERROR_CONTEXT_LIMIT)
-        throw new ParseError(`Unexpected statement beginning with "${context}"`, getSourceRange(token))
-      })
-    )
-  ),
+  p.many(expectStatement_),
   p.end,
   (imports, children) => {
     return ast.make('Program', combineSourceRanges(...imports, ...children), {
