@@ -1,0 +1,3 @@
+use "mylib" as *
+
+& foo

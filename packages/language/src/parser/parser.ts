@@ -839,7 +839,7 @@ const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
   ),
   p.end,
   (imports, children) => {
-    return ast.make('Program', combineSourceRanges(...children), {
+    return ast.make('Program', combineSourceRanges(...imports, ...children), {
       imports,
       children
     })
