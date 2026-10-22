@@ -32,7 +32,7 @@ jobs:
 
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.0
+          node-version: 24.22.1
       - run: docker run --detach --name cadence-ci --publish 127.0.0.1:8080:80 cadence:ci
       - run: npm run container-test
       - if: always()
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.0
+          node-version: 24.22.1
           cache: npm
       - run: npm ci
       - run: npm run lint
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.0
+          node-version: 24.22.1
           cache: npm
       - run: npm ci
       - run: npm run test
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24.22.0
+          node-version: 24.22.1
           cache: npm
       - run: npm ci
       - uses: actions/cache@v6.1.0
