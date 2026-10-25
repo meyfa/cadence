@@ -8,31 +8,32 @@ import { getErrorContext, ParseError } from './error.ts'
 import type { Keyword } from './keywords.ts'
 import { isKeyword } from './keywords.ts'
 import { parseStringEscape } from './string.ts'
+import type { Parser } from './utilities.ts'
 import { combine2, combine3, expect, expectLiteral, keyword, literal } from './utilities.ts'
 
-const identifier_: p.Parser<Token, unknown, ast.Identifier> = p.token((t) => {
+const identifier_: Parser<ast.Identifier> = p.token((t) => {
   return t.name === 'word' && !isKeyword(t.text)
     ? ast.make('Identifier', getSourceRange(t), { name: t.text })
     : undefined
 })
 
-const boolean_: p.Parser<Token, unknown, ast.Boolean> = p.token((t) => {
+const boolean_: Parser<ast.Boolean> = p.token((t) => {
   return t.name === 'word' && (t.text === 'true' || t.text === 'false')
     ? ast.make('Boolean', getSourceRange(t), { value: t.text === 'true' })
     : undefined
 })
 
-const number_: p.Parser<Token, unknown, ast.Number> = p.token((t) => {
+const number_: Parser<ast.Number> = p.token((t) => {
   return t.name === 'number'
     ? ast.make('Number', getSourceRange(t), { value: Number.parseFloat(t.text) })
     : undefined
 })
 
-const stringContent_: p.Parser<Token, unknown, string> = p.token((t) => {
+const stringContent_: Parser<string> = p.token((t) => {
   return t.name === 'stringContent' ? t.text : undefined
 })
 
-const stringEscape_: p.Parser<Token, unknown, string> = p.token((t) => {
+const stringEscape_: Parser<string> = p.token((t) => {
   if (t.name !== 'stringEscape') {
     return undefined
   }
@@ -40,7 +41,7 @@ const stringEscape_: p.Parser<Token, unknown, string> = p.token((t) => {
   return parseStringEscape(t.text)
 })
 
-const stringInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
+const stringInterpolation_: Parser<ast.Expression> = p.abc(
   literal('{'),
   p.recursive(() => expression_),
   expectLiteral('}'),
@@ -49,7 +50,7 @@ const stringInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
   }
 )
 
-const string_: p.Parser<Token, unknown, ast.String> = p.abc(
+const string_: Parser<ast.String> = p.abc(
   literal('"'),
   p.many(
     p.eitherOr(
@@ -107,7 +108,7 @@ function splitStepsFromWordToken (text: string, tokenRange: SourceRange): readon
 
 // The lexer is unable to distinguish e.g. 'xx' (two step tokens) from 'xx' (one word token).
 // Therefore, we have to split step tokens out of word tokens here.
-const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
+const steps_: Parser<readonly ast.Step[]> = p.abc(
   p.token((t) => {
     const tokenRange = getSourceRange(t)
     if (t.name === '-') {
@@ -180,7 +181,7 @@ const steps_: p.Parser<Token, unknown, readonly ast.Step[]> = p.abc(
   }
 )
 
-const patternInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
+const patternInterpolation_: Parser<ast.Expression> = p.abc(
   literal('{'),
   p.recursive(() => expression_),
   expectLiteral('}'),
@@ -189,7 +190,7 @@ const patternInterpolation_: p.Parser<Token, unknown, ast.Expression> = p.abc(
   }
 )
 
-const patternChildren_: p.Parser<Token, unknown, ReadonlyArray<ast.Step | ast.Expression>> = p.map(
+const patternChildren_: Parser<ReadonlyArray<ast.Step | ast.Expression>> = p.map(
   p.many(
     p.eitherOr(
       steps_,
@@ -205,7 +206,7 @@ const patternChildren_: p.Parser<Token, unknown, ReadonlyArray<ast.Step | ast.Ex
   (children) => children.flat()
 )
 
-const serialPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
+const serialPattern_: Parser<ast.Pattern> = p.abc(
   literal('['),
   patternChildren_,
   expectLiteral(']'),
@@ -214,7 +215,7 @@ const serialPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   }
 )
 
-const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
+const parallelPattern_: Parser<ast.Pattern> = p.abc(
   literal('<'),
   p.filter(patternChildren_, (children) => children.length > 0),
   expectLiteral('>'),
@@ -223,7 +224,7 @@ const parallelPattern_: p.Parser<Token, unknown, ast.Pattern> = p.abc(
   }
 )
 
-const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
+const curveSegment_: Parser<ast.CurveSegment> = p.ab(
   p.token((t) => t.name === 'word' ? t : undefined),
   combine2(
     p.option(
@@ -258,7 +259,7 @@ const curveSegment_: p.Parser<Token, unknown, ast.CurveSegment> = p.ab(
   }
 )
 
-const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
+const curve_: Parser<ast.Curve> = p.abc(
   literal('~['),
   p.many(
     p.eitherOr(curveSegment_, patternInterpolation_)
@@ -269,7 +270,7 @@ const curve_: p.Parser<Token, unknown, ast.Curve> = p.abc(
   }
 )
 
-const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
+const namedType_: Parser<ast.NamedType> = p.ab(
   // Do not use identifier_ as it excludes keywords, but keywords are valid type names (e.g. "effect" and "instrument")
   p.token((t) => {
     return t.name === 'word' ? ast.make('Identifier', getSourceRange(t), { name: t.text }) : undefined
@@ -282,7 +283,7 @@ const namedType_: p.Parser<Token, unknown, ast.NamedType> = p.ab(
   }
 )
 
-const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
+const functionType_: Parser<ast.FunctionType> = p.abc(
   p.recursive(() => parameterList_),
   combine2(
     literal(':'),
@@ -304,7 +305,7 @@ const functionType_: p.Parser<Token, unknown, ast.FunctionType> = p.abc(
   }
 )
 
-const recordTypeProperty_: p.Parser<Token, unknown, ast.RecordTypeProperty> = p.abc(
+const recordTypeProperty_: Parser<ast.RecordTypeProperty> = p.abc(
   identifier_,
   literal(':'),
   p.recursive(() => type_),
@@ -313,7 +314,7 @@ const recordTypeProperty_: p.Parser<Token, unknown, ast.RecordTypeProperty> = p.
   }
 )
 
-const recordType_: p.Parser<Token, unknown, ast.RecordType> = p.abc(
+const recordType_: Parser<ast.RecordType> = p.abc(
   literal('{'),
   p.sepBy(
     recordTypeProperty_,
@@ -325,13 +326,13 @@ const recordType_: p.Parser<Token, unknown, ast.RecordType> = p.abc(
   }
 )
 
-const atomicType_: p.Parser<Token, unknown, ast.Type> = p.choice<Token, unknown, ast.Type>(
+const atomicType_: Parser<ast.Type> = p.choice<Token, unknown, ast.Type>(
   namedType_,
   functionType_,
   recordType_,
   p.abc(
     literal('('),
-    p.recursive((): p.Parser<Token, unknown, ast.Type> => type_),
+    p.recursive((): Parser<ast.Type> => type_),
     literal(')'),
     (_l, type, _r) => {
       return ast.make(type.type, combineSourceRanges(_l, _r), { ...type })
@@ -339,7 +340,7 @@ const atomicType_: p.Parser<Token, unknown, ast.Type> = p.choice<Token, unknown,
   )
 )
 
-const type_: p.Parser<Token, unknown, ast.Type> = p.leftAssoc2(
+const type_: Parser<ast.Type> = p.leftAssoc2(
   atomicType_,
   p.map(
     literal('+'),
@@ -352,7 +353,7 @@ const type_: p.Parser<Token, unknown, ast.Type> = p.leftAssoc2(
   atomicType_
 )
 
-const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
+const parameter_: Parser<ast.Parameter> = p.abc(
   combine2(
     identifier_,
     p.option(
@@ -374,7 +375,7 @@ const parameter_: p.Parser<Token, unknown, ast.Parameter> = p.abc(
 
 type ParameterList = readonly [Token, readonly ast.Parameter[], Token]
 
-const parameterList_: p.Parser<Token, unknown, ParameterList> = combine3(
+const parameterList_: Parser<ParameterList> = combine3(
   literal('('),
   p.sepBy(
     parameter_,
@@ -383,7 +384,7 @@ const parameterList_: p.Parser<Token, unknown, ParameterList> = combine3(
   literal(')')
 )
 
-const function_: p.Parser<Token, unknown, ast.Function> = p.ab(
+const function_: Parser<ast.Function> = p.ab(
   parameterList_,
   combine3(
     literal('{'),
@@ -395,7 +396,7 @@ const function_: p.Parser<Token, unknown, ast.Function> = p.ab(
   }
 )
 
-const recordValue_: p.Parser<Token, unknown, ast.RecordValue> = p.abc(
+const recordValue_: Parser<ast.RecordValue> = p.abc(
   literal('{'),
   p.recursive(() => p.many(statement_)),
   expectLiteral('}'),
@@ -404,7 +405,7 @@ const recordValue_: p.Parser<Token, unknown, ast.RecordValue> = p.abc(
   }
 )
 
-const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast.Value>(
+const value_: Parser<ast.Value> = p.choice<Token, unknown, ast.Value>(
   identifier_,
   boolean_,
   number_,
@@ -421,7 +422,7 @@ const value_: p.Parser<Token, unknown, ast.Value> = p.choice<Token, unknown, ast
   p.recursive(() => voice_)
 )
 
-const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+const primary_: Parser<ast.Expression> = p.eitherOr(
   value_,
   p.abc(
     literal('('),
@@ -432,7 +433,7 @@ const primary_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
 )
 
 // Parse a primary value, a property access, or a call; chained as needed.
-const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
+const accessOrCall_: Parser<ast.Expression> = p.ab(
   primary_,
   p.many(
     p.eitherOr(
@@ -471,7 +472,7 @@ const accessOrCall_: p.Parser<Token, unknown, ast.Expression> = p.ab(
   }
 )
 
-const unaryExpression_: p.Parser<Token, unknown, ast.Expression> = p.eitherOr(
+const unaryExpression_: Parser<ast.Expression> = p.eitherOr(
   p.ab(
     p.choice(literal('+'), literal('-'), keyword('not')),
     p.recursive(() => unaryExpression_),
@@ -509,7 +510,7 @@ function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast
 }
 
 // multiplication = unary ((*|/) unary)*
-const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+const multiplicativeExpression_: Parser<ast.Expression> = p.leftAssoc2(
   unaryExpression_,
   p.map(
     p.satisfy((t) => t.name === '*' || t.name === '/'),
@@ -519,7 +520,7 @@ const multiplicativeExpression_: p.Parser<Token, unknown, ast.Expression> = p.le
 )
 
 // addition = multiplication ((+|-) multiplication)*
-const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+const additiveExpression_: Parser<ast.Expression> = p.leftAssoc2(
   multiplicativeExpression_,
   p.map(
     p.satisfy((t) => t.name === '+' || t.name === '-'),
@@ -529,7 +530,7 @@ const additiveExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAsso
 )
 
 // comparison = addition ((==|!=|<|>|<=|>=) addition)*
-const comparisonExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+const comparisonExpression_: Parser<ast.Expression> = p.leftAssoc2(
   additiveExpression_,
   p.map(
     p.satisfy((t) => ['==', '!=', '<', '>', '<=', '>='].includes(t.name)),
@@ -539,7 +540,7 @@ const comparisonExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAs
 )
 
 // conjunction = comparison (and comparison)*
-const conjunctionExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+const conjunctionExpression_: Parser<ast.Expression> = p.leftAssoc2(
   comparisonExpression_,
   p.map(
     keyword('and'),
@@ -549,7 +550,7 @@ const conjunctionExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftA
 )
 
 // disjunction = conjunction (or conjunction)*
-const disjunctionExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftAssoc2(
+const disjunctionExpression_: Parser<ast.Expression> = p.leftAssoc2(
   conjunctionExpression_,
   p.map(
     keyword('or'),
@@ -559,13 +560,13 @@ const disjunctionExpression_: p.Parser<Token, unknown, ast.Expression> = p.leftA
 )
 
 // The top-level expression parser
-const optionalExpression_: p.Parser<Token, unknown, ast.Expression> = disjunctionExpression_
-const expression_: p.Parser<Token, unknown, ast.Expression> = expect(
+const optionalExpression_: Parser<ast.Expression> = disjunctionExpression_
+const expression_: Parser<ast.Expression> = expect(
   optionalExpression_,
   'expression'
 )
 
-const argument_: p.Parser<Token, unknown, ast.Argument> = p.eitherOr(
+const argument_: Parser<ast.Argument> = p.eitherOr(
   p.abc(
     identifier_,
     literal(':'),
@@ -581,7 +582,7 @@ const argument_: p.Parser<Token, unknown, ast.Argument> = p.eitherOr(
 
 type ArgumentList = readonly [Token, readonly ast.Argument[], Token]
 
-const argumentList_: p.Parser<Token, unknown, ArgumentList> = combine3(
+const argumentList_: Parser<ArgumentList> = combine3(
   literal('('),
   p.sepBy(
     argument_,
@@ -590,7 +591,7 @@ const argumentList_: p.Parser<Token, unknown, ArgumentList> = combine3(
   literal(')')
 )
 
-const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
+const import_: Parser<ast.Import> = p.ab(
   combine2(
     keyword('use'),
     expect(string_, 'module name')
@@ -612,7 +613,7 @@ const import_: p.Parser<Token, unknown, ast.Import> = p.ab(
   }
 )
 
-const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
+const plainAssignment_: Parser<ast.Statement> = p.ab(
   p.option(literal('@'), undefined),
   combine3(
     identifier_,
@@ -629,7 +630,7 @@ const plainAssignment_: p.Parser<Token, unknown, ast.Statement> = p.ab(
   }
 )
 
-const plainEmission_: p.Parser<Token, unknown, ast.Statement> = p.abc(
+const plainEmission_: Parser<ast.Statement> = p.abc(
   literal('&'),
   expression_,
   p.many(
@@ -650,7 +651,7 @@ const plainEmission_: p.Parser<Token, unknown, ast.Statement> = p.abc(
   }
 )
 
-const emissionAssignment_: p.Parser<Token, unknown, ast.Statement> = p.abc(
+const emissionAssignment_: Parser<ast.Statement> = p.abc(
   literal('&'),
   p.option(literal('@'), undefined),
   combine3(
@@ -674,7 +675,7 @@ const simpleStatement_ = p.choice<Token, unknown, ast.Statement>(
   plainEmission_
 )
 
-const conditionalBranch_: p.Parser<Token, unknown, ast.ConditionalBranch> = p.ab(
+const conditionalBranch_: Parser<ast.ConditionalBranch> = p.ab(
   optionalExpression_,
   combine3(
     literal('{'),
@@ -686,7 +687,7 @@ const conditionalBranch_: p.Parser<Token, unknown, ast.ConditionalBranch> = p.ab
   }
 )
 
-const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
+const ifStatement_: Parser<ast.IfStatement> = p.abc(
   keyword('if'),
   p.sepBy1(conditionalBranch_, literal(',')),
   p.option(
@@ -711,12 +712,12 @@ const ifStatement_: p.Parser<Token, unknown, ast.IfStatement> = p.abc(
   }
 )
 
-const statement_: p.Parser<Token, unknown, ast.Statement> = p.choice<Token, unknown, ast.Statement>(
+const statement_: Parser<ast.Statement> = p.choice<Token, unknown, ast.Statement>(
   simpleStatement_,
   ifStatement_
 )
 
-const expectStatement_: p.Parser<Token, unknown, ast.Statement> = p.eitherOr(
+const expectStatement_: Parser<ast.Statement> = p.eitherOr(
   statement_,
   p.map(p.any, (token) => {
     const context = getErrorContext(token)
@@ -732,7 +733,7 @@ interface BuilderFields {
 function makeBuilder<TNode extends ast.ASTNode> (
   name: Keyword,
   create: (range: SourceRange, fields: BuilderFields) => TNode
-): p.Parser<Token, unknown, TNode> {
+): Parser<TNode> {
   return p.abc(
     keyword(name),
     p.option(argumentList_, undefined),
@@ -754,7 +755,7 @@ const track_ = makeBuilder('track', (range, fields) => ast.make('Track', range, 
 const part_ = makeBuilder('part', (range, fields) => ast.make('Part', range, fields))
 const instrument_ = makeBuilder('instrument', (range, fields) => ast.make('Instrument', range, fields))
 
-const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
+const voice_: Parser<ast.Voice> = p.abc(
   keyword('voice'),
   p.option(identifier_, undefined),
   combine3(
@@ -772,7 +773,7 @@ const voice_: p.Parser<Token, unknown, ast.Voice> = p.abc(
   }
 )
 
-const program_: p.Parser<Token, unknown, ast.Program> = p.abc(
+const program_: Parser<ast.Program> = p.abc(
   p.many(import_),
   p.many(expectStatement_),
   p.end,

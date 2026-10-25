@@ -4,6 +4,8 @@ import * as p from 'peberminta'
 import { getErrorContext, ParseError } from './error.ts'
 import type { Keyword } from './keywords.ts'
 
+export type Parser<TValue> = p.Parser<Token, unknown, TValue>
+
 /**
  * A parser that expects the given parser to succeed, or else throws a `ParseError`
  * with a message including the given expected description. Both end-of-input and
@@ -13,10 +15,7 @@ import type { Keyword } from './keywords.ts'
  * @param expected A description of what was expected, for use in the error message
  * @returns A parser that produces the same value as the given parser, or throws a `ParseError`
  */
-export function expect<TValue> (
-  parser: p.Parser<Token, unknown, TValue>,
-  expected: string
-): p.Parser<Token, unknown, TValue> {
+export function expect<TValue> (parser: Parser<TValue>, expected: string): Parser<TValue> {
   return p.eitherOr(
     parser,
     p.eitherOr(
@@ -31,29 +30,29 @@ export function expect<TValue> (
   )
 }
 
-export function combine2<TToken, TOptions, TValueA, TValueB> (
-  a: p.Parser<TToken, TOptions, TValueA>,
-  b: p.Parser<TToken, TOptions, TValueB>
-): p.Parser<TToken, TOptions, [TValueA, TValueB]> {
+export function combine2<TValueA, TValueB> (
+  a: Parser<TValueA>,
+  b: Parser<TValueB>
+): Parser<[TValueA, TValueB]> {
   return p.ab(a, b, (a, b) => [a, b])
 }
 
-export function combine3<TToken, TOptions, TValueA, TValueB, TValueC> (
-  a: p.Parser<TToken, TOptions, TValueA>,
-  b: p.Parser<TToken, TOptions, TValueB>,
-  c: p.Parser<TToken, TOptions, TValueC>
-): p.Parser<TToken, TOptions, [TValueA, TValueB, TValueC]> {
+export function combine3<TValueA, TValueB, TValueC> (
+  a: Parser<TValueA>,
+  b: Parser<TValueB>,
+  c: Parser<TValueC>
+): Parser<[TValueA, TValueB, TValueC]> {
   return p.abc(a, b, c, (a, b, c) => [a, b, c])
 }
 
-export function literal (name: string): p.Parser<Token, unknown, Token> {
+export function literal (name: string): Parser<Token> {
   return p.satisfy((t) => t.name === name)
 }
 
-export function keyword (keyword: Keyword): p.Parser<Token, unknown, Token> {
+export function keyword (keyword: Keyword): Parser<Token> {
   return p.satisfy((t) => t.name === 'word' && t.text === keyword)
 }
 
-export function expectLiteral (name: string, printable = `"${name}"`): p.Parser<Token, unknown, Token> {
+export function expectLiteral (name: string, printable = `"${name}"`): Parser<Token> {
   return expect(literal(name), printable)
 }
