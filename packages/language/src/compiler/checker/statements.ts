@@ -8,7 +8,7 @@ import { CompileError } from '../error.ts'
 import { mergeCapabilities, noCapabilities } from './capabilities.ts'
 import type { Emission, Emissions, MutableEmissions, Slot, SlotName, Slots } from './emissions.ts'
 import { addEmission } from './emissions.ts'
-import { checkExpression } from './expressions.ts'
+import { checkExpression } from './expressions/index.ts'
 import type { Binding, MutableScope, Scope } from './scopes.ts'
 import { createLocalScope } from './scopes.ts'
 

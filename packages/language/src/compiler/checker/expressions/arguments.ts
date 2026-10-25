@@ -1,11 +1,11 @@
 import type { ast, SourceRange } from '@meyfa/cadence-ast'
-import type { Capabilities } from '../../type-system/base/function.ts'
-import type { Schema, SchemaItem } from '../../type-system/schema.ts'
-import type { Type } from '../../type-system/types.ts'
-import { CompileError } from '../error.ts'
-import { mergeCapabilities, noCapabilities } from './capabilities.ts'
-import { checkExpression } from './expressions.ts'
-import type { Scope } from './scopes.ts'
+import type { Capabilities } from '../../../type-system/base/function.ts'
+import type { Schema, SchemaItem } from '../../../type-system/schema.ts'
+import type { Type } from '../../../type-system/types.ts'
+import { CompileError } from '../../error.ts'
+import { mergeCapabilities, noCapabilities } from '../capabilities.ts'
+import type { Scope } from '../scopes.ts'
+import { checkExpression } from './index.ts'
 
 export interface CheckedArguments {
   readonly errors: readonly CompileError[]

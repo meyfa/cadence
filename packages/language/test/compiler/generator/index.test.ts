@@ -5,8 +5,8 @@ import type { Numeric } from '@meyfa/cadence-utility'
 import { runtimeNumeric } from '@meyfa/cadence-utility'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../../src/compiler/checker/checker.ts'
-import { generate } from '../../../src/compiler/generator/generator.ts'
+import { check } from '../../../src/compiler/checker/index.ts'
+import { generate } from '../../../src/compiler/generator/index.ts'
 import { lex } from '../../../src/lexer/lexer.ts'
 import { parse } from '../../../src/parser/parser.ts'
 import { assertResultComplete } from '../../test-utils.ts'
@@ -39,7 +39,7 @@ function generateSource (source: string, fileName?: string): Program {
   })
 }
 
-describe('compiler/generator/generator.ts', async () => {
+describe('compiler/generator/index.ts', async () => {
   describe('fixtures', async () => {
     await createFixtureTests({
       directory: new URL('../../../fixtures/generator/', import.meta.url),
