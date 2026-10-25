@@ -212,6 +212,8 @@ export default defineConfig([
       complexity: ['error', { variant: 'modified', max: 10 }],
       'max-depth': ['error', { max: 3 }],
       'max-params': ['error', { max: 6 }],
+
+      'max-lines': ['error', { max: 800 }],
       'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
 
       'react/no-typos': ['error'],
@@ -288,6 +290,18 @@ export default defineConfig([
     }
   },
 
+  // Disable some rules that are not relevant for test files.
+  {
+    files: [
+      'packages/*/test/**/*.{test,spec}.{ts,tsx}',
+      'packages/*/test-browser/**/*.{test,spec}.{ts,tsx}'
+    ],
+    rules: {
+      'max-lines': 'off',
+      'max-lines-per-function': 'off'
+    }
+  },
+
   // monorepo: Prevent relative imports into package source directories; use @alias imports instead.
   crossPackageRelativeImportRestrictions,
 
@@ -295,7 +309,6 @@ export default defineConfig([
   ...selfImportRestrictions,
 
   // monorepo: Keep root describe() titles in test files synced with the source file under test.
-  // Disable some rules that are not relevant for test files.
   {
     files: [
       'packages/*/test/**/*.{test,spec}.{ts,tsx}',
@@ -305,8 +318,7 @@ export default defineConfig([
       local: localRules
     },
     rules: {
-      'local/describe-matches-source-file': 'error',
-      'max-lines-per-function': 'off'
+      'local/describe-matches-source-file': 'error'
     }
   }
 ])
