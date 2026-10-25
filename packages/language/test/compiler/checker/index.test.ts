@@ -3,8 +3,8 @@ import { ast, getEmptySourceRange } from '@meyfa/cadence-ast'
 import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { check } from '../../../src/compiler/checker/checker.ts'
-import { checkExpression } from '../../../src/compiler/checker/expressions.ts'
+import { check } from '../../../src/compiler/checker/index.ts'
+import { checkExpression } from '../../../src/compiler/checker/expressions/index.ts'
 import { createGlobalScope, createLocalScope } from '../../../src/compiler/checker/scopes.ts'
 import { checkStatement } from '../../../src/compiler/checker/statements.ts'
 import { CompileError } from '../../../src/compiler/error.ts'
@@ -68,7 +68,7 @@ function rangeOf (source: string, substring: string, position?: number): SourceR
   }
 }
 
-describe('compiler/checker/checker.ts', async () => {
+describe('compiler/checker/index.ts', async () => {
   describe('fixtures', async () => {
     await createFixtureTests({
       directory: new URL('../../../fixtures/checker/', import.meta.url),

@@ -1,7 +1,7 @@
 import type { Asset, AssetId, Bus, BusId, Curve, Instrument, InstrumentId, Parameter, ParameterId } from '@meyfa/cadence-core'
 import type { Numeric, Unit } from '@meyfa/cadence-utility'
 import type { Value } from '../../type-system/types.ts'
-import type { SemanticModel } from '../checker/checker.ts'
+import type { SemanticModel } from '../checker/index.ts'
 import type { GenerateOptions } from './options.ts'
 
 // scope aspects

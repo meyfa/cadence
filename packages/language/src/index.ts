@@ -10,8 +10,8 @@ export * from './parser/string.ts'
 
 export type { GenerateOptions } from './compiler/generator/options.ts'
 export * from './compiler/error.ts'
-export * from './compiler/checker/checker.ts'
-export * from './compiler/generator/generator.ts'
+export * from './compiler/checker/index.ts'
+export * from './compiler/generator/index.ts'
 
 export type { Documentation } from './library/documentation.ts'
 export { getGlobalDocumentation, getModuleDocumentation } from './library/documentation.ts'
