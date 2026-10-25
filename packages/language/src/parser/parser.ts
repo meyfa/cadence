@@ -497,65 +497,43 @@ const unaryExpression_: Parser<ast.Expression> = p.eitherOr(
   accessOrCall_
 )
 
-function makeBinaryExpression (operator: Token, left: ast.Expression, right: ast.Expression): ast.BinaryExpression {
-  if (!ast.isBinaryOperator(operator.text)) {
-    throw new ParseError(`Unexpected operator: "${operator.text}"`, getSourceRange(operator))
-  }
-
-  return ast.make('BinaryExpression', combineSourceRanges(left, right), {
-    operator: operator.text,
-    left,
-    right
+function makeBinaryExpression (
+  operatorParser: Parser<Token>,
+  operandParser: Parser<ast.Expression>
+): Parser<ast.Expression> {
+  const mapOperator = p.map(operatorParser, (op) => (left: ast.Expression, right: ast.Expression) => {
+    const operator = op.text
+    if (!ast.isBinaryOperator(operator)) {
+      throw new ParseError(`Unexpected operator: "${operator}"`, getSourceRange(op))
+    }
+    return ast.make('BinaryExpression', combineSourceRanges(left, right), { operator, left, right })
   })
+
+  return p.leftAssoc2(operandParser, mapOperator, operandParser)
 }
 
-// multiplication = unary ((*|/) unary)*
-const multiplicativeExpression_: Parser<ast.Expression> = p.leftAssoc2(
-  unaryExpression_,
-  p.map(
-    p.satisfy((t) => t.name === '*' || t.name === '/'),
-    (op) => makeBinaryExpression.bind(undefined, op)
-  ),
+const multiplicativeExpression_ = makeBinaryExpression(
+  p.satisfy((t) => t.name === '*' || t.name === '/'),
   unaryExpression_
 )
 
-// addition = multiplication ((+|-) multiplication)*
-const additiveExpression_: Parser<ast.Expression> = p.leftAssoc2(
-  multiplicativeExpression_,
-  p.map(
-    p.satisfy((t) => t.name === '+' || t.name === '-'),
-    (op) => makeBinaryExpression.bind(undefined, op)
-  ),
+const additiveExpression_ = makeBinaryExpression(
+  p.satisfy((t) => t.name === '+' || t.name === '-'),
   multiplicativeExpression_
 )
 
-// comparison = addition ((==|!=|<|>|<=|>=) addition)*
-const comparisonExpression_: Parser<ast.Expression> = p.leftAssoc2(
-  additiveExpression_,
-  p.map(
-    p.satisfy((t) => ['==', '!=', '<', '>', '<=', '>='].includes(t.name)),
-    (op) => makeBinaryExpression.bind(undefined, op)
-  ),
+const comparisonExpression_ = makeBinaryExpression(
+  p.satisfy((t) => ['==', '!=', '<', '>', '<=', '>='].includes(t.name)),
   additiveExpression_
 )
 
-// conjunction = comparison (and comparison)*
-const conjunctionExpression_: Parser<ast.Expression> = p.leftAssoc2(
-  comparisonExpression_,
-  p.map(
-    keyword('and'),
-    (op) => makeBinaryExpression.bind(undefined, op)
-  ),
+const conjunctionExpression_ = makeBinaryExpression(
+  keyword('and'),
   comparisonExpression_
 )
 
-// disjunction = conjunction (or conjunction)*
-const disjunctionExpression_: Parser<ast.Expression> = p.leftAssoc2(
-  conjunctionExpression_,
-  p.map(
-    keyword('or'),
-    (op) => makeBinaryExpression.bind(undefined, op)
-  ),
+const disjunctionExpression_ = makeBinaryExpression(
+  keyword('or'),
   conjunctionExpression_
 )
 
