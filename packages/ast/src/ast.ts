@@ -1,11 +1,10 @@
 import type { StepValue } from '@meyfa/cadence-core'
-import type { SourceRange } from './range.ts'
+import type { Locatable, SourceRange } from './range.ts'
 
 // Abstract Type
 
-export interface ASTNode {
+export interface ASTNode extends Locatable {
   readonly type: string
-  readonly range: SourceRange
 }
 
 // Factory

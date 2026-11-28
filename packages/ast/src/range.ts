@@ -1,13 +1,3 @@
-import * as ast from './ast.ts'
-
-interface Token {
-  readonly offset: number
-  readonly len: number
-  readonly line: number
-  readonly column: number
-  readonly filePath?: string
-}
-
 export interface SourceRange {
   readonly offset: number
   readonly length: number
@@ -16,26 +6,16 @@ export interface SourceRange {
   readonly filePath?: string
 }
 
-type Locatable = Token | ast.ASTNode
+export interface Locatable {
+  readonly range: SourceRange
+}
 
 export function getEmptySourceRange (): SourceRange {
   return { offset: 0, length: 0, line: 1, column: 1 }
 }
 
 export function getSourceRange (item: Locatable): SourceRange {
-  if ('range' in item) {
-    return item.range
-  }
-
-  const filePath = item.filePath
-
-  return {
-    offset: item.offset,
-    length: item.len,
-    line: item.line,
-    column: item.column,
-    ...(filePath == null ? {} : { filePath })
-  }
+  return item.range
 }
 
 export function combineSourceRanges (...items: Locatable[]): SourceRange {
