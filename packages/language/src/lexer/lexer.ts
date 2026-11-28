@@ -1,9 +1,10 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
-import type { Lexer, Options, Rules, Token } from 'leac'
+import type { Lexer, Options, Rules, Token as LeacToken } from 'leac'
 import { createLexer } from 'leac'
 import { truncateString } from '../result/errors.ts'
 import type { Result } from '../result/result.ts'
 import { LexError } from './error.ts'
+import type { Token } from './types.ts'
 
 const ERROR_CONTEXT_LIMIT = 16
 
@@ -123,6 +124,20 @@ export function lex (input: string, filePath?: string): LexResult {
 
   return {
     complete: true,
-    value: lexerResult.tokens.map((token) => ({ ...token, filePath }))
+    value: lexerResult.tokens.map((token) => createToken(token, filePath))
+  }
+}
+
+function createToken (input: LeacToken, filePath?: string): Token {
+  return {
+    name: input.name,
+    text: input.text,
+    range: {
+      offset: input.offset,
+      length: input.len,
+      column: input.column,
+      line: input.line,
+      filePath
+    }
   }
 }

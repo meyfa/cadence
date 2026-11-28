@@ -1,9 +1,9 @@
 import { getEmptySourceRange } from '@meyfa/cadence-ast'
 import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
-import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import { lex } from '../../src/lexer/lexer.ts'
+import type { Token } from '../../src/lexer/types.ts'
 import { parse } from '../../src/parser/parser.ts'
 
 /**

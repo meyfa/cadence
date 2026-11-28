@@ -1,6 +1,6 @@
 import type { SourceRange } from '@meyfa/cadence-ast'
+import type { Token } from '../lexer/types.ts'
 import { RangeError, truncateString } from '../result/errors.ts'
-import type { Token } from 'leac'
 
 const errorContextLimit = 16
 

@@ -1,13 +1,13 @@
 import { createFixtureTests, fromLineComment } from '@meyfa/cadence-snapshot-testing'
-import type { Token } from 'leac'
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
 import type { LexError } from '../../src/lexer/error.ts'
 import type { LexResult } from '../../src/lexer/lexer.ts'
 import { lex } from '../../src/lexer/lexer.ts'
+import type { Token } from '../../src/lexer/types.ts'
 import type { Result } from '../../src/result/result.ts'
 
-type LexResultWithoutMeta = Result<ReadonlyArray<Omit<Token, 'state' | 'offset' | 'len' | 'line' | 'column'>>, LexError>
+type LexResultWithoutMeta = Result<ReadonlyArray<Omit<Token, 'range'>>, LexError>
 
 /**
  * Helper function to strip metadata such as the source range from tokens for easier comparison in tests.
@@ -82,6 +82,6 @@ describe('lexer/lexer.ts', async () => {
   it('should annotate tokens with the source file path', () => {
     const result = lex('foo = 42', 'track.cadence')
     assert.strictEqual(result.complete, true)
-    assert.strictEqual((result.value[0] as any)?.filePath, 'track.cadence')
+    assert.strictEqual((result.value[0] as any)?.range.filePath, 'track.cadence')
   })
 })

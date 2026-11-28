@@ -1,6 +1,6 @@
 import { getSourceRange } from '@meyfa/cadence-ast'
-import type { Token } from 'leac'
 import * as p from 'peberminta'
+import type { Token } from '../lexer/types.ts'
 import { getErrorContext, ParseError } from './error.ts'
 import type { Keyword } from './keywords.ts'
 
