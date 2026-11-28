@@ -48,6 +48,19 @@ describe('collections/multimap.ts', () => {
     assert.deepStrictEqual(new Set(bValues), new Set([3]))
   })
 
+  it('should return whether values were deleted', () => {
+    const multimap = createMultimap<string, number>()
+    multimap.add('foo', 42)
+    multimap.add('foo', 43)
+    multimap.add('bar', 100)
+
+    assert.strictEqual(multimap.delete('baz', 100), false)
+    assert.strictEqual(multimap.delete('foo', 40), false)
+    assert.strictEqual(multimap.delete('foo', 42), true)
+    assert.strictEqual(multimap.delete('foo', 43), true)
+    assert.strictEqual(multimap.delete('foo', 43), false)
+  })
+
   it('should iterate over all keys', () => {
     const multimap = createMultimap<string, number>()
     multimap.add('a', 1)
