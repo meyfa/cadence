@@ -45,7 +45,9 @@ describe('pattern/functions.ts', () => {
       const pattern = createSerialPattern([
         { value: 'C1', length: beats(0) },
         { value: 'C2', length: beats(-1) },
-        { value: 'C3' }
+        { value: 'C3' },
+        { value: 'C4', length: beats(Infinity) },
+        { value: 'C5', length: beats(Number.NaN) }
       ])
       assert.strictEqual(pattern.length, 1)
       assert.deepStrictEqual([...pattern.evaluate()], [
@@ -134,6 +136,20 @@ describe('pattern/functions.ts', () => {
       assert.deepStrictEqual([...pattern.evaluate()], [
         { time: beats(0), gate: beats(2), velocity: scalar(1) },
         { time: beats(0), gate: beats(0.5), velocity: scalar(1) }
+      ])
+    })
+
+    it('should skip steps with non-positive lengths', () => {
+      const pattern = createParallelPattern([
+        { value: 'C1', length: beats(0) },
+        { value: 'C2', length: beats(-1) },
+        { value: 'C3' },
+        { value: 'C4', length: beats(Infinity) },
+        { value: 'C5', length: beats(Number.NaN) }
+      ])
+      assert.strictEqual(pattern.length, 1)
+      assert.deepStrictEqual([...pattern.evaluate()], [
+        { pitch: 'C3', time: beats(0), gate: beats(1), velocity: scalar(1) }
       ])
     })
 
@@ -389,15 +405,24 @@ describe('pattern/functions.ts', () => {
     })
 
     it('should return empty pattern when looping an empty pattern', () => {
-      const pattern = loopPattern(createSerialPattern([]), beats(10))
-      assert.strictEqual(pattern.length, 0)
-      assert.deepStrictEqual([...pattern.evaluate()], [])
+      const looped = loopPattern(createSerialPattern([]), beats(10))
+      assert.strictEqual(looped.length, 0)
+      assert.deepStrictEqual([...looped.evaluate()], [])
     })
 
     it('should return empty pattern when looping an empty pattern infinitely', () => {
-      const pattern = loopPattern(createSerialPattern([]))
-      assert.strictEqual(pattern.length, 0)
-      assert.deepStrictEqual([...pattern.evaluate()], [])
+      const looped = loopPattern(createSerialPattern([]))
+      assert.strictEqual(looped.length, 0)
+      assert.deepStrictEqual([...looped.evaluate()], [])
+    })
+
+    it('should return empty pattern when duration is invalid', () => {
+      const pattern = createSerialPattern([{ value: 'x' }, { value: '-' }])
+      for (const duration of [0, -1, Infinity, Number.NaN]) {
+        const looped = loopPattern(pattern, beats(duration))
+        assert.strictEqual(looped.length, 0)
+        assert.deepStrictEqual([...looped.evaluate()], [])
+      }
     })
   })
 
