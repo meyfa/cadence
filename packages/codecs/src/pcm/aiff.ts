@@ -158,9 +158,7 @@ function writePString (view: DataView, offset: number, str: string): number {
 
   const size = 1 + length
   const pad = padByteCount(size)
-  if (pad > 0) {
-    view.setUint8(offset + size, 0)
-  }
+  writePad(view, offset + size, pad)
 
   return size + pad
 }

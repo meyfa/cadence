@@ -71,6 +71,16 @@ describe('common/concatenated-audio-buffer.ts', () => {
       assert.deepStrictEqual(dest, new Float32Array([8, 0.25, 0.25]))
     })
 
+    it('accepts dest that is too small', () => {
+      const a = new SimpleAudioBuffer(44100, [new Float32Array([1, 2, 3])])
+      const b = new SimpleAudioBuffer(44100, [new Float32Array([7, 8])])
+      const c = new ConcatenatedAudioBuffer([a, b])
+
+      const dest = new Float32Array([0.25, 0.25, 0.25])
+      c.copyFromChannel(dest, 0, 0)
+      assert.deepStrictEqual(dest, new Float32Array([1, 2, 3]))
+    })
+
     it('throws when start is at/after the end', () => {
       const a = new SimpleAudioBuffer(44100, [new Float32Array([1, 2, 3])])
       const b = new SimpleAudioBuffer(44100, [new Float32Array([7, 8])])
