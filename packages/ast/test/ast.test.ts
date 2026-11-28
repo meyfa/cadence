@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { describe, it } from 'node:test'
-import { make } from '../src/ast.ts'
+import { isBinaryOperator, isUnaryOperator, make } from '../src/ast.ts'
 import type { SourceRange } from '../src/range.ts'
 
 describe('ast.ts', () => {
@@ -54,6 +54,44 @@ describe('ast.ts', () => {
           value: 0.75
         }
       })
+    })
+  })
+
+  describe('isUnaryOperator()', () => {
+    it('should return true for unary operators', () => {
+      assert.strictEqual(isUnaryOperator('+'), true)
+      assert.strictEqual(isUnaryOperator('-'), true)
+      assert.strictEqual(isUnaryOperator('not'), true)
+    })
+
+    it('should return false for non-unary operator strings', () => {
+      assert.strictEqual(isUnaryOperator(''), false)
+      assert.strictEqual(isUnaryOperator(' +'), false)
+      assert.strictEqual(isUnaryOperator('+ '), false)
+      assert.strictEqual(isUnaryOperator('+-'), false)
+      assert.strictEqual(isUnaryOperator('n'), false)
+    })
+  })
+
+  describe('isBinaryOperator()', () => {
+    it('should return true for binary operators', () => {
+      assert.strictEqual(isBinaryOperator('+'), true)
+      assert.strictEqual(isBinaryOperator('-'), true)
+      assert.strictEqual(isBinaryOperator('and'), true)
+      assert.strictEqual(isBinaryOperator('or'), true)
+      assert.strictEqual(isBinaryOperator('=='), true)
+      assert.strictEqual(isBinaryOperator('!='), true)
+    })
+
+    it('should return false for non-binary operator strings', () => {
+      assert.strictEqual(isBinaryOperator(''), false)
+      assert.strictEqual(isBinaryOperator(' +'), false)
+      assert.strictEqual(isBinaryOperator('+ '), false)
+      assert.strictEqual(isBinaryOperator('+-'), false)
+      assert.strictEqual(isBinaryOperator('a'), false)
+      assert.strictEqual(isBinaryOperator('='), false)
+      assert.strictEqual(isBinaryOperator('!'), false)
+      assert.strictEqual(isBinaryOperator('not'), false)
     })
   })
 })
